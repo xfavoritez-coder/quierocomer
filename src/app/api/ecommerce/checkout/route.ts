@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     const baseUrl = req.nextUrl.origin;
     const returnUrl = `${baseUrl}/api/ecommerce/webpay/return`;
 
-    const init = await webpayInit(buyOrder, order.id, amount, returnUrl, webpaySettingsFor(null));
+    // Credenciales Webpay del restaurante (producción o integración).
+    const settingsRest = await prisma.restaurant.findUnique({ where: { id: resId! }, select: { ecommerceConfig: true } });
+    const init = await webpayInit(buyOrder, order.id, amount, returnUrl, webpaySettingsFor(settingsRest));
     if (!init.ok || !init.url || !init.token) {
       await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
       return NextResponse.json({ error: init.error || "No se pudo iniciar el pago" }, { status: 502 });

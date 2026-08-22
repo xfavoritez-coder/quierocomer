@@ -5,6 +5,7 @@ import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { norm } from "@/lib/normalize";
 import SubirFoto from "@/components/SubirFoto";
+import { integrationStatus, type EcommerceConfig } from "@/lib/ecommerce/config";
 
 interface Restaurant {
   id: string;
@@ -41,6 +42,8 @@ interface Restaurant {
   toteatApiToken: string | null;
   toteatLastSyncAt: string | null;
   isDemo: boolean;
+  ecommerceEnabled?: boolean;
+  ecommerceConfig?: EcommerceConfig | null;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
 }
 
@@ -633,6 +636,49 @@ export default function AdminLocales() {
           </button>
         </div>
 
+        {/* Toggle Ecommerce (pilar nuevo) — super-admin only */}
+        {isSuper && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.ecommerceEnabled ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.ecommerceEnabled ? "rgba(167,139,250,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.ecommerceEnabled ? "#a78bfa" : "white", margin: 0 }}>🚀 Ecommerce <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#a78bfa", background: "rgba(167,139,250,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+                {selected.ecommerceEnabled
+                  ? "Pilar activo · el menú Ecommerce aparece en el panel del local"
+                  : "Tienda online tipo Servio con pago real y delivery — solo locales de prueba"}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const val = !selected.ecommerceEnabled;
+                const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ecommerceEnabled: val }) });
+                if (!res.ok) { alert("Error al actualizar"); return; }
+                const u = { ...selected, ecommerceEnabled: val };
+                setSelected(u);
+                setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+                background: selected.ecommerceEnabled ? "#a78bfa" : "rgba(255,255,255,0.15)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+                left: selected.ecommerceEnabled ? 23 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              }} />
+            </button>
+          </div>
+        )}
+
+        {/* Credenciales Ecommerce (pasarelas + couriers) — super-admin only, cuando el pilar está activo */}
+        {isSuper && selected.ecommerceEnabled && (
+          <EcommerceSection
+            restaurant={selected}
+            onUpdate={(patch) => { const updated = { ...selected, ...patch }; setSelected(updated); setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x)); }}
+          />
+        )}
+
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
 
@@ -1058,5 +1104,146 @@ function Input({ label, value, onChange, placeholder, type = "text" }: { label: 
         style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "#fff", fontFamily: "monospace", fontSize: "0.78rem", outline: "none" }}
       />
     </label>
+  );
+}
+
+function EnvSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ fontFamily: F, fontSize: "0.66rem", color: "#888", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "#fff", fontFamily: F, fontSize: "0.78rem", outline: "none" }}
+      >
+        {options.map((o) => <option key={o.value} value={o.value} style={{ background: "#1a1a1a" }}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function IntegrationGroup({ title, sub, ok, children }: { title: string; sub: string; ok: boolean; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div>
+          <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "#fff", margin: 0 }}>{title}</p>
+          <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "1px 0 0" }}>{sub}</p>
+        </div>
+        <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: ok ? "#4ade80" : "#666" }}>{ok ? "● Configurada" : "○ Sin configurar"}</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+    </div>
+  );
+}
+
+function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // Webpay (Transbank)
+  const [wpEnv, setWpEnv] = useState("integration");
+  const [wpCode, setWpCode] = useState("");
+  const [wpKey, setWpKey] = useState("");
+  // Flow.cl
+  const [flEnv, setFlEnv] = useState("sandbox");
+  const [flKey, setFlKey] = useState("");
+  const [flSecret, setFlSecret] = useState("");
+  // Uber Direct
+  const [ubCustomer, setUbCustomer] = useState("");
+  const [ubClient, setUbClient] = useState("");
+  const [ubSecret, setUbSecret] = useState("");
+  // PedidosYa
+  const [pyEnv, setPyEnv] = useState("sandbox");
+  const [pyClient, setPyClient] = useState("");
+  const [pySecret, setPySecret] = useState("");
+
+  useEffect(() => {
+    const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
+    setWpEnv(c.webpay?.env || "integration"); setWpCode(c.webpay?.commerceCode || ""); setWpKey(c.webpay?.apiKey || "");
+    setFlEnv(c.flow?.env || "sandbox"); setFlKey(c.flow?.apiKey || ""); setFlSecret(c.flow?.secretKey || "");
+    setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || "");
+    setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
+    setMsg(null);
+  }, [restaurant.id]);
+
+  const st = integrationStatus((restaurant.ecommerceConfig || {}) as EcommerceConfig);
+  const configuredCount = Object.values(st).filter(Boolean).length;
+
+  const save = async () => {
+    setBusy(true); setMsg(null);
+    const next: EcommerceConfig = {
+      webpay: { env: wpEnv as "integration" | "production", commerceCode: wpCode.trim() || undefined, apiKey: wpKey.trim() || undefined },
+      flow: { env: flEnv as "sandbox" | "production", apiKey: flKey.trim() || undefined, secretKey: flSecret.trim() || undefined },
+      uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined },
+      pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
+    };
+    try {
+      const res = await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ecommerceConfig: next }) });
+      const data = await res.json();
+      if (!res.ok) { setMsg({ type: "err", text: data.error || "Error al guardar" }); setBusy(false); return; }
+      onUpdate({ ecommerceConfig: next });
+      setMsg({ type: "ok", text: "Credenciales guardadas" });
+    } catch { setMsg({ type: "err", text: "Error de conexión" }); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ marginTop: 12, padding: "14px 16px", background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.25)", borderRadius: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
+        <div>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+            🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/4 configuradas</span>
+          </p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · Uber Direct · PedidosYa</p>
+        </div>
+        <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(167,139,250,0.2)", display: "flex", flexDirection: "column", gap: 12 }}>
+          <IntegrationGroup title="Webpay (Transbank)" sub="Pago online con tarjeta" ok={st.webpay}>
+            <EnvSelect label="Ambiente" value={wpEnv} onChange={setWpEnv} options={[{ value: "integration", label: "Integración (pruebas)" }, { value: "production", label: "Producción" }]} />
+            {wpEnv === "production" && (
+              <>
+                <Input label="Commerce Code" value={wpCode} onChange={setWpCode} placeholder="597055555532" />
+                <Input label="API Key (secret)" value={wpKey} onChange={setWpKey} placeholder="579B532A7440BB0C9079..." type="password" />
+              </>
+            )}
+          </IntegrationGroup>
+
+          <IntegrationGroup title="Flow.cl" sub="Pago online (tarjetas, transferencia)" ok={st.flow}>
+            <EnvSelect label="Ambiente" value={flEnv} onChange={setFlEnv} options={[{ value: "sandbox", label: "Sandbox (pruebas)" }, { value: "production", label: "Producción" }]} />
+            <Input label="API Key" value={flKey} onChange={setFlKey} placeholder="1F90971E-8276-4713-..." />
+            <Input label="Secret Key" value={flSecret} onChange={setFlSecret} placeholder="f8c9d...secret" type="password" />
+          </IntegrationGroup>
+
+          <IntegrationGroup title="Uber Direct" sub="Delivery con courier bajo demanda" ok={st.uberDirect}>
+            <Input label="Customer ID" value={ubCustomer} onChange={setUbCustomer} placeholder="uuid del customer" />
+            <Input label="Client ID" value={ubClient} onChange={setUbClient} placeholder="client id" />
+            <Input label="Client Secret" value={ubSecret} onChange={setUbSecret} placeholder="client secret" type="password" />
+          </IntegrationGroup>
+
+          <IntegrationGroup title="PedidosYa Envíos" sub="Delivery con courier bajo demanda" ok={st.pedidosya}>
+            <EnvSelect label="Ambiente" value={pyEnv} onChange={setPyEnv} options={[{ value: "sandbox", label: "Sandbox (pruebas)" }, { value: "production", label: "Producción" }]} />
+            <Input label="Client ID" value={pyClient} onChange={setPyClient} placeholder="client id" />
+            <Input label="Client Secret" value={pySecret} onChange={setPySecret} placeholder="client secret" type="password" />
+          </IntegrationGroup>
+
+          {msg && (
+            <p style={{ fontFamily: F, fontSize: "0.74rem", margin: 0, color: msg.type === "ok" ? "#4ade80" : "#ef4444" }}>
+              {msg.type === "ok" ? "✓ " : "✗ "}{msg.text}
+            </p>
+          )}
+
+          <div>
+            <button onClick={save} disabled={busy} style={{ padding: "9px 16px", background: "#a78bfa", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Guardando..." : "Guardar credenciales"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

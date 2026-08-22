@@ -169,7 +169,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">(showPickup ? "PICKUP" : "DELIVERY");
   const [clientAddress, setClientAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | "webpay" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
@@ -197,7 +197,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     if (orderType === "PICKUP" && address) {
       lines.push(`*Local:* ${address}`);
     }
-    const payLabels: Record<string, string> = { efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta (presencial)", webpay: "Webpay (pagado online)" };
+    const payLabels = { efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta (presencial)" };
     if (paymentMethod) lines.push(`*Pago:* ${payLabels[paymentMethod]}`);
     lines.push("");
     lines.push("*Productos:*");
@@ -224,49 +224,6 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
     if (!isValid || sending) return;
     setSending(true);
     setSendError(null);
-
-    // Pago online con Webpay (Transbank) — crea la orden e inicia el pago, luego redirige.
-    if (paymentMethod === "webpay") {
-      try {
-        const res = await fetch("/api/ecommerce/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            restaurantSlug,
-            customerName: name.trim(),
-            customerPhone: buildFullPhone(clientPhone, dialCountry),
-            customerEmail: email.trim() || null,
-            orderType,
-            deliveryAddress: orderType === "DELIVERY" ? clientAddress.trim() : null,
-            items,
-            total,
-            notes: orderNotes.trim() || null,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.url || !data.token) {
-          setSendError(data.error || "No se pudo iniciar el pago.");
-          setSending(false);
-          return;
-        }
-        clearCart();
-        // Redirigir al formulario de Webpay con un form POST (token_ws).
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = data.url;
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "token_ws";
-        input.value = data.token;
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-      } catch {
-        setSendError("Error de conexión. Intenta de nuevo.");
-        setSending(false);
-      }
-      return;
-    }
 
     if (isPanelMode) {
       try {
@@ -491,7 +448,6 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                 { value: "efectivo", label: "Efectivo", Icon: Banknote },
                 { value: "transferencia", label: "Transferencia", Icon: ArrowLeftRight },
                 { value: "tarjeta", label: "Tarjeta", Icon: CreditCard },
-                { value: "webpay", label: "Webpay", Icon: CreditCard },
               ] as const).filter(opt => paymentMethods.includes(opt.value)).map(({ value, label, Icon }) => {
                 const active = paymentMethod === value;
                 return (
@@ -598,7 +554,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             disabled={!isValid || sending}
             style={{
               width: "100%", padding: "15px 16px", borderRadius: 14, border: "none",
-              background: isValid && !sending ? (paymentMethod === "webpay" || isPanelMode ? ACCENT : "#25D366") : "var(--carta-border, #ddd)",
+              background: isValid && !sending ? (isPanelMode ? ACCENT : "#25D366") : "var(--carta-border, #ddd)",
               color: isValid && !sending ? "#fff" : "var(--carta-text2, #aaa)",
               fontFamily: F, fontSize: "0.92rem", fontWeight: 700,
               cursor: isValid && !sending ? "pointer" : "not-allowed",
@@ -606,14 +562,10 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
               transition: "all 0.15s",
             }}
           >
-            {paymentMethod === "webpay" ? <CreditCard size={20} /> : isPanelMode ? <CheckCircle2 size={20} /> : <MessageCircle size={20} />}
-            {sending ? (paymentMethod === "webpay" ? "Redirigiendo…" : "Enviando...") : paymentMethod === "webpay" ? "Ir a pagar" : isPanelMode ? "Confirmar pedido" : "Enviar pedido por WhatsApp"}
+            {isPanelMode ? <CheckCircle2 size={20} /> : <MessageCircle size={20} />}
+            {sending ? "Enviando..." : isPanelMode ? "Confirmar pedido" : "Enviar pedido por WhatsApp"}
           </button>
-          {paymentMethod === "webpay" ? (
-            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #999)", textAlign: "center", margin: "8px 0 0" }}>
-              Serás redirigido a Webpay para pagar de forma segura.
-            </p>
-          ) : !isPanelMode && (
+          {!isPanelMode && (
             <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text2, #999)", textAlign: "center", margin: "8px 0 0" }}>
               Se abrirá WhatsApp con tu pedido listo para enviar
             </p>

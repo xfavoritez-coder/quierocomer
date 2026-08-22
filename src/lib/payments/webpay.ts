@@ -4,6 +4,7 @@
 //  credenciales de prueba que trae el SDK (no requiere config real).
 // ═══════════════════════════════════════════════════════════
 import { WebpayPlus, Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } from "transbank-sdk";
+import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 
 export interface WebpaySettings {
   webpay_env?: string; // "production" | "integration" (default: integration)
@@ -70,9 +71,15 @@ export async function webpayConfirm(token: string, settings: WebpaySettings = {}
   }
 }
 
-/** Lee la config Webpay del restaurante. Por ahora, integración (modo prueba). */
-export function webpaySettingsFor(_restaurant: unknown): WebpaySettings {
-  // Fase 1: modo integración (credenciales de prueba del SDK). En una fase
-  // siguiente se leerán las credenciales de producción por restaurante.
+/**
+ * Lee la config Webpay del restaurante desde Restaurant.ecommerceConfig.
+ * Si hay credenciales de producción completas, usa producción; si no,
+ * cae a modo integración (credenciales de prueba del SDK).
+ */
+export function webpaySettingsFor(restaurant: { ecommerceConfig?: unknown } | null): WebpaySettings {
+  const w = parseEcommerceConfig(restaurant?.ecommerceConfig).webpay;
+  if (w?.env === "production" && w.commerceCode && w.apiKey) {
+    return { webpay_env: "production", webpay_commerce_code: w.commerceCode, webpay_api_key: w.apiKey };
+  }
   return { webpay_env: "integration" };
 }

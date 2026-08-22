@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
       const restaurant = await prisma.restaurant.findFirst({
         where: { slug: demoSlug, isDemo: true },
-        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true },
       });
       if (!restaurant) return NextResponse.json({ error: "Demo no encontrado" }, { status: 401 });
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       const memberId = panelId.slice(3);
       const member = await prisma.teamMember.findUnique({
         where: { id: memberId },
-        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true } } },
+        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true } } },
       });
 
       if (!member) return NextResponse.json({ error: "User not found" }, { status: 401 });
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true }, orderBy: { createdAt: 'asc' } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true }, orderBy: { createdAt: 'asc' } } },
     });
 
     if (!owner) {

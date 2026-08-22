@@ -7,6 +7,11 @@ const translations = {
   es: {
     // Nav
     nav_home: "Dashboard",
+    nav_ecommerce_home: "Inicio",
+    nav_ecommerce_orders: "Pedidos",
+    nav_ecommerce_menu: "Catálogo",
+    nav_ecommerce_delivery: "Delivery",
+    nav_ecommerce_settings: "Configuración",
     nav_live: "Venta en vivo",
     nav_menu: "Mi Carta",
     nav_analytics: "Analytics",
@@ -851,6 +856,11 @@ const translations = {
   en: {
     // Nav
     nav_home: "Dashboard",
+    nav_ecommerce_home: "Home",
+    nav_ecommerce_orders: "Orders",
+    nav_ecommerce_menu: "Catalog",
+    nav_ecommerce_delivery: "Delivery",
+    nav_ecommerce_settings: "Settings",
     nav_live: "Live Sales",
     nav_menu: "My Menu",
     nav_analytics: "Analytics",

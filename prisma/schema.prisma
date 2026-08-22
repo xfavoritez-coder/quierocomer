@@ -391,6 +391,9 @@ model Restaurant {
   invoices                   Invoice[]
   // Módulo Control
   controlEnabled             Boolean                  @default(false)
+  // Pilar Ecommerce (Servio dentro de quierocomer) — activado solo por superadmin.
+  ecommerceEnabled           Boolean                  @default(false)
+  ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]

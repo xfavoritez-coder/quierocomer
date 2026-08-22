@@ -40,7 +40,8 @@ async function handle(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/pedido/${order.id}?pago=exito`, 303);
   }
 
-  const result = await webpayConfirm(tokenWs, webpaySettingsFor(null));
+  const settingsRest = await prisma.restaurant.findUnique({ where: { id: order.restaurantId }, select: { ecommerceConfig: true } });
+  const result = await webpayConfirm(tokenWs, webpaySettingsFor(settingsRest));
 
   if (result.ok && result.authorized) {
     await prisma.onlineOrder.update({

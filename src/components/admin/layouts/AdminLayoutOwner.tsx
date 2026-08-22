@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, Truck } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -42,7 +42,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -87,6 +87,19 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Users, labelKey: "nav_clients_orders", href: `${base}/pedir-online/clientes` },
         { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online` },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
+      ],
+    }] : []),
+    ...(opts.hasEcommerce ? [{
+      key: "ecommerce",
+      label: "Ecommerce",
+      icon: Rocket,
+      badge: "Beta",
+      items: [
+        { icon: Rocket, labelKey: "nav_ecommerce_home", href: `${base}/ecommerce` },
+        { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
+        { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
+        { icon: Truck, labelKey: "nav_ecommerce_delivery", href: `${base}/ecommerce/delivery` },
+        { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
       ],
     }] : []),
     {
@@ -173,7 +186,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasControl = !!(selected as any)?.hasControl;
   const hasFinancial = !!(selected as any)?.hasFinancial;
   const profileType = (selected as any)?.profileType || "RESTAURANT";
-  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType });
+  const hasEcommerce = !!(selected as any)?.ecommerceEnabled;
+  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce });
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));
