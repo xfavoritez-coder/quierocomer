@@ -28,12 +28,32 @@ export interface PedidosYaCreds {
   clientSecret?: string;
 }
 
+/** Credenciales del POS Toteat para inyectar pedidos (estilo Servio / deliveryhandroll). */
+export interface ToteatPosCreds {
+  apiUrl?: string; // default https://api.toteat.com/mw/or/1.0
+  xir?: string; // Restaurant ID
+  xil?: string; // Local ID
+  xiu?: string; // User ID (por defecto = xil)
+  token?: string; // xapitoken
+}
+
+export type PosProvider = "none" | "toteat";
+
+/** A qué POS se envían los pedidos del ecommerce (por ahora: ninguno o Toteat). */
+export interface PosConfig {
+  provider?: PosProvider;
+  toteat?: ToteatPosCreds;
+}
+
 export interface EcommerceConfig {
   webpay?: WebpayCreds;
   flow?: FlowCreds;
   uberDirect?: UberDirectCreds;
   pedidosya?: PedidosYaCreds;
+  pos?: PosConfig;
 }
+
+export const TOTEAT_DEFAULT_API_URL = "https://api.toteat.com/mw/or/1.0";
 
 /** Normaliza el JSON crudo de la DB a un EcommerceConfig seguro. */
 export function parseEcommerceConfig(raw: unknown): EcommerceConfig {
@@ -50,6 +70,8 @@ export function integrationStatus(cfg: EcommerceConfig) {
     flow: !!(cfg.flow?.apiKey && cfg.flow?.secretKey),
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
+    // POS: configurado si hay un proveedor seleccionado con sus credenciales mínimas.
+    pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
   };
 }
 

@@ -5,7 +5,7 @@ import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { norm } from "@/lib/normalize";
 import SubirFoto from "@/components/SubirFoto";
-import { integrationStatus, type EcommerceConfig } from "@/lib/ecommerce/config";
+import { integrationStatus, TOTEAT_DEFAULT_API_URL, type EcommerceConfig } from "@/lib/ecommerce/config";
 
 interface Restaurant {
   id: string;
@@ -1158,6 +1158,13 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [pyEnv, setPyEnv] = useState("sandbox");
   const [pyClient, setPyClient] = useState("");
   const [pySecret, setPySecret] = useState("");
+  // POS destino (a qué POS se envían los pedidos)
+  const [posProvider, setPosProvider] = useState("none");
+  const [posApiUrl, setPosApiUrl] = useState("");
+  const [posXir, setPosXir] = useState("");
+  const [posXil, setPosXil] = useState("");
+  const [posXiu, setPosXiu] = useState("");
+  const [posToken, setPosToken] = useState("");
 
   useEffect(() => {
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
@@ -1165,11 +1172,14 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setFlEnv(c.flow?.env || "sandbox"); setFlKey(c.flow?.apiKey || ""); setFlSecret(c.flow?.secretKey || "");
     setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || "");
     setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
+    setPosProvider(c.pos?.provider || "none");
+    setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setMsg(null);
   }, [restaurant.id]);
 
   const st = integrationStatus((restaurant.ecommerceConfig || {}) as EcommerceConfig);
   const configuredCount = Object.values(st).filter(Boolean).length;
+  const totalCount = Object.keys(st).length;
 
   const save = async () => {
     setBusy(true); setMsg(null);
@@ -1178,6 +1188,9 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       flow: { env: flEnv as "sandbox" | "production", apiKey: flKey.trim() || undefined, secretKey: flSecret.trim() || undefined },
       uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined },
       pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
+      pos: posProvider === "toteat"
+        ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
+        : { provider: "none" },
     };
     try {
       const res = await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ecommerceConfig: next }) });
@@ -1194,9 +1207,9 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-            🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/4 configuradas</span>
+            🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/{totalCount} configuradas</span>
           </p>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · Uber Direct · PedidosYa</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · Uber Direct · PedidosYa · POS</p>
         </div>
         <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
       </div>
@@ -1229,6 +1242,19 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <EnvSelect label="Ambiente" value={pyEnv} onChange={setPyEnv} options={[{ value: "sandbox", label: "Sandbox (pruebas)" }, { value: "production", label: "Producción" }]} />
             <Input label="Client ID" value={pyClient} onChange={setPyClient} placeholder="client id" />
             <Input label="Client Secret" value={pySecret} onChange={setPySecret} placeholder="client secret" type="password" />
+          </IntegrationGroup>
+
+          <IntegrationGroup title="POS destino" sub="A qué punto de venta se envían los pedidos" ok={st.pos}>
+            <EnvSelect label="Proveedor POS" value={posProvider} onChange={setPosProvider} options={[{ value: "none", label: "Ninguno (no enviar a POS)" }, { value: "toteat", label: "Toteat" }]} />
+            {posProvider === "toteat" && (
+              <>
+                <Input label="URL API Toteat" value={posApiUrl} onChange={setPosApiUrl} placeholder={TOTEAT_DEFAULT_API_URL} />
+                <Input label="XIR (Restaurant ID)" value={posXir} onChange={setPosXir} placeholder="1028812002756304" />
+                <Input label="XIL (Local ID)" value={posXil} onChange={setPosXil} placeholder="1" />
+                <Input label="XIU (User ID)" value={posXiu} onChange={setPosXiu} placeholder="por defecto = XIL" />
+                <Input label="Token (xapitoken)" value={posToken} onChange={setPosToken} placeholder="CoN2rv5sTcYAdks..." type="password" />
+              </>
+            )}
           </IntegrationGroup>
 
           {msg && (

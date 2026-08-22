@@ -38,5 +38,6 @@ export async function GET(req: NextRequest) {
     enabled: !!restaurant.ecommerceEnabled,
     integrations: integrationStatus(cfg),
     webpayEnv: cfg.webpay?.env || "integration",
+    posProvider: cfg.pos?.provider || "none",
   });
 }
