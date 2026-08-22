@@ -405,7 +405,7 @@ export default function PedirOnlinePage() {
       else { revert(); toast.error(t("ordering_error_save")); }
     } catch { revert(); toast.error(t("ordering_error_connection")); }
   };
-  const toggleColumns = () => { const v = !twoColumns; setTwoColumns(v); autoSaveField({ orderingColumns: v ? "two" : "one" }, () => setTwoColumns(!v), v ? "Vista de 2 columnas" : "Vista de 1 columna"); };
+  const toggleColumns = () => { const v = !twoColumns; setTwoColumns(v); autoSaveField({ orderingColumns: v ? "two" : "one" }, () => setTwoColumns(!v), v ? "Vista multicolumna activada" : "Vista de 1 columna"); };
   const toggleIdentify = () => { const v = !showIdentify; setShowIdentify(v); autoSaveField({ orderingShowIdentify: v }, () => setShowIdentify(!v), v ? "Identificación visible" : "Identificación oculta"); };
   const toggleCategoryPhotos = () => { const v = !categoryPhotos; setCategoryPhotos(v); autoSaveField({ orderingCategoryPhotos: v }, () => setCategoryPhotos(!v), v ? "Categorías con foto" : "Categorías sin foto"); };
 
@@ -737,12 +737,12 @@ export default function PedirOnlinePage() {
         </Field>
 
         {/* Columnas de productos */}
-        <Field label="Vista de 2 columnas" hint="Muestra los productos en 2 columnas. Desactivado = 1 columna (vista de lista).">
+        <Field label="Vista multicolumna" hint="Activada: 2 columnas en mobile y 4 en escritorio. Desactivada: 1 columna en mobile y escritorio (vista de lista).">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button type="button" onClick={toggleColumns} style={{ width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0, background: twoColumns ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s" }}>
               <span style={{ display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: twoColumns ? 17 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </button>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>{twoColumns ? "2 columnas" : "1 columna"}</span>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>{twoColumns ? "Multicolumna (2/4)" : "1 columna"}</span>
           </div>
         </Field>
 
