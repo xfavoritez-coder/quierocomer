@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   useAccount, usePosSync, useStaff,
   setRestaurantId, setUserId,
@@ -38,6 +38,17 @@ export default function CuentaPanel({
 
   const [showAddItem, setShowAddItem] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const settingsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!showSettings || !isPanel) return
+    const handler = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setShowSettings(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showSettings, isPanel])
   const [settingsModal, setSettingsModal] = useState<'comensales' | 'garzon' | null>(null)
   const [voidModal, setVoidModal] = useState<{ itemId: string; name: string } | null>(null)
   const [voidAccountModal, setVoidAccountModal] = useState(false)
@@ -310,13 +321,15 @@ export default function CuentaPanel({
       {/* Settings drawer */}
       {showSettings && (
         <>
-          <div className="pos-drawer-overlay" onClick={() => setShowSettings(false)} />
-          <div className="pos-sheet" style={{ maxHeight: 'auto' }}>
+          {!isPanel && <div className="pos-drawer-overlay" onClick={() => setShowSettings(false)} />}
+          <div className="pos-sheet" ref={settingsRef}>
             <div className="pos-sheet-header">
               <div style={{ fontWeight: 700, fontSize: 15 }}>{accountName}</div>
-              <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 0, cursor: 'pointer', padding: 8, color: 'var(--ink-3)' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </button>
+              {!isPanel && (
+                <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 0, cursor: 'pointer', padding: 8, color: 'var(--ink-3)' }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              )}
             </div>
             <div style={{ padding: '8px 10px' }}>
               <button
