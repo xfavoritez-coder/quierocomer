@@ -25,7 +25,7 @@ import type { PosRestaurant } from './lib/usePosRestaurant'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'todos' | 'mesas' | 'retiro' | 'delivery'
+type Tab = 'mesas' | 'retiro' | 'delivery'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -43,11 +43,16 @@ const statusLabel: Record<TableStatus, string> = {
 }
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'todos', label: 'Todos' },
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
 ]
+
+const mesaBadge: Partial<Record<TableStatus, string>> = {
+  con_pedidos: 'En cocina',
+  cuenta_pedida: 'Cobrar',
+  pagada_parcial: 'Cobrar',
+}
 
 // ── Modals ────────────────────────────────────────────────────────
 
@@ -368,7 +373,7 @@ export default function PosHomePage() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
-      if (p && ['todos', 'mesas', 'retiro', 'delivery'].includes(p)) return p
+      if (p && ['mesas', 'retiro', 'delivery'].includes(p)) return p
     }
     return 'mesas'
   })
@@ -391,11 +396,15 @@ export default function PosHomePage() {
   const openAccounts = accounts.filter(a => !['cerrada', 'anulada'].includes(a.status))
   const retiroAccounts = openAccounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
   const deliveryAccounts = openAccounts.filter(a => a.type === 'delivery')
+  const ocupadas = tables.filter(t => {
+    const { status } = getTableStatus(t.id, accounts)
+    return status !== 'libre'
+  }).length
 
   const tabCounts: Partial<Record<Tab, number>> = {
-    todos: openAccounts.length,
-    retiro: retiroAccounts.length,
-    delivery: deliveryAccounts.length,
+    ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
+    ...(retiroAccounts.length > 0 ? { retiro: retiroAccounts.length } : {}),
+    ...(deliveryAccounts.length > 0 ? { delivery: deliveryAccounts.length } : {}),
   }
 
   // Handlers
@@ -476,25 +485,7 @@ export default function PosHomePage() {
       <div className="pos-scroll">
         <div className="pos-pad">
 
-          {/* TODOS */}
-          {tab === 'todos' && (
-            openAccounts.length === 0 ? (
-              <div className="pos-empty" style={{ minHeight: 200 }}>
-                <div className="ring">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
-                </div>
-                <p>Sin cuentas abiertas</p>
-              </div>
-            ) : (
-              <div className="pos-tickets">
-                {[...openAccounts].sort((a, b) => a.opened_at.localeCompare(b.opened_at)).map(a => (
-                  <AccountCard key={a.id} account={a} onNavigate={navigate} from="todos" />
-                ))}
-              </div>
-            )
-          )}
-
-          {/* MESAS */}
+            {/* MESAS */}
           {tab === 'mesas' && (() => {
             const filteredTables = sectorFilter === 'all'
               ? tables
@@ -540,24 +531,30 @@ export default function PosHomePage() {
                   {filteredTables.map(table => {
                     const { status, accountId } = getTableStatus(table.id, accounts)
                     const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
+                    const itemCount = acc ? acc.items.filter(i => !i.voided).length : 0
+                    const badge = mesaBadge[status]
                     return (
                       <button
                         key={table.id}
                         className={`pos-mesa ${status}`}
                         onClick={() => handleMesaClick(table.id, table.number, table.label)}
                       >
-                        <span className="mn">{table.label || table.number}</span>
-                        {acc && acc.items.filter(i => !i.voided).length > 0 ? (
+                        <div className="pos-mesa-top">
+                          <span className="mn">{table.label || table.number}</span>
+                          {badge && <span className="pos-mesa-badge">{badge}</span>}
+                        </div>
+                        {acc && itemCount > 0 ? (
                           <>
                             <span className="ms">
-                              {status === 'cuenta_pedida'
-                                ? 'Cuenta solicitada'
-                                : `${acc.items.filter(i => !i.voided).length} ítem${acc.items.filter(i => !i.voided).length !== 1 ? 's' : ''}`}
+                              {itemCount} {itemCount === 1 ? 'ítem' : 'ítems'}{acc.covers ? ` · ${acc.covers} pers` : ''}
                             </span>
-                            <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
+                            <div className="pos-mesa-bottom">
+                              <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
+                              <span className="pos-mesa-time">{timeSince(acc.opened_at)}</span>
+                            </div>
                           </>
                         ) : (
-                          <span className="ms">{statusLabel[status]}</span>
+                          <span className="ms">{status === 'libre' ? 'Libre' : statusLabel[status]}</span>
                         )}
                       </button>
                     )

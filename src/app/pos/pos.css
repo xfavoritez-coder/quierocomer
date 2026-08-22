@@ -235,30 +235,74 @@
 .pos-mod-add .price{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- mapa de mesas ---------- */
-.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;margin-bottom:26px}
-.pos-mesa{border:1.5px solid var(--line);background:var(--sunk);border-radius:14px;padding:16px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:.16s;min-height:92px;font-family:var(--sans)}
+.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:26px}
+.pos-mesa{
+  border:1px solid var(--line);
+  border-left-width:4px;
+  border-left-color:var(--line);
+  background:var(--surface);
+  border-radius:14px;
+  padding:18px 18px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  cursor:pointer;
+  transition:.16s;
+  min-height:152px;
+  font-family:var(--sans);
+  text-align:left;
+  box-shadow:var(--sh-1);
+}
 .pos-mesa:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
-.pos-mesa .mn{font-family:var(--mono);font-weight:700;font-size:22px;letter-spacing:-.02em;color:var(--ink)}
-.pos-mesa .ms{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
-.pos-mesa .mt{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;font-weight:600;margin-top:2px}
-.pos-mesa.libre{background:var(--sunk);border-color:var(--line)}
-.pos-mesa.libre .mn{color:var(--ink-3)}
-.pos-mesa.abierta{background:var(--amber-tint-2);border-color:var(--amber-tint)}
-.pos-mesa.abierta .mn{color:var(--amber-press)}
-.pos-mesa.con_pedidos{background:var(--amber-tint);border-color:var(--amber)}
-.pos-mesa.con_pedidos .mn{color:var(--amber-press)}
-.pos-mesa.cuenta_pedida{background:var(--slate-tint);border-color:var(--slate)}
-.pos-mesa.cuenta_pedida .mn{color:var(--slate)}
-.pos-mesa.pagada_parcial{background:var(--jade-tint);border-color:var(--jade)}
-.pos-mesa.pagada_parcial .mn{color:var(--jade)}
+.pos-mesa-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:6px}
+.pos-mesa .mn{font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:-.02em;line-height:1.05}
+.pos-mesa-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:6px;flex-shrink:0;margin-top:5px}
+.pos-mesa .ms{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:auto;padding-bottom:12px}
+.pos-mesa-bottom{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:auto}
+.pos-mesa .mt{font-family:var(--mono);font-weight:700;font-size:19px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.pos-mesa-time{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:500;flex-shrink:0}
+
+/* libre */
+.pos-mesa.libre{background:#f7f6f3;border-color:#e8e5df;border-left-color:#e8e5df;box-shadow:none}
+.pos-mesa.libre .mn{color:#b0aa9f;font-size:24px}
+.pos-mesa.libre .ms{color:#c0b8ae;font-size:10px;font-weight:500;letter-spacing:.08em;padding-bottom:0}
+
+/* abierta */
+.pos-mesa.abierta{background:#fff8ed;border-color:#f0e0c0;border-left-color:var(--amber)}
+.pos-mesa.abierta .mn{color:var(--ink)}
+.pos-mesa.abierta .ms{color:var(--amber-press)}
+.pos-mesa.abierta .mt{color:var(--amber-press)}
+.pos-mesa.abierta .pos-mesa-badge{background:var(--amber-tint);color:var(--amber-press)}
+
+/* con_pedidos → azul "EN COCINA" */
+.pos-mesa.con_pedidos{background:#f0f3ff;border-color:#ccd4f8;border-left-color:#4b68f0}
+.pos-mesa.con_pedidos .mn{color:var(--ink)}
+.pos-mesa.con_pedidos .ms{color:#4b68f0}
+.pos-mesa.con_pedidos .mt{color:#4b68f0}
+.pos-mesa.con_pedidos .pos-mesa-badge{background:#dde3fc;color:#4b68f0}
+
+/* cuenta_pedida → teal "COBRAR" */
+.pos-mesa.cuenta_pedida{background:#edfaf4;border-color:#b8e8d4;border-left-color:#16a073}
+.pos-mesa.cuenta_pedida .mn{color:var(--ink)}
+.pos-mesa.cuenta_pedida .ms{color:#16a073}
+.pos-mesa.cuenta_pedida .mt{color:#16a073}
+.pos-mesa.cuenta_pedida .pos-mesa-badge{background:#c8eed8;color:#16a073}
+
+/* pagada_parcial → same as cuenta_pedida */
+.pos-mesa.pagada_parcial{background:#edfaf4;border-color:#b8e8d4;border-left-color:#16a073}
+.pos-mesa.pagada_parcial .mn{color:var(--ink)}
+.pos-mesa.pagada_parcial .ms{color:#16a073}
+.pos-mesa.pagada_parcial .mt{color:#16a073}
+.pos-mesa.pagada_parcial .pos-mesa-badge{background:#c8eed8;color:#16a073}
 
 /* ---------- tab bar ---------- */
-.pos-tabs{display:flex;align-items:center;justify-content:center;gap:2px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
-.pos-tab{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:40px}
+.pos-tab{display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:40px}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
 .pos-tab.on{background:var(--amber-tint-2);color:var(--amber-press)}
-.pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;line-height:1}
+.pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:#1c1b19;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;padding:0 5px}
+.pos-tab.on .pos-tab-badge{background:var(--amber);color:#fff}
 
 /* ---------- header extras (pending + hamburger) ---------- */
 .pos-pending-btn{display:flex;align-items:center;gap:5px;background:var(--amber-tint-2);color:var(--amber-press);border:1px solid var(--amber-tint);border-radius:var(--r-chip);padding:5px 10px;font-family:var(--mono);font-size:11.5px;font-weight:600;cursor:pointer;min-height:34px;transition:.14s}
