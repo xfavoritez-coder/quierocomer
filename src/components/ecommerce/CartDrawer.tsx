@@ -115,7 +115,11 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
             <div className="flex justify-between font-black text-base text-gray-900 pt-1 border-t border-gray-100">
               <span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span>
             </div>
-            {belowMin ? (
+            {!tenant.openStatus.open ? (
+              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">
+                🔒 Cerrado por ahora
+              </div>
+            ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">
                 Monto mínimo: {clp(tenant.minAmount!)}
               </div>

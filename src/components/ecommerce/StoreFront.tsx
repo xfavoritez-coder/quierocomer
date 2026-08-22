@@ -173,6 +173,21 @@ export default function StoreFront({ tenant, categories, products }: Props) {
         </div>
       )}
 
+      {/* ── Banner de tienda cerrada ─────────────────────────────── */}
+      {!tenant.openStatus.open && (
+        <div className="bg-gray-900 text-white text-center py-3 px-4">
+          <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
+          {(() => {
+            const t = tenant.openStatus.today;
+            let msg: string;
+            if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
+            else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
+            else msg = "Hoy no atendemos";
+            return <span className="text-sm text-gray-300"> · {msg}</span>;
+          })()}
+        </div>
+      )}
+
       {/* ── Selector de entrega — solo mobile ─── */}
       <div className="lg:hidden bg-white border-b border-gray-100 px-4 py-3">
         <MobileDeliveryBar tenant={tenant} primaryColor={primaryColor} onOpen={() => setDeliveryModalOpen(true)} />
@@ -450,7 +465,9 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
               <div className="flex justify-between text-sm text-gray-500"><span>Delivery</span><span>{deliveryAddress ? clp(deliveryFee) : "—"}</span></div>
             )}
             <div className="flex justify-between font-black text-base text-gray-900 pt-1 border-t border-gray-100"><span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span></div>
-            {belowMin ? (
+            {!tenant.openStatus.open ? (
+              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">🔒 Cerrado por ahora</div>
+            ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(tenant.minAmount!)}</div>
             ) : (
               <button onClick={() => router.push(`/ecommerce/${tenant.slug}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>

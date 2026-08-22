@@ -51,7 +51,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
   const discount = coupon?.discount ?? 0;
   const finalTotal = Math.max(0, total - discount);
-  const isValid = name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && (payment !== "flow" || emailOk);
+  const isOpen = tenant.openStatus.open;
+  const isValid = isOpen && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && (payment !== "flow" || emailOk);
 
   async function applyCoupon() {
     const code = couponCode.trim();
@@ -275,6 +276,11 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
             )}
           </section>
 
+          {!isOpen && (
+            <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
+              🔒 Estamos cerrados ahora{tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}
+            </div>
+          )}
           {belowMin && (
             <p className="text-center text-xs font-semibold text-red-500">Monto mínimo para pedir: {clp(minReq!)}</p>
           )}

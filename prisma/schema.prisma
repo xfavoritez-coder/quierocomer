@@ -399,6 +399,7 @@ model Restaurant {
   ecommerceStoreConfig       Json?                    // config de la tienda: colores de marca, métodos de pago visibles, notas
   ecommerceAccompaniments    Json?                    // acompañamientos del checkout (por monto y por producto)
   ecommerceCoupons           Json?                    // cupones de descuento del ecommerce
+  ecommerceHours             Json?                    // horario de atención del ecommerce (tienda abierta/cerrada)
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]
