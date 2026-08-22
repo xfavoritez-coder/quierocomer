@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayConfirm, webpaySettingsFor } from "@/lib/payments/webpay";
+import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 
 export const runtime = "nodejs";
 
@@ -46,8 +47,10 @@ async function handle(req: NextRequest) {
   if (result.ok && result.authorized) {
     await prisma.onlineOrder.update({
       where: { id: order.id },
-      data: { paymentStatus: "paid", paidAt: new Date() },
+      data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" },
     });
+    // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
+    await dispatchOrderToPos(order.id).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
     return NextResponse.redirect(`${baseUrl}/pedido/${order.id}?pago=exito`, 303);
   }
 

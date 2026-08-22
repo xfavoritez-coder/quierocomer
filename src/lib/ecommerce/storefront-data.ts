@@ -65,6 +65,27 @@ export interface StorefrontData {
 
 const DEFAULT_PRIMARY = "#e63946";
 
+/** Solo el tenant (para el checkout), sin cargar el catálogo. */
+export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | null> {
+  const r = await prisma.restaurant.findUnique({
+    where: { slug },
+    select: {
+      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
+      cartaAccentColor: true, address: true, whatsapp: true, phone: true,
+      orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true,
+    },
+  });
+  if (!r || !r.ecommerceEnabled) return null;
+  return {
+    id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
+    primaryColor: r.cartaAccentColor || DEFAULT_PRIMARY, address: r.address, whatsapp: r.whatsapp, phone: r.phone,
+    deliveryEnabled: !!r.orderingDelivery, pickupEnabled: true,
+    waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
+    paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean),
+  };
+}
+
 /**
  * Carga los datos del storefront para un restaurante con Ecommerce activado.
  * Devuelve null si el local no existe o no tiene el pilar habilitado.

@@ -439,6 +439,9 @@ model OnlineOrder {
   total           Int
   notes           String?
   cancellationReason String?
+  orderNumber     Int? // correlativo por restaurante (para el POS y el cliente)
+  toteatOrderId   String? // id del pedido en Toteat tras inyectarlo al POS
+  posError        String? // último error al enviar al POS (si hubo)
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")
