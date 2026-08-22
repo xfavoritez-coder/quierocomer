@@ -493,6 +493,7 @@ export default function LifecyclePage() {
 
                 {/* Actions */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <ActionBtn label="⚙️ Configuración" onClick={() => window.open(`/admin/locales?id=${entry.id}`, "_blank")} />
                   <ActionBtn label="👁 Ver carta" onClick={() => window.open(`/qr/${entry.slug}`, "_blank")} />
                   {entry.cartaOriginalUrl && (
                     <ActionBtn label={`📄 Ver original (${entry.cartaType === "LINK" ? "link" : entry.cartaType === "DOCUMENT" ? "PDF" : "foto"})`} onClick={() => window.open(entry.cartaOriginalUrl!, "_blank")} />

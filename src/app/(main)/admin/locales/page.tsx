@@ -103,7 +103,17 @@ export default function AdminLocales() {
   };
 
   useEffect(() => {
-    fetch("/api/admin/locales").then(r => r.json()).then(d => { if (Array.isArray(d)) setRestaurants(d); }).catch(() => {}).finally(() => setLoading(false));
+    fetch("/api/admin/locales").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) {
+        setRestaurants(d);
+        // Deep-link: /admin/locales?id=<restaurantId> abre ese local directo (p.ej. desde Lifecycle).
+        const wanted = new URLSearchParams(window.location.search).get("id");
+        if (wanted) {
+          const match = d.find((r: Restaurant) => r.id === wanted);
+          if (match) setSelected(match);
+        }
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   // Edit form state
