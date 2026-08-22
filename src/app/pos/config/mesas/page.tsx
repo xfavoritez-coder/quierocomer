@@ -5,15 +5,16 @@ import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@
 import { saveTables, saveSectors, updateTableSector, updateTableLabel } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
 import { usePosNav } from '../../lib/usePosNav'
+import { usePosRestaurant } from '../../lib/usePosRestaurant'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 export default function MesasConfigPage() {
   const navigate = usePosNav()
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
-  const tables = useTables(TEST_RESTAURANT_ID)
-  const sectors = useSectors(TEST_RESTAURANT_ID)
+  const { restaurantId } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
+  const tables = useTables(restaurantId)
+  const sectors = useSectors(restaurantId)
 
   const [quickN, setQuickN] = useState('10')
   const [quickPrefix, setQuickPrefix] = useState('')
@@ -25,14 +26,14 @@ export default function MesasConfigPage() {
   const [editingLabel, setEditingLabel] = useState<Record<string, string>>({})
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
 
   const handleAddSector = async () => {
     const name = newSectorName.trim()
     if (!name || sectors.some(s => s.name.toLowerCase() === name.toLowerCase())) return
-    await saveSectors(TEST_RESTAURANT_ID, [
+    await saveSectors(restaurantId, [
       ...sectors.map((s, i) => ({ name: s.name, position: i })),
       { name, position: sectors.length },
     ])
@@ -43,7 +44,7 @@ export default function MesasConfigPage() {
     const tablesInSector = tables.filter(t => t.sector_id === sectorId)
     await Promise.all(tablesInSector.map(t => updateTableSector(t.id, null)))
     await saveSectors(
-      TEST_RESTAURANT_ID,
+      restaurantId,
       sectors.filter(s => s.id !== sectorId).map((s, i) => ({ name: s.name, position: i }))
     )
   }
@@ -55,7 +56,7 @@ export default function MesasConfigPage() {
     const sectorId = quickSector || undefined
     const prefix = quickPrefix.trim()
     await saveTables(
-      TEST_RESTAURANT_ID,
+      restaurantId,
       Array.from({ length: n }, (_, i) => ({
         number: i + 1,
         label: prefix ? `${prefix}${i + 1}` : undefined,
@@ -82,18 +83,18 @@ export default function MesasConfigPage() {
       if (tables.some(t => t.number === num && !t.label)) return
       updated[updated.length - 1] = { number: num, label: undefined, sector_id: addSector || undefined }
     }
-    await saveTables(TEST_RESTAURANT_ID, updated.sort((a, b) => a.number - b.number))
+    await saveTables(restaurantId, updated.sort((a, b) => a.number - b.number))
     setAddLabel('')
   }
 
   const handleDelete = async (tableId: string) => {
     const remaining = tables.filter(t => t.id !== tableId)
-    await saveTables(TEST_RESTAURANT_ID, remaining.map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id })))
+    await saveTables(restaurantId, remaining.map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id })))
   }
 
   const handleClearAll = async () => {
     if (!confirm('¿Eliminar todas las mesas?')) return
-    await saveTables(TEST_RESTAURANT_ID, [])
+    await saveTables(restaurantId, [])
   }
 
   const handleSectorChange = async (tableId: string, sectorId: string) => {

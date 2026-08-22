@@ -17,19 +17,20 @@ import { printComanda, getBridgeUrl } from '@/lib/pos/bridge'
 import type { CachedProduct, RoundItem, ItemModifier } from '@/lib/pos/types'
 import PosHeader from '../components/PosHeader'
 import { usePosNav } from '../lib/usePosNav'
+import { usePosRestaurant } from '../lib/usePosRestaurant'
 import ModifierModal from '../components/ModifierModal'
 import OrderPanel from '../components/OrderPanel'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 export default function ComanderoPage() {
   const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('cuenta')
 
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
-  const { products, categories, loading } = useCatalog(TEST_RESTAURANT_ID)
+  const { restaurantId } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
+  const { products, categories, loading } = useCatalog(restaurantId)
   const account = useAccount(accountId)
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -43,7 +44,7 @@ export default function ComanderoPage() {
   const longPressTriggered = useRef(false)
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
 

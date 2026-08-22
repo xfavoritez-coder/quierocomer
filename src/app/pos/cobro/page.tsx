@@ -7,9 +7,9 @@ import { useAccount, usePosSync, setRestaurantId, setUserId, recordPayment, clos
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
 import { usePosNav } from '../lib/usePosNav'
+import { usePosRestaurant } from '../lib/usePosRestaurant'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 type SplitMode = 'all' | 'items' | 'parts'
 type PaymentMethod = 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'app_pago'
@@ -68,7 +68,8 @@ function CobroPageInner() {
   const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('cuenta')
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
+  const { restaurantId } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
   const account = useAccount(accountId)
 
   const [splitMode, setSplitMode] = useState<SplitMode>('all')
@@ -81,7 +82,7 @@ function CobroPageInner() {
   const [processing, setProcessing] = useState(false)
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
 

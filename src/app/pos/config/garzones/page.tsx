@@ -4,21 +4,22 @@ import { useState } from 'react'
 import { usePosSync, useStaff, setRestaurantId, setUserId, saveGarzon, deleteGarzon, seedDefaultGarzones } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
 import { usePosNav } from '../../lib/usePosNav'
+import { usePosRestaurant } from '../../lib/usePosRestaurant'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 export default function GarzonesConfigPage() {
   const navigate = usePosNav()
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
-  const garzones = useStaff(TEST_RESTAURANT_ID)
+  const { restaurantId } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
+  const garzones = useStaff(restaurantId)
   const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
-    seedDefaultGarzones(TEST_RESTAURANT_ID)
+    seedDefaultGarzones(restaurantId)
   })
 
   const handleAdd = async () => {
@@ -26,7 +27,7 @@ export default function GarzonesConfigPage() {
     if (!name) return
     if (garzones.some(g => g.name.toLowerCase() === name.toLowerCase())) return
     setSaving(true)
-    await saveGarzon(TEST_RESTAURANT_ID, name)
+    await saveGarzon(restaurantId, name)
     setNewName('')
     setSaving(false)
   }

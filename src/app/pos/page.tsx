@@ -18,9 +18,10 @@ import {
 import type { Account, PosStaff } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import { usePosNav } from './lib/usePosNav'
+import { usePosRestaurant } from './lib/usePosRestaurant'
+import type { PosRestaurant } from './lib/usePosRestaurant'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 type Tab = 'todos' | 'mesas' | 'retiro' | 'delivery' | 'online'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
@@ -219,7 +220,7 @@ function MesaOpenModal({
 
 // ── Menu drawer ───────────────────────────────────────────────────
 
-function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: boolean; onClose: () => void; onNavigate: (url: string) => void }) {
+function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashSession: boolean; restaurant: PosRestaurant | null; onClose: () => void; onNavigate: (url: string) => void }) {
   const items = [
     {
       label: cashSession ? 'Ver caja' : 'Abrir caja',
@@ -241,20 +242,30 @@ function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: bool
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg>,
       href: '/pos/config',
     },
-    {
-      label: 'Ver reportes en panel',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
-      href: '/panel',
-      external: true,
-    },
   ]
 
   return (
     <>
       <div className="pos-drawer-overlay" onClick={onClose} />
       <div className="pos-drawer">
-        <div className="pos-drawer-header">
-          <span>Ajustes</span>
+        {/* Restaurant info header */}
+        {restaurant && (
+          <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 14, color: 'var(--amber-press)' }}>
+                  {restaurant.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{restaurant.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--mono)' }}>POS · {restaurant.slug}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="pos-drawer-header" style={restaurant ? { borderBottom: 0, paddingTop: 12, paddingBottom: 8 } : undefined}>
+          <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Ajustes</span>
           <button onClick={onClose} className="pos-drawer-close">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -264,10 +275,7 @@ function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: bool
             <button
               key={item.label}
               className="pos-drawer-item"
-              onClick={() => {
-                if (item.external) window.open(item.href, '_blank')
-                else { onClose(); onNavigate(item.href) }
-              }}
+              onClick={() => { onClose(); onNavigate(item.href) }}
             >
               <span className="pos-drawer-ic">{item.icon}</span>
               <span>{item.label}</span>
@@ -330,12 +338,13 @@ function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (u
 
 export default function PosHomePage() {
   const navigate = usePosNav()
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
+  const { restaurantId, restaurant } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
   const accounts = useOpenAccounts()
   const cashSession = useOpenCashSession()
-  const tables = useTables(TEST_RESTAURANT_ID)
-  const sectors = useSectors(TEST_RESTAURANT_ID)
-  const garzones = useStaff(TEST_RESTAURANT_ID)
+  const tables = useTables(restaurantId)
+  const sectors = useSectors(restaurantId)
+  const garzones = useStaff(restaurantId)
   const pendingCount = usePendingSyncCount()
 
   const [tab, setTab] = useState<Tab>('mesas')
@@ -347,9 +356,9 @@ export default function PosHomePage() {
   const [mesaOpenModal, setMesaOpenModal] = useState<{ tableId: string; tableNumber: number; tableLabel: string } | null>(null)
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
-    seedDefaultGarzones(TEST_RESTAURANT_ID)
+    seedDefaultGarzones(restaurantId)
   })
 
   // Tab counts for badges
@@ -625,7 +634,7 @@ export default function PosHomePage() {
       )}
 
       {/* ── Drawer ──────────────────────────────────────────── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} onClose={() => setMenuOpen(false)} onNavigate={navigate} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} />}
     </div>
   )
 }

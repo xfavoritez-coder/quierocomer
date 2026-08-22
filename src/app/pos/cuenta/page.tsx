@@ -12,17 +12,18 @@ import {
 import PosHeader from '../components/PosHeader'
 import ProductPickerSheet from '../components/ProductPickerSheet'
 import { usePosNav } from '../lib/usePosNav'
+import { usePosRestaurant } from '../lib/usePosRestaurant'
 
-const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
-const TEST_USER_ID = 'test-garzon'
+const TEST_USER_ID = 'pos-garzon'
 
 function CuentaPageInner() {
   const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('id') ?? ''
-  const { syncing } = usePosSync(TEST_RESTAURANT_ID)
+  const { restaurantId } = usePosRestaurant()
+  const { syncing } = usePosSync(restaurantId)
   const account = useAccount(accountId)
-  const garzones = useStaff(TEST_RESTAURANT_ID)
+  const garzones = useStaff(restaurantId)
 
   // Sheet / modal states
   const [showAddItem, setShowAddItem] = useState(false)
@@ -38,7 +39,7 @@ function CuentaPageInner() {
   const [savingMeta, setSavingMeta] = useState(false)
 
   useState(() => {
-    setRestaurantId(TEST_RESTAURANT_ID)
+    setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
 
@@ -279,7 +280,7 @@ function CuentaPageInner() {
       {showAddItem && (
         <ProductPickerSheet
           accountId={accountId}
-          restaurantId={TEST_RESTAURANT_ID}
+          restaurantId={restaurantId}
           onClose={() => setShowAddItem(false)}
         />
       )}
