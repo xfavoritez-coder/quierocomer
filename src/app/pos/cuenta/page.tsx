@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, Suspense } from 'react'
+import { useState, useCallback, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -133,14 +133,12 @@ function CuentaPageInner() {
         ? `Delivery${account.customer_name ? ` · ${account.customer_name}` : ''}`
         : 'Cuenta'
 
-  const statusLabel: Record<string, string> = {
-    abierta: 'Abierta',
-    con_pedidos: 'Con pedidos',
-    cuenta_pedida: 'Cuenta pedida',
-    pagada_parcial: 'Pago parcial',
-    cerrada: 'Cerrada',
-    anulada: 'Anulada',
-  }
+  // Live elapsed timer
+  const [elapsed, setElapsed] = useState(() => timeSince(account.opened_at))
+  useEffect(() => {
+    const iv = setInterval(() => setElapsed(timeSince(account.opened_at)), 30_000)
+    return () => clearInterval(iv)
+  }, [account.opened_at])
 
   const activeItems = account.items.filter(i => !i.voided)
   const isClosed = account.status === 'cerrada' || account.status === 'anulada'
@@ -150,7 +148,6 @@ function CuentaPageInner() {
       <PosHeader
         mode="back"
         eyebrow={accountName}
-        subtitle={statusLabel[account.status] ?? account.status}
         syncing={syncing}
         onBack={() => navigate('/pos')}
         rightSlot={!isClosed ? (
@@ -166,29 +163,22 @@ function CuentaPageInner() {
 
       <div className="pos-scroll">
         <div style={{ padding: '20px 20px 120px' }}>
-          {/* Info row: comensales · hora apertura · garzón */}
-          {(account.covers || account.opened_by_name || account.opened_at) && (
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20, padding: '10px 14px', background: 'var(--sunk)', borderRadius: 12, border: '1px solid var(--line)' }}>
-              {account.covers && (
-                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  {account.covers} {account.covers === 1 ? 'comensal' : 'comensales'}
-                </span>
-              )}
-              {account.opened_at && (
-                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {new Date(account.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-              {account.opened_by_name && (
-                <span style={{ fontSize: 13, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  {account.opened_by_name}
-                </span>
-              )}
-            </div>
-          )}
+          {/* Info row */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+            <InfoChip icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}>
+              Abierta hace {elapsed}
+            </InfoChip>
+            {account.covers && (
+              <InfoChip icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}>
+                {account.covers} {account.covers === 1 ? 'comensal' : 'comensales'}
+              </InfoChip>
+            )}
+            {account.opened_by_name && (
+              <InfoChip icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}>
+                {account.opened_by_name}
+              </InfoChip>
+            )}
+          </div>
 
           {account.rounds.length === 0 ? (
             <div className="pos-empty" style={{ minHeight: 160 }}>
@@ -434,5 +424,26 @@ export default function CuentaPage() {
     <Suspense>
       <CuentaPageInner />
     </Suspense>
+  )
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+
+function timeSince(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'menos de 1 min'
+  if (mins < 60) return `${mins} min`
+  const hrs = Math.floor(mins / 60)
+  const rem = mins % 60
+  return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`
+}
+
+function InfoChip({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 99, padding: '5px 10px' }}>
+      <span style={{ color: 'var(--ink-3)', display: 'flex' }}>{icon}</span>
+      {children}
+    </span>
   )
 }
