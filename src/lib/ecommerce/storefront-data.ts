@@ -1,0 +1,131 @@
+// ═══════════════════════════════════════════════════════════
+//  Storefront del Ecommerce — carga y mapea los datos del
+//  restaurante (Restaurant / Category / Dish) al shape que
+//  usa el diseño clásico 1.0 (portado de Servio).
+// ═══════════════════════════════════════════════════════════
+import { prisma } from "@/lib/prisma";
+
+export interface StoreTenant {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  primaryColor: string;
+  address: string | null;
+  whatsapp: string | null;
+  phone: string | null;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  waitTime: string | null;
+  minAmount: number | null;
+  paymentMethods: string[];
+}
+
+export interface StoreCategory {
+  id: string;
+  name: string;
+  position: number;
+}
+
+export interface StoreProduct {
+  id: string;
+  category_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  original_price: number | null; // precio tachado (si hay oferta)
+  image_url: string | null;
+  is_sold_out: boolean;
+  toteat_code: string | null;
+}
+
+export interface StorefrontData {
+  tenant: StoreTenant;
+  categories: StoreCategory[];
+  products: StoreProduct[];
+}
+
+const DEFAULT_PRIMARY = "#e63946";
+
+/**
+ * Carga los datos del storefront para un restaurante con Ecommerce activado.
+ * Devuelve null si el local no existe o no tiene el pilar habilitado.
+ */
+export async function loadEcommerceStorefront(slug: string): Promise<StorefrontData | null> {
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { slug },
+    select: {
+      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
+      cartaAccentColor: true, address: true, whatsapp: true, phone: true,
+      orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true,
+    },
+  });
+
+  if (!restaurant || !restaurant.ecommerceEnabled) return null;
+
+  const categories = await prisma.category.findMany({
+    where: { restaurantId: restaurant.id, isActive: true },
+    orderBy: { position: "asc" },
+    select: {
+      id: true, name: true, position: true,
+      dishes: {
+        where: { isActive: true, deletedAt: null },
+        orderBy: { position: "asc" },
+        select: {
+          id: true, categoryId: true, name: true, description: true,
+          price: true, discountPrice: true, photos: true, stockCountdown: true,
+          toteatProductId: true,
+        },
+      },
+    },
+  });
+
+  const storeCategories: StoreCategory[] = [];
+  const products: StoreProduct[] = [];
+
+  for (const cat of categories) {
+    if (!cat.dishes.length) continue;
+    storeCategories.push({ id: cat.id, name: cat.name, position: cat.position });
+    for (const d of cat.dishes) {
+      // discountPrice es el precio de oferta (menor). Si existe y es menor,
+      // el precio actual es la oferta y el original queda tachado.
+      const hasOffer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price;
+      products.push({
+        id: d.id,
+        category_id: d.categoryId,
+        name: d.name,
+        description: d.description,
+        price: hasOffer ? d.discountPrice! : d.price,
+        original_price: hasOffer ? d.price : null,
+        image_url: d.photos?.[0] ?? null,
+        is_sold_out: d.stockCountdown != null && d.stockCountdown <= 0,
+        toteat_code: d.toteatProductId ?? null,
+      });
+    }
+  }
+
+  const paymentMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+  return {
+    tenant: {
+      id: restaurant.id,
+      slug: restaurant.slug,
+      name: restaurant.name,
+      logoUrl: restaurant.logoUrl,
+      bannerUrl: restaurant.orderingBannerUrl,
+      primaryColor: restaurant.cartaAccentColor || DEFAULT_PRIMARY,
+      address: restaurant.address,
+      whatsapp: restaurant.whatsapp,
+      phone: restaurant.phone,
+      deliveryEnabled: !!restaurant.orderingDelivery,
+      pickupEnabled: true,
+      waitTime: restaurant.orderingWaitTime,
+      minAmount: restaurant.orderingMinAmount ?? null,
+      paymentMethods,
+    },
+    categories: storeCategories,
+    products,
+  };
+}
