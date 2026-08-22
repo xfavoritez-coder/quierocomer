@@ -70,7 +70,7 @@ function CuentaPageInner() {
     } catch (err) {
       toast.error('Error: ' + String(err))
     }
-  }, [accountId, router])
+  }, [accountId, navigate])
 
   if (!account) {
     return (
