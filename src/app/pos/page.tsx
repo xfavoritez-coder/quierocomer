@@ -78,12 +78,20 @@ export default function PosHomePage() {
       <PosHeader
         mode="brand"
         syncing={syncing}
-        rightSlot={cashSession && (
-          <div className="pos-caja-info">
-            <span className="who">JC</span>
-            Caja abierta
-          </div>
-        )}
+        rightSlot={
+          <button
+            className="pos-caja-info"
+            onClick={() => location.assign('/pos/caja')}
+            style={{ cursor: 'pointer', background: 'none', border: 0, font: 'inherit' }}
+          >
+            <span className="who">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/>
+              </svg>
+            </span>
+            {cashSession ? 'Caja abierta' : 'Abrir caja'}
+          </button>
+        }
       />
 
       <div className="pos-scroll">

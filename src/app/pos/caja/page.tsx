@@ -1,38 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   usePosSync,
   useOpenCashSession,
   useOpenAccounts,
+  useSessionSummary,
   setRestaurantId,
   setUserId,
+  openCashSession,
   closeCashSession,
 } from '@/lib/pos'
+import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
+import type { PaymentMethod } from '@/lib/pos'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
-// Demo data — will come from real events once payment tracking is wired
-const DEMO_METHODS = [
-  { label: 'Efectivo', amount: 184300, count: 14 },
-  { label: 'Débito', amount: 421900, count: 28 },
-  { label: 'Crédito', amount: 312500, count: 19 },
-  { label: 'Transferencia', amount: 96800, count: 6 },
-  { label: 'App de pago', amount: 54200, count: 4 },
-  { label: 'Propinas', amount: 71400, count: 0, isTip: true },
-]
+const METHOD_LABELS: Record<string, string> = {
+  efectivo: 'Efectivo',
+  debito: 'Débito',
+  credito: 'Crédito',
+  transferencia: 'Transferencia',
+  app_pago: 'App de pago',
+}
+
+const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago']
 
 export default function CajaPage() {
-  const router = useRouter()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const cashSession = useOpenCashSession()
   const openAccounts = useOpenAccounts()
+  const summary = useSessionSummary(cashSession)
 
+  const [initialAmount, setInitialAmount] = useState('50000')
   const [countedCash, setCountedCash] = useState('')
+  const [closingNote, setClosingNote] = useState('')
+  const [opening, setOpening] = useState(false)
   const [closing, setClosing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -41,11 +47,31 @@ export default function CajaPage() {
     setUserId(TEST_USER_ID)
   })
 
-  const openingAmount = cashSession?.initial_amount ?? 50000
-  const cashSales = DEMO_METHODS.find(m => m.label === 'Efectivo')?.amount ?? 0
+  const goHome = () => location.assign('/pos')
+
+  // ── OPEN SESSION ─────────────────────────────────────────────
+
+  const handleOpen = async () => {
+    const amount = parseInt(initialAmount.replace(/\D/g, ''), 10)
+    if (!amount || amount < 0) { toast.error('Ingresa un monto válido'); return }
+    setOpening(true)
+    try {
+      await openCashSession({ session_id: uuidv4(), initial_amount: amount })
+      toast.success('Caja abierta')
+    } catch (err) {
+      toast.error('Error: ' + String(err))
+    } finally {
+      setOpening(false)
+    }
+  }
+
+  // ── CLOSE SESSION ────────────────────────────────────────────
+
+  const cashSales = summary.byMethod['efectivo']?.amount ?? 0
+  const openingAmount = cashSession?.initial_amount ?? 0
   const expectedCash = openingAmount + cashSales
-  const counted = countedCash ? parseInt(countedCash, 10) : 0
-  const difference = counted - expectedCash
+  const counted = parseInt(countedCash.replace(/\D/g, ''), 10) || 0
+  const difference = countedCash ? counted - expectedCash : 0
   const hasCounted = countedCash.length > 0
 
   const handleClose = async () => {
@@ -53,19 +79,30 @@ export default function CajaPage() {
       setConfirmOpen(true)
       return
     }
-
     setClosing(true)
     try {
       if (cashSession) {
+        const counted_amounts = ALL_METHODS.reduce((acc, m) => {
+          acc[m] = m === 'efectivo' ? (hasCounted ? counted : expectedCash) : (summary.byMethod[m]?.amount ?? 0)
+          return acc
+        }, {} as Record<PaymentMethod, number>)
+
+        const expected_amounts = ALL_METHODS.reduce((acc, m) => {
+          acc[m] = summary.byMethod[m]?.amount ?? 0
+          if (m === 'efectivo') acc[m] = expectedCash
+          return acc
+        }, {} as Record<PaymentMethod, number>)
+
         await closeCashSession({
           session_id: cashSession.id,
-          counted_amounts: { efectivo: counted, debito: 0, credito: 0, transferencia: 0, app_pago: 0 },
-          expected_amounts: { efectivo: expectedCash, debito: 0, credito: 0, transferencia: 0, app_pago: 0 },
-          difference,
+          counted_amounts,
+          expected_amounts,
+          difference: hasCounted ? difference : 0,
+          note: closingNote || undefined,
         })
       }
       toast.success('Caja cerrada')
-      router.push('/pos')
+      goHome()
     } catch (err) {
       toast.error('Error al cerrar caja: ' + String(err))
     } finally {
@@ -76,30 +113,84 @@ export default function CajaPage() {
 
   const openedAt = cashSession?.opened_at
     ? new Date(cashSession.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-    : '12:30'
+    : '--:--'
 
   const diffColor = !hasCounted
     ? 'var(--ink-3)'
-    : difference === 0
-      ? 'var(--ink)'
-      : difference < 0
-        ? '#C53030'
-        : 'var(--amber-press)'
+    : difference === 0 ? 'var(--jade)'
+    : difference < 0 ? '#C53030'
+    : 'var(--amber-press)'
+
+  // ── NO SESSION: apertura ─────────────────────────────────────
+
+  if (!cashSession) {
+    return (
+      <div className="pos-shell">
+        <PosHeader mode="back" eyebrow="Caja" subtitle="Sin sesión activa" syncing={syncing} onBack={goHome} />
+        <div className="pos-scroll">
+          <div className="pos-caja-wrap">
+            <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
+              <div className="ring">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/>
+                </svg>
+              </div>
+              <p>No hay caja abierta</p>
+            </div>
+
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: '20px 18px', boxShadow: 'var(--sh-1)' }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Abrir caja</div>
+              <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Monto inicial en efectivo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <span style={{ fontFamily: 'var(--mono)', fontWeight: 600, fontSize: 16 }}>$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={initialAmount}
+                  onChange={e => setInitialAmount(e.target.value.replace(/\D/g, ''))}
+                  style={{
+                    flex: 1, fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 700,
+                    textAlign: 'right', padding: '10px 14px', borderRadius: 10,
+                    border: '1.5px solid var(--line)', background: 'var(--sunk)',
+                    color: 'var(--ink)', outline: 'none',
+                  }}
+                />
+              </div>
+              <button
+                onClick={handleOpen}
+                disabled={opening}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 'var(--r-btn)',
+                  border: 0, background: 'var(--amber)', color: '#fff',
+                  fontWeight: 700, fontSize: 15, cursor: opening ? 'default' : 'pointer',
+                  opacity: opening ? 0.7 : 1,
+                }}
+              >
+                {opening ? 'Abriendo...' : 'Abrir caja'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── SESSION OPEN: resumen + cierre ───────────────────────────
 
   return (
     <div className="pos-shell">
       <PosHeader
         mode="back"
         eyebrow="Caja"
-        subtitle="Cierre de turno · Hoy"
+        subtitle={`Turno desde las ${openedAt}`}
         syncing={syncing}
-        onBack={() => router.push('/pos')}
+        onBack={goHome}
       />
 
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
 
-          {/* ── Opening banner ──────────────────────── */}
+          {/* ── Apertura ───────────────────────────── */}
           <div className="pos-caja-open">
             <div className="co-l">
               <div className="co-ic">
@@ -109,38 +200,54 @@ export default function CajaPage() {
               </div>
               <div>
                 <div className="co-t">Apertura de caja</div>
-                <div className="co-s">
-                  Hoy · {openedAt} · Jaime C.
-                </div>
+                <div className="co-s">Hoy · {openedAt}</div>
               </div>
             </div>
-            <div className="co-v">
-              ${openingAmount.toLocaleString('es-CL')}
-            </div>
+            <div className="co-v">${openingAmount.toLocaleString('es-CL')}</div>
           </div>
 
-          {/* ── Methods grid ───────────────────────── */}
+          {/* ── Resumen por medio ───────────────────── */}
+          <div className="pos-eyebrow" style={{ marginBottom: 10 }}>
+            Ventas del turno <b>· {summary.closedAccounts} cuentas</b>
+          </div>
+
           <div className="pos-mgrid">
-            {DEMO_METHODS.map(m => (
-              <div key={m.label} className="pos-mcard">
-                <div className="ml">{m.label}</div>
-                <div className="mv">${m.amount.toLocaleString('es-CL')}</div>
-                <div className="mc">
-                  {m.isTip ? 'Total turno' : `${m.count} pagos`}
+            {ALL_METHODS.map(m => {
+              const data = summary.byMethod[m]
+              return (
+                <div key={m} className="pos-mcard">
+                  <div className="ml">{METHOD_LABELS[m]}</div>
+                  <div className="mv">${(data?.amount ?? 0).toLocaleString('es-CL')}</div>
+                  <div className="mc">{data?.count ?? 0} cobros</div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
+            <div className="pos-mcard" style={{ gridColumn: 'span 2' }}>
+              <div className="ml">Propinas</div>
+              <div className="mv">${summary.totalTips.toLocaleString('es-CL')}</div>
+              <div className="mc">Turno completo</div>
+            </div>
           </div>
 
-          {/* ── Cash count (arqueo) ─────────────────── */}
+          {/* ── Total ────────────────────────────────── */}
+          <div className="pos-caja-open" style={{ marginTop: 4 }}>
+            <div className="co-l">
+              <div>
+                <div className="co-t">Total ventas</div>
+                <div className="co-s">Sin propinas</div>
+              </div>
+            </div>
+            <div className="co-v">${summary.totalSales.toLocaleString('es-CL')}</div>
+          </div>
+
+          {/* ── Arqueo ───────────────────────────────── */}
           <div className="pos-arqueo">
             <h4>Arqueo de efectivo</h4>
 
-            {/* Rows */}
             {[
               { label: 'Apertura', value: openingAmount },
               { label: 'Ventas en efectivo', value: cashSales },
-              { label: 'Efectivo esperado en caja', value: expectedCash },
+              { label: 'Efectivo esperado', value: expectedCash },
             ].map(row => (
               <div key={row.label} className="pos-aqr">
                 <span>{row.label}</span>
@@ -148,67 +255,73 @@ export default function CajaPage() {
               </div>
             ))}
 
-            {/* Counted cash input */}
             <div className="pos-aqr">
               <span>Efectivo contado</span>
-              <div className="flex items-center gap-1">
-                <span className="av">$</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontFamily: 'var(--mono)', fontWeight: 600 }}>$</span>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={countedCash}
-                  onChange={e => setCountedCash(e.target.value)}
+                  onChange={e => setCountedCash(e.target.value.replace(/\D/g, ''))}
                   placeholder={expectedCash.toLocaleString('es-CL')}
                   style={{
-                    fontFamily: 'var(--mono)',
-                    fontVariantNumeric: 'tabular-nums',
-                    color: 'var(--ink)',
-                    background: 'var(--sunk)',
-                    border: '1px solid var(--line)',
-                    borderRadius: 8,
-                    padding: '6px 10px',
-                    outline: 'none',
-                    width: '8rem',
-                    textAlign: 'right',
-                    fontSize: 15,
-                    fontWeight: 500,
+                    fontFamily: 'var(--mono)', fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--ink)', background: 'var(--sunk)', border: '1px solid var(--line)',
+                    borderRadius: 8, padding: '6px 10px', outline: 'none',
+                    width: '8rem', textAlign: 'right', fontSize: 15, fontWeight: 500,
                   }}
                 />
               </div>
             </div>
 
-            {/* Difference */}
             <div className="pos-aqr diff">
               <span className="al">Diferencia</span>
-              <span className="flex items-center gap-2">
-                {hasCounted && difference === 0 ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {hasCounted && difference === 0 && (
                   <span className="pos-ok-tag">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>
                     Cuadrado
                   </span>
-                ) : null}
+                )}
                 <span className="av" style={{ color: diffColor }}>
-                  {hasCounted ? `$${Math.abs(difference).toLocaleString('es-CL')}` : '$–'}
-                  {hasCounted && difference < 0 ? ' (faltante)' : ''}
-                  {hasCounted && difference > 0 ? ' (sobrante)' : ''}
+                  {hasCounted
+                    ? `$${Math.abs(difference).toLocaleString('es-CL')}${difference < 0 ? ' (faltante)' : difference > 0 ? ' (sobrante)' : ''}`
+                    : '$–'}
                 </span>
               </span>
             </div>
+
+            {/* Nota opcional */}
+            <div style={{ marginTop: 12 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>
+                Nota de cierre (opcional)
+              </label>
+              <input
+                type="text"
+                value={closingNote}
+                onChange={e => setClosingNote(e.target.value)}
+                placeholder="Ej: faltaron billetes de $1.000, se pagó en otra caja..."
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: 10,
+                  border: '1px solid var(--line)', background: 'var(--sunk)',
+                  fontSize: 13, color: 'var(--ink)', outline: 'none', fontFamily: 'var(--sans)',
+                }}
+              />
+            </div>
           </div>
 
-          {/* ── Warning: open accounts ──────────────── */}
+          {/* ── Cuentas abiertas — alerta ────────────── */}
           {confirmOpen && openAccounts.length > 0 && (
-            <div className="pos-caja-open" style={{ flexDirection: 'column', alignItems: 'stretch', fontSize: 13 }}>
+            <div className="pos-caja-open" style={{ flexDirection: 'column', alignItems: 'stretch', fontSize: 13, background: 'var(--amber-tint-2)', borderColor: 'var(--amber)' }}>
               <p className="co-t" style={{ marginBottom: 8 }}>
-                Hay {openAccounts.length} cuenta{openAccounts.length > 1 ? 's' : ''} abierta{openAccounts.length > 1 ? 's' : ''}:
+                {openAccounts.length} cuenta{openAccounts.length > 1 ? 's' : ''} abierta{openAccounts.length > 1 ? 's' : ''}:
               </p>
-              <ul className="list-disc pl-5 space-y-1" style={{ color: 'var(--ink-2)' }}>
+              <ul style={{ paddingLeft: 18, color: 'var(--ink-2)' }}>
                 {openAccounts.map(a => (
-                  <li key={a.id}>
+                  <li key={a.id} style={{ marginBottom: 4 }}>
                     {a.type === 'mesa' ? `Mesa ${a.table_number}` : a.type === 'mostrador' ? 'Mostrador' : `Retiro: ${a.customer_name}`}
-                    {' · '}
-                    <span className="co-s">${a.total.toLocaleString('es-CL')}</span>
+                    {' · '}${a.total.toLocaleString('es-CL')}
                   </li>
                 ))}
               </ul>
@@ -216,7 +329,7 @@ export default function CajaPage() {
             </div>
           )}
 
-          {/* ── Action buttons ─────────────────────── */}
+          {/* ── Botones ──────────────────────────────── */}
           <div className="pos-caja-btns">
             <button
               className="close"
@@ -228,7 +341,7 @@ export default function CajaPage() {
             </button>
             <button
               className="print"
-              onClick={() => toast.success('Imprimiendo cierre de caja')}
+              onClick={() => toast.info('Impresión de cierre disponible con puente conectado')}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/>
@@ -237,6 +350,7 @@ export default function CajaPage() {
               Imprimir
             </button>
           </div>
+
         </div>
       </div>
     </div>

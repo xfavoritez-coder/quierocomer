@@ -186,6 +186,49 @@ export function useCategoryProducts(restaurantId: string, categoryId: string | n
   )
 }
 
+// ── Session summary ───────────────────────────────────────────────
+
+export type SessionMethodSummary = { amount: number; tip: number; count: number }
+export type SessionSummary = {
+  byMethod: Partial<Record<string, SessionMethodSummary>>
+  totalSales: number
+  totalTips: number
+  closedAccounts: number
+}
+
+export function useSessionSummary(session: CashSession | undefined): SessionSummary {
+  return useDexieQuery(
+    async () => {
+      const empty: SessionSummary = { byMethod: {}, totalSales: 0, totalTips: 0, closedAccounts: 0 }
+      if (!session) return empty
+
+      const allAccounts = await posDb.accounts.toArray()
+      const sessionAccounts = allAccounts.filter(
+        a => a.status === 'cerrada' && a.closed_at && a.closed_at >= session.opened_at
+      )
+
+      const byMethod: Record<string, SessionMethodSummary> = {}
+      let totalSales = 0
+      let totalTips = 0
+
+      for (const account of sessionAccounts) {
+        for (const payment of account.payments ?? []) {
+          if (!byMethod[payment.method]) byMethod[payment.method] = { amount: 0, tip: 0, count: 0 }
+          byMethod[payment.method].amount += payment.amount
+          byMethod[payment.method].tip += payment.tip ?? 0
+          byMethod[payment.method].count++
+          totalSales += payment.amount
+          totalTips += payment.tip ?? 0
+        }
+      }
+
+      return { byMethod, totalSales, totalTips, closedAccounts: sessionAccounts.length }
+    },
+    [session?.id, session?.opened_at],
+    { byMethod: {}, totalSales: 0, totalTips: 0, closedAccounts: 0 }
+  )
+}
+
 // ── Events (for debug) ──────────────────────────────────────────
 
 export function useRecentEvents(limit = 20) {
