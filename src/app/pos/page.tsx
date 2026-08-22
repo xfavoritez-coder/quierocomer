@@ -538,7 +538,11 @@ export default function PosHomePage() {
                         <span className="mn">{table.label || table.number}</span>
                         {acc && acc.items.filter(i => !i.voided).length > 0 ? (
                           <>
-                            <span className="ms">{acc.items.filter(i => !i.voided).length} ítem{acc.items.filter(i => !i.voided).length !== 1 ? 's' : ''}</span>
+                            <span className="ms">
+                              {status === 'cuenta_pedida'
+                                ? 'Cuenta solicitada'
+                                : `${acc.items.filter(i => !i.voided).length} ítem${acc.items.filter(i => !i.voided).length !== 1 ? 's' : ''}`}
+                            </span>
                             <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
                           </>
                         ) : (
