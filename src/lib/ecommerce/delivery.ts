@@ -56,8 +56,8 @@ export interface DeliveryConfig {
   basePrice: number; // tarifa base
   pricePerKm: number; // costo por km
   roundingMult: number; // redondeo del total (ej: 100)
-  polygonIncluded: LatLng[]; // perímetro de reparto (cobertura)
-  polygonExcluded: LatLng[]; // zona excluida (opcional)
+  polygonIncluded: LatLng[]; // perímetro de reparto (cobertura, un solo anillo)
+  polygonExcluded: LatLng[][]; // zonas excluidas (varias, cada una un anillo)
 }
 
 export function defaultDeliveryConfig(): DeliveryConfig {
@@ -77,6 +77,16 @@ function toLatLngArray(raw: unknown): LatLng[] {
   return out;
 }
 
+/** Normaliza a array de anillos. Acepta un anillo suelto [{lat,lng}…] o varios [[…],[…]]. */
+function toRings(raw: unknown): LatLng[][] {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  if (Array.isArray(raw[0])) {
+    return (raw as unknown[]).map(toLatLngArray).filter((r) => r.length >= 3);
+  }
+  const single = toLatLngArray(raw);
+  return single.length >= 3 ? [single] : [];
+}
+
 export function parseDeliveryConfig(raw: unknown): DeliveryConfig {
   const d = defaultDeliveryConfig();
   if (!raw || typeof raw !== "object") return d;
@@ -91,7 +101,7 @@ export function parseDeliveryConfig(raw: unknown): DeliveryConfig {
     pricePerKm: Math.max(0, Math.round(Number(o.pricePerKm) || 0)),
     roundingMult: Math.max(1, Math.round(Number(o.roundingMult) || 100)),
     polygonIncluded: toLatLngArray(o.polygonIncluded),
-    polygonExcluded: toLatLngArray(o.polygonExcluded),
+    polygonExcluded: toRings(o.polygonExcluded),
   };
 }
 
@@ -132,7 +142,7 @@ export interface DistanceFeeResult {
 /** Calcula la tarifa de delivery por distancia+polígono para un destino. */
 export function computeDistanceFee(config: DeliveryConfig, dest: LatLng): DistanceFeeResult {
   if (!config.origin) return { available: false, fee: 0, distanceKm: 0, reason: "El local aún no configuró su ubicación." };
-  if (config.polygonExcluded.length >= 3 && pointInPolygon(dest, config.polygonExcluded)) {
+  if (config.polygonExcluded.some((ring) => ring.length >= 3 && pointInPolygon(dest, ring))) {
     return { available: false, fee: 0, distanceKm: 0, reason: "No llegamos a esa dirección (zona excluida)." };
   }
   if (config.polygonIncluded.length >= 3 && !pointInPolygon(dest, config.polygonIncluded)) {

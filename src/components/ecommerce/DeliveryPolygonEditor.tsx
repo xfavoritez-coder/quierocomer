@@ -75,8 +75,15 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
       const target = drawingRef.current;
       if (!target) return;
       const pt = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      const key = target === "included" ? "polygonIncluded" : "polygonExcluded";
-      onChange({ [key]: [...(cfgRef.current[key] as LatLng[]), pt] } as Partial<DeliveryConfig>);
+      if (target === "included") {
+        onChange({ polygonIncluded: [...cfgRef.current.polygonIncluded, pt] });
+      } else {
+        // Agrega el punto al último anillo de la zona excluida.
+        const rings = cfgRef.current.polygonExcluded.map((r) => r.slice());
+        if (!rings.length) rings.push([]);
+        rings[rings.length - 1].push(pt);
+        onChange({ polygonExcluded: rings });
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
@@ -97,8 +104,9 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
       includedPoly.current = new g.maps.Polygon({ paths: config.polygonIncluded, map: mapRef.current, strokeColor: "#22c55e", fillColor: "#22c55e", fillOpacity: 0.12, strokeWeight: 2 });
     }
     if (excludedPoly.current) excludedPoly.current.setMap(null);
-    if (config.polygonExcluded.length >= 2) {
-      excludedPoly.current = new g.maps.Polygon({ paths: config.polygonExcluded, map: mapRef.current, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
+    const excludedRings = config.polygonExcluded.filter((r) => r.length >= 2);
+    if (excludedRings.length) {
+      excludedPoly.current = new g.maps.Polygon({ paths: excludedRings, map: mapRef.current, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
     }
   }, [config.polygonIncluded, config.polygonExcluded]);
 
@@ -126,8 +134,8 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
         <button onClick={() => onChange({ polygonIncluded: [] })} style={btnGhost}>
           <Trash2 size={14} /> Limpiar zona
         </button>
-        <button onClick={() => setDrawing(drawing === "excluded" ? null : "excluded")} style={btn(drawing === "excluded", "#ef4444")}>
-          <Ban size={14} /> {drawing === "excluded" ? "Terminar zona excluida" : "Zona excluida"}
+        <button onClick={() => { const next = drawing === "excluded" ? null : "excluded"; setDrawing(next); if (next === "excluded") onChange({ polygonExcluded: [...config.polygonExcluded, []] }); }} style={btn(drawing === "excluded", "#ef4444")}>
+          <Ban size={14} /> {drawing === "excluded" ? "Terminar zona excluida" : "Agregar zona excluida"}
         </button>
         {config.polygonExcluded.length > 0 && (
           <button onClick={() => onChange({ polygonExcluded: [] })} style={btnGhost}><Trash2 size={14} /> Limpiar excluida</button>
@@ -135,7 +143,7 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
       </div>
       {drawing && (
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: ACCENT, margin: 0 }}>
-          Haz clic en el mapa para marcar los vértices de la {drawing === "included" ? "zona de reparto" : "zona excluida"}. ({(drawing === "included" ? config.polygonIncluded : config.polygonExcluded).length} puntos)
+          Haz clic en el mapa para marcar los vértices de la {drawing === "included" ? "zona de reparto" : "zona excluida"}. ({drawing === "included" ? config.polygonIncluded.length : (config.polygonExcluded[config.polygonExcluded.length - 1]?.length ?? 0)} puntos)
         </p>
       )}
 
