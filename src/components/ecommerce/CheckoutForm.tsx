@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -32,6 +32,10 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [sending, setSending] = useState(false);
   const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
   const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number; label?: string | null } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -43,7 +47,31 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const minReq = (isDelivery ? deliveryAddress?.minOrder : null) ?? tenant.minAmount;
   const belowMin = minReq != null && subtotal < minReq;
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  const discount = coupon?.discount ?? 0;
+  const finalTotal = Math.max(0, total - discount);
   const isValid = name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && (payment !== "flow" || emailOk);
+
+  async function applyCoupon() {
+    const code = couponCode.trim();
+    if (!code || couponBusy) return;
+    setCouponBusy(true);
+    setCouponMsg(null);
+    try {
+      const res = await fetch("/api/ecommerce/coupons/validate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.valid) {
+        setCoupon({ code: data.coupon.code, discount: data.discount, label: data.coupon.label });
+        setCouponMsg(null);
+      } else {
+        setCoupon(null);
+        setCouponMsg(data.error || "Cupón no válido");
+      }
+    } catch { setCouponMsg("Error al validar el cupón"); }
+    setCouponBusy(false);
+  }
 
   async function placeOrder() {
     if (!isValid || sending) return;
@@ -67,6 +95,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           items,
           notes: [notes.trim(), accom.notesPart].filter(Boolean).join(" · ") || null,
           paymentMethod: payment,
+          couponCode: coupon?.code || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -202,6 +231,24 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
             </section>
           )}
 
+          {/* Cupón */}
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h2 className="font-black text-sm text-gray-900 mb-3">Cupón de descuento</h2>
+            {coupon ? (
+              <div className="flex items-center gap-2 rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}10` }}>
+                <span className="text-sm font-black" style={{ color: primaryColor }}>{coupon.code}</span>
+                <span className="text-sm text-gray-500">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
+                <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); }} className="ml-auto text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400" />
+                <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+              </div>
+            )}
+            {couponMsg && <p className="text-xs text-red-500 mt-2">{couponMsg}</p>}
+          </section>
+
           {/* Resumen */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-black text-sm text-gray-900 mb-3">Resumen</h2>
@@ -220,7 +267,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
                 ))}
                 <div className="flex justify-between text-sm text-gray-500 pt-2 mt-1 border-t border-gray-100"><span>Subtotal</span><span>{clp(subtotal)}</span></div>
                 {isDelivery && <div className="flex justify-between text-sm text-gray-500"><span>Delivery</span><span>{clp(deliveryFee)}</span></div>}
-                <div className="flex justify-between font-black text-base text-gray-900"><span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span></div>
+                {discount > 0 && <div className="flex justify-between text-sm" style={{ color: primaryColor }}><span>Descuento {coupon ? `(${coupon.code})` : ""}</span><span>−{clp(discount)}</span></div>}
+                <div className="flex justify-between font-black text-base text-gray-900"><span>Total</span><span style={{ color: primaryColor }}>{clp(finalTotal)}</span></div>
               </div>
             )}
           </section>
@@ -236,7 +284,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
             style={{ background: primaryColor }}
           >
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-            {sending ? "Procesando…" : onlineSel ? `Ir a pagar · ${clp(total)}` : `Confirmar pedido · ${clp(total)}`}
+            {sending ? "Procesando…" : onlineSel ? `Ir a pagar · ${clp(finalTotal)}` : `Confirmar pedido · ${clp(finalTotal)}`}
           </button>
           {onlineSel && <p className="text-center text-xs text-gray-400 -mt-1">Serás redirigido a {payment === "flow" ? "Flow" : "Webpay"} para pagar de forma segura.</p>}
         </div>

@@ -5,6 +5,7 @@ import { flowInit, flowSettingsFor } from "@/lib/payments/flow";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 
 export const runtime = "nodejs";
 
@@ -32,9 +33,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string;
+      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true } as const;
+    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -78,7 +79,30 @@ export async function POST(req: NextRequest) {
         deliveryFee = zone.fee;
       }
     }
-    const total = subtotal + deliveryFee;
+    // Cupón: revalidar en el servidor (nunca confiar en el cliente).
+    let discount = 0;
+    let appliedCoupon: ReturnType<typeof parseCoupons>[number] | null = null;
+    let couponNote: string | null = null;
+    if (couponCode) {
+      const found = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === String(couponCode).toUpperCase().trim());
+      if (found) {
+        const v = validateCoupon(found, { subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP" });
+        if (v.valid) {
+          // Chequear límites de uso.
+          let okUses = true;
+          if (found.maxUses) okUses = (await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: found.code } })) < found.maxUses;
+          if (okUses && found.maxUsesPerUser) okUses = (await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: found.code, customerPhone: String(customerPhone).trim() } })) < found.maxUsesPerUser;
+          if (okUses) {
+            appliedCoupon = found;
+            discount = computeDiscount(found, subtotal);
+            if (found.type === "product") couponNote = `🎁 Cupón ${found.code}: producto gratis${found.label ? ` (${found.label})` : ""}`;
+          }
+        }
+      }
+    }
+
+    const total = Math.max(0, subtotal + deliveryFee - discount);
+    const finalNotes = [notes?.trim(), couponNote].filter(Boolean).join(" · ") || null;
 
     // Correlativo por restaurante.
     const prevCount = await prisma.onlineOrder.count({ where: { restaurantId: restaurant.id } });
@@ -115,12 +139,19 @@ export async function POST(req: NextRequest) {
         items: storedItems as unknown as object,
         total,
         deliveryFee,
-        notes: notes?.trim() || null,
+        discount,
+        couponCode: appliedCoupon?.code ?? null,
+        notes: finalNotes,
         orderNumber,
         status: isOnline ? "PENDING" : "ACCEPTED",
         statusHistory: [{ status: isOnline ? "PENDING" : "ACCEPTED", ts: new Date().toISOString() }],
       },
     });
+
+    // Registrar el uso del cupón (para los límites de uso).
+    if (appliedCoupon) {
+      await prisma.ecommerceCouponUse.create({ data: { restaurantId: restaurant.id, couponCode: appliedCoupon.code, orderId: order.id, customerPhone: String(customerPhone).trim() } }).catch(() => {});
+    }
 
     // ── Pago offline: confirmar y enviar al POS de inmediato ──
     if (!isOnline) {

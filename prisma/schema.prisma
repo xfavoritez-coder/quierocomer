@@ -398,6 +398,7 @@ model Restaurant {
   ecommerceDeliveryConfig    Json?                    // config de delivery por polígono+distancia (origen, tarifas, polígonos)
   ecommerceStoreConfig       Json?                    // config de la tienda: colores de marca, métodos de pago visibles, notas
   ecommerceAccompaniments    Json?                    // acompañamientos del checkout (por monto y por producto)
+  ecommerceCoupons           Json?                    // cupones de descuento del ecommerce
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]
@@ -448,6 +449,8 @@ model OnlineOrder {
   toteatOrderId   String? // id del pedido en Toteat tras inyectarlo al POS
   posError        String? // último error al enviar al POS (si hubo)
   deliveryFee     Int      @default(0) // costo de despacho de la zona (incluido en total)
+  discount        Int      @default(0) // descuento del cupón aplicado
+  couponCode      String? // código del cupón usado
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")
@@ -458,6 +461,17 @@ model OnlineOrder {
 
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
+}
+
+model EcommerceCouponUse {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  couponCode    String
+  orderId       String?
+  customerPhone String?
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId, couponCode])
 }
 
 model Invoice {
