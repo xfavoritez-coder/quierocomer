@@ -9,6 +9,7 @@ import { clp } from "@/lib/ecommerce/format";
 import { storeFontVars, shortAddr } from "./StoreFront";
 import StoreStyles from "./StoreStyles";
 import AccompanimentsSection from "./AccompanimentsSection";
+import { useFavicon } from "@/lib/ecommerce/useFavicon";
 
 const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?: boolean }> = {
   webpay: { label: "Webpay", hint: "Paga online con tarjeta", Icon: CreditCard, online: true },
@@ -20,6 +21,7 @@ const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?
 
 export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const primaryColor = tenant.primaryColor;
+  useFavicon(tenant.logoUrl);
   const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());

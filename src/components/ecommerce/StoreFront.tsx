@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
+import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import ProductModal from "./ProductModal";
 import CartDrawer from "./CartDrawer";
 import StoreStyles from "./StoreStyles";
@@ -39,6 +40,7 @@ export const storeFontVars: React.CSSProperties = {
 export default function StoreFront({ tenant, categories, products }: Props) {
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
+  useFavicon(tenant.logoUrl);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);

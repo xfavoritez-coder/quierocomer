@@ -13,6 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${tenant.name} · Pedir online`,
     description: `Haz tu pedido en ${tenant.name}. Rápido y fácil.`,
+    ...(tenant.logoUrl ? { icons: { icon: tenant.logoUrl, shortcut: tenant.logoUrl, apple: tenant.logoUrl } } : {}),
     openGraph: {
       title: tenant.name,
       description: `Haz tu pedido en ${tenant.name}.`,
