@@ -342,7 +342,7 @@ function AccountCard({ account, onSelect }: { account: Account; onSelect: (accou
               <span className="sep">·</span>
               <span>{account.rounds.length} ronda{account.rounds.length !== 1 ? 's' : ''}</span>
               <span className="sep">·</span>
-              <span>{timeSince(account.opened_at, now)}</span>
+              <span>{timeSince(account.opened_at)}</span>
             </div>
           </div>
         </div>
@@ -375,11 +375,16 @@ export default function PosHomePage() {
   // Desktop split-panel state
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null)
 
-  // Timer: actualiza 'now' cada 60s — timeSince lo usa directamente
-  const [now, setNow] = useState(() => Date.now())
+  // Timer: re-render cada 60s + al volver al tab (browsers congelan timers en bg)
+  const [, setTick] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60_000)
-    return () => clearInterval(t)
+    const tick = () => setTick(n => n + 1)
+    const t = setInterval(tick, 60_000)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener('visibilitychange', tick)
+    }
   }, [])
 
   // Cerrar panel al cambiar a mobile
@@ -605,7 +610,7 @@ export default function PosHomePage() {
                         </div>
                         {acc && (
                           <div className="pos-mesa-bottom">
-                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at, now)}</span>
+                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
                           </div>
                         )}
                       </button>
@@ -737,8 +742,8 @@ export default function PosHomePage() {
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 
-function timeSince(isoDate: string, now = Date.now()): string {
-  const diff = now - new Date(isoDate).getTime()
+function timeSince(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return '< 1 min'
   if (mins < 60) return `${mins} min`
