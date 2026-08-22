@@ -29,10 +29,13 @@ function CuentaPageInner() {
   const [showSettings, setShowSettings] = useState(false)
   const [settingsModal, setSettingsModal] = useState<'comensales' | 'garzon' | null>(null)
   const [voidModal, setVoidModal] = useState<{ itemId: string; name: string } | null>(null)
+  const [voidAccountModal, setVoidAccountModal] = useState(false)
 
   // Field states
   const [voidReason, setVoidReason] = useState('')
   const [voiding, setVoiding] = useState(false)
+  const [voidAccountReason, setVoidAccountReason] = useState('')
+  const [voidingAccount, setVoidingAccount] = useState(false)
   const [requestingBill, setRequestingBill] = useState(false)
   const [coversInput, setCoversInput] = useState('')
   const [savingMeta, setSavingMeta] = useState(false)
@@ -67,16 +70,25 @@ function CuentaPageInner() {
     }
   }, [voidModal, accountId, voidReason])
 
-  const handleVoidAccount = useCallback(async () => {
+  const handleVoidAccount = useCallback(() => {
     if (!accountId) return
     setShowSettings(false)
-    if (!confirm('¿Anular esta cuenta? Esta acción queda registrada.')) return
+    setVoidAccountReason('')
+    setVoidAccountModal(true)
+  }, [accountId])
+
+  const handleConfirmVoidAccount = useCallback(async () => {
+    if (!accountId) return
+    setVoidingAccount(true)
     try {
-      await voidAccount({ account_id: accountId, reason: 'Anulada desde vista de cuenta' })
+      await voidAccount({ account_id: accountId, reason: voidAccountReason.trim() || 'Sin motivo' })
+      setVoidAccountModal(false)
       navigate('/pos')
     } catch (err) {
+    } finally {
+      setVoidingAccount(false)
     }
-  }, [accountId, navigate])
+  }, [accountId, voidAccountReason, navigate])
 
   const handleSaveCovers = useCallback(async () => {
     const n = parseInt(coversInput)
@@ -389,6 +401,31 @@ function CuentaPageInner() {
             </div>
             <div className="pos-modal-actions">
               <button className="pos-modal-cancel" onClick={() => setSettingsModal(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Void account modal */}
+      {voidAccountModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(27,26,23,.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: 480, background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: 24 }}>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Anular cuenta</div>
+            <div style={{ fontSize: 14, color: 'var(--ink-2)', marginBottom: 18 }}>{accountName}</div>
+            <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 8 }}>Motivo <span style={{ fontWeight: 400, color: 'var(--ink-3)' }}>(opcional)</span></label>
+            <input
+              autoFocus
+              value={voidAccountReason}
+              onChange={e => setVoidAccountReason(e.target.value)}
+              placeholder="Ej: Error al abrir, cliente canceló..."
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+              onKeyDown={e => e.key === 'Enter' && handleConfirmVoidAccount()}
+            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setVoidAccountModal(false)} style={{ flex: 1, padding: 13, borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>Cancelar</button>
+              <button onClick={handleConfirmVoidAccount} disabled={voidingAccount} style={{ flex: 1, padding: 13, borderRadius: 'var(--r-btn)', border: 0, background: '#e05252', color: '#fff', fontWeight: 700, fontSize: 14, cursor: voidingAccount ? 'default' : 'pointer', fontFamily: 'var(--sans)', opacity: voidingAccount ? 0.7 : 1 }}>
+                {voidingAccount ? 'Anulando...' : 'Anular cuenta'}
+              </button>
             </div>
           </div>
         </div>
