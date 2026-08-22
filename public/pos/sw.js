@@ -1,21 +1,10 @@
-// POS QuieroComer — Service Worker v5
-// Toda la navegación POS usa location.assign (navigate mode) → sin problemas de RSC offline
+// POS QuieroComer — Service Worker v6
+// Solo intercepta requests navigate (HTML) para /pos/*.
+// Los RSC fetch (router.push online) pasan directo a la red → SPA instantáneo.
+// Offline: location.assign() desde el cliente → siempre llega como navigate → SW sirve HTML cacheado.
 
-const CACHE_NAME = 'pos-qc-v5'
-
-// Rutas a pre-cachear en install
+const CACHE_NAME = 'pos-qc-v6'
 const APP_SHELL = ['/pos', '/pos/comandero', '/pos/cuenta', '/pos/cobro', '/pos/caja']
-
-// ── Normaliza URL para cache: elimina params dinámicos y Next.js internos ──
-// /pos/cuenta?id=abc&_rsc=xyz → /pos/cuenta
-// /pos/comandero?cuenta=abc&_rsc=xyz → /pos/comandero
-function toCacheKey(url) {
-  const u = new URL(url)
-  u.searchParams.delete('_rsc')
-  u.searchParams.delete('id')       // param dinámico de cuenta
-  u.searchParams.delete('cuenta')   // param dinámico de comandero
-  return u.toString()
-}
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -41,7 +30,7 @@ self.addEventListener('fetch', event => {
   // Solo mismo origen
   if (url.origin !== self.location.origin) return
 
-  // ── /_next/static/: stale-while-revalidate ──
+  // /_next/static/: stale-while-revalidate (assets inmutables con hash)
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
@@ -55,52 +44,31 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // ── /pos/*: cachear navigate + RSC con key normalizada ──
-  if (url.pathname.startsWith('/pos')) {
+  // /pos/* navigate: network-first con fallback a cache (soporte offline)
+  if (url.pathname.startsWith('/pos') && event.request.mode === 'navigate') {
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
-        const key = toCacheKey(event.request.url)
-
-        // Intentar red siempre (actualiza cache en background cuando está online)
-        const networkRes = fetch(event.request)
-          .then(res => {
-            if (res.ok) cache.put(key, res.clone())
-            return res
-          })
-          .catch(() => null)
-
-        if (event.request.mode === 'navigate') {
-          // Navegación directa: red primero para contenido fresco
-          const fresh = await networkRes
-          if (fresh) return fresh
-
-          // Offline: buscar en cache con key normalizada
+        try {
+          const res = await fetch(event.request)
+          if (res.ok) cache.put(url.pathname, res.clone())
+          return res
+        } catch {
+          // Offline: servir HTML cacheado por pathname (sin query params)
           return (
-            (await cache.match(key)) ||
+            (await cache.match(url.pathname)) ||
             (await cache.match('/pos')) ||
             new Response(offlinePage(), {
               status: 503,
               headers: { 'Content-Type': 'text/html; charset=utf-8' },
             })
           )
-        } else {
-          // RSC u otro request del cliente (router.push, prefetch, etc.)
-          // Cache-first: responder instantáneo desde cache, actualizar en background
-          const cached = await cache.match(key)
-          if (cached) {
-            networkRes.catch(() => {}) // actualizar en background sin bloquear
-            return cached
-          }
-          // Sin cache: esperar red
-          const fresh = await networkRes
-          return fresh || new Response('', { status: 503 })
         }
       })
     )
     return
   }
 
-  // Todo lo demás (Supabase, /api, etc.): red directa
+  // Todo lo demás (RSC fetches, /api, Supabase, etc.): red directa sin interceptar
 })
 
 function offlinePage() {

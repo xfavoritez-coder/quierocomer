@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { usePosNav } from '../lib/usePosNav'
 import {
   usePosSync,
   useOpenCashSession,
@@ -30,6 +31,7 @@ const METHOD_LABELS: Record<string, string> = {
 const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago']
 
 export default function CajaPage() {
+  const navigate = usePosNav()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const cashSession = useOpenCashSession()
   const openAccounts = useOpenAccounts()
@@ -47,7 +49,7 @@ export default function CajaPage() {
     setUserId(TEST_USER_ID)
   })
 
-  const goHome = () => location.assign('/pos')
+  const goHome = () => navigate('/pos')
 
   // ── OPEN SESSION ─────────────────────────────────────────────
 

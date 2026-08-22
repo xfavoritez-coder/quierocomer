@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -15,6 +15,7 @@ import {
 } from '@/lib/pos'
 import type { Account } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
+import { usePosNav } from './lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
@@ -134,7 +135,7 @@ function PendingModal({ count, onClose }: { count: number; onClose: () => void }
 
 // ── Menu drawer ───────────────────────────────────────────────────
 
-function PosMenuDrawer({ cashSession, onClose }: { cashSession: boolean; onClose: () => void }) {
+function PosMenuDrawer({ cashSession, onClose, onNavigate }: { cashSession: boolean; onClose: () => void; onNavigate: (url: string) => void }) {
   const items = [
     {
       label: cashSession ? 'Ver caja' : 'Abrir caja',
@@ -176,7 +177,7 @@ function PosMenuDrawer({ cashSession, onClose }: { cashSession: boolean; onClose
               className="pos-drawer-item"
               onClick={() => {
                 if (item.external) window.open(item.href, '_blank')
-                else location.assign(item.href)
+                else { onClose(); onNavigate(item.href) }
               }}
             >
               <span className="pos-drawer-ic">{item.icon}</span>
@@ -194,7 +195,7 @@ function PosMenuDrawer({ cashSession, onClose }: { cashSession: boolean; onClose
 
 // ── Account cards (Mostrador / Retiro / Delivery) ─────────────────
 
-function AccountCard({ account }: { account: Account }) {
+function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (url: string) => void }) {
   const isActive = account.total > 0
   const typeLabel = account.type === 'mostrador' ? 'MO' : account.type === 'retiro' ? 'RE' : 'DE'
   const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 'mo' : account.type === 'retiro' ? 're' : 'de'
@@ -202,7 +203,7 @@ function AccountCard({ account }: { account: Account }) {
   return (
     <button
       className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-      onClick={() => location.assign(`/pos/cuenta?id=${account.id}`)}
+      onClick={() => onNavigate(`/pos/cuenta?id=${account.id}`)}
     >
       <div className="pos-rail" />
       <div className="pos-ticket-body">
@@ -239,6 +240,7 @@ function AccountCard({ account }: { account: Account }) {
 // ── Main page ─────────────────────────────────────────────────────
 
 export default function PosHomePage() {
+  const navigate = usePosNav()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const accounts = useOpenAccounts()
   const cashSession = useOpenCashSession()
@@ -267,42 +269,42 @@ export default function PosHomePage() {
     delivery: deliveryAccounts.length,
   }
 
-  // Handlers
-  const handleMesaClick = async (tableId: string, tableNumber: number) => {
+  // Handlers — openAccount fire-and-forget + navigate inmediato (optimistic)
+  const handleMesaClick = (tableId: string, tableNumber: number) => {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
       const id = uuidv4()
-      await openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
-      location.assign(`/pos/cuenta?id=${id}`)
+      openAccount({ account_id: id, account_type: 'mesa', table_id: tableId, table_number: tableNumber })
+      navigate(`/pos/cuenta?id=${id}`)
     } else if (accountId) {
-      location.assign(`/pos/cuenta?id=${accountId}`)
+      navigate(`/pos/cuenta?id=${accountId}`)
     }
   }
 
-  const handleNewMostrador = async () => {
+  const handleNewMostrador = () => {
     const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'mostrador' })
-    location.assign(`/pos/cuenta?id=${id}`)
+    openAccount({ account_id: id, account_type: 'mostrador' })
+    navigate(`/pos/cuenta?id=${id}`)
   }
 
-  const handleNewRetiro = async (name: string, time: string) => {
+  const handleNewRetiro = (name: string, time: string) => {
     setRetiroModal(false)
     const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
-    location.assign(`/pos/cuenta?id=${id}`)
+    openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
+    navigate(`/pos/cuenta?id=${id}`)
   }
 
-  const handleNewDelivery = async (data: { name: string; phone: string; address: string; notes: string }) => {
+  const handleNewDelivery = (data: { name: string; phone: string; address: string; notes: string }) => {
     setDeliveryModal(false)
     const id = uuidv4()
-    await openAccount({
+    openAccount({
       account_id: id,
       account_type: 'delivery',
       customer_name: data.name,
       customer_phone: data.phone,
       delivery_address: data.address,
     })
-    location.assign(`/pos/cuenta?id=${id}`)
+    navigate(`/pos/cuenta?id=${id}`)
   }
 
   return (
@@ -411,7 +413,7 @@ export default function PosHomePage() {
                 <p>
                   Sin mesas configuradas.{' '}
                   <button
-                    onClick={() => location.assign('/pos/config/mesas')}
+                    onClick={() => navigate('/pos/config/mesas')}
                     style={{ color: 'var(--amber-press)', fontWeight: 600, background: 'none', border: 0, cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit', padding: 0 }}
                   >
                     Configurar mesas
@@ -437,7 +439,7 @@ export default function PosHomePage() {
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} />)}
+                    .map(a => <AccountCard key={a.id} account={a} onNavigate={navigate} />)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
@@ -457,7 +459,7 @@ export default function PosHomePage() {
               {deliveryAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} />)}
+                    .map(a => <AccountCard key={a.id} account={a} onNavigate={navigate} />)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
@@ -489,7 +491,7 @@ export default function PosHomePage() {
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
 
       {/* ── Drawer ──────────────────────────────────────────── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} onClose={() => setMenuOpen(false)} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} onClose={() => setMenuOpen(false)} onNavigate={navigate} />}
     </div>
   )
 }

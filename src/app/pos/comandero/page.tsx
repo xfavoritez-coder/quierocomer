@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
 import {
@@ -15,6 +15,7 @@ import {
 import { printComanda, getBridgeUrl } from '@/lib/pos/bridge'
 import type { CachedProduct, RoundItem, ItemModifier } from '@/lib/pos/types'
 import PosHeader from '../components/PosHeader'
+import { usePosNav } from '../lib/usePosNav'
 import ModifierModal from '../components/ModifierModal'
 import OrderPanel from '../components/OrderPanel'
 
@@ -22,7 +23,7 @@ const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
 export default function ComanderoPage() {
-  const router = useRouter()
+  const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('cuenta')
 
@@ -132,7 +133,7 @@ export default function ComanderoPage() {
 
       setOrderItems([])
       setShowOrder(false)
-      location.assign(`/pos/cuenta?id=${targetAccountId}`)
+      navigate(`/pos/cuenta?id=${targetAccountId}`)
     } catch (err) {
       toast.error('Error al enviar: ' + String(err))
     } finally {
@@ -153,7 +154,7 @@ export default function ComanderoPage() {
         eyebrow="Comandero"
         subtitle={accountId ? `Mostrador · Cuenta #${accountId.slice(-4)}` : 'Nueva cuenta'}
         syncing={syncing}
-        onBack={() => router.push('/pos')}
+        onBack={() => navigate('/pos')}
       />
 
       {loading ? (

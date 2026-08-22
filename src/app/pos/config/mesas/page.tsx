@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
 import { saveTables, saveSectors, updateTableSector, updateTableLabel } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
+import { usePosNav } from '../../lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
 export default function MesasConfigPage() {
+  const navigate = usePosNav()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const tables = useTables(TEST_RESTAURANT_ID)
   const sectors = useSectors(TEST_RESTAURANT_ID)
@@ -132,7 +134,7 @@ export default function MesasConfigPage() {
         eyebrow="Configuración"
         subtitle="Mesas"
         syncing={syncing}
-        onBack={() => location.assign('/pos')}
+        onBack={() => navigate('/pos')}
       />
 
       <div className="pos-scroll">

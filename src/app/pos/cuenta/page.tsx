@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   useAccount, usePosSync,
@@ -9,12 +9,13 @@ import {
   voidItem, requestBill, voidAccount,
 } from '@/lib/pos'
 import PosHeader from '../components/PosHeader'
+import { usePosNav } from '../lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
 function CuentaPageInner() {
-  const router = useRouter()
+  const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('id') ?? ''
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
@@ -65,7 +66,7 @@ function CuentaPageInner() {
     try {
       await voidAccount({ account_id: accountId, reason: 'Anulada desde vista de cuenta' })
       toast.success('Cuenta anulada')
-      router.push('/pos')
+      navigate('/pos')
     } catch (err) {
       toast.error('Error: ' + String(err))
     }
@@ -74,7 +75,7 @@ function CuentaPageInner() {
   if (!account) {
     return (
       <div className="pos-shell">
-        <PosHeader mode="back" eyebrow="Cuenta" subtitle="Cargando..." onBack={() => router.push('/pos')} syncing={syncing} />
+        <PosHeader mode="back" eyebrow="Cuenta" subtitle="Cargando..." onBack={() => navigate('/pos')} syncing={syncing} />
         <div className="pos-empty" style={{ flex: 1 }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: 'var(--amber)', animation: 'spin 1s linear infinite' }} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -107,7 +108,7 @@ function CuentaPageInner() {
         eyebrow={accountName}
         subtitle={statusLabel[account.status] ?? account.status}
         syncing={syncing}
-        onBack={() => router.push('/pos')}
+        onBack={() => navigate('/pos')}
         rightSlot={
           <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 17, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
             ${account.total.toLocaleString('es-CL')}
@@ -180,7 +181,7 @@ function CuentaPageInner() {
 
       {!isClosed && (
         <div style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', display: 'flex', gap: 10 }}>
-          <button onClick={() => location.assign(`/pos/comandero?cuenta=${accountId}`)}
+          <button onClick={() => navigate(`/pos/comandero?cuenta=${accountId}`)}
             style={{ flex: 1, padding: '13px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)' }}>
             + Nueva ronda
           </button>
@@ -191,7 +192,7 @@ function CuentaPageInner() {
             </button>
           )}
           {activeItems.length > 0 && (
-            <button onClick={() => location.assign(`/pos/cobro?cuenta=${accountId}`)}
+            <button onClick={() => navigate(`/pos/cobro?cuenta=${accountId}`)}
               style={{ padding: '13px 18px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
               Cobrar
             </button>

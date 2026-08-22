@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useAccount, usePosSync, setRestaurantId, setUserId, recordPayment, closeAccount } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
+import { usePosNav } from '../lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
@@ -64,6 +65,7 @@ function VueltoCalc({ totalToPay }: { totalToPay: number }) {
 // ── Inner page ────────────────────────────────────────────────────
 
 function CobroPageInner() {
+  const navigate = usePosNav()
   const searchParams = useSearchParams()
   const accountId = searchParams.get('cuenta')
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
@@ -113,7 +115,7 @@ function CobroPageInner() {
     })
   }, [])
 
-  const goHome = () => location.assign('/pos')
+  const goHome = () => navigate('/pos')
 
   const handlePay = useCallback(async () => {
     if (!accountId || totalToPay <= 0) return
