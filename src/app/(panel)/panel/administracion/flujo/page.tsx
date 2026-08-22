@@ -268,7 +268,7 @@ function GroupHead({ label, icon, value, base }: { label: string; icon?: string;
       <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2,#555)", display: "flex", alignItems: "center", gap: 5 }}>
         {icon && <span style={{ fontSize: 12 }}>{icon}</span>}{label}
       </span>
-      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text3,#bbb)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
+      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
       <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text,#333)", textAlign: "right", alignSelf: "center" }}>{clp(value)}</span>
     </div>
   );
@@ -284,7 +284,7 @@ function DataRow({ label, icon, value, base, indent, deep, isIncome }: {
         {icon && <span style={{ fontSize: 13, flexShrink: 0 }}>{icon}</span>}
         {label}
       </span>
-      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text3,#ccc)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
+      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
       <span style={{ fontFamily: FM, fontSize: "0.855rem", fontWeight: 600, color: isIncome ? "#16a34a" : "var(--adm-text,#333)", textAlign: "right", alignSelf: "center" }}>{clp(value)}</span>
     </div>
   );
@@ -294,7 +294,7 @@ function TotalRow({ label, value, base, color, thick }: { label: string; value: 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", gap: 0, padding: "8px 12px", borderTop: `${thick ? 2 : 1}px solid var(--adm-card-border,#e5e7eb)`, marginTop: 4 }}>
       <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text,#111)" }}>{label}</span>
-      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text3,#bbb)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
+      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
       <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color, textAlign: "right", alignSelf: "center" }}>{clp(value)}</span>
     </div>
   );
