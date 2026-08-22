@@ -6,14 +6,24 @@ let loadingPromise: Promise<void> | null = null;
 
 export function loadGoogleMaps(key: string): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  const w = window as unknown as { google?: { maps?: { places?: unknown } } };
+  const w = window as unknown as { google?: { maps?: { places?: unknown; importLibrary?: (n: string) => Promise<unknown> } }; [k: string]: unknown };
   if (w.google?.maps?.places) return Promise.resolve();
   if (loadingPromise) return loadingPromise;
   loadingPromise = new Promise<void>((resolve, reject) => {
+    const cb = "__qcGmapsReady";
+    // El callback se dispara cuando la API base está lista; luego cargamos las
+    // librerías con importLibrary para garantizar que `places`/`geometry` existan.
+    w[cb] = async () => {
+      try {
+        const im = w.google!.maps!.importLibrary!;
+        await im("places");
+        await im("geometry");
+        resolve();
+      } catch (e) { loadingPromise = null; reject(e); }
+    };
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places,geometry&loading=async`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places,geometry&loading=async&callback=${cb}`;
     s.async = true;
-    s.onload = () => resolve();
     s.onerror = () => { loadingPromise = null; reject(new Error("No se pudo cargar Google Maps")); };
     document.head.appendChild(s);
   });

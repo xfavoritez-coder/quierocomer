@@ -489,7 +489,8 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
   // Adjunta el autocompletado cuando el SDK está listo y estamos en delivery+distancia.
   useEffect(() => {
     if (!distanceMode || tab !== "delivery" || !gmapsReady || !inputRef.current) return;
-    const g = (window as unknown as { google: any }).google;
+    const g = (window as unknown as { google?: any }).google;
+    if (!g?.maps?.places?.Autocomplete) return;
     const ac = new g.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: ["cl"] },
       types: ["address"],
