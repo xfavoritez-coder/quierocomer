@@ -19,7 +19,7 @@ import PosHeader from './components/PosHeader'
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
-type Tab = 'mesas' | 'mostrador' | 'retiro' | 'delivery' | 'online'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'online'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -38,7 +38,6 @@ const statusLabel: Record<TableStatus, string> = {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
-  { id: 'mostrador', label: 'Mostrador' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
   { id: 'online', label: 'Online' },
@@ -260,12 +259,10 @@ export default function PosHomePage() {
   })
 
   // Tab counts for badges
-  const mostradorAccounts = accounts.filter(a => a.type === 'mostrador')
-  const retiroAccounts = accounts.filter(a => a.type === 'retiro')
+  const retiroAccounts = accounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
   const deliveryAccounts = accounts.filter(a => a.type === 'delivery')
 
   const tabCounts: Partial<Record<Tab, number>> = {
-    mostrador: mostradorAccounts.length,
     retiro: retiroAccounts.length,
     delivery: deliveryAccounts.length,
   }
@@ -388,9 +385,13 @@ export default function PosHomePage() {
                         onClick={() => handleMesaClick(table.id, table.number)}
                       >
                         <span className="mn">{table.number}</span>
-                        <span className="ms">{statusLabel[status]}</span>
-                        {acc && acc.total > 0 && (
-                          <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
+                        {acc && acc.items.filter(i => !i.voided).length > 0 ? (
+                          <>
+                            <span className="ms">{acc.items.filter(i => !i.voided).length} ítem{acc.items.filter(i => !i.voided).length !== 1 ? 's' : ''}</span>
+                            <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
+                          </>
+                        ) : (
+                          <span className="ms">{statusLabel[status]}</span>
                         )}
                       </button>
                     )
@@ -420,33 +421,19 @@ export default function PosHomePage() {
             )
           })()}
 
-          {/* MOSTRADOR */}
-          {tab === 'mostrador' && (
-            <>
-              <button className="pos-new-btn" onClick={handleNewMostrador}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                Nueva venta en mostrador
-              </button>
-              {mostradorAccounts.length > 0 ? (
-                <div className="pos-tickets">
-                  {[...mostradorAccounts.filter(a => a.total > 0), ...mostradorAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} />)}
-                </div>
-              ) : (
-                <div className="pos-empty" style={{ minHeight: 160 }}>
-                  <p>Sin ventas en mostrador abiertas</p>
-                </div>
-              )}
-            </>
-          )}
-
           {/* RETIRO */}
           {tab === 'retiro' && (
             <>
-              <button className="pos-new-btn" onClick={() => setRetiroModal(true)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                Nuevo retiro
-              </button>
+              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                <button className="pos-new-btn" style={{ marginBottom: 0 }} onClick={handleNewMostrador}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                  Mostrador
+                </button>
+                <button className="pos-new-btn" style={{ marginBottom: 0 }} onClick={() => setRetiroModal(true)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                  Retiro
+                </button>
+              </div>
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
@@ -454,7 +441,7 @@ export default function PosHomePage() {
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
-                  <p>Sin retiros pendientes</p>
+                  <p>Sin pedidos pendientes</p>
                 </div>
               )}
             </>
