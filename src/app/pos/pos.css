@@ -200,7 +200,7 @@
 .pos-fab .total{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- modifier modal ---------- */
-.pos-mod-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(27,26,23,.4)}
+.pos-mod-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgba(27,26,23,.4)}
 .pos-mod-panel{position:relative;width:100%;max-width:32rem;max-height:85dvh;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0}
 .pos-mod-head{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 12px;border-bottom:1px solid var(--line)}
 .pos-mod-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0}
