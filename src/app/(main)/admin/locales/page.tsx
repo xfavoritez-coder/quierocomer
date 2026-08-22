@@ -657,6 +657,16 @@ export default function AdminLocales() {
                   : "Tienda online tipo Servio con pago real y delivery — solo locales de prueba"}
               </p>
             </div>
+            {selected.ecommerceEnabled && (
+              <a
+                href={`/ecommerce/${selected.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 12px", marginRight: 10, background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.35)", borderRadius: 9, color: "#a78bfa", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+              >
+                Abrir tienda ↗
+              </a>
+            )}
             <button
               onClick={async () => {
                 const val = !selected.ecommerceEnabled;
