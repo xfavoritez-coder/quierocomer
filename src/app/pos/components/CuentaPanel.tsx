@@ -187,7 +187,7 @@ export default function CuentaPanel({
           <>
             {!isClosed && (
               <button
-                onClick={() => setShowSettings(true)}
+                onClick={() => setShowSettings(v => !v)}
                 style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-2)', minWidth: 44, minHeight: 44 }}
                 title="Opciones"
               >

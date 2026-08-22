@@ -342,7 +342,7 @@ function AccountCard({ account, onSelect }: { account: Account; onSelect: (accou
               <span className="sep">·</span>
               <span>{account.rounds.length} ronda{account.rounds.length !== 1 ? 's' : ''}</span>
               <span className="sep">·</span>
-              <span>{timeSince(account.opened_at)}</span>
+              <span>{timeSince(account.opened_at, now)}</span>
             </div>
           </div>
         </div>
@@ -375,10 +375,10 @@ export default function PosHomePage() {
   // Desktop split-panel state
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null)
 
-  // Un timer cada 60s — el texto de tiempo solo cambia una vez por minuto
-  const [, setTick] = useState(0)
+  // Timer: actualiza 'now' cada 60s — timeSince lo usa directamente
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 60_000)
+    const t = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(t)
   }, [])
 
@@ -605,7 +605,7 @@ export default function PosHomePage() {
                         </div>
                         {acc && (
                           <div className="pos-mesa-bottom">
-                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at, now)}</span>
                           </div>
                         )}
                       </button>
@@ -737,8 +737,8 @@ export default function PosHomePage() {
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 
-function timeSince(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
+function timeSince(isoDate: string, now = Date.now()): string {
+  const diff = now - new Date(isoDate).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return '< 1 min'
   if (mins < 60) return `${mins} min`
