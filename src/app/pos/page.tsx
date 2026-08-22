@@ -161,16 +161,18 @@ function MesaOpenModal({
         <div className="pos-modal-title">Abrir {tableLabel}</div>
 
         <label className="pos-modal-label">Comensales</label>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
           {QUICK.map(n => (
             <button
               key={n}
               onClick={() => setCovers(n)}
               style={{
-                width: 44, height: 44, borderRadius: 10, border: covers === n ? 0 : '1px solid var(--line)',
-                background: covers === n ? 'var(--amber)' : 'var(--sunk)',
-                color: covers === n ? '#fff' : 'var(--ink-2)',
-                fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                height: 48, borderRadius: 12,
+                border: covers === n ? '2px solid var(--amber)' : '1px solid var(--line)',
+                background: covers === n ? 'var(--amber-tint)' : 'var(--sunk)',
+                color: covers === n ? 'var(--amber-press)' : 'var(--ink-2)',
+                fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 16, cursor: 'pointer',
+                transition: '.12s',
               }}
             >{n}</button>
           ))}
@@ -179,25 +181,38 @@ function MesaOpenModal({
             value={covers > 8 ? covers : ''}
             placeholder="9+"
             onChange={e => { const v = parseInt(e.target.value); if (v > 0) setCovers(v) }}
-            style={{ width: 56, height: 44, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink)', textAlign: 'center', outline: 'none' }}
+            style={{ height: 48, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink)', textAlign: 'center', outline: 'none', width: '100%' }}
           />
         </div>
 
         {garzones.length > 0 && (
           <>
             <label className="pos-modal-label">Garzón</label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {garzones.map(g => (
                 <button
                   key={g.id}
                   onClick={() => setGarzon(g.name)}
                   style={{
-                    padding: '10px 16px', borderRadius: 10, border: garzon === g.name ? 0 : '1px solid var(--line)',
-                    background: garzon === g.name ? 'var(--amber)' : 'var(--sunk)',
-                    color: garzon === g.name ? '#fff' : 'var(--ink-2)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '11px 14px', borderRadius: 12, textAlign: 'left',
+                    border: garzon === g.name ? '2px solid var(--amber)' : '1px solid var(--line)',
+                    background: garzon === g.name ? 'var(--amber-tint)' : 'var(--sunk)',
+                    color: garzon === g.name ? 'var(--amber-press)' : 'var(--ink)',
                     fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)',
+                    transition: '.12s',
                   }}
-                >{g.name}</button>
+                >
+                  <span style={{ width: 30, height: 30, borderRadius: '50%', background: garzon === g.name ? 'rgba(222,124,0,.15)' : 'var(--surface)', display: 'grid', placeItems: 'center', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                    {g.name.charAt(0).toUpperCase()}
+                  </span>
+                  {g.name}
+                  {garzon === g.name && (
+                    <span style={{ marginLeft: 'auto' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                  )}
+                </button>
               ))}
             </div>
           </>

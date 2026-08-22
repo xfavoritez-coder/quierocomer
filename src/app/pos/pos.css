@@ -200,7 +200,7 @@
 .pos-fab .total{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- modifier modal ---------- */
-.pos-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(27,26,23,.4)}
+.pos-mod-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(27,26,23,.4)}
 .pos-mod-panel{position:relative;width:100%;max-width:32rem;max-height:85dvh;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0}
 .pos-mod-head{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 12px;border-bottom:1px solid var(--line)}
 .pos-mod-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0}
@@ -293,7 +293,7 @@
 
 /* ---------- modals (retiro / delivery / pending) ---------- */
 .pos-modal-overlay{position:fixed;inset:0;background:rgba(27,26,23,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
-.pos-modal{background:var(--surface);border:1px solid var(--line);border-radius:20px;width:100%;max-width:380px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.pos-modal{background:var(--surface);border:1px solid var(--line);border-radius:20px;width:100%;max-width:400px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.12);max-height:90dvh;overflow-y:auto}
 .pos-modal-title{font-weight:700;font-size:17px;letter-spacing:-.01em;margin-bottom:20px}
 .pos-modal-label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;margin-top:14px}
 .pos-modal-label:first-of-type{margin-top:0}

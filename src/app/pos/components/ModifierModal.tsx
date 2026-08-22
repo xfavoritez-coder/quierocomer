@@ -65,7 +65,7 @@ export default function ModifierModal({ product, onConfirm, onClose }: ModifierM
   )
 
   return (
-    <div className="pos-modal" onClick={onClose}>
+    <div className="pos-mod-overlay" onClick={onClose}>
       <div className="pos-mod-panel" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="pos-mod-head">
