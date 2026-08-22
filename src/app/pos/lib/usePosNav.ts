@@ -1,20 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 
 /**
- * Navegación híbrida para el POS:
- * - Online  → router.push() (SPA instantáneo, ~50ms)
- * - Offline → location.assign() (reload desde SW cache)
+ * Navegación POS: siempre location.assign() para que el SW intercepte
+ * la request como 'navigate' y sirva HTML cacheado tanto online como offline.
+ * navigator.onLine es poco confiable — muchos dispositivos reportan true
+ * sin internet real, causando que router.push() dispare RSC fetches que fallan.
  */
 export function usePosNav() {
-  const router = useRouter()
   return useCallback((url: string) => {
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      router.push(url)
-    } else {
-      location.assign(url)
-    }
-  }, [router])
+    location.assign(url)
+  }, [])
 }

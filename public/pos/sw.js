@@ -1,10 +1,17 @@
-// POS QuieroComer — Service Worker v6
-// Solo intercepta requests navigate (HTML) para /pos/*.
-// Los RSC fetch (router.push online) pasan directo a la red → SPA instantáneo.
-// Offline: location.assign() desde el cliente → siempre llega como navigate → SW sirve HTML cacheado.
+// POS QuieroComer — Service Worker v7
+// Siempre location.assign() en el cliente → todas las navs llegan como 'navigate' → SW controla todo.
 
-const CACHE_NAME = 'pos-qc-v6'
-const APP_SHELL = ['/pos', '/pos/comandero', '/pos/cuenta', '/pos/cobro', '/pos/caja']
+const CACHE_NAME = 'pos-qc-v7'
+const APP_SHELL = [
+  '/pos',
+  '/pos/comandero',
+  '/pos/cuenta',
+  '/pos/cobro',
+  '/pos/caja',
+  '/pos/config/mesas',
+  '/pos/config/garzones',
+  '/pos/config',
+]
 
 self.addEventListener('install', event => {
   event.waitUntil(
