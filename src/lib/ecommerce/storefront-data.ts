@@ -28,6 +28,22 @@ export interface StoreCategory {
   position: number;
 }
 
+export interface StoreOptionValue {
+  id: string;
+  name: string;
+  price_delta: number;
+  toteat_modifier_code: string | null;
+}
+
+export interface StoreOptionGroup {
+  id: string;
+  name: string;
+  is_required: boolean;
+  min_select: number;
+  max_select: number;
+  values: StoreOptionValue[];
+}
+
 export interface StoreProduct {
   id: string;
   category_id: string;
@@ -38,6 +54,7 @@ export interface StoreProduct {
   image_url: string | null;
   is_sold_out: boolean;
   toteat_code: string | null;
+  option_groups: StoreOptionGroup[];
 }
 
 export interface StorefrontData {
@@ -77,6 +94,21 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
           id: true, categoryId: true, name: true, description: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true,
           toteatProductId: true,
+          modifierTemplates: {
+            select: {
+              groups: {
+                orderBy: { position: "asc" },
+                select: {
+                  id: true, name: true, required: true, minSelect: true, maxSelect: true, position: true,
+                  options: {
+                    where: { isHidden: false },
+                    orderBy: { position: "asc" },
+                    select: { id: true, name: true, priceAdjustment: true, toteatProductId: true },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -92,6 +124,28 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       // discountPrice es el precio de oferta (menor). Si existe y es menor,
       // el precio actual es la oferta y el original queda tachado.
       const hasOffer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price;
+
+      // Aplanar los grupos de modificadores de todas las plantillas del plato.
+      const optionGroups: StoreOptionGroup[] = [];
+      for (const tpl of d.modifierTemplates) {
+        for (const g of tpl.groups) {
+          if (!g.options.length) continue;
+          optionGroups.push({
+            id: g.id,
+            name: g.name,
+            is_required: g.required || g.minSelect > 0,
+            min_select: g.minSelect,
+            max_select: g.maxSelect,
+            values: g.options.map((o) => ({
+              id: o.id,
+              name: o.name,
+              price_delta: o.priceAdjustment,
+              toteat_modifier_code: o.toteatProductId ?? null,
+            })),
+          });
+        }
+      }
+
       products.push({
         id: d.id,
         category_id: d.categoryId,
@@ -102,6 +156,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         image_url: d.photos?.[0] ?? null,
         is_sold_out: d.stockCountdown != null && d.stockCountdown <= 0,
         toteat_code: d.toteatProductId ?? null,
+        option_groups: optionGroups,
       });
     }
   }

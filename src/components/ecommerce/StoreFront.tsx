@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Toaster } from "sonner";
 import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -130,6 +131,8 @@ export default function StoreFront({ tenant, categories, products }: Props) {
   return (
     <div className="qc-storefront min-h-screen bg-gray-50" style={storeFontVars}>
       <StoreStyles />
+      <Toaster position="top-center" richColors />
+
       {/* ── Header — solo logo ─────────────────────────────────── */}
       <header ref={headerRef} className="sticky top-0 z-40 shadow-sm bg-white">
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
