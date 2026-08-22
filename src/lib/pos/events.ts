@@ -129,6 +129,8 @@ export async function projectEvent(event: PosEvent): Promise<void> {
         table_number: d.table_number,
         customer_name: d.customer_name,
         pickup_time: d.pickup_time,
+        customer_phone: d.customer_phone,
+        delivery_address: d.delivery_address,
         opened_at: event.created_at_local,
         opened_by: event.user_id,
         total: 0,

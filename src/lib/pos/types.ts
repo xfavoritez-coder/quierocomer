@@ -1,6 +1,6 @@
 // ── POS Domain Types ──────────────────────────────────────────────
 
-export type AccountType = 'mesa' | 'mostrador' | 'retiro'
+export type AccountType = 'mesa' | 'mostrador' | 'retiro' | 'delivery'
 export type AccountStatus = 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial' | 'cerrada' | 'anulada'
 export type PaymentMethod = 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'app_pago'
 export type StaffRole = 'admin' | 'garzon'
@@ -39,8 +39,10 @@ export interface AccountOpenedPayload {
   account_type: AccountType
   table_id?: string
   table_number?: number
-  customer_name?: string  // retiro
-  pickup_time?: string    // retiro
+  customer_name?: string    // retiro + delivery
+  pickup_time?: string      // retiro
+  customer_phone?: string   // delivery
+  delivery_address?: string // delivery
 }
 
 export interface RoundSentPayload {
@@ -126,6 +128,8 @@ export interface Account {
   table_number?: number
   customer_name?: string
   pickup_time?: string
+  customer_phone?: string
+  delivery_address?: string
   opened_at: string
   opened_by: string
   closed_at?: string

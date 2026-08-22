@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
   useOpenAccounts,
   useOpenCashSession,
   useTables,
+  usePendingSyncCount,
   setRestaurantId,
   setUserId,
   openAccount,
@@ -18,6 +18,7 @@ import PosHeader from './components/PosHeader'
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
+type Tab = 'mesas' | 'mostrador' | 'retiro' | 'delivery' | 'online'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -34,30 +35,239 @@ const statusLabel: Record<TableStatus, string> = {
   pagada_parcial: 'Pago parcial',
 }
 
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'mesas', label: 'Mesas' },
+  { id: 'mostrador', label: 'Mostrador' },
+  { id: 'retiro', label: 'Retiro' },
+  { id: 'delivery', label: 'Delivery' },
+  { id: 'online', label: 'Online' },
+]
+
+// ── Modals ────────────────────────────────────────────────────────
+
+function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (name: string, time: string) => void }) {
+  const [name, setName] = useState('')
+  const [time, setTime] = useState('')
+  return (
+    <div className="pos-modal-overlay" onClick={onClose}>
+      <div className="pos-modal" onClick={e => e.stopPropagation()}>
+        <div className="pos-modal-title">Nuevo retiro</div>
+        <label className="pos-modal-label">Nombre del cliente</label>
+        <input
+          autoFocus
+          className="pos-modal-input"
+          placeholder="Ej: Juan"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && name.trim() && onConfirm(name.trim(), time)}
+        />
+        <label className="pos-modal-label">Hora de retiro (opcional)</label>
+        <input
+          className="pos-modal-input"
+          type="time"
+          value={time}
+          onChange={e => setTime(e.target.value)}
+        />
+        <div className="pos-modal-actions">
+          <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
+          <button
+            className="pos-modal-ok"
+            disabled={!name.trim()}
+            onClick={() => onConfirm(name.trim(), time)}
+          >
+            Crear retiro
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeliveryModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (data: { name: string; phone: string; address: string; notes: string }) => void }) {
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [notes, setNotes] = useState('')
+  const valid = name.trim() && phone.trim() && address.trim()
+  return (
+    <div className="pos-modal-overlay" onClick={onClose}>
+      <div className="pos-modal" onClick={e => e.stopPropagation()}>
+        <div className="pos-modal-title">Nuevo delivery</div>
+        <label className="pos-modal-label">Nombre del cliente</label>
+        <input autoFocus className="pos-modal-input" placeholder="Ej: María González" value={name} onChange={e => setName(e.target.value)} />
+        <label className="pos-modal-label">Teléfono</label>
+        <input className="pos-modal-input" placeholder="+56 9 1234 5678" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+        <label className="pos-modal-label">Dirección de entrega</label>
+        <input className="pos-modal-input" placeholder="Calle y número, barrio..." value={address} onChange={e => setAddress(e.target.value)} />
+        <label className="pos-modal-label">Notas (opcional)</label>
+        <input className="pos-modal-input" placeholder="Depto, referencias, sin gluten..." value={notes} onChange={e => setNotes(e.target.value)} />
+        <div className="pos-modal-actions">
+          <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
+          <button className="pos-modal-ok" disabled={!valid} onClick={() => onConfirm({ name: name.trim(), phone: phone.trim(), address: address.trim(), notes: notes.trim() })}>
+            Crear delivery
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PendingModal({ count, onClose }: { count: number; onClose: () => void }) {
+  return (
+    <div className="pos-modal-overlay" onClick={onClose}>
+      <div className="pos-modal" onClick={e => e.stopPropagation()}>
+        <div className="pos-modal-title">{count} evento{count !== 1 ? 's' : ''} pendiente{count !== 1 ? 's' : ''}</div>
+        <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>
+          Hay acciones registradas localmente que aún no se han sincronizado con el servidor.
+          Se sincronizarán automáticamente cuando haya conexión a internet.
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>
+          Los datos están guardados de forma segura en este dispositivo. No se perderá ningún pedido, pago ni anulación.
+        </p>
+        <div className="pos-modal-actions">
+          <button className="pos-modal-ok" style={{ flex: 1 }} onClick={onClose}>Entendido</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Menu drawer ───────────────────────────────────────────────────
+
+function PosMenuDrawer({ cashSession, onClose }: { cashSession: boolean; onClose: () => void }) {
+  const items = [
+    {
+      label: cashSession ? 'Ver caja' : 'Abrir caja',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/></svg>,
+      href: '/pos/caja',
+    },
+    {
+      label: 'Configurar mesas',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
+      href: '/pos/config/mesas',
+    },
+    {
+      label: 'Impresora',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg>,
+      href: '/pos/config',
+    },
+    {
+      label: 'Ver reportes en panel',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+      href: '/panel',
+      external: true,
+    },
+  ]
+
+  return (
+    <>
+      <div className="pos-drawer-overlay" onClick={onClose} />
+      <div className="pos-drawer">
+        <div className="pos-drawer-header">
+          <span>Ajustes</span>
+          <button onClick={onClose} className="pos-drawer-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="pos-drawer-items">
+          {items.map(item => (
+            <button
+              key={item.label}
+              className="pos-drawer-item"
+              onClick={() => {
+                if (item.external) window.open(item.href, '_blank')
+                else location.assign(item.href)
+              }}
+            >
+              <span className="pos-drawer-ic">{item.icon}</span>
+              <span>{item.label}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'auto', color: 'var(--ink-3)' }}>
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ── Account cards (Mostrador / Retiro / Delivery) ─────────────────
+
+function AccountCard({ account }: { account: Account }) {
+  const isActive = account.total > 0
+  const typeLabel = account.type === 'mostrador' ? 'MO' : account.type === 'retiro' ? 'RE' : 'DE'
+  const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 'mo' : account.type === 'retiro' ? 're' : 'de'
+
+  return (
+    <button
+      className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
+      onClick={() => location.assign(`/pos/cuenta?id=${account.id}`)}
+    >
+      <div className="pos-rail" />
+      <div className="pos-ticket-body">
+        <div className="pos-t-left">
+          <div className={`pos-chip ${chipClass}`}>{typeLabel}</div>
+          <div>
+            <div className="pos-t-name">
+              {account.type === 'mostrador'
+                ? 'Mostrador'
+                : account.type === 'retiro'
+                  ? `Retiro · ${account.customer_name}`
+                  : `Delivery · ${account.customer_name}`}
+            </div>
+            {account.delivery_address && (
+              <div className="pos-t-address">{account.delivery_address}</div>
+            )}
+            <div className="pos-t-meta">
+              <span>{account.items.filter(i => !i.voided).length} ítems</span>
+              <span className="sep">·</span>
+              <span>{account.rounds.length} ronda{account.rounds.length !== 1 ? 's' : ''}</span>
+              <span className="sep">·</span>
+              <span>{timeSince(account.opened_at)}</span>
+            </div>
+          </div>
+        </div>
+        <div className={`pos-t-total ${account.total === 0 ? 'zero' : 'big'}`}>
+          ${account.total.toLocaleString('es-CL')}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────
+
 export default function PosHomePage() {
-  const router = useRouter()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const accounts = useOpenAccounts()
   const cashSession = useOpenCashSession()
   const tables = useTables(TEST_RESTAURANT_ID)
+  const pendingCount = usePendingSyncCount()
+
+  const [tab, setTab] = useState<Tab>('mesas')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [retiroModal, setRetiroModal] = useState(false)
+  const [deliveryModal, setDeliveryModal] = useState(false)
+  const [pendingModal, setPendingModal] = useState(false)
 
   useState(() => {
     setRestaurantId(TEST_RESTAURANT_ID)
     setUserId(TEST_USER_ID)
   })
 
-  const handleMostrador = async () => {
-    const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'mostrador' })
-    location.assign(`/pos/cuenta?id=${id}`)
+  // Tab counts for badges
+  const mostradorAccounts = accounts.filter(a => a.type === 'mostrador')
+  const retiroAccounts = accounts.filter(a => a.type === 'retiro')
+  const deliveryAccounts = accounts.filter(a => a.type === 'delivery')
+
+  const tabCounts: Partial<Record<Tab, number>> = {
+    mostrador: mostradorAccounts.length,
+    retiro: retiroAccounts.length,
+    delivery: deliveryAccounts.length,
   }
 
-  const handleRetiro = async () => {
-    const id = uuidv4()
-    await openAccount({ account_id: id, account_type: 'retiro', customer_name: 'Cliente' })
-    location.assign(`/pos/cuenta?id=${id}`)
-  }
-
+  // Handlers
   const handleMesaClick = async (tableId: string, tableNumber: number) => {
     const { status, accountId } = getTableStatus(tableId, accounts)
     if (status === 'libre') {
@@ -69,15 +279,39 @@ export default function PosHomePage() {
     }
   }
 
-  // Mostrador y retiro abiertos (no mesa)
-  const nonMesaAccounts = accounts.filter(a => a.type !== 'mesa')
-  const sortedNonMesa = [...nonMesaAccounts.filter(a => a.total > 0), ...nonMesaAccounts.filter(a => a.total === 0)]
+  const handleNewMostrador = async () => {
+    const id = uuidv4()
+    await openAccount({ account_id: id, account_type: 'mostrador' })
+    location.assign(`/pos/cuenta?id=${id}`)
+  }
+
+  const handleNewRetiro = async (name: string, time: string) => {
+    setRetiroModal(false)
+    const id = uuidv4()
+    await openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
+    location.assign(`/pos/cuenta?id=${id}`)
+  }
+
+  const handleNewDelivery = async (data: { name: string; phone: string; address: string; notes: string }) => {
+    setDeliveryModal(false)
+    const id = uuidv4()
+    await openAccount({
+      account_id: id,
+      account_type: 'delivery',
+      customer_name: data.name,
+      customer_phone: data.phone,
+      delivery_address: data.address,
+    })
+    location.assign(`/pos/cuenta?id=${id}`)
+  }
 
   return (
     <div className="pos-shell">
       <PosHeader
         mode="brand"
         syncing={syncing}
+        onMenu={() => setMenuOpen(true)}
+        onPendingClick={() => setPendingModal(true)}
         rightSlot={
           <button
             className="pos-caja-info"
@@ -94,43 +328,27 @@ export default function PosHomePage() {
         }
       />
 
+      {/* ── Tab bar ─────────────────────────────────────────── */}
+      <div className="pos-tabs">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            className={`pos-tab${tab === t.id ? ' on' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+            {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Content ─────────────────────────────────────────── */}
       <div className="pos-scroll">
         <div className="pos-pad">
 
-          {/* ── Action cards ──────────────────────────── */}
-          <div className="pos-actions">
-            <button className="pos-act" onClick={handleMostrador}>
-              <span className="ic">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
-              </span>
-              <span className="lb">Mostrador</span>
-            </button>
-            <button className="pos-act" onClick={handleRetiro}>
-              <span className="ic">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-              </span>
-              <span className="lb">Retiro</span>
-            </button>
-            <button className="pos-act" onClick={() => router.push('/pos/config')}>
-              <span className="ic">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 0-1.41-1.41M5.34 5.34A10 10 0 0 0 4.93 6.7M4.93 17.3a10 10 0 0 0 1.41 1.41M18.66 18.66A10 10 0 0 0 19.07 17M20 12h1M3 12H2M12 20v1M12 3V2M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z"/></svg>
-              </span>
-              <span className="lb">Impresora</span>
-            </button>
-            <button className="pos-act" onClick={() => router.push('/pos/config/mesas')}>
-              <span className="ic">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-              </span>
-              <span className="lb">Mesas</span>
-            </button>
-          </div>
-
-          {/* ── Mesa grid ──────────────────────────── */}
-          {tables.length > 0 ? (
-            <>
-              <div className="pos-eyebrow">
-                Mesas <b>· {tables.length}</b>
-              </div>
+          {/* MESAS */}
+          {tab === 'mesas' && (
+            tables.length > 0 ? (
               <div className="pos-mesa-grid">
                 {tables.map(table => {
                   const { status, accountId } = getTableStatus(table.id, accounts)
@@ -150,98 +368,112 @@ export default function PosHomePage() {
                   )
                 })}
               </div>
-            </>
-          ) : (
-            <>
-              <div className="pos-eyebrow">Mesas</div>
-              <div className="pos-empty" style={{ minHeight: 100, marginBottom: 26 }}>
+            ) : (
+              <div className="pos-empty" style={{ minHeight: 200 }}>
                 <div className="ring">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                 </div>
                 <p>
                   Sin mesas configuradas.{' '}
                   <button
-                    onClick={() => router.push('/pos/config/mesas')}
+                    onClick={() => location.assign('/pos/config/mesas')}
                     style={{ color: 'var(--amber-press)', fontWeight: 600, background: 'none', border: 0, cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit', padding: 0 }}
                   >
                     Configurar mesas
                   </button>
                 </p>
               </div>
-            </>
+            )
           )}
 
-          {/* ── Mostrador / retiro abiertos ──────────────────────────── */}
-          {sortedNonMesa.length > 0 && (
+          {/* MOSTRADOR */}
+          {tab === 'mostrador' && (
             <>
-              <div className="pos-eyebrow">
-                Mostrador / Retiro {sortedNonMesa.length > 0 && <b>· {sortedNonMesa.length}</b>}
-              </div>
-              <div className="pos-tickets">
-                {sortedNonMesa.map(account => {
-                  const isActive = account.total > 0
-                  const chipLabel = account.type === 'mostrador' ? 'MO' : 'RE'
-                  const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 'mo' : 're'
-
-                  return (
-                    <button
-                      key={account.id}
-                      className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-                      onClick={() => location.assign(`/pos/cuenta?id=${account.id}`)}
-                    >
-                      <div className="pos-rail" />
-                      <div className="pos-ticket-body">
-                        <div className="pos-t-left">
-                          <div className={`pos-chip ${chipClass}`}>
-                            {chipLabel}
-                          </div>
-                          <div>
-                            <div className="pos-t-name">
-                              {account.type === 'mostrador'
-                                ? 'Mostrador'
-                                : `Retiro · ${account.customer_name}`
-                              }
-                            </div>
-                            <div className="pos-t-meta">
-                              <span>{account.items.filter(i => !i.voided).length} ítems</span>
-                              <span className="sep">·</span>
-                              <span>{account.rounds.length} ronda{account.rounds.length !== 1 ? 's' : ''}</span>
-                              <span className="sep">·</span>
-                              <span>{timeSince(account.opened_at)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`pos-t-total ${account.total === 0 ? 'zero' : 'big'}`}>
-                          ${account.total.toLocaleString('es-CL')}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+              <button className="pos-new-btn" onClick={handleNewMostrador}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                Nueva venta en mostrador
+              </button>
+              {mostradorAccounts.length > 0 ? (
+                <div className="pos-tickets">
+                  {[...mostradorAccounts.filter(a => a.total > 0), ...mostradorAccounts.filter(a => a.total === 0)]
+                    .map(a => <AccountCard key={a.id} account={a} />)}
+                </div>
+              ) : (
+                <div className="pos-empty" style={{ minHeight: 160 }}>
+                  <p>Sin ventas en mostrador abiertas</p>
+                </div>
+              )}
             </>
           )}
 
-          {tables.length === 0 && sortedNonMesa.length === 0 && (
-            <div className="pos-empty" style={{ marginTop: 16 }}>
+          {/* RETIRO */}
+          {tab === 'retiro' && (
+            <>
+              <button className="pos-new-btn" onClick={() => setRetiroModal(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                Nuevo retiro
+              </button>
+              {retiroAccounts.length > 0 ? (
+                <div className="pos-tickets">
+                  {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
+                    .map(a => <AccountCard key={a.id} account={a} />)}
+                </div>
+              ) : (
+                <div className="pos-empty" style={{ minHeight: 160 }}>
+                  <p>Sin retiros pendientes</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* DELIVERY */}
+          {tab === 'delivery' && (
+            <>
+              <button className="pos-new-btn" onClick={() => setDeliveryModal(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                Nuevo delivery
+              </button>
+              {deliveryAccounts.length > 0 ? (
+                <div className="pos-tickets">
+                  {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
+                    .map(a => <AccountCard key={a.id} account={a} />)}
+                </div>
+              ) : (
+                <div className="pos-empty" style={{ minHeight: 160 }}>
+                  <p>Sin deliveries pendientes</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ONLINE */}
+          {tab === 'online' && (
+            <div className="pos-empty" style={{ minHeight: 200 }}>
               <div className="ring">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
               </div>
-              <p>
-                Sin cuentas abiertas. Toca Mostrador o Retiro para empezar.
+              <p>Pedidos online — próximamente</p>
+              <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6 }}>
+                Los pedidos de tu web llegarán aquí automáticamente.
               </p>
             </div>
           )}
 
         </div>
       </div>
+
+      {/* ── Modals ──────────────────────────────────────────── */}
+      {retiroModal && <RetiroModal onClose={() => setRetiroModal(false)} onConfirm={handleNewRetiro} />}
+      {deliveryModal && <DeliveryModal onClose={() => setDeliveryModal(false)} onConfirm={handleNewDelivery} />}
+      {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
+
+      {/* ── Drawer ──────────────────────────────────────────── */}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} onClose={() => setMenuOpen(false)} />}
     </div>
   )
 }
 
-/* ── Helpers ────────────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────────── */
 
 function timeSince(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime()
