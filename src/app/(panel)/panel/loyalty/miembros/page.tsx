@@ -221,8 +221,13 @@ export default function LoyaltyMembersPage() {
                   </span>
                 </div>
 
-                {/* Última compra (último sello escaneado) */}
+                {/* Miembro desde (fecha de inscripción) */}
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
+                  Miembro desde: {new Date(m.enrolledAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+
+                {/* Última compra (último sello escaneado) */}
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
                   {m.lastStampAt
                     ? `Última compra: ${new Date(m.lastStampAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
                     : "Sin compras aún"}
