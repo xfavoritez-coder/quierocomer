@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -15,13 +15,15 @@ type OrderStatus = "PENDING" | "ACCEPTED" | "PREPARING" | "IN_DELIVERY" | "READY
 interface OrderItem { dishName?: string; name?: string; quantity: number; unitTotal?: number; unit_price?: number; selectedOptions?: { optionName: string }[] }
 interface Order {
   id: string; orderNumber?: number | null; customerName: string; customerPhone: string; customerEmail?: string | null;
-  orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string;
+  orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string; paymentGateway?: string | null;
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
-  notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null;
+  notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
+  statusHistory?: { status: string; ts: string }[];
 }
 
 const STATUS_LABEL: Record<OrderStatus, string> = { PENDING: "Nuevo", ACCEPTED: "Aceptado", PREPARING: "Preparando", IN_DELIVERY: "En reparto", READY: "Listo", DONE: "Entregado", CANCELLED: "Cancelado" };
 const STATUS_COLOR: Record<OrderStatus, string> = { PENDING: ORANGE, ACCEPTED: BLUE, PREPARING: GOLD, IN_DELIVERY: GREEN, READY: GREEN, DONE: GRAY, CANCELLED: RED };
+const STATUS_ORDER: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY", "DONE", "CANCELLED"];
 const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; color: string }[]> = {
   PENDING: [{ status: "ACCEPTED", label: "Aceptar", color: BLUE }, { status: "CANCELLED", label: "Rechazar", color: RED }],
   ACCEPTED: [{ status: "PREPARING", label: "Preparando", color: GOLD }, { status: "CANCELLED", label: "Cancelar", color: RED }],
@@ -30,14 +32,17 @@ const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; co
   READY: [{ status: "DONE", label: "Entregado", color: GRAY }],
   DONE: [], CANCELLED: [],
 };
-const TABS = [
-  { id: "active", label: "Activos", statuses: ["PENDING", "ACCEPTED", "PREPARING"] as OrderStatus[] },
-  { id: "out", label: "En curso", statuses: ["IN_DELIVERY", "READY"] as OrderStatus[] },
-  { id: "history", label: "Historial", statuses: ["DONE", "CANCELLED"] as OrderStatus[] },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
 
 const PAY_LABEL: Record<string, string> = { webpay: "Webpay", flow: "Flow", efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" };
+const isOnline = (o: Order) => o.paymentMethod === "webpay" || o.paymentMethod === "flow";
+const isAttempt = (o: Order) => isOnline(o) && o.paymentStatus !== "paid"; // intento de pago no completado
+function payInfo(o: Order): { label: string; color: string } {
+  if (o.paymentStatus === "paid") return { label: "Pagado", color: GREEN };
+  if (o.paymentStatus === "failed") return { label: "Pago fallido", color: RED };
+  if (isOnline(o)) return { label: "Pago pendiente", color: ORANGE };
+  return { label: "Por pagar", color: GRAY };
+}
+
 const fmt = (n: number) => `$${Math.round(n || 0).toLocaleString("es-CL")}`;
 function relativeTime(iso: string) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -47,26 +52,26 @@ function relativeTime(iso: string) {
   if (hrs < 24) return `hace ${hrs}h`;
   return new Date(iso).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
 }
+const fmtFull = (iso: string) => new Date(iso).toLocaleString("es-CL", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" });
 
 export default function EcommercePedidosPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [orders, setOrders] = useState<Order[]>([]);
-  const [tab, setTab] = useState<TabId>("active");
+  const [view, setView] = useState<"activos" | "historial">("activos");
+  const [statusFilter, setStatusFilter] = useState<"todos" | OrderStatus>("todos");
   const [loading, setLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [detail, setDetail] = useState<Order | null>(null);
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
 
   const beep = () => {
     try {
-      const AC = (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext });
-      const Ctx = AC.AudioContext || AC.webkitAudioContext;
-      if (!Ctx) return;
-      const ctx = new Ctx();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 880; g.gain.value = 0.12;
+      const AC = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+      const Ctx = AC.AudioContext || AC.webkitAudioContext; if (!Ctx) return;
+      const ctx = new Ctx(); const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.frequency.value = 880; g.gain.value = 0.12;
       o.start(); o.stop(ctx.currentTime + 0.18);
     } catch {}
   };
@@ -78,15 +83,15 @@ export default function EcommercePedidosPage() {
       if (!res.ok) return;
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
-      // Detectar nuevos pendientes.
-      const currentPending = fetched.filter((o) => o.status === "PENDING").map((o) => o.id);
+      const currentPending = fetched.filter((o) => o.status === "PENDING" && !isAttempt(o)).map((o) => o.id);
       if (!firstLoadRef.current) {
         const fresh = currentPending.filter((id) => !knownPendingRef.current.has(id));
-        if (fresh.length) { beep(); setNewIds((s) => new Set([...s, ...fresh])); if (poll) setTab("active"); }
+        if (fresh.length) { beep(); setNewIds((s) => new Set([...s, ...fresh])); if (poll) { setView("activos"); setStatusFilter("todos"); } }
       }
       knownPendingRef.current = new Set(currentPending);
       firstLoadRef.current = false;
       setOrders(fetched);
+      setDetail((d) => (d ? fetched.find((o) => o.id === d.id) ?? null : null));
     } catch {} finally { setLoading(false); }
   }, [restaurantId]);
 
@@ -102,15 +107,16 @@ export default function EcommercePedidosPage() {
       if (!res.ok) { const d = await res.json().catch(() => ({})); toast.error(d.error || "No se pudo actualizar"); return; }
       setNewIds((s) => { const n = new Set(s); n.delete(id); return n; });
       setOrders((os) => os.map((o) => (o.id === id ? { ...o, status } : o)));
+      setDetail((d) => (d && d.id === id ? { ...d, status } : d));
       toast.success(`Pedido ${STATUS_LABEL[status].toLowerCase()}`);
     } catch { toast.error("Error de conexión"); }
   }
 
-  const activeTab = TABS.find((t) => t.id === tab)!;
-  const shown = orders.filter((o) => activeTab.statuses.includes(o.status));
-  const counts: Record<TabId, number> = { active: 0, out: 0, history: 0 };
-  for (const o of orders) for (const t of TABS) if (t.statuses.includes(o.status)) counts[t.id]++;
-  const pendingCount = orders.filter((o) => o.status === "PENDING").length;
+  // Base según vista: activos oculta intentos de pago; historial muestra todo.
+  const base = view === "activos" ? orders.filter((o) => !isAttempt(o)) : orders;
+  const shown = statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
+  const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
+  const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
@@ -122,105 +128,86 @@ export default function EcommercePedidosPage() {
         <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><ClipboardList size={20} color={ACCENT} /></div>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Pedidos</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>{pendingCount > 0 ? `${pendingCount} pedido${pendingCount !== 1 ? "s" : ""} nuevo${pendingCount !== 1 ? "s" : ""} · ` : ""}se actualiza automáticamente</p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>{pendingCount > 0 ? `${pendingCount} nuevo${pendingCount !== 1 ? "s" : ""} · ` : ""}se actualiza solo</p>
         </div>
-        <button onClick={() => fetchOrders(false)} title="Actualizar" style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><RefreshCw size={16} /></button>
+        <button onClick={() => fetchOrders(false)} title="Actualizar" style={iconBtn}><RefreshCw size={16} /></button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {TABS.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, border: `1px solid ${tab === t.id ? ACCENT : "var(--adm-card-border)"}`, background: tab === t.id ? ACCENT : "var(--adm-hover)", color: tab === t.id ? "#1a1a1a" : "var(--adm-text2)" }}>
-            {t.label}{counts[t.id] > 0 ? ` (${counts[t.id]})` : ""}
-          </button>
-        ))}
+      {/* Vista: Activos / Historial */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <button onClick={() => { setView("activos"); setStatusFilter("todos"); }} style={viewBtn(view === "activos")}><ListChecks size={15} /> Activos</button>
+        <button onClick={() => { setView("historial"); setStatusFilter("todos"); }} style={viewBtn(view === "historial")}><History size={15} /> Historial</button>
+      </div>
+      {view === "historial" && <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 2px 12px" }}>Todos los pedidos, incluidos los intentos de pago no completados.</p>}
+
+      {/* Chips por estado */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        <Chip label="Todos" count={countFor("todos")} on={statusFilter === "todos"} onClick={() => setStatusFilter("todos")} color="var(--adm-text2)" />
+        {STATUS_ORDER.map((s) => <Chip key={s} label={STATUS_LABEL[s]} count={countFor(s)} on={statusFilter === s} onClick={() => setStatusFilter(s)} color={STATUS_COLOR[s]} />)}
       </div>
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</p>
       ) : shown.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>
-          {tab === "active" ? "No hay pedidos nuevos por ahora." : tab === "out" ? "No hay pedidos en curso." : "Aún no hay pedidos en el historial."}
-        </div>
+        <div style={{ textAlign: "center", padding: "48px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>No hay pedidos aquí.</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {shown.map((o) => <OrderCard key={o.id} order={o} isNew={newIds.has(o.id)} onStatusChange={updateStatus} />)}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {shown.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} />)}
         </div>
       )}
+
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} />}
     </div>
   );
 }
 
-function OrderCard({ order, isNew, onStatusChange }: { order: Order; isNew: boolean; onStatusChange: (id: string, status: OrderStatus, reason?: string) => Promise<void> }) {
+function Chip({ label, count, on, onClick, color }: { label: string; count: number; on: boolean; onClick: () => void; color: string }) {
+  return (
+    <button onClick={onClick} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 11px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, border: `1px solid ${on ? color : "var(--adm-card-border)"}`, background: on ? `${color}22` : "transparent", color: on ? color : "var(--adm-text2)" }}>
+      {label}<span style={{ fontFamily: FB, fontSize: "0.68rem", opacity: 0.7 }}>{count}</span>
+    </button>
+  );
+}
+
+function OrderRow({ order, isNew, onOpen, onStatusChange }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
-  const paid = order.paymentStatus === "paid";
-  const online = order.paymentMethod === "webpay" || order.paymentMethod === "flow";
+  const pay = payInfo(order);
+  const attempt = isAttempt(order);
 
-  const act = async (status: OrderStatus) => {
-    if (status === "CANCELLED") { setCancelOpen(true); return; }
-    setBusy(true); await onStatusChange(order.id, status); setBusy(false);
-  };
+  const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
 
   return (
-    <div style={{ background: "var(--adm-card)", border: `1px solid ${isNew ? ORANGE : "var(--adm-card-border)"}`, borderRadius: 14, padding: 16, boxShadow: isNew ? `0 0 0 1px ${ORANGE}55` : "none" }}>
-      {/* Header */}
+    <div style={{ background: "var(--adm-card)", border: `1px solid ${isNew ? ORANGE : "var(--adm-card-border)"}`, borderRadius: 14, padding: 14, opacity: attempt ? 0.75 : 1 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-        <div style={{ minWidth: 0 }}>
+        <button onClick={onOpen} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)" }}>#{order.orderNumber ?? order.id.slice(-5)}</span>
-            <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 700, color: "#fff", background: STATUS_COLOR[order.status], padding: "2px 9px", borderRadius: 999 }}>{STATUS_LABEL[order.status]}</span>
-            {isNew && <span style={{ fontFamily: FB, fontSize: "0.62rem", fontWeight: 800, color: ORANGE }}>● NUEVO</span>}
+            <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>#{order.orderNumber ?? order.id.slice(-5)}</span>
+            <span style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, color: "#fff", background: STATUS_COLOR[order.status], padding: "2px 8px", borderRadius: 999 }}>{STATUS_LABEL[order.status]}</span>
+            {isNew && <span style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: ORANGE }}>● NUEVO</span>}
+            {attempt && <span style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: pay.color }}>⚠ {pay.label.toUpperCase()}</span>}
           </div>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", margin: "6px 0 0", fontWeight: 600 }}>{order.customerName} · {order.customerPhone}</p>
-          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 5 }}>
-            {order.orderType === "DELIVERY" ? <><MapPin size={12} /> {order.deliveryAddress || "Delivery"}</> : <><Store size={12} /> Retiro en tienda</>}
-            <span>· {relativeTime(order.createdAt)}</span>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", margin: "6px 0 0", fontWeight: 600, textDecoration: "underline", textDecorationColor: "var(--adm-card-border)", textUnderlineOffset: 3 }}>{order.customerName}</p>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            {order.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {order.orderType === "DELIVERY" ? "Delivery" : "Retiro"} · {relativeTime(order.createdAt)}
           </p>
-        </div>
+        </button>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <p style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>{fmt(order.total)}</p>
-          <p style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 700, margin: "2px 0 0", color: paid ? GREEN : "var(--adm-text3)" }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {online ? (paid ? "Pagado" : "Pago pendiente") : "Por pagar"}</p>
+          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>{fmt(order.total)}</p>
+          <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, margin: "2px 0 0", color: pay.color }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</p>
         </div>
       </div>
 
-      {/* Items */}
-      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 5 }}>
-        {items.map((it, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontFamily: FB, fontSize: "0.82rem" }}>
-            <span style={{ color: "var(--adm-text2)" }}>
-              {it.quantity}× {it.dishName || it.name}
-              {it.selectedOptions?.length ? <span style={{ color: "var(--adm-text3)" }}> · {it.selectedOptions.map((o) => o.optionName).join(", ")}</span> : null}
-            </span>
-            <span style={{ color: "var(--adm-text3)", flexShrink: 0 }}>{fmt((it.unitTotal ?? it.unit_price ?? 0) * it.quantity)}</span>
-          </div>
-        ))}
-        {(order.deliveryFee ?? 0) > 0 && <Row label="Delivery" value={fmt(order.deliveryFee!)} />}
-        {(order.discount ?? 0) > 0 && <Row label={`Descuento${order.couponCode ? ` (${order.couponCode})` : ""}`} value={`−${fmt(order.discount!)}`} accent />}
-      </div>
-
-      {order.notes && <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: "10px 0 0", background: "var(--adm-hover)", padding: "8px 10px", borderRadius: 8 }}>📝 {order.notes}</p>}
-
-      {/* POS */}
-      {order.toteatOrderId && <p style={{ fontFamily: FB, fontSize: "0.7rem", color: GREEN, margin: "8px 0 0" }}>🖨️ Enviado al POS (Toteat #{order.toteatOrderId})</p>}
-      {order.posError && <p style={{ fontFamily: FB, fontSize: "0.7rem", color: RED, margin: "8px 0 0" }}>⚠️ Error POS: {order.posError}</p>}
-
-      {/* Actions */}
-      {actions.length > 0 && (
-        <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-          {actions.map((a) => (
-            <button key={a.status} onClick={() => act(a.status)} disabled={busy} style={{ flex: a.status === "CANCELLED" ? "0 0 auto" : 1, minWidth: 100, padding: "10px 14px", borderRadius: 10, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>{a.label}</button>
-          ))}
+      {actions.length > 0 && !attempt && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {actions.map((a) => <button key={a.status} onClick={() => act(a.status)} disabled={busy} style={{ flex: a.status === "CANCELLED" ? "0 0 auto" : 1, minWidth: 90, padding: "9px 12px", borderRadius: 10, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>{a.label}</button>)}
         </div>
       )}
-
-      {/* Cancel form */}
       {cancelOpen && (
         <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
-          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo de cancelación (requerido)" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" }} />
+          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo de cancelación (requerido)" style={inp} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={async () => { setBusy(true); await onStatusChange(order.id, "CANCELLED", reason.trim()); setBusy(false); setCancelOpen(false); }} disabled={busy || !reason.trim()} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy || !reason.trim() ? "not-allowed" : "pointer", opacity: !reason.trim() ? 0.5 : 1 }}>Confirmar cancelación</button>
             <button onClick={() => setCancelOpen(false)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer" }}>Volver</button>
@@ -231,6 +218,107 @@ function OrderCard({ order, isNew, onStatusChange }: { order: Order; isNew: bool
   );
 }
 
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FB, fontSize: "0.8rem", color: accent ? ACCENT : "var(--adm-text3)" }}><span>{label}</span><span>{value}</span></div>;
+function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const items = Array.isArray(order.items) ? order.items : [];
+  const actions = NEXT_ACTIONS[order.status] ?? [];
+  const pay = payInfo(order);
+  const subtotal = items.reduce((s, it) => s + (it.unitTotal ?? it.unit_price ?? 0) * it.quantity, 0);
+
+  useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
+
+  const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto", borderRadius: "18px 18px 0 0", border: "1px solid var(--adm-card-border)" }}>
+        <div style={{ position: "sticky", top: 0, background: "var(--adm-card)", padding: "16px 18px", borderBottom: "1px solid var(--adm-card-border)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>Pedido #{order.orderNumber ?? order.id.slice(-5)}</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>{fmtFull(order.createdAt)}</p>
+          </div>
+          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 700, color: "#fff", background: STATUS_COLOR[order.status], padding: "3px 10px", borderRadius: 999, flexShrink: 0 }}>{STATUS_LABEL[order.status]}</span>
+          <button onClick={onClose} style={{ ...iconBtn, width: 32, height: 32 }}><X size={16} /></button>
+        </div>
+
+        <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Cliente */}
+          <div style={{ fontFamily: FB, fontSize: "0.84rem" }}>
+            <p style={{ fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{order.customerName || "Cliente"}</p>
+            {order.customerPhone && <p style={{ color: "var(--adm-text2)", margin: "2px 0 0" }}>{order.customerPhone}</p>}
+            {order.customerEmail && <p style={{ color: "var(--adm-text2)", margin: "2px 0 0" }}>{order.customerEmail}</p>}
+            <p style={{ color: "var(--adm-text2)", margin: "6px 0 0" }}>{order.orderType === "DELIVERY" ? `🛵 Delivery${order.deliveryAddress ? ` · ${order.deliveryAddress}` : ""}` : "🏠 Retiro en tienda"}</p>
+          </div>
+
+          {/* Items */}
+          <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+            {items.map((it, i) => (
+              <div key={i} style={{ padding: "10px 12px", borderBottom: i < items.length - 1 ? "1px solid var(--adm-card-border)" : "none", display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", margin: 0 }}><b>{it.quantity}×</b> {it.dishName || it.name}</p>
+                  {it.selectedOptions?.length ? <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{it.selectedOptions.map((o) => o.optionName).join(", ")}</p> : null}
+                </div>
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", flexShrink: 0 }}>{fmt((it.unitTotal ?? it.unit_price ?? 0) * it.quantity)}</span>
+              </div>
+            ))}
+            {items.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 16, margin: 0 }}>Sin items.</p>}
+          </div>
+
+          {/* Montos */}
+          <div style={{ fontFamily: FB, fontSize: "0.84rem", display: "flex", flexDirection: "column", gap: 4 }}>
+            {(order.total !== subtotal) && <div style={{ display: "flex", justifyContent: "space-between", color: "var(--adm-text3)" }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>}
+            {(order.deliveryFee ?? 0) > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "var(--adm-text3)" }}><span>Despacho</span><span>{fmt(order.deliveryFee!)}</span></div>}
+            {(order.discount ?? 0) > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: ACCENT }}><span>Descuento{order.couponCode ? ` (${order.couponCode})` : ""}</span><span>−{fmt(order.discount!)}</span></div>}
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: F, fontWeight: 900, color: "var(--adm-text)", paddingTop: 5, borderTop: "1px solid var(--adm-card-border)" }}><span>Total</span><span>{fmt(order.total)}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", marginTop: 2 }}><span style={{ color: "var(--adm-text3)" }}>Pago</span><span style={{ color: pay.color, fontWeight: 700 }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</span></div>
+          </div>
+
+          {order.notes && <div style={{ fontFamily: FB, fontSize: "0.8rem", background: "var(--adm-hover)", borderRadius: 10, padding: "10px 12px", color: "var(--adm-text2)" }}>📝 {order.notes}</div>}
+          {order.cancellationReason && <div style={{ fontFamily: FB, fontSize: "0.8rem", color: RED }}>Motivo de cancelación: {order.cancellationReason}</div>}
+          {order.toteatOrderId && <div style={{ fontFamily: FB, fontSize: "0.76rem", color: GREEN }}>🖨️ Enviado al POS (Toteat #{order.toteatOrderId})</div>}
+          {order.posError && <div style={{ fontFamily: FB, fontSize: "0.76rem", color: RED }}>⚠️ Error POS: {order.posError}</div>}
+
+          {/* Timeline */}
+          {Array.isArray(order.statusHistory) && order.statusHistory.length > 0 && (
+            <div>
+              <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: "0 0 6px" }}>Línea de tiempo</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {order.statusHistory.map((h, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FB, fontSize: "0.76rem" }}>
+                    <span style={{ color: STATUS_COLOR[h.status as OrderStatus] || "var(--adm-text2)", fontWeight: 600 }}>{STATUS_LABEL[h.status as OrderStatus] || h.status}</span>
+                    <span style={{ color: "var(--adm-text3)" }}>{new Date(h.ts).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" })}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Acciones */}
+          {actions.length > 0 && (
+            cancelOpen ? (
+              <div style={{ padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo de cancelación (requerido)" style={inp} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button onClick={async () => { setBusy(true); await onStatusChange(order.id, "CANCELLED", reason.trim()); setBusy(false); setCancelOpen(false); }} disabled={busy || !reason.trim()} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy || !reason.trim() ? "not-allowed" : "pointer", opacity: !reason.trim() ? 0.5 : 1 }}>Confirmar cancelación</button>
+                  <button onClick={() => setCancelOpen(false)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer" }}>Volver</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {actions.map((a) => <button key={a.status} onClick={() => act(a.status)} disabled={busy} style={{ flex: a.status === "CANCELLED" ? "0 0 auto" : 1, minWidth: 90, padding: "11px 14px", borderRadius: 10, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>{a.label}</button>)}
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const iconBtn: React.CSSProperties = { width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
+const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" };
+function viewBtn(on: boolean): React.CSSProperties {
+  return { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, border: `1px solid ${on ? ACCENT : "var(--adm-card-border)"}`, background: on ? ACCENT : "var(--adm-hover)", color: on ? "#1a1a1a" : "var(--adm-text2)" };
 }
