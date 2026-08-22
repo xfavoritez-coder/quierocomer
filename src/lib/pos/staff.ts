@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { posDb } from './db'
-import { notifyDbChange } from './notify'
+import { saveStaff, deleteStaff } from './events'
 import type { PosStaff } from './types'
 
 export async function saveGarzon(restaurantId: string, name: string): Promise<PosStaff> {
@@ -12,14 +12,12 @@ export async function saveGarzon(restaurantId: string, name: string): Promise<Po
     role: 'garzon',
     active: true,
   }
-  await posDb.staff.put(garzon)
-  notifyDbChange()
+  await saveStaff({ staff: { id: garzon.id, name: garzon.name, pin_hash: garzon.pin_hash, role: garzon.role, active: garzon.active } })
   return garzon
 }
 
 export async function deleteGarzon(id: string): Promise<void> {
-  await posDb.staff.delete(id)
-  notifyDbChange()
+  await deleteStaff({ staff_id: id })
 }
 
 export async function seedDefaultGarzones(restaurantId: string): Promise<void> {

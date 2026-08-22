@@ -18,6 +18,10 @@ export type PosEventType =
   | 'cash_session_opened'
   | 'cash_session_closed'
   | 'bill_requested'
+  | 'tables_configured'
+  | 'sectors_configured'
+  | 'staff_saved'
+  | 'staff_deleted'
 
 export interface PosEvent {
   event_id: string        // UUID v4 generado en cliente
@@ -119,6 +123,22 @@ export interface CashSessionClosedPayload {
   expected_amounts: Record<PaymentMethod, number>
   difference: number
   note?: string
+}
+
+export interface TablesConfiguredPayload {
+  tables: PosTable[]
+}
+
+export interface SectorsConfiguredPayload {
+  sectors: PosSector[]
+}
+
+export interface StaffSavedPayload {
+  staff: { id: string; name: string; pin_hash: string; role: StaffRole; active: boolean }
+}
+
+export interface StaffDeletedPayload {
+  staff_id: string
 }
 
 // ── Projected State (materialized from events) ──────────────────

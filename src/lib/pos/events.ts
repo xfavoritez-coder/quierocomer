@@ -13,6 +13,10 @@ import type {
   CashSessionOpenedPayload,
   CashSessionClosedPayload,
   BillRequestedPayload,
+  TablesConfiguredPayload,
+  SectorsConfiguredPayload,
+  StaffSavedPayload,
+  StaffDeletedPayload,
 } from './types'
 
 // ── Device & user context ────────────────────────────────────────
@@ -111,6 +115,22 @@ export async function openCashSession(payload: CashSessionOpenedPayload) {
 
 export async function closeCashSession(payload: CashSessionClosedPayload) {
   return createEvent('cash_session_closed', payload as unknown as Record<string, unknown>)
+}
+
+export async function configureTables(payload: TablesConfiguredPayload) {
+  return createEvent('tables_configured', payload as unknown as Record<string, unknown>)
+}
+
+export async function configureSectors(payload: SectorsConfiguredPayload) {
+  return createEvent('sectors_configured', payload as unknown as Record<string, unknown>)
+}
+
+export async function saveStaff(payload: StaffSavedPayload) {
+  return createEvent('staff_saved', payload as unknown as Record<string, unknown>)
+}
+
+export async function deleteStaff(payload: StaffDeletedPayload) {
+  return createEvent('staff_deleted', payload as unknown as Record<string, unknown>)
 }
 
 // ── Projection engine (incremental) ─────────────────────────────
@@ -283,6 +303,32 @@ export async function projectEvent(event: PosEvent): Promise<void> {
     case 'bill_requested': {
       const d = p as unknown as BillRequestedPayload
       await posDb.accounts.update(d.account_id, { status: 'cuenta_pedida' })
+      break
+    }
+
+    case 'tables_configured': {
+      const d = p as unknown as TablesConfiguredPayload
+      await posDb.posTables.where('restaurant_id').equals(event.restaurant_id).delete()
+      await posDb.posTables.bulkPut(d.tables)
+      break
+    }
+
+    case 'sectors_configured': {
+      const d = p as unknown as SectorsConfiguredPayload
+      await posDb.posSectors.where('restaurant_id').equals(event.restaurant_id).delete()
+      await posDb.posSectors.bulkPut(d.sectors)
+      break
+    }
+
+    case 'staff_saved': {
+      const d = p as unknown as StaffSavedPayload
+      await posDb.staff.put({ ...d.staff, restaurant_id: event.restaurant_id })
+      break
+    }
+
+    case 'staff_deleted': {
+      const d = p as unknown as StaffDeletedPayload
+      await posDb.staff.delete(d.staff_id)
       break
     }
   }
