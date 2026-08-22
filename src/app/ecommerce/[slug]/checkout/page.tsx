@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
+import { storeFontVars } from "@/components/ecommerce/StoreFront";
+import StoreStyles from "@/components/ecommerce/StoreStyles";
 
 export default function EcommerceCheckoutPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -13,7 +15,8 @@ export default function EcommerceCheckoutPage({ params }: { params: Promise<{ sl
   useEffect(() => { setMounted(true); }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="qc-storefront min-h-screen bg-gray-50" style={storeFontVars}>
+      <StoreStyles />
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
           <Link href={`/ecommerce/${slug}`} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">

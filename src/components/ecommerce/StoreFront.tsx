@@ -7,6 +7,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import ProductModal from "./ProductModal";
 import CartDrawer from "./CartDrawer";
+import StoreStyles from "./StoreStyles";
 
 interface Props {
   tenant: StoreTenant;
@@ -18,6 +19,19 @@ interface Props {
 export function shortAddr(address: string) {
   return address.split(",")[0].trim();
 }
+
+// Fuente del storefront (sans limpio, estilo Servio 1.0). Se fija localmente
+// porque la app global define --font-body/--font-display solo por página, y en
+// esta ruta quedarían vacíos (la regla global caería a Times/serif).
+export const STORE_SANS = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+export const storeFontVars: React.CSSProperties = {
+  fontFamily: STORE_SANS,
+  ["--font-body" as string]: STORE_SANS,
+  ["--font-display" as string]: STORE_SANS,
+  ["--font-category" as string]: STORE_SANS,
+  ["--font-product-name" as string]: STORE_SANS,
+  ["--font-product-detail" as string]: STORE_SANS,
+} as React.CSSProperties;
 
 export default function StoreFront({ tenant, categories, products }: Props) {
   const primaryColor = tenant.primaryColor;
@@ -114,7 +128,8 @@ export default function StoreFront({ tenant, categories, products }: Props) {
   const badge = mounted ? itemCount : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="qc-storefront min-h-screen bg-gray-50" style={storeFontVars}>
+      <StoreStyles />
       {/* ── Header — solo logo ─────────────────────────────────── */}
       <header ref={headerRef} className="sticky top-0 z-40 shadow-sm bg-white">
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
@@ -174,7 +189,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
               onChange={(e) => setSearch(e.target.value)}
             />
           ) : (
-            <div ref={catScrollRef} className="flex overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
+            <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
