@@ -28,6 +28,11 @@ export interface PedidosYaCreds {
   clientSecret?: string;
 }
 
+/** Google Maps: autocompletado de direcciones, geocoding y (futuro) zonas por mapa. */
+export interface GoogleMapsCreds {
+  apiKey?: string;
+}
+
 /** Credenciales del POS Toteat para inyectar pedidos (estilo Servio / deliveryhandroll). */
 export interface ToteatPosCreds {
   apiUrl?: string; // default https://api.toteat.com/mw/or/1.0
@@ -50,6 +55,7 @@ export interface EcommerceConfig {
   flow?: FlowCreds;
   uberDirect?: UberDirectCreds;
   pedidosya?: PedidosYaCreds;
+  googleMaps?: GoogleMapsCreds;
   pos?: PosConfig;
 }
 
@@ -70,6 +76,7 @@ export function integrationStatus(cfg: EcommerceConfig) {
     flow: !!(cfg.flow?.apiKey && cfg.flow?.secretKey),
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
+    googleMaps: !!cfg.googleMaps?.apiKey,
     // POS: configurado si hay un proveedor seleccionado con sus credenciales mínimas.
     pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
   };

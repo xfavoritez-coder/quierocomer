@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -10,7 +10,7 @@ const ACCENT = "#F4A623";
 
 type Status = {
   enabled: boolean;
-  integrations: { webpay: boolean; flow: boolean; uberDirect: boolean; pedidosya: boolean; pos: boolean };
+  integrations: { webpay: boolean; flow: boolean; uberDirect: boolean; pedidosya: boolean; googleMaps: boolean; pos: boolean };
   webpayEnv: string;
   posProvider: string;
 };
@@ -104,6 +104,7 @@ export default function EcommerceHomePage() {
         <IntegrationCard icon={Wallet} name="Flow" kind="Pago online (flow.cl)" ok={!!ints?.flow} />
         <IntegrationCard icon={Truck} name="Uber Direct" kind="Delivery con courier" ok={!!ints?.uberDirect} />
         <IntegrationCard icon={Bike} name="PedidosYa" kind="Delivery con courier" ok={!!ints?.pedidosya} />
+        <IntegrationCard icon={MapIcon} name="Google Maps" kind="Direcciones y geocoding" ok={!!ints?.googleMaps} />
         <IntegrationCard icon={Store} name="POS" kind="Envío de pedidos al punto de venta" ok={!!ints?.pos} note={status ? POS_LABELS[status.posProvider] || status.posProvider : undefined} />
       </div>
       <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "10px 2px 0", lineHeight: 1.5 }}>
