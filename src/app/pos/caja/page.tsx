@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { usePosNav } from '../lib/usePosNav'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import {
@@ -56,13 +55,11 @@ export default function CajaPage() {
 
   const handleOpen = async () => {
     const amount = parseInt(initialAmount.replace(/\D/g, ''), 10)
-    if (!amount || amount < 0) { toast.error('Ingresa un monto válido'); return }
+    if (!amount || amount < 0) { return }
     setOpening(true)
     try {
       await openCashSession({ session_id: uuidv4(), initial_amount: amount })
-      toast.success('Caja abierta')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setOpening(false)
     }
@@ -104,10 +101,8 @@ export default function CajaPage() {
           note: closingNote || undefined,
         })
       }
-      toast.success('Caja cerrada')
       goHome()
     } catch (err) {
-      toast.error('Error al cerrar caja: ' + String(err))
     } finally {
       setClosing(false)
       setConfirmOpen(false)
@@ -344,7 +339,7 @@ export default function CajaPage() {
             </button>
             <button
               className="print"
-              onClick={() => toast.info('Impresión de cierre disponible con puente conectado')}
+              onClick={() => {}}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/>

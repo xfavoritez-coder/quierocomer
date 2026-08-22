@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { toast } from 'sonner'
 import { useCatalog, sendRound } from '@/lib/pos'
 import type { CachedProduct, RoundItem, ItemModifier } from '@/lib/pos/types'
 import ModifierModal from './ModifierModal'
@@ -86,11 +85,8 @@ export default function ProductPickerSheet({ accountId, restaurantId, onClose }:
     setSending(true)
     try {
       await sendRound({ round_id: uuidv4(), account_id: accountId, items: orderItems })
-      const total = orderItems.reduce((s, i) => s + i.quantity, 0)
-      toast.success(`${total} ítem${total !== 1 ? 's' : ''} agregados`)
       onClose()
     } catch (err) {
-      toast.error('Error al agregar: ' + String(err))
     } finally {
       setSending(false)
     }

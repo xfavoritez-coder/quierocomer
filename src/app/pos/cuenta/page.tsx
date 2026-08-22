@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { toast } from 'sonner'
 import {
   useAccount, usePosSync, useStaff,
   setRestaurantId, setUserId,
@@ -48,9 +47,7 @@ function CuentaPageInner() {
     setRequestingBill(true)
     try {
       await requestBill({ account_id: accountId })
-      toast.success('Cuenta pedida')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setRequestingBill(false)
     }
@@ -58,15 +55,13 @@ function CuentaPageInner() {
 
   const handleVoidItem = useCallback(async () => {
     if (!voidModal || !accountId) return
-    if (!voidReason.trim()) { toast.error('Escribe un motivo'); return }
+    if (!voidReason.trim()) { return }
     setVoiding(true)
     try {
       await voidItem({ account_id: accountId, item_id: voidModal.itemId, reason: voidReason.trim() })
-      toast.success('Ítem anulado')
       setVoidModal(null)
       setVoidReason('')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setVoiding(false)
     }
@@ -78,23 +73,19 @@ function CuentaPageInner() {
     if (!confirm('¿Anular esta cuenta? Esta acción queda registrada.')) return
     try {
       await voidAccount({ account_id: accountId, reason: 'Anulada desde vista de cuenta' })
-      toast.success('Cuenta anulada')
       navigate('/pos')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     }
   }, [accountId, navigate])
 
   const handleSaveCovers = useCallback(async () => {
     const n = parseInt(coversInput)
-    if (!n || n < 1) { toast.error('Número inválido'); return }
+    if (!n || n < 1) { return }
     setSavingMeta(true)
     try {
       await updateAccountCovers(accountId, n)
-      toast.success('Comensales actualizados')
       setSettingsModal(null)
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setSavingMeta(false)
     }
@@ -104,10 +95,8 @@ function CuentaPageInner() {
     setSavingMeta(true)
     try {
       await updateAccountGarzon(accountId, name)
-      toast.success('Garzón actualizado')
       setSettingsModal(null)
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setSavingMeta(false)
     }

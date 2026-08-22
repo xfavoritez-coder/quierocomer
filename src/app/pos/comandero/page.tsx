@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
-import { toast } from 'sonner'
 import {
   useCatalog,
   usePosSync,
@@ -128,20 +127,12 @@ export default function ComanderoPage() {
             note: i.note,
           })),
         })
-        if (!printResult.ok) {
-          toast.warning(`Enviado a cocina, pero fallo la impresion: ${printResult.error}`)
-        } else {
-          toast.success(`Enviado a cocina (${orderItems.length} ítems)`)
-        }
-      } else {
-        toast.success(`Enviado a cocina (${orderItems.length} ítems)`)
       }
 
       setOrderItems([])
       setShowOrder(false)
       navigate(`/pos/cuenta?id=${targetAccountId}`)
     } catch (err) {
-      toast.error('Error al enviar: ' + String(err))
     } finally {
       setSending(false)
     }

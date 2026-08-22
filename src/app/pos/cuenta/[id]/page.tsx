@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { toast } from 'sonner'
 import {
   useAccount, usePosSync,
   setRestaurantId, setUserId,
@@ -35,9 +34,7 @@ export default function CuentaPage() {
     setRequestingBill(true)
     try {
       await requestBill({ account_id: accountId })
-      toast.success('Cuenta pedida')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setRequestingBill(false)
     }
@@ -45,15 +42,13 @@ export default function CuentaPage() {
 
   const handleVoidItem = useCallback(async () => {
     if (!voidModal || !accountId) return
-    if (!voidReason.trim()) { toast.error('Escribe un motivo'); return }
+    if (!voidReason.trim()) { return }
     setVoiding(true)
     try {
       await voidItem({ account_id: accountId, item_id: voidModal.itemId, reason: voidReason.trim() })
-      toast.success('Ítem anulado')
       setVoidModal(null)
       setVoidReason('')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     } finally {
       setVoiding(false)
     }
@@ -64,10 +59,8 @@ export default function CuentaPage() {
     if (!confirm('¿Anular esta cuenta? Esta acción queda registrada.')) return
     try {
       await voidAccount({ account_id: accountId, reason: 'Anulada desde vista de cuenta' })
-      toast.success('Cuenta anulada')
       router.push('/pos')
     } catch (err) {
-      toast.error('Error: ' + String(err))
     }
   }, [accountId, router])
 

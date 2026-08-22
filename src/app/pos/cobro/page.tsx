@@ -2,7 +2,6 @@
 
 import { useState, useCallback, Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { toast } from 'sonner'
 import { useAccount, usePosSync, setRestaurantId, setUserId, recordPayment, closeAccount } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
@@ -149,30 +148,24 @@ function CobroPageInner() {
         const unpaid = items.filter(i => !newPaid.has(i.id))
         if (unpaid.length === 0) {
           await closeAccount({ account_id: accountId })
-          toast.success('Cuenta cerrada')
           goHome()
           return
         }
         setPaidItemIds(newPaid)
         setSelectedItemIds(new Set())
-        toast.success('Pago registrado')
       } else if (splitMode === 'parts') {
         if (currentPart >= partsCount) {
           await closeAccount({ account_id: accountId })
-          toast.success('Cuenta cerrada')
           goHome()
           return
         }
         setCurrentPart(c => c + 1)
-        toast.success(`Pago ${currentPart} de ${partsCount} registrado`)
       } else {
         await closeAccount({ account_id: accountId })
-        toast.success('Cuenta cerrada')
         goHome()
         return
       }
     } catch (err) {
-      toast.error('Error al registrar pago: ' + String(err))
     } finally {
       setProcessing(false)
     }
