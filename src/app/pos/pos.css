@@ -235,37 +235,37 @@
 .pos-mod-add .price{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- mapa de mesas ---------- */
-.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:26px}
+.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:26px}
 .pos-mesa{
   border:1px solid var(--line);
-  border-left-width:4px;
+  border-left-width:3px;
   border-left-color:var(--line);
   background:var(--surface);
-  border-radius:14px;
-  padding:18px 18px 16px;
+  border-radius:12px;
+  padding:12px 13px 11px;
   display:flex;
   flex-direction:column;
   gap:0;
   cursor:pointer;
   transition:.16s;
-  min-height:152px;
+  min-height:108px;
   font-family:var(--sans);
   text-align:left;
   box-shadow:var(--sh-1);
 }
 .pos-mesa:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
-.pos-mesa-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:6px}
-.pos-mesa .mn{font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:-.02em;line-height:1.05}
-.pos-mesa-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:6px;flex-shrink:0;margin-top:5px}
-.pos-mesa .ms{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:auto;padding-bottom:12px}
-.pos-mesa-bottom{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:auto}
-.pos-mesa .mt{font-family:var(--mono);font-weight:700;font-size:19px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.pos-mesa-time{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:500;flex-shrink:0}
+.pos-mesa-top{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:4px}
+.pos-mesa .mn{font-family:var(--mono);font-weight:700;font-size:22px;letter-spacing:-.02em;line-height:1.05}
+.pos-mesa-badge{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:5px;flex-shrink:0;margin-top:4px}
+.pos-mesa .ms{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:auto;padding-bottom:8px;line-height:1.35}
+.pos-mesa-bottom{display:flex;align-items:baseline;justify-content:space-between;gap:4px;margin-top:auto}
+.pos-mesa .mt{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.pos-mesa-time{font-family:var(--mono);font-size:10px;color:var(--ink-3);font-weight:500;flex-shrink:0}
 
 /* libre */
 .pos-mesa.libre{background:#f7f6f3;border-color:#e8e5df;border-left-color:#e8e5df;box-shadow:none}
-.pos-mesa.libre .mn{color:#b0aa9f;font-size:24px}
-.pos-mesa.libre .ms{color:#c0b8ae;font-size:10px;font-weight:500;letter-spacing:.08em;padding-bottom:0}
+.pos-mesa.libre .mn{color:#b0aa9f;font-size:18px}
+.pos-mesa.libre .ms{color:#c0b8ae;font-size:9.5px;font-weight:500;letter-spacing:.07em;padding-bottom:0}
 
 /* abierta */
 .pos-mesa.abierta{background:#fff8ed;border-color:#f0e0c0;border-left-color:var(--amber)}
@@ -274,21 +274,21 @@
 .pos-mesa.abierta .mt{color:var(--amber-press)}
 .pos-mesa.abierta .pos-mesa-badge{background:var(--amber-tint);color:var(--amber-press)}
 
-/* con_pedidos → azul "EN COCINA" */
+/* con_pedidos → azul */
 .pos-mesa.con_pedidos{background:#f0f3ff;border-color:#ccd4f8;border-left-color:#4b68f0}
 .pos-mesa.con_pedidos .mn{color:var(--ink)}
 .pos-mesa.con_pedidos .ms{color:#4b68f0}
 .pos-mesa.con_pedidos .mt{color:#4b68f0}
 .pos-mesa.con_pedidos .pos-mesa-badge{background:#dde3fc;color:#4b68f0}
 
-/* cuenta_pedida → teal "COBRAR" */
+/* cuenta_pedida → teal */
 .pos-mesa.cuenta_pedida{background:#edfaf4;border-color:#b8e8d4;border-left-color:#16a073}
 .pos-mesa.cuenta_pedida .mn{color:var(--ink)}
 .pos-mesa.cuenta_pedida .ms{color:#16a073}
 .pos-mesa.cuenta_pedida .mt{color:#16a073}
 .pos-mesa.cuenta_pedida .pos-mesa-badge{background:#c8eed8;color:#16a073}
 
-/* pagada_parcial → same as cuenta_pedida */
+/* pagada_parcial → mismo que cuenta_pedida */
 .pos-mesa.pagada_parcial{background:#edfaf4;border-color:#b8e8d4;border-left-color:#16a073}
 .pos-mesa.pagada_parcial .mn{color:var(--ink)}
 .pos-mesa.pagada_parcial .ms{color:#16a073}
