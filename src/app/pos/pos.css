@@ -238,8 +238,7 @@
 .pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:26px}
 .pos-mesa{
   border:1px solid var(--line);
-  border-left-width:3px;
-  border-left-color:var(--line);
+  border-left-width:1px;
   background:var(--surface);
   border-radius:12px;
   padding:10px 13px;
@@ -265,24 +264,24 @@
 .pos-mesa-time{font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:500;flex-shrink:0}
 .pos-mesa-covers{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:var(--mono);font-size:12px;font-weight:700}
 .pos-mesa.abierta .pos-mesa-covers,.pos-mesa.con_pedidos .pos-mesa-covers,.pos-mesa.pagada_parcial .pos-mesa-covers{background:rgba(222,124,0,.12);color:var(--amber-press)}
-.pos-mesa.cuenta_pedida .pos-mesa-covers{background:rgba(22,160,115,.12);color:#16a073}
+.pos-mesa.cuenta_pedida .pos-mesa-covers{background:rgba(37,99,235,.12);color:#2563eb}
 
 /* libre */
-.pos-mesa.libre{background:#f7f6f3;border-color:#e8e5df;border-left-color:#e8e5df;box-shadow:none}
+.pos-mesa.libre{background:#f7f6f3;border-color:#e8e5df;box-shadow:none}
 .pos-mesa.libre .mn{color:#b0aa9f;font-size:18px}
 .pos-mesa.libre .ms{color:#c0b8ae;font-size:9.5px;font-weight:500;letter-spacing:.07em}
 
 /* tomada (abierta + con_pedidos + pagada_parcial) → amber */
-.pos-mesa.abierta,.pos-mesa.con_pedidos,.pos-mesa.pagada_parcial{background:#fff8ed;border-color:#f0e0c0;border-left-color:var(--amber)}
+.pos-mesa.abierta,.pos-mesa.con_pedidos,.pos-mesa.pagada_parcial{background:#fff8ed;border-color:#f0e0c0}
 .pos-mesa.abierta .mn,.pos-mesa.con_pedidos .mn,.pos-mesa.pagada_parcial .mn{color:var(--ink)}
 .pos-mesa.abierta .ms,.pos-mesa.con_pedidos .ms,.pos-mesa.pagada_parcial .ms{color:var(--amber-press)}
 .pos-mesa.abierta .mt,.pos-mesa.con_pedidos .mt,.pos-mesa.pagada_parcial .mt{color:var(--amber-press)}
 
 /* pidió cuenta → teal */
-.pos-mesa.cuenta_pedida{background:#edfaf4;border-color:#b8e8d4;border-left-color:#16a073}
+.pos-mesa.cuenta_pedida{background:#eff6ff;border-color:#bfdbfe}
 .pos-mesa.cuenta_pedida .mn{color:var(--ink)}
-.pos-mesa.cuenta_pedida .ms{color:#16a073}
-.pos-mesa.cuenta_pedida .mt{color:#16a073}
+.pos-mesa.cuenta_pedida .ms{color:#2563eb}
+.pos-mesa.cuenta_pedida .mt{color:#2563eb}
 
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
@@ -340,6 +339,14 @@
 .pos-modal-ok{flex:1.5;border:0;background:var(--amber);color:#fff;font-family:var(--sans);font-weight:600;font-size:14px;padding:12px;border-radius:var(--r-btn);cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 16px rgba(222,124,0,.24);transition:.16s;min-height:44px}
 .pos-modal-ok:hover{background:var(--amber-press)}
 .pos-modal-ok:disabled{background:var(--line-strong);color:var(--ink-3);box-shadow:none;cursor:default}
+
+/* ---------- desktop split layout ---------- */
+/* El grid se aplica inline via JS (useIsDesktop), estos son los estilos de cada columna */
+.pos-split-left{overflow-y:auto;overflow-x:hidden}
+.pos-split-right{border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pos-split-right.empty{background:var(--sunk)}
+/* Mesa seleccionada actualmente en el panel */
+.pos-mesa.panel-active{outline:2px solid var(--amber);outline-offset:2px}
 
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){

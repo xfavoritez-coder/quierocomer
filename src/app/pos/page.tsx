@@ -22,6 +22,9 @@ import PosHeader from './components/PosHeader'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant } from './lib/usePosRestaurant'
 import type { PosRestaurant } from './lib/usePosRestaurant'
+import { useIsDesktop } from './lib/useIsDesktop'
+import CuentaPanel from './components/CuentaPanel'
+import ComanderoPanel from './components/ComanderoPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -353,8 +356,13 @@ function AccountCard({ account, onNavigate, from }: { account: Account; onNaviga
 
 // ── Main page ─────────────────────────────────────────────────────
 
+type DesktopPanel =
+  | { type: 'cuenta'; accountId: string }
+  | { type: 'comandero'; accountId: string | null }
+
 export default function PosHomePage() {
   const navigate = usePosNav()
+  const isDesktop = useIsDesktop()
   const { restaurantId, restaurant } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const accounts = useOpenAccounts()
@@ -363,6 +371,21 @@ export default function PosHomePage() {
   const sectors = useSectors(restaurantId)
   const garzones = useStaff(restaurantId)
   const pendingCount = usePendingSyncCount()
+
+  // Desktop split-panel state
+  const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null)
+
+  // Un timer cada 60s — el texto de tiempo solo cambia una vez por minuto
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setTick(n => n + 1), 60_000)
+    return () => clearInterval(t)
+  }, [])
+
+  // Cerrar panel al cambiar a mobile
+  useEffect(() => {
+    if (!isDesktop) setDesktopPanel(null)
+  }, [isDesktop])
 
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== 'undefined') {
@@ -407,7 +430,11 @@ export default function PosHomePage() {
     if (status === 'libre') {
       setMesaOpenModal({ tableId, tableNumber, tableLabel: tableLabel ?? `Mesa ${tableNumber}` })
     } else if (accountId) {
-      navigate(`/pos/cuenta?id=${accountId}`)
+      if (isDesktop) {
+        setDesktopPanel({ type: 'cuenta', accountId })
+      } else {
+        navigate(`/pos/cuenta?id=${accountId}`)
+      }
     }
   }
 
@@ -424,7 +451,11 @@ export default function PosHomePage() {
       opened_by_name: garzonName || undefined,
     })
     setMesaOpenModal(null)
-    navigate(`/pos/comandero?cuenta=${id}`)
+    if (isDesktop) {
+      setDesktopPanel({ type: 'comandero', accountId: id })
+    } else {
+      navigate(`/pos/comandero?cuenta=${id}`)
+    }
   }
 
   const handleNewRetiro = (name: string, time: string) => {
@@ -451,6 +482,12 @@ export default function PosHomePage() {
     navigate(`/pos/cuenta?id=${id}`)
   }
 
+  // ID de mesa activa en el panel desktop (para resaltarla visualmente)
+  const activePanelAccountId = desktopPanel?.accountId ?? null
+  const activePanelTableId = activePanelAccountId
+    ? accounts.find(a => a.id === activePanelAccountId)?.table_id ?? null
+    : null
+
   return (
     <div className="pos-shell">
       <PosHeader
@@ -475,8 +512,11 @@ export default function PosHomePage() {
         ))}
       </div>
 
-      {/* ── Content ─────────────────────────────────────────── */}
-      <div className="pos-scroll">
+      {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
+      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+      {/* ── Content (columna izquierda en desktop) ──────────── */}
+      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'}>
         <div className="pos-pad">
 
             {/* MESAS */}
@@ -527,10 +567,11 @@ export default function PosHomePage() {
                     const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
                     const itemCount = acc ? acc.items.filter(i => !i.voided).length : 0
                     const isCuentaPedida = status === 'cuenta_pedida'
+                    const isActivePanel = isDesktop && activePanelTableId === table.id
                     return (
                       <button
                         key={table.id}
-                        className={`pos-mesa ${status}`}
+                        className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
                         onClick={() => handleMesaClick(table.id, table.number, table.label)}
                       >
                         <span className="mn">{table.label || table.number}</span>
@@ -622,6 +663,43 @@ export default function PosHomePage() {
         </div>
       </div>
 
+      {/* ── Panel derecho (solo desktop) ────────────────────── */}
+      {isDesktop && (
+        <div className={`pos-split-right${desktopPanel ? '' : ' empty'}`}>
+          {desktopPanel?.type === 'cuenta' && (
+            <CuentaPanel
+              accountId={desktopPanel.accountId}
+              fromTab={tab}
+              isPanel
+              onClose={() => setDesktopPanel(null)}
+              onGoToComandero={(id) => setDesktopPanel({ type: 'comandero', accountId: id })}
+            />
+          )}
+          {desktopPanel?.type === 'comandero' && (
+            <ComanderoPanel
+              accountId={desktopPanel.accountId}
+              isPanel
+              onClose={() => setDesktopPanel(null)}
+              onBack={() => desktopPanel.accountId
+                ? setDesktopPanel({ type: 'cuenta', accountId: desktopPanel.accountId })
+                : setDesktopPanel(null)
+              }
+            />
+          )}
+          {!desktopPanel && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona una mesa</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      </div>{/* /pos-split-wrapper */}
+
       {/* ── Modals ──────────────────────────────────────────── */}
       {retiroModal && <RetiroModal onClose={() => setRetiroModal(false)} onConfirm={handleNewRetiro} />}
       {deliveryModal && <DeliveryModal onClose={() => setDeliveryModal(false)} onConfirm={handleNewDelivery} />}
@@ -646,7 +724,7 @@ export default function PosHomePage() {
 function timeSince(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'ahora'
+  if (mins < 1) return '< 1 min'
   if (mins < 60) return `${mins} min`
   const hrs = Math.floor(mins / 60)
   return `${hrs}h ${mins % 60}m`
