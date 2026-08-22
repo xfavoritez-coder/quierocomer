@@ -73,6 +73,7 @@
 
 .pos-grid-wrap{overflow-y:auto;background:var(--surface);display:flex;flex-direction:column}
 .pos-grid{padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-content:start}
+.pos-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-content:start}
 .pos-prod{display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.16s;box-shadow:var(--sh-1);text-align:left;font-family:var(--sans);width:100%}
 .pos-prod:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:var(--line-strong)}
 .pos-prod:active{transform:translateY(-1px) scale(.99)}

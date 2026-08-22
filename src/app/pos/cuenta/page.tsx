@@ -4,11 +4,13 @@ import { useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
-  useAccount, usePosSync,
+  useAccount, usePosSync, useStaff,
   setRestaurantId, setUserId,
   voidItem, requestBill, voidAccount,
+  updateAccountCovers, updateAccountGarzon,
 } from '@/lib/pos'
 import PosHeader from '../components/PosHeader'
+import ProductPickerSheet from '../components/ProductPickerSheet'
 import { usePosNav } from '../lib/usePosNav'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
@@ -20,11 +22,20 @@ function CuentaPageInner() {
   const accountId = searchParams.get('id') ?? ''
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const account = useAccount(accountId)
+  const garzones = useStaff(TEST_RESTAURANT_ID)
 
+  // Sheet / modal states
+  const [showAddItem, setShowAddItem] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsModal, setSettingsModal] = useState<'comensales' | 'garzon' | null>(null)
   const [voidModal, setVoidModal] = useState<{ itemId: string; name: string } | null>(null)
+
+  // Field states
   const [voidReason, setVoidReason] = useState('')
   const [voiding, setVoiding] = useState(false)
   const [requestingBill, setRequestingBill] = useState(false)
+  const [coversInput, setCoversInput] = useState('')
+  const [savingMeta, setSavingMeta] = useState(false)
 
   useState(() => {
     setRestaurantId(TEST_RESTAURANT_ID)
@@ -62,6 +73,7 @@ function CuentaPageInner() {
 
   const handleVoidAccount = useCallback(async () => {
     if (!accountId) return
+    setShowSettings(false)
     if (!confirm('¿Anular esta cuenta? Esta acción queda registrada.')) return
     try {
       await voidAccount({ account_id: accountId, reason: 'Anulada desde vista de cuenta' })
@@ -71,6 +83,34 @@ function CuentaPageInner() {
       toast.error('Error: ' + String(err))
     }
   }, [accountId, navigate])
+
+  const handleSaveCovers = useCallback(async () => {
+    const n = parseInt(coversInput)
+    if (!n || n < 1) { toast.error('Número inválido'); return }
+    setSavingMeta(true)
+    try {
+      await updateAccountCovers(accountId, n)
+      toast.success('Comensales actualizados')
+      setSettingsModal(null)
+    } catch (err) {
+      toast.error('Error: ' + String(err))
+    } finally {
+      setSavingMeta(false)
+    }
+  }, [accountId, coversInput])
+
+  const handleChangeGarzon = useCallback(async (name: string) => {
+    setSavingMeta(true)
+    try {
+      await updateAccountGarzon(accountId, name)
+      toast.success('Garzón actualizado')
+      setSettingsModal(null)
+    } catch (err) {
+      toast.error('Error: ' + String(err))
+    } finally {
+      setSavingMeta(false)
+    }
+  }, [accountId])
 
   if (!account) {
     return (
@@ -113,9 +153,20 @@ function CuentaPageInner() {
         syncing={syncing}
         onBack={() => navigate('/pos')}
         rightSlot={
-          <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 17, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
-            ${account.total.toLocaleString('es-CL')}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 17, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+              ${account.total.toLocaleString('es-CL')}
+            </span>
+            {!isClosed && (
+              <button
+                onClick={() => setShowSettings(true)}
+                style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-2)', minWidth: 44, minHeight: 44 }}
+                title="Opciones de mesa"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -144,12 +195,13 @@ function CuentaPageInner() {
               )}
             </div>
           )}
+
           {account.rounds.length === 0 ? (
             <div className="pos-empty" style={{ minHeight: 160 }}>
               <div className="ring">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
               </div>
-              <p>Sin pedidos aún.<br/>Toca &quot;Nueva ronda&quot; para agregar.</p>
+              <p>Sin pedidos aún.<br/>Toca &quot;Agregar ítem&quot; para empezar.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -195,37 +247,171 @@ function CuentaPageInner() {
               ))}
             </div>
           )}
-
-          {!isClosed && (
-            <button onClick={handleVoidAccount}
-              style={{ marginTop: 24, width: '100%', padding: '12px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink-3)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
-              Anular cuenta
-            </button>
-          )}
         </div>
       </div>
 
+      {/* Bottom bar */}
       {!isClosed && (
         <div style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', display: 'flex', gap: 10 }}>
-          <button onClick={() => navigate(`/pos/comandero?cuenta=${accountId}`)}
-            style={{ flex: 1, padding: '13px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)' }}>
-            + Nueva ronda
+          {/* Primary: Agregar ítem */}
+          <button
+            onClick={() => setShowAddItem(true)}
+            style={{ flex: 1, padding: '13px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 2px 4px rgba(222,124,0,.2),0 4px 12px rgba(222,124,0,.2)' }}
+          >
+            + Agregar ítem
           </button>
           {account.status !== 'cuenta_pedida' && activeItems.length > 0 && (
             <button onClick={handleRequestBill} disabled={requestingBill}
-              style={{ padding: '13px 18px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1 }}>
-              Pedir cuenta
+              style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1 }}>
+              Cuenta
             </button>
           )}
           {activeItems.length > 0 && (
             <button onClick={() => navigate(`/pos/cobro?cuenta=${accountId}`)}
-              style={{ padding: '13px 18px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
+              style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
               Cobrar
             </button>
           )}
         </div>
       )}
 
+      {/* Product picker sheet */}
+      {showAddItem && (
+        <ProductPickerSheet
+          accountId={accountId}
+          restaurantId={TEST_RESTAURANT_ID}
+          onClose={() => setShowAddItem(false)}
+        />
+      )}
+
+      {/* Settings drawer */}
+      {showSettings && (
+        <>
+          <div className="pos-drawer-overlay" onClick={() => setShowSettings(false)} />
+          <div className="pos-sheet" style={{ maxHeight: 'auto' }}>
+            <div className="pos-sheet-header">
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{accountName}</div>
+              <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 0, cursor: 'pointer', padding: 8, color: 'var(--ink-3)' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div style={{ padding: '8px 10px' }}>
+              <button
+                onClick={() => { setShowSettings(false); setCoversInput(String(account.covers ?? '')); setSettingsModal('comensales') }}
+                className="pos-drawer-item"
+              >
+                <span className="pos-drawer-ic">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </span>
+                Editar comensales
+                {account.covers && <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{account.covers}</span>}
+              </button>
+              <button
+                onClick={() => { setShowSettings(false); setSettingsModal('garzon') }}
+                className="pos-drawer-item"
+              >
+                <span className="pos-drawer-ic">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                Cambiar garzón
+                {account.opened_by_name && <span style={{ marginLeft: 'auto', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{account.opened_by_name}</span>}
+              </button>
+              <button
+                className="pos-drawer-item"
+                style={{ color: 'var(--ink-3)', cursor: 'not-allowed' }}
+              >
+                <span className="pos-drawer-ic">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </span>
+                Separar cuenta
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ink-3)', background: 'var(--sunk)', padding: '2px 7px', borderRadius: 99 }}>Próximamente</span>
+              </button>
+              <div style={{ height: 1, background: 'var(--line)', margin: '8px 0' }} />
+              <button
+                onClick={handleVoidAccount}
+                className="pos-drawer-item"
+                style={{ color: '#e05252' }}
+              >
+                <span className="pos-drawer-ic" style={{ background: '#fef2f2', color: '#e05252' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </span>
+                Anular mesa
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Comensales modal */}
+      {settingsModal === 'comensales' && (
+        <div className="pos-modal-overlay">
+          <div className="pos-modal">
+            <div className="pos-modal-title">Editar comensales</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+              {[1,2,3,4,5,6,7,8].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setCoversInput(String(n))}
+                  style={{ width: 44, height: 44, borderRadius: 10, border: `1px solid ${coversInput === String(n) ? 'var(--amber)' : 'var(--line)'}`, background: coversInput === String(n) ? 'var(--amber-tint-2)' : 'var(--sunk)', color: coversInput === String(n) ? 'var(--amber-press)' : 'var(--ink)', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'var(--mono)' }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <label className="pos-modal-label">Otro número</label>
+            <input
+              className="pos-modal-input"
+              type="number"
+              min={1}
+              placeholder="Ej: 12"
+              value={coversInput}
+              onChange={e => setCoversInput(e.target.value)}
+            />
+            <div className="pos-modal-actions">
+              <button className="pos-modal-cancel" onClick={() => setSettingsModal(null)}>Cancelar</button>
+              <button className="pos-modal-ok" onClick={handleSaveCovers} disabled={savingMeta}>
+                {savingMeta ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Garzón modal */}
+      {settingsModal === 'garzon' && (
+        <div className="pos-modal-overlay">
+          <div className="pos-modal">
+            <div className="pos-modal-title">Cambiar garzón</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {garzones.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0' }}>Sin garzones configurados</p>
+              ) : garzones.map(g => (
+                <button
+                  key={g.id}
+                  onClick={() => handleChangeGarzon(g.name)}
+                  disabled={savingMeta}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderRadius: 12, border: `1px solid ${account.opened_by_name === g.name ? 'var(--amber)' : 'var(--line)'}`, background: account.opened_by_name === g.name ? 'var(--amber-tint-2)' : 'var(--sunk)', cursor: 'pointer', fontFamily: 'var(--sans)' }}
+                >
+                  <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 13, color: 'var(--amber-press)', flexShrink: 0 }}>
+                    {g.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: account.opened_by_name === g.name ? 'var(--amber-press)' : 'var(--ink)' }}>{g.name}</span>
+                  {account.opened_by_name === g.name && (
+                    <span style={{ marginLeft: 'auto' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="pos-modal-actions">
+              <button className="pos-modal-cancel" onClick={() => setSettingsModal(null)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Void item modal */}
       {voidModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(27,26,23,.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: 480, background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: 24 }}>

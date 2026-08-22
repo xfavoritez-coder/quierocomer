@@ -41,5 +41,8 @@ export {
   useCategoryProducts,
   useTables,
   useSectors,
+  useStaff,
 } from './hooks'
 export { saveTables, saveSectors, updateTableSector, updateTableLabel } from './tables'
+export { saveGarzon, deleteGarzon, seedDefaultGarzones } from './staff'
+export { updateAccountCovers, updateAccountGarzon } from './account-meta'
