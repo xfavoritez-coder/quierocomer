@@ -126,7 +126,7 @@ function CuentaPageInner() {
   if (!account) {
     return (
       <div className="pos-shell">
-        <PosHeader mode="back" eyebrow="Cuenta" subtitle="Cargando..." onBack={() => navigate('/pos')} syncing={syncing} />
+        <PosHeader mode="back" subtitle="Cargando..." onBack={() => navigate('/pos')} syncing={syncing} />
         <div className="pos-empty" style={{ flex: 1 }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: 'var(--amber)', animation: 'spin 1s linear infinite' }} />
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -150,7 +150,7 @@ function CuentaPageInner() {
     <div className="pos-shell">
       <PosHeader
         mode="back"
-        eyebrow={accountName}
+        subtitle={accountName}
         syncing={syncing}
         onBack={() => navigate('/pos')}
         rightSlot={!isClosed ? (
