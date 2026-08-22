@@ -42,4 +42,4 @@ export {
   useTables,
   useSectors,
 } from './hooks'
-export { saveTables, saveSectors, updateTableSector } from './tables'
+export { saveTables, saveSectors, updateTableSector, updateTableLabel } from './tables'

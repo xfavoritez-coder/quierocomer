@@ -384,7 +384,7 @@ export default function PosHomePage() {
                         className={`pos-mesa ${status}`}
                         onClick={() => handleMesaClick(table.id, table.number)}
                       >
-                        <span className="mn">{table.number}</span>
+                        <span className="mn">{table.label || table.number}</span>
                         {acc && acc.items.filter(i => !i.voided).length > 0 ? (
                           <>
                             <span className="ms">{acc.items.filter(i => !i.voided).length} ítem{acc.items.filter(i => !i.voided).length !== 1 ? 's' : ''}</span>

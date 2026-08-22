@@ -24,6 +24,11 @@ export async function updateTableSector(tableId: string, sectorId: string | null
   notifyDbChange()
 }
 
+export async function updateTableLabel(tableId: string, label: string): Promise<void> {
+  await posDb.posTables.update(tableId, { label: label || undefined })
+  notifyDbChange()
+}
+
 export async function saveSectors(restaurantId: string, sectors: { name: string; position: number }[]): Promise<void> {
   await posDb.posSectors.where('restaurant_id').equals(restaurantId).delete()
   const rows: PosSector[] = sectors.map(s => ({
