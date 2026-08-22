@@ -23,7 +23,7 @@ import type { PosRestaurant } from './lib/usePosRestaurant'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'todos' | 'mesas' | 'retiro' | 'delivery' | 'online'
+type Tab = 'todos' | 'mesas' | 'retiro' | 'delivery'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -45,7 +45,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Para llevar' },
   { id: 'delivery', label: 'Delivery' },
-  { id: 'online', label: 'Online' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -56,17 +55,17 @@ function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
       <div className="pos-modal" onClick={e => e.stopPropagation()}>
-        <div className="pos-modal-title">Nuevo retiro</div>
-        <label className="pos-modal-label">Nombre del cliente</label>
+        <div className="pos-modal-title">Nuevo para llevar</div>
+        <label className="pos-modal-label">Nombre del cliente <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(opcional)</span></label>
         <input
           autoFocus
           className="pos-modal-input"
           placeholder="Ej: Juan"
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && name.trim() && onConfirm(name.trim(), time)}
+          onKeyDown={e => e.key === 'Enter' && onConfirm(name.trim(), time)}
         />
-        <label className="pos-modal-label">Hora de retiro (opcional)</label>
+        <label className="pos-modal-label">Hora de retiro <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(opcional)</span></label>
         <input
           className="pos-modal-input"
           type="time"
@@ -77,10 +76,9 @@ function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
           <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
           <button
             className="pos-modal-ok"
-            disabled={!name.trim()}
             onClick={() => onConfirm(name.trim(), time)}
           >
-            Crear retiro
+            Crear pedido
           </button>
         </div>
       </div>
@@ -294,8 +292,8 @@ function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashS
 
 function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (url: string) => void }) {
   const isActive = account.total > 0
-  const typeLabel = account.type === 'mostrador' ? 'MO' : account.type === 'retiro' ? 'RE' : 'DE'
-  const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 'mo' : account.type === 'retiro' ? 're' : 'de'
+  const typeLabel = account.type === 'mostrador' ? 'DI' : account.type === 'retiro' ? 'RE' : 'DE'
+  const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 're' : account.type === 'retiro' ? 're' : 'de'
 
   return (
     <button
@@ -308,11 +306,11 @@ function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (u
           <div className={`pos-chip ${chipClass}`}>{typeLabel}</div>
           <div>
             <div className="pos-t-name">
-              {account.type === 'mostrador'
-                ? 'Mostrador'
-                : account.type === 'retiro'
-                  ? `Retiro · ${account.customer_name}`
-                  : `Delivery · ${account.customer_name}`}
+              {account.type === 'delivery'
+                ? `Delivery · ${account.customer_name}`
+                : account.customer_name
+                  ? `Para llevar · ${account.customer_name}`
+                  : 'Para llevar'}
             </div>
             {account.delivery_address && (
               <div className="pos-t-address">{account.delivery_address}</div>
@@ -398,16 +396,14 @@ export default function PosHomePage() {
     navigate(`/pos/comandero?cuenta=${id}`)
   }
 
-  const handleNewMostrador = () => {
-    const id = uuidv4()
-    openAccount({ account_id: id, account_type: 'mostrador' })
-    navigate(`/pos/cuenta?id=${id}`)
-  }
-
   const handleNewRetiro = (name: string, time: string) => {
     setRetiroModal(false)
     const id = uuidv4()
-    openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
+    if (name) {
+      openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
+    } else {
+      openAccount({ account_id: id, account_type: 'mostrador' })
+    }
     navigate(`/pos/cuenta?id=${id}`)
   }
 
@@ -561,16 +557,10 @@ export default function PosHomePage() {
           {/* RETIRO */}
           {tab === 'retiro' && (
             <>
-              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                <button className="pos-new-btn" style={{ marginBottom: 0 }} onClick={handleNewMostrador}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                  Mostrador
-                </button>
-                <button className="pos-new-btn" style={{ marginBottom: 0 }} onClick={() => setRetiroModal(true)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                  Retiro
-                </button>
-              </div>
+              <button className="pos-new-btn" onClick={() => setRetiroModal(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                Nuevo para llevar
+              </button>
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
@@ -602,19 +592,6 @@ export default function PosHomePage() {
                 </div>
               )}
             </>
-          )}
-
-          {/* ONLINE */}
-          {tab === 'online' && (
-            <div className="pos-empty" style={{ minHeight: 200 }}>
-              <div className="ring">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
-              </div>
-              <p>Pedidos online — próximamente</p>
-              <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6 }}>
-                Los pedidos de tu web llegarán aquí automáticamente.
-              </p>
-            </div>
           )}
 
         </div>
