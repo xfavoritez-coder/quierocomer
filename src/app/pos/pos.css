@@ -4,7 +4,7 @@
 */
 
 /* ---------- shell ---------- */
-.pos-shell{height:100dvh;background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
+.pos-shell{height:100dvh;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;position:relative}
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
 
 /* ---------- top bar ---------- */
@@ -195,7 +195,7 @@
 .pos-sheet-backdrop{position:fixed;inset:0;background:rgba(27,26,23,.4);z-index:40}
 .pos-sheet{position:fixed;bottom:0;left:0;right:0;z-index:41;background:var(--surface);border-radius:20px 20px 0 0;max-height:80dvh;display:flex;flex-direction:column}
 @media(min-width:900px){
-  .pos-sheet{top:52px;right:16px;bottom:auto;left:auto;width:260px;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.08);max-height:none}
+  .pos-sheet{position:absolute;top:54px;right:12px;bottom:auto;left:auto;width:260px;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.07);max-height:none}
   .pos-sheet-header{padding:14px 16px 12px}
   .pos-drawer-overlay{background:transparent}
 }
