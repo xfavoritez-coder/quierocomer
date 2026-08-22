@@ -1,6 +1,7 @@
 'use client'
 
 import { usePendingSyncCount } from '@/lib/pos'
+import { usePosRestaurant } from '../lib/usePosRestaurant'
 
 interface PosHeaderProps {
   mode?: 'brand' | 'back'
@@ -18,6 +19,7 @@ export default function PosHeader({
   mode = 'brand', eyebrow, subtitle, onBack, onMenu, onPendingClick, onBrandClick, rightSlot,
 }: PosHeaderProps) {
   const pendingCount = usePendingSyncCount()
+  const { restaurant } = usePosRestaurant()
 
   return (
     <header className="pos-bar">
@@ -25,7 +27,7 @@ export default function PosHeader({
         <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           <span className="mk">Q</span>
           QuieroComer
-          <small>POS</small>
+          <small>{restaurant?.name ?? 'POS'}</small>
         </div>
       ) : (
         <div className="pos-back">

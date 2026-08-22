@@ -80,6 +80,13 @@ export default function ProductPickerSheet({ accountId, restaurantId, onClose }:
     setOrderItems(prev => prev.filter(i => i.item_id !== itemId))
   }, [])
 
+  const updateQty = useCallback((itemId: string, delta: number) => {
+    setOrderItems(prev => prev
+      .map(i => i.item_id === itemId ? { ...i, quantity: i.quantity + delta } : i)
+      .filter(i => i.quantity > 0)
+    )
+  }, [])
+
   const handleSend = useCallback(async () => {
     if (orderItems.length === 0 || sending) return
     setSending(true)
@@ -210,14 +217,23 @@ export default function ProductPickerSheet({ accountId, restaurantId, onClose }:
             {/* Selected chips */}
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, scrollbarWidth: 'none', paddingBottom: 2 }}>
               {orderItems.map(item => (
-                <div key={item.item_id} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)', borderRadius: 99, padding: '5px 8px 5px 10px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--amber-press)' }}>{item.quantity}×</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.dish_name}</span>
+                <div key={item.item_id} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)', borderRadius: 99, padding: '4px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   <button
-                    onClick={() => removeItem(item.item_id)}
-                    style={{ display: 'grid', placeItems: 'center', background: 'none', border: 0, cursor: 'pointer', color: 'var(--amber-press)', padding: 0, width: 16, height: 16, flexShrink: 0, marginLeft: 2 }}
+                    onClick={() => updateQty(item.item_id, -1)}
+                    style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--amber-tint)', background: 'var(--surface)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--amber-press)', flexShrink: 0 }}
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M8 2L2 8M2 2l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    {item.quantity === 1
+                      ? <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M8 2L2 8M2 2l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      : <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    }
+                  </button>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color: 'var(--amber-press)', minWidth: 14, textAlign: 'center' }}>{item.quantity}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-2)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.dish_name}</span>
+                  <button
+                    onClick={() => updateQty(item.item_id, 1)}
+                    style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--amber-tint)', background: 'var(--surface)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--amber-press)', flexShrink: 0 }}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M5 2v6M2 5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </button>
                 </div>
               ))}

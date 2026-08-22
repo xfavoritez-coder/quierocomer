@@ -38,17 +38,31 @@ export default function OrderPanel({ items, onUpdateQuantity, onRemove, onSend, 
 
           return (
             <div key={item.item_id} className="pos-oi">
-              <span className="q">{item.quantity}&times;</span>
+              {/* Quantity stepper */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                <button
+                  onClick={() => item.quantity <= 1 ? onRemove(item.item_id) : onUpdateQuantity(item.item_id, -1)}
+                  style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: item.quantity <= 1 ? '#e05252' : 'var(--ink-2)', flexShrink: 0 }}
+                >
+                  {item.quantity <= 1
+                    ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14"/></svg>
+                  }
+                </button>
+                <span className="q" style={{ minWidth: 18, textAlign: 'center' }}>{item.quantity}</span>
+                <button
+                  onClick={() => onUpdateQuantity(item.item_id, 1)}
+                  style={{ width: 26, height: 26, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-2)', flexShrink: 0 }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
               <div className="n">
                 {item.dish_name}
                 {item.modifiers.length > 0 && (
-                  <span className="mod">
-                    {item.modifiers.map(m => m.option_name).join(', ')}
-                  </span>
+                  <span className="mod">{item.modifiers.map(m => m.option_name).join(', ')}</span>
                 )}
-                {item.note && (
-                  <span className="note">{item.note}</span>
-                )}
+                {item.note && <span className="note">{item.note}</span>}
               </div>
               <span className="p">${lineTotal.toLocaleString('es-CL')}</span>
             </div>
