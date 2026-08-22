@@ -174,15 +174,6 @@ export default function CuentaPanel({
         onBack={onClose}
         rightSlot={!isClosed ? (
           <>
-            {/* Botón ir al comandero */}
-            <button
-              onClick={() => onGoToComandero(accountId)}
-              title="Agregar pedido (comandero)"
-              style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-2)', minWidth: 44, minHeight: 44 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-            {/* Ajustes */}
             <button
               onClick={() => setShowSettings(true)}
               style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-2)', minWidth: 44, minHeight: 44 }}
