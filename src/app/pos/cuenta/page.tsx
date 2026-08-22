@@ -165,6 +165,14 @@ function CuentaPageInner() {
         <div style={{ padding: '20px 20px 120px' }}>
           {/* Info row */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+            {account.status === 'cuenta_pedida' && (
+              <InfoChip
+                icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
+                accent
+              >
+                Cuenta solicitada
+              </InfoChip>
+            )}
             <InfoChip icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}>
               Abierta hace {elapsed}
             </InfoChip>
@@ -246,7 +254,7 @@ function CuentaPageInner() {
           {account.status !== 'cuenta_pedida' && activeItems.length > 0 && (
             <button onClick={handleRequestBill} disabled={requestingBill}
               style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1 }}>
-              Cuenta
+              {requestingBill ? 'Enviando...' : 'Pedir cuenta'}
             </button>
           )}
           {activeItems.length > 0 && (
@@ -439,10 +447,16 @@ function timeSince(isoDate: string): string {
   return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`
 }
 
-function InfoChip({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function InfoChip({ icon, children, accent }: { icon: React.ReactNode; children: React.ReactNode; accent?: boolean }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500, color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 99, padding: '5px 10px' }}>
-      <span style={{ color: 'var(--ink-3)', display: 'flex' }}>{icon}</span>
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
+      color: accent ? 'var(--slate)' : 'var(--ink-2)',
+      background: accent ? 'var(--slate-tint)' : 'var(--sunk)',
+      border: `1px solid ${accent ? 'var(--slate)' : 'var(--line)'}`,
+      borderRadius: 99, padding: '5px 10px',
+    }}>
+      <span style={{ color: accent ? 'var(--slate)' : 'var(--ink-3)', display: 'flex' }}>{icon}</span>
       {children}
     </span>
   )
