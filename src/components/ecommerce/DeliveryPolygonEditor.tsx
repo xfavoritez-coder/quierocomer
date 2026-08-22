@@ -29,6 +29,7 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
   const excludedPoly = useRef<any>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [drawing, setDrawing] = useState<DrawTarget>(null);
+  const [mapReady, setMapReady] = useState(false);
   const drawingRef = useRef<DrawTarget>(null);
   drawingRef.current = drawing;
 
@@ -41,8 +42,9 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     if (!ready || !mapDiv.current || mapRef.current) return;
     const g = (window as any).google;
     const center = config.origin ?? SANTIAGO;
-    const map = new g.maps.Map(mapDiv.current, { center, zoom: 13, mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
+    const map = new g.maps.Map(mapDiv.current, { center, zoom: 12, mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
     mapRef.current = map;
+    setMapReady(true);
 
     // Marcador de origen (arrastrable)
     if (config.origin) placeOrigin(config.origin);
@@ -95,9 +97,9 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     originMarker.current.addListener("dragend", (e: any) => onChange({ origin: { lat: e.latLng.lat(), lng: e.latLng.lng() } }));
   }
 
-  // ── Redibujar polígonos cuando cambian ──
+  // ── Redibujar polígonos cuando cambian (o cuando el mapa está listo) ──
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapReady || !mapRef.current) return;
     const g = (window as any).google;
     if (includedPoly.current) includedPoly.current.setMap(null);
     if (config.polygonIncluded.length >= 2) {
@@ -108,7 +110,21 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     if (excludedRings.length) {
       excludedPoly.current = new g.maps.Polygon({ paths: excludedRings, map: mapRef.current, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
     }
-  }, [config.polygonIncluded, config.polygonExcluded]);
+  }, [mapReady, config.polygonIncluded, config.polygonExcluded]);
+
+  // Al tener mapa + cobertura, encuadrar la vista a la zona de reparto.
+  const fittedRef = useRef(false);
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || fittedRef.current) return;
+    const g = (window as any).google;
+    const pts = [...config.polygonIncluded, ...config.polygonExcluded.flat()];
+    if (config.origin) pts.push(config.origin);
+    if (pts.length < 2) return;
+    const bounds = new g.maps.LatLngBounds();
+    pts.forEach((p) => bounds.extend(p));
+    mapRef.current.fitBounds(bounds);
+    fittedRef.current = true;
+  }, [mapReady, config.polygonIncluded, config.polygonExcluded, config.origin]);
 
   if (!gmapsKey) {
     return <div style={{ padding: 16, borderRadius: 12, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>Falta la API Key de Google Maps. Pídela al equipo de QuieroComer para configurar el mapa.</div>;
