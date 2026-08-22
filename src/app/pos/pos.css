@@ -22,7 +22,7 @@
 .pos-back{display:flex;align-items:center;gap:8px}
 .pos-back .bk{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.14s;min-width:44px;min-height:44px}
 .pos-back .bk:hover{border-color:var(--line-strong);background:var(--sunk)}
-.pos-back-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.pos-back-title{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);font-weight:600}
 .pos-back-sub{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-top:1px}
 
 /* ---------- home ---------- */
