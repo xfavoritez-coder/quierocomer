@@ -7,7 +7,7 @@ import type { PosEvent } from './types'
 // ── Config ───────────────────────────────────────────────────────
 
 const BATCH_SIZE = 50
-const SYNC_INTERVAL_MS = 5_000
+const SYNC_INTERVAL_MS = 3_000
 const MAX_RETRIES = 10
 
 let _syncTimer: ReturnType<typeof setInterval> | null = null
@@ -27,9 +27,11 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
   syncCycle()
   _syncTimer = setInterval(syncCycle, SYNC_INTERVAL_MS)
 
-  // Flush pending events immediately when connection returns
+  // Flush pending events immediately when connection returns or tab gets focus
   if (typeof window !== 'undefined') {
     window.addEventListener('online', handleOnline)
+    window.addEventListener('focus', handleOnline)
+    document.addEventListener('visibilitychange', handleVisibility)
   }
 
   // Listen for Supabase Realtime events from other devices
@@ -43,6 +45,8 @@ export function stopSync() {
   }
   if (typeof window !== 'undefined') {
     window.removeEventListener('online', handleOnline)
+    window.removeEventListener('focus', handleOnline)
+    document.removeEventListener('visibilitychange', handleVisibility)
   }
   unsubscribeFromRemoteEvents()
 }
@@ -57,6 +61,12 @@ export async function forceSyncNow() {
 // Small delay after 'online' event — browser fires it before DNS/TCP is truly ready
 function handleOnline() {
   setTimeout(syncCycle, 500)
+}
+
+function handleVisibility() {
+  if (document.visibilityState === 'visible') {
+    syncCycle()
+  }
 }
 
 async function syncCycle() {
@@ -164,9 +174,12 @@ async function pushEvents() {
 // ── Pull: Supabase → local ───────────────────────────────────────
 
 async function pullEvents() {
+  if (!supabase) return
+
   // Get the highest server_seq we have locally
   const lastLocal = await posDb.events
-    .orderBy('server_seq')
+    .where('server_seq')
+    .above(0)
     .last()
 
   const cursor = lastLocal?.server_seq ?? 0
