@@ -396,6 +396,7 @@ model Restaurant {
   ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya (solo superadmin)
   ecommerceDeliveryZones     Json?                    // zonas de delivery por comuna que cada local se autoadministra
   ecommerceDeliveryConfig    Json?                    // config de delivery por polígono+distancia (origen, tarifas, polígonos)
+  ecommerceStoreConfig       Json?                    // config de la tienda: colores de marca, métodos de pago visibles, notas
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]

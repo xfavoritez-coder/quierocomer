@@ -179,10 +179,12 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           </section>
 
           {/* Notas */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">Notas (opcional)</h2>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Ej: sin cebolla, tocar el timbre…" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 resize-none" />
-          </section>
+          {tenant.notesEnabled && (
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h2 className="font-black text-sm text-gray-900 mb-3">Notas (opcional)</h2>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Ej: sin cebolla, tocar el timbre…" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 resize-none" />
+            </section>
+          )}
 
           {/* Resumen */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">

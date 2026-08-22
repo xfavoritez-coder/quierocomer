@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export const runtime = "nodejs";
 
@@ -41,14 +42,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true } as const;
+    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
     if (!restaurant || !restaurant.ecommerceEnabled) return NextResponse.json({ error: "Tienda no disponible" }, { status: 404 });
 
-    const allowed = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
-    if (!allowed.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
+    const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
+    if (!store.paymentMethods.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
 
     const isDelivery = orderType === "DELIVERY";
 

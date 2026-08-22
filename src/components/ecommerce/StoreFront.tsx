@@ -38,6 +38,7 @@ export const storeFontVars: React.CSSProperties = {
 
 export default function StoreFront({ tenant, categories, products }: Props) {
   const primaryColor = tenant.primaryColor;
+  const categoryColor = tenant.categoryColor;
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -136,7 +137,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
       <Toaster position="top-center" richColors />
 
       {/* ── Header — solo logo ─────────────────────────────────── */}
-      <header ref={headerRef} className="sticky top-0 z-40 shadow-sm bg-white">
+      <header ref={headerRef} className="sticky top-0 z-40 shadow-sm" style={{ background: tenant.headerBgColor }}>
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
           <div className="flex items-center">
             {tenant.logoUrl ? (
@@ -201,7 +202,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
                   data-cat={cat.id}
                   onClick={() => scrollToCategory(cat.id)}
                   className={`shrink-0 px-4 py-3 text-xs font-black uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeCat === cat.id ? "border-current" : "border-transparent text-gray-400 hover:text-gray-800"}`}
-                  style={activeCat === cat.id ? { color: primaryColor, borderColor: primaryColor } : {}}
+                  style={activeCat === cat.id ? { color: categoryColor, borderColor: categoryColor } : {}}
                 >
                   {cat.name}
                 </button>
@@ -221,7 +222,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
               if (!catProducts.length) return null;
               return (
                 <section key={cat.id} id={`cat-${cat.id}`}>
-                  <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: primaryColor }}>{cat.name}</h2>
+                  <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
                       <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} />

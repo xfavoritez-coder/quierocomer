@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export interface StoreTenant {
   id: string;
@@ -14,6 +15,9 @@ export interface StoreTenant {
   logoUrl: string | null;
   bannerUrl: string | null;
   primaryColor: string;
+  headerBgColor: string;
+  categoryColor: string;
+  notesEnabled: boolean;
   address: string | null;
   whatsapp: string | null;
   phone: string | null;
@@ -68,7 +72,6 @@ export interface StorefrontData {
   products: StoreProduct[];
 }
 
-const DEFAULT_PRIMARY = "#e63946";
 
 /** Solo el tenant (para el checkout), sin cargar el catálogo. */
 export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | null> {
@@ -78,16 +81,18 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true,
     },
   });
   if (!r || !r.ecommerceEnabled) return null;
+  const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
   return {
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
-    primaryColor: r.cartaAccentColor || DEFAULT_PRIMARY, address: r.address, whatsapp: r.whatsapp, phone: r.phone,
+    primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled,
+    address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     deliveryEnabled: !!r.orderingDelivery, pickupEnabled: true,
     waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
-    paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean),
+    paymentMethods: store.paymentMethods,
     deliveryZones: parseDeliveryZones(r.ecommerceDeliveryZones).filter((z) => z.active),
     deliveryConfig: parseDeliveryConfig(r.ecommerceDeliveryConfig),
     googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
@@ -105,7 +110,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true,
     },
   });
 
@@ -190,7 +195,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
     }
   }
 
-  const paymentMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const fallbackMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: fallbackMethods });
 
   return {
     tenant: {
@@ -199,7 +205,10 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       name: restaurant.name,
       logoUrl: restaurant.logoUrl,
       bannerUrl: restaurant.orderingBannerUrl,
-      primaryColor: restaurant.cartaAccentColor || DEFAULT_PRIMARY,
+      primaryColor: store.primaryColor,
+      headerBgColor: store.headerBgColor,
+      categoryColor: store.categoryColor,
+      notesEnabled: store.notesEnabled,
       address: restaurant.address,
       whatsapp: restaurant.whatsapp,
       phone: restaurant.phone,
@@ -207,7 +216,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       pickupEnabled: true,
       waitTime: restaurant.orderingWaitTime,
       minAmount: restaurant.orderingMinAmount ?? null,
-      paymentMethods,
+      paymentMethods: store.paymentMethods,
       deliveryZones: parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active),
       deliveryConfig: parseDeliveryConfig(restaurant.ecommerceDeliveryConfig),
       googleMapsKey: parseEcommerceConfig(restaurant.ecommerceConfig).googleMaps?.apiKey || null,
