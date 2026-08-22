@@ -41,3 +41,17 @@ export async function seedDefaultGarzones(restaurantId: string): Promise<void> {
   await saveGarzon(restaurantId, 'Garzón 1')
   await saveGarzon(restaurantId, 'Garzón 2')
 }
+
+/** One-time dedup: if multiple staff share the same name, keep the first and delete the rest */
+export async function deduplicateStaff(restaurantId: string): Promise<void> {
+  const all = await posDb.staff.where('restaurant_id').equals(restaurantId).toArray()
+  const seen = new Map<string, string>() // name → id to keep
+  for (const s of all) {
+    const key = s.name.trim().toLowerCase()
+    if (!seen.has(key)) {
+      seen.set(key, s.id)
+    } else {
+      await deleteStaff({ staff_id: s.id })
+    }
+  }
+}
