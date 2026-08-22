@@ -12,6 +12,18 @@ import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
 import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp, ShoppingCart } from "lucide-react";
+
+// Carrito con línea diagonal cuando el producto está bloqueado de Pedidos online.
+function OrderingCartIcon({ blocked, size = 16 }: { blocked: boolean; size?: number }) {
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <ShoppingCart size={size} color={blocked ? "#ff6b6b" : "#888"} />
+      {blocked && (
+        <span style={{ position: "absolute", width: size + 6, height: 2, background: "#ff6b6b", transform: "rotate(45deg)", borderRadius: 2, boxShadow: "0 0 0 1.5px var(--adm-card, #fff)" }} />
+      )}
+    </span>
+  );
+}
 import ImportMenuModal from "@/components/admin/ImportMenuModal";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -359,7 +371,7 @@ export default function AdminMenus() {
   const [lactoseFreeFilter, setLactoseFreeFilter] = useState(false);
   const [soyFreeFilter, setSoyFreeFilter] = useState(false);
   const [nutsFilter, setNutsFilter] = useState(false);
-  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden" | "blocked">("all");
   const [sortMode, setSortMode] = useState<"category" | "alpha" | "recent">("category");
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
@@ -593,6 +605,7 @@ export default function AdminMenus() {
     // Visibility filter
     if (visibilityFilter === "hidden") list = list.filter(d => !d.isActive);
     else if (visibilityFilter === "visible") list = list.filter(d => d.isActive);
+    else if (visibilityFilter === "blocked") list = list.filter(d => d.hideFromOrdering);
 
     // Recently created first, then featured/recommended always at the top,
     // then the rest by the selected sort mode.
@@ -1568,6 +1581,24 @@ export default function AdminMenus() {
               </button>
             ) : null;
           })()}
+          {/* Blocked-from-ordering filter */}
+          {(() => {
+            const blockedCount = dishes.filter(d => d.hideFromOrdering).length;
+            return blockedCount > 0 ? (
+              <button
+                onClick={() => setVisibilityFilter(v => v === "blocked" ? "all" : "blocked")}
+                style={{
+                  padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F,
+                  fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0,
+                  background: visibilityFilter === "blocked" ? "rgba(255,107,107,0.15)" : "var(--adm-input)",
+                  color: visibilityFilter === "blocked" ? "#ff6b6b" : "var(--adm-text2)",
+                }}
+              >
+                <ShoppingCart size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+                {blockedCount} bloqueados online
+              </button>
+            ) : null;
+          })()}
           {/* Separator */}
           <div style={{ width: 1, height: 24, background: "var(--adm-card-border)", flexShrink: 0, alignSelf: "center" }} />
           <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "var(--adm-input)", color: spicyFilter ? "#e85530" : "var(--adm-text2)" }}>
@@ -1880,7 +1911,7 @@ export default function AdminMenus() {
                   </button>
                   {/* Carrito — ocultar de Pedidos online */}
                   <button onClick={() => toggleDishOrdering(d)} title={d.hideFromOrdering ? "Mostrar en Pedidos online" : "Ocultar de Pedidos online"} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ShoppingCart size={16} color={d.hideFromOrdering ? "#ff6b6b" : "#888"} />
+                    <OrderingCartIcon blocked={!!d.hideFromOrdering} />
                   </button>
                   {/* More menu */}
                   <div style={{ position: "relative" }}>
