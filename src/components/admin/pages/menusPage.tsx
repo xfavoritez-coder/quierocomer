@@ -11,7 +11,7 @@ import MenuGroupsManager from "@/components/admin/MenuGroupsManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
-import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp } from "lucide-react";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp, ShoppingCart } from "lucide-react";
 import ImportMenuModal from "@/components/admin/ImportMenuModal";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -21,7 +21,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
   id: string; name: string; description: string | null; price: number; discountPrice: number | null;
-  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; ingredients: string | null;
+  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
   category: { id: string; name: string };
 }
@@ -685,6 +685,25 @@ export default function AdminMenus() {
     }
   };
 
+  // Ocultar / mostrar el producto SOLO en Pedidos online (/pedir), sin afectar la carta.
+  const toggleDishOrdering = async (dish: Dish) => {
+    const newHidden = !dish.hideFromOrdering;
+    setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, hideFromOrdering: newHidden } : d));
+    if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, hideFromOrdering: newHidden } : prev);
+    try {
+      const res = await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hideFromOrdering: newHidden }) });
+      if (!res.ok) {
+        setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, hideFromOrdering: dish.hideFromOrdering } : d));
+        if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, hideFromOrdering: dish.hideFromOrdering } : prev);
+        console.error("Toggle ordering failed:", await res.text());
+      }
+    } catch (e) {
+      setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, hideFromOrdering: dish.hideFromOrdering } : d));
+      if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, hideFromOrdering: dish.hideFromOrdering } : prev);
+      console.error("Toggle ordering error:", e);
+    }
+  };
+
   const toggleBulk = (id: string) => {
     setBulkSelected(prev => {
       const next = new Set(prev);
@@ -1120,6 +1139,10 @@ export default function AdminMenus() {
                   ) : (
                     <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {t("menu_show_btn")}</>
                   )}
+                </button>
+                <button onClick={() => toggleDishOrdering(selectedDish)} style={{ marginTop: 8, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.hideFromOrdering ? "rgba(74,222,128,0.1)" : "rgba(255,100,100,0.1)", color: selectedDish.hideFromOrdering ? "#4ade80" : "#ff6b6b", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+                  <ShoppingCart size={17} />
+                  {selectedDish.hideFromOrdering ? "Mostrar en Pedidos online" : "Ocultar de Pedidos online"}
                 </button>
               </div>
 
@@ -1851,9 +1874,13 @@ export default function AdminMenus() {
                   }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Star size={16} fill={isRec ? "#EF9F27" : "none"} color={isRec ? "#EF9F27" : "#888"} />
                   </button>
-                  {/* Eye */}
-                  <button onClick={() => toggleDishActive(d)} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {/* Eye — ocultar de la carta */}
+                  <button onClick={() => toggleDishActive(d)} title={d.isActive ? "Ocultar de la carta" : "Mostrar en la carta"} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {d.isActive ? <Eye size={16} color="#888" /> : <EyeOff size={16} color="#C5C0B5" />}
+                  </button>
+                  {/* Carrito — ocultar de Pedidos online */}
+                  <button onClick={() => toggleDishOrdering(d)} title={d.hideFromOrdering ? "Mostrar en Pedidos online" : "Ocultar de Pedidos online"} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ShoppingCart size={16} color={d.hideFromOrdering ? "#ff6b6b" : "#888"} />
                   </button>
                   {/* More menu */}
                   <div style={{ position: "relative" }}>

@@ -120,7 +120,8 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     // al instante; el `restaurant` viene de getRestaurantBySlug que cachea 5 min.
     filterBarEnabled: (config as any).filterBarEnabled ?? true,
     categories: filteredCats,
-    dishes: (restaurant as any).dishes.filter((d: any) => visibleCatIds.has(d.categoryId)),
+    // En Pedidos online se ocultan los platos marcados como hideFromOrdering (siguen en la carta /qr).
+    dishes: (restaurant as any).dishes.filter((d: any) => visibleCatIds.has(d.categoryId) && !d.hideFromOrdering),
   };
 
   // Empty carta: demo restaurant with no dishes yet

@@ -630,6 +630,7 @@ model Dish {
   tags                  DishTag[]
   isHero                Boolean                @default(false)
   isActive              Boolean                @default(true)
+  hideFromOrdering      Boolean                @default(false) // oculto en Pedidos online (/pedir) pero visible en la carta
   stockCountdown        Int?
   ingredients           String?
   allergens             String?
