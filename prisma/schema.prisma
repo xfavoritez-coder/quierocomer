@@ -438,6 +438,7 @@ model OnlineOrder {
   paymentGateway  String? // "webpay" (u otro) cuando el pago es online
   webpayToken     String? // token_ws de la transacción Webpay
   webpayBuyOrder  String? // buy_order enviado a Webpay
+  flowToken       String? // token de la transacción Flow
   paidAt          DateTime?
   items           Json // CartItem[]
   total           Int

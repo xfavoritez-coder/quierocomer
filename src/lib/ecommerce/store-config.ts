@@ -4,7 +4,7 @@
 //  Vive en Restaurant.ecommerceStoreConfig (JSON).
 // ═══════════════════════════════════════════════════════════
 
-export const ALL_PAYMENT_METHODS = ["webpay", "efectivo", "transferencia", "tarjeta"] as const;
+export const ALL_PAYMENT_METHODS = ["webpay", "flow", "efectivo", "transferencia", "tarjeta"] as const;
 export type PaymentMethod = (typeof ALL_PAYMENT_METHODS)[number];
 
 export const DEFAULT_PRIMARY = "#e63946";

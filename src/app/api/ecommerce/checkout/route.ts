@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
+import { flowInit, flowSettingsFor } from "@/lib/payments/flow";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export const runtime = "nodejs";
 
-const ONLINE_METHODS = ["webpay"];
+const ONLINE_METHODS = ["webpay", "flow"];
 
 interface CartItemIn {
   product_id: string;
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
 
     const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
     if (!store.paymentMethods.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
+    if (paymentMethod === "flow" && !customerEmail?.trim()) return NextResponse.json({ error: "El email es obligatorio para pagar con Flow" }, { status: 400 });
 
     const isDelivery = orderType === "DELIVERY";
 
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
         deliveryAddress: deliveryAddress?.trim() || null,
         paymentMethod,
         paymentStatus: isOnline ? "pending" : "unpaid",
-        paymentGateway: isOnline ? "webpay" : null,
+        paymentGateway: isOnline ? paymentMethod : null,
         items: storedItems as unknown as object,
         total,
         deliveryFee,
@@ -126,9 +128,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, orderId: order.id, paid: false, pos });
     }
 
-    // ── Pago online (Webpay) ──
+    const origin = req.nextUrl.origin;
+
+    // ── Pago online: Flow ──
+    if (paymentMethod === "flow") {
+      const email = customerEmail!.trim();
+      const init = await flowInit(
+        order.id,
+        `Pedido #${orderNumber}`,
+        total,
+        email,
+        `${origin}/api/ecommerce/flow/confirm`,
+        `${origin}/api/ecommerce/flow/return`,
+        flowSettingsFor(restaurant),
+      );
+      if (!init.ok || !init.redirectUrl || !init.token) {
+        await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
+        return NextResponse.json({ error: init.error || "No se pudo iniciar el pago con Flow" }, { status: 502 });
+      }
+      await prisma.onlineOrder.update({ where: { id: order.id }, data: { flowToken: init.token } });
+      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl });
+    }
+
+    // ── Pago online: Webpay ──
     const buyOrder = `qc${order.id.slice(-22)}`; // máx 26 chars
-    const returnUrl = `${req.nextUrl.origin}/api/ecommerce/webpay/return`;
+    const returnUrl = `${origin}/api/ecommerce/webpay/return`;
     const init = await webpayInit(buyOrder, order.id, total, returnUrl, webpaySettingsFor(restaurant));
     if (!init.ok || !init.url || !init.token) {
       await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });

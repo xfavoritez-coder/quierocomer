@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -12,6 +12,7 @@ import AccompanimentsSection from "./AccompanimentsSection";
 
 const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?: boolean }> = {
   webpay: { label: "Webpay", hint: "Paga online con tarjeta", Icon: CreditCard, online: true },
+  flow: { label: "Flow", hint: "Paga online (tarjetas, transferencia)", Icon: Wallet, online: true },
   efectivo: { label: "Efectivo", hint: "Pagas al recibir/retirar", Icon: Banknote },
   transferencia: { label: "Transferencia", hint: "Coordinas la transferencia", Icon: ArrowLeftRight },
   tarjeta: { label: "Tarjeta", hint: "Pagas con tarjeta al recibir", Icon: CreditCard },
@@ -41,7 +42,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const deliveryFee = isDelivery ? deliveryAddress?.fee ?? 0 : 0;
   const minReq = (isDelivery ? deliveryAddress?.minOrder : null) ?? tenant.minAmount;
   const belowMin = minReq != null && subtotal < minReq;
-  const isValid = name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address);
+  const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  const isValid = name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && (payment !== "flow" || emailOk);
 
   async function placeOrder() {
     if (!isValid || sending) return;
@@ -81,6 +83,13 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         form.appendChild(input);
         document.body.appendChild(form);
         form.submit();
+        return;
+      }
+
+      // Pago online (Flow): redirigir a la URL de pago.
+      if (data.redirectUrl) {
+        clearCart();
+        window.location.href = data.redirectUrl;
         return;
       }
 
@@ -128,7 +137,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
               <Field label="Teléfono">
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
-              <Field label="Email (opcional)">
+              <Field label={payment === "flow" ? "Email (requerido para Flow)" : "Email (opcional)"}>
                 <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" placeholder="tu@email.com" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
             </div>
@@ -229,7 +238,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             {sending ? "Procesando…" : onlineSel ? `Ir a pagar · ${clp(total)}` : `Confirmar pedido · ${clp(total)}`}
           </button>
-          {onlineSel && <p className="text-center text-xs text-gray-400 -mt-1">Serás redirigido a Webpay para pagar de forma segura.</p>}
+          {onlineSel && <p className="text-center text-xs text-gray-400 -mt-1">Serás redirigido a {payment === "flow" ? "Flow" : "Webpay"} para pagar de forma segura.</p>}
         </div>
       )}
     </div>
