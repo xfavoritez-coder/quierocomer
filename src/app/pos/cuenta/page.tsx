@@ -102,6 +102,15 @@ function CuentaPageInner() {
     }
   }, [accountId])
 
+  // Live elapsed timer — must be before any early return (Rules of Hooks)
+  const [elapsed, setElapsed] = useState(() => account ? timeSince(account.opened_at) : '')
+  useEffect(() => {
+    if (!account) return
+    setElapsed(timeSince(account.opened_at))
+    const iv = setInterval(() => setElapsed(timeSince(account.opened_at)), 30_000)
+    return () => clearInterval(iv)
+  }, [account?.opened_at])
+
   if (!account) {
     return (
       <div className="pos-shell">
@@ -117,17 +126,10 @@ function CuentaPageInner() {
   const accountName = account.type === 'mesa'
     ? account.table_label || `Mesa ${account.table_number}`
     : account.type === 'retiro' || account.type === 'mostrador'
-      ? `Para llevar${account.customer_name ? ` · ${account.customer_name}` : ''}`
+      ? `Retiro${account.customer_name ? ` · ${account.customer_name}` : ''}`
       : account.type === 'delivery'
         ? `Delivery${account.customer_name ? ` · ${account.customer_name}` : ''}`
         : 'Cuenta'
-
-  // Live elapsed timer
-  const [elapsed, setElapsed] = useState(() => timeSince(account.opened_at))
-  useEffect(() => {
-    const iv = setInterval(() => setElapsed(timeSince(account.opened_at)), 30_000)
-    return () => clearInterval(iv)
-  }, [account.opened_at])
 
   const activeItems = account.items.filter(i => !i.voided)
   const isClosed = account.status === 'cerrada' || account.status === 'anulada'

@@ -148,7 +148,7 @@ export default function ComanderoPage() {
     ? account.type === 'mesa'
       ? account.table_label || `Mesa ${account.table_number}`
       : account.type === 'retiro' || account.type === 'mostrador'
-        ? `Para llevar · ${account.customer_name || ''}`
+        ? `Retiro · ${account.customer_name || ''}`
         : account.type === 'delivery'
           ? `Delivery · ${account.customer_name || ''}`
           : `Cuenta #${accountId?.slice(-4)}`
