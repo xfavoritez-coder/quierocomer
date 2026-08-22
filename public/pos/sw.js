@@ -4,7 +4,7 @@
 const CACHE_NAME = 'pos-qc-v5'
 
 // Rutas a pre-cachear en install
-const APP_SHELL = ['/pos', '/pos/comandero', '/pos/cuenta']
+const APP_SHELL = ['/pos', '/pos/comandero', '/pos/cuenta', '/pos/cobro']
 
 // ── Normaliza URL para cache: elimina params dinámicos y Next.js internos ──
 // /pos/cuenta?id=abc&_rsc=xyz → /pos/cuenta

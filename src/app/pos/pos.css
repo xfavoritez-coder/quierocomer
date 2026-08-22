@@ -149,6 +149,17 @@
 .pos-parts .pb:hover{border-color:var(--line-strong)}
 .pos-parts .pv{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink);width:24px;text-align:center}
 
+/* ---------- calculadora de vuelto ---------- */
+.pos-vuelto{margin:10px 0;padding:12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.pos-vuelto-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0}
+.pos-vuelto-row .vl{font-size:12px;color:var(--ink-3);font-weight:500}
+.pos-vuelto-row .vn{font-family:var(--mono);font-weight:600;font-size:16px;font-variant-numeric:tabular-nums}
+.pos-vuelto-row .vn.green{color:var(--jade)}
+.pos-billetes{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px}
+.pos-billete{border:1px solid var(--line);background:var(--sunk);border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-2);padding:8px 4px;cursor:pointer;min-height:36px;transition:.12s;font-family:var(--sans)}
+.pos-billete:hover{border-color:var(--line-strong);color:var(--ink)}
+.pos-billete.clear{grid-column:span 1;background:var(--sunk);color:var(--ink-3)}
+
 /* ---------- caja ---------- */
 .pos-caja-wrap{padding:22px 24px;max-width:720px;margin:0 auto}
 .pos-caja-open{display:flex;align-items:center;justify-content:space-between;background:var(--amber-tint-2);border:1px solid var(--amber-tint);border-radius:var(--r-card);padding:14px 18px;margin-bottom:22px}
