@@ -1,6 +1,6 @@
 'use client'
 
-import { useOnlineStatus, usePendingSyncCount } from '@/lib/pos'
+import { usePendingSyncCount } from '@/lib/pos'
 
 interface PosHeaderProps {
   mode?: 'brand' | 'back'
@@ -15,12 +15,9 @@ interface PosHeaderProps {
 }
 
 export default function PosHeader({
-  mode = 'brand', eyebrow, subtitle, syncing, onBack, onMenu, onPendingClick, onBrandClick, rightSlot,
+  mode = 'brand', eyebrow, subtitle, onBack, onMenu, onPendingClick, onBrandClick, rightSlot,
 }: PosHeaderProps) {
-  const online = useOnlineStatus()
   const pendingCount = usePendingSyncCount()
-
-  const dotClass = syncing ? 'dot syncing' : online ? 'dot' : 'dot offline'
 
   return (
     <header className="pos-bar">
@@ -57,14 +54,8 @@ export default function PosHeader({
               <path d="M12 8v4l3 3"/>
               <circle cx="12" cy="12" r="9"/>
             </svg>
-            {pendingCount} pend.
+            {pendingCount}
           </button>
-        )}
-        {mode === 'brand' && (
-          <div className="pos-live">
-            <span className={dotClass} />
-            {online ? 'En línea' : 'Sin conexión'}
-          </div>
         )}
         {rightSlot}
         {onMenu && (

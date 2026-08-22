@@ -9,7 +9,7 @@
 
 /* ---------- top bar ---------- */
 .pos-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
-.pos-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.pos-brand{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .pos-brand .mk{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(222,124,0,.35)}
 .pos-brand small{font-family:var(--mono);font-weight:500;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
 .pos-bar-right{display:flex;align-items:center;gap:16px}
@@ -251,7 +251,7 @@
 .pos-mesa.pagada_parcial .mn{color:var(--jade)}
 
 /* ---------- tab bar ---------- */
-.pos-tabs{display:flex;align-items:center;gap:2px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.pos-tabs{display:flex;align-items:center;justify-content:center;gap:2px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
 .pos-tab{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:40px}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
