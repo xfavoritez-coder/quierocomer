@@ -24,7 +24,10 @@ export default function PosHeader({
       {mode === 'brand' ? (
         <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           <span className="mk">Q</span>
-          QuieroComer<span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: '.06em', color: 'var(--ink-3)', textTransform: 'uppercase', marginLeft: 4, alignSelf: 'center' }}>POS</span>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+            QuieroComer
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: '.06em', color: 'var(--ink-3)', textTransform: 'uppercase' as const }}>POS</span>
+          </span>
         </div>
       ) : (
         <div className="pos-back">
