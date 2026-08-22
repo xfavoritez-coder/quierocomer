@@ -189,15 +189,33 @@ function MesaOpenModal({
           {garzones.length > 0 && (
             <>
               <label className="pos-modal-label" style={{ marginTop: 12 }}>Garzón</label>
-              <select
-                value={garzon}
-                onChange={e => setGarzon(e.target.value)}
-                style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A19D94' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center' }}
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {garzones.map(g => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
+                  <button
+                    key={g.id}
+                    onClick={() => setGarzon(g.name)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '11px 14px', borderRadius: 12, textAlign: 'left',
+                      border: garzon === g.name ? '2px solid var(--amber)' : '1px solid var(--line)',
+                      background: garzon === g.name ? 'var(--amber-tint)' : 'var(--sunk)',
+                      color: garzon === g.name ? 'var(--amber-press)' : 'var(--ink)',
+                      fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)',
+                      transition: '.12s',
+                    }}
+                  >
+                    <span style={{ width: 30, height: 30, borderRadius: '50%', background: garzon === g.name ? 'rgba(222,124,0,.15)' : 'var(--surface)', display: 'grid', placeItems: 'center', fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                      {g.name.charAt(0).toUpperCase()}
+                    </span>
+                    {g.name}
+                    {garzon === g.name && (
+                      <span style={{ marginLeft: 'auto' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      </span>
+                    )}
+                  </button>
                 ))}
-              </select>
+              </div>
             </>
           )}
         </div>
