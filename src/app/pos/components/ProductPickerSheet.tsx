@@ -139,7 +139,6 @@ export default function ProductPickerSheet({ accountId, restaurantId, onClose }:
             <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input
               type="search"
-              autoFocus
               placeholder="Buscar producto..."
               value={search}
               onChange={e => setSearch(e.target.value)}
