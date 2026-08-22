@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -309,15 +309,16 @@ function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashS
 
 // ── Account cards (Mostrador / Retiro / Delivery) ─────────────────
 
-function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (url: string) => void }) {
+function AccountCard({ account, onNavigate, from }: { account: Account; onNavigate: (url: string) => void; from?: string }) {
   const isActive = account.total > 0
-  const typeLabel = account.type === 'mostrador' ? 'DI' : account.type === 'retiro' ? 'RE' : 'DE'
-  const chipClass = isActive ? 'on' : account.type === 'mostrador' ? 're' : account.type === 'retiro' ? 're' : 'de'
+  const isDelivery = account.type === 'delivery'
+  const typeLabel = isDelivery ? 'Delivery' : 'Retiro'
+  const chipClass = isActive ? 'on' : isDelivery ? 'de' : 're'
 
   return (
     <button
       className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-      onClick={() => onNavigate(`/pos/cuenta?id=${account.id}`)}
+      onClick={() => onNavigate(`/pos/cuenta?id=${account.id}${from ? `&from=${from}` : ''}`)}
     >
       <div className="pos-rail" />
       <div className="pos-ticket-body">
@@ -364,7 +365,13 @@ export default function PosHomePage() {
   const garzones = useStaff(restaurantId)
   const pendingCount = usePendingSyncCount()
 
-  const [tab, setTab] = useState<Tab>('mesas')
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
+      if (p && ['todos', 'mesas', 'retiro', 'delivery'].includes(p)) return p
+    }
+    return 'mesas'
+  })
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
   const [retiroModal, setRetiroModal] = useState(false)
@@ -382,8 +389,8 @@ export default function PosHomePage() {
 
   // Tab counts for badges
   const openAccounts = accounts.filter(a => !['cerrada', 'anulada'].includes(a.status))
-  const retiroAccounts = accounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
-  const deliveryAccounts = accounts.filter(a => a.type === 'delivery')
+  const retiroAccounts = openAccounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
+  const deliveryAccounts = openAccounts.filter(a => a.type === 'delivery')
 
   const tabCounts: Partial<Record<Tab, number>> = {
     todos: openAccounts.length,
@@ -481,7 +488,7 @@ export default function PosHomePage() {
             ) : (
               <div className="pos-tickets">
                 {[...openAccounts].sort((a, b) => a.opened_at.localeCompare(b.opened_at)).map(a => (
-                  <AccountCard key={a.id} account={a} onNavigate={navigate} />
+                  <AccountCard key={a.id} account={a} onNavigate={navigate} from="todos" />
                 ))}
               </div>
             )

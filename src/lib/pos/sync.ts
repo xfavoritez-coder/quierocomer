@@ -1,6 +1,6 @@
 import { posDb } from './db'
 import { projectEvent } from './events'
-import { notifyDbChange } from './notify'
+import { notifyDbChange, markOnline } from './notify'
 import { supabase } from '@/lib/supabase'
 import type { PosEvent } from './types'
 
@@ -72,6 +72,7 @@ async function syncCycle() {
   try {
     await pushEvents()
     await pullEvents()
+    markOnline()
   } catch (err) {
     console.error('[POS Sync] Unhandled error in sync cycle:', err)
   } finally {
