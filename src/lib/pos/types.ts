@@ -195,9 +195,19 @@ export interface PosTable {
   restaurant_id: string
   number: number
   label?: string
+  sector_id?: string
   x: number
   y: number
   active: boolean
+}
+
+// ── Sector (agrupación de mesas: Salón, Terraza, etc.) ───────────
+
+export interface PosSector {
+  id: string
+  restaurant_id: string
+  name: string
+  position: number
 }
 
 // ── Staff ────────────────────────────────────────────────────────

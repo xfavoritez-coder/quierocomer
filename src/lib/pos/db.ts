@@ -7,6 +7,7 @@ import type {
   Payment,
   CashSession,
   PosTable,
+  PosSector,
   PosStaff,
   PosDevice,
   CachedProduct,
@@ -43,6 +44,7 @@ export class PosDatabase extends Dexie {
   payments!: EntityTable<Payment, 'id'>
   cashSessions!: EntityTable<CashSession, 'id'>
   posTables!: EntityTable<PosTable, 'id'>
+  posSectors!: EntityTable<PosSector, 'id'>
   staff!: EntityTable<PosStaff, 'id'>
   devices!: EntityTable<PosDevice, 'id'>
   products!: EntityTable<CachedProduct, 'id'>
@@ -53,29 +55,23 @@ export class PosDatabase extends Dexie {
     super('pos_quierocomer')
 
     this.version(1).stores({
-      // Events: indexed by restaurant + sync status for push, server_seq for pull
       events: 'event_id, [restaurant_id+synced], [restaurant_id+type], server_seq, created_at_local',
-
-      // Projected state (materialized views)
       accounts: 'id, [table_id+status], status, type',
       items: 'id, [account_id+voided], round_id',
       rounds: 'id, account_id',
       payments: 'id, account_id',
       cashSessions: 'id, is_open',
-
-      // Config
       posTables: 'id, restaurant_id, number',
       staff: 'id, restaurant_id, [restaurant_id+active]',
       devices: 'id, restaurant_id',
-
-      // Catalog cache
       products: 'id, [restaurant_id+is_active], category_id',
-
-      // Sync
       syncQueue: '++id, event_id',
-
-      // Snapshots
       snapshots: 'id, [restaurant_id+date]',
+    })
+
+    this.version(2).stores({
+      posTables: 'id, restaurant_id, number, sector_id',
+      posSectors: 'id, restaurant_id',
     })
   }
 }

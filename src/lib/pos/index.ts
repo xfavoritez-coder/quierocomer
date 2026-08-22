@@ -40,5 +40,6 @@ export {
   useCatalog,
   useCategoryProducts,
   useTables,
+  useSectors,
 } from './hooks'
-export { saveTables } from './tables'
+export { saveTables, saveSectors, updateTableSector } from './tables'

@@ -7,6 +7,7 @@ import {
   useOpenAccounts,
   useOpenCashSession,
   useTables,
+  useSectors,
   usePendingSyncCount,
   setRestaurantId,
   setUserId,
@@ -243,9 +244,11 @@ export default function PosHomePage() {
   const accounts = useOpenAccounts()
   const cashSession = useOpenCashSession()
   const tables = useTables(TEST_RESTAURANT_ID)
+  const sectors = useSectors(TEST_RESTAURANT_ID)
   const pendingCount = usePendingSyncCount()
 
   const [tab, setTab] = useState<Tab>('mesas')
+  const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
   const [retiroModal, setRetiroModal] = useState(false)
   const [deliveryModal, setDeliveryModal] = useState(false)
@@ -347,27 +350,72 @@ export default function PosHomePage() {
         <div className="pos-pad">
 
           {/* MESAS */}
-          {tab === 'mesas' && (
-            tables.length > 0 ? (
-              <div className="pos-mesa-grid">
-                {tables.map(table => {
-                  const { status, accountId } = getTableStatus(table.id, accounts)
-                  const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
-                  return (
+          {tab === 'mesas' && (() => {
+            const filteredTables = sectorFilter === 'all'
+              ? tables
+              : sectorFilter === 'none'
+                ? tables.filter(t => !t.sector_id)
+                : tables.filter(t => t.sector_id === sectorFilter)
+
+            return tables.length > 0 ? (
+              <>
+                {/* Sector pills */}
+                {sectors.length > 0 && (
+                  <div className="pos-sector-pills">
                     <button
-                      key={table.id}
-                      className={`pos-mesa ${status}`}
-                      onClick={() => handleMesaClick(table.id, table.number)}
+                      className={`pos-sector-pill${sectorFilter === 'all' ? ' on' : ''}`}
+                      onClick={() => setSectorFilter('all')}
                     >
-                      <span className="mn">{table.number}</span>
-                      <span className="ms">{statusLabel[status]}</span>
-                      {acc && acc.total > 0 && (
-                        <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
-                      )}
+                      Todos <span className="pos-sector-count">{tables.length}</span>
                     </button>
-                  )
-                })}
-              </div>
+                    {sectors.map(s => {
+                      const count = tables.filter(t => t.sector_id === s.id).length
+                      return (
+                        <button
+                          key={s.id}
+                          className={`pos-sector-pill${sectorFilter === s.id ? ' on' : ''}`}
+                          onClick={() => setSectorFilter(s.id)}
+                        >
+                          {s.name}
+                          {count > 0 && <span className="pos-sector-count">{count}</span>}
+                        </button>
+                      )
+                    })}
+                    {tables.some(t => !t.sector_id) && (
+                      <button
+                        className={`pos-sector-pill${sectorFilter === 'none' ? ' on' : ''}`}
+                        onClick={() => setSectorFilter('none')}
+                      >
+                        Sin sector <span className="pos-sector-count">{tables.filter(t => !t.sector_id).length}</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div className="pos-mesa-grid">
+                  {filteredTables.map(table => {
+                    const { status, accountId } = getTableStatus(table.id, accounts)
+                    const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
+                    return (
+                      <button
+                        key={table.id}
+                        className={`pos-mesa ${status}`}
+                        onClick={() => handleMesaClick(table.id, table.number)}
+                      >
+                        <span className="mn">{table.number}</span>
+                        <span className="ms">{statusLabel[status]}</span>
+                        {acc && acc.total > 0 && (
+                          <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                  {filteredTables.length === 0 && (
+                    <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13, padding: '20px 0' }}>
+                      Sin mesas en este sector
+                    </p>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="pos-empty" style={{ minHeight: 200 }}>
                 <div className="ring">
@@ -384,7 +432,7 @@ export default function PosHomePage() {
                 </p>
               </div>
             )
-          )}
+          })()}
 
           {/* MOSTRADOR */}
           {tab === 'mostrador' && (

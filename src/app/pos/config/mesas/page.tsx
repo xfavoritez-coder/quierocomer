@@ -1,32 +1,60 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useTables, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
-import { saveTables } from '@/lib/pos/tables'
+import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
+import { saveTables, saveSectors, updateTableSector } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
 
 const TEST_RESTAURANT_ID = 'cmo22e53z0000l404vsw2cksk'
 const TEST_USER_ID = 'test-garzon'
 
 export default function MesasConfigPage() {
-  const router = useRouter()
   const { syncing } = usePosSync(TEST_RESTAURANT_ID)
   const tables = useTables(TEST_RESTAURANT_ID)
+  const sectors = useSectors(TEST_RESTAURANT_ID)
+
   const [quickN, setQuickN] = useState('10')
+  const [quickSector, setQuickSector] = useState('')
   const [saving, setSaving] = useState(false)
   const [addNumber, setAddNumber] = useState('')
+  const [addSector, setAddSector] = useState('')
+  const [newSectorName, setNewSectorName] = useState('')
 
   useState(() => {
     setRestaurantId(TEST_RESTAURANT_ID)
     setUserId(TEST_USER_ID)
   })
 
+  const handleAddSector = async () => {
+    const name = newSectorName.trim()
+    if (!name) return
+    if (sectors.some(s => s.name.toLowerCase() === name.toLowerCase())) return
+    await saveSectors(TEST_RESTAURANT_ID, [
+      ...sectors.map((s, i) => ({ name: s.name, position: i })),
+      { name, position: sectors.length },
+    ])
+    setNewSectorName('')
+  }
+
+  const handleDeleteSector = async (sectorId: string) => {
+    // Desasociar mesas del sector eliminado
+    const tablesInSector = tables.filter(t => t.sector_id === sectorId)
+    await Promise.all(tablesInSector.map(t => updateTableSector(t.id, null)))
+    await saveSectors(
+      TEST_RESTAURANT_ID,
+      sectors.filter(s => s.id !== sectorId).map((s, i) => ({ name: s.name, position: i }))
+    )
+  }
+
   const handleQuickCreate = async () => {
     const n = parseInt(quickN)
     if (!n || n < 1 || n > 50) return
     setSaving(true)
-    await saveTables(TEST_RESTAURANT_ID, Array.from({ length: n }, (_, i) => ({ number: i + 1 })))
+    const sectorId = quickSector || undefined
+    await saveTables(
+      TEST_RESTAURANT_ID,
+      Array.from({ length: n }, (_, i) => ({ number: i + 1, sector_id: sectorId }))
+    )
     setSaving(false)
   }
 
@@ -34,20 +62,68 @@ export default function MesasConfigPage() {
     const num = parseInt(addNumber)
     if (!num || num < 1) return
     if (tables.some(t => t.number === num)) return
-    const updated = [...tables.map(t => ({ number: t.number, label: t.label })), { number: num }]
-      .sort((a, b) => a.number - b.number)
+    const updated = [
+      ...tables.map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id })),
+      { number: num, sector_id: addSector || undefined },
+    ].sort((a, b) => a.number - b.number)
     await saveTables(TEST_RESTAURANT_ID, updated)
     setAddNumber('')
   }
 
-  const handleDelete = async (number: number) => {
-    const remaining = tables.filter(t => t.number !== number)
-    await saveTables(TEST_RESTAURANT_ID, remaining.map(t => ({ number: t.number, label: t.label })))
+  const handleDelete = async (tableId: string) => {
+    const remaining = tables.filter(t => t.id !== tableId)
+    await saveTables(TEST_RESTAURANT_ID, remaining.map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id })))
   }
 
   const handleClearAll = async () => {
     if (!confirm('¿Eliminar todas las mesas?')) return
     await saveTables(TEST_RESTAURANT_ID, [])
+  }
+
+  const handleSectorChange = async (tableId: string, sectorId: string) => {
+    await updateTableSector(tableId, sectorId || null)
+  }
+
+  // Group tables by sector for display
+  const sectorGroups: { id: string; name: string; tables: typeof tables }[] = [
+    ...sectors.map(s => ({
+      id: s.id,
+      name: s.name,
+      tables: tables.filter(t => t.sector_id === s.id),
+    })),
+    {
+      id: '',
+      name: 'Sin sector',
+      tables: tables.filter(t => !t.sector_id),
+    },
+  ].filter(g => g.tables.length > 0 || g.id === '')
+
+  const card: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--line)',
+    borderRadius: 'var(--r-card)',
+    padding: 20,
+    marginBottom: 20,
+    boxShadow: 'var(--sh-1)',
+  }
+  const eyebrow: React.CSSProperties = {
+    fontFamily: 'var(--mono)',
+    fontSize: 11,
+    letterSpacing: '.1em',
+    textTransform: 'uppercase' as const,
+    color: 'var(--ink-3)',
+    marginBottom: 14,
+  }
+  const select: React.CSSProperties = {
+    padding: '8px 10px',
+    borderRadius: 10,
+    border: '1px solid var(--line)',
+    background: 'var(--sunk)',
+    fontSize: 13,
+    fontFamily: 'var(--sans)',
+    color: 'var(--ink)',
+    outline: 'none',
+    cursor: 'pointer',
   }
 
   return (
@@ -57,18 +133,59 @@ export default function MesasConfigPage() {
         eyebrow="Configuración"
         subtitle="Mesas"
         syncing={syncing}
-        onBack={() => router.push('/pos')}
+        onBack={() => location.assign('/pos')}
       />
 
       <div className="pos-scroll">
         <div style={{ padding: '20px 20px 60px', maxWidth: 560, margin: '0 auto' }}>
 
-          {/* Creación rápida */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: 20, marginBottom: 20, boxShadow: 'var(--sh-1)' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 14 }}>
-              Creación rápida
+          {/* ── Sectores ─────────────────────────────────────── */}
+          <div style={card}>
+            <div style={eyebrow}>Sectores</div>
+            {sectors.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                {sectors.map(s => (
+                  <div
+                    key={s.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, padding: '6px 12px' }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-3)' }}>
+                      {tables.filter(t => t.sector_id === s.id).length} mesas
+                    </span>
+                    <button
+                      onClick={() => handleDeleteSector(s.id)}
+                      style={{ display: 'grid', placeItems: 'center', width: 22, height: 22, borderRadius: 6, border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--ink-3)', padding: 0 }}
+                      title="Eliminar sector"
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                placeholder="Ej: Salón, Terraza, Bar..."
+                value={newSectorName}
+                onChange={e => setNewSectorName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddSector()}
+                style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none' }}
+              />
+              <button
+                onClick={handleAddSector}
+                disabled={!newSectorName.trim()}
+                style={{ padding: '10px 16px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', opacity: !newSectorName.trim() ? 0.5 : 1 }}
+              >
+                Agregar
+              </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          </div>
+
+          {/* ── Creación rápida ──────────────────────────────── */}
+          <div style={card}>
+            <div style={eyebrow}>Creación rápida</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 14, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>Crear mesas del 1 al</span>
               <input
                 type="number"
@@ -78,10 +195,16 @@ export default function MesasConfigPage() {
                 onChange={e => setQuickN(e.target.value)}
                 style={{ width: 70, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', textAlign: 'center' }}
               />
+              {sectors.length > 0 && (
+                <select value={quickSector} onChange={e => setQuickSector(e.target.value)} style={select}>
+                  <option value="">Sin sector</option>
+                  {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              )}
               <button
                 onClick={handleQuickCreate}
                 disabled={saving}
-                style={{ flex: 1, padding: '11px 16px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', opacity: saving ? 0.7 : 1 }}
+                style={{ flex: 1, minWidth: 80, padding: '11px 16px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', opacity: saving ? 0.7 : 1 }}
               >
                 {saving ? 'Guardando...' : 'Crear'}
               </button>
@@ -91,33 +214,37 @@ export default function MesasConfigPage() {
             </p>
           </div>
 
-          {/* Agregar mesa individual */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: 20, marginBottom: 20, boxShadow: 'var(--sh-1)' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 14 }}>
-              Agregar mesa
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+          {/* ── Agregar mesa individual ──────────────────────── */}
+          <div style={card}>
+            <div style={eyebrow}>Agregar mesa</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input
                 type="number"
                 min={1}
                 value={addNumber}
                 onChange={e => setAddNumber(e.target.value)}
                 placeholder="Nro."
-                style={{ width: 90, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', textAlign: 'center' }}
                 onKeyDown={e => e.key === 'Enter' && handleAddSingle()}
+                style={{ width: 90, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', textAlign: 'center' }}
               />
+              {sectors.length > 0 && (
+                <select value={addSector} onChange={e => setAddSector(e.target.value)} style={select}>
+                  <option value="">Sin sector</option>
+                  {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              )}
               <button
                 onClick={handleAddSingle}
                 disabled={!addNumber}
-                style={{ flex: 1, padding: '11px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: !addNumber ? 0.5 : 1 }}
+                style={{ flex: 1, minWidth: 80, padding: '11px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: !addNumber ? 0.5 : 1 }}
               >
                 Agregar
               </button>
             </div>
           </div>
 
-          {/* Lista de mesas */}
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 12 }}>
+          {/* ── Lista de mesas ───────────────────────────────── */}
+          <div style={{ ...eyebrow, marginBottom: 12 }}>
             Mesas configuradas {tables.length > 0 && `· ${tables.length}`}
           </div>
 
@@ -130,20 +257,39 @@ export default function MesasConfigPage() {
             </div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(90px,1fr))', gap: 10, marginBottom: 20 }}>
-                {tables.map(table => (
-                  <div key={table.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 10px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, position: 'relative', boxShadow: 'var(--sh-1)' }}>
-                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 20, color: 'var(--ink)' }}>{table.number}</span>
-                    <button
-                      onClick={() => handleDelete(table.number)}
-                      style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 6, border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--ink-3)' }}
-                      title="Eliminar"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                    </button>
+              {sectorGroups.map(group => (
+                <div key={group.id} style={{ marginBottom: 20 }}>
+                  {(sectors.length > 0) && (
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.05em', textTransform: 'uppercase', fontFamily: 'var(--mono)', marginBottom: 10 }}>
+                      {group.name} · {group.tables.length}
+                    </div>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(90px,1fr))', gap: 10 }}>
+                    {group.tables.map(table => (
+                      <div key={table.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 10px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, position: 'relative', boxShadow: 'var(--sh-1)' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 20, color: 'var(--ink)' }}>{table.number}</span>
+                        {sectors.length > 0 && (
+                          <select
+                            value={table.sector_id ?? ''}
+                            onChange={e => handleSectorChange(table.id, e.target.value)}
+                            style={{ ...select, fontSize: 11, padding: '3px 6px', width: '100%' }}
+                          >
+                            <option value="">Sin sector</option>
+                            {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        )}
+                        <button
+                          onClick={() => handleDelete(table.id)}
+                          style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 6, border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--ink-3)' }}
+                          title="Eliminar"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
 
               <button
                 onClick={handleClearAll}

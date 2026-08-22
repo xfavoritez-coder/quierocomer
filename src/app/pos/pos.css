@@ -263,6 +263,14 @@
 .pos-hamburger{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.14s;min-height:44px;min-width:44px}
 .pos-hamburger:hover{background:var(--surface);border-color:var(--line-strong);color:var(--ink)}
 
+/* ---------- sector pills (filtro dentro del tab Mesas) ---------- */
+.pos-sector-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.pos-sector-pill{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9999px;border:1px solid var(--line);background:var(--sunk);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:var(--sans);transition:.14s;min-height:36px}
+.pos-sector-pill:hover{border-color:var(--line-strong);color:var(--ink)}
+.pos-sector-pill.on{background:var(--amber-tint-2);border-color:var(--amber);color:var(--amber-press)}
+.pos-sector-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9999px;background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:0 4px}
+.pos-sector-pill:not(.on) .pos-sector-count{background:var(--line-strong);color:var(--ink-2)}
+
 /* ---------- new button (+ Nueva venta / retiro / delivery) ---------- */
 .pos-new-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 18px;border-radius:var(--r-btn);background:var(--amber);color:#fff;font-family:var(--sans);font-size:15px;font-weight:600;border:0;cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 16px rgba(222,124,0,.22);transition:.16s;min-height:50px;margin-bottom:16px}
 .pos-new-btn:hover{background:var(--amber-press)}
