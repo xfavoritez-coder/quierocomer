@@ -48,12 +48,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'delivery', label: 'Delivery' },
 ]
 
-const mesaBadge: Partial<Record<TableStatus, string>> = {
-  con_pedidos: 'En cocina',
-  cuenta_pedida: 'Cobrar',
-  pagada_parcial: 'Cobrar',
-}
-
 // ── Modals ────────────────────────────────────────────────────────
 
 function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (name: string, time: string) => void }) {
@@ -532,29 +526,30 @@ export default function PosHomePage() {
                     const { status, accountId } = getTableStatus(table.id, accounts)
                     const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
                     const itemCount = acc ? acc.items.filter(i => !i.voided).length : 0
-                    const badge = mesaBadge[status]
+                    const isCuentaPedida = status === 'cuenta_pedida'
                     return (
                       <button
                         key={table.id}
                         className={`pos-mesa ${status}`}
                         onClick={() => handleMesaClick(table.id, table.number, table.label)}
                       >
-                        <div className="pos-mesa-top">
-                          <span className="mn">{table.label || table.number}</span>
-                          {badge && <span className="pos-mesa-badge">{badge}</span>}
+                        <span className="mn">{table.label || table.number}</span>
+                        <div className="pos-mesa-center">
+                          {status === 'libre' ? (
+                            <span className="ms">Libre</span>
+                          ) : isCuentaPedida ? (
+                            <>
+                              {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
+                              <span className="ms">Pidió cuenta</span>
+                            </>
+                          ) : acc ? (
+                            acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
+                          ) : null}
                         </div>
-                        {acc && itemCount > 0 ? (
-                          <>
-                            <span className="ms">
-                              {itemCount} {itemCount === 1 ? 'ítem' : 'ítems'}{acc.covers ? ` · ${acc.covers} pers` : ''}
-                            </span>
-                            <div className="pos-mesa-bottom">
-                              <span className="mt">${acc.total.toLocaleString('es-CL')}</span>
-                              <span className="pos-mesa-time">{timeSince(acc.opened_at)}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <span className="ms">{status === 'libre' ? 'Libre' : statusLabel[status]}</span>
+                        {acc && (
+                          <div className="pos-mesa-bottom">
+                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+                          </div>
                         )}
                       </button>
                     )
