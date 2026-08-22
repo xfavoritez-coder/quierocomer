@@ -13,7 +13,6 @@ import {
   setRestaurantId,
   setUserId,
   openAccount,
-  seedDefaultGarzones,
   migrateLocalTablesToEvents,
   migrateLocalStaffToEvents,
 } from '@/lib/pos'
@@ -45,7 +44,7 @@ const statusLabel: Record<TableStatus, string> = {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'todos', label: 'Todos' },
   { id: 'mesas', label: 'Mesas' },
-  { id: 'retiro', label: 'Para llevar' },
+  { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
 ]
 
@@ -57,7 +56,7 @@ function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
       <div className="pos-modal" onClick={e => e.stopPropagation()}>
-        <div className="pos-modal-title">Nuevo para llevar</div>
+        <div className="pos-modal-title">Nuevo retiro</div>
         <label className="pos-modal-label">Nombre del cliente <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(opcional)</span></label>
         <input
           autoFocus
@@ -326,8 +325,8 @@ function AccountCard({ account, onNavigate }: { account: Account; onNavigate: (u
               {account.type === 'delivery'
                 ? `Delivery · ${account.customer_name}`
                 : account.customer_name
-                  ? `Para llevar · ${account.customer_name}`
-                  : 'Para llevar'}
+                  ? `Retiro · ${account.customer_name}`
+                  : 'Retiro'}
             </div>
             {account.delivery_address && (
               <div className="pos-t-address">{account.delivery_address}</div>
@@ -375,7 +374,6 @@ export default function PosHomePage() {
     setUserId(TEST_USER_ID)
     migrateLocalTablesToEvents(restaurantId)
     migrateLocalStaffToEvents(restaurantId)
-    seedDefaultGarzones(restaurantId)
   })
 
   // Tab counts for badges
@@ -446,6 +444,7 @@ export default function PosHomePage() {
         syncing={syncing}
         onMenu={() => setMenuOpen(true)}
         onPendingClick={() => setPendingModal(true)}
+        onBrandClick={() => setTab('mesas')}
       />
 
       {/* ── Tab bar ─────────────────────────────────────────── */}
@@ -578,7 +577,7 @@ export default function PosHomePage() {
             <>
               <button className="pos-new-btn" onClick={() => setRetiroModal(true)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                Nuevo para llevar
+                Nuevo retiro
               </button>
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">

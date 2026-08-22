@@ -10,11 +10,12 @@ interface PosHeaderProps {
   onBack?: () => void
   onMenu?: () => void
   onPendingClick?: () => void
+  onBrandClick?: () => void
   rightSlot?: React.ReactNode
 }
 
 export default function PosHeader({
-  mode = 'brand', eyebrow, subtitle, syncing, onBack, onMenu, onPendingClick, rightSlot,
+  mode = 'brand', eyebrow, subtitle, syncing, onBack, onMenu, onPendingClick, onBrandClick, rightSlot,
 }: PosHeaderProps) {
   const online = useOnlineStatus()
   const pendingCount = usePendingSyncCount()
@@ -24,7 +25,7 @@ export default function PosHeader({
   return (
     <header className="pos-bar">
       {mode === 'brand' ? (
-        <div className="pos-brand">
+        <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           <span className="mk">Q</span>
           QuieroComer
           <small>POS</small>
