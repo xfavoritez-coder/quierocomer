@@ -254,7 +254,7 @@ function CuentaPageInner() {
           >
             + Agregar ítem
           </button>
-          {account.status !== 'cuenta_pedida' && activeItems.length > 0 && (
+          {activeItems.length > 0 && (
             <button onClick={handleRequestBill} disabled={requestingBill}
               style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1 }}>
               {requestingBill ? 'Enviando...' : 'Pedir cuenta'}
