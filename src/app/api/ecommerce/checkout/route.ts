@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { parseDeliveryZones } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 
@@ -29,9 +30,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, items, notes, paymentMethod } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, items, notes, paymentMethod } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; items?: CartItemIn[]; notes?: string; paymentMethod?: string;
+      orderType?: string; deliveryAddress?: string; deliveryZone?: string; items?: CartItemIn[]; notes?: string; paymentMethod?: string;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -40,17 +41,30 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
+    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true } as const;
     const restaurant = await (restaurantId
-      ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true } })
-      : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true } }));
+      ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
+      : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
     if (!restaurant || !restaurant.ecommerceEnabled) return NextResponse.json({ error: "Tienda no disponible" }, { status: 404 });
 
     const allowed = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
     if (!allowed.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
 
-    // Total calculado en el servidor (nunca confiar en el cliente).
-    const total = Math.round(items.reduce((s, it) => s + Number(it.unit_price) * Number(it.quantity), 0));
-    if (!Number.isFinite(total) || total < 50) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
+    const isDelivery = orderType === "DELIVERY";
+
+    // Subtotal + fee de delivery, todo calculado en el servidor (nunca confiar en el cliente).
+    const subtotal = Math.round(items.reduce((s, it) => s + Number(it.unit_price) * Number(it.quantity), 0));
+    if (!Number.isFinite(subtotal) || subtotal < 50) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
+
+    let deliveryFee = 0;
+    if (isDelivery) {
+      const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
+      const zone = zones.find((z) => z.name === deliveryZone);
+      if (!zone) return NextResponse.json({ error: "Zona de delivery no válida" }, { status: 400 });
+      if (zone.minOrder && subtotal < zone.minOrder) return NextResponse.json({ error: `Pedido mínimo en ${zone.name}: ${zone.minOrder}` }, { status: 400 });
+      deliveryFee = zone.fee;
+    }
+    const total = subtotal + deliveryFee;
 
     // Correlativo por restaurante.
     const prevCount = await prisma.onlineOrder.count({ where: { restaurantId: restaurant.id } });
@@ -86,6 +100,7 @@ export async function POST(req: NextRequest) {
         paymentGateway: isOnline ? "webpay" : null,
         items: storedItems as unknown as object,
         total,
+        deliveryFee,
         notes: notes?.trim() || null,
         orderNumber,
         status: isOnline ? "PENDING" : "ACCEPTED",

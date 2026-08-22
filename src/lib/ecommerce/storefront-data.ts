@@ -4,6 +4,7 @@
 //  usa el diseño clásico 1.0 (portado de Servio).
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
+import { parseDeliveryZones, type DeliveryZone } from "@/lib/ecommerce/delivery";
 
 export interface StoreTenant {
   id: string;
@@ -20,6 +21,7 @@ export interface StoreTenant {
   waitTime: string | null;
   minAmount: number | null;
   paymentMethods: string[];
+  deliveryZones: DeliveryZone[]; // solo zonas activas
 }
 
 export interface StoreCategory {
@@ -73,7 +75,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true,
     },
   });
   if (!r || !r.ecommerceEnabled) return null;
@@ -83,6 +85,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     deliveryEnabled: !!r.orderingDelivery, pickupEnabled: true,
     waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
     paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean),
+    deliveryZones: parseDeliveryZones(r.ecommerceDeliveryZones).filter((z) => z.active),
   };
 }
 
@@ -97,7 +100,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true,
     },
   });
 
@@ -200,6 +203,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       waitTime: restaurant.orderingWaitTime,
       minAmount: restaurant.orderingMinAmount ?? null,
       paymentMethods,
+      deliveryZones: parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active),
     },
     categories: storeCategories,
     products,

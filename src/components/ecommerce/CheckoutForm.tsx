@@ -36,7 +36,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
   const isDelivery = deliverySelected && deliveryType === "delivery";
   const deliveryFee = isDelivery ? deliveryAddress?.fee ?? 0 : 0;
-  const belowMin = tenant.minAmount != null && subtotal < tenant.minAmount;
+  const minReq = (isDelivery ? deliveryAddress?.minOrder : null) ?? tenant.minAmount;
+  const belowMin = minReq != null && subtotal < minReq;
   const isValid = name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address);
 
   async function placeOrder() {
@@ -54,6 +55,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           customerEmail: email.trim() || null,
           orderType: isDelivery ? "DELIVERY" : "PICKUP",
           deliveryAddress: isDelivery ? [deliveryAddress?.address, deliveryAddress?.details].filter(Boolean).join(" · ") : null,
+          deliveryZone: isDelivery ? deliveryAddress?.zoneName : null,
           items,
           notes: notes.trim() || null,
           paymentMethod: payment,
@@ -204,7 +206,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           </section>
 
           {belowMin && (
-            <p className="text-center text-xs font-semibold text-red-500">Monto mínimo para pedir: {clp(tenant.minAmount!)}</p>
+            <p className="text-center text-xs font-semibold text-red-500">Monto mínimo para pedir: {clp(minReq!)}</p>
           )}
 
           <button

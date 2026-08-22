@@ -393,7 +393,8 @@ model Restaurant {
   controlEnabled             Boolean                  @default(false)
   // Pilar Ecommerce (Servio dentro de quierocomer) — activado solo por superadmin.
   ecommerceEnabled           Boolean                  @default(false)
-  ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya
+  ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya (solo superadmin)
+  ecommerceDeliveryZones     Json?                    // zonas de delivery que cada local se autoadministra
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]
@@ -442,6 +443,7 @@ model OnlineOrder {
   orderNumber     Int? // correlativo por restaurante (para el POS y el cliente)
   toteatOrderId   String? // id del pedido en Toteat tras inyectarlo al POS
   posError        String? // último error al enviar al POS (si hubo)
+  deliveryFee     Int      @default(0) // costo de despacho de la zona (incluido en total)
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")

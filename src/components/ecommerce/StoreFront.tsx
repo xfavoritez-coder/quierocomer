@@ -462,9 +462,13 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
 // ── Modal selección de entrega (retiro / delivery) ──────────────
 function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
+  const zones = tenant.deliveryZones;
   const [tab, setTab] = useState<"pickup" | "delivery">(deliveryType);
   const [address, setAddress] = useState(deliveryAddress?.address ?? "");
   const [details, setDetails] = useState(deliveryAddress?.details ?? "");
+  const [zoneId, setZoneId] = useState(() => zones.find((z) => z.name === deliveryAddress?.zoneName)?.id ?? (zones.length === 1 ? zones[0].id : ""));
+  const selectedZone = zones.find((z) => z.id === zoneId) ?? null;
+  const noZones = zones.length === 0;
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -472,14 +476,23 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  const deliveryReady = !!selectedZone && !!address.trim();
+
   function confirm() {
     if (tab === "pickup") {
       confirmPickup();
       onClose();
       return;
     }
-    if (!address.trim()) return;
-    setDeliveryAddress({ address: address.trim(), details: details.trim(), lat: null, lng: null, fee: 0 });
+    if (!selectedZone || !address.trim()) return;
+    setDeliveryAddress({
+      address: `${address.trim()}, ${selectedZone.name}`,
+      details: details.trim(),
+      lat: null, lng: null,
+      fee: selectedZone.fee,
+      zoneName: selectedZone.name,
+      minOrder: selectedZone.minOrder ?? null,
+    });
     onClose();
   }
 
@@ -512,8 +525,21 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
               <p className="text-sm font-bold text-gray-700 mb-1">🏠 Retiras en tienda</p>
               {tenant.address ? <p className="text-sm text-gray-500">{tenant.address}</p> : <p className="text-sm text-gray-400">Dirección disponible al confirmar el pedido.</p>}
             </div>
+          ) : noZones ? (
+            <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500">
+              Este local aún no configuró zonas de delivery. Elige <span className="font-bold">Retiro</span> o vuelve más tarde.
+            </div>
           ) : (
             <>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Comuna / sector</span>
+                <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 bg-white">
+                  <option value="">Elige tu comuna…</option>
+                  {zones.map((z) => (
+                    <option key={z.id} value={z.id}>{z.name} · {clp(z.fee)}</option>
+                  ))}
+                </select>
+              </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección</span>
                 <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle y número" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
@@ -522,10 +548,19 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>
                 <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Opcional" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </label>
+              {selectedZone && (
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-gray-500">Costo de despacho{selectedZone.estimatedTime ? ` · ${selectedZone.estimatedTime}` : ""}</span>
+                  <span className="font-black" style={{ color: primaryColor }}>{selectedZone.fee > 0 ? clp(selectedZone.fee) : "Gratis"}</span>
+                </div>
+              )}
+              {selectedZone?.minOrder ? (
+                <p className="text-xs text-gray-400 px-1 -mt-1">Pedido mínimo en {selectedZone.name}: {clp(selectedZone.minOrder)}</p>
+              ) : null}
             </>
           )}
 
-          <button onClick={confirm} disabled={tab === "delivery" && !address.trim()} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>
+          <button onClick={confirm} disabled={tab === "delivery" && !deliveryReady} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>
             Confirmar
           </button>
         </div>

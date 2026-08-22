@@ -34,6 +34,8 @@ export interface DeliveryAddress {
   lat: number | null;
   lng: number | null;
   fee: number;
+  zoneName?: string | null;
+  minOrder?: number | null;
 }
 
 interface CartState {

@@ -40,7 +40,7 @@ export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean
     customerPhone: order.customerPhone,
     orderType: order.orderType === "DELIVERY" ? "DELIVERY" : "PICKUP",
     deliveryAddress: order.deliveryAddress,
-    deliveryFee: 0,
+    deliveryFee: order.deliveryFee ?? 0,
     notes: order.notes,
     total: order.total,
     paymentMethod: order.paymentMethod,
