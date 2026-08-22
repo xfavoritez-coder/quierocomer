@@ -311,7 +311,7 @@ function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashS
 
 // ── Account cards (Mostrador / Retiro / Delivery) ─────────────────
 
-function AccountCard({ account, onNavigate, from }: { account: Account; onNavigate: (url: string) => void; from?: string }) {
+function AccountCard({ account, onSelect }: { account: Account; onSelect: (accountId: string) => void }) {
   const isActive = account.total > 0
   const isDelivery = account.type === 'delivery'
   const typeLabel = isDelivery ? 'Delivery' : 'Retiro'
@@ -320,7 +320,7 @@ function AccountCard({ account, onNavigate, from }: { account: Account; onNaviga
   return (
     <button
       className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-      onClick={() => onNavigate(`/pos/cuenta?id=${account.id}${from ? `&from=${from}` : ''}`)}
+      onClick={() => onSelect(account.id)}
     >
       <div className="pos-rail" />
       <div className="pos-ticket-body">
@@ -458,6 +458,14 @@ export default function PosHomePage() {
     }
   }
 
+  const handleSelectAccount = (accountId: string) => {
+    if (isDesktop) {
+      setDesktopPanel({ type: 'cuenta', accountId })
+    } else {
+      navigate(`/pos/cuenta?id=${accountId}&from=${tab}`)
+    }
+  }
+
   const handleNewRetiro = (name: string, time: string) => {
     setRetiroModal(false)
     const id = uuidv4()
@@ -466,7 +474,11 @@ export default function PosHomePage() {
     } else {
       openAccount({ account_id: id, account_type: 'mostrador' })
     }
-    navigate(`/pos/cuenta?id=${id}`)
+    if (isDesktop) {
+      setDesktopPanel({ type: 'cuenta', accountId: id })
+    } else {
+      navigate(`/pos/cuenta?id=${id}&from=retiro`)
+    }
   }
 
   const handleNewDelivery = (data: { name: string; phone: string; address: string; notes: string }) => {
@@ -479,7 +491,11 @@ export default function PosHomePage() {
       customer_phone: data.phone,
       delivery_address: data.address,
     })
-    navigate(`/pos/cuenta?id=${id}`)
+    if (isDesktop) {
+      setDesktopPanel({ type: 'cuenta', accountId: id })
+    } else {
+      navigate(`/pos/cuenta?id=${id}&from=delivery`)
+    }
   }
 
   // ID de mesa activa en el panel desktop (para resaltarla visualmente)
@@ -630,7 +646,7 @@ export default function PosHomePage() {
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} onNavigate={navigate} />)}
+                    .map(a => <AccountCard key={a.id} account={a} onSelect={handleSelectAccount} />)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
@@ -650,7 +666,7 @@ export default function PosHomePage() {
               {deliveryAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} onNavigate={navigate} />)}
+                    .map(a => <AccountCard key={a.id} account={a} onSelect={handleSelectAccount} />)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>

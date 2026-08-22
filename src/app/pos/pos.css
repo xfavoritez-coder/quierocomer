@@ -307,7 +307,7 @@
 .pos-sector-pill:not(.on) .pos-sector-count{background:var(--line-strong);color:var(--ink-2)}
 
 /* ---------- new button (+ Nueva venta / retiro / delivery) ---------- */
-.pos-new-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 22px;border-radius:var(--r-btn);background:var(--amber);color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;border:0;cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 16px rgba(222,124,0,.22);transition:.16s;min-height:44px;margin-bottom:16px}
+.pos-new-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 22px;border-radius:var(--r-btn);background:var(--amber);color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;border:0;cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 16px rgba(222,124,0,.22);transition:.16s;min-height:44px;margin-bottom:16px}
 .pos-new-btn:hover{background:var(--amber-press)}
 
 /* ---------- account card extras ---------- */
