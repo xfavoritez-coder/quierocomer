@@ -339,15 +339,27 @@ export async function projectEvent(event: PosEvent): Promise<void> {
 export async function rebuildFromEvents(restaurantId: string): Promise<void> {
   // Limpiar proyecciones
   await posDb.accounts.clear()
+  await posDb.cashSessions.clear()
 
-  // Obtener todos los eventos ordenados
-  const events = await posDb.events
-    .where('restaurant_id')
-    .equals(restaurantId)
+  // Eventos sincronizados, en orden de servidor (fuente de verdad)
+  const synced = await posDb.events
+    .where('server_seq')
+    .above(0)
+    .filter(e => e.restaurant_id === restaurantId)
+    .sortBy('server_seq')
+
+  // Eventos locales aún no sincronizados (en orden de creación local)
+  const unsynced = await posDb.events
+    .where('[restaurant_id+synced]')
+    .equals([restaurantId, 0])
     .sortBy('created_at_local')
 
-  for (const event of events) {
-    await projectEvent(event)
+  for (const event of [...synced, ...unsynced]) {
+    try {
+      await projectEvent(event)
+    } catch (err) {
+      console.error('[POS Rebuild] Error projecting event:', event.event_id, event.type, err)
+    }
   }
 }
 

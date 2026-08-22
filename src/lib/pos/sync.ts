@@ -1,5 +1,5 @@
 import { posDb } from './db'
-import { projectEvent } from './events'
+import { projectEvent, rebuildFromEvents } from './events'
 import { notifyDbChange, markOnline } from './notify'
 import { supabase } from '@/lib/supabase'
 import type { PosEvent } from './types'
@@ -23,9 +23,15 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
 
   if (_syncTimer) clearInterval(_syncTimer)
 
-  // Sync immediately, then on interval
-  syncCycle()
-  _syncTimer = setInterval(syncCycle, SYNC_INTERVAL_MS)
+  // Full initial pull + rebuild on startup, then start incremental interval
+  _isSyncing = true
+  initialSync(restaurantId)
+    .catch(err => console.error('[POS Sync] Initial sync error:', err))
+    .finally(() => {
+      _isSyncing = false
+      _onSyncStatusChange?.(false)
+      _syncTimer = setInterval(syncCycle, SYNC_INTERVAL_MS)
+    })
 
   // Flush pending events immediately when connection returns or tab gets focus
   if (typeof window !== 'undefined') {
@@ -36,6 +42,57 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
 
   // Listen for Supabase Realtime events from other devices
   subscribeToRemoteEvents(restaurantId)
+}
+
+// ── Initial sync: push pending + pull ALL + rebuild ───────────────
+
+async function initialSync(restaurantId: string): Promise<void> {
+  // 1. Push any locally pending events first
+  await pushEvents()
+
+  // 2. Pull ALL events from Supabase (paginated from beginning)
+  if (supabase) {
+    let cursor = 0
+    while (true) {
+      const { data, error } = await supabase
+        .from('pos_events')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .gt('server_seq', cursor)
+        .order('server_seq', { ascending: true })
+        .limit(BATCH_SIZE)
+
+      if (error) {
+        console.error('[POS Sync] Initial pull error:', error)
+        break
+      }
+      if (!data || data.length === 0) break
+
+      for (const row of data) {
+        // Always put (overwrite) to ensure server_seq and synced are set
+        await posDb.events.put({
+          event_id: row.event_id as string,
+          device_id: row.device_id as string,
+          user_id: row.user_id as string,
+          restaurant_id: row.restaurant_id as string,
+          created_at_local: row.created_at_local as string,
+          type: row.type as PosEvent['type'],
+          payload: row.payload as Record<string, unknown>,
+          synced: 1,
+          server_seq: row.server_seq as number,
+        })
+      }
+
+      cursor = data[data.length - 1].server_seq as number
+      if (data.length < BATCH_SIZE) break
+    }
+
+    markOnline()
+  }
+
+  // 3. Rebuild projected state from ALL local events (clean replay)
+  await rebuildFromEvents(restaurantId)
+  notifyDbChange()
 }
 
 export function stopSync() {
@@ -246,29 +303,10 @@ function subscribeToRemoteEvents(restaurantId: string) {
         table: 'pos_events',
         filter: `restaurant_id=eq.${restaurantId}`,
       },
-      async (payload) => {
-        const row = payload.new as Record<string, unknown>
-        const eventId = row.event_id as string
-
-        // Skip our own events
-        const existing = await posDb.events.get(eventId)
-        if (existing) return
-
-        const event: PosEvent = {
-          event_id: eventId,
-          device_id: row.device_id as string,
-          user_id: row.user_id as string,
-          restaurant_id: row.restaurant_id as string,
-          created_at_local: row.created_at_local as string,
-          type: row.type as PosEvent['type'],
-          payload: row.payload as Record<string, unknown>,
-          synced: 1,
-          server_seq: row.server_seq as number,
-        }
-
-        await posDb.events.put(event)
-        await projectEvent(event)
-        notifyDbChange()
+      () => {
+        // Realtime notification: new event from another device.
+        // Trigger a sync cycle to pull it properly (avoids inline projection bugs).
+        syncCycle()
       }
     )
     .subscribe()
