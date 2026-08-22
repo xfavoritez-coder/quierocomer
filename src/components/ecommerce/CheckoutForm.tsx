@@ -56,6 +56,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           orderType: isDelivery ? "DELIVERY" : "PICKUP",
           deliveryAddress: isDelivery ? [deliveryAddress?.address, deliveryAddress?.details].filter(Boolean).join(" · ") : null,
           deliveryZone: isDelivery ? deliveryAddress?.zoneName : null,
+          deliveryLat: isDelivery ? deliveryAddress?.lat : null,
+          deliveryLng: isDelivery ? deliveryAddress?.lng : null,
           items,
           notes: notes.trim() || null,
           paymentMethod: payment,

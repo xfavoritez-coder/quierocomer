@@ -4,7 +4,8 @@
 //  usa el diseño clásico 1.0 (portado de Servio).
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
-import { parseDeliveryZones, type DeliveryZone } from "@/lib/ecommerce/delivery";
+import { parseDeliveryZones, parseDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
+import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 
 export interface StoreTenant {
   id: string;
@@ -21,7 +22,9 @@ export interface StoreTenant {
   waitTime: string | null;
   minAmount: number | null;
   paymentMethods: string[];
-  deliveryZones: DeliveryZone[]; // solo zonas activas
+  deliveryZones: DeliveryZone[]; // solo zonas activas (modo "zones")
+  deliveryConfig: DeliveryConfig; // modo "distance" (polígono + km)
+  googleMapsKey: string | null; // key de navegador para autocompletar direcciones
 }
 
 export interface StoreCategory {
@@ -75,7 +78,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true,
     },
   });
   if (!r || !r.ecommerceEnabled) return null;
@@ -86,6 +89,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
     paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean),
     deliveryZones: parseDeliveryZones(r.ecommerceDeliveryZones).filter((z) => z.active),
+    deliveryConfig: parseDeliveryConfig(r.ecommerceDeliveryConfig),
+    googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
   };
 }
 
@@ -100,7 +105,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true,
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
-      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true,
+      orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true,
     },
   });
 
@@ -204,6 +209,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       minAmount: restaurant.orderingMinAmount ?? null,
       paymentMethods,
       deliveryZones: parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active),
+      deliveryConfig: parseDeliveryConfig(restaurant.ecommerceDeliveryConfig),
+      googleMapsKey: parseEcommerceConfig(restaurant.ecommerceConfig).googleMaps?.apiKey || null,
     },
     categories: storeCategories,
     products,

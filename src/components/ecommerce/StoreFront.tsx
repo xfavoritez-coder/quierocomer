@@ -6,6 +6,8 @@ import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Penci
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
+import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
+import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import ProductModal from "./ProductModal";
 import CartDrawer from "./CartDrawer";
 import StoreStyles from "./StoreStyles";
@@ -463,12 +465,20 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
 function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
+  const distanceMode = tenant.deliveryConfig.mode === "distance";
   const [tab, setTab] = useState<"pickup" | "delivery">(deliveryType);
-  const [address, setAddress] = useState(deliveryAddress?.address ?? "");
   const [details, setDetails] = useState(deliveryAddress?.details ?? "");
+
+  // Modo comuna
+  const [address, setAddress] = useState(deliveryAddress?.address ?? "");
   const [zoneId, setZoneId] = useState(() => zones.find((z) => z.name === deliveryAddress?.zoneName)?.id ?? (zones.length === 1 ? zones[0].id : ""));
   const selectedZone = zones.find((z) => z.id === zoneId) ?? null;
-  const noZones = zones.length === 0;
+
+  // Modo distancia (Google Maps autocomplete)
+  const gmapsReady = useGoogleMaps(distanceMode ? tenant.googleMapsKey : null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [feeResult, setFeeResult] = useState<DistanceFeeResult | null>(null);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -476,25 +486,43 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  const deliveryReady = !!selectedZone && !!address.trim();
+  // Adjunta el autocompletado cuando el SDK está listo y estamos en delivery+distancia.
+  useEffect(() => {
+    if (!distanceMode || tab !== "delivery" || !gmapsReady || !inputRef.current) return;
+    const g = (window as unknown as { google: any }).google;
+    const ac = new g.maps.places.Autocomplete(inputRef.current, {
+      componentRestrictions: { country: ["cl"] },
+      types: ["address"],
+      fields: ["formatted_address", "geometry"],
+    });
+    const listener = ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const loc = place?.geometry?.location;
+      if (!loc) return;
+      const d = { lat: loc.lat(), lng: loc.lng(), address: place.formatted_address || inputRef.current!.value };
+      setDest(d);
+      setFeeResult(computeDistanceFee(tenant.deliveryConfig, d));
+    });
+    inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
+    return () => { g.maps.event?.removeListener?.(listener); };
+  }, [distanceMode, tab, gmapsReady, tenant.deliveryConfig]);
+
+  const deliveryReady = distanceMode ? !!(feeResult?.available && dest) : (!!selectedZone && !!address.trim());
 
   function confirm() {
-    if (tab === "pickup") {
-      confirmPickup();
+    if (tab === "pickup") { confirmPickup(); onClose(); return; }
+    if (distanceMode) {
+      if (!feeResult?.available || !dest) return;
+      setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null });
       onClose();
       return;
     }
     if (!selectedZone || !address.trim()) return;
-    setDeliveryAddress({
-      address: `${address.trim()}, ${selectedZone.name}`,
-      details: details.trim(),
-      lat: null, lng: null,
-      fee: selectedZone.fee,
-      zoneName: selectedZone.name,
-      minOrder: selectedZone.minOrder ?? null,
-    });
+    setDeliveryAddress({ address: `${address.trim()}, ${selectedZone.name}`, details: details.trim(), lat: null, lng: null, fee: selectedZone.fee, zoneName: selectedZone.name, minOrder: selectedZone.minOrder ?? null });
     onClose();
   }
+
+  const noZones = !distanceMode && zones.length === 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -525,6 +553,26 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
               <p className="text-sm font-bold text-gray-700 mb-1">🏠 Retiras en tienda</p>
               {tenant.address ? <p className="text-sm text-gray-500">{tenant.address}</p> : <p className="text-sm text-gray-400">Dirección disponible al confirmar el pedido.</p>}
             </div>
+          ) : distanceMode ? (
+            <>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección de entrega</span>
+                <input ref={inputRef} defaultValue={deliveryAddress?.address ?? ""} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+                <span className="text-[11px] text-gray-400">Elige una opción de la lista para calcular el despacho.</span>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>
+                <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Opcional" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+              </label>
+              {!tenant.googleMapsKey && <p className="text-xs text-red-500 px-1">El local aún no configuró Google Maps.</p>}
+              {feeResult && !feeResult.available && <p className="text-xs text-red-500 px-1">{feeResult.reason}</p>}
+              {feeResult?.available && (
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-gray-500">Despacho · {feeResult.distanceKm.toFixed(1)} km</span>
+                  <span className="font-black" style={{ color: primaryColor }}>{feeResult.fee > 0 ? clp(feeResult.fee) : "Gratis"}</span>
+                </div>
+              )}
+            </>
           ) : noZones ? (
             <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-500">
               Este local aún no configuró zonas de delivery. Elige <span className="font-bold">Retiro</span> o vuelve más tarde.

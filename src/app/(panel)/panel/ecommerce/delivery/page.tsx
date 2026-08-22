@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Truck, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
-import type { DeliveryZone } from "@/lib/ecommerce/delivery";
+import { defaultDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
+import DeliveryPolygonEditor from "@/components/ecommerce/DeliveryPolygonEditor";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -18,16 +19,31 @@ export default function EcommerceDeliveryPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [config, setConfig] = useState<DeliveryConfig>(defaultDeliveryConfig());
+  const [gmapsKey, setGmapsKey] = useState<string | null>(null);
+  const [restaurantAddress, setRestaurantAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deliveryEnabled, setDeliveryEnabled] = useState(true);
+
+  const mode = config.mode;
+  const setMode = (m: DeliveryConfig["mode"]) => setConfig((c) => ({ ...c, mode: m }));
+  const patchConfig = (patch: Partial<DeliveryConfig>) => setConfig((c) => ({ ...c, ...patch }));
 
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
     fetch(`/api/panel/ecommerce/delivery?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setZones(d.zones || []); setDeliveryEnabled(d.deliveryEnabled); } })
+      .then((d) => {
+        if (d) {
+          setZones(d.zones || []);
+          if (d.config) setConfig(d.config);
+          setGmapsKey(d.googleMapsKey || null);
+          setRestaurantAddress(d.restaurantAddress || null);
+          setDeliveryEnabled(d.deliveryEnabled);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
@@ -46,12 +62,13 @@ export default function EcommerceDeliveryPage() {
       const res = await fetch("/api/panel/ecommerce/delivery", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, zones: clean }),
+        body: JSON.stringify({ restaurantId, zones: clean, config }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al guardar"); setSaving(false); return; }
       setZones(data.zones);
-      toast.success("Zonas guardadas");
+      if (data.config) setConfig(data.config);
+      toast.success("Configuración guardada");
     } catch { toast.error("Error de conexión"); }
     setSaving(false);
   }
@@ -82,7 +99,21 @@ export default function EcommerceDeliveryPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", marginTop: 24 }}>Cargando…</p>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+          {/* Selector de modo */}
+          <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+            <button onClick={() => setMode("zones")} style={modeBtn(mode === "zones")}>Por comuna</button>
+            <button onClick={() => setMode("distance")} style={modeBtn(mode === "distance")}>Por mapa (distancia)</button>
+          </div>
+          <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "8px 2px 0" }}>
+            {mode === "distance" ? "Dibuja tu zona de reparto en el mapa; el costo se calcula por distancia (como delivery por km)." : "Cobras una tarifa fija por comuna/sector."}
+          </p>
+
+          {mode === "distance" ? (
+            <div style={{ marginTop: 14 }}>
+              <DeliveryPolygonEditor config={config} gmapsKey={gmapsKey} restaurantAddress={restaurantAddress} onChange={patchConfig} />
+            </div>
+          ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
             {zones.length === 0 && (
               <div style={{ textAlign: "center", padding: "36px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>
                 Aún no tienes zonas. Agrega la primera comuna/sector a la que repartes.
@@ -122,13 +153,16 @@ export default function EcommerceDeliveryPage() {
               </div>
             ))}
           </div>
+          )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-            <button onClick={add} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-              <Plus size={16} /> Agregar zona
-            </button>
+            {mode === "zones" && (
+              <button onClick={add} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                <Plus size={16} /> Agregar zona
+              </button>
+            )}
             <button onClick={save} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>
-              <Save size={16} /> {saving ? "Guardando…" : "Guardar zonas"}
+              <Save size={16} /> {saving ? "Guardando…" : "Guardar cambios"}
             </button>
           </div>
         </>
@@ -142,3 +176,13 @@ const inp: React.CSSProperties = {
   border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8,
   color: "var(--adm-text)", fontFamily: "var(--font-body)", fontSize: "0.85rem", outline: "none",
 };
+
+function modeBtn(active: boolean): React.CSSProperties {
+  return {
+    flex: 1, padding: "9px 12px", borderRadius: 10, cursor: "pointer",
+    background: active ? ACCENT : "var(--adm-hover)",
+    border: `1px solid ${active ? ACCENT : "var(--adm-card-border)"}`,
+    color: active ? "#1a1a1a" : "var(--adm-text2)",
+    fontFamily: F, fontSize: "0.8rem", fontWeight: 700,
+  };
+}

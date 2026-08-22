@@ -35,3 +35,110 @@ export function parseDeliveryZones(raw: unknown): DeliveryZone[] {
 function cryptoId(): string {
   return Math.random().toString(36).slice(2, 10);
 }
+
+// ═══════════════════════════════════════════════════════════
+//  Delivery por polígono + distancia (modelo de deliveryalfredograterol).
+//  Cobertura = polígono incluido (y opcional excluido); tarifa = base +
+//  distancia(km) × precio_por_km, redondeada al múltiplo más cercano.
+// ═══════════════════════════════════════════════════════════
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+export type DeliveryMode = "zones" | "distance";
+
+export interface DeliveryConfig {
+  mode: DeliveryMode;
+  origin: LatLng | null; // ubicación del local
+  originAddress?: string | null;
+  basePrice: number; // tarifa base
+  pricePerKm: number; // costo por km
+  roundingMult: number; // redondeo del total (ej: 100)
+  polygonIncluded: LatLng[]; // perímetro de reparto (cobertura)
+  polygonExcluded: LatLng[]; // zona excluida (opcional)
+}
+
+export function defaultDeliveryConfig(): DeliveryConfig {
+  return { mode: "zones", origin: null, originAddress: null, basePrice: 0, pricePerKm: 0, roundingMult: 100, polygonIncluded: [], polygonExcluded: [] };
+}
+
+function toLatLngArray(raw: unknown): LatLng[] {
+  if (!Array.isArray(raw)) return [];
+  const out: LatLng[] = [];
+  for (const p of raw) {
+    if (p && typeof p === "object") {
+      const o = p as Record<string, unknown>;
+      const lat = Number(o.lat), lng = Number(o.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) out.push({ lat, lng });
+    }
+  }
+  return out;
+}
+
+export function parseDeliveryConfig(raw: unknown): DeliveryConfig {
+  const d = defaultDeliveryConfig();
+  if (!raw || typeof raw !== "object") return d;
+  const o = raw as Record<string, unknown>;
+  const originLat = Number((o.origin as Record<string, unknown>)?.lat);
+  const originLng = Number((o.origin as Record<string, unknown>)?.lng);
+  return {
+    mode: o.mode === "distance" ? "distance" : "zones",
+    origin: Number.isFinite(originLat) && Number.isFinite(originLng) ? { lat: originLat, lng: originLng } : null,
+    originAddress: o.originAddress ? String(o.originAddress) : null,
+    basePrice: Math.max(0, Math.round(Number(o.basePrice) || 0)),
+    pricePerKm: Math.max(0, Math.round(Number(o.pricePerKm) || 0)),
+    roundingMult: Math.max(1, Math.round(Number(o.roundingMult) || 100)),
+    polygonIncluded: toLatLngArray(o.polygonIncluded),
+    polygonExcluded: toLatLngArray(o.polygonExcluded),
+  };
+}
+
+/** Ray-casting: ¿el punto está dentro del polígono? */
+export function pointInPolygon(pt: LatLng, polygon: LatLng[]): boolean {
+  if (polygon.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const yi = polygon[i].lat, xi = polygon[i].lng;
+    const yj = polygon[j].lat, xj = polygon[j].lng;
+    if ((yi > pt.lat) !== (yj > pt.lat) && pt.lng < ((xj - xi) * (pt.lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** Distancia haversine en km. */
+export function haversineKm(a: LatLng, b: LatLng): number {
+  const R = 6371;
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function roundToNearest(value: number, mult: number): number {
+  const m = Math.max(1, Math.abs(mult || 100));
+  return Math.round(value / m) * m;
+}
+
+export interface DistanceFeeResult {
+  available: boolean;
+  fee: number;
+  distanceKm: number;
+  reason?: string;
+}
+
+/** Calcula la tarifa de delivery por distancia+polígono para un destino. */
+export function computeDistanceFee(config: DeliveryConfig, dest: LatLng): DistanceFeeResult {
+  if (!config.origin) return { available: false, fee: 0, distanceKm: 0, reason: "El local aún no configuró su ubicación." };
+  if (config.polygonExcluded.length >= 3 && pointInPolygon(dest, config.polygonExcluded)) {
+    return { available: false, fee: 0, distanceKm: 0, reason: "No llegamos a esa dirección (zona excluida)." };
+  }
+  if (config.polygonIncluded.length >= 3 && !pointInPolygon(dest, config.polygonIncluded)) {
+    return { available: false, fee: 0, distanceKm: 0, reason: "La dirección está fuera del perímetro de reparto." };
+  }
+  const distanceKm = haversineKm(config.origin, dest);
+  const fee = roundToNearest(config.basePrice + distanceKm * config.pricePerKm, config.roundingMult);
+  return { available: true, fee, distanceKm };
+}

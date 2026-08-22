@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
-import { parseDeliveryZones } from "@/lib/ecommerce/delivery";
+import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 
@@ -30,9 +30,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, items, notes, paymentMethod } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryZone?: string; items?: CartItemIn[]; notes?: string; paymentMethod?: string;
+      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true } as const;
+    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -58,11 +58,22 @@ export async function POST(req: NextRequest) {
 
     let deliveryFee = 0;
     if (isDelivery) {
-      const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
-      const zone = zones.find((z) => z.name === deliveryZone);
-      if (!zone) return NextResponse.json({ error: "Zona de delivery no válida" }, { status: 400 });
-      if (zone.minOrder && subtotal < zone.minOrder) return NextResponse.json({ error: `Pedido mínimo en ${zone.name}: ${zone.minOrder}` }, { status: 400 });
-      deliveryFee = zone.fee;
+      const dcfg = parseDeliveryConfig(restaurant.ecommerceDeliveryConfig);
+      if (dcfg.mode === "distance") {
+        // Recalcular el fee desde la ubicación (no confiar en el cliente).
+        if (!Number.isFinite(Number(deliveryLat)) || !Number.isFinite(Number(deliveryLng))) {
+          return NextResponse.json({ error: "Falta la ubicación de entrega" }, { status: 400 });
+        }
+        const res = computeDistanceFee(dcfg, { lat: Number(deliveryLat), lng: Number(deliveryLng) });
+        if (!res.available) return NextResponse.json({ error: res.reason || "Fuera de la zona de reparto" }, { status: 400 });
+        deliveryFee = res.fee;
+      } else {
+        const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
+        const zone = zones.find((z) => z.name === deliveryZone);
+        if (!zone) return NextResponse.json({ error: "Zona de delivery no válida" }, { status: 400 });
+        if (zone.minOrder && subtotal < zone.minOrder) return NextResponse.json({ error: `Pedido mínimo en ${zone.name}: ${zone.minOrder}` }, { status: 400 });
+        deliveryFee = zone.fee;
+      }
     }
     const total = subtotal + deliveryFee;
 

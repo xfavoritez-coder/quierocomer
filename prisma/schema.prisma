@@ -394,7 +394,8 @@ model Restaurant {
   // Pilar Ecommerce (Servio dentro de quierocomer) — activado solo por superadmin.
   ecommerceEnabled           Boolean                  @default(false)
   ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya (solo superadmin)
-  ecommerceDeliveryZones     Json?                    // zonas de delivery que cada local se autoadministra
+  ecommerceDeliveryZones     Json?                    // zonas de delivery por comuna que cada local se autoadministra
+  ecommerceDeliveryConfig    Json?                    // config de delivery por polígono+distancia (origen, tarifas, polígonos)
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]
