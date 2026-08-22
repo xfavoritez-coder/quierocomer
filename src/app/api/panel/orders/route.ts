@@ -31,8 +31,9 @@ export async function GET(req: NextRequest) {
   const allowed = await verifyAccess(req, restaurantId);
   if (!allowed) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+  const source = req.nextUrl.searchParams.get("source"); // "ecommerce" | "pedir-online" | null (todos)
   const orders = await prisma.onlineOrder.findMany({
-    where: { restaurantId },
+    where: { restaurantId, ...(source ? { source } : {}) },
     orderBy: { createdAt: "desc" },
     take: 500,
   });

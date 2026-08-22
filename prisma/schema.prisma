@@ -446,6 +446,7 @@ model OnlineOrder {
   total           Int
   notes           String?
   cancellationReason String?
+  source          String   @default("pedir-online") // "pedir-online" | "ecommerce" (pilar de origen)
   orderNumber     Int? // correlativo por restaurante (para el POS y el cliente)
   toteatOrderId   String? // id del pedido en Toteat tras inyectarlo al POS
   posError        String? // último error al enviar al POS (si hubo)

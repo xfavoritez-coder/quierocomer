@@ -132,6 +132,7 @@ export async function POST(req: NextRequest) {
     const order = await prisma.onlineOrder.create({
       data: {
         restaurantId: restaurant.id,
+        source: "ecommerce",
         customerName: String(customerName).trim(),
         customerPhone: String(customerPhone).trim(),
         customerEmail: customerEmail?.trim() || null,
