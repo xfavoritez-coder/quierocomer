@@ -243,7 +243,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
       <div style={{ flex: 1, overflowY: "auto", padding: "0 14px 20px", scrollBehavior: "smooth" }}>
         {filtered ? (
           filtered.length === 0 ? <p style={{ textAlign: "center", color: C.text3, fontFamily: FB, padding: 30 }}>Sin resultados</p>
-            : <ProductGrid products={filtered} accent={accent} onClick={onProductClick} />
+            : <ProductGrid products={filtered} accent={accent} showDesc={tenant.posShowDescriptions} onClick={onProductClick} />
         ) : (
           categories.map((cat) => {
             const catProducts = products.filter((p) => p.category_id === cat.id);
@@ -253,7 +253,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
                 <h2 style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: C.text, margin: "6px 0 10px" }}>
                   <span style={{ width: 5, height: 18, borderRadius: 999, background: accent }} />{cat.name}
                 </h2>
-                <ProductGrid products={catProducts} accent={accent} onClick={onProductClick} />
+                <ProductGrid products={catProducts} accent={accent} showDesc={tenant.posShowDescriptions} onClick={onProductClick} />
               </div>
             );
           })
@@ -458,7 +458,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
 // ── Componentes auxiliares ──
 const inp: React.CSSProperties = { width: "100%", padding: "9px 11px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, fontFamily: FB, fontSize: "0.84rem", color: C.text, outline: "none", boxSizing: "border-box" };
 
-function ProductGrid({ products, accent, onClick }: { products: StoreProduct[]; accent: string; onClick: (p: StoreProduct) => void }) {
+function ProductGrid({ products, accent, showDesc, onClick }: { products: StoreProduct[]; accent: string; showDesc?: boolean; onClick: (p: StoreProduct) => void }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
       {products.map((p) => {
@@ -470,6 +470,7 @@ function ProductGrid({ products, accent, onClick }: { products: StoreProduct[]; 
               <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: C.text, lineHeight: 1.25 }}>{p.name}</span>
               {hasMods && <span style={{ fontFamily: FB, fontSize: "0.58rem", fontWeight: 700, color: accent, background: `${accent}1f`, padding: "1px 6px", borderRadius: 999, flexShrink: 0 }}>opciones</span>}
             </div>
+            {showDesc && p.description && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: C.text2, lineHeight: 1.35, margin: 0 }}>{p.description}</p>}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "auto" }}>
               {p.is_sold_out ? <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: C.red }}>Agotado</span>
                 : p.original_price ? <><span style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: "#fff", background: accent, padding: "1px 7px", borderRadius: 999 }}>{fmt(p.price)}</span><span style={{ fontFamily: FB, fontSize: "0.72rem", color: C.text3, textDecoration: "line-through" }}>{fmt(p.original_price)}</span></>

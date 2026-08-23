@@ -20,6 +20,7 @@ export interface StoreTenant {
   headerBgColor: string;
   categoryColor: string;
   notesEnabled: boolean;
+  posShowDescriptions: boolean; // mostrar descripción de productos en "Tomar pedidos"
   address: string | null;
   whatsapp: string | null;
   phone: string | null;
@@ -92,7 +93,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
   return {
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
-    primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled,
+    primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     deliveryEnabled: !!r.orderingDelivery, pickupEnabled: true,
     waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
@@ -215,6 +216,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       headerBgColor: store.headerBgColor,
       categoryColor: store.categoryColor,
       notesEnabled: store.notesEnabled,
+      posShowDescriptions: store.posShowDescriptions,
       address: restaurant.address,
       whatsapp: restaurant.whatsapp,
       phone: restaurant.phone,

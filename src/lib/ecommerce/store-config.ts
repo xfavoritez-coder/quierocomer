@@ -16,6 +16,7 @@ export interface EcommerceStoreConfig {
   categoryColor: string; // color de los títulos de categoría (= principal si no se define)
   paymentMethods: string[]; // métodos de pago que se muestran al cliente
   notesEnabled: boolean; // mostrar el campo de notas (opcional) en el checkout
+  posShowDescriptions: boolean; // mostrar la descripción de los productos en "Tomar pedidos"
 }
 
 interface Fallback {
@@ -40,5 +41,6 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     categoryColor: isHex(o.categoryColor) ? o.categoryColor.trim() : primary,
     paymentMethods: methods,
     notesEnabled: o.notesEnabled !== false,
+    posShowDescriptions: o.posShowDescriptions === true,
   };
 }
