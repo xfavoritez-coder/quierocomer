@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
+import { supabase } from "@/lib/supabase";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -18,6 +19,7 @@ interface Order {
   orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string; paymentGateway?: string | null;
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
+  source?: string | null;
   statusHistory?: { status: string; ts: string }[];
 }
 
@@ -63,6 +65,7 @@ export default function EcommercePedidosPage() {
   const [loading, setLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<Order | null>(null);
+  const [live, setLive] = useState(false);
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
 
@@ -76,30 +79,61 @@ export default function EcommercePedidosPage() {
     } catch {}
   };
 
-  const fetchOrders = useCallback(async (poll = false) => {
+  // Avisa (beep + resalta + salta a Activos) por un pedido PENDING realmente nuevo.
+  // Idempotente vía knownPendingRef, así el poll de respaldo no duplica el beep del socket.
+  const notifyNew = useCallback((o: Order, jump = true) => {
+    if (o.status !== "PENDING" || isAttempt(o) || knownPendingRef.current.has(o.id)) return;
+    knownPendingRef.current.add(o.id);
+    beep();
+    setNewIds((s) => new Set([...s, o.id]));
+    if (jump) { setView("activos"); setStatusFilter("todos"); }
+  }, []);
+
+  const fetchOrders = useCallback(async (announce = false) => {
     if (!restaurantId) return;
     try {
       const res = await fetch(`/api/panel/orders?restaurantId=${restaurantId}&source=ecommerce`);
       if (!res.ok) return;
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
-      const currentPending = fetched.filter((o) => o.status === "PENDING" && !isAttempt(o)).map((o) => o.id);
-      if (!firstLoadRef.current) {
-        const fresh = currentPending.filter((id) => !knownPendingRef.current.has(id));
-        if (fresh.length) { beep(); setNewIds((s) => new Set([...s, ...fresh])); if (poll) { setView("activos"); setStatusFilter("todos"); } }
-      }
-      knownPendingRef.current = new Set(currentPending);
+      if (announce && !firstLoadRef.current) fetched.forEach((o) => notifyNew(o));
+      // Sembrar los PENDING conocidos en la primera carga (sin sonar) para no avisar de lo viejo.
+      if (firstLoadRef.current) fetched.forEach((o) => { if (o.status === "PENDING" && !isAttempt(o)) knownPendingRef.current.add(o.id); });
       firstLoadRef.current = false;
       setOrders(fetched);
-      setDetail((d) => (d ? fetched.find((o) => o.id === d.id) ?? null : null));
+      setDetail((d) => (d ? fetched.find((o) => o.id === d.id) ?? d : null));
     } catch {} finally { setLoading(false); }
-  }, [restaurantId]);
+  }, [restaurantId, notifyNew]);
 
+  // Push en tiempo real vía Supabase Realtime (WebSocket) sobre la tabla OnlineOrder.
   useEffect(() => {
+    if (!restaurantId) return;
     fetchOrders(false);
-    const t = setInterval(() => fetchOrders(true), 10000);
-    return () => clearInterval(t);
-  }, [fetchOrders]);
+
+    const upsert = (row: Order) => {
+      setOrders((prev) => {
+        const i = prev.findIndex((o) => o.id === row.id);
+        if (i === -1) return [row, ...prev];
+        const next = prev.slice(); next[i] = { ...next[i], ...row }; return next;
+      });
+      setDetail((d) => (d && d.id === row.id ? { ...d, ...row } : d));
+    };
+
+    const channel = supabase
+      .channel(`ecommerce-orders-${restaurantId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "OnlineOrder", filter: `restaurantId=eq.${restaurantId}` }, (payload) => {
+        const row = payload.new as Order;
+        if (!row || row.source !== "ecommerce") return; // solo pedidos del pilar ecommerce
+        if (payload.eventType === "INSERT") { upsert(row); notifyNew(row); }
+        else if (payload.eventType === "UPDATE") { upsert(row); if (row.status !== "PENDING") knownPendingRef.current.delete(row.id); }
+        else if (payload.eventType === "DELETE") { const old = payload.old as Order; setOrders((p) => p.filter((o) => o.id !== old.id)); }
+      })
+      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+
+    // Poll de respaldo lento (45s): red de seguridad si el socket se cae silenciosamente.
+    const t = setInterval(() => fetchOrders(true), 45000);
+    return () => { clearInterval(t); supabase.removeChannel(channel); };
+  }, [restaurantId, fetchOrders, notifyNew]);
 
   async function updateStatus(id: string, status: OrderStatus, reason?: string) {
     try {
@@ -128,7 +162,13 @@ export default function EcommercePedidosPage() {
         <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><ClipboardList size={20} color={ACCENT} /></div>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Pedidos</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>{pendingCount > 0 ? `${pendingCount} nuevo${pendingCount !== 1 ? "s" : ""} · ` : ""}se actualiza solo</p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {pendingCount > 0 ? `${pendingCount} nuevo${pendingCount !== 1 ? "s" : ""} · ` : ""}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: live ? GREEN : GRAY, boxShadow: live ? `0 0 0 3px ${GREEN}22` : "none" }} />
+              {live ? "En vivo" : "Conectando…"}
+            </span>
+          </p>
         </div>
         <button onClick={() => fetchOrders(false)} title="Actualizar" style={iconBtn}><RefreshCw size={16} /></button>
       </div>
