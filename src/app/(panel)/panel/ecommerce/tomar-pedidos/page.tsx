@@ -71,7 +71,13 @@ export default function TomarPedidosPage() {
 
 // Oculta el sidebar del panel (desktop) mientras el tomador está montado.
 function CollapseSidebar() {
-  return <style>{`@media (min-width:768px){.owl-sidebar{display:none!important}.owl-main{margin-left:0!important}}`}</style>;
+  // Colapsa el sidebar (desktop) y neutraliza el zoom:1.03 del panel, que inflaba
+  // el layout ~3% sobre 100vh y provocaba scroll externo (la fila Ecommerce/Nueva
+  // ventana se movía). Sin zoom, el contenido cabe exacto y esa fila queda fija.
+  return <style>{`
+    .owl-main{ zoom:1 !important; }
+    @media (min-width:768px){ .owl-sidebar{ display:none !important } .owl-main{ margin-left:0 !important } }
+  `}</style>;
 }
 
 function Center({ children }: { children: React.ReactNode }) {
