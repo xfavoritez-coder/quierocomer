@@ -8,7 +8,10 @@
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
 
 /* ---------- top bar ---------- */
-.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:52px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
+.pos-bar.has-center{display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+.pos-bar-center{display:flex;align-items:center;justify-content:center}
+.pos-tabs-bar{display:flex;align-items:center;gap:2px}
 .pos-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .pos-brand .mk{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(222,124,0,.35);flex-shrink:0}
 .pos-brand-text{display:flex;flex-direction:column;gap:0}
@@ -291,7 +294,7 @@
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
-.pos-tab{display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:40px}
+.pos-tab{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:36px}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
 .pos-tab.on{background:var(--amber-tint-2);color:var(--amber-press)}
 .pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:#1c1b19;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;padding:0 5px}

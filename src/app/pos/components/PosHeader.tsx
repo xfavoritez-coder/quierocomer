@@ -12,22 +12,19 @@ interface PosHeaderProps {
   onPendingClick?: () => void
   onBrandClick?: () => void
   rightSlot?: React.ReactNode
+  centerSlot?: React.ReactNode
 }
 
 export default function PosHeader({
-  mode = 'brand', eyebrow, subtitle, onBack, onMenu, onPendingClick, onBrandClick, rightSlot,
+  mode = 'brand', eyebrow, subtitle, onBack, onMenu, onPendingClick, onBrandClick, rightSlot, centerSlot,
 }: PosHeaderProps) {
   const pendingCount = usePendingSyncCount()
 
   return (
-    <header className="pos-bar">
+    <header className={`pos-bar${centerSlot ? ' has-center' : ''}`}>
       {mode === 'brand' ? (
         <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           <span className="mk">Q</span>
-          <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-            QuieroComer
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: '.06em', color: 'var(--ink-3)', textTransform: 'uppercase' as const }}>POS</span>
-          </span>
         </div>
       ) : (
         <div className="pos-back">
@@ -44,6 +41,8 @@ export default function PosHeader({
           </div>
         </div>
       )}
+
+      {centerSlot && <div className="pos-bar-center">{centerSlot}</div>}
 
       <div className="pos-bar-right">
         {mode === 'brand' && pendingCount > 0 && (

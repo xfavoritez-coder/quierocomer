@@ -520,21 +520,21 @@ export default function PosHomePage() {
         onMenu={() => setMenuOpen(true)}
         onPendingClick={() => setPendingModal(true)}
         onBrandClick={() => setTab('mesas')}
+        centerSlot={
+          <div className="pos-tabs-bar">
+            {TABS.map(t => (
+              <button
+                key={t.id}
+                className={`pos-tab${tab === t.id ? ' on' : ''}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+                {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+              </button>
+            ))}
+          </div>
+        }
       />
-
-      {/* ── Tab bar ─────────────────────────────────────────── */}
-      <div className="pos-tabs">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            className={`pos-tab${tab === t.id ? ' on' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-            {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
-          </button>
-        ))}
-      </div>
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
       <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>

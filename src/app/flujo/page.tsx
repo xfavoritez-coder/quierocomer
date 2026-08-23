@@ -102,7 +102,7 @@ export default function FlujoPage() {
 
   useEffect(() => {
     fetch("/api/flujo/gastos").then(r => r.json()).then(setGastos).catch(() => {});
-    fetch(`/api/admin/financial/categories?restaurantId=${HORUS_ID}`)
+    fetch("/api/flujo/categories")
       .then(r => r.json())
       .then((data: any) => { if (Array.isArray(data)) setCategories(data); })
       .catch(() => {});
