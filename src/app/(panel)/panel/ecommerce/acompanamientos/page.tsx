@@ -65,8 +65,8 @@ export default function AccompanimentsPage() {
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
-      <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 18 }}>
-        <ArrowLeft size={15} /> Ecommerce
+      <Link href="/panel/ecommerce/configuracion" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 18 }}>
+        <ArrowLeft size={15} /> Configuración
       </Link>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>

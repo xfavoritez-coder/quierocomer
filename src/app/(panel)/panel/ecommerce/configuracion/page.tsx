@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, Clock, UtensilsCrossed, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -132,6 +132,16 @@ export default function EcommerceConfiguracionPage() {
             </div>
           </section>
 
+          {/* Más ajustes de la tienda (páginas propias) */}
+          <section style={card}>
+            <SectionTitle icon={Settings} title="Más ajustes de la tienda" sub="Delivery, horario de apertura y acompañamientos." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+              <NavRow href="/panel/ecommerce/delivery" icon={Truck} title="Delivery" desc="Zonas de reparto y despacho" />
+              <NavRow href="/panel/ecommerce/horario" icon={Clock} title="Horario" desc="Cuándo la tienda está abierta" />
+              <NavRow href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} title="Acompañamientos" desc="Palitos, salsas y extras del checkout" />
+            </div>
+          </section>
+
           <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 ? 0.5 : 1 }}>
             <Save size={16} /> {saving ? "Guardando…" : "Guardar configuración"}
           </button>
@@ -152,6 +162,21 @@ function SectionTitle({ icon: Icon, title, sub }: { icon: any; title: string; su
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0", lineHeight: 1.4 }}>{sub}</p>
       </div>
     </div>
+  );
+}
+
+function NavRow({ href, icon: Icon, title, desc }: { href: string; icon: any; title: string; desc: string }) {
+  return (
+    <Link href={href} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", textDecoration: "none" }}>
+      <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon size={17} color={ACCENT} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>{title}</div>
+        <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{desc}</div>
+      </div>
+      <ChevronRight size={18} color="var(--adm-text3)" />
+    </Link>
   );
 }
 

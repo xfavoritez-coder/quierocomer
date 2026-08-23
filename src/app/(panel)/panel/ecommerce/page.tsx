@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, UtensilsCrossed, Ticket, Clock, ConciergeBell } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -119,11 +119,8 @@ export default function EcommerceHomePage() {
         <QuickLink href="/panel/ecommerce/tomar-pedidos" icon={ConciergeBell} label="Tomar pedidos" desc="Registra pedidos de mostrador / teléfono" />
         <QuickLink href="/panel/ecommerce/pedidos" icon={ClipboardList} label="Pedidos" desc="Recibe y gestiona pedidos online" />
         <QuickLink href="/panel/ecommerce/carta" icon={ShoppingBag} label="Catálogo" desc="Qué productos vender online" />
-        <QuickLink href="/panel/ecommerce/delivery" icon={Truck} label="Delivery" desc="Zonas y despacho con courier" />
-        <QuickLink href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} label="Acompañamientos" desc="Palitos, salsas y extras del checkout" />
         <QuickLink href="/panel/ecommerce/cupones" icon={Ticket} label="Cupones" desc="Códigos de descuento" />
-        <QuickLink href="/panel/ecommerce/horario" icon={Clock} label="Horario" desc="Cuándo la tienda está abierta" />
-        <QuickLink href="/panel/ecommerce/configuracion" icon={Settings} label="Configuración" desc="Ajustes de la tienda online" />
+        <QuickLink href="/panel/ecommerce/configuracion" icon={Settings} label="Configuración" desc="Ajustes, delivery, horario y acompañamientos" />
       </div>
     </div>
   );
