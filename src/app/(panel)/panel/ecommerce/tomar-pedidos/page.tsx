@@ -89,7 +89,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
     const on = () => setIsWide(mq.matches); on(); mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
   }, []);
-  const [mobileTab, setMobileTab] = useState<"menu" | "cart">("menu");
+  const [mobileTab, setMobileTab] = useState<"menu" | "cart">("cart");
 
   // Menú
   const [search, setSearch] = useState("");
@@ -440,15 +440,16 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
           <div style={{ flex: 1, minWidth: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>{menuPanel}</div>
         </div>
       ) : (
-        <>
-          <div style={{ height: "calc(100vh - 210px)", minHeight: 400, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 128px)", minHeight: 420 }}>
+          <div style={{ flex: 1, minHeight: 0, borderRadius: "16px 16px 0 0", border: `1px solid ${C.border}`, borderBottom: "none", overflow: "hidden" }}>
             {mobileTab === "menu" ? menuPanel : cartPanel}
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menú" accent={accent} />
+          {/* Barra de tabs fija abajo */}
+          <div style={{ display: "flex", gap: 8, padding: 8, background: C.card, borderRadius: "0 0 16px 16px", border: `1px solid ${C.border}`, flexShrink: 0 }}>
             <TabBtn active={mobileTab === "cart"} onClick={() => setMobileTab("cart")} icon={<ShoppingCart size={16} />} label={`Pedido${cartCount ? ` (${cartCount})` : ""}`} accent={accent} />
+            <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menú" accent={accent} />
           </div>
-        </>
+        </div>
       )}
 
       {modalProduct && <ModifiersModal product={modalProduct} accent={accent} onClose={() => setModalProduct(null)} onAdd={(base, qty) => { addToCart(base, qty); setModalProduct(null); if (!isWide) setMobileTab("cart"); }} />}
