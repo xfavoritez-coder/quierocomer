@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -65,6 +65,7 @@ function QuickLink({ href, icon: Icon, label, desc }: { href: string; icon: any;
 export default function EcommerceHomePage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
+  const slug = session?.restaurants.find((r) => r.id === restaurantId)?.slug || null;
   const [status, setStatus] = useState<Status | null>(null);
 
   useEffect(() => {
@@ -94,6 +95,21 @@ export default function EcommerceHomePage() {
           </p>
         </div>
       </div>
+
+      {/* Acceso a la tienda pública */}
+      {slug && (
+        <a href={`/ecommerce/${slug}`} target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 20, padding: 16, borderRadius: 16, textDecoration: "none", background: `${ACCENT}14`, border: `1px solid ${ACCENT}55` }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Store size={20} color="#1a1a1a" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)" }}>Ver mi tienda online</div>
+            <div style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>quierocomer.com/ecommerce/{slug}</div>
+          </div>
+          <ExternalLink size={18} color={ACCENT} style={{ flexShrink: 0 }} />
+        </a>
+      )}
 
       {/* Integraciones */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "26px 0 12px" }}>
