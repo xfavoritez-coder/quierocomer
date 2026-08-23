@@ -27,6 +27,9 @@ interface Order {
 const STATUS_LABEL: Record<OrderStatus, string> = { PENDING: "Nuevo", ACCEPTED: "Aceptado", PREPARING: "Preparando", IN_DELIVERY: "En reparto", READY: "Listo", DONE: "Entregado", CANCELLED: "Cancelado" };
 const STATUS_COLOR: Record<OrderStatus, string> = { PENDING: ORANGE, ACCEPTED: BLUE, PREPARING: GOLD, IN_DELIVERY: GREEN, READY: GREEN, DONE: GRAY, CANCELLED: RED };
 const STATUS_ORDER: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY", "DONE", "CANCELLED"];
+// Activos: solo estados en curso/terminados OK. Cancelado (y los intentos de
+// pago) van únicamente a Historial.
+const ACTIVE_STATUSES: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY", "DONE"];
 const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; color: string }[]> = {
   PENDING: [{ status: "ACCEPTED", label: "Aceptar", color: BLUE }, { status: "CANCELLED", label: "Rechazar", color: RED }],
   ACCEPTED: [{ status: "PREPARING", label: "Preparando", color: GOLD }, { status: "CANCELLED", label: "Cancelar", color: RED }],
@@ -148,7 +151,9 @@ export default function EcommercePedidosPage() {
   }
 
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
-  const base = view === "activos" ? orders.filter((o) => !isAttempt(o)) : orders;
+  // Activos excluye intentos de pago y cancelados; Historial muestra todo.
+  const base = view === "activos" ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED") : orders;
+  const chipStatuses = view === "activos" ? ACTIVE_STATUSES : STATUS_ORDER;
   const shown = statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
@@ -184,7 +189,7 @@ export default function EcommercePedidosPage() {
       {/* Chips por estado */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
         <Chip label="Todos" count={countFor("todos")} on={statusFilter === "todos"} onClick={() => setStatusFilter("todos")} color="var(--adm-text2)" />
-        {STATUS_ORDER.map((s) => <Chip key={s} label={STATUS_LABEL[s]} count={countFor(s)} on={statusFilter === s} onClick={() => setStatusFilter(s)} color={STATUS_COLOR[s]} />)}
+        {chipStatuses.map((s) => <Chip key={s} label={STATUS_LABEL[s]} count={countFor(s)} on={statusFilter === s} onClick={() => setStatusFilter(s)} color={STATUS_COLOR[s]} />)}
       </div>
 
       {loading ? (
