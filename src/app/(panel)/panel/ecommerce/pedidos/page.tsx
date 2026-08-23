@@ -272,10 +272,13 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
 
   const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
 
-  // Portal a document.body: el panel (.owl-main) usa `zoom: 1.03`, y un
-  // position:fixed dentro de un ancestro con zoom se escala → el 88vh queda más
-  // alto que el viewport y se corta abajo. Fuera del zoom, el alto es correcto.
+  // Portal fuera del contenedor con `zoom: 1.03` (.owl-main): un position:fixed
+  // dentro de un ancestro con zoom se escala → el alto queda mayor al viewport y
+  // se corta abajo. Se porta al contenedor de tema (.theme-dark/.theme-light),
+  // que es el PADRE de .owl-main: escapa del zoom y conserva las variables de
+  // tema (--adm-*) y las fuentes. (document.body no las tiene → sin fondo/serif.)
   if (typeof document === "undefined") return null;
+  const target = document.querySelector(".theme-dark, .theme-light") ?? document.body;
   return createPortal(
     <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "90dvh", overflowY: "auto", overscrollBehavior: "contain", borderRadius: "18px 18px 0 0", border: "1px solid var(--adm-card-border)" }}>
@@ -359,7 +362,7 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
         </div>
       </div>
     </div>,
-    document.body,
+    target,
   );
 }
 
