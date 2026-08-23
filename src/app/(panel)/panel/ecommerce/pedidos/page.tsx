@@ -154,7 +154,8 @@ export default function EcommercePedidosPage() {
   // Activos excluye intentos de pago y cancelados; Historial muestra todo.
   const base = view === "activos" ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED") : orders;
   const chipStatuses = view === "activos" ? ACTIVE_STATUSES : STATUS_ORDER;
-  const shown = statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
+  // Historial: backlog completo, sin filtros. Activos: filtra por chip.
+  const shown = view === "historial" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
 
@@ -184,13 +185,16 @@ export default function EcommercePedidosPage() {
         <button onClick={() => { setView("activos"); setStatusFilter("todos"); }} style={viewBtn(view === "activos")}><ListChecks size={15} /> Activos</button>
         <button onClick={() => { setView("historial"); setStatusFilter("todos"); }} style={viewBtn(view === "historial")}><History size={15} /> Historial</button>
       </div>
-      {view === "historial" && <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 2px 12px" }}>Todos los pedidos, incluidos los intentos de pago no completados.</p>}
+      {view === "historial" && <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 2px 12px" }}>Backlog de todos los pedidos, incluidos cancelados e intentos de pago.</p>}
 
-      {/* Chips por estado */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-        <Chip label="Todos" count={countFor("todos")} on={statusFilter === "todos"} onClick={() => setStatusFilter("todos")} color="var(--adm-text2)" />
-        {chipStatuses.map((s) => <Chip key={s} label={STATUS_LABEL[s]} count={countFor(s)} on={statusFilter === s} onClick={() => setStatusFilter(s)} color={STATUS_COLOR[s]} />)}
-      </div>
+      {/* Chips por estado — solo en Activos (Historial no filtra). Sin "Todos":
+          verlos todos es justamente el Historial. Clic en un chip filtra; volver
+          a hacer clic vuelve a mostrar todos los activos. */}
+      {view === "activos" && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+          {chipStatuses.map((s) => <Chip key={s} label={STATUS_LABEL[s]} count={countFor(s)} on={statusFilter === s} onClick={() => setStatusFilter(statusFilter === s ? "todos" : s)} color={STATUS_COLOR[s]} />)}
+        </div>
+      )}
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</p>
