@@ -24,6 +24,7 @@ export default function EcommerceConfiguracionPage() {
   const [allMethods, setAllMethods] = useState<string[]>(["webpay", "efectivo", "transferencia", "tarjeta"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"marca" | "pagos" | "checkout" | "pos" | "mas">("marca");
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -67,11 +68,23 @@ export default function EcommerceConfiguracionPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      {!loading && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
+          <TabChip active={tab === "marca"} onClick={() => setTab("marca")} icon={Palette} label="Marca" />
+          <TabChip active={tab === "pagos"} onClick={() => setTab("pagos")} icon={CreditCard} label="Pagos" />
+          <TabChip active={tab === "checkout"} onClick={() => setTab("checkout")} icon={StickyNote} label="Checkout" />
+          <TabChip active={tab === "pos"} onClick={() => setTab("pos")} icon={ConciergeBell} label="Tomar pedidos" />
+          <TabChip active={tab === "mas"} onClick={() => setTab("mas")} icon={Settings} label="Más ajustes" />
+        </div>
+      )}
+
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", marginTop: 24 }}>Cargando…</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
           {/* Colores de marca */}
+          {tab === "marca" && (
           <section style={card}>
             <SectionTitle icon={Palette} title="Colores de marca" sub="Se aplican en tu tienda online (botones, precios, header y categorías)." />
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
@@ -92,8 +105,10 @@ export default function EcommerceConfiguracionPage() {
               </div>
             </div>
           </section>
+          )}
 
           {/* Métodos de pago */}
+          {tab === "pagos" && (
           <section style={card}>
             <SectionTitle icon={CreditCard} title="Métodos de pago" sub="Elige qué medios de pago ve el cliente en el checkout." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
@@ -113,8 +128,10 @@ export default function EcommerceConfiguracionPage() {
               {cfg.paymentMethods.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "#ef4444", margin: 0 }}>Debes dejar al menos un método de pago activo.</p>}
             </div>
           </section>
+          )}
 
           {/* Notas */}
+          {tab === "checkout" && (
           <section style={card}>
             <SectionTitle icon={StickyNote} title="Notas del cliente" sub="Campo opcional en el checkout para instrucciones (ej: sin cebolla)." />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
@@ -122,8 +139,10 @@ export default function EcommerceConfiguracionPage() {
               <Toggle on={cfg.notesEnabled} onClick={() => patch({ notesEnabled: !cfg.notesEnabled })} />
             </div>
           </section>
+          )}
 
           {/* Tomar pedidos */}
+          {tab === "pos" && (
           <section style={card}>
             <SectionTitle icon={ConciergeBell} title="Tomar pedidos" sub="Ajustes de la pantalla de mostrador (Tomar pedidos)." />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
@@ -131,8 +150,10 @@ export default function EcommerceConfiguracionPage() {
               <Toggle on={cfg.posShowDescriptions} onClick={() => patch({ posShowDescriptions: !cfg.posShowDescriptions })} />
             </div>
           </section>
+          )}
 
           {/* Más ajustes de la tienda (páginas propias) */}
+          {tab === "mas" && (
           <section style={card}>
             <SectionTitle icon={Settings} title="Más ajustes de la tienda" sub="Delivery, horario de apertura y acompañamientos." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
@@ -141,10 +162,13 @@ export default function EcommerceConfiguracionPage() {
               <NavRow href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} title="Acompañamientos" desc="Palitos, salsas y extras del checkout" />
             </div>
           </section>
+          )}
 
+          {tab !== "mas" && (
           <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 ? 0.5 : 1 }}>
             <Save size={16} /> {saving ? "Guardando…" : "Guardar configuración"}
           </button>
+          )}
         </div>
       )}
     </div>
@@ -162,6 +186,14 @@ function SectionTitle({ icon: Icon, title, sub }: { icon: any; title: string; su
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0", lineHeight: 1.4 }}>{sub}</p>
       </div>
     </div>
+  );
+}
+
+function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
+  return (
+    <button onClick={onClick} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, border: `1px solid ${active ? ACCENT : "var(--adm-card-border)"}`, background: active ? `${ACCENT}1a` : "transparent", color: active ? ACCENT : "var(--adm-text2)" }}>
+      <Icon size={15} /> {label}
+    </button>
   );
 }
 
