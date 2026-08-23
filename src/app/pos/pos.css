@@ -8,12 +8,12 @@
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
 
 /* ---------- top bar ---------- */
-.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:52px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
-.pos-bar.has-center{display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:60px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
+.pos-bar.has-center{display:grid;grid-template-columns:auto 1fr auto;gap:12px}
 .pos-bar-center{display:flex;align-items:center;justify-content:center}
-.pos-tabs-bar{display:flex;align-items:center;gap:2px}
+.pos-tabs-bar{display:flex;align-items:center;gap:4px}
 .pos-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
-.pos-brand .mk{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(222,124,0,.35);flex-shrink:0}
+.pos-brand .mk{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;box-shadow:0 2px 8px rgba(222,124,0,.35);flex-shrink:0}
 .pos-brand-text{display:flex;flex-direction:column;gap:0}
 .pos-brand-text span{font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.15}
 .pos-brand small{font-family:var(--mono);font-weight:500;font-size:10px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
@@ -294,7 +294,7 @@
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
-.pos-tab{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:36px}
+.pos-tab{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;min-height:36px}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
 .pos-tab.on{background:var(--amber-tint-2);color:var(--amber-press)}
 .pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:#1c1b19;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;padding:0 5px}
@@ -303,8 +303,8 @@
 /* ---------- header extras (pending + hamburger) ---------- */
 .pos-pending-btn{display:flex;align-items:center;gap:5px;background:var(--amber-tint-2);color:var(--amber-press);border:1px solid var(--amber-tint);border-radius:var(--r-chip);padding:5px 10px;font-family:var(--mono);font-size:11.5px;font-weight:600;cursor:pointer;min-height:34px;transition:.14s}
 .pos-pending-btn:hover{background:var(--amber-tint);border-color:var(--amber)}
-.pos-hamburger{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.14s;min-height:44px;min-width:44px}
-.pos-hamburger:hover{background:var(--surface);border-color:var(--line-strong);color:var(--ink)}
+.pos-hamburger{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.14s;min-height:44px;min-width:44px;box-shadow:var(--sh-1)}
+.pos-hamburger:hover{border-color:var(--line-strong);color:var(--ink);box-shadow:var(--sh-2)}
 
 /* ---------- sector pills (filtro dentro del tab Mesas) ---------- */
 .pos-sector-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px}
