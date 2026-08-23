@@ -280,9 +280,9 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
   if (typeof document === "undefined") return null;
   const target = document.querySelector(".theme-dark, .theme-light") ?? document.body;
   return createPortal(
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "90dvh", overflowY: "auto", overscrollBehavior: "contain", borderRadius: "18px 18px 0 0", border: "1px solid var(--adm-card-border)" }}>
-        <div style={{ position: "sticky", top: 0, background: "var(--adm-card)", padding: "16px 18px", borderBottom: "1px solid var(--adm-card-border)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, boxSizing: "border-box" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "calc(100dvh - 40px)", overflowY: "auto", overscrollBehavior: "contain", borderRadius: 18, border: "1px solid var(--adm-card-border)" }}>
+        <div style={{ position: "sticky", top: 0, background: "var(--adm-card)", padding: "16px 18px", borderBottom: "1px solid var(--adm-card-border)", borderRadius: "18px 18px 0 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
           <div>
             <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>Pedido #{order.orderNumber ?? order.id.slice(-5)}</h3>
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>{fmtFull(order.createdAt)}</p>
