@@ -26,6 +26,7 @@ export interface UberDirectCreds {
   customerId?: string; // Uber Direct customer id
   clientId?: string;
   clientSecret?: string;
+  signingKey?: string; // clave de firma de webhooks (X-Uber-Signature)
 }
 
 export interface PedidosYaCreds {

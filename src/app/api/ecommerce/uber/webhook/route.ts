@@ -27,11 +27,12 @@ export async function POST(req: NextRequest) {
   });
   if (!order) return NextResponse.json({ ok: true }); // no es nuestro / ya borrado
 
-  // Verificar firma con el clientSecret del local.
+  // Verificar firma con la clave de firma de webhooks del local (fallback a clientSecret).
   const creds = uberSettingsFor(order.restaurant);
+  const secret = creds.signingKey || creds.clientSecret;
   const sig = req.headers.get("x-uber-signature");
-  if (creds.clientSecret && sig) {
-    const expected = crypto.createHmac("sha256", creds.clientSecret).update(raw).digest("hex");
+  if (secret && sig) {
+    const expected = crypto.createHmac("sha256", secret).update(raw).digest("hex");
     if (sig !== expected) { console.warn("[uber/webhook] firma inválida", deliveryId); return NextResponse.json({ ok: true }); }
   }
 

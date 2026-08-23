@@ -12,11 +12,12 @@ export interface UberCreds {
   customerId?: string;
   clientId?: string;
   clientSecret?: string;
+  signingKey?: string;
 }
 
 export function uberSettingsFor(restaurant: { ecommerceConfig?: unknown } | null): UberCreds {
   const u = parseEcommerceConfig(restaurant?.ecommerceConfig).uberDirect || {};
-  return { customerId: u.customerId, clientId: u.clientId, clientSecret: u.clientSecret };
+  return { customerId: u.customerId, clientId: u.clientId, clientSecret: u.clientSecret, signingKey: u.signingKey };
 }
 
 export function uberConfigured(creds: UberCreds): boolean {

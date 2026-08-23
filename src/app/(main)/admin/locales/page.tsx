@@ -1178,6 +1178,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [ubCustomer, setUbCustomer] = useState("");
   const [ubClient, setUbClient] = useState("");
   const [ubSecret, setUbSecret] = useState("");
+  const [ubSigning, setUbSigning] = useState("");
   // PedidosYa
   const [pyEnv, setPyEnv] = useState("sandbox");
   const [pyClient, setPyClient] = useState("");
@@ -1197,7 +1198,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setWpEnv(c.webpay?.env || "integration"); setWpCode(c.webpay?.commerceCode || ""); setWpKey(c.webpay?.apiKey || "");
     setFlEnv(c.flow?.env || "sandbox"); setFlKey(c.flow?.apiKey || ""); setFlSecret(c.flow?.secretKey || "");
     setMpEnv(c.mercadopago?.env || "sandbox"); setMpToken(c.mercadopago?.accessToken || ""); setMpPublic(c.mercadopago?.publicKey || "");
-    setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || "");
+    setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || ""); setUbSigning(c.uberDirect?.signingKey || "");
     setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
     setGmapsKey(c.googleMaps?.apiKey || "");
     setPosProvider(c.pos?.provider || "none");
@@ -1215,7 +1216,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       webpay: { env: wpEnv as "integration" | "production", commerceCode: wpCode.trim() || undefined, apiKey: wpKey.trim() || undefined },
       flow: { env: flEnv as "sandbox" | "production", apiKey: flKey.trim() || undefined, secretKey: flSecret.trim() || undefined },
       mercadopago: { env: mpEnv as "sandbox" | "production", accessToken: mpToken.trim() || undefined, publicKey: mpPublic.trim() || undefined },
-      uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined },
+      uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined, signingKey: ubSigning.trim() || undefined },
       pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
       googleMaps: { apiKey: gmapsKey.trim() || undefined },
       pos: posProvider === "toteat"
@@ -1272,6 +1273,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <Input label="Customer ID" value={ubCustomer} onChange={setUbCustomer} placeholder="uuid del customer" />
             <Input label="Client ID" value={ubClient} onChange={setUbClient} placeholder="client id" />
             <Input label="Client Secret" value={ubSecret} onChange={setUbSecret} placeholder="client secret" type="password" />
+            <Input label="Signing Key (webhooks)" value={ubSigning} onChange={setUbSigning} placeholder="clave de firma de webhooks" type="password" />
             <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "4px 0 0", lineHeight: 1.5 }}>Webhook a configurar en el dashboard de Uber Direct:<br /><code style={{ color: "#a78bfa", wordBreak: "break-all" }}>https://quierocomer.com/api/ecommerce/uber/webhook</code></p>
           </IntegrationGroup>
 
