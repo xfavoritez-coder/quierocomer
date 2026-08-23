@@ -47,7 +47,7 @@ const statusLabel: Record<TableStatus, string> = {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
-  { id: 'retiro', label: 'Retiro' },
+  { id: 'retiro', label: 'Retiros' },
   { id: 'delivery', label: 'Delivery' },
 ]
 
@@ -271,10 +271,11 @@ function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashS
         {restaurant && (
           <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--line)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 14, color: 'var(--amber-press)' }}>
-                  {restaurant.name.charAt(0).toUpperCase()}
-                </span>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                {restaurant.logoUrl
+                  ? <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 14, color: 'var(--amber-press)' }}>{restaurant.name.charAt(0).toUpperCase()}</span>
+                }
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{restaurant.name}</div>
