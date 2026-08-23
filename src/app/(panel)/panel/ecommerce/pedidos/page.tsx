@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks } from "lucide-react";
 import { toast } from "sonner";
@@ -271,9 +272,13 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
 
   const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
 
-  return (
+  // Portal a document.body: el panel (.owl-main) usa `zoom: 1.03`, y un
+  // position:fixed dentro de un ancestro con zoom se escala → el 88vh queda más
+  // alto que el viewport y se corta abajo. Fuera del zoom, el alto es correcto.
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 0 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto", borderRadius: "18px 18px 0 0", border: "1px solid var(--adm-card-border)" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", width: "100%", maxWidth: 520, maxHeight: "90dvh", overflowY: "auto", overscrollBehavior: "contain", borderRadius: "18px 18px 0 0", border: "1px solid var(--adm-card-border)" }}>
         <div style={{ position: "sticky", top: 0, background: "var(--adm-card)", padding: "16px 18px", borderBottom: "1px solid var(--adm-card-border)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
           <div>
             <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>Pedido #{order.orderNumber ?? order.id.slice(-5)}</h3>
@@ -353,7 +358,8 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
