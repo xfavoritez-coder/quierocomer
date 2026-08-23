@@ -33,7 +33,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
   id: string; name: string; description: string | null; price: number; discountPrice: number | null;
-  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ingredients: string | null;
+  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
   category: { id: string; name: string };
 }
@@ -359,6 +359,7 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
 export default function AdminMenus() {
   const { t } = usePanelLang();
   const { selectedRestaurantId, restaurants, isSuper, loading: sessionLoading } = useAdminSession();
+  const ecommerceEnabled = !!restaurants.find((r) => r.id === selectedRestaurantId)?.ecommerceEnabled;
   const { activePlan } = usePanelSession();
   const canHighlight = canAccess(activePlan, "highlight_dishes");
   const [dishes, setDishes] = useState<Dish[]>([]);
@@ -714,6 +715,25 @@ export default function AdminMenus() {
       setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, hideFromOrdering: dish.hideFromOrdering } : d));
       if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, hideFromOrdering: dish.hideFromOrdering } : prev);
       console.error("Toggle ordering error:", e);
+    }
+  };
+
+  // "Solo online": el plato se muestra únicamente en el Ecommerce (oculto en la carta QR).
+  const toggleDishEcommerceOnly = async (dish: Dish) => {
+    const newVal = !dish.ecommerceOnly;
+    setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, ecommerceOnly: newVal } : d));
+    if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, ecommerceOnly: newVal } : prev);
+    try {
+      const res = await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ecommerceOnly: newVal }) });
+      if (!res.ok) {
+        setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, ecommerceOnly: dish.ecommerceOnly } : d));
+        if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, ecommerceOnly: dish.ecommerceOnly } : prev);
+        console.error("Toggle ecommerceOnly failed:", await res.text());
+      }
+    } catch (e) {
+      setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, ecommerceOnly: dish.ecommerceOnly } : d));
+      if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, ecommerceOnly: dish.ecommerceOnly } : prev);
+      console.error("Toggle ecommerceOnly error:", e);
     }
   };
 
@@ -1157,6 +1177,12 @@ export default function AdminMenus() {
                   <ShoppingCart size={17} />
                   {selectedDish.hideFromOrdering ? "Mostrar en Pedidos online" : "Ocultar de Pedidos online"}
                 </button>
+                {ecommerceEnabled && (
+                  <button onClick={() => toggleDishEcommerceOnly(selectedDish)} style={{ marginTop: 8, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.ecommerceOnly ? "rgba(244,166,35,0.14)" : "rgba(120,120,120,0.1)", color: selectedDish.ecommerceOnly ? "#F4A623" : "var(--adm-text2)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+                    <Globe size={17} />
+                    {selectedDish.ecommerceOnly ? "Solo en Ecommerce · volver a la carta QR" : "Mostrar solo en Ecommerce"}
+                  </button>
+                )}
               </div>
 
 
@@ -1913,6 +1939,12 @@ export default function AdminMenus() {
                   <button onClick={() => toggleDishOrdering(d)} title={d.hideFromOrdering ? "Mostrar en Pedidos online" : "Ocultar de Pedidos online"} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <OrderingCartIcon blocked={!!d.hideFromOrdering} />
                   </button>
+                  {/* Globe — solo en Ecommerce (oculto en carta QR) */}
+                  {ecommerceEnabled && (
+                    <button onClick={() => toggleDishEcommerceOnly(d)} title={d.ecommerceOnly ? "Solo en Ecommerce — volver a la carta QR" : "Mostrar solo en Ecommerce (ocultar de la carta QR)"} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Globe size={16} color={d.ecommerceOnly ? "#F4A623" : "#888"} />
+                    </button>
+                  )}
                   {/* More menu */}
                   <div style={{ position: "relative" }}>
                     <button onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === d.id ? null : d.id); }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

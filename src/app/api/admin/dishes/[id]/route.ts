@@ -53,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isHero !== undefined && { isHero: body.isHero }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.hideFromOrdering !== undefined && { hideFromOrdering: body.hideFromOrdering }),
+        ...(body.ecommerceOnly !== undefined && { ecommerceOnly: body.ecommerceOnly }),
         ...(body.ingredients !== undefined && { ingredients: body.ingredients || null }),
         ...(body.allergens !== undefined && { allergens: body.allergens || null }),
         ...(body.dishDiet !== undefined && { dishDiet: body.dishDiet }),

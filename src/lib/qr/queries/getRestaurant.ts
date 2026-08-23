@@ -16,7 +16,8 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
         }),
       },
       dishes: {
-        where: { isActive: true, deletedAt: null },
+        // ecommerceOnly: platos "solo online" no se muestran en la carta QR.
+        where: { isActive: true, deletedAt: null, ecommerceOnly: false },
         orderBy: { position: "asc" },
         include: {
           modifierTemplates: {

@@ -11,6 +11,7 @@ interface AdminRestaurant {
   qrToken?: string | null;
   plan?: string | null;
   hasToteat?: boolean;
+  ecommerceEnabled?: boolean;
 }
 
 export interface AdminSession {

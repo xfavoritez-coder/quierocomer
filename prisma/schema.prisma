@@ -664,6 +664,7 @@ model Dish {
   isHero                Boolean                @default(false)
   isActive              Boolean                @default(true)
   hideFromOrdering      Boolean                @default(false) // oculto en Pedidos online (/pedir) pero visible en la carta
+  ecommerceOnly         Boolean                @default(false) // solo visible en el Ecommerce (oculto en la carta QR)
   stockCountdown        Int?
   ingredients           String?
   allergens             String?
