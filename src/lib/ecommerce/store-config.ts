@@ -17,6 +17,8 @@ export interface EcommerceStoreConfig {
   paymentMethods: string[]; // métodos de pago que se muestran al cliente
   notesEnabled: boolean; // mostrar el campo de notas (opcional) en el checkout
   posShowDescriptions: boolean; // mostrar la descripción de los productos en "Tomar pedidos"
+  pickupEnabled: boolean; // aceptar pedidos para retiro en local
+  deliveryEnabled: boolean; // aceptar pedidos con delivery
 }
 
 interface Fallback {
@@ -42,5 +44,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     paymentMethods: methods,
     notesEnabled: o.notesEnabled !== false,
     posShowDescriptions: o.posShowDescriptions === true,
+    pickupEnabled: o.pickupEnabled !== false,
+    deliveryEnabled: o.deliveryEnabled !== false,
   };
 }

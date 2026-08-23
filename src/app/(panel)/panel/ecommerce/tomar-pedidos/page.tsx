@@ -101,7 +101,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
   const [courtesyKey, setCourtesyKey] = useState<string | null>(null);
 
   // Formulario
-  const [deliveryType, setDeliveryType] = useState<"PICKUP" | "DELIVERY">("PICKUP");
+  const [deliveryType, setDeliveryType] = useState<"PICKUP" | "DELIVERY">(tenant.pickupEnabled === false && tenant.deliveryEnabled ? "DELIVERY" : "PICKUP");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 

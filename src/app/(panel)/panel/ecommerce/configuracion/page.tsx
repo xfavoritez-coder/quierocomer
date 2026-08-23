@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, Clock, UtensilsCrossed, ChevronRight } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
+import HorarioEditor from "@/components/ecommerce/HorarioEditor";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -24,7 +25,7 @@ export default function EcommerceConfiguracionPage() {
   const [allMethods, setAllMethods] = useState<string[]>(["webpay", "efectivo", "transferencia", "tarjeta"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"marca" | "pagos" | "checkout" | "pos" | "mas">("marca");
+  const [tab, setTab] = useState<"tienda" | "pagos" | "checkout" | "pos" | "mas">("tienda");
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -71,7 +72,7 @@ export default function EcommerceConfiguracionPage() {
       {/* Tabs */}
       {!loading && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
-          <TabChip active={tab === "marca"} onClick={() => setTab("marca")} icon={Palette} label="Marca" />
+          <TabChip active={tab === "tienda"} onClick={() => setTab("tienda")} icon={Store} label="Tienda" />
           <TabChip active={tab === "pagos"} onClick={() => setTab("pagos")} icon={CreditCard} label="Pagos" />
           <TabChip active={tab === "checkout"} onClick={() => setTab("checkout")} icon={StickyNote} label="Checkout" />
           <TabChip active={tab === "pos"} onClick={() => setTab("pos")} icon={ConciergeBell} label="Tomar pedidos" />
@@ -83,8 +84,38 @@ export default function EcommerceConfiguracionPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", marginTop: 24 }}>Cargando…</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
+          {/* Tipos de entrega */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Store} title="Tipos de entrega" sub="Elige qué formas de recibir el pedido aceptas en tu tienda online." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderRadius: 12, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Package size={18} color={ACCENT} />
+                  <div>
+                    <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Retiro en local</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>El cliente pasa a retirar el pedido.</p>
+                  </div>
+                </div>
+                <Toggle on={cfg.pickupEnabled} onClick={() => patch({ pickupEnabled: !cfg.pickupEnabled })} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderRadius: 12, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Bike size={18} color={ACCENT} />
+                  <div>
+                    <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Delivery</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Envío a domicilio según tus zonas.</p>
+                  </div>
+                </div>
+                <Toggle on={cfg.deliveryEnabled} onClick={() => patch({ deliveryEnabled: !cfg.deliveryEnabled })} />
+              </div>
+              {!cfg.pickupEnabled && !cfg.deliveryEnabled && <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "#ef4444", margin: 0 }}>Debes aceptar al menos retiro o delivery.</p>}
+            </div>
+          </section>
+          )}
+
           {/* Colores de marca */}
-          {tab === "marca" && (
+          {tab === "tienda" && (
           <section style={card}>
             <SectionTitle icon={Palette} title="Colores de marca" sub="Se aplican en tu tienda online (botones, precios, header y categorías)." />
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
@@ -104,6 +135,13 @@ export default function EcommerceConfiguracionPage() {
                 <button style={{ marginTop: 8, width: "100%", padding: "8px", borderRadius: 10, border: "none", background: cfg.primaryColor, color: "#fff", fontFamily: F, fontWeight: 800, fontSize: "0.8rem" }}>Continuar con mi pedido →</button>
               </div>
             </div>
+          </section>
+          )}
+
+          {/* Horario (dentro de Tienda) */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <HorarioEditor restaurantId={restaurantId} showHeader />
           </section>
           )}
 
@@ -155,17 +193,16 @@ export default function EcommerceConfiguracionPage() {
           {/* Más ajustes de la tienda (páginas propias) */}
           {tab === "mas" && (
           <section style={card}>
-            <SectionTitle icon={Settings} title="Más ajustes de la tienda" sub="Delivery, horario de apertura y acompañamientos." />
+            <SectionTitle icon={Settings} title="Más ajustes de la tienda" sub="Zonas de delivery y acompañamientos." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
               <NavRow href="/panel/ecommerce/delivery" icon={Truck} title="Delivery" desc="Zonas de reparto y despacho" />
-              <NavRow href="/panel/ecommerce/horario" icon={Clock} title="Horario" desc="Cuándo la tienda está abierta" />
               <NavRow href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} title="Acompañamientos" desc="Palitos, salsas y extras del checkout" />
             </div>
           </section>
           )}
 
           {tab !== "mas" && (
-          <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 ? 0.5 : 1 }}>
+          <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled)} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled) ? 0.5 : 1 }}>
             <Save size={16} /> {saving ? "Guardando…" : "Guardar configuración"}
           </button>
           )}

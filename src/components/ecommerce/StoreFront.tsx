@@ -486,7 +486,9 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
   const distanceMode = tenant.deliveryConfig.mode === "distance";
-  const [tab, setTab] = useState<"pickup" | "delivery">(deliveryType);
+  const [tab, setTab] = useState<"pickup" | "delivery">(
+    !tenant.pickupEnabled ? "delivery" : !tenant.deliveryEnabled ? "pickup" : deliveryType,
+  );
   const [details, setDetails] = useState(deliveryAddress?.details ?? "");
 
   // Modo comuna
