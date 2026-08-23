@@ -295,7 +295,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
 // ── Barra mobile de selección de entrega ────────────────────────
 function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTenant; primaryColor: string; onOpen: () => void }) {
   const { deliveryType, deliveryAddress, deliverySelected } = useCartStore();
-  const estimatedTime = deliverySelected ? tenant.waitTime ?? "" : "";
+  const estimatedTime = deliverySelected ? ((deliveryType === "delivery" ? tenant.waitTimeDelivery : tenant.waitTimePickup) || tenant.waitTime || "") : "";
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -385,7 +385,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
   const deliveryFee = deliveryType === "delivery" ? deliveryAddress?.fee ?? 0 : 0;
-  const estimatedTime = deliverySelected ? tenant.waitTime ?? "" : "";
+  const estimatedTime = deliverySelected ? ((deliveryType === "delivery" ? tenant.waitTimeDelivery : tenant.waitTimePickup) || tenant.waitTime || "") : "";
   const showItems = mounted && items.length > 0;
   const minPerType = deliveryType === "delivery" ? (deliveryAddress?.minOrder ?? tenant.minOrderDelivery) : tenant.minOrderPickup;
   const minReq = minPerType && minPerType > 0 ? minPerType : null;

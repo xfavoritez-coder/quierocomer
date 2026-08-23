@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink, Clock, Save, Package } from "lucide-react";
+import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -43,6 +44,64 @@ function IntegrationCard({ icon: Icon, name, kind, ok, note }: { icon: any; name
           <Circle size={13} /> Sin configurar
         </span>
       )}
+    </div>
+  );
+}
+
+// Tiempo de entrega estimado (retiro / delivery). Edita el store config completo
+// para no pisar el resto de la configuración al guardar.
+function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
+  const [cfg, setCfg] = useState<Record<string, unknown> | null>(null);
+  const [pickup, setPickup] = useState("");
+  const [delivery, setDelivery] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.config) { setCfg(d.config); setPickup(String(d.config.waitTimePickup ?? "")); setDelivery(String(d.config.waitTimeDelivery ?? "")); } })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  async function save() {
+    if (!cfg) return;
+    setSaving(true);
+    try {
+      const next = { ...cfg, waitTimePickup: pickup.trim(), waitTimeDelivery: delivery.trim() };
+      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setSaving(false); return; }
+      setCfg(next);
+      toast.success("Tiempo de entrega guardado");
+    } catch { toast.error("Error de conexión"); }
+    setSaving(false);
+  }
+
+  const field = (icon: React.ReactNode, label: string, value: string, onChange: (v: string) => void) => (
+    <div style={{ flex: 1, minWidth: 150 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 5 }}>{icon} {label}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="ej: 20-30" style={{ flex: 1, minWidth: 0, padding: "8px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>min</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ ...CARD, marginTop: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <Clock size={18} color={ACCENT} style={{ marginTop: 2, flexShrink: 0 }} />
+        <div>
+          <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Tiempo de entrega estimado</h2>
+          <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Lo que ve el cliente al pedir. Puedes usar un rango (ej: 20-30).</p>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
+        {field(<Package size={13} />, "Retiro", pickup, setPickup)}
+        {field(<Bike size={13} />, "Delivery", delivery, setDelivery)}
+      </div>
+      <button onClick={save} disabled={saving || !cfg} style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.83rem", fontWeight: 800, cursor: saving || !cfg ? "wait" : "pointer", opacity: saving || !cfg ? 0.6 : 1 }}>
+        <Save size={15} /> {saving ? "Guardando…" : "Guardar tiempo"}
+      </button>
     </div>
   );
 }
@@ -110,6 +169,9 @@ export default function EcommerceHomePage() {
           <ExternalLink size={18} color={ACCENT} style={{ flexShrink: 0 }} />
         </a>
       )}
+
+      {/* Tiempo de entrega estimado */}
+      {restaurantId && <WaitTimeCard restaurantId={restaurantId} />}
 
       {/* Integraciones */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "26px 0 12px" }}>

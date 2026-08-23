@@ -21,12 +21,15 @@ export interface EcommerceStoreConfig {
   deliveryEnabled: boolean; // aceptar pedidos con delivery
   minOrderPickup: number; // monto mínimo de compra para retiro (0 = sin mínimo)
   minOrderDelivery: number; // monto mínimo de compra para delivery (0 = sin mínimo)
+  waitTimePickup: string; // tiempo estimado de retiro (ej: "20-30")
+  waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
 }
 
 interface Fallback {
   accent?: string | null;
   paymentMethods?: string[];
   minOrder?: number | null; // mínimo legacy (orderingMinAmount) para sembrar defaults
+  waitTime?: string | null; // waitTime legacy (orderingWaitTime) para sembrar defaults
 }
 
 function isHex(v: unknown): v is string {
@@ -52,6 +55,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     deliveryEnabled: o.deliveryEnabled !== false,
     minOrderPickup: nonNegInt(o.minOrderPickup, fbMin),
     minOrderDelivery: nonNegInt(o.minOrderDelivery, fbMin),
+    waitTimePickup: typeof o.waitTimePickup === "string" ? o.waitTimePickup : (fb.waitTime ?? ""),
+    waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
   };
 }
 
