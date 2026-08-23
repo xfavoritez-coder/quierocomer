@@ -32,6 +32,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [email, setEmail] = useState("");
   const [payment, setPayment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
   const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
   const [couponCode, setCouponCode] = useState("");
@@ -106,6 +107,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
       // Pago online (Webpay): redirigir al formulario de Transbank.
       if (data.url && data.token) {
+        setRedirecting(true);
         clearCart();
         const form = document.createElement("form");
         form.method = "POST";
@@ -120,12 +122,14 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
       // Pago online (Flow): redirigir a la URL de pago.
       if (data.redirectUrl) {
+        setRedirecting(true);
         clearCart();
         window.location.href = data.redirectUrl;
         return;
       }
 
       // Pago offline: ir al seguimiento del pedido.
+      setRedirecting(true);
       clearCart();
       window.location.href = `/pedido/${data.orderId}`;
     } catch {
@@ -134,7 +138,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     }
   }
 
-  const showEmpty = mounted && items.length === 0;
+  const showEmpty = mounted && items.length === 0 && !redirecting;
   const onlineSel = payment ? PAY_META[payment]?.online : false;
 
   return (
@@ -151,7 +155,12 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         </div>
       </header>
 
-      {showEmpty ? (
+      {redirecting ? (
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-transparent animate-spin" style={{ borderTopColor: primaryColor }} />
+          <p className="text-sm font-semibold text-gray-600">Redirigiendo al pago…</p>
+        </div>
+      ) : showEmpty ? (
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <p className="text-4xl mb-3">🛒</p>
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
