@@ -18,7 +18,7 @@ interface StoredCartItem {
 export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean; message: string; skipped?: boolean }> {
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    include: { restaurant: { select: { ecommerceConfig: true } } },
+    include: { restaurant: { select: { ecommerceConfig: true, name: true } } },
   });
   if (!order) return { ok: false, message: "orden no encontrada" };
   if (order.toteatOrderId) return { ok: true, message: "ya enviada al POS", skipped: true };
@@ -45,6 +45,7 @@ export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean
     total: order.total,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
+    vendorName: `QC-${order.restaurant.name}`, // distintivo de origen en Toteat
   };
 
   const res = await sendOrderToToteat(posOrder, items, cfg.pos.toteat ?? {});

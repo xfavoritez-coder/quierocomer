@@ -31,6 +31,7 @@ export interface PosOrder {
   total: number;
   paymentMethod: string;
   paymentStatus: string; // "paid" | "pending" | ...
+  vendorName?: string; // distintivo de origen que se ve en Toteat (ej: "QC-Hand Roll")
 }
 
 export interface ToteatResult {
@@ -188,7 +189,7 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
     status: "new",
     type: isDelivery ? "delivery" : "takeaway",
     channel: "webstore",
-    vendorName: "QuieroComer",
+    vendorName: order.vendorName?.trim() || "QuieroComer",
     comment,
     document: { customer, line: lines },
     operationDate: now,
