@@ -1272,6 +1272,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <Input label="Customer ID" value={ubCustomer} onChange={setUbCustomer} placeholder="uuid del customer" />
             <Input label="Client ID" value={ubClient} onChange={setUbClient} placeholder="client id" />
             <Input label="Client Secret" value={ubSecret} onChange={setUbSecret} placeholder="client secret" type="password" />
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "4px 0 0", lineHeight: 1.5 }}>Webhook a configurar en el dashboard de Uber Direct:<br /><code style={{ color: "#a78bfa", wordBreak: "break-all" }}>https://quierocomer.com/api/ecommerce/uber/webhook</code></p>
           </IntegrationGroup>
 
           <IntegrationGroup title="PedidosYa Envíos" sub="Delivery con courier bajo demanda" ok={st.pedidosya}>

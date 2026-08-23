@@ -453,6 +453,10 @@ model OnlineOrder {
   deliveryFee     Int      @default(0) // costo de despacho de la zona (incluido en total)
   discount        Int      @default(0) // descuento del cupón aplicado
   couponCode      String? // código del cupón usado
+  deliveryLat     Float? // lat de la dirección de entrega (para el courier)
+  deliveryLng     Float? // lng de la dirección de entrega (para el courier)
+  uberDeliveryId  String? // id de la entrega en Uber Direct
+  courier         Json? // info en vivo del repartidor (status, nombre, tel, ubicación, eta, tracking, foto)
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")

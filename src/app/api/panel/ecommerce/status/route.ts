@@ -39,5 +39,6 @@ export async function GET(req: NextRequest) {
     integrations: integrationStatus(cfg),
     webpayEnv: cfg.webpay?.env || "integration",
     posProvider: cfg.pos?.provider || "none",
+    googleMapsKey: cfg.googleMaps?.apiKey || null, // key de navegador, para el mini-mapa del courier
   });
 }

@@ -97,6 +97,8 @@ export async function POST(req: NextRequest) {
         customerEmail: null,
         orderType: isDelivery ? "DELIVERY" : "PICKUP",
         deliveryAddress: isDelivery ? (deliveryAddress?.trim() || null) : null,
+        deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
+        deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         paymentMethod,
         paymentStatus: "unpaid",
         paymentGateway: null,

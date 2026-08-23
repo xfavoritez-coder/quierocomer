@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -21,8 +21,22 @@ interface Order {
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
   source?: string | null;
+  deliveryLat?: number | null; deliveryLng?: number | null;
+  uberDeliveryId?: string | null;
+  courier?: CourierInfo | null;
   statusHistory?: { status: string; ts: string }[];
 }
+
+interface CourierInfo {
+  deliveryId: string; status: string; trackingUrl: string | null; fee: number | null; eta: string | null;
+  courierName: string | null; courierPhone: string | null; courierVehicle: string | null; courierImg: string | null;
+  location: { lat: number; lng: number } | null; proofPhotoUrl: string | null; updatedAt: string;
+}
+
+const UBER_STATUS_LABEL: Record<string, string> = {
+  pending: "Buscando repartidor…", pickup: "Repartidor yendo al local", pickup_complete: "Pedido retirado",
+  dropoff: "En camino al cliente", delivered: "Entregado", canceled: "Cancelado", returned: "Devuelto",
+};
 
 const STATUS_LABEL: Record<OrderStatus, string> = { PENDING: "Nuevo", ACCEPTED: "Aceptado", PREPARING: "Preparando", IN_DELIVERY: "En reparto", READY: "Listo", DONE: "Entregado", CANCELLED: "Cancelado" };
 const STATUS_COLOR: Record<OrderStatus, string> = { PENDING: ORANGE, ACCEPTED: BLUE, PREPARING: GOLD, IN_DELIVERY: GREEN, READY: GREEN, DONE: GRAY, CANCELLED: RED };
@@ -71,8 +85,29 @@ export default function EcommercePedidosPage() {
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<Order | null>(null);
   const [live, setLive] = useState(false);
+  const [uberEnabled, setUberEnabled] = useState(false);
+  const [mapsKey, setMapsKey] = useState<string | null>(null);
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/status?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); } })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  async function requestCourier(id: string) {
+    try {
+      const res = await fetch("/api/panel/ecommerce/uber/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: id }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo solicitar el repartidor"); return; }
+      setOrders((os) => os.map((o) => (o.id === id ? { ...o, uberDeliveryId: d.courier?.deliveryId ?? o.uberDeliveryId, courier: d.courier ?? o.courier } : o)));
+      setDetail((dd) => (dd && dd.id === id ? { ...dd, uberDeliveryId: d.courier?.deliveryId ?? dd.uberDeliveryId, courier: d.courier ?? dd.courier } : dd));
+      toast.success("Repartidor solicitado a Uber");
+    } catch { toast.error("Error de conexión"); }
+  }
 
   const beep = () => {
     try {
@@ -203,11 +238,11 @@ export default function EcommercePedidosPage() {
         <div style={{ textAlign: "center", padding: "48px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>No hay pedidos aquí.</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {shown.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} />)}
+          {shown.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />)}
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />}
     </div>
   );
 }
@@ -220,15 +255,78 @@ function Chip({ label, count, on, onClick, color }: { label: string; count: numb
   );
 }
 
-function OrderRow({ order, isNew, onOpen, onStatusChange }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void> }) {
+function etaText(iso: string | null): string | null {
+  if (!iso) return null;
+  const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+  if (isNaN(mins)) return null;
+  if (mins <= 0) return "llegando";
+  return `~${mins} min`;
+}
+
+// Tarjeta de seguimiento del repartidor (Uber Direct). Se actualiza en vivo por
+// Realtime cuando llega un webhook de Uber.
+function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: CourierInfo; mapsKey: string | null; dropoff: { lat: number; lng: number } | null; compact?: boolean }) {
+  const label = UBER_STATUS_LABEL[c.status] || c.status;
+  const delivered = c.status === "delivered";
+  const color = delivered ? GREEN : c.status === "canceled" || c.status === "returned" ? RED : GREEN;
+  const eta = etaText(c.eta);
+
+  // Mini mapa estático: courier (verde) + destino (rojo).
+  let mapUrl: string | null = null;
+  if (mapsKey && c.location) {
+    const markers = [`markers=color:green%7Clabel:R%7C${c.location.lat},${c.location.lng}`];
+    if (dropoff) markers.push(`markers=color:red%7Clabel:D%7C${dropoff.lat},${dropoff.lng}`);
+    mapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=560x200&scale=2&maptype=roadmap&${markers.join("&")}&key=${mapsKey}`;
+  }
+
+  return (
+    <div style={{ marginTop: 10, borderRadius: 12, border: `1px solid ${color}55`, background: `${color}0e`, overflow: "hidden" }}>
+      <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+        <Bike size={17} color={color} style={{ flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{label}{!delivered && eta ? <span style={{ color, fontWeight: 700 }}> · {eta}</span> : null}</p>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>
+            {c.courierName ? c.courierName : "Repartidor Uber"}{c.courierVehicle ? ` · ${c.courierVehicle}` : ""}
+          </p>
+        </div>
+        {c.courierPhone && (
+          <a href={`tel:${c.courierPhone}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: `1px solid ${color}`, color, textDecoration: "none", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, flexShrink: 0 }}><Phone size={13} /> Llamar</a>
+        )}
+      </div>
+
+      {!compact && mapUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={mapUrl} alt="Ubicación del repartidor" style={{ width: "100%", display: "block", borderTop: `1px solid ${color}33` }} />
+      )}
+
+      {!compact && (c.trackingUrl || c.proofPhotoUrl) && (
+        <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${color}22` }}>
+          {c.trackingUrl && <a href={c.trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color, textDecoration: "none" }}><ExternalLink size={14} /> Ver seguimiento en vivo</a>}
+          {c.proofPhotoUrl && (
+            <div>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>📸 Foto de entrega</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.proofPhotoUrl} alt="Prueba de entrega" style={{ width: "100%", borderRadius: 8, display: "block" }} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [courierBusy, setCourierBusy] = useState(false);
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const pay = payInfo(order);
   const attempt = isAttempt(order);
+  const canRequestCourier = uberEnabled && order.orderType === "DELIVERY" && order.status === "PREPARING" && !order.uberDeliveryId;
 
   const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
+  const reqCourier = async () => { setCourierBusy(true); await onRequestCourier(order.id); setCourierBusy(false); };
 
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${isNew ? ORANGE : "var(--adm-card-border)"}`, borderRadius: 14, padding: 14, opacity: attempt ? 0.75 : 1 }}>
@@ -256,6 +354,14 @@ function OrderRow({ order, isNew, onOpen, onStatusChange }: { order: Order; isNe
           {actions.map((a) => <button key={a.status} onClick={() => act(a.status)} disabled={busy} style={{ flex: a.status === "CANCELLED" ? "0 0 auto" : 1, minWidth: 90, padding: "9px 12px", borderRadius: 10, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>{a.label}</button>)}
         </div>
       )}
+
+      {canRequestCourier && (
+        <button onClick={reqCourier} disabled={courierBusy} style={{ marginTop: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${GREEN}`, background: `${GREEN}14`, color: GREEN, fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <Bike size={15} /> {courierBusy ? "Solicitando…" : "Solicitar repartidor externo (Uber)"}
+        </button>
+      )}
+      {order.courier && <CourierCard courier={order.courier} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
+
       {cancelOpen && (
         <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo de cancelación (requerido)" style={inp} />
@@ -269,14 +375,17 @@ function OrderRow({ order, isNew, onOpen, onStatusChange }: { order: Order; isNe
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void> }) {
+function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onRequestCourier }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [courierBusy, setCourierBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const pay = payInfo(order);
   const subtotal = items.reduce((s, it) => s + (it.unitTotal ?? it.unit_price ?? 0) * it.quantity, 0);
+  const canRequestCourier = uberEnabled && order.orderType === "DELIVERY" && order.status === "PREPARING" && !order.uberDeliveryId;
+  const reqCourier = async () => { setCourierBusy(true); await onRequestCourier(order.id); setCourierBusy(false); };
 
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
 
@@ -309,6 +418,14 @@ function DetailModal({ order, onClose, onStatusChange }: { order: Order; onClose
             {order.customerEmail && <p style={{ color: "var(--adm-text2)", margin: "2px 0 0" }}>{order.customerEmail}</p>}
             <p style={{ color: "var(--adm-text2)", margin: "6px 0 0" }}>{order.orderType === "DELIVERY" ? `🛵 Delivery${order.deliveryAddress ? ` · ${order.deliveryAddress}` : ""}` : "🏠 Retiro en tienda"}</p>
           </div>
+
+          {/* Repartidor externo (Uber Direct) */}
+          {canRequestCourier && (
+            <button onClick={reqCourier} disabled={courierBusy} style={{ width: "100%", padding: "11px", borderRadius: 10, border: `1px solid ${GREEN}`, background: `${GREEN}14`, color: GREEN, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Bike size={16} /> {courierBusy ? "Solicitando…" : "Solicitar repartidor externo (Uber)"}
+            </button>
+          )}
+          {order.courier && <CourierCard courier={order.courier} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} />}
 
           {/* Items */}
           <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
