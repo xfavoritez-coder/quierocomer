@@ -432,9 +432,10 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none" }}>
+        <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
           <ArrowLeft size={15} /> Ecommerce
         </Link>
+        <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{tenant.name}</span>
         <button onClick={() => window.open("/panel/ecommerce/tomar-pedidos", "_blank", "noopener")}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
           <ExternalLink size={14} /> Nueva ventana
