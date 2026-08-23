@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, UtensilsCrossed, Ticket, Clock } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, UtensilsCrossed, Ticket, Clock, ConciergeBell } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -116,6 +116,7 @@ export default function EcommerceHomePage() {
         Gestión
       </h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+        <QuickLink href="/panel/ecommerce/tomar-pedidos" icon={ConciergeBell} label="Tomar pedidos" desc="Registra pedidos de mostrador / teléfono" />
         <QuickLink href="/panel/ecommerce/pedidos" icon={ClipboardList} label="Pedidos" desc="Recibe y gestiona pedidos online" />
         <QuickLink href="/panel/ecommerce/carta" icon={ShoppingBag} label="Catálogo" desc="Qué productos vender online" />
         <QuickLink href="/panel/ecommerce/delivery" icon={Truck} label="Delivery" desc="Zonas y despacho con courier" />
