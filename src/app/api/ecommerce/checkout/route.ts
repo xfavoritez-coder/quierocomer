@@ -58,7 +58,15 @@ export async function POST(req: NextRequest) {
 
     // Tienda cerrada según horario.
     if (!getOpenStatus(parseHours(restaurant.ecommerceHours)).open) return NextResponse.json({ error: "La tienda está cerrada en este momento" }, { status: 400 });
-    if (paymentMethod === "flow" && !customerEmail?.trim()) return NextResponse.json({ error: "El email es obligatorio para pagar con Flow" }, { status: 400 });
+    if (!customerPhone?.trim()) return NextResponse.json({ error: "El teléfono es obligatorio" }, { status: 400 });
+    // Email obligatorio si paga con Flow o usa cupón.
+    const emailRequired = paymentMethod === "flow" || !!couponCode;
+    if (emailRequired && !customerEmail?.trim()) return NextResponse.json({ error: paymentMethod === "flow" ? "El email es obligatorio para pagar con Flow" : "El email es obligatorio para usar un cupón" }, { status: 400 });
+    // Si ingresó email, debe estar verificado (código enviado al correo).
+    if (customerEmail?.trim()) {
+      const verified = await prisma.qRUser.findUnique({ where: { email: customerEmail.trim().toLowerCase() }, select: { verifiedAt: true } });
+      if (!verified?.verifiedAt) return NextResponse.json({ error: "Verifica tu email con el código que te enviamos antes de continuar" }, { status: 400 });
+    }
 
     const isDelivery = orderType === "DELIVERY";
 

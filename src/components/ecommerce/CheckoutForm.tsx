@@ -32,6 +32,12 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  // Verificación de email por código (OTP). Reutiliza /api/qr/user/send-otp + verify-otp.
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpMsg, setOtpMsg] = useState<string | null>(null);
   const [payment, setPayment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
@@ -87,11 +93,46 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const minPerType = isDelivery ? (deliveryAddress?.minOrder ?? tenant.minOrderDelivery) : tenant.minOrderPickup;
   const minReq = minPerType && minPerType > 0 ? minPerType : null;
   const belowMin = minReq != null && subtotal < minReq;
-  const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  const emailTrim = email.trim();
+  const emailOk = /\S+@\S+\.\S+/.test(emailTrim);
+  // Email obligatorio si paga con Flow o usa cupón.
+  const emailNeeded = payment === "flow" || !!coupon;
+  const emailVerifiedOk = emailOk && verifiedEmail !== "" && verifiedEmail === emailTrim.toLowerCase();
+  // Si ingresa email debe verificarlo; si no lo ingresa, solo es válido cuando no es obligatorio.
+  const emailReady = emailTrim === "" ? !emailNeeded : emailVerifiedOk;
   const discount = coupon?.discount ?? 0;
   const finalTotal = Math.max(0, total - discount);
   const isOpen = tenant.openStatus.open;
-  const isValid = isOpen && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && (payment !== "flow" || emailOk);
+  const isValid = isOpen && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+
+  function onEmailChange(v: string) {
+    setEmail(v);
+    // Al cambiar el email se pierde la verificación previa.
+    if (v.trim().toLowerCase() !== verifiedEmail) { setOtpSent(false); setOtpCode(""); setOtpMsg(null); }
+  }
+  async function sendOtp() {
+    if (!emailOk || otpBusy) return;
+    setOtpBusy(true); setOtpMsg(null);
+    try {
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, name: name.trim() || null }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setOtpMsg(d.error || "No se pudo enviar el código"); setOtpBusy(false); return; }
+      setOtpSent(true); setOtpMsg(d.devCode ? `Código (dev): ${d.devCode}` : "Te enviamos un código a tu correo.");
+    } catch { setOtpMsg("Error de conexión"); }
+    setOtpBusy(false);
+  }
+  async function verifyOtp() {
+    if (otpCode.trim().length !== 6 || otpBusy) return;
+    setOtpBusy(true); setOtpMsg(null);
+    try {
+      const res = await fetch("/api/qr/user/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, code: otpCode.trim() }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setOtpMsg(d.error || "Código incorrecto"); setOtpBusy(false); return; }
+      setVerifiedEmail(emailTrim.toLowerCase()); setOtpSent(false); setOtpCode(""); setOtpMsg(null);
+      toast.success("Email verificado");
+    } catch { setOtpMsg("Error de conexión"); }
+    setOtpBusy(false);
+  }
 
   async function applyCoupon() {
     const code = couponCode.trim();
@@ -230,11 +271,29 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
               <Field label="Nombre">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
-              <Field label="Teléfono">
+              <Field label="Teléfono *">
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
-              <Field label={payment === "flow" ? "Email (requerido para Flow)" : "Email (opcional)"}>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" placeholder="tu@email.com" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+              <Field label={emailNeeded ? "Email *" : "Email"}>
+                <input value={email} onChange={(e) => onEmailChange(e.target.value)} inputMode="email" placeholder="tu@email.com"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${emailVerifiedOk ? "border-green-400 bg-green-50" : "border-gray-200 focus:border-gray-400"}`} />
+                {emailVerifiedOk ? (
+                  <p className="text-xs text-green-600 font-semibold mt-1.5">✓ Email verificado</p>
+                ) : emailOk ? (
+                  otpSent ? (
+                    <div className="mt-2 flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="Código de 6 dígitos" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm tracking-widest text-center outline-none focus:border-gray-400" />
+                        <button type="button" onClick={verifyOtp} disabled={otpBusy || otpCode.length !== 6} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>{otpBusy ? "…" : "Verificar"}</button>
+                      </div>
+                      <button type="button" onClick={sendOtp} disabled={otpBusy} className="text-xs text-gray-400 self-start hover:text-gray-600">Reenviar código</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={sendOtp} disabled={otpBusy} className="mt-2 text-sm font-bold px-3 py-2 rounded-xl border transition hover:opacity-90 disabled:opacity-50" style={{ borderColor: primaryColor, color: primaryColor }}>{otpBusy ? "Enviando…" : "Verificar mi correo"}</button>
+                  )
+                ) : null}
+                {otpMsg && <p className={`text-xs mt-1.5 ${otpMsg.includes("incorrecto") || otpMsg.includes("No se pudo") || otpMsg.includes("Error") ? "text-red-500" : "text-gray-500"}`}>{otpMsg}</p>}
+                {emailNeeded && !emailVerifiedOk && !otpMsg && <p className="text-xs text-gray-400 mt-1.5">Necesario para {payment === "flow" ? "pagar con Flow" : "usar el cupón"}. Verifícalo para continuar.</p>}
               </Field>
             </div>
           </section>
