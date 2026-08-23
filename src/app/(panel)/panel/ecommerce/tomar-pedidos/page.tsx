@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, Search, Plus, Minus, X, ShoppingCart, User, MapPin, CreditCard,
-  Package, Bike, Trash2, Gift, MessageSquare, Tag, PencilLine, CheckCircle2, Loader2, UtensilsCrossed,
+  Package, Bike, Trash2, Gift, MessageSquare, Tag, PencilLine, CheckCircle2, Loader2, UtensilsCrossed, ExternalLink,
 } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import StoreStyles from "@/components/ecommerce/StoreStyles";
@@ -93,6 +93,13 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
   const [deliveryType, setDeliveryType] = useState<"PICKUP" | "DELIVERY">("PICKUP");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
+  // Nombre del cliente en la pestaña del navegador (útil con varias ventanas abiertas).
+  useEffect(() => {
+    const prev = document.title;
+    document.title = customerName.trim() ? `${customerName.trim()} — Tomar pedidos` : `Tomar pedidos · ${tenant.name}`;
+    return () => { document.title = prev; };
+  }, [customerName, tenant.name]);
   const [address, setAddress] = useState("");
   const [apt, setApt] = useState("");
   const [zoneName, setZoneName] = useState("");
@@ -406,9 +413,17 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
   return (
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
-      <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 12 }}>
-        <ArrowLeft size={15} /> Ecommerce
-      </Link>
+      {/* Colapsa el sidebar del panel para dar ancho completo al mostrador (solo desktop). */}
+      <style>{`@media (min-width:768px){.owl-sidebar{display:none!important}.owl-main{margin-left:0!important}}`}</style>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+        <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none" }}>
+          <ArrowLeft size={15} /> Ecommerce
+        </Link>
+        <button onClick={() => window.open("/panel/ecommerce/tomar-pedidos", "_blank", "noopener")}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
+          <ExternalLink size={14} /> Nueva ventana
+        </button>
+      </div>
 
       {isWide ? (
         <div style={{ display: "flex", gap: 14, height: "calc(100vh - 150px)", minHeight: 520 }}>
