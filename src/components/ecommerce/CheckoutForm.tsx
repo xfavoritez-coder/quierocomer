@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -34,6 +35,9 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [payment, setPayment] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
   const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
   const [couponCode, setCouponCode] = useState("");
@@ -42,6 +46,36 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [couponBusy, setCouponBusy] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Resultado del pago online al volver a esta página.
+  // - ?pago=exito → el pago se confirmó: vaciamos el carrito y vamos al seguimiento.
+  // - ?pago=fallido / o quedó un pago pendiente marcado (el cliente volvió atrás sin
+  //   pagar) → marcamos ese pago como fallido, avisamos y dejamos el carrito para
+  //   reintentar.
+  useEffect(() => {
+    const PENDING_KEY = "qc-pay-pending";
+    const pago = searchParams.get("pago");
+    const orderParam = searchParams.get("order");
+    let pending: string | null = null;
+    try { pending = sessionStorage.getItem(PENDING_KEY); } catch {}
+
+    if (pago === "exito") {
+      try { sessionStorage.removeItem(PENDING_KEY); } catch {}
+      clearCart();
+      if (orderParam) router.replace(`/pedido/${orderParam}`);
+      return;
+    }
+
+    if (pago === "fallido" || pago === "cancelado" || pago === "error" || pending) {
+      const failId = orderParam || pending;
+      if (failId) {
+        fetch("/api/ecommerce/payment/fail", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: failId }) }).catch(() => {});
+      }
+      try { sessionStorage.removeItem(PENDING_KEY); } catch {}
+      setPaymentFailed(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const methods = tenant.paymentMethods.filter((m) => PAY_META[m]);
   useEffect(() => { if (!payment && methods.length) setPayment(methods[0]); }, [methods, payment]);
@@ -109,10 +143,14 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) { toast.error(data.error || "No se pudo crear el pedido"); setSending(false); return; }
 
+      // Pago online: NO vaciamos el carrito todavía. Guardamos el pedido pendiente:
+      // si el cliente vuelve sin pagar, marcamos el pago fallido y conserva su carrito.
+      const markPending = () => { try { if (data.orderId) sessionStorage.setItem("qc-pay-pending", data.orderId); } catch {} };
+
       // Pago online (Webpay): redirigir al formulario de Transbank.
       if (data.url && data.token) {
         setRedirecting(true);
-        clearCart();
+        markPending();
         const form = document.createElement("form");
         form.method = "POST";
         form.action = data.url;
@@ -124,10 +162,10 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         return;
       }
 
-      // Pago online (Flow): redirigir a la URL de pago.
+      // Pago online (Flow / MercadoPago): redirigir a la URL de pago.
       if (data.redirectUrl) {
         setRedirecting(true);
-        clearCart();
+        markPending();
         window.location.href = data.redirectUrl;
         return;
       }
@@ -142,7 +180,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     }
   }
 
-  const showEmpty = mounted && items.length === 0 && !redirecting;
+  const finalizingSuccess = searchParams.get("pago") === "exito";
+  const showEmpty = mounted && items.length === 0 && !redirecting && !finalizingSuccess && !paymentFailed;
   const onlineSel = payment ? PAY_META[payment]?.online : false;
 
   return (
@@ -159,10 +198,10 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         </div>
       </header>
 
-      {redirecting ? (
+      {(redirecting || finalizingSuccess) ? (
         <div className="max-w-2xl mx-auto px-4 py-16 text-center flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-transparent animate-spin" style={{ borderTopColor: primaryColor }} />
-          <p className="text-sm font-semibold text-gray-600">Redirigiendo al pago…</p>
+          <p className="text-sm font-semibold text-gray-600">{finalizingSuccess ? "Confirmando tu pago…" : "Redirigiendo al pago…"}</p>
         </div>
       ) : showEmpty ? (
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -172,6 +211,18 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         </div>
       ) : (
         <div className="max-w-2xl mx-auto px-4 py-5 flex flex-col gap-4">
+          {/* Aviso de pago fallido: el cliente volvió sin completar el pago. */}
+          {paymentFailed && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+              <span className="text-xl leading-none">❌</span>
+              <div className="min-w-0">
+                <p className="font-black text-sm text-red-700 m-0">Tu pago no se completó</p>
+                <p className="text-xs text-red-600 mt-1 leading-relaxed">Guardamos tu pedido acá. Revisa tus datos y vuelve a intentar el pago cuando quieras.</p>
+              </div>
+              <button onClick={() => setPaymentFailed(false)} className="ml-auto text-red-400 hover:text-red-600 shrink-0"><X className="w-4 h-4" /></button>
+            </div>
+          )}
+
           {/* Datos del cliente */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-black text-sm text-gray-900 mb-3">Tus datos</h2>
