@@ -27,6 +27,9 @@ interface OrderData {
   total: number;
   deliveryAddress: string | null;
   paymentMethod: string;
+  paymentStatus: string | null;
+  paymentGateway: string | null;
+  restaurantSlug?: string | null;
   status: string;
   statusHistory: StatusEntry[];
   notes: string | null;
@@ -226,6 +229,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           const updated = {
             ...prev,
             status: p.status ?? prev.status,
+            paymentStatus: p.paymentStatus ?? prev.paymentStatus,
             updatedAt: p.updatedAt ?? prev.updatedAt,
             statusHistory: Array.isArray(p.statusHistory) ? p.statusHistory : prev.statusHistory,
             cancellationReason: p.cancellationReason ?? prev.cancellationReason,
@@ -273,6 +277,31 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
         <div style={{ textAlign: "center", color: "#555" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
           <p style={{ fontSize: 14 }}>Cargando tu pedido...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Pago online no completado: no mostramos el estado del pedido. Si el pago se
+  // confirma (webhook), la página se actualiza sola (polling + realtime).
+  if (order.paymentGateway && order.paymentStatus !== "paid" && order.status !== "CANCELLED") {
+    const failed = order.paymentStatus === "failed";
+    return (
+      <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 340 }}>
+          {order.restaurantLogoUrl && <img src={order.restaurantLogoUrl} alt={order.restaurantName} style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", margin: "0 auto 16px" }} />}
+          <div style={{ fontSize: 52, marginBottom: 14 }}>{failed ? "❌" : "⏳"}</div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: theme.text, margin: "0 0 8px" }}>{failed ? "Tu pago no se completó" : "Pago pendiente"}</h2>
+          <p style={{ fontSize: 14, color: theme.text2, margin: "0 0 20px", lineHeight: 1.6 }}>
+            {failed
+              ? "El pago fue rechazado o cancelado, así que no registramos el pedido. Puedes intentarlo de nuevo."
+              : "Aún no confirmamos tu pago. Si ya pagaste, esta pantalla se actualizará en unos segundos; si no completaste el pago, no se registró ningún pedido."}
+          </p>
+          {order.restaurantSlug && (
+            <a href={`/ecommerce/${order.restaurantSlug}`} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", borderRadius: 12, background: theme.accent || "#F4A623", color: "#1a1a1a", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>
+              Volver a la tienda
+            </a>
+          )}
         </div>
       </div>
     );

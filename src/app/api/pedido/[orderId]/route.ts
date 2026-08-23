@@ -16,6 +16,8 @@ export async function GET(
       orderType: true,
       deliveryAddress: true,
       paymentMethod: true,
+      paymentStatus: true,
+      paymentGateway: true,
       items: true,
       total: true,
       notes: true,
@@ -27,6 +29,7 @@ export async function GET(
       restaurant: {
         select: {
           name: true,
+          slug: true,
           logoUrl: true,
           orderingWaitTime: true,
           whatsapp: true,
@@ -50,6 +53,9 @@ export async function GET(
     total: order.total,
     deliveryAddress: order.deliveryAddress ?? null,
     paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus ?? null,
+    paymentGateway: order.paymentGateway ?? null,
+    restaurantSlug: order.restaurant.slug,
     status: order.status,
     statusHistory: Array.isArray(order.statusHistory) ? order.statusHistory : [],
     notes: order.notes ?? null,
