@@ -24,7 +24,8 @@ export default function PosHeader({
     <header className={`pos-bar${centerSlot ? ' has-center' : ''}`}>
       {mode === 'brand' ? (
         <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
-          <span className="mk">Q</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="QuieroComer" className="mk-logo" />
         </div>
       ) : (
         <div className="pos-back">

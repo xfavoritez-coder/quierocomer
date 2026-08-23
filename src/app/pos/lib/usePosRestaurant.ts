@@ -43,8 +43,18 @@ function init() {
   // Async: fetch full info (name, slug, logo) from panel session API
   fetch('/api/panel/me')
     .then(r => r.ok ? r.json() : null)
-    .then(data => {
+    .then(async data => {
       if (!data?.restaurants?.length) {
+        // Fallback: fetch restaurant directly by ID (sin sesión de panel, ej. localhost)
+        try {
+          const id = _restaurantId
+          const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
+          if (r?.id) {
+            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null }, loading: false }
+            notify()
+            return
+          }
+        } catch {}
         _state = { ..._state, loading: false }
         notify()
         return
