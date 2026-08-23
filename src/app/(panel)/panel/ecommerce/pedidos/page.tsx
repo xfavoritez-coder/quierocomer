@@ -39,8 +39,9 @@ const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; co
   DONE: [], CANCELLED: [],
 };
 
-const PAY_LABEL: Record<string, string> = { webpay: "Webpay", flow: "Flow", efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" };
-const isOnline = (o: Order) => o.paymentMethod === "webpay" || o.paymentMethod === "flow";
+const PAY_LABEL: Record<string, string> = { webpay: "Webpay", flow: "Flow", mercadopago: "MercadoPago", efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" };
+const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
+const isOnline = (o: Order) => ONLINE_METHODS.includes(o.paymentMethod) || !!o.paymentGateway;
 const isAttempt = (o: Order) => isOnline(o) && o.paymentStatus !== "paid"; // intento de pago no completado
 function payInfo(o: Order): { label: string; color: string } {
   if (o.paymentStatus === "paid") return { label: "Pagado", color: GREEN };
