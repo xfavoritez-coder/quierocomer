@@ -10,7 +10,7 @@ const ACCENT = "#F4A623";
 
 type Status = {
   enabled: boolean;
-  integrations: { webpay: boolean; flow: boolean; uberDirect: boolean; pedidosya: boolean; googleMaps: boolean; pos: boolean };
+  integrations: { webpay: boolean; flow: boolean; mercadopago: boolean; uberDirect: boolean; pedidosya: boolean; googleMaps: boolean; pos: boolean };
   webpayEnv: string;
   posProvider: string;
 };
@@ -102,6 +102,7 @@ export default function EcommerceHomePage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
         <IntegrationCard icon={CreditCard} name="Webpay" kind="Pago online (Transbank)" ok={!!ints?.webpay} note={status ? (status.webpayEnv === "production" ? "producción" : "modo prueba") : undefined} />
         <IntegrationCard icon={Wallet} name="Flow" kind="Pago online (flow.cl)" ok={!!ints?.flow} />
+        <IntegrationCard icon={Wallet} name="MercadoPago" kind="Pago online (Checkout Pro)" ok={!!ints?.mercadopago} />
         <IntegrationCard icon={Truck} name="Uber Direct" kind="Delivery con courier" ok={!!ints?.uberDirect} />
         <IntegrationCard icon={Bike} name="PedidosYa" kind="Delivery con courier" ok={!!ints?.pedidosya} />
         <IntegrationCard icon={MapIcon} name="Google Maps" kind="Direcciones y geocoding" ok={!!ints?.googleMaps} />

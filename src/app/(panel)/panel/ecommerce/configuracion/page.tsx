@@ -13,6 +13,8 @@ const ACCENT = "#F4A623";
 
 const PAY_LABELS: Record<string, { label: string; hint: string }> = {
   webpay: { label: "Webpay", hint: "Pago online con tarjeta" },
+  flow: { label: "Flow", hint: "Pago online (tarjetas, transferencia)" },
+  mercadopago: { label: "MercadoPago", hint: "Pago online con MercadoPago" },
   efectivo: { label: "Efectivo", hint: "Paga al recibir/retirar" },
   transferencia: { label: "Transferencia", hint: "Coordina la transferencia" },
   tarjeta: { label: "Tarjeta", hint: "Con tarjeta al recibir" },

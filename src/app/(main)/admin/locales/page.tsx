@@ -1170,6 +1170,10 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [flEnv, setFlEnv] = useState("sandbox");
   const [flKey, setFlKey] = useState("");
   const [flSecret, setFlSecret] = useState("");
+  // MercadoPago
+  const [mpEnv, setMpEnv] = useState("sandbox");
+  const [mpToken, setMpToken] = useState("");
+  const [mpPublic, setMpPublic] = useState("");
   // Uber Direct
   const [ubCustomer, setUbCustomer] = useState("");
   const [ubClient, setUbClient] = useState("");
@@ -1192,6 +1196,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
     setWpEnv(c.webpay?.env || "integration"); setWpCode(c.webpay?.commerceCode || ""); setWpKey(c.webpay?.apiKey || "");
     setFlEnv(c.flow?.env || "sandbox"); setFlKey(c.flow?.apiKey || ""); setFlSecret(c.flow?.secretKey || "");
+    setMpEnv(c.mercadopago?.env || "sandbox"); setMpToken(c.mercadopago?.accessToken || ""); setMpPublic(c.mercadopago?.publicKey || "");
     setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || "");
     setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
     setGmapsKey(c.googleMaps?.apiKey || "");
@@ -1209,6 +1214,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     const next: EcommerceConfig = {
       webpay: { env: wpEnv as "integration" | "production", commerceCode: wpCode.trim() || undefined, apiKey: wpKey.trim() || undefined },
       flow: { env: flEnv as "sandbox" | "production", apiKey: flKey.trim() || undefined, secretKey: flSecret.trim() || undefined },
+      mercadopago: { env: mpEnv as "sandbox" | "production", accessToken: mpToken.trim() || undefined, publicKey: mpPublic.trim() || undefined },
       uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined },
       pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
       googleMaps: { apiKey: gmapsKey.trim() || undefined },
@@ -1233,7 +1239,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
             🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/{totalCount} configuradas</span>
           </p>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · Uber Direct · PedidosYa · Google Maps · POS</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · MercadoPago · Uber Direct · PedidosYa · Google Maps · POS</p>
         </div>
         <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
       </div>
@@ -1254,6 +1260,12 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <EnvSelect label="Ambiente" value={flEnv} onChange={setFlEnv} options={[{ value: "sandbox", label: "Sandbox (pruebas)" }, { value: "production", label: "Producción" }]} />
             <Input label="API Key" value={flKey} onChange={setFlKey} placeholder="1F90971E-8276-4713-..." />
             <Input label="Secret Key" value={flSecret} onChange={setFlSecret} placeholder="f8c9d...secret" type="password" />
+          </IntegrationGroup>
+
+          <IntegrationGroup title="MercadoPago" sub="Pago online (Checkout Pro)" ok={st.mercadopago}>
+            <EnvSelect label="Ambiente" value={mpEnv} onChange={setMpEnv} options={[{ value: "sandbox", label: "Sandbox (pruebas)" }, { value: "production", label: "Producción" }]} />
+            <Input label="Access Token" value={mpToken} onChange={setMpToken} placeholder="APP_USR-... o TEST-..." type="password" />
+            <Input label="Public Key (opcional)" value={mpPublic} onChange={setMpPublic} placeholder="APP_USR-... o TEST-..." />
           </IntegrationGroup>
 
           <IntegrationGroup title="Uber Direct" sub="Delivery con courier bajo demanda" ok={st.uberDirect}>

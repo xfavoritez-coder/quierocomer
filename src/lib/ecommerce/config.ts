@@ -16,6 +16,12 @@ export interface FlowCreds {
   secretKey?: string;
 }
 
+export interface MercadoPagoCreds {
+  env?: "sandbox" | "production";
+  accessToken?: string; // Access Token (secreto, server-side)
+  publicKey?: string; // Public Key (opcional)
+}
+
 export interface UberDirectCreds {
   customerId?: string; // Uber Direct customer id
   clientId?: string;
@@ -53,6 +59,7 @@ export interface PosConfig {
 export interface EcommerceConfig {
   webpay?: WebpayCreds;
   flow?: FlowCreds;
+  mercadopago?: MercadoPagoCreds;
   uberDirect?: UberDirectCreds;
   pedidosya?: PedidosYaCreds;
   googleMaps?: GoogleMapsCreds;
@@ -74,6 +81,7 @@ export function integrationStatus(cfg: EcommerceConfig) {
     // En modo integración Webpay funciona con las credenciales de prueba del SDK.
     webpay: !!w && (w.env === "production" ? !!(w.commerceCode && w.apiKey) : true),
     flow: !!(cfg.flow?.apiKey && cfg.flow?.secretKey),
+    mercadopago: !!cfg.mercadopago?.accessToken,
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
     googleMaps: !!cfg.googleMaps?.apiKey,

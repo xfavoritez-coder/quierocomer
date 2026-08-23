@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { flowInit, flowSettingsFor } from "@/lib/payments/flow";
+import { mpCreatePreference, mercadopagoSettingsFor } from "@/lib/payments/mercadopago";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
@@ -10,7 +11,7 @@ import { parseHours, getOpenStatus } from "@/lib/ecommerce/hours";
 
 export const runtime = "nodejs";
 
-const ONLINE_METHODS = ["webpay", "flow"];
+const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 
 interface CartItemIn {
   product_id: string;
@@ -189,6 +190,30 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: init.error || "No se pudo iniciar el pago con Flow" }, { status: 502 });
       }
       await prisma.onlineOrder.update({ where: { id: order.id }, data: { flowToken: init.token } });
+      return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl });
+    }
+
+    // ── Pago online: MercadoPago ──
+    if (paymentMethod === "mercadopago") {
+      const back = `${origin}/api/ecommerce/mercadopago/return?order=${order.id}`;
+      const init = await mpCreatePreference(
+        {
+          title: `Pedido #${orderNumber}`,
+          amount: total,
+          email: customerEmail?.trim() || undefined,
+          externalReference: order.id,
+          successUrl: back,
+          failureUrl: back,
+          pendingUrl: back,
+          notificationUrl: `${origin}/api/ecommerce/mercadopago/confirm?order=${order.id}`,
+          autoReturn: origin.startsWith("https://"), // MP exige back_urls https para auto_return
+        },
+        mercadopagoSettingsFor(restaurant),
+      );
+      if (!init.ok || !init.redirectUrl) {
+        await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
+        return NextResponse.json({ error: init.error || "No se pudo iniciar el pago con MercadoPago" }, { status: 502 });
+      }
       return NextResponse.json({ ok: true, orderId: order.id, redirectUrl: init.redirectUrl });
     }
 

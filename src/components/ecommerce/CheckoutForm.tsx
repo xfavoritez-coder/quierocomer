@@ -14,6 +14,7 @@ import { useFavicon } from "@/lib/ecommerce/useFavicon";
 const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?: boolean }> = {
   webpay: { label: "Webpay", hint: "Paga online con tarjeta", Icon: CreditCard, online: true },
   flow: { label: "Flow", hint: "Paga online (tarjetas, transferencia)", Icon: Wallet, online: true },
+  mercadopago: { label: "MercadoPago", hint: "Paga online con MercadoPago", Icon: Wallet, online: true },
   efectivo: { label: "Efectivo", hint: "Pagas al recibir/retirar", Icon: Banknote },
   transferencia: { label: "Transferencia", hint: "Coordinas la transferencia", Icon: ArrowLeftRight },
   tarjeta: { label: "Tarjeta", hint: "Pagas con tarjeta al recibir", Icon: CreditCard },
