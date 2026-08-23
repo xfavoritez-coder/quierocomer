@@ -56,10 +56,21 @@ export default function TomarPedidosPage() {
       .finally(() => setLoading(false));
   }, [restaurantId]);
 
-  if (loading) return <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>;
-  if (err || !data) return <Center>{err || "No disponible"}</Center>;
+  // Colapsa el sidebar del panel desde el primer render (antes de cargar), para
+  // que no se vea aparecer y desaparecer. Se restaura al desmontar la página.
+  return (
+    <>
+      <CollapseSidebar />
+      {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
+        : err || !data ? <Center>{err || "No disponible"}</Center>
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} />}
+    </>
+  );
+}
 
-  return <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} />;
+// Oculta el sidebar del panel (desktop) mientras el tomador está montado.
+function CollapseSidebar() {
+  return <style>{`@media (min-width:768px){.owl-sidebar{display:none!important}.owl-main{margin-left:0!important}}`}</style>;
 }
 
 function Center({ children }: { children: React.ReactNode }) {
@@ -413,8 +424,6 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
   return (
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
-      {/* Colapsa el sidebar del panel para dar ancho completo al mostrador (solo desktop). */}
-      <style>{`@media (min-width:768px){.owl-sidebar{display:none!important}.owl-main{margin-left:0!important}}`}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
         <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none" }}>
           <ArrowLeft size={15} /> Ecommerce
