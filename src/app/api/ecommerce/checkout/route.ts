@@ -45,13 +45,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true } as const;
+    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
     if (!restaurant || !restaurant.ecommerceEnabled) return NextResponse.json({ error: "Tienda no disponible" }, { status: 404 });
 
-    const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
+    const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: restaurant.orderingMinAmount ?? null });
     if (!store.paymentMethods.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
 
     // Tienda cerrada según horario.
@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
     // Subtotal + fee de delivery, todo calculado en el servidor (nunca confiar en el cliente).
     const subtotal = Math.round(items.reduce((s, it) => s + Number(it.unit_price) * Number(it.quantity), 0));
     if (!Number.isFinite(subtotal) || subtotal < 50) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
+
+    // Mínimo de compra por tipo de entrega (0 = sin mínimo).
+    const minReq = isDelivery ? store.minOrderDelivery : store.minOrderPickup;
+    if (minReq > 0 && subtotal < minReq) {
+      return NextResponse.json({ error: `El monto mínimo para ${isDelivery ? "delivery" : "retiro"} es $${minReq.toLocaleString("es-CL")}` }, { status: 400 });
+    }
 
     let deliveryFee = 0;
     if (isDelivery) {

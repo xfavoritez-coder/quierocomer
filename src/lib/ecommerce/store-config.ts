@@ -19,11 +19,14 @@ export interface EcommerceStoreConfig {
   posShowDescriptions: boolean; // mostrar la descripción de los productos en "Tomar pedidos"
   pickupEnabled: boolean; // aceptar pedidos para retiro en local
   deliveryEnabled: boolean; // aceptar pedidos con delivery
+  minOrderPickup: number; // monto mínimo de compra para retiro (0 = sin mínimo)
+  minOrderDelivery: number; // monto mínimo de compra para delivery (0 = sin mínimo)
 }
 
 interface Fallback {
   accent?: string | null;
   paymentMethods?: string[];
+  minOrder?: number | null; // mínimo legacy (orderingMinAmount) para sembrar defaults
 }
 
 function isHex(v: unknown): v is string {
@@ -37,6 +40,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
   const methods = Array.isArray(o.paymentMethods)
     ? (o.paymentMethods as unknown[]).map(String).filter((m) => (ALL_PAYMENT_METHODS as readonly string[]).includes(m))
     : fb.paymentMethods ?? [];
+  const fbMin = Math.max(0, Math.round(Number(fb.minOrder) || 0));
   return {
     primaryColor: primary,
     headerBgColor: isHex(o.headerBgColor) ? o.headerBgColor.trim() : DEFAULT_HEADER_BG,
@@ -46,5 +50,13 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     posShowDescriptions: o.posShowDescriptions === true,
     pickupEnabled: o.pickupEnabled !== false,
     deliveryEnabled: o.deliveryEnabled !== false,
+    minOrderPickup: nonNegInt(o.minOrderPickup, fbMin),
+    minOrderDelivery: nonNegInt(o.minOrderDelivery, fbMin),
   };
+}
+
+// Entero ≥ 0 o el fallback si el valor no es válido.
+function nonNegInt(v: unknown, fallback: number): number {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
 }

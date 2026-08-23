@@ -387,7 +387,9 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
   const deliveryFee = deliveryType === "delivery" ? deliveryAddress?.fee ?? 0 : 0;
   const estimatedTime = deliverySelected ? tenant.waitTime ?? "" : "";
   const showItems = mounted && items.length > 0;
-  const belowMin = tenant.minAmount != null && subtotal < tenant.minAmount;
+  const minPerType = deliveryType === "delivery" ? (deliveryAddress?.minOrder ?? tenant.minOrderDelivery) : tenant.minOrderPickup;
+  const minReq = minPerType && minPerType > 0 ? minPerType : null;
+  const belowMin = minReq != null && subtotal < minReq;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -468,7 +470,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             {!tenant.openStatus.open ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">🔒 Cerrado por ahora</div>
             ) : belowMin ? (
-              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(tenant.minAmount!)}</div>
+              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(minReq!)}</div>
             ) : (
               <button onClick={() => router.push(`/ecommerce/${tenant.slug}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
                 Continuar con mi pedido →

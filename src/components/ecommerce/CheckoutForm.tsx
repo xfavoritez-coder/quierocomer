@@ -47,7 +47,10 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
   const isDelivery = deliverySelected && deliveryType === "delivery";
   const deliveryFee = isDelivery ? deliveryAddress?.fee ?? 0 : 0;
-  const minReq = (isDelivery ? deliveryAddress?.minOrder : null) ?? tenant.minAmount;
+  // Mínimo de compra por tipo de entrega (0 = sin mínimo). En delivery, la zona
+  // puede imponer su propio mínimo (más específico).
+  const minPerType = isDelivery ? (deliveryAddress?.minOrder ?? tenant.minOrderDelivery) : tenant.minOrderPickup;
+  const minReq = minPerType && minPerType > 0 ? minPerType : null;
   const belowMin = minReq != null && subtotal < minReq;
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
   const discount = coupon?.discount ?? 0;

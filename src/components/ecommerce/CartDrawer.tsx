@@ -31,7 +31,9 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
 
   if (!open) return null;
 
-  const belowMin = tenant.minAmount != null && subtotal < tenant.minAmount;
+  const minPerType = deliveryType === "delivery" ? (deliveryAddress?.minOrder ?? tenant.minOrderDelivery) : tenant.minOrderPickup;
+  const minReq = minPerType && minPerType > 0 ? minPerType : null;
+  const belowMin = minReq != null && subtotal < minReq;
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
@@ -121,7 +123,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               </div>
             ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">
-                Monto mínimo: {clp(tenant.minAmount!)}
+                Monto mínimo: {clp(minReq!)}
               </div>
             ) : (
               <button

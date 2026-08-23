@@ -28,6 +28,8 @@ export interface StoreTenant {
   pickupEnabled: boolean;
   waitTime: string | null;
   minAmount: number | null;
+  minOrderPickup: number; // mínimo de compra para retiro (0 = sin mínimo)
+  minOrderDelivery: number; // mínimo de compra para delivery (0 = sin mínimo)
   paymentMethods: string[];
   deliveryZones: DeliveryZone[]; // solo zonas activas (modo "zones")
   deliveryConfig: DeliveryConfig; // modo "distance" (polígono + km)
@@ -90,13 +92,13 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     },
   });
   if (!r || !r.ecommerceEnabled) return null;
-  const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean) });
+  const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: r.orderingMinAmount ?? null });
   return {
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled,
-    waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null,
+    waitTime: r.orderingWaitTime, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
     deliveryZones: parseDeliveryZones(r.ecommerceDeliveryZones).filter((z) => z.active),
     deliveryConfig: parseDeliveryConfig(r.ecommerceDeliveryConfig),
@@ -203,7 +205,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
   }
 
   const fallbackMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: fallbackMethods });
+  const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: fallbackMethods, minOrder: restaurant.orderingMinAmount ?? null });
 
   return {
     tenant: {
@@ -224,6 +226,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       pickupEnabled: store.pickupEnabled,
       waitTime: restaurant.orderingWaitTime,
       minAmount: restaurant.orderingMinAmount ?? null,
+      minOrderPickup: store.minOrderPickup,
+      minOrderDelivery: store.minOrderDelivery,
       paymentMethods: store.paymentMethods,
       deliveryZones: parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active),
       deliveryConfig: parseDeliveryConfig(restaurant.ecommerceDeliveryConfig),

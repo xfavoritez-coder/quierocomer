@@ -111,6 +111,15 @@ export default function EcommerceConfiguracionPage() {
               </div>
               {!cfg.pickupEnabled && !cfg.deliveryEnabled && <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "#ef4444", margin: 0 }}>Debes aceptar al menos retiro o delivery.</p>}
             </div>
+
+            {(cfg.pickupEnabled || cfg.deliveryEnabled) && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Mínimo de compra</p>
+                {cfg.pickupEnabled && <MinField label="Retiro" value={cfg.minOrderPickup} onChange={(n) => patch({ minOrderPickup: n })} />}
+                {cfg.deliveryEnabled && <MinField label="Delivery" value={cfg.minOrderDelivery} onChange={(n) => patch({ minOrderDelivery: n })} />}
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>Deja en 0 para no exigir mínimo. En delivery, la zona puede tener su propio mínimo (se aplica el mayor).</p>
+              </div>
+            )}
           </section>
           )}
 
@@ -221,6 +230,20 @@ function SectionTitle({ icon: Icon, title, sub }: { icon: any; title: string; su
       <div>
         <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{title}</h2>
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0", lineHeight: 1.4 }}>{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+function MinField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text2)", width: 74, flexShrink: 0 }}>{label}</span>
+      <div style={{ position: "relative", flex: 1 }}>
+        <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)" }}>$</span>
+        <input type="number" min={0} step={100} value={value || ""} placeholder="0"
+          onChange={(e) => onChange(Math.max(0, Math.round(Number(e.target.value) || 0)))}
+          style={{ width: "100%", padding: "8px 10px 8px 20px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none", boxSizing: "border-box" }} />
       </div>
     </div>
   );
