@@ -4,6 +4,7 @@ import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { flowInit, flowSettingsFor } from "@/lib/payments/flow";
 import { mpCreatePreference, mercadopagoSettingsFor } from "@/lib/payments/mercadopago";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
@@ -170,6 +171,7 @@ export async function POST(req: NextRequest) {
     // ── Pago offline: confirmar y enviar al POS de inmediato ──
     if (!isOnline) {
       const pos = await dispatchOrderToPos(order.id).catch((e) => ({ ok: false, message: String(e) }));
+      notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
       return NextResponse.json({ ok: true, orderId: order.id, paid: false, pos });
     }
 

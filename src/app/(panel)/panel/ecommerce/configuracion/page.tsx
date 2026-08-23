@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -28,6 +28,43 @@ export default function EcommerceConfiguracionPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"tienda" | "pagos" | "checkout" | "pos" | "mas">("tienda");
+  const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
+
+  // Estado inicial de las notificaciones push (suscripción del dispositivo).
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) { setPushState("unsupported"); return; }
+    navigator.serviceWorker.getRegistration("/sw-orders.js")
+      .then((reg) => reg?.pushManager.getSubscription())
+      .then((sub) => setPushState(sub ? "active" : "inactive"))
+      .catch(() => setPushState("inactive"));
+  }, []);
+
+  async function subscribePush() {
+    if (!restaurantId) return;
+    try {
+      const reg = await navigator.serviceWorker.register("/sw-orders.js");
+      await navigator.serviceWorker.ready;
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setPushState("denied"); return; }
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) });
+      await fetch("/api/panel/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, subscription: sub.toJSON() }) });
+      setPushState("active");
+      toast.success("Notificaciones activadas");
+    } catch { setPushState("inactive"); toast.error("No se pudieron activar las notificaciones"); }
+  }
+  async function unsubscribePush() {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration("/sw-orders.js");
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/panel/push/subscribe", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+        await sub.unsubscribe();
+      }
+      setPushState("inactive");
+      toast.success("Notificaciones desactivadas");
+    } catch { setPushState("inactive"); }
+  }
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -149,6 +186,28 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Notificaciones de pedidos (dentro de Tienda) */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Bell} title="Notificaciones de pedidos" sub="Recibe un aviso en este dispositivo cuando llegue un pedido nuevo." />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 12 }}>
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: pushState === "denied" ? "#ef4444" : "var(--adm-text2)" }}>
+                {pushState === "active" ? "🔔 Activas en este dispositivo" : pushState === "denied" ? "🔕 Bloqueadas en el navegador" : pushState === "unsupported" ? "No compatible en este navegador" : "Desactivadas"}
+              </span>
+              {pushState !== "unsupported" && (
+                <button
+                  onClick={pushState === "active" ? unsubscribePush : subscribePush}
+                  disabled={pushState === "denied"}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10, border: `1px solid ${pushState === "active" ? "#22c55e" : "var(--adm-card-border)"}`, background: pushState === "active" ? "rgba(34,197,94,0.12)" : ACCENT, color: pushState === "active" ? "#22c55e" : "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: pushState === "denied" ? "not-allowed" : "pointer", opacity: pushState === "denied" ? 0.5 : 1, flexShrink: 0 }}
+                >
+                  <Bell size={15} /> {pushState === "active" ? "Desactivar" : "Activar notificaciones"}
+                </button>
+              )}
+            </div>
+            {pushState === "denied" && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>Habilita las notificaciones para este sitio en la configuración del navegador y vuelve a intentar.</p>}
+          </section>
+          )}
+
           {/* Horario (dentro de Tienda) */}
           {tab === "tienda" && (
           <section style={card}>
@@ -249,6 +308,13 @@ function MinField({ label, value, onChange }: { label: string; value: number; on
       </div>
     </div>
   );
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
 function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
