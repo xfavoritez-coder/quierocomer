@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   ArrowLeft, Search, Plus, Minus, X, ShoppingCart, User, MapPin, CreditCard,
@@ -440,16 +441,21 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
           <div style={{ flex: 1, minWidth: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>{menuPanel}</div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 128px)", minHeight: 420 }}>
-          <div style={{ flex: 1, minHeight: 0, borderRadius: "16px 16px 0 0", border: `1px solid ${C.border}`, borderBottom: "none", overflow: "hidden" }}>
+        <>
+          {/* Panel: ocupa hasta justo encima de la barra fija (evita scroll de página). */}
+          <div style={{ height: "calc(100dvh - 184px)", minHeight: 340, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             {mobileTab === "menu" ? menuPanel : cartPanel}
           </div>
-          {/* Barra de tabs fija abajo */}
-          <div style={{ display: "flex", gap: 8, padding: 8, background: C.card, borderRadius: "0 0 16px 16px", border: `1px solid ${C.border}`, flexShrink: 0 }}>
-            <TabBtn active={mobileTab === "cart"} onClick={() => setMobileTab("cart")} icon={<ShoppingCart size={16} />} label={`Pedido${cartCount ? ` (${cartCount})` : ""}`} accent={accent} />
-            <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menú" accent={accent} />
-          </div>
-        </div>
+          {/* Barra de tabs FIJA abajo — portada al contenedor de tema para no verse
+              afectada por el zoom del panel. */}
+          {typeof document !== "undefined" && createPortal(
+            <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, display: "flex", gap: 8, padding: "8px 12px calc(8px + env(safe-area-inset-bottom))", background: C.card, borderTop: `1px solid ${C.border}`, boxShadow: "0 -4px 16px rgba(0,0,0,0.06)" }}>
+              <TabBtn active={mobileTab === "cart"} onClick={() => setMobileTab("cart")} icon={<ShoppingCart size={16} />} label={`Pedido${cartCount ? ` (${cartCount})` : ""}`} accent={accent} />
+              <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menú" accent={accent} />
+            </div>,
+            document.querySelector(".theme-dark, .theme-light") ?? document.body,
+          )}
+        </>
       )}
 
       {modalProduct && <ModifiersModal product={modalProduct} accent={accent} onClose={() => setModalProduct(null)} onAdd={(base, qty) => { addToCart(base, qty); setModalProduct(null); if (!isWide) setMobileTab("cart"); }} />}
