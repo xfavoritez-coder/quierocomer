@@ -314,6 +314,12 @@
 /* ---------- new button (+ Nueva venta / retiro / delivery) ---------- */
 .pos-new-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 22px;border-radius:var(--r-btn);background:var(--amber);color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;border:0;cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 16px rgba(222,124,0,.22);transition:.16s;min-height:44px;margin-bottom:16px}
 .pos-new-btn:hover{background:var(--amber-press)}
+.pos-tab-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.pos-tab-stat{display:flex;flex-direction:column;gap:1px}
+.pos-tab-stat-n{font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--amber-press)}
+.pos-tab-stat-l{font-size:11px;font-weight:500;color:var(--ink-3);letter-spacing:.02em;text-transform:uppercase}
+.pos-new-btn-sm{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:var(--r-btn);background:var(--amber);color:#fff;font-family:var(--sans);font-size:14px;font-weight:600;border:0;cursor:pointer;box-shadow:0 2px 4px rgba(222,124,0,.2),0 6px 14px rgba(222,124,0,.22);transition:.16s;white-space:nowrap;min-height:44px}
+.pos-new-btn-sm:hover{background:var(--amber-press)}
 
 /* ---------- account card extras ---------- */
 .pos-t-address{font-size:12px;color:var(--ink-3);margin-top:3px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}

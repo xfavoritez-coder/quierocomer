@@ -357,8 +357,8 @@ function AccountCard({ account, onSelect }: { account: Account; onSelect: (accou
 // ── Main page ─────────────────────────────────────────────────────
 
 type DesktopPanel =
-  | { type: 'cuenta'; accountId: string }
-  | { type: 'comandero'; accountId: string | null }
+  | { type: 'cuenta'; accountId: string; tab: Tab }
+  | { type: 'comandero'; accountId: string | null; tab: Tab }
 
 export default function PosHomePage() {
   const navigate = usePosNav()
@@ -436,7 +436,7 @@ export default function PosHomePage() {
       setMesaOpenModal({ tableId, tableNumber, tableLabel: tableLabel ?? `Mesa ${tableNumber}` })
     } else if (accountId) {
       if (isDesktop) {
-        setDesktopPanel({ type: 'cuenta', accountId })
+        setDesktopPanel({ type: 'cuenta', accountId, tab: 'mesas' })
       } else {
         navigate(`/pos/cuenta?id=${accountId}`)
       }
@@ -457,7 +457,7 @@ export default function PosHomePage() {
     })
     setMesaOpenModal(null)
     if (isDesktop) {
-      setDesktopPanel({ type: 'comandero', accountId: id })
+      setDesktopPanel({ type: 'comandero', accountId: id, tab: 'mesas' })
     } else {
       navigate(`/pos/comandero?cuenta=${id}`)
     }
@@ -465,7 +465,7 @@ export default function PosHomePage() {
 
   const handleSelectAccount = (accountId: string) => {
     if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId })
+      setDesktopPanel({ type: 'cuenta', accountId, tab })
     } else {
       navigate(`/pos/cuenta?id=${accountId}&from=${tab}`)
     }
@@ -480,7 +480,7 @@ export default function PosHomePage() {
       openAccount({ account_id: id, account_type: 'mostrador' })
     }
     if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId: id })
+      setDesktopPanel({ type: 'cuenta', accountId: id, tab: 'retiro' })
     } else {
       navigate(`/pos/cuenta?id=${id}&from=retiro`)
     }
@@ -497,14 +497,17 @@ export default function PosHomePage() {
       delivery_address: data.address,
     })
     if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId: id })
+      setDesktopPanel({ type: 'cuenta', accountId: id, tab: 'delivery' })
     } else {
       navigate(`/pos/cuenta?id=${id}&from=delivery`)
     }
   }
 
+  // Solo mostrar el panel si pertenece al tab activo
+  const activePanel = desktopPanel?.tab === tab ? desktopPanel : null
+
   // ID de mesa activa en el panel desktop (para resaltarla visualmente)
-  const activePanelAccountId = desktopPanel?.accountId ?? null
+  const activePanelAccountId = activePanel?.accountId ?? null
   const activePanelTableId = activePanelAccountId
     ? accounts.find(a => a.id === activePanelAccountId)?.table_id ?? null
     : null
@@ -644,10 +647,16 @@ export default function PosHomePage() {
           {/* RETIRO */}
           {tab === 'retiro' && (
             <>
-              <button className="pos-new-btn" onClick={() => setRetiroModal(true)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                Nuevo retiro
-              </button>
+              <div className="pos-tab-header">
+                <div className="pos-tab-stat">
+                  <span className="pos-tab-stat-n">{retiroAccounts.length}</span>
+                  <span className="pos-tab-stat-l">retiro{retiroAccounts.length !== 1 ? 's' : ''} activo{retiroAccounts.length !== 1 ? 's' : ''}</span>
+                </div>
+                <button className="pos-new-btn-sm" onClick={() => setRetiroModal(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                  Nuevo retiro
+                </button>
+              </div>
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
@@ -664,10 +673,16 @@ export default function PosHomePage() {
           {/* DELIVERY */}
           {tab === 'delivery' && (
             <>
-              <button className="pos-new-btn" onClick={() => setDeliveryModal(true)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-                Nuevo delivery
-              </button>
+              <div className="pos-tab-header">
+                <div className="pos-tab-stat">
+                  <span className="pos-tab-stat-n">{deliveryAccounts.length}</span>
+                  <span className="pos-tab-stat-l">delivery{deliveryAccounts.length !== 1 ? 's' : ''} activo{deliveryAccounts.length !== 1 ? 's' : ''}</span>
+                </div>
+                <button className="pos-new-btn-sm" onClick={() => setDeliveryModal(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                  Nuevo delivery
+                </button>
+              </div>
               {deliveryAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
@@ -686,34 +701,37 @@ export default function PosHomePage() {
 
       {/* ── Panel derecho (solo desktop) ────────────────────── */}
       {isDesktop && (
-        <div className={`pos-split-right${desktopPanel ? '' : ' empty'}`}>
-          {desktopPanel?.type === 'cuenta' && (
+        <div className={`pos-split-right${activePanel ? '' : ' empty'}`}>
+          {activePanel?.type === 'cuenta' && (
             <CuentaPanel
-              accountId={desktopPanel.accountId}
+              accountId={activePanel.accountId}
               fromTab={tab}
               isPanel
               onClose={() => setDesktopPanel(null)}
-              onGoToComandero={(id) => setDesktopPanel({ type: 'comandero', accountId: id })}
+              onGoToComandero={(id) => setDesktopPanel({ type: 'comandero', accountId: id, tab })}
             />
           )}
-          {desktopPanel?.type === 'comandero' && (
+          {activePanel?.type === 'comandero' && (
             <ComanderoPanel
-              accountId={desktopPanel.accountId}
+              accountId={activePanel.accountId}
               isPanel
               onClose={() => setDesktopPanel(null)}
-              onBack={() => desktopPanel.accountId
-                ? setDesktopPanel({ type: 'cuenta', accountId: desktopPanel.accountId })
+              onBack={() => activePanel.accountId
+                ? setDesktopPanel({ type: 'cuenta', accountId: activePanel.accountId, tab })
                 : setDesktopPanel(null)
               }
             />
           )}
-          {!desktopPanel && (
+          {!activePanel && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
-                <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                {tab === 'mesas' && <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>}
+                {tab === 'retiro' && <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
+                {tab === 'delivery' && <><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><circle cx="20" cy="16" r="1"/></>}
               </svg>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona una mesa</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>
+                {tab === 'mesas' ? 'Selecciona una mesa' : tab === 'retiro' ? 'Selecciona un retiro' : 'Selecciona un delivery'}
+              </span>
             </div>
           )}
         </div>

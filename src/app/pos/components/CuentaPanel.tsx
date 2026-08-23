@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   useAccount, usePosSync, useStaff,
   setRestaurantId, setUserId,
@@ -38,22 +38,6 @@ export default function CuentaPanel({
 
   const [showAddItem, setShowAddItem] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const settingsRef = useRef<HTMLDivElement>(null)
-  const gearBtnRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    if (!showSettings || !isPanel) return
-    const handler = (e: MouseEvent) => {
-      const t = e.target as Node
-      if (
-        settingsRef.current && !settingsRef.current.contains(t) &&
-        gearBtnRef.current && !gearBtnRef.current.contains(t)
-      ) {
-        setShowSettings(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [showSettings, isPanel])
   const [settingsModal, setSettingsModal] = useState<'comensales' | 'garzon' | null>(null)
   const [voidModal, setVoidModal] = useState<{ itemId: string; name: string } | null>(null)
   const [voidAccountModal, setVoidAccountModal] = useState(false)
@@ -182,7 +166,7 @@ export default function CuentaPanel({
   const isClosed = account.status === 'cerrada' || account.status === 'anulada'
 
   return (
-    <div className="pos-shell">
+    <div className="pos-shell" onClick={() => { if (showSettings) setShowSettings(false) }}>
       <PosHeader
         mode="back"
         subtitle={accountName}
@@ -192,8 +176,7 @@ export default function CuentaPanel({
           <>
             {!isClosed && (
               <button
-                ref={gearBtnRef}
-                onClick={() => setShowSettings(v => !v)}
+                onClick={(e) => { e.stopPropagation(); setShowSettings(v => !v) }}
                 style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-2)', minWidth: 44, minHeight: 44 }}
                 title="Opciones"
               >
@@ -328,7 +311,7 @@ export default function CuentaPanel({
       {showSettings && (
         <>
           {!isPanel && <div className="pos-drawer-overlay" onClick={() => setShowSettings(false)} />}
-          <div className="pos-sheet" ref={settingsRef}>
+          <div className="pos-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="pos-sheet-header">
               <div style={{ fontWeight: 700, fontSize: 15 }}>{accountName}</div>
               {!isPanel && (
