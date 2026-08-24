@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   try {
 
   if (contentType.includes("multipart/form-data")) {
-    // File upload (single or multiple)
+    // File upload (single or multiple) — legacy path
     const formData = await req.formData();
     restaurantId = formData.get("restaurantId") as string;
     const files = formData.getAll("file") as File[];
@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Falta restaurantId o archivo" }, { status: 400 });
     }
 
-    // Upload each file and extract dishes, then merge
     const allDishes: ExtractionResult["dishes"] = [];
     let mergedLogoUrl: string | undefined;
     let mergedRestaurantName: string | undefined;
@@ -64,11 +63,9 @@ export async function POST(req: NextRequest) {
       const { error: uploadError } = await supabase.storage
         .from("fotos")
         .upload(fileName, buffer, { contentType: file.type, upsert: true });
-      if (uploadError) continue; // skip failed uploads
+      if (uploadError) continue;
       const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
-      const fileUrl = urlData.publicUrl;
-
-      const result = await extractFromDocument(fileUrl);
+      const result = await extractFromDocument(urlData.publicUrl);
       allDishes.push(...result.dishes);
       if (!mergedLogoUrl && result.logoUrl) mergedLogoUrl = result.logoUrl;
       if (!mergedRestaurantName && result.restaurantName) mergedRestaurantName = result.restaurantName;
@@ -76,9 +73,23 @@ export async function POST(req: NextRequest) {
 
     extraction = { dishes: allDishes, logoUrl: mergedLogoUrl ?? null, bannerUrl: null, restaurantName: mergedRestaurantName ?? "" };
   } else {
-    // JSON body — link mode
+    // JSON body — link mode or pre-uploaded URLs
     const body = await req.json();
     restaurantId = body.restaurantId;
+
+    // New: array of pre-uploaded photo URLs
+    if (Array.isArray(body.urls) && body.urls.length > 0) {
+      const allDishes: ExtractionResult["dishes"] = [];
+      let mergedLogoUrl: string | undefined;
+      let mergedRestaurantName: string | undefined;
+      for (const url of body.urls.slice(0, 10)) {
+        const result = await extractFromDocument(url);
+        allDishes.push(...result.dishes);
+        if (!mergedLogoUrl && result.logoUrl) mergedLogoUrl = result.logoUrl;
+        if (!mergedRestaurantName && result.restaurantName) mergedRestaurantName = result.restaurantName;
+      }
+      extraction = { dishes: allDishes, logoUrl: mergedLogoUrl ?? null, bannerUrl: null, restaurantName: mergedRestaurantName ?? "" };
+    } else {
     const cartaUrl = body.cartaUrl;
 
     if (!restaurantId || !cartaUrl) {
@@ -97,6 +108,7 @@ export async function POST(req: NextRequest) {
     } else {
       extraction = await extractWithScraper(cartaUrl, provider?.name, provider?.extractionConfig);
     }
+    } // end else (link mode)
   }
 
   if (!extraction.dishes.length) {

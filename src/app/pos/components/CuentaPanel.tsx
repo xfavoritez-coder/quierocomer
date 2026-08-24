@@ -270,29 +270,27 @@ export default function CuentaPanel({
 
       {/* Bottom bar */}
       {!isClosed && (
-        <div style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', display: 'flex', gap: 10 }}>
+        <div style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '10px 14px', display: 'flex', gap: 8 }}>
           <button
             onClick={() => setShowAddItem(true)}
-            style={{ flex: 1, padding: '13px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 2px 4px rgba(222,124,0,.2),0 4px 12px rgba(222,124,0,.2)' }}
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 2px 4px rgba(222,124,0,.2),0 4px 12px rgba(222,124,0,.2)' }}
           >
             + Agregar ítem
           </button>
           {activeItems.length > 0 && (
             <button onClick={handleRequestBill} disabled={requestingBill}
-              style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1 }}>
-              {requestingBill ? 'Enviando...' : 'Pedir cuenta'}
+              style={{ padding: '10px 14px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', opacity: requestingBill ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+              {requestingBill ? '...' : 'Pedir cuenta'}
             </button>
           )}
           {activeItems.length > 0 && (
             <button
-              onClick={() => {
-                const url = `/pos/cobro?cuenta=${accountId}`
-                if (isPanel) navigate(url)
-                else navigate(url)
-              }}
-              style={{ padding: '13px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>${account.total.toLocaleString('es-CL')}</span>
-              <span style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 500 }}>Cobrar</span>
+              onClick={() => navigate(`/pos/cobro?cuenta=${accountId}`)}
+              style={{ padding: '10px 16px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
+              Cobrar
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, color: 'var(--amber-press)', fontVariantNumeric: 'tabular-nums' }}>
+                ${account.total.toLocaleString('es-CL')}
+              </span>
             </button>
           )}
         </div>

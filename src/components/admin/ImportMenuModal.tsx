@@ -38,10 +38,25 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
         });
       } else {
         if (!files.length) { setError("Selecciona un archivo"); setLoading(false); return; }
-        const fd = new FormData();
-        fd.append("restaurantId", restaurantId);
-        for (const f of files) fd.append("file", f);
-        res = await fetch("/api/admin/import-menu", { method: "POST", body: fd });
+
+        // Upload each photo individually to avoid body size limits
+        const urls: string[] = [];
+        for (let i = 0; i < files.length; i++) {
+          setProgress(`Subiendo foto ${i + 1} de ${files.length}...`);
+          const fd = new FormData();
+          fd.append("file", files[i]);
+          const upRes = await fetch("/api/admin/upload-menu-photo", { method: "POST", body: fd });
+          const upData = await upRes.json();
+          if (!upRes.ok) throw new Error(upData.error || `Error subiendo foto ${i + 1}`);
+          urls.push(upData.url);
+        }
+
+        setProgress("Extrayendo platos de tu carta...");
+        res = await fetch("/api/admin/import-menu", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId, urls }),
+        });
       }
 
       const data = await res.json();

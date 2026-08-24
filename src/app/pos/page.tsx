@@ -541,7 +541,7 @@ export default function PosHomePage() {
       <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* ── Content (columna izquierda en desktop) ──────────── */}
-      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'}>
+      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setDesktopPanel(null) : undefined}>
         <div className="pos-pad">
 
             {/* MESAS */}
@@ -597,7 +597,7 @@ export default function PosHomePage() {
                       <button
                         key={table.id}
                         className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
-                        onClick={() => handleMesaClick(table.id, table.number, table.label)}
+                        onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
                       >
                         <span className="mn">{table.label || table.number}</span>
                         <div className="pos-mesa-center">
@@ -661,7 +661,7 @@ export default function PosHomePage() {
               {retiroAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} onSelect={handleSelectAccount} />)}
+                    .map(a => <div key={a.id} onClick={e => e.stopPropagation()}><AccountCard account={a} onSelect={handleSelectAccount} /></div>)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
@@ -687,7 +687,7 @@ export default function PosHomePage() {
               {deliveryAccounts.length > 0 ? (
                 <div className="pos-tickets">
                   {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
-                    .map(a => <AccountCard key={a.id} account={a} onSelect={handleSelectAccount} />)}
+                    .map(a => <div key={a.id} onClick={e => e.stopPropagation()}><AccountCard account={a} onSelect={handleSelectAccount} /></div>)}
                 </div>
               ) : (
                 <div className="pos-empty" style={{ minHeight: 160 }}>
