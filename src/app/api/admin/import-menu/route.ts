@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       const allDishes: ExtractionResult["dishes"] = [];
       let mergedLogoUrl: string | undefined;
       let mergedRestaurantName: string | undefined;
-      for (const url of body.urls.slice(0, 10)) {
+      for (const url of body.urls.slice(0, 15)) {
         const result = await extractFromDocument(url);
         allDishes.push(...result.dishes);
         if (!mergedLogoUrl && result.logoUrl) mergedLogoUrl = result.logoUrl;

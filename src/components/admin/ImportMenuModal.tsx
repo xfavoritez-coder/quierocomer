@@ -128,7 +128,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
                   multiple
                   onChange={e => {
                     if (!e.target.files) return;
-                    const selected = Array.from(e.target.files).slice(0, 10);
+                    const selected = Array.from(e.target.files).slice(0, 15);
                     setFiles(selected);
                   }}
                   style={{ display: "none" }}
@@ -150,7 +150,7 @@ export default function ImportMenuModal({ restaurantId, onClose, onDone }: Props
                       ))}
                       {mode === "photo" && (
                         <div style={{ fontSize: "0.75rem", color: "var(--adm-text3)", fontFamily: F, marginTop: 4 }}>
-                          Toca para agregar más (máx. 10)
+                          Toca para agregar más (máx. 15)
                         </div>
                       )}
                     </div>
