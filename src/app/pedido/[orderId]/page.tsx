@@ -110,6 +110,18 @@ function getSteps(orderType: "PICKUP" | "DELIVERY") {
   ];
 }
 
+function statusTitle(status: string, orderType: "PICKUP" | "DELIVERY"): { t: string; s: string } {
+  switch (status) {
+    case "PENDING": return { t: "Pedido recibido", s: "Recibimos tu pedido, en breve lo confirmamos." };
+    case "ACCEPTED": return { t: "¡Pedido aceptado!", s: "El local va a empezar a prepararlo." };
+    case "PREPARING": return { t: "Preparando tu pedido", s: "Están cocinando lo tuyo 👨‍🍳" };
+    case "IN_DELIVERY": return { t: "Tu pedido va en camino", s: "El repartidor ya salió con tu pedido 🛵" };
+    case "READY": return { t: "¡Tu pedido está listo!", s: orderType === "DELIVERY" ? "Ya puede salir a reparto." : "Puedes pasar a retirarlo 🏠" };
+    case "DONE": return { t: "¡Pedido entregado!", s: "Gracias por tu compra 🎉" };
+    default: return { t: "Seguimiento de pedido", s: "" };
+  }
+}
+
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 }
@@ -135,12 +147,12 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 0, width: "100%", overflowX: "auto", padding: "8px 0" }}>
       {steps.map((step, i) => {
-        const done = i < currentStep;
+        // Todo estado alcanzado (incluido el actual) se marca con check verde.
+        const reached = i <= currentStep;
         const active = i === currentStep;
-        const YELLOW = "#F4A623";
-        const color = done ? GREEN : active ? YELLOW : theme.text3;
-        const circleBg = done ? GREEN + "22" : active ? YELLOW + "22" : theme.isDark ? "#242424" : "#f3f4f6";
-        const timeLabel = (done || active) ? getStepTime(i, statusHistory, createdAt) : null;
+        const color = reached ? GREEN : theme.text3;
+        const circleBg = reached ? GREEN : theme.isDark ? "#242424" : "#f3f4f6";
+        const timeLabel = reached ? getStepTime(i, statusHistory, createdAt) : null;
 
         return (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", flex: i < steps.length - 1 ? 1 : "none" }}>
@@ -148,12 +160,13 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
               <div style={{
                 width: 36, height: 36, borderRadius: "50%",
                 background: circleBg,
-                border: `2px solid ${color}`,
+                border: `2px solid ${reached ? GREEN : theme.border}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 16, flexShrink: 0,
-                color: done ? "#fff" : undefined,
+                color: reached ? "#fff" : undefined,
+                boxShadow: active ? `0 0 0 4px ${GREEN}22` : "none",
               }}>
-                {done ? "✓" : step.icon}
+                {reached ? "✓" : step.icon}
               </div>
               <span style={{
                 fontFamily: FONT, fontSize: "clamp(8px, 2.5vw, 10px)", fontWeight: active ? 700 : 500,
@@ -346,21 +359,8 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     );
   }
 
-  if (order.status === "DONE") {
-    return (
-      <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: GREEN, margin: "0 0 8px" }}>¡Pedido entregado!</h2>
-          <p style={{ fontSize: 14, color: theme.text2, margin: 0, lineHeight: 1.6 }}>
-            Gracias por tu pedido en <strong style={{ color: theme.text }}>{order.restaurantName}</strong>.<br />¡Esperamos que lo hayas disfrutado!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const items = Array.isArray(order.items) ? order.items : [];
+  const st = statusTitle(order.status, order.orderType);
 
   return (
     <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT }}>
@@ -387,6 +387,12 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             {order.restaurantName}
           </h1>
           <p style={{ fontSize: 13, color: theme.text2, margin: "4px 0 0" }}>Seguimiento de pedido</p>
+        </div>
+
+        {/* Título del estado actual */}
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: theme.text, margin: 0 }}>{st.t}</h2>
+          {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
 
         {/* Stepper */}
