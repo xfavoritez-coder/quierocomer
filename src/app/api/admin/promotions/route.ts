@@ -165,6 +165,15 @@ export async function PUT(req: NextRequest) {
       },
       include: { modifierTemplates: { select: { id: true, name: true } } },
     });
+
+    // Sync isHero on promo dishes when featured flag changes
+    if (data.featured !== undefined && promo.dishIds.length > 0) {
+      await prisma.dish.updateMany({
+        where: { id: { in: promo.dishIds } },
+        data: { isHero: data.featured },
+      });
+    }
+
     await revalidateRestaurant(existing.restaurantId);
     logActivity(existing.restaurantId, "promo_edit", { promoId: id, name: promo.name, status: promo.status });
     return NextResponse.json({ promotion: promo });
