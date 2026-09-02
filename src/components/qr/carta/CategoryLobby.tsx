@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Category, Dish } from "@prisma/client";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
@@ -13,6 +13,128 @@ interface Props {
   accentColor?: string;
   onSelectCategory: (categoryId: string) => void;
   onSkip: () => void;
+}
+
+function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: string; onSelect: (catId: string) => void }) {
+  const [current, setCurrent] = useState(0);
+  const touchStartX = useRef(0);
+  const touchWasSwipe = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (dishes.length <= 1) return;
+    timerRef.current = setTimeout(() => {
+      setCurrent(c => (c + 1) % dishes.length);
+    }, 4500);
+  }, [dishes.length]);
+
+  useEffect(() => {
+    resetTimer();
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [current, resetTimer]);
+
+  const d = dishes[current];
+
+  return (
+    <div style={{ padding: "0 14px 20px" }}>
+      <div
+        onClick={() => { if (!touchWasSwipe.current) onSelect(d.categoryId); touchWasSwipe.current = false; }}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchWasSwipe.current = false; }}
+        onTouchEnd={e => {
+          const diff = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(diff) > 48) {
+            touchWasSwipe.current = true;
+            const next = diff < 0
+              ? (current + 1) % dishes.length
+              : (current - 1 + dishes.length) % dishes.length;
+            setCurrent(next);
+            resetTimer();
+          }
+        }}
+        style={{
+          position: "relative", borderRadius: 20, overflow: "hidden",
+          height: "52vw", maxHeight: 260, minHeight: 180,
+          cursor: "pointer",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+        }}
+      >
+        {/* Photos — cross-fade */}
+        {dishes.map((dish, i) => (
+          <div key={dish.id} style={{
+            position: "absolute", inset: 0, zIndex: 1,
+            opacity: i === current ? 1 : 0,
+            transition: "opacity 0.7s ease",
+          }}>
+            {dish.photos[0] ? (
+              <img
+                src={dish.photos[0]}
+                alt={dish.name}
+                loading={i === 0 ? "eager" : "lazy"}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(135deg, ${accent}30, ${accent}10)` }} />
+            )}
+          </div>
+        ))}
+
+        {/* Gradient overlay */}
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 2,
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.18) 35%, rgba(0,0,0,0.75) 80%, rgba(0,0,0,0.88) 100%)",
+        }} />
+
+        {/* Badge top-left */}
+        <div style={{
+          position: "absolute", top: 14, left: 14, zIndex: 3,
+          display: "inline-flex", alignItems: "center", gap: 5,
+          background: accent,
+          color: "#fff",
+          fontSize: "10px", fontWeight: 900, letterSpacing: "0.5px",
+          textTransform: "uppercase",
+          padding: "5px 11px", borderRadius: 999,
+          fontFamily: "var(--font-dm)",
+        }}>
+          ★ Destacado
+        </div>
+
+        {/* Content bottom */}
+        <div style={{ position: "absolute", left: 16, right: 16, bottom: 14, zIndex: 3 }}>
+          <p style={{
+            margin: "0 0 4px",
+            fontFamily: "var(--font-dm)",
+            fontSize: "20px", fontWeight: 800, lineHeight: 1.15,
+            color: "#fff",
+            textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+          }}>
+            {d.name}
+          </p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{
+              fontFamily: "var(--font-dm)",
+              fontSize: "15px", fontWeight: 800,
+              color: accent === "#F4A623" ? "#FFD580" : accent,
+            }}>
+              ${Math.round((d.discountPrice ?? d.price) || 0).toLocaleString("es-CL")}
+            </span>
+            {/* Dots */}
+            {dishes.length > 1 && (
+              <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                {dishes.map((_, i) => (
+                  <div key={i} style={{
+                    width: i === current ? 14 : 5, height: 5, borderRadius: 3,
+                    background: i === current ? "#fff" : "rgba(255,255,255,0.4)",
+                    transition: "all 0.3s ease",
+                  }} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function CategoryLobby({ categories, dishes, restaurantName, logoUrl, accentColor, onSelectCategory, onSkip }: Props) {
@@ -106,97 +228,9 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
         );
       })()}
 
-      {/* Featured dishes strip */}
+      {/* Featured hero slider */}
       {featuredDishes.length > 0 && (
-        <div style={{ padding: "0 0 20px" }}>
-          {/* Section label */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 7,
-            padding: "0 16px 12px",
-          }}>
-            <span style={{ fontSize: 14, color: accent, lineHeight: 1 }}>★</span>
-            <span style={{
-              fontFamily: "var(--font-dm)",
-              fontSize: "12px", fontWeight: 800, letterSpacing: "0.9px",
-              textTransform: "uppercase",
-              color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)",
-            }}>
-              Destacados
-            </span>
-          </div>
-
-          {/* Horizontal scroll */}
-          <div style={{
-            display: "flex", gap: 10,
-            overflowX: "auto", overflowY: "hidden",
-            padding: "0 16px 4px",
-            scrollbarWidth: "none",
-            WebkitOverflowScrolling: "touch",
-          } as React.CSSProperties}>
-            {featuredDishes.map(dish => (
-              <button
-                key={dish.id}
-                onClick={() => onSelectCategory(dish.categoryId)}
-                style={{
-                  flexShrink: 0,
-                  width: 140,
-                  borderRadius: 14,
-                  overflow: "hidden",
-                  border: "none",
-                  cursor: "pointer",
-                  background: isDark ? "#1a1a1a" : "#f0ede6",
-                  textAlign: "left",
-                  padding: 0,
-                  boxShadow: isDark ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
-                }}
-              >
-                {/* Photo */}
-                <div style={{ position: "relative", width: 140, height: 110 }}>
-                  <img
-                    src={dish.photos[0]}
-                    alt={dish.name}
-                    loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  />
-                  {/* Badge */}
-                  <div style={{
-                    position: "absolute", top: 8, left: 8,
-                    background: accent,
-                    color: "#fff",
-                    fontSize: "10px", fontWeight: 800,
-                    padding: "3px 7px", borderRadius: 6,
-                    letterSpacing: "0.3px",
-                    fontFamily: "var(--font-dm)",
-                  }}>
-                    ★
-                  </div>
-                </div>
-                {/* Info */}
-                <div style={{ padding: "10px 10px 12px" }}>
-                  <p style={{
-                    margin: "0 0 4px",
-                    fontFamily: "var(--font-dm)",
-                    fontSize: "13px", fontWeight: 700, lineHeight: 1.2,
-                    color: isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  } as React.CSSProperties}>
-                    {dish.name}
-                  </p>
-                  <span style={{
-                    fontFamily: "var(--font-dm)",
-                    fontSize: "13px", fontWeight: 800,
-                    color: accent,
-                  }}>
-                    ${Math.round(dish.discountPrice ?? dish.price).toLocaleString("es-CL")}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <FeaturedHero dishes={featuredDishes} accent={accent} onSelect={onSelectCategory} />
       )}
 
       {/* Grid */}
