@@ -15,6 +15,17 @@ interface Props {
   onSkip: () => void;
 }
 
+/** Returns true if a hex color is "light" (luminance > 0.55) */
+function isLightColor(hex: string): boolean {
+  const h = hex.replace("#", "");
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  // Perceived luminance
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.55;
+}
+
 function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: string; onSelect: (catId: string) => void }) {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef(0);
@@ -35,6 +46,12 @@ function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: st
   }, [current, resetTimer]);
 
   const d = dishes[current];
+  const accentIsLight = isLightColor(accent);
+  // Badge: if accent is light use dark bg+text for legibility
+  const badgeBg = accentIsLight ? "rgba(0,0,0,0.6)" : accent;
+  const badgeColor = "#fff";
+  // Price: if accent is light on dark overlay, use white instead
+  const priceColor = accentIsLight ? "#fff" : (accent === "#F4A623" ? "#FFD580" : accent);
 
   return (
     <div style={{ padding: "0 14px 20px" }}>
@@ -89,8 +106,9 @@ function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: st
         <div style={{
           position: "absolute", top: 14, left: 14, zIndex: 3,
           display: "inline-flex", alignItems: "center", gap: 5,
-          background: accent,
-          color: "#fff",
+          background: badgeBg,
+          backdropFilter: accentIsLight ? "blur(6px)" : undefined,
+          color: badgeColor,
           fontSize: "10px", fontWeight: 900, letterSpacing: "0.5px",
           textTransform: "uppercase",
           padding: "5px 11px", borderRadius: 999,
@@ -114,7 +132,7 @@ function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: st
             <span style={{
               fontFamily: "var(--font-dm)",
               fontSize: "15px", fontWeight: 800,
-              color: accent === "#F4A623" ? "#FFD580" : accent,
+              color: priceColor,
             }}>
               ${Math.round((d.discountPrice ?? d.price) || 0).toLocaleString("es-CL")}
             </span>
@@ -240,8 +258,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
         gap: 10,
         padding: "0 14px",
       }}>
-        {visibleCategories.map((cat, i) => {
-          const isWide = i === 0; // First item full width
+        {visibleCategories.map((cat) => {
           const hasCover = !!(cat.coverPhoto && !failedImages.has(cat.id));
           return (
             <button
@@ -249,8 +266,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
               onClick={() => onSelectCategory(cat.id)}
               style={{
                 position: "relative",
-                gridColumn: isWide ? "1 / -1" : undefined,
-                height: isWide ? 180 : 140,
+                height: 140,
                 borderRadius: 16,
                 overflow: "hidden",
                 border: "none",
@@ -285,7 +301,7 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                 <p style={{
                   margin: "0 0 3px",
                   fontFamily: "var(--font-dm)",
-                  fontSize: isWide ? "20px" : "16px",
+                  fontSize: "16px",
                   fontWeight: 700,
                   color: hasCover ? "#fff" : isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
                   lineHeight: 1.15,
