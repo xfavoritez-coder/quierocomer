@@ -222,35 +222,26 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
                   : "linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.5) 60%, var(--carta-bg, #faf9f6) 100%)"
                 : `linear-gradient(135deg, ${accent}15 0%, transparent 60%)`,
             }} />
-            <div style={{ position: "relative", zIndex: 2, padding: "36px 20px 28px", textAlign: "center" }}>
+            <div style={{ position: "relative", zIndex: 2, padding: "18px 16px 16px", display: "flex", alignItems: "center", gap: 10 }}>
               {logoUrl && (
                 <div style={{
-                  width: 68, height: 68, borderRadius: "50%", overflow: "hidden",
-                  margin: "0 auto 16px",
-                  border: isDark ? "3px solid rgba(255,255,255,0.2)" : "3px solid rgba(0,0,0,0.1)",
-                  boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.12)",
+                  width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                  border: isDark ? "2px solid rgba(255,255,255,0.2)" : "2px solid rgba(0,0,0,0.1)",
+                  boxShadow: isDark ? "0 2px 10px rgba(0,0,0,0.4)" : "0 2px 10px rgba(0,0,0,0.1)",
                 }}>
-                  <img src={logoUrl} alt="" loading="lazy" style={{ width: 68, height: 68, objectFit: "cover" }} />
+                  <img src={logoUrl} alt="" loading="lazy" style={{ width: 38, height: 38, objectFit: "cover" }} />
                 </div>
               )}
               <h1 style={{
                 fontFamily: "var(--font-dm)",
-                fontSize: "26px", fontWeight: 800,
+                fontSize: "17px", fontWeight: 800,
                 color: isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
-                margin: "0 0 6px", letterSpacing: "-0.3px",
-                textShadow: isDark ? "0 2px 12px rgba(0,0,0,0.5)" : "none",
+                margin: 0, letterSpacing: "-0.2px",
+                textShadow: isDark ? "0 1px 8px rgba(0,0,0,0.5)" : "none",
+                lineHeight: 1.2,
               }}>
                 {restaurantName}
               </h1>
-              <p style={{
-                fontFamily: "var(--font-dm)",
-                fontSize: "13px",
-                color: isDark ? "rgba(255,255,255,0.55)" : "var(--carta-text3, #999)",
-                margin: 0, fontWeight: 500, letterSpacing: "0.8px",
-                textTransform: "uppercase",
-              }}>
-                {t(lang, "ourMenu" as any)}
-              </p>
             </div>
           </div>
         );
