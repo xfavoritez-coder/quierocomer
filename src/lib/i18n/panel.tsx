@@ -22,7 +22,7 @@ const translations = {
     nav_clients: "Clientes",
     nav_loyalty: "Loyalty",
     nav_loyalty_how: "¿Cómo funciona?",
-    nav_loyalty_card: "Tarjeta de fidelización",
+    nav_loyalty_card: "Tarjeta",
     nav_loyalty_members: "Miembros",
     nav_loyalty_notif: "Notificaciones",
     nav_loyalty_scan: "Escanear",

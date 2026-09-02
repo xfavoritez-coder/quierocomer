@@ -23,11 +23,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "restaurantId, plan y method requeridos" }, { status: 400 });
   }
 
-  const { restaurantId, plan, method, amount, note } = body as {
+  const { restaurantId, plan, method, amountNet: amountNetOverride, note } = body as {
     restaurantId: string;
     plan: string;
     method: "transfer" | "cash" | "other";
-    amount?: number;
+    amountNet?: number;
     note?: string;
   };
 
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
   const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const effectiveNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
-  const amountGross = amount ?? grossOf(effectiveNet);
+  const effectiveNet = amountNetOverride ?? restaurant.customPlanPriceNet ?? planConfig.amountNet;
+  const amountGross = grossOf(effectiveNet);
 
   // Actualizar restaurante
   await prisma.restaurant.update({

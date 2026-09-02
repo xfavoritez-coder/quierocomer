@@ -241,7 +241,7 @@ function ListaHero({
         )}
 
         {/* Logo + nombre dentro del banner (diseño original) */}
-        <div style={{ position: "absolute", top: 10, left: 14, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <a href={`/qr/${restaurant.slug}`} style={{ position: "absolute", top: 10, left: 14, zIndex: 10, display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           {restaurant.logoUrl ? (
             <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
           ) : (
@@ -250,7 +250,7 @@ function ListaHero({
             </div>
           )}
           <span style={{ color: "white", fontSize: "1.17rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}>{restaurant.name}</span>
-        </div>
+        </a>
 
         {/* Dish info */}
         {dish && (
@@ -942,7 +942,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
           {isClosed && <ClosedBanner businessHours={businessHours} inline isDark={isDark} accent={accent} />}
           <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <a href={`/qr/${restaurant.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
                 {restaurant.logoUrl ? (
                   <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: 10, objectFit: "contain" }} />
                 ) : (
@@ -951,7 +951,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
                   </div>
                 )}
                 <span style={{ fontWeight: 800, fontSize: 18, color: isDark ? "#fff" : "var(--carta-text)", letterSpacing: "-0.3px" }}>{restaurant.name}</span>
-              </div>
+              </a>
               <button onClick={() => setCartOpen(true)} style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}`, background: count > 0 ? accent : (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"), display: "grid", placeItems: "center", cursor: "pointer" }}>
                 <ShoppingCart size={17} color={count > 0 ? "#fff" : (isDark ? "#aaa" : "#666")} />
                 {count > 0 && <span style={{ position: "absolute", top: -3, right: -3, width: 17, height: 17, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{count}</span>}

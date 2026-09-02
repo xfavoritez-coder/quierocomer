@@ -31,16 +31,16 @@ export async function GET(req: NextRequest) {
   // Detect manual payments via PanelActivity log
   const manualPaymentLogs = await prisma.panelActivity.findMany({
     where: { restaurantId: { in: restaurantIds }, action: "manual_payment" },
-    select: { restaurantId: true, details: true },
+    select: { restaurantId: true, details: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
 
-  const manualMethodByRestaurant = new Map<string, string>();
+  const manualMethodByRestaurant = new Map<string, { method: string; createdAt: Date }>();
   for (const log of manualPaymentLogs) {
     if (!manualMethodByRestaurant.has(log.restaurantId)) {
       const d = log.details as any;
       const label = d?.methodLabel || d?.method || "Manual";
-      manualMethodByRestaurant.set(log.restaurantId, label);
+      manualMethodByRestaurant.set(log.restaurantId, { method: label, createdAt: log.createdAt });
     }
   }
 
@@ -55,8 +55,13 @@ export async function GET(req: NextRequest) {
       : null;
 
     let method: string;
-    if (manualMethodByRestaurant.has(r.id)) {
-      method = manualMethodByRestaurant.get(r.id)!;
+    const manualEntry = manualMethodByRestaurant.get(r.id);
+    const lastPayAt = r.lastPaymentAt ? new Date(r.lastPaymentAt) : null;
+    // Si el último pago automático (Flow/MP) es más reciente que el último manual, priorizar auto-detección
+    const autoIsNewer = lastPayAt && manualEntry && lastPayAt > manualEntry.createdAt;
+
+    if (manualEntry && !autoIsNewer) {
+      method = manualEntry.method;
     } else if (r.flowPlanId || r.flowSubscriptionId) {
       method = "Flow";
     } else if (r.mpPayerEmail) {
