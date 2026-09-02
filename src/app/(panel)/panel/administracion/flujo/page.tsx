@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
-import { ChevronLeft, ChevronRight, Plus, X, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Download, TrendingUp, Landmark, ChevronDown } from "lucide-react";
 
 const F = "var(--font-display, system-ui)";
 const FB = "var(--font-body, system-ui)";
@@ -382,6 +382,126 @@ function RecentEntries({ entries, restaurantId, onDelete }: { entries: Entry[]; 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Explainer Card
+// ─────────────────────────────────────────────────────────────────────────────
+function ExplainerCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{
+      borderRadius: 14,
+      border: "1px solid var(--adm-card-border, #e8e8e8)",
+      background: "var(--adm-card, #fff)",
+      marginBottom: 20,
+      overflow: "hidden",
+    }}>
+      {/* Cabecera siempre visible */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 14,
+          padding: "14px 18px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
+        }}
+      >
+        <div style={{
+          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+          background: "linear-gradient(135deg,#F4A623,#e8941a)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <TrendingUp size={18} color="#fff" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text,#111)", margin: 0 }}>
+            ¿Cómo funciona el Flujo de Caja?
+          </p>
+          <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3,#999)", margin: "2px 0 0" }}>
+            Registra ingresos y egresos · Concilia con el banco · Ve tu P&amp;L mensual
+          </p>
+        </div>
+        <ChevronDown
+          size={16}
+          color="var(--adm-text3,#999)"
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
+        />
+      </button>
+
+      {/* Contenido expandible */}
+      {open && (
+        <div style={{ borderTop: "1px solid var(--adm-card-border,#f0f0f0)", padding: "18px 18px 20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
+            {[
+              {
+                icon: "➕",
+                title: "Registra movimientos",
+                desc: 'Haz click en "Nuevo movimiento" para registrar cualquier ingreso (venta, transferencia, otro) o egreso (gasto, compra, sueldo). Cada movimiento tiene categoría, fecha y monto.',
+              },
+              {
+                icon: "📊",
+                title: "Estado de resultados",
+                desc: "Al final de la página verás tu P&L del mes: ingresos vs egresos por categoría, con la utilidad o pérdida resultante. Navega entre meses con las flechas.",
+              },
+              {
+                icon: "🏦",
+                title: "Conciliación bancaria",
+                desc: 'En "Conciliación Bancaria" importas el extracto de tu banco (BCI u otro). El sistema cruza automáticamente los movimientos bancarios con los que ya tienes registrados, marcando cuáles coinciden y cuáles están pendientes.',
+              },
+              {
+                icon: "✅",
+                title: "¿Qué queda conciliado?",
+                desc: "Un movimiento queda conciliado cuando el monto y fecha del registro manual coinciden con el extracto del banco. Así puedes detectar diferencias, depósitos no registrados o gastos olvidados.",
+              },
+            ].map(item => (
+              <div key={item.title} style={{
+                padding: "14px 16px", borderRadius: 10,
+                background: "var(--adm-hover, #f9f9f9)",
+                border: "1px solid var(--adm-card-border, #f0f0f0)",
+              }}>
+                <p style={{ fontSize: "1.3rem", margin: "0 0 6px" }}>{item.icon}</p>
+                <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: "0 0 4px" }}>{item.title}</p>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2,#555)", margin: 0, lineHeight: 1.45 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Flujo de conciliación visual */}
+          <div style={{
+            padding: "14px 16px", borderRadius: 10,
+            background: "linear-gradient(135deg, rgba(244,166,35,0.06), rgba(244,166,35,0.02))",
+            border: "1px solid rgba(244,166,35,0.2)",
+          }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#b8810a", margin: "0 0 10px" }}>
+              <Landmark size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />
+              Flujo de trabajo recomendado
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              {[
+                "Registra tus ventas e ingresos del día",
+                "Registra tus gastos y compras",
+                "Cada semana/mes: importa el extracto bancario",
+                "Concilia y revisa diferencias",
+                "Exporta tu P&L para contabilidad",
+              ].map((step, i, arr) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: "#F4A623", color: "#fff",
+                      fontSize: "0.65rem", fontWeight: 800,
+                      display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>{i + 1}</span>
+                    <span style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text2,#555)" }}>{step}</span>
+                  </div>
+                  {i < arr.length - 1 && <span style={{ color: "var(--adm-text3,#ccc)", fontSize: "0.7rem" }}>→</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function FlujoFinancieroPage() {
@@ -424,7 +544,7 @@ export default function FlujoFinancieroPage() {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--adm-text3,#999)", margin: "0 0 2px" }}>Administración</p>
           <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "var(--adm-text,#111)", margin: 0 }}>Flujo de Caja</h1>
@@ -434,6 +554,9 @@ export default function FlujoFinancieroPage() {
           <Plus size={15} /> Nuevo movimiento
         </button>
       </div>
+
+      {/* Card explicativa colapsable */}
+      <ExplainerCard />
 
       {/* Month navigation */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
