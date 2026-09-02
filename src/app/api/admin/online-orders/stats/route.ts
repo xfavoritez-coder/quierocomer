@@ -30,9 +30,10 @@ export async function GET(req: NextRequest) {
 
   // Totales
   const totalOrders = allOrders.length;
-  const totalRevenue = allOrders.filter(o => o.status === "DONE").reduce((s, o) => s + o.total, 0);
-  const totalRevenueAll = allOrders.reduce((s, o) => s + o.total, 0);
-  const deliveryRevenue = allOrders.filter(o => o.status === "DONE" && o.orderType === "DELIVERY").reduce((s, o) => s + o.total, 0);
+  const totalRevenue = allOrders.reduce((s, o) => s + o.total, 0); // todos no-cancelados
+  const totalRevenueAll = totalRevenue;
+  const totalRevenueDone = allOrders.filter(o => o.status === "DONE").reduce((s, o) => s + o.total, 0);
+  const deliveryRevenue = allOrders.filter(o => o.orderType === "DELIVERY").reduce((s, o) => s + o.total, 0);
 
   // Por estado
   const byStatus: Record<string, number> = {};
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
           const id = o.restaurantId;
           if (!acc[id]) acc[id] = { name: o.restaurant.name, count: 0, revenue: 0 };
           acc[id].count += 1;
-          if (o.status === "DONE") acc[id].revenue += o.total;
+          acc[id].revenue += o.total; // todos los no-cancelados
           return acc;
         }, {})
       )
@@ -93,6 +94,7 @@ export async function GET(req: NextRequest) {
     totalOrders,
     totalRevenue,
     totalRevenueAll,
+    totalRevenueDone,
     deliveryRevenue,
     byStatus,
     repeatCustomers,

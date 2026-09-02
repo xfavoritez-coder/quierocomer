@@ -26,6 +26,7 @@ interface Stats {
   totalOrders: number;
   totalRevenue: number;
   totalRevenueAll: number;
+  totalRevenueDone: number;
   deliveryRevenue: number;
   byStatus: Record<string, number>;
   repeatCustomers: number;
@@ -146,7 +147,7 @@ export default function PedidosOnlinePage() {
       {/* Header */}
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 800, margin: "0 0 6px", color: "#fff" }}>Pedidos Online</h1>
-        <p style={{ color: "#777", fontSize: 14, margin: 0 }}>{total} pedidos · {statsLoading ? "..." : fmtCLP(stats?.totalRevenue || 0)} entregados</p>
+        <p style={{ color: "#777", fontSize: 14, margin: 0 }}>{total} pedidos · {statsLoading ? "..." : fmtCLP(stats?.totalRevenue || 0)} en pedidos</p>
       </div>
 
       {/* Filtro por local + acciones */}
@@ -180,8 +181,8 @@ export default function PedidosOnlinePage() {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 16 }}>
             <StatCard label="Total pedidos" value={String(stats.totalOrders)} color={ACCENT} />
-            <StatCard label="Revenue entregado" value={fmtCLP(stats.totalRevenue)} color="#22c55e" />
-            <StatCard label="Revenue delivery" value={fmtCLP(stats.deliveryRevenue)} sub={`${stats.deliveryCount} pedidos delivery`} color="#60a5fa" />
+            <StatCard label="Total en pedidos" value={fmtCLP(stats.totalRevenue)} sub={`${fmtCLP(stats.totalRevenueDone)} entregados`} color="#22c55e" />
+            <StatCard label="Total delivery" value={fmtCLP(stats.deliveryRevenue)} sub={`${stats.deliveryCount} pedidos delivery`} color="#60a5fa" />
             <StatCard label="Clientes únicos" value={String(stats.uniqueCustomers)} sub={`${stats.repeatCustomers} repiten (${stats.uniqueCustomers > 0 ? Math.round(stats.repeatCustomers / stats.uniqueCustomers * 100) : 0}%)`} color="#f472b6" />
             <StatCard label="Retiros" value={String(stats.pickupCount)} sub={`${stats.deliveryCount} delivery`} color="#a78bfa" />
             <StatCard label="Pendientes" value={String(stats.byStatus["PENDING"] || 0)} color="#f59e0b" />
