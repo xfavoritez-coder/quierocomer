@@ -32,6 +32,9 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
     return () => obs.disconnect();
   }, []);
 
+  // Featured dishes: isHero with at least one photo
+  const featuredDishes = dishes.filter(d => d.isHero === true && d.photos?.length > 0);
+
   // Only show active categories with active dishes
   const visibleCategories = categories
     .filter(c => c.isActive)
@@ -102,6 +105,99 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
           </div>
         );
       })()}
+
+      {/* Featured dishes strip */}
+      {featuredDishes.length > 0 && (
+        <div style={{ padding: "0 0 20px" }}>
+          {/* Section label */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "0 16px 12px",
+          }}>
+            <span style={{ fontSize: 14, color: accent, lineHeight: 1 }}>★</span>
+            <span style={{
+              fontFamily: "var(--font-dm)",
+              fontSize: "12px", fontWeight: 800, letterSpacing: "0.9px",
+              textTransform: "uppercase",
+              color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)",
+            }}>
+              Destacados
+            </span>
+          </div>
+
+          {/* Horizontal scroll */}
+          <div style={{
+            display: "flex", gap: 10,
+            overflowX: "auto", overflowY: "hidden",
+            padding: "0 16px 4px",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}>
+            {featuredDishes.map(dish => (
+              <button
+                key={dish.id}
+                onClick={() => onSelectCategory(dish.categoryId)}
+                style={{
+                  flexShrink: 0,
+                  width: 140,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  border: "none",
+                  cursor: "pointer",
+                  background: isDark ? "#1a1a1a" : "#f0ede6",
+                  textAlign: "left",
+                  padding: 0,
+                  boxShadow: isDark ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
+                }}
+              >
+                {/* Photo */}
+                <div style={{ position: "relative", width: 140, height: 110 }}>
+                  <img
+                    src={dish.photos[0]}
+                    alt={dish.name}
+                    loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                  {/* Badge */}
+                  <div style={{
+                    position: "absolute", top: 8, left: 8,
+                    background: accent,
+                    color: "#fff",
+                    fontSize: "10px", fontWeight: 800,
+                    padding: "3px 7px", borderRadius: 6,
+                    letterSpacing: "0.3px",
+                    fontFamily: "var(--font-dm)",
+                  }}>
+                    ★
+                  </div>
+                </div>
+                {/* Info */}
+                <div style={{ padding: "10px 10px 12px" }}>
+                  <p style={{
+                    margin: "0 0 4px",
+                    fontFamily: "var(--font-dm)",
+                    fontSize: "13px", fontWeight: 700, lineHeight: 1.2,
+                    color: isDark ? "#fff" : "var(--carta-text, #0e0e0e)",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  } as React.CSSProperties}>
+                    {dish.name}
+                  </p>
+                  <span style={{
+                    fontFamily: "var(--font-dm)",
+                    fontSize: "13px", fontWeight: 800,
+                    color: accent,
+                  }}>
+                    ${Math.round(dish.discountPrice ?? dish.price).toLocaleString("es-CL")}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grid */}
       <div style={{
