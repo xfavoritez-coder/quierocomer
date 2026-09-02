@@ -226,6 +226,7 @@ export async function GET(req: NextRequest) {
         leadCreatedAt: lead.createdAt.toISOString(),
         billingExempt: false, subscriptionStatus: "NONE",
         mpPayerEmail: null, currentPeriodEnd: null, lastPaymentAt: null,
+        customPlanPriceNet: null,
         ownerId: null,
         leadTimeline: { deliveredAt: null, emailOpenedAt: null, emailClickedAt: null, activatedAt: null },
       });
