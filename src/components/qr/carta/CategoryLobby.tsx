@@ -11,6 +11,7 @@ interface Props {
   restaurantName: string;
   logoUrl?: string | null;
   accentColor?: string;
+  featuredPromoDishIds?: string[];
   onSelectCategory: (categoryId: string) => void;
   onSkip: () => void;
 }
@@ -155,7 +156,7 @@ function FeaturedHero({ dishes, accent, onSelect }: { dishes: Dish[]; accent: st
   );
 }
 
-export default function CategoryLobby({ categories, dishes, restaurantName, logoUrl, accentColor, onSelectCategory, onSkip }: Props) {
+export default function CategoryLobby({ categories, dishes, restaurantName, logoUrl, accentColor, featuredPromoDishIds, onSelectCategory, onSkip }: Props) {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const accent = accentColor || "#F4A623";
   const lang = useLang();
@@ -172,8 +173,17 @@ export default function CategoryLobby({ categories, dishes, restaurantName, logo
     return () => obs.disconnect();
   }, []);
 
-  // Featured dishes: isHero with at least one photo
-  const featuredDishes = dishes.filter(d => d.isHero === true && d.photos?.length > 0);
+  // Featured dishes: isHero (★ Recomendado) OR in a "featured" promotion — must have photo, no duplicates
+  const promoFeaturedSet = new Set(featuredPromoDishIds || []);
+  const seenIds = new Set<string>();
+  const featuredDishes = dishes.filter(d => {
+    if (!d.photos?.length || seenIds.has(d.id)) return false;
+    if (d.isHero === true || promoFeaturedSet.has(d.id)) {
+      seenIds.add(d.id);
+      return true;
+    }
+    return false;
+  });
 
   // Only show active categories with active dishes
   const visibleCategories = categories

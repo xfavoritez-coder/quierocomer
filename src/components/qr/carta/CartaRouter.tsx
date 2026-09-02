@@ -290,6 +290,7 @@ export default function CartaRouter(props: Props) {
             restaurantName={props.restaurant.name}
             logoUrl={props.restaurant.logoUrl}
             accentColor={(props.restaurant as any).cartaAccentColor}
+            featuredPromoDishIds={(props.marketingPromos || []).filter((p: any) => p.featured).flatMap((p: any) => p.dishIds || [])}
             onSelectCategory={(catId) => {
               history.pushState({ lobby: true }, "");
               setLobbyDismissed(true);

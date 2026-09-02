@@ -234,6 +234,8 @@ export default async function CartaPage({
     validUntil: p.validUntil ? new Date(p.validUntil).toISOString() : null,
     daysOfWeek: p.daysOfWeek || [],
     dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),
+    featured: !!(p as any).featured,
+    dishIds: p.dishIds,
   }));
 
   // Filter announcements by day of week and date range
