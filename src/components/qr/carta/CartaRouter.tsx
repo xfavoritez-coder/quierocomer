@@ -297,7 +297,17 @@ export default function CartaRouter(props: Props) {
               const scrollToCategory = () => {
                 const el = document.querySelector(`[id$="-cat-${catId}"]`);
                 if (el) {
-                  const y = el.getBoundingClientRect().top + window.scrollY - 70;
+                  // Measure actual fixed headers at top of viewport (accounts for announcement banners)
+                  let topOffset = 70;
+                  const fixedEls = document.querySelectorAll('[style*="position: fixed"]');
+                  for (const fixed of Array.from(fixedEls)) {
+                    const r = (fixed as HTMLElement).getBoundingClientRect();
+                    // Only count wide top-anchored elements (the main header bar, not floating buttons)
+                    if (r.top <= 4 && r.width > window.innerWidth * 0.5) {
+                      topOffset = Math.max(topOffset, r.bottom + 16);
+                    }
+                  }
+                  const y = el.getBoundingClientRect().top + window.scrollY - topOffset;
                   window.scrollTo({ top: y, behavior: "smooth" });
                   return true;
                 }
