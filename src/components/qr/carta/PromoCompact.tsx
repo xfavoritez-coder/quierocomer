@@ -1,5 +1,13 @@
 "use client";
 
+function isLightColor(hex: string): boolean {
+  const h = hex.replace("#", "");
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.55;
+}
 
 interface Promo {
   id: string;
@@ -15,16 +23,24 @@ interface Promo {
 
 interface Props {
   promos: Promo[];
+  accentColor?: string | null;
   onViewDish?: (dishId: string) => void;
   onViewPromo?: (promo: Promo) => void;
 }
 
 const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
 
-export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props) {
+export default function PromoCompact({ promos, accentColor, onViewDish, onViewPromo }: Props) {
   if (!promos || promos.length === 0) return null;
 
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+  const accent = accentColor || "#F4A623";
+  const accentLight = isLightColor(accent);
+  // Badge: light accent → dark glass pill; dark accent → accent bg with white text
+  const badgeBg = accentLight ? "rgba(0,0,0,0.6)" : accent;
+  const badgeColor = "#fff";
+  // Price: light accent on dark card → white; dark accent → accent
+  const priceColor = accentLight ? "#fff" : accent;
 
   return (
     <div className="promo-compact-scroll" style={{
@@ -66,7 +82,9 @@ export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props)
             {/* Day badge */}
             <span style={{
               position: "absolute", top: 8, right: 8, fontSize: 10, fontWeight: 900,
-              color: "white", background: "var(--carta-accent, #F4A623)",
+              color: badgeColor, background: badgeBg,
+              backdropFilter: accentLight ? "blur(6px)" : undefined,
+              WebkitBackdropFilter: accentLight ? "blur(6px)" : undefined,
               padding: "4px 10px", borderRadius: 50, letterSpacing: "0.1em", zIndex: 2,
             }}>{label}</span>
 
@@ -89,7 +107,7 @@ export default function PromoCompact({ promos, onViewDish, onViewPromo }: Props)
               )}
               <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                 {p.promoPrice && (
-                  <span style={{ fontSize: 16, fontWeight: 900, color: "var(--carta-accent, #F4A623)" }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: priceColor }}>
                     ${p.promoPrice.toLocaleString("es-CL")}
                   </span>
                 )}

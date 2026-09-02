@@ -577,7 +577,7 @@ export default function CartaPremium({
         {/* Ofertas section */}
         {hasPromos && (
           <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCompact promos={marketingPromos || []} onViewPromo={(promo) => setOpenPromo(promo)} />
+            <PromoCompact promos={marketingPromos || []} accentColor={(restaurant as any).cartaAccentColor} onViewPromo={(promo) => setOpenPromo(promo)} />
           </div>
         )}
 

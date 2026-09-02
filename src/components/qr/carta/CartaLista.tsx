@@ -511,7 +511,7 @@ export default function CartaLista({
       {/* OFERTAS section */}
       {hasPromos && (
         <section id="lista-cat-promos" style={{ padding: "18px 0 0" }}>
-          <PromoCompact promos={marketingPromos || []} onViewPromo={(promo) => setOpenPromo(promo)} />
+          <PromoCompact promos={marketingPromos || []} accentColor={(restaurant as any).cartaAccentColor} onViewPromo={(promo) => setOpenPromo(promo)} />
         </section>
       )}
 
