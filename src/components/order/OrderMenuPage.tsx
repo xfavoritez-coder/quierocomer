@@ -773,8 +773,11 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   const activeCatIds = new Set(activeDishes.map(d => d.categoryId));
   const categories = restaurant.categories.filter(c => activeCatIds.has(c.id));
 
-  // Hero dishes: primeros 3 platos con foto
-  const heroDishes = useMemo(() => activeDishes.filter(d => d.photos?.[0]).slice(0, 3), [activeDishes]);
+  // Hero dishes: isHero (incl. promos destacadas) con foto; si no hay, nada
+  const heroDishes = useMemo(() => {
+    const hero = activeDishes.filter(d => (d as any).isHero && d.photos?.[0]);
+    return hero.length > 0 ? hero.slice(0, 5) : [];
+  }, [activeDishes]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

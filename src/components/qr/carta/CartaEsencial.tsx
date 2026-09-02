@@ -332,10 +332,10 @@ export default function CartaEsencial({
       if (pool.length === 0) return dishes.slice(0, 1)
       return [pool[Math.floor(Date.now() / 86400000) % pool.length]]
     }
-    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
+    const rec = dishes.filter(d => (d as any).isHero || d.tags?.includes("RECOMMENDED"));
     const pop = dishes.filter(d => popularDishIds.has(d.id) && !rec.some(r => r.id === d.id));
     const pool = [...rec, ...pop];
-    return pool.length > 0 ? pool.slice(0, 5) : dishes.slice(0, 3);
+    return pool.slice(0, 5);
   }, [dishes, popularDishIds, restaurant]);
   const [heroIdx, setHeroIdx] = useState(0);
   useEffect(() => {

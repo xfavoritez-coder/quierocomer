@@ -464,7 +464,7 @@ function FeaturedSection({
   title?: string;
 }) {
   const featured = useMemo(() => {
-    return dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+    return dishes.filter((d) => (d as any).isHero || d.tags?.includes("RECOMMENDED"));
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
