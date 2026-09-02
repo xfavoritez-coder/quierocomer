@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
           plan: true, subscriptionStatus: true, trialEndsAt: true,
           billingExempt: true, isDemo: true, createdAt: true, ownerId: true,
           mpPayerEmail: true, currentPeriodEnd: true, lastPaymentAt: true,
+          customPlanPriceNet: true,
           owner: { select: { id: true, name: true, email: true, whatsapp: true, lastLoginAt: true } },
           _count: { select: { dishes: true, sessions: true, categories: true } },
         },
@@ -173,6 +174,7 @@ export async function GET(req: NextRequest) {
         mpPayerEmail: r.mpPayerEmail || null,
         currentPeriodEnd: r.currentPeriodEnd?.toISOString() || null,
         lastPaymentAt: r.lastPaymentAt?.toISOString() || null,
+        customPlanPriceNet: r.customPlanPriceNet ?? null,
         ownerId: r.ownerId,
         leadTimeline: lead ? {
           deliveredAt: lead.deliveredAt?.toISOString() || null,

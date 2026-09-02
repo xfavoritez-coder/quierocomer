@@ -34,6 +34,7 @@ interface Entry {
   mpPayerEmail: string | null;
   currentPeriodEnd: string | null;
   lastPaymentAt: string | null;
+  customPlanPriceNet: number | null;
   sessions7d: number;
   totalSessions: number;
   dishes: number;
@@ -739,6 +740,7 @@ function ActivityBtn({ restaurantId, name }: { restaurantId: string; name: strin
 
 const PLAN_OPTIONS = ["FREE", "SILVER", "GOLD", "PREMIUM"] as const;
 const PLAN_COLORS: Record<string, string> = { FREE: "#22c55e", SILVER: "#94a3b8", GOLD: "#F4A623", PREMIUM: "#7c3aed" };
+const PLAN_NET: Record<string, number> = { SILVER: 14900, GOLD: 29900, PREMIUM: 44900 };
 
 function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<Entry>) => void }) {
   const [saving, setSaving] = useState(false);
@@ -904,64 +906,87 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
       </div>
 
       {/* Manual payment form */}
-      {showManualPayment && (
-        <div onClick={e => e.stopPropagation()} style={{
-          marginTop: 10, padding: 14, background: "#141414", border: "1px solid rgba(96,165,250,.2)",
-          borderRadius: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
-        }}>
-          <select value={mpPlan} onChange={e => setMpPlan(e.target.value)} style={{
-            height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
-            color: "#fff", padding: "0 8px", fontSize: 12,
+      {showManualPayment && (() => {
+        // Monto efectivo: override manual > precio especial del local > precio estándar del plan seleccionado
+        const defaultNet = entry.customPlanPriceNet ?? PLAN_NET[mpPlan] ?? 0;
+        const effectiveNet = mpAmount ? Number(mpAmount) : defaultNet;
+        const effectiveGross = Math.round(effectiveNet * 1.19);
+        const isOverride = !!mpAmount;
+        return (
+          <div onClick={e => e.stopPropagation()} style={{
+            marginTop: 10, padding: 14, background: "#141414", border: "1px solid rgba(96,165,250,.2)",
+            borderRadius: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start",
           }}>
-            <option value="SILVER">Silver</option>
-            <option value="GOLD">Gold</option>
-            <option value="PREMIUM">Premium</option>
-          </select>
-          <select value={mpMethod} onChange={e => setMpMethod(e.target.value)} style={{
-            height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
-            color: "#fff", padding: "0 8px", fontSize: 12,
-          }}>
-            <option value="transfer">Transferencia</option>
-            <option value="cash">Efectivo</option>
-            <option value="other">Otro</option>
-          </select>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <select value={mpPlan} onChange={e => setMpPlan(e.target.value)} style={{
+              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+              color: "#fff", padding: "0 8px", fontSize: 12, alignSelf: "flex-start",
+            }}>
+              <option value="SILVER">Silver</option>
+              <option value="GOLD">Gold</option>
+              <option value="PREMIUM">Premium</option>
+            </select>
+            <select value={mpMethod} onChange={e => setMpMethod(e.target.value)} style={{
+              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
+              color: "#fff", padding: "0 8px", fontSize: 12, alignSelf: "flex-start",
+            }}>
+              <option value="transfer">Transferencia</option>
+              <option value="cash">Efectivo</option>
+              <option value="other">Otro</option>
+            </select>
+
+            {/* Resumen de monto con IVA */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ background: "#1e1e1e", border: "1px solid #333", borderRadius: 8, padding: "6px 12px" }}>
+                  <span style={{ fontSize: 11, color: "#888" }}>Neto: </span>
+                  <span style={{ fontSize: 13, color: "#ddd", fontWeight: 600 }}>${effectiveNet.toLocaleString("es-CL")}</span>
+                  <span style={{ fontSize: 11, color: "#888" }}> + IVA = </span>
+                  <span style={{ fontSize: 14, color: "#60a5fa", fontWeight: 800 }}>${effectiveGross.toLocaleString("es-CL")}</span>
+                </div>
+                {entry.customPlanPriceNet && !isOverride && (
+                  <span style={{ fontSize: 10, color: "#a78bfa" }}>precio especial</span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  placeholder="Override neto (opcional)"
+                  value={mpAmount}
+                  onChange={e => setMpAmount(e.target.value.replace(/\D/g, ""))}
+                  style={{
+                    height: 28, borderRadius: 6, border: "1px solid #2a2a2a", background: "#111",
+                    color: "#bbb", padding: "0 8px", fontSize: 11, width: 140,
+                  }}
+                />
+                {isOverride && (
+                  <button onClick={() => setMpAmount("")} style={{ fontSize: 10, color: "#555", background: "none", border: "none", cursor: "pointer" }}>
+                    reset
+                  </button>
+                )}
+              </div>
+            </div>
+
             <input
-              placeholder="Monto neto CLP"
-              value={mpAmount}
-              onChange={e => setMpAmount(e.target.value.replace(/\D/g, ""))}
+              placeholder="Nota (opcional)"
+              value={mpNote}
+              onChange={e => setMpNote(e.target.value)}
               style={{
                 height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
-                color: "#fff", padding: "0 8px", fontSize: 12, width: 110,
+                color: "#fff", padding: "0 8px", fontSize: 12, width: 150, alignSelf: "flex-start",
               }}
             />
-            {mpAmount && (
-              <span style={{ fontSize: 10, color: "#888" }}>
-                + IVA = ${Math.round(Number(mpAmount) * 1.19).toLocaleString("es-CL")}
-              </span>
-            )}
+            <button onClick={registerManualPayment} disabled={saving} style={{
+              height: 30, padding: "0 14px", borderRadius: 6, border: "none",
+              background: "#60a5fa", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", alignSelf: "flex-start",
+            }}>
+              {saving ? "..." : `Confirmar $${effectiveGross.toLocaleString("es-CL")}`}
+            </button>
+            <button onClick={() => setShowManualPayment(false)} style={{
+              height: 30, padding: "0 8px", borderRadius: 6, border: "none",
+              background: "transparent", color: "#555", fontSize: 11, cursor: "pointer", alignSelf: "flex-start",
+            }}>✕</button>
           </div>
-          <input
-            placeholder="Nota (opcional)"
-            value={mpNote}
-            onChange={e => setMpNote(e.target.value)}
-            style={{
-              height: 30, borderRadius: 6, border: "1px solid #2a2a2a", background: "#1a1a1a",
-              color: "#fff", padding: "0 8px", fontSize: 12, width: 150,
-            }}
-          />
-          <button onClick={registerManualPayment} disabled={saving} style={{
-            height: 30, padding: "0 14px", borderRadius: 6, border: "none",
-            background: "#60a5fa", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer",
-          }}>
-            {saving ? "..." : "Confirmar pago"}
-          </button>
-          <button onClick={() => setShowManualPayment(false)} style={{
-            height: 30, padding: "0 8px", borderRadius: 6, border: "none",
-            background: "transparent", color: "#555", fontSize: 11, cursor: "pointer",
-          }}>✕</button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Precio especial form */}
       {showCustomPrice && (
