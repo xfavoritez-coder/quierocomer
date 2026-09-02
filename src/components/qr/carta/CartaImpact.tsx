@@ -2,6 +2,16 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
+function isLightColor(hex: string | null | undefined): boolean {
+  if (!hex) return false;
+  const h = hex.replace("#", "");
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.55;
+}
+
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
@@ -1403,11 +1413,16 @@ export default function CartaImpact({
                     const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
                     const label = p.daysOfWeek?.length ? `Hoy ${DAY_NAMES[todayDow].charAt(0) + DAY_NAMES[todayDow].slice(1).toLowerCase()}` : "Oferta";
+                    const accentHex = (restaurant as any).cartaAccentColor;
+                    const lightAccent = isLightColor(accentHex);
                     return (
                       <span style={{
                         position: "absolute", top: 15, right: 15, zIndex: 2,
                         fontSize: 11, fontWeight: 900, color: "white",
-                        background: "var(--carta-accent)", padding: "9px 13px",
+                        background: lightAccent ? "rgba(0,0,0,0.6)" : "var(--carta-accent)",
+                        backdropFilter: lightAccent ? "blur(6px)" : undefined,
+                        WebkitBackdropFilter: lightAccent ? "blur(6px)" : undefined,
+                        padding: "9px 13px",
                         borderRadius: 999, letterSpacing: "0.6px", textTransform: "uppercase",
                       }}>{label}</span>
                     );
