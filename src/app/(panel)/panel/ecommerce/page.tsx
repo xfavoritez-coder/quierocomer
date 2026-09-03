@@ -25,6 +25,12 @@ const CARD: React.CSSProperties = {
   padding: 18,
 };
 
+const GRID: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 };
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text2)", margin: "16px 2px 8px" }}>{children}</p>;
+}
+
 function IntegrationCard({ icon: Icon, name, kind, ok, note }: { icon: any; name: string; kind: string; ok: boolean; note?: string }) {
   return (
     <div style={{ ...CARD, display: "flex", alignItems: "center", gap: 14 }}>
@@ -177,16 +183,26 @@ export default function EcommerceHomePage() {
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "26px 0 12px" }}>
         Integraciones
       </h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+
+      <GroupLabel>Medios de pago</GroupLabel>
+      <div style={GRID}>
         <IntegrationCard icon={CreditCard} name="Webpay" kind="Pago online (Transbank)" ok={!!ints?.webpay} note={status ? (status.webpayEnv === "production" ? "producción" : "modo prueba") : undefined} />
         <IntegrationCard icon={Wallet} name="Flow" kind="Pago online (flow.cl)" ok={!!ints?.flow} />
         <IntegrationCard icon={Wallet} name="MercadoPago" kind="Pago online (Checkout Pro)" ok={!!ints?.mercadopago} />
-        <IntegrationCard icon={Truck} name="Uber Direct" kind="Delivery con courier" ok={!!ints?.uberDirect} />
+      </div>
+
+      <GroupLabel>Delivery</GroupLabel>
+      <div style={GRID}>
         <IntegrationCard icon={Bike} name="PedidosYa" kind="Delivery con courier" ok={!!ints?.pedidosya} />
+        <IntegrationCard icon={Truck} name="Uber Direct" kind="Delivery con courier" ok={!!ints?.uberDirect} />
+      </div>
+
+      <GroupLabel>Configuración base</GroupLabel>
+      <div style={GRID}>
         <IntegrationCard icon={MapIcon} name="Google Maps" kind="Direcciones y geocoding" ok={!!ints?.googleMaps} />
         <IntegrationCard icon={Store} name="POS" kind="Envío de pedidos al punto de venta" ok={!!ints?.pos} note={status ? POS_LABELS[status.posProvider] || status.posProvider : undefined} />
       </div>
-      <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "10px 2px 0", lineHeight: 1.5 }}>
+      <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "12px 2px 0", lineHeight: 1.5 }}>
         Las credenciales las configura el equipo de QuieroComer. Escríbenos para activar una pasarela o courier en tu local.
       </p>
 
