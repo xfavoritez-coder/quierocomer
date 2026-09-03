@@ -34,6 +34,11 @@ function genSpacingCss(): string {
     css += `.qc-storefront .mr-${c}{margin-right:${v}}`;
   }
   css += `.qc-storefront .mx-auto{margin-left:auto;margin-right:auto}`;
+  // Evitar el "mini zoom" de iOS al enfocar un campo: iOS hace zoom si el
+  // font-size del control es < 16px. En dispositivos táctiles forzamos 16px
+  // en TODOS los inputs/textarea/select del storefront (dirección, notas,
+  // búsqueda, código, etc.), sin tocar el layout de escritorio.
+  css += `@media (pointer: coarse){.qc-storefront input:not([type=checkbox]):not([type=radio]):not([type=range]),.qc-storefront textarea,.qc-storefront select{font-size:16px !important}}`;
   // Ocultar scrollbar de la barra de categorías (webkit)
   css += `.qc-storefront .no-scrollbar::-webkit-scrollbar{display:none}`;
   // Animación del carrito (bump) al agregar
