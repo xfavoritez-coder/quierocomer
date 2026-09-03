@@ -130,6 +130,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "administracion",
       label: "Administración",
       icon: TrendingUp,
+      badge: "Nuevo",
       items: [
         { icon: TrendingUp, labelKey: "nav_flujo_financiero", href: `${base}/administracion/flujo` },
         { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
@@ -233,6 +234,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     }
     if (pathname.includes("/valoraciones") && !seenFeatures.includes("valoraciones")) {
       markFeatureSeen?.("valoraciones");
+    }
+    if (pathname.includes("/administracion") && !seenFeatures.includes("administracion")) {
+      markFeatureSeen?.("administracion");
     }
   }, [pathname, seenFeatures, markFeatureSeen]);
 
