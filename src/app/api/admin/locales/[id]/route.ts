@@ -124,6 +124,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         // Pilar Ecommerce (super-admin only): flag maestro + credenciales de pasarelas/couriers
         ...(body.ecommerceEnabled !== undefined && { ecommerceEnabled: body.ecommerceEnabled }),
         ...(body.ecommerceConfig !== undefined && { ecommerceConfig: body.ecommerceConfig }),
+        ...(body.ecommerceDeliveryZones !== undefined && { ecommerceDeliveryZones: body.ecommerceDeliveryZones }),
+        ...(body.ecommerceDeliveryConfig !== undefined && { ecommerceDeliveryConfig: body.ecommerceDeliveryConfig }),
         ...(body.filterBarEnabled !== undefined && { filterBarEnabled: body.filterBarEnabled }),
         ...(body.weeklyEmailEnabled !== undefined && { weeklyEmailEnabled: body.weeklyEmailEnabled }),
         // Google Places fields (super-admin only)

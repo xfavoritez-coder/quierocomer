@@ -44,6 +44,8 @@ interface Restaurant {
   isDemo: boolean;
   ecommerceEnabled?: boolean;
   ecommerceConfig?: EcommerceConfig | null;
+  ecommerceDeliveryZones?: unknown;
+  ecommerceDeliveryConfig?: unknown;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
 }
 
@@ -1185,6 +1187,9 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [pySecret, setPySecret] = useState("");
   // Google Maps
   const [gmapsKey, setGmapsKey] = useState("");
+  // Zonas de reparto (exportar/importar entre locales)
+  const [zonesText, setZonesText] = useState("");
+  const [zonesCopied, setZonesCopied] = useState(false);
   // POS destino (a qué POS se envían los pedidos)
   const [posProvider, setPosProvider] = useState("none");
   const [posApiUrl, setPosApiUrl] = useState("");
@@ -1203,6 +1208,8 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setGmapsKey(c.googleMaps?.apiKey || "");
     setPosProvider(c.pos?.provider || "none");
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
+    setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
+    setZonesCopied(false);
     setMsg(null);
   }, [restaurant.id]);
 
@@ -1223,12 +1230,28 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
         : { provider: "none" },
     };
+    // Zonas de reparto: si el textarea trae JSON válido, se guardan junto con las credenciales.
+    const bodyOut: Record<string, unknown> = { ecommerceConfig: next };
+    let zonesPatch: { ecommerceDeliveryZones?: unknown; ecommerceDeliveryConfig?: unknown } | null = null;
+    if (zonesText.trim()) {
+      try {
+        const parsed = JSON.parse(zonesText);
+        if (parsed && typeof parsed === "object" && ("deliveryZones" in parsed || "deliveryConfig" in parsed)) {
+          zonesPatch = { ecommerceDeliveryZones: parsed.deliveryZones ?? [], ecommerceDeliveryConfig: parsed.deliveryConfig ?? null };
+          Object.assign(bodyOut, zonesPatch);
+        } else {
+          setMsg({ type: "err", text: "El JSON de zonas no tiene el formato esperado (deliveryZones / deliveryConfig)." }); setBusy(false); return;
+        }
+      } catch {
+        setMsg({ type: "err", text: "El JSON de zonas de reparto no es válido." }); setBusy(false); return;
+      }
+    }
     try {
-      const res = await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ecommerceConfig: next }) });
+      const res = await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bodyOut) });
       const data = await res.json();
       if (!res.ok) { setMsg({ type: "err", text: data.error || "Error al guardar" }); setBusy(false); return; }
-      onUpdate({ ecommerceConfig: next });
-      setMsg({ type: "ok", text: "Credenciales guardadas" });
+      onUpdate({ ecommerceConfig: next, ...(zonesPatch || {}) });
+      setMsg({ type: "ok", text: "Credenciales y zonas guardadas" });
     } catch { setMsg({ type: "err", text: "Error de conexión" }); }
     setBusy(false);
   };
@@ -1287,6 +1310,24 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <Input label="API Key" value={gmapsKey} onChange={setGmapsKey} placeholder="AIzaSy..." type="password" />
           </IntegrationGroup>
 
+          {/* Zonas de reparto — exportar/importar entre locales */}
+          <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "#fff", margin: 0 }}>Zonas de reparto</p>
+                <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#888", margin: "2px 0 0" }}>Incluye zonas por comuna + polígono de reparto y zonas excluidas. Copia y pega entre locales.</p>
+              </div>
+              <button type="button" onClick={() => { navigator.clipboard?.writeText(zonesText).then(() => { setZonesCopied(true); setTimeout(() => setZonesCopied(false), 1500); }).catch(() => {}); }}
+                style={{ flexShrink: 0, padding: "7px 12px", borderRadius: 8, border: "1px solid #3A3A3A", background: zonesCopied ? "rgba(74,222,128,0.12)" : "#242424", color: zonesCopied ? "#4ade80" : "#ddd", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>
+                {zonesCopied ? "✓ Copiado" : "Copiar"}
+              </button>
+            </div>
+            <textarea value={zonesText} onChange={(e) => setZonesText(e.target.value)} spellCheck={false} rows={6}
+              placeholder='{"deliveryZones":[...],"deliveryConfig":{...}}'
+              style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#141414", border: "1px solid #2A2A2A", borderRadius: 8, color: "#ddd", fontFamily: "monospace", fontSize: "0.72rem", lineHeight: 1.4, outline: "none", resize: "vertical" }} />
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#888", margin: "6px 0 0" }}>Para importar en otro local: pega aquí el JSON y presiona “Guardar cambios”.</p>
+          </div>
+
           <IntegrationGroup title="POS destino" sub="A qué punto de venta se envían los pedidos" ok={st.pos}>
             <EnvSelect label="Proveedor POS" value={posProvider} onChange={setPosProvider} options={[{ value: "none", label: "Ninguno (no enviar a POS)" }, { value: "toteat", label: "Toteat" }]} />
             {posProvider === "toteat" && (
@@ -1308,7 +1349,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
 
           <div>
             <button onClick={save} disabled={busy} style={{ padding: "9px 16px", background: "#a78bfa", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
-              {busy ? "Guardando..." : "Guardar credenciales"}
+              {busy ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
         </div>
