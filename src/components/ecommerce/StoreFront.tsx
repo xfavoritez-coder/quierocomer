@@ -487,6 +487,34 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
   );
 }
 
+// ── Mini-mapa con la ubicación del cliente (pin arrastrable) ────
+function AddressMiniMap({ lat, lng, onMove }: { lat: number; lng: number; onMove: (lat: number, lng: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
+
+  useEffect(() => {
+    const g = (window as unknown as { google?: any }).google;
+    if (!g?.maps || !ref.current) return;
+    if (!mapRef.current) {
+      mapRef.current = new g.maps.Map(ref.current, {
+        center: { lat, lng }, zoom: 16, disableDefaultUI: true, clickableIcons: false, gestureHandling: "greedy",
+      });
+      markerRef.current = new g.maps.Marker({ position: { lat, lng }, map: mapRef.current, draggable: true });
+      markerRef.current.addListener("dragend", (e: any) => {
+        const p = e.latLng; if (p) onMoveRef.current(p.lat(), p.lng());
+      });
+    } else {
+      mapRef.current.setCenter({ lat, lng });
+      markerRef.current?.setPosition({ lat, lng });
+    }
+  }, [lat, lng]);
+
+  return <div ref={ref} className="w-full rounded-xl overflow-hidden border border-gray-200" style={{ height: 170 }} />;
+}
+
 // ── Modal selección de entrega (retiro / delivery) ──────────────
 function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
@@ -537,6 +565,12 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
   }, [distanceMode, tab, gmapsReady, tenant.deliveryConfig]);
 
   const deliveryReady = distanceMode ? !!(feeResult?.available && dest) : (!!selectedZone && !!address.trim());
+
+  // Al arrastrar el pin en el mapa: actualiza la ubicación y recalcula el despacho.
+  function onMapMove(lat: number, lng: number) {
+    setDest((d) => (d ? { ...d, lat, lng } : d));
+    setFeeResult(computeDistanceFee(tenant.deliveryConfig, { lat, lng }));
+  }
 
   function confirm() {
     if (tab === "pickup") { confirmPickup(); onClose(); return; }
@@ -593,11 +627,17 @@ function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant;
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>
                 <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Opcional" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </label>
+              {dest && (
+                <>
+                  <AddressMiniMap lat={dest.lat} lng={dest.lng} onMove={onMapMove} />
+                  <p className="text-[11px] text-gray-400 px-1 -mt-1">Arrastra el pin para ajustar tu ubicación exacta.</p>
+                </>
+              )}
               {!tenant.googleMapsKey && <p className="text-xs text-red-500 px-1">El local aún no configuró Google Maps.</p>}
               {feeResult && !feeResult.available && <p className="text-xs text-red-500 px-1">{feeResult.reason}</p>}
               {feeResult?.available && (
                 <div className="flex items-center justify-between text-xs px-1">
-                  <span className="text-gray-500">Despacho · {feeResult.distanceKm.toFixed(1)} km</span>
+                  <span className="text-gray-500">Costo de despacho</span>
                   <span className="font-black" style={{ color: primaryColor }}>{feeResult.fee > 0 ? clp(feeResult.fee) : "Gratis"}</span>
                 </div>
               )}
