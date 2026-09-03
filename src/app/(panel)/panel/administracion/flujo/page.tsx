@@ -394,103 +394,55 @@ function ExplainerCard() {
       marginBottom: 20,
       overflow: "hidden",
     }}>
-      {/* Cabecera siempre visible */}
       <button
         onClick={() => setOpen(o => !o)}
-        style={{
-          width: "100%", display: "flex", alignItems: "center", gap: 14,
-          padding: "14px 18px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
-        }}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
       >
-        <div style={{
-          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-          background: "linear-gradient(135deg,#F4A623,#e8941a)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <TrendingUp size={18} color="#fff" />
+        <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: "linear-gradient(135deg,#F4A623,#e8941a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <TrendingUp size={16} color="#fff" />
         </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text,#111)", margin: 0 }}>
-            ¿Cómo funciona el Flujo de Caja?
-          </p>
-          <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3,#999)", margin: "2px 0 0" }}>
-            Registra ingresos y egresos · Concilia con el banco · Ve tu P&amp;L mensual
-          </p>
-        </div>
-        <ChevronDown
-          size={16}
-          color="var(--adm-text3,#999)"
-          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
-        />
+        <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: 0, flex: 1 }}>
+          ¿Cómo funciona?
+        </p>
+        <ChevronDown size={15} color="var(--adm-text3,#999)" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
       </button>
 
-      {/* Contenido expandible */}
       {open && (
-        <div style={{ borderTop: "1px solid var(--adm-card-border,#f0f0f0)", padding: "18px 18px 20px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 18 }}>
+        <div style={{ borderTop: "1px solid var(--adm-card-border,#f0f0f0)", padding: "16px" }}>
+
+          {/* 4 bloques visuales */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
             {[
-              {
-                icon: "➕",
-                title: "Registra movimientos",
-                desc: 'Haz click en "Nuevo movimiento" para registrar cualquier ingreso (venta, transferencia, otro) o egreso (gasto, compra, sueldo). Cada movimiento tiene categoría, fecha y monto.',
-              },
-              {
-                icon: "📊",
-                title: "Estado de resultados",
-                desc: "Al final de la página verás tu P&L del mes: ingresos vs egresos por categoría, con la utilidad o pérdida resultante. Navega entre meses con las flechas.",
-              },
-              {
-                icon: "🏦",
-                title: "Conciliación bancaria",
-                desc: 'En "Conciliación Bancaria" importas el extracto de tu banco (BCI u otro). El sistema cruza automáticamente los movimientos bancarios con los que ya tienes registrados, marcando cuáles coinciden y cuáles están pendientes.',
-              },
-              {
-                icon: "✅",
-                title: "¿Qué queda conciliado?",
-                desc: "Un movimiento queda conciliado cuando el monto y fecha del registro manual coinciden con el extracto del banco. Así puedes detectar diferencias, depósitos no registrados o gastos olvidados.",
-              },
+              { icon: "➕", title: "Nuevo movimiento", desc: "Ingreso o egreso · categoría · monto · fecha" },
+              { icon: "📊", title: "P&L del mes", desc: "Ingresos vs egresos · utilidad o pérdida" },
+              { icon: "🏦", title: "Conciliación bancaria", desc: "Sube el extracto del banco y cruzamos los registros" },
+              { icon: "✅", title: "¿Qué queda conciliado?", desc: "Monto + fecha coinciden → marcado como conciliado" },
             ].map(item => (
-              <div key={item.title} style={{
-                padding: "14px 16px", borderRadius: 10,
-                background: "var(--adm-hover, #f9f9f9)",
-                border: "1px solid var(--adm-card-border, #f0f0f0)",
-              }}>
-                <p style={{ fontSize: "1.3rem", margin: "0 0 6px" }}>{item.icon}</p>
-                <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: "0 0 4px" }}>{item.title}</p>
-                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2,#555)", margin: 0, lineHeight: 1.45 }}>{item.desc}</p>
+              <div key={item.title} style={{ display: "flex", gap: 10, padding: "11px 12px", borderRadius: 10, background: "var(--adm-hover,#f9fafb)", border: "1px solid var(--adm-card-border,#f0f0f0)", alignItems: "flex-start" }}>
+                <span style={{ fontSize: "1.3rem", lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: "0 0 2px" }}>{item.title}</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3,#888)", margin: 0, lineHeight: 1.4 }}>{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Flujo de conciliación visual */}
-          <div style={{
-            padding: "14px 16px", borderRadius: 10,
-            background: "linear-gradient(135deg, rgba(244,166,35,0.06), rgba(244,166,35,0.02))",
-            border: "1px solid rgba(244,166,35,0.2)",
-          }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#b8810a", margin: "0 0 10px" }}>
-              <Landmark size={13} style={{ verticalAlign: "middle", marginRight: 5 }} />
-              Flujo de trabajo recomendado
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          {/* Flujo de trabajo — visual compacto */}
+          <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.18)" }}>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "#b8810a", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Flujo recomendado</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                "Registra tus ventas e ingresos del día",
-                "Registra tus gastos y compras",
-                "Cada semana/mes: importa el extracto bancario",
-                "Concilia y revisa diferencias",
-                "Exporta tu P&L para contabilidad",
-              ].map((step, i, arr) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: "#F4A623", color: "#fff",
-                      fontSize: "0.65rem", fontWeight: 800,
-                      display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    }}>{i + 1}</span>
-                    <span style={{ fontFamily: FB, fontSize: "0.73rem", color: "var(--adm-text2,#555)" }}>{step}</span>
-                  </div>
-                  {i < arr.length - 1 && <span style={{ color: "var(--adm-text3,#ccc)", fontSize: "0.7rem" }}>→</span>}
+                { n: 1, icon: "💰", text: "Registra ventas e ingresos del día" },
+                { n: 2, icon: "🧾", text: "Registra gastos y compras" },
+                { n: 3, icon: "🏦", text: "Sube el extracto bancario (semanal o mensual)" },
+                { n: 4, icon: "🔍", text: "Concilia y revisa diferencias" },
+                { n: 5, icon: "📤", text: "Exporta el P&L para contabilidad" },
+              ].map(s => (
+                <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#F4A623", color: "#fff", fontSize: "0.62rem", fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.n}</span>
+                  <span style={{ fontSize: "0.9rem" }}>{s.icon}</span>
+                  <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2,#555)" }}>{s.text}</span>
                 </div>
               ))}
             </div>
