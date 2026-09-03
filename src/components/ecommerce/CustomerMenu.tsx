@@ -54,24 +54,32 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
           {view === "root" && (
             <>
               {/* Usuario / login */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}>
-                  {user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+              {loadingUser ? (
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}><User className="w-5 h-5" /></div>
+                  <p className="text-sm text-gray-400">Cargando…</p>
                 </div>
-                <div className="min-w-0 flex-1">
-                  {loadingUser ? (
-                    <p className="text-sm text-gray-400">Cargando…</p>
-                  ) : user ? (
-                    <>
-                      <p className="text-sm font-black text-gray-900 truncate">{user.name || "Cliente"}</p>
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    </>
-                  ) : (
-                    <button onClick={() => setLoginOpen(true)} className="text-sm font-black" style={{ color: primaryColor }}>Iniciar sesión →</button>
-                  )}
+              ) : user ? (
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}>
+                    {user.name ? user.name.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-gray-900 truncate">{user.name || "Cliente"}</p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                  <button onClick={logout} title="Cerrar sesión" className="text-gray-400 hover:text-red-500 shrink-0"><LogOut className="w-4 h-4" /></button>
                 </div>
-                {user && <button onClick={logout} title="Cerrar sesión" className="text-gray-400 hover:text-red-500 shrink-0"><LogOut className="w-4 h-4" /></button>}
-              </div>
+              ) : (
+                <button onClick={() => setLoginOpen(true)} className="w-full bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3 text-left hover:bg-gray-50 transition">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}><User className="w-5 h-5" /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-gray-900">Iniciar sesión</p>
+                    <p className="text-xs text-gray-400">Accede con tu correo</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                </button>
+              )}
 
               <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
                 <MenuRow icon={<User className="w-5 h-5" />} label="Mi perfil" onClick={() => go("profile")} color={primaryColor} />
@@ -109,7 +117,6 @@ function MenuRow({ icon, label, onClick, color }: { icon: React.ReactNode; label
 // ── Login por código (OTP) ──────────────────────────────────────
 function LoginModal({ primaryColor, onClose, onLogged }: { primaryColor: string; onClose: () => void; onLogged: () => void }) {
   const [step, setStep] = useState<"email" | "code">("email");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -120,7 +127,7 @@ function LoginModal({ primaryColor, onClose, onLogged }: { primaryColor: string;
     if (!emailOk || busy) return;
     setBusy(true); setMsg(null);
     try {
-      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), name: name.trim() || null }) });
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim() }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setMsg(d.error || "No se pudo enviar"); setBusy(false); return; }
       setStep("code"); setMsg(d.devCode ? `Código (dev): ${d.devCode}` : "Te enviamos un código a tu correo.");
@@ -148,8 +155,7 @@ function LoginModal({ primaryColor, onClose, onLogged }: { primaryColor: string;
         <p className="text-xs text-gray-400 mb-4">{step === "email" ? "Con tu correo. Te enviamos un código para entrar." : `Enviado a ${email}`}</p>
         {step === "email" ? (
           <div className="flex flex-col gap-3">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre (opcional)" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" placeholder="tu@email.com" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" autoFocus placeholder="tu@email.com" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
             <button onClick={send} disabled={!emailOk || busy} className="w-full py-3 rounded-xl text-white font-black text-sm disabled:opacity-40" style={{ background: primaryColor }}>{busy ? "Enviando…" : "Enviar código"}</button>
           </div>
         ) : (

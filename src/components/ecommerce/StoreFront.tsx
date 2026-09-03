@@ -162,30 +162,32 @@ export default function StoreFront({ tenant, categories, products }: Props) {
       {/* ── Header — solo logo ─────────────────────────────────── */}
       <header ref={headerRef} className="sticky top-0 z-40 shadow-sm" style={{ background: tenant.headerBgColor }}>
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition shrink-0">
-              <MenuIcon className="w-6 h-6" />
-            </button>
+          <div className="flex items-center">
             {tenant.logoUrl ? (
               <img src={tenant.logoUrl} alt={tenant.name} className="h-16 w-auto object-contain" />
             ) : (
               <span className="font-black text-xl text-gray-900">{tenant.name}</span>
             )}
           </div>
-          {/* Carrito móvil */}
-          <button
-            onClick={() => setCartOpen(true)}
-            className={`relative lg:hidden flex items-center gap-1.5 rounded-xl px-3 py-2 text-white font-bold text-sm shadow transition hover:opacity-90 whitespace-nowrap ${cartBump ? "cart-bump" : ""}`}
-            style={{ background: primaryColor }}
-          >
-            <ShoppingCart className="w-4 h-4 shrink-0" />
-            <span>Mi pedido</span>
-            {badge > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center shadow" style={{ color: primaryColor }}>
-                {badge}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Carrito móvil */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className={`relative lg:hidden flex items-center gap-1.5 rounded-xl px-3 py-2 text-white font-bold text-sm shadow transition hover:opacity-90 whitespace-nowrap ${cartBump ? "cart-bump" : ""}`}
+              style={{ background: primaryColor }}
+            >
+              <ShoppingCart className="w-4 h-4 shrink-0" />
+              <span>Mi pedido</span>
+              {badge > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center shadow" style={{ color: primaryColor }}>
+                  {badge}
+                </span>
+              )}
+            </button>
+            <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition shrink-0">
+              <MenuIcon className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </header>
 
