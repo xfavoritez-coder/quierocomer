@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
+import { getGoogleApiKey } from '@/lib/platformSettings'
 
 /** Sugerencias de autocomplete mientras el usuario escribe.
  *  Solo retorna place_id + texto — sin coordenadas (se cargan al hacer click).
@@ -11,6 +10,8 @@ export async function GET(req: NextRequest) {
   // ?all=1 → sin restricción de país (por defecto se limita a Chile)
   const noCountry = req.nextUrl.searchParams.get('all') === '1'
   if (!q || q.length < 3) return NextResponse.json([])
+
+  const GOOGLE_KEY = await getGoogleApiKey()
 
   if (!GOOGLE_KEY) {
     return nominatimSearch(q, noCountry)

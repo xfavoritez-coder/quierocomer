@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY;
+import { getGoogleApiKey } from "@/lib/platformSettings";
 
 /** Geocodificación inversa: coordenadas → dirección.
  *  GET /api/geo/reverse?lat=..&lng=..
@@ -9,6 +8,8 @@ export async function GET(req: NextRequest) {
   const lat = req.nextUrl.searchParams.get("lat");
   const lng = req.nextUrl.searchParams.get("lng");
   if (!lat || !lng) return NextResponse.json(null);
+
+  const GOOGLE_KEY = await getGoogleApiKey();
 
   if (GOOGLE_KEY) {
     try {

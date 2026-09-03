@@ -2715,3 +2715,11 @@ enum EntrySource {
   BANK_CSV
   BANK_API
 }
+
+/// Ajustes globales de plataforma (key-value). Solo superadmin.
+/// Ej: google_api_key (usada por /api/geo/* para "Dirección" en el panel).
+model PlatformSetting {
+  key       String   @id
+  value     String?
+  updatedAt DateTime @default(now()) @updatedAt
+}

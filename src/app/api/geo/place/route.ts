@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
+import { getGoogleApiKey } from '@/lib/platformSettings'
 
 /** Retorna coordenadas y dirección para un place_id de Google Places.
  *  Se llama solo cuando el usuario selecciona una sugerencia.
@@ -8,6 +7,7 @@ const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY
  */
 export async function GET(req: NextRequest) {
   const placeId = req.nextUrl.searchParams.get('place_id')?.trim()
+  const GOOGLE_KEY = await getGoogleApiKey()
   if (!placeId || !GOOGLE_KEY) return NextResponse.json(null)
 
   try {
