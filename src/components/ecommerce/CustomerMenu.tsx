@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { X, ChevronRight, ArrowLeft, User, ClipboardList, Heart, MessageCircle, Share2, MapPin, LogOut, Camera, Globe, Mail, RotateCcw } from "lucide-react";
+import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, Share2, MapPin, LogOut, Camera, Globe, Mail, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -18,7 +18,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
   const [view, setView] = useState<View>("root");
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginExpanded, setLoginExpanded] = useState(false);
 
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
 
@@ -33,7 +33,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
   }
 
   const needsLogin = (v: View) => (v === "profile" || v === "orders" || v === "favorites") && !user;
-  const go = (v: View) => { if (needsLogin(v)) { setLoginOpen(true); return; } setView(v); };
+  const go = (v: View) => { if (needsLogin(v)) { setLoginExpanded(true); return; } setView(v); };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -71,14 +71,22 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
                   <button onClick={logout} title="Cerrar sesión" className="text-gray-400 hover:text-red-500 shrink-0"><LogOut className="w-4 h-4" /></button>
                 </div>
               ) : (
-                <button onClick={() => setLoginOpen(true)} className="w-full bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3 text-left hover:bg-gray-50 transition">
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}><User className="w-5 h-5" /></div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-black text-gray-900">Iniciar sesión</p>
-                    <p className="text-xs text-gray-400">Accede con tu correo</p>
+                <div className="bg-white rounded-2xl border border-gray-100 mb-4 overflow-hidden">
+                  <button onClick={() => setLoginExpanded((v) => !v)} className="w-full p-4 flex items-center gap-3 text-left hover:bg-gray-50 transition">
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shrink-0" style={{ background: primaryColor }}><User className="w-5 h-5" /></div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-black text-gray-900">Iniciar sesión</p>
+                      <p className="text-xs text-gray-400">Accede con tu correo</p>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-gray-300 shrink-0 transition-transform ${loginExpanded ? "rotate-180" : ""}`} />
+                  </button>
+                  {/* Panel desplegable (grid 0fr → 1fr = expansión suave) */}
+                  <div className="grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: loginExpanded ? "1fr" : "0fr" }}>
+                    <div className="overflow-hidden">
+                      <InlineLogin primaryColor={primaryColor} onLogged={() => { setLoginExpanded(false); loadUser(); }} />
+                    </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                </button>
+                </div>
               )}
 
               <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
@@ -98,8 +106,6 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
           {view === "social" && <SocialView tenant={tenant} primaryColor={primaryColor} />}
         </div>
       </div>
-
-      {loginOpen && <LoginModal primaryColor={primaryColor} onClose={() => setLoginOpen(false)} onLogged={() => { setLoginOpen(false); loadUser(); }} />}
     </div>
   );
 }
@@ -114,14 +120,16 @@ function MenuRow({ icon, label, onClick, color }: { icon: React.ReactNode; label
   );
 }
 
-// ── Login por código (OTP) ──────────────────────────────────────
-function LoginModal({ primaryColor, onClose, onLogged }: { primaryColor: string; onClose: () => void; onLogged: () => void }) {
+// ── Login por código (OTP), en línea ────────────────────────────
+function InlineLogin({ primaryColor, onLogged }: { primaryColor: string; onLogged: () => void }) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  // inputs a 16px para que iOS no haga zoom al enfocar
+  const inputStyle = { fontSize: "16px" } as const;
 
   async function send() {
     if (!emailOk || busy) return;
@@ -147,26 +155,32 @@ function LoginModal({ primaryColor, onClose, onLogged }: { primaryColor: string;
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400"><X className="w-5 h-5" /></button>
-        <h3 className="font-black text-lg text-gray-900 mb-1">{step === "email" ? "Iniciar sesión" : "Ingresa tu código"}</h3>
-        <p className="text-xs text-gray-400 mb-4">{step === "email" ? "Con tu correo. Te enviamos un código para entrar." : `Enviado a ${email}`}</p>
-        {step === "email" ? (
-          <div className="flex flex-col gap-3">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" autoFocus placeholder="tu@email.com" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
-            <button onClick={send} disabled={!emailOk || busy} className="w-full py-3 rounded-xl text-white font-black text-sm disabled:opacity-40" style={{ background: primaryColor }}>{busy ? "Enviando…" : "Enviar código"}</button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="Código de 6 dígitos" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-center text-lg tracking-widest outline-none focus:border-gray-400" />
-            <button onClick={verify} disabled={code.length !== 6 || busy} className="w-full py-3 rounded-xl text-white font-black text-sm disabled:opacity-40" style={{ background: primaryColor }}>{busy ? "Verificando…" : "Entrar"}</button>
-            <button onClick={send} disabled={busy} className="text-xs text-gray-400 self-center">Reenviar código</button>
-          </div>
-        )}
-        {msg && <p className={`text-xs mt-3 ${msg.includes("incorrecto") || msg.includes("No se pudo") || msg.includes("Error") ? "text-red-500" : "text-gray-500"}`}>{msg}</p>}
-      </div>
+    <div className="px-4 pb-4 pt-1 border-t border-gray-100 flex flex-col gap-2.5">
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && step === "email") send(); }}
+        inputMode="email" type="email" style={inputStyle}
+        placeholder="tu@email.com"
+        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 outline-none focus:border-gray-400"
+      />
+      {step === "email" ? (
+        <button onClick={send} disabled={!emailOk || busy} className="w-full py-3 rounded-xl text-white font-black text-sm disabled:opacity-40" style={{ background: primaryColor }}>{busy ? "Enviando…" : "Enviar código"}</button>
+      ) : (
+        <>
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={(e) => { if (e.key === "Enter") verify(); }}
+            inputMode="numeric" autoFocus style={inputStyle}
+            placeholder="Código de 6 dígitos"
+            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-center tracking-[0.3em] outline-none focus:border-gray-400"
+          />
+          <button onClick={verify} disabled={code.length !== 6 || busy} className="w-full py-3 rounded-xl text-white font-black text-sm disabled:opacity-40" style={{ background: primaryColor }}>{busy ? "Verificando…" : "Entrar"}</button>
+          <button onClick={send} disabled={busy} className="text-xs text-gray-400 self-center">Reenviar código</button>
+        </>
+      )}
+      {msg && <p className={`text-xs ${msg.includes("incorrecto") || msg.includes("No se pudo") || msg.includes("Error") ? "text-red-500" : "text-gray-500"}`}>{msg}</p>}
     </div>
   );
 }
