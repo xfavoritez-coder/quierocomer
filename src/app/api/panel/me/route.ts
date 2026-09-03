@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         role: "OWNER",
         name: restaurant.name,
-        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: true, hasControl: !!_ce, hasFinancial: !!_fe }],
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: true, hasControl: !!_ce, hasFinancial: true }],
         selectedRestaurantId: restaurant.id,
         mustChangePassword: false,
       });
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         role: member.role,
         name: member.name,
-        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!_ce2, hasFinancial: !!_fe2 }],
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!_ce2, hasFinancial: true }],
         selectedRestaurantId: member.restaurant.id,
         mustChangePassword: false,
         seenFeatures: member.seenFeatures || [],
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       hasToteat: !!toteatApiToken,
       isDemo: !!isDemo,
       hasControl: !!controlEnabled,
-      hasFinancial: !!financialEnabled,
+      hasFinancial: true,
     }));
 
     return NextResponse.json({
