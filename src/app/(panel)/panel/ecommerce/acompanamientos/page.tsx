@@ -261,6 +261,7 @@ function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string
         value={q}
         onChange={(e) => { setQ(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder="Buscar producto para agregar una regla…"
         style={{ ...inp, marginTop: 0 }}
@@ -274,7 +275,7 @@ function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string
               <div key={g.category}>
                 <p style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: 0, padding: "8px 10px 4px" }}>{g.category}</p>
                 {g.items.map((d) => (
-                  <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(false); }}
+                  <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(true); }}
                     style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px 7px 16px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--adm-hover)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
