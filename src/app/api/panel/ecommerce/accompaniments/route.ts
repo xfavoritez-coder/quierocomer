@@ -23,11 +23,12 @@ export async function GET(req: NextRequest) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceAccompaniments: true } });
   if (!r) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const dishes = await prisma.dish.findMany({
+  const rows = await prisma.dish.findMany({
     where: { restaurantId, isActive: true, deletedAt: null },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
-    select: { id: true, name: true },
+    select: { id: true, name: true, category: { select: { name: true } } },
   });
+  const dishes = rows.map((d) => ({ id: d.id, name: d.name, category: d.category?.name || "Sin categoría" }));
 
   return NextResponse.json({ config: parseAccompConfig(r.ecommerceAccompaniments), dishes });
 }

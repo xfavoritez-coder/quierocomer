@@ -10,7 +10,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
 
-type Dish = { id: string; name: string };
+type Dish = { id: string; name: string; category?: string };
 
 export default function AccompanimentsPage() {
   const session = useSessionContext();
@@ -246,7 +246,15 @@ function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string
   const [open, setOpen] = useState(false);
   if (dishes.length === 0) return <p style={hint}>Todos los productos ya tienen una regla.</p>;
   const query = q.trim().toLowerCase();
-  const matches = (query ? dishes.filter((d) => d.name.toLowerCase().includes(query)) : dishes).slice(0, 12);
+  const matches = query ? dishes.filter((d) => d.name.toLowerCase().includes(query) || (d.category || "").toLowerCase().includes(query)) : dishes;
+  // Agrupar por categoría preservando el orden (dishes ya viene ordenado).
+  const groups: { category: string; items: Dish[] }[] = [];
+  for (const d of matches) {
+    const cat = d.category || "Sin categoría";
+    const last = groups[groups.length - 1];
+    if (last && last.category === cat) last.items.push(d);
+    else groups.push({ category: cat, items: [d] });
+  }
   return (
     <div style={{ position: "relative" }}>
       <input
@@ -258,17 +266,22 @@ function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string
         style={{ ...inp, marginTop: 0 }}
       />
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 10px 28px rgba(0,0,0,0.18)", maxHeight: 240, overflowY: "auto", padding: 4 }}>
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 10px 28px rgba(0,0,0,0.18)", maxHeight: 300, overflowY: "auto", padding: 4 }}>
           {matches.length === 0 ? (
             <p style={{ ...empty, padding: "8px 10px" }}>Sin resultados</p>
           ) : (
-            matches.map((d) => (
-              <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(false); }}
-                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--adm-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                <Plus size={14} color={ACCENT} style={{ flexShrink: 0 }} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-              </button>
+            groups.map((g) => (
+              <div key={g.category}>
+                <p style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: 0, padding: "8px 10px 4px" }}>{g.category}</p>
+                {g.items.map((d) => (
+                  <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(false); }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px 7px 16px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--adm-hover)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    {d.name}
+                  </button>
+                ))}
+              </div>
             ))
           )}
         </div>
