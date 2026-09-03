@@ -44,8 +44,9 @@ export default function AccompanimentsPage() {
   const toggleOpt = (gi: number, name: string) => { const g = cfg.groups[gi]; updGroup(gi, { options: g.options.includes(name) ? g.options.filter((o) => o !== name) : [...g.options, name] }); };
 
   // Rules (producto -> grupo)
-  const addRule = () => patch({ rules: [...cfg.rules, { productId: dishes[0]?.id ?? "", groupId: cfg.groups[0]?.id ?? "", quantity: 1 }] });
+  const addRuleFor = (productId: string) => patch({ rules: [...cfg.rules, { productId, groupId: cfg.groups[0]?.id ?? "", quantity: 1 }] });
   const updRule = (i: number, p: Partial<AccompConfig["rules"][0]>) => patch({ rules: cfg.rules.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+  const dishName = (id: string) => dishes.find((d) => d.id === id)?.name || "(producto no encontrado)";
   const delRule = (i: number) => patch({ rules: cfg.rules.filter((_, j) => j !== i) });
 
   async function save() {
@@ -194,9 +195,7 @@ export default function AccompanimentsPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {cfg.rules.map((rule, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 10 }}>
-                        <select value={rule.productId} onChange={(e) => updRule(i, { productId: e.target.value })} style={{ ...inp, marginTop: 0, flex: "1 1 160px", minWidth: 130 }}>
-                          {dishes.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                        </select>
+                        <span style={{ flex: "1 1 150px", minWidth: 120, fontFamily: FB, fontSize: "0.84rem", fontWeight: 600, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dishName(rule.productId)}</span>
                         <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>otorga</span>
                         <input value={rule.quantity || ""} onChange={(e) => updRule(i, { quantity: Number(e.target.value.replace(/\D/g, "")) || 1 })} inputMode="numeric" style={{ ...inp, marginTop: 0, width: 60, flex: "0 0 60px" }} />
                         <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>a</span>
@@ -206,8 +205,13 @@ export default function AccompanimentsPage() {
                         <button onClick={() => delRule(i)} style={delBtn} title="Quitar"><Trash2 size={15} /></button>
                       </div>
                     ))}
-                    {cfg.rules.length === 0 && <p style={empty}>No hay reglas. Agrega qué productos otorgan pool.</p>}
-                    <button onClick={addRule} disabled={!dishes.length || !cfg.groups.length} style={{ ...addBtn, opacity: !dishes.length || !cfg.groups.length ? 0.5 : 1 }}><Plus size={15} /> Agregar regla</button>
+                    {cfg.rules.length === 0 && <p style={empty}>No hay reglas. Busca un producto abajo para agregarlo.</p>}
+                    {cfg.groups.length > 0 && dishes.length > 0 && (
+                      <ProductPicker
+                        dishes={dishes.filter((d) => !cfg.rules.some((r) => r.productId === d.id))}
+                        onPick={addRuleFor}
+                      />
+                    )}
                     {!cfg.groups.length && <p style={hint}>Crea al menos un grupo para poder agregar reglas.</p>}
                   </div>
                 </div>
@@ -234,6 +238,44 @@ const hint: React.CSSProperties = { fontFamily: FB, fontSize: "0.72rem", color: 
 const empty: React.CSSProperties = { fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", padding: "8px 2px", margin: 0 };
 const addBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", alignSelf: "flex-start" };
 const delBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", cursor: "pointer", flexShrink: 0 };
+
+// Buscador dinámico para agregar un producto a una regla. `dishes` ya viene
+// filtrado (sin los productos que ya tienen regla).
+function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string) => void }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  if (dishes.length === 0) return <p style={hint}>Todos los productos ya tienen una regla.</p>;
+  const query = q.trim().toLowerCase();
+  const matches = (query ? dishes.filter((d) => d.name.toLowerCase().includes(query)) : dishes).slice(0, 12);
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        value={q}
+        onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Buscar producto para agregar una regla…"
+        style={{ ...inp, marginTop: 0 }}
+      />
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 10px 28px rgba(0,0,0,0.18)", maxHeight: 240, overflowY: "auto", padding: 4 }}>
+          {matches.length === 0 ? (
+            <p style={{ ...empty, padding: "8px 10px" }}>Sin resultados</p>
+          ) : (
+            matches.map((d) => (
+              <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(false); }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--adm-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                <Plus size={14} color={ACCENT} style={{ flexShrink: 0 }} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
