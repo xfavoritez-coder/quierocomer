@@ -42,39 +42,38 @@ export default function AccompanimentsSection({ config, items, subtotal, primary
   const inc = (name: string, max: number) => setQty((p) => ({ ...p, [name]: Math.min(max, (p[name] ?? 0) + 1) }));
 
   return (
-    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <h2 className="font-black text-sm text-gray-900 mb-1">Acompañamientos</h2>
-      <p className="text-xs text-gray-400 mb-3">Elige tus acompañamientos o marca &quot;No quiero&quot;.</p>
-      <div className="flex flex-col gap-2">
+    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      <h2 className="font-black text-sm text-gray-900 mb-1.5">Acompañamientos</h2>
+      <div className="flex flex-col divide-y divide-gray-100">
         {unifiedList.map((entry) => {
           const isDeclined = !!declined[entry.name];
           const max = accomMaxFor(entry, config, subtotal, pools, qty);
           const q = qty[entry.name] ?? 0;
           const atMax = q >= max;
           return (
-            <div key={entry.name} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${isDeclined ? "border-gray-100 bg-gray-50" : "border-gray-200"}`}>
+            <div key={entry.name} className="flex items-center gap-2 py-2">
               <div className="min-w-0 flex-1">
-                <span className={`text-sm font-medium ${isDeclined ? "text-gray-400 line-through" : "text-gray-700"}`}>{entry.name}</span>
-                {!isDeclined && <span className="ml-2 text-xs text-gray-400">máx. {max}</span>}
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button onClick={() => dec(entry.name)} disabled={q === 0 || isDeclined} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition disabled:opacity-30">
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className={`w-5 text-center text-sm font-black ${isDeclined ? "text-gray-300" : "text-gray-800"}`}>{q}</span>
-                <button onClick={() => inc(entry.name, max)} disabled={atMax || isDeclined} className="w-7 h-7 rounded-lg flex items-center justify-center transition text-white disabled:opacity-30" style={{ background: isDeclined ? "#d1d5db" : primaryColor }}>
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+                <p className={`text-sm font-medium leading-tight truncate ${isDeclined ? "text-gray-400 line-through" : "text-gray-800"}`}>{entry.name}</p>
+                <p className="text-[11px] text-gray-400 leading-tight">{isDeclined ? "No quiero" : `Máx ${max}`}</p>
               </div>
               <button
                 onClick={() => {
                   if (isDeclined) setDeclined((p) => ({ ...p, [entry.name]: false }));
                   else { setDeclined((p) => ({ ...p, [entry.name]: true })); setQty((p) => ({ ...p, [entry.name]: 0 })); }
                 }}
-                className={`ml-3 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition shrink-0 ${isDeclined ? "bg-gray-200 border-gray-200 text-gray-600" : "border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600"}`}
+                className={`text-[11px] font-bold shrink-0 px-2 py-1 rounded-md transition ${isDeclined ? "text-gray-600 bg-gray-100" : "text-gray-400 hover:text-gray-600"}`}
               >
-                {isDeclined ? "✓ No quiero" : "No quiero"}
+                {isDeclined ? "Elegir" : "No quiero"}
               </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => dec(entry.name)} disabled={q === 0 || isDeclined} className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition disabled:opacity-30">
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className={`w-4 text-center text-sm font-black ${isDeclined ? "text-gray-300" : "text-gray-800"}`}>{q}</span>
+                <button onClick={() => inc(entry.name, max)} disabled={atMax || isDeclined} className="w-6 h-6 rounded-md flex items-center justify-center transition text-white disabled:opacity-30" style={{ background: isDeclined ? "#d1d5db" : primaryColor }}>
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           );
         })}
