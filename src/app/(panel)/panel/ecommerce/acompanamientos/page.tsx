@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Save, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, UtensilsCrossed, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseAccompConfig, emptyAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
@@ -62,6 +62,13 @@ export default function AccompanimentsPage() {
   }
 
   const itemNames = cfg.items.map((i) => i.name).filter(Boolean);
+  // Ítems por monto cuyo nombre se usa en un grupo "por producto" → se manejan
+  // por producto y quedan bloqueados en la sección "Por monto".
+  const usedByProduct = new Set<string>(cfg.perProductEnabled ? cfg.groups.flatMap((g) => g.options) : []);
+  const itemsWithIdx = cfg.items.map((it, i) => ({ it, i }));
+  const montoItems = itemsWithIdx.filter((x) => !x.it.name || !usedByProduct.has(x.it.name));
+  const productItems = itemsWithIdx.filter((x) => x.it.name && usedByProduct.has(x.it.name));
+  const groupsOf = (name: string) => cfg.groups.filter((g) => g.options.includes(name)).map((g) => g.name || "(sin nombre)").join(", ");
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
@@ -95,7 +102,7 @@ export default function AccompanimentsPage() {
 
             {cfg.perAmountEnabled && (
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                {cfg.items.map((it, i) => (
+                {montoItems.map(({ it, i }) => (
                   <div key={i} style={{ background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 12 }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
                       <div style={{ flex: "1 1 160px", minWidth: 130 }}>
@@ -121,6 +128,23 @@ export default function AccompanimentsPage() {
                 {cfg.items.length === 0 && <p style={empty}>No hay acompañamientos. Agrega el primero.</p>}
                 <button onClick={addItem} style={addBtn}><Plus size={15} /> Agregar acompañamiento</button>
                 <p style={hint}><strong>Mínimo $</strong>: si el pedido no lo alcanza, el acompañamiento no aparece. 0 = siempre aparece.</p>
+
+                {/* Manejados por producto específico — bloqueados */}
+                {productItems.length > 0 && (
+                  <div style={{ marginTop: 8, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+                    <p style={{ ...lbl, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 8 }}><Lock size={12} /> Manejados por producto específico</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {productItems.map(({ it, i }) => (
+                        <div key={i} style={{ background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", borderRadius: 12, padding: "11px 12px", display: "flex", alignItems: "center", gap: 10, opacity: 0.9 }}>
+                          <Lock size={14} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, minWidth: 0, fontFamily: FB, fontSize: "0.86rem", fontWeight: 600, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.name || "(sin nombre)"}</span>
+                          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>Grupo: {groupsOf(it.name)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={hint}>Estos se controlan en “Por producto específico” (según el producto del pedido). No se edita su cantidad por monto acá.</p>
+                  </div>
+                )}
               </div>
             )}
           </section>
