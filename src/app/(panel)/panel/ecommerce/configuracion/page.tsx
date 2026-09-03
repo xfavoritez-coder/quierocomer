@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -212,6 +212,20 @@ export default function EcommerceConfiguracionPage() {
           {tab === "tienda" && (
           <section style={card}>
             <HorarioEditor restaurantId={restaurantId} showHeader />
+          </section>
+          )}
+
+          {/* Menú del cliente */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Heart} title="Menú del cliente" sub="Opciones que ve el cliente en el menú de la tienda." />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Favoritos</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Permite al cliente marcar productos con ♥ y verlos en “Mis favoritos”.</p>
+              </div>
+              <Toggle on={cfg.favoritesEnabled} onClick={() => patch({ favoritesEnabled: !cfg.favoritesEnabled })} />
+            </div>
           </section>
           )}
 

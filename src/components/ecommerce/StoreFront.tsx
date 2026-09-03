@@ -2,7 +2,8 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Toaster } from "sonner";
-import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil } from "lucide-react";
+import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart } from "lucide-react";
+import CustomerMenu from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -47,8 +48,10 @@ export default function StoreFront({ tenant, categories, products }: Props) {
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [cartBump, setCartBump] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   const headerRef = useRef<HTMLElement>(null);
   const catNavRef = useRef<HTMLDivElement>(null);
@@ -60,6 +63,24 @@ export default function StoreFront({ tenant, categories, products }: Props) {
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
+
+  // Favoritos del cliente (si el local lo tiene habilitado)
+  useEffect(() => {
+    if (!tenant.favoritesEnabled) return;
+    fetch("/api/qr/favorites").then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (Array.isArray(d?.dishIds)) setFavIds(new Set(d.dishIds));
+    }).catch(() => {});
+  }, [tenant.favoritesEnabled]);
+
+  const toggleFav = useCallback((dishId: string) => {
+    setFavIds((prev) => {
+      const next = new Set(prev);
+      const isFav = next.has(dishId);
+      if (isFav) { next.delete(dishId); fetch(`/api/qr/favorites?dishId=${encodeURIComponent(dishId)}`, { method: "DELETE" }).catch(() => {}); }
+      else { next.add(dishId); fetch("/api/qr/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishId, restaurantId: tenant.id }) }).catch(() => {}); }
+      return next;
+    });
+  }, [tenant.id]);
 
   useEffect(() => {
     function handleAdded() {
@@ -141,7 +162,10 @@ export default function StoreFront({ tenant, categories, products }: Props) {
       {/* ── Header — solo logo ─────────────────────────────────── */}
       <header ref={headerRef} className="sticky top-0 z-40 shadow-sm" style={{ background: tenant.headerBgColor }}>
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition shrink-0">
+              <MenuIcon className="w-6 h-6" />
+            </button>
             {tenant.logoUrl ? (
               <img src={tenant.logoUrl} alt={tenant.name} className="h-16 w-auto object-contain" />
             ) : (
@@ -242,7 +266,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
-                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} />
+                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} />
                     ))}
                   </div>
                 </section>
@@ -278,6 +302,10 @@ export default function StoreFront({ tenant, categories, products }: Props) {
       {/* Modal delivery/retiro */}
       {deliveryModalOpen && (
         <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />
+      )}
+
+      {menuOpen && (
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} />
       )}
 
       {/* Drawer carrito (mobile) */}
@@ -330,14 +358,24 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 }
 
 // ── Tarjeta de producto ──────────────────────────────────────────
-function ProductCard({ product, primaryColor, onClick }: { product: StoreProduct; primaryColor: string; onClick: () => void }) {
+function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void }) {
   const soldOut = product.is_sold_out;
   return (
     <button
       onClick={soldOut ? undefined : onClick}
       disabled={soldOut}
-      className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow group grid grid-cols-[1fr_8rem] sm:grid-cols-[1fr_9rem] min-h-[8rem] w-full text-left ${soldOut ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
+      className={`relative bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow group grid grid-cols-[1fr_8rem] sm:grid-cols-[1fr_9rem] min-h-[8rem] w-full text-left ${soldOut ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
     >
+      {showFav && (
+        <span
+          role="button"
+          aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
+          className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur cursor-pointer hover:scale-105 transition"
+        >
+          <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#9ca3af"} />
+        </span>
+      )}
       {/* Texto */}
       <div className="p-4 flex flex-col justify-between">
         <div>

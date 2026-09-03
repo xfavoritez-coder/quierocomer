@@ -23,6 +23,7 @@ export interface EcommerceStoreConfig {
   minOrderDelivery: number; // monto mínimo de compra para delivery (0 = sin mínimo)
   waitTimePickup: string; // tiempo estimado de retiro (ej: "20-30")
   waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
+  favoritesEnabled: boolean; // permitir que el cliente marque favoritos
 }
 
 interface Fallback {
@@ -57,6 +58,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     minOrderDelivery: nonNegInt(o.minOrderDelivery, fbMin),
     waitTimePickup: typeof o.waitTimePickup === "string" ? o.waitTimePickup : (fb.waitTime ?? ""),
     waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
+    favoritesEnabled: o.favoritesEnabled === true,
   };
 }
 

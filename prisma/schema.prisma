@@ -1126,6 +1126,7 @@ model QRUser {
   unsubscribedAt     DateTime?
   triggerHistory     Json?
   dislikes           String[]
+  savedAddresses     Json? // direcciones guardadas del cliente (ecommerce)
   birthdayEmailLogs  BirthdayEmailLog[]
   campaignRecipients CampaignRecipient[]
   dishFavorites      DishFavorite[]

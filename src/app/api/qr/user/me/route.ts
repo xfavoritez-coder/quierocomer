@@ -15,7 +15,7 @@ export async function GET() {
       where: { id: userId },
       select: {
         id: true, name: true, email: true, birthDate: true,
-        dietType: true, restrictions: true, dislikes: true,
+        dietType: true, restrictions: true, dislikes: true, savedAddresses: true,
       },
     });
 

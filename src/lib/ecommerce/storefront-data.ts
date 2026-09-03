@@ -24,6 +24,10 @@ export interface StoreTenant {
   address: string | null;
   whatsapp: string | null;
   phone: string | null;
+  instagram: string | null;
+  website: string | null;
+  contactEmail: string | null;
+  favoritesEnabled: boolean;
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   waitTime: string | null;
@@ -88,7 +92,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     where: { slug },
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
-      cartaAccentColor: true, address: true, whatsapp: true, phone: true,
+      cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
+      owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
     },
@@ -99,6 +104,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
+    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, favoritesEnabled: store.favoritesEnabled,
     deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled,
     waitTime: r.orderingWaitTime, waitTimePickup: store.waitTimePickup, waitTimeDelivery: store.waitTimeDelivery, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
@@ -119,7 +125,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
     where: { slug },
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
-      cartaAccentColor: true, address: true, whatsapp: true, phone: true,
+      cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
+      owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
     },
@@ -224,6 +231,10 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       address: restaurant.address,
       whatsapp: restaurant.whatsapp,
       phone: restaurant.phone,
+      instagram: restaurant.instagram,
+      website: restaurant.website,
+      contactEmail: restaurant.owner?.email ?? null,
+      favoritesEnabled: store.favoritesEnabled,
       deliveryEnabled: store.deliveryEnabled,
       pickupEnabled: store.pickupEnabled,
       waitTime: restaurant.orderingWaitTime,

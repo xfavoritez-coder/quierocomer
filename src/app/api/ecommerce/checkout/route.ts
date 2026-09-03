@@ -176,6 +176,22 @@ export async function POST(req: NextRequest) {
       await prisma.ecommerceCouponUse.create({ data: { restaurantId: restaurant.id, couponCode: appliedCoupon.code, orderId: order.id, customerPhone: String(customerPhone).trim() } }).catch(() => {});
     }
 
+    // Guardar la dirección en el perfil del cliente logueado (para "Mis direcciones").
+    if (isDelivery && deliveryAddress?.trim()) {
+      const qrUserId = req.cookies.get("qr_user_id")?.value;
+      if (qrUserId) {
+        try {
+          const u = await prisma.qRUser.findUnique({ where: { id: qrUserId }, select: { savedAddresses: true } });
+          if (u) {
+            const addr = deliveryAddress.trim();
+            const prev = (Array.isArray(u.savedAddresses) ? (u.savedAddresses as { address: string; lat?: number | null; lng?: number | null }[]) : []).filter((a) => a?.address && a.address !== addr);
+            const next = [{ address: addr, lat: Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null, lng: Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null }, ...prev].slice(0, 5);
+            await prisma.qRUser.update({ where: { id: qrUserId }, data: { savedAddresses: next as unknown as object } });
+          }
+        } catch { /* best-effort */ }
+      }
+    }
+
     // ── Pago offline: confirmar y enviar al POS de inmediato ──
     if (!isOnline) {
       const pos = await dispatchOrderToPos(order.id).catch((e) => ({ ok: false, message: String(e) }));
