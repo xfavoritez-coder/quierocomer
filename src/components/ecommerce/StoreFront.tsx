@@ -469,6 +469,10 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             <div className="flex justify-between font-black text-base text-gray-900 pt-1 border-t border-gray-100"><span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span></div>
             {!tenant.openStatus.open ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">🔒 Cerrado por ahora</div>
+            ) : !deliverySelected ? (
+              <button onClick={onOpenDeliveryModal} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
+                {tenant.pickupEnabled && tenant.deliveryEnabled ? "Elige cómo recibir tu pedido" : tenant.deliveryEnabled ? "Ingresa tu dirección de entrega" : "Confirmar retiro"} →
+              </button>
             ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(minReq!)}</div>
             ) : (

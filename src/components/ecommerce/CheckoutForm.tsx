@@ -86,7 +86,12 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const methods = tenant.paymentMethods.filter((m) => PAY_META[m]);
   useEffect(() => { if (!payment && methods.length) setPayment(methods[0]); }, [methods, payment]);
 
-  const isDelivery = deliverySelected && deliveryType === "delivery";
+  // Tipo de entrega efectivo respetando lo habilitado por la tienda: si solo hay
+  // delivery, se fuerza delivery (y se exige dirección); si solo retiro, retiro.
+  const onlyDelivery = tenant.deliveryEnabled && !tenant.pickupEnabled;
+  const onlyPickup = tenant.pickupEnabled && !tenant.deliveryEnabled;
+  const isDelivery = onlyDelivery ? true : onlyPickup ? false : (deliverySelected && deliveryType === "delivery");
+  const missingAddress = isDelivery && !deliveryAddress?.address;
   const deliveryFee = isDelivery ? deliveryAddress?.fee ?? 0 : 0;
   // Mínimo de compra por tipo de entrega (0 = sin mínimo). En delivery, la zona
   // puede imponer su propio mínimo (más específico).
@@ -261,6 +266,18 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
                 <p className="text-xs text-red-600 mt-1 leading-relaxed">Guardamos tu pedido acá. Revisa tus datos y vuelve a intentar el pago cuando quieras.</p>
               </div>
               <button onClick={() => setPaymentFailed(false)} className="ml-auto text-red-400 hover:text-red-600 shrink-0"><X className="w-4 h-4" /></button>
+            </div>
+          )}
+
+          {/* Falta dirección de entrega (tienda solo delivery / entró sin elegir) */}
+          {missingAddress && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-sm text-amber-700 m-0">Falta tu dirección de entrega</p>
+                <p className="text-xs text-amber-600 mt-1 leading-relaxed">Este local solo hace delivery. Vuelve a la tienda para ingresar tu dirección y continuar.</p>
+                <Link href={`/ecommerce/${tenant.slug}`} className="inline-block mt-2 text-xs font-black underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
+              </div>
             </div>
           )}
 
