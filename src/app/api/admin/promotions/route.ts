@@ -113,6 +113,15 @@ export async function POST(req: NextRequest) {
         : undefined,
     };
     const promo = await prisma.promotion.create({ data: promoData, include: { modifierTemplates: { select: { id: true, name: true } } } });
+
+    // Sync dish.discountPrice so pedidos online shows the same price as the carta QR promo
+    if (promo.status === "ACTIVE" && promo.promoPrice && promo.dishIds.length > 0) {
+      await prisma.dish.updateMany({
+        where: { id: { in: promo.dishIds } },
+        data: { discountPrice: promo.promoPrice },
+      });
+    }
+
     await revalidateRestaurant(restaurantId);
     logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
     return NextResponse.json({ promotion: promo });
@@ -172,6 +181,24 @@ export async function PUT(req: NextRequest) {
         where: { id: { in: promo.dishIds } },
         data: { isHero: data.featured },
       });
+    }
+
+    // Sync dish.discountPrice so pedidos online matches carta QR promo price
+    if (promo.dishIds.length > 0) {
+      const isNowActive = promo.status === "ACTIVE";
+      if (isNowActive && promo.promoPrice) {
+        // Active promo: apply discountPrice to all dishes
+        await prisma.dish.updateMany({
+          where: { id: { in: promo.dishIds } },
+          data: { discountPrice: promo.promoPrice },
+        });
+      } else if (!isNowActive) {
+        // Inactive/deleted promo: clear discountPrice
+        await prisma.dish.updateMany({
+          where: { id: { in: promo.dishIds } },
+          data: { discountPrice: null },
+        });
+      }
     }
 
     await revalidateRestaurant(existing.restaurantId);
