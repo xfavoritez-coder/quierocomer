@@ -9,9 +9,10 @@ interface Props {
   subtotal: number;
   primaryColor: string;
   onResolve: (r: { pending: string[]; notesPart: string }) => void;
+  persistKey?: string; // si se pasa, recuerda la selección (por composición del carrito)
 }
 
-export default function AccompanimentsSection({ config, items, subtotal, primaryColor, onResolve }: Props) {
+export default function AccompanimentsSection({ config, items, subtotal, primaryColor, onResolve, persistKey }: Props) {
   const unifiedList = useMemo(() => buildUnifiedList(config, items, subtotal), [config, items, subtotal]);
   const pools = useMemo(() => groupPools(config, items), [config, items]);
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -20,9 +21,32 @@ export default function AccompanimentsSection({ config, items, subtotal, primary
   const resolveRef = useRef(onResolve);
   resolveRef.current = onResolve;
 
-  // Reiniciar al cambiar el carrito (item agregado/quitado).
+  // Al cambiar el carrito: restaurar la selección guardada para ESA composición
+  // (si coincide), o reiniciar. Así sobrevive a salir/entrar del checkout pero se
+  // reinicia si el carrito cambia (los máximos dependen del carrito).
   const itemsKey = items.map((i) => `${i.product_id}:${i.quantity}`).join("|");
-  useEffect(() => { setQty({}); setDeclined({}); }, [itemsKey]);
+  useEffect(() => {
+    if (!persistKey) { setQty({}); setDeclined({}); return; }
+    let restored = false;
+    try {
+      const raw = localStorage.getItem(persistKey);
+      if (raw) {
+        const s = JSON.parse(raw) as { itemsKey?: string; qty?: Record<string, number>; declined?: Record<string, boolean> };
+        if (s.itemsKey === itemsKey) { setQty(s.qty ?? {}); setDeclined(s.declined ?? {}); restored = true; }
+      }
+    } catch {}
+    if (!restored) { setQty({}); setDeclined({}); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsKey, persistKey]);
+
+  // Guardar la selección (salta el primer render para no pisar lo restaurado).
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if (firstSave.current) { firstSave.current = false; return; }
+    if (!persistKey) return;
+    try { localStorage.setItem(persistKey, JSON.stringify({ itemsKey, qty, declined })); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qty, declined]);
 
   // Reportar al padre (pendientes + nota) cuando cambia la selección.
   useEffect(() => {

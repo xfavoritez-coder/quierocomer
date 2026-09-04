@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X } from "lucide-react";
@@ -73,6 +73,31 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     try { localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name, phone, email })); } catch {}
   }, [name, phone, email]);
 
+  // Persistir cupón aplicado + comentario del pedido (por local), para que
+  // sobrevivan al salir/entrar del checkout (pago fallido, cerrar la web, etc.).
+  const EXTRA_KEY = `qc-checkout-extra:${tenant.id}`;
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(EXTRA_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as { couponCode?: string; coupon?: { code: string; discount: number; label?: string | null } | null; notes?: string };
+        if (d.couponCode) setCouponCode(d.couponCode);
+        if (d.coupon) setCoupon(d.coupon);
+        if (d.notes) setNotes(d.notes);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const extrasFirstSave = useRef(true);
+  useEffect(() => {
+    if (extrasFirstSave.current) { extrasFirstSave.current = false; return; } // no pisar en el montaje
+    try {
+      if (!coupon && !couponCode.trim() && !notes.trim()) localStorage.removeItem(EXTRA_KEY);
+      else localStorage.setItem(EXTRA_KEY, JSON.stringify({ couponCode, coupon, notes }));
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coupon, couponCode, notes]);
+
   // Reusar la sesión del cliente: si ya verificó su correo alguna vez (cookie
   // qr_user_id de un verify-otp previo), lo reconocemos al volver — prellenamos
   // nombre/email y damos el email por verificado, sin pedir el código otra vez.
@@ -100,6 +125,8 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
     if (pago === "exito") {
       try { sessionStorage.removeItem(PENDING_KEY); } catch {}
+      // Pedido completado: limpiar cupón/comentario/acompañamientos guardados.
+      try { localStorage.removeItem(`qc-checkout-extra:${tenant.id}`); localStorage.removeItem(`qc-accom:${tenant.id}`); } catch {}
       clearCart();
       if (orderParam) router.replace(`/pedido/${orderParam}`);
       return;
@@ -399,7 +426,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           </section>
 
           {/* Acompañamientos */}
-          <AccompanimentsSection config={tenant.accompaniments} items={items} subtotal={subtotal} primaryColor={primaryColor} onResolve={onAccomResolve} />
+          <AccompanimentsSection config={tenant.accompaniments} items={items} subtotal={subtotal} primaryColor={primaryColor} onResolve={onAccomResolve} persistKey={`qc-accom:${tenant.id}`} />
 
           {/* Notas */}
           {tenant.notesEnabled && (
