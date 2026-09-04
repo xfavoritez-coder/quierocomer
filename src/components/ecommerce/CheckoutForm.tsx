@@ -53,6 +53,26 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Persistir los datos del cliente (nombre/teléfono/correo) en el navegador para
+  // que al salir y volver a entrar al checkout queden rellenados y no haya que
+  // reescribirlos. Se carga al montar y se guarda a medida que se escribe.
+  const CUSTOMER_KEY = "qc-checkout-customer";
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOMER_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as { name?: string; phone?: string; email?: string };
+        if (d.name) setName(d.name);
+        if (d.phone) setPhone(d.phone);
+        if (d.email) setEmail(d.email);
+      }
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (!name && !phone && !email) return; // no sobrescribir con todo vacío
+    try { localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name, phone, email })); } catch {}
+  }, [name, phone, email]);
+
   // Reusar la sesión del cliente: si ya verificó su correo alguna vez (cookie
   // qr_user_id de un verify-otp previo), lo reconocemos al volver — prellenamos
   // nombre/email y damos el email por verificado, sin pedir el código otra vez.
