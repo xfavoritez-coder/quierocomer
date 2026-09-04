@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
+
+// Fija la raíz del workspace a esta carpeta (evita que Next infiera mal la raíz
+// por un package-lock.json suelto en el Home del usuario).
+const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 const nextConfig: NextConfig = {
+  turbopack: { root: projectRoot },
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "pdf-lib"],
   async redirects() {
     return [
