@@ -62,8 +62,9 @@ export async function POST(req: NextRequest) {
     // Email obligatorio si paga con Flow o usa cupón.
     const emailRequired = paymentMethod === "flow" || !!couponCode;
     if (emailRequired && !customerEmail?.trim()) return NextResponse.json({ error: paymentMethod === "flow" ? "El email es obligatorio para pagar con Flow" : "El email es obligatorio para usar un cupón" }, { status: 400 });
-    // Si ingresó email, debe estar verificado (código enviado al correo).
-    if (customerEmail?.trim()) {
+    // Solo exigimos email verificado cuando es obligatorio (Flow o cupón). Para el
+    // resto de métodos el correo es opcional (comprobante) y no requiere verificación.
+    if (emailRequired && customerEmail?.trim()) {
       const verified = await prisma.qRUser.findUnique({ where: { email: customerEmail.trim().toLowerCase() }, select: { verifiedAt: true } });
       if (!verified?.verifiedAt) return NextResponse.json({ error: "Verifica tu email con el código que te enviamos antes de continuar" }, { status: 400 });
     }

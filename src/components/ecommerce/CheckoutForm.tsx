@@ -53,6 +53,19 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Reusar la sesión del cliente: si ya verificó su correo alguna vez (cookie
+  // qr_user_id de un verify-otp previo), lo reconocemos al volver — prellenamos
+  // nombre/email y damos el email por verificado, sin pedir el código otra vez.
+  useEffect(() => {
+    fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null)).then((d) => {
+      const u = d?.user as { name?: string | null; email?: string } | undefined;
+      if (!u?.email) return;
+      setEmail((prev) => prev || u.email!);
+      setName((prev) => prev || u.name || "");
+      setVerifiedEmail(u.email.toLowerCase());
+    }).catch(() => {});
+  }, []);
+
   // Resultado del pago online al volver a esta página.
   // - ?pago=exito → el pago se confirmó: vaciamos el carrito y vamos al seguimiento.
   // - ?pago=fallido / o quedó un pago pendiente marcado (el cliente volvió atrás sin
@@ -103,8 +116,10 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   // Email obligatorio si paga con Flow o usa cupón.
   const emailNeeded = payment === "flow" || !!coupon;
   const emailVerifiedOk = emailOk && verifiedEmail !== "" && verifiedEmail === emailTrim.toLowerCase();
-  // Si ingresa email debe verificarlo; si no lo ingresa, solo es válido cuando no es obligatorio.
-  const emailReady = emailTrim === "" ? !emailNeeded : emailVerifiedOk;
+  // La verificación por código SOLO se exige cuando el email es obligatorio (Flow o
+  // cupón). Para el resto de métodos el correo es opcional (para el comprobante) y no
+  // requiere verificarse — así no molesta al recargar / volver del medio de pago.
+  const emailReady = emailNeeded ? emailVerifiedOk : true;
   const discount = coupon?.discount ?? 0;
   const finalTotal = Math.max(0, total - discount);
   const isOpen = tenant.openStatus.open;
@@ -293,11 +308,11 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
               </Field>
               <Field label={emailNeeded ? "Email *" : "Email"}>
                 <input value={email} onChange={(e) => onEmailChange(e.target.value)} inputMode="email" placeholder="tu@email.com"
-                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${emailVerifiedOk ? "border-green-400 bg-green-50" : "border-gray-200 focus:border-gray-400"}`} />
-                {emailVerifiedOk ? (
-                  <p className="text-xs text-green-600 font-semibold mt-1.5">✓ Email verificado</p>
-                ) : emailOk ? (
-                  otpSent ? (
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${emailNeeded && emailVerifiedOk ? "border-green-400 bg-green-50" : "border-gray-200 focus:border-gray-400"}`} />
+                {emailNeeded && emailOk ? (
+                  emailVerifiedOk ? (
+                    <p className="text-xs text-green-600 font-semibold mt-1.5">✓ Email verificado</p>
+                  ) : otpSent ? (
                     <div className="mt-2 flex flex-col gap-2">
                       <div className="flex gap-2">
                         <input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="Código de 6 dígitos" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm tracking-widest text-center outline-none focus:border-gray-400" />
