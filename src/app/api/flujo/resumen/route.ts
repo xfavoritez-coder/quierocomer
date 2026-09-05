@@ -55,8 +55,6 @@ export async function GET(req: NextRequest) {
   }
 
   // Modo global: breakdown por mes
-  const currentMonthKey = toMonthKey(new Date());
-
   const bankMovements = await prisma.bankMovement.findMany({
     where: { restaurantId, agentId: { in: agentIds }, status: { not: "RECONCILED" } },
     select: { date: true, debit: true },
@@ -78,8 +76,8 @@ export async function GET(req: NextRequest) {
     reportadoByMonth[k] = (reportadoByMonth[k] || 0) + e.amount;
   }
 
-  // Unir todos los meses con actividad + el mes actual siempre
-  const allMonths = new Set([...Object.keys(retiradoByMonth), ...Object.keys(reportadoByMonth), currentMonthKey]);
+  // Unir todos los meses con actividad
+  const allMonths = new Set([...Object.keys(retiradoByMonth), ...Object.keys(reportadoByMonth)]);
   const months = Array.from(allMonths)
     .sort()
     .map((k) => {

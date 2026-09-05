@@ -176,9 +176,9 @@ export default function FlujoPage() {
       </div>
 
       {/* Balance por mes */}
-      {resumen?.months && resumen.months.length > 0 && (
+      {resumen?.months && resumen.months.some(m => m.sinJustificar > 0) && (
         <div style={{ padding: "12px 20px 0", maxWidth: "480px", margin: "0 auto", display: "flex", flexDirection: "column", gap: 8 }}>
-          {resumen.months.map((m) => {
+          {resumen.months.filter(m => m.sinJustificar > 0).map((m) => {
             const hasPending = m.sinJustificar > 0;
             const monthLabel = new Date(m.month + "-15").toLocaleDateString("es-CL", { month: "long", year: "numeric" });
             return (
