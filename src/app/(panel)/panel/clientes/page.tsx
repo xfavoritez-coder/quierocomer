@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { maxVisibleClients, canAccess } from "@/lib/plans";
-import PlanGate from "@/components/admin/PlanGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
-import { Users, Download, Gift, Mail, Pencil, Trash2, X } from "lucide-react";
+import { Users, Download, Gift, Mail, Pencil, Trash2, X, Lock } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -272,24 +272,62 @@ export default function ClientesPage() {
             ))}
           </div>
 
-          {/* Locked clients */}
+          {/* Locked clients — filas borrosas + overlay */}
           {lockedClients.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <PlanGate plan={activePlan} feature="clients_full">
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {lockedClients.slice(0, 5).map(c => (
-                    <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+            <div style={{ marginTop: 8, position: "relative" }}>
+              {/* Filas fantasma con blur progresivo */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, pointerEvents: "none", userSelect: "none" }}>
+                {lockedClients.slice(0, 3).map((c, i) => {
+                  const blurPx = 4 + i * 3;
+                  const opacity = 0.55 - i * 0.13;
+                  return (
+                    <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, filter: `blur(${blurPx}px)`, opacity }}>
                       <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Mail size={18} color="var(--adm-text3)" />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0 }}>{c.name || "Cliente"}</p>
+                        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", margin: "0 0 3px" }}>{c.name || "Cliente"}</p>
                         <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{c.email}</span>
                       </div>
+                      <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{formatDate(c.registeredAt)}</span>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+
+              {/* Overlay central */}
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{
+                  background: "var(--adm-card)",
+                  border: `1.5px solid ${GOLD}40`,
+                  borderRadius: 16,
+                  padding: "16px 22px",
+                  textAlign: "center",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                  backdropFilter: "blur(8px)",
+                  maxWidth: 280,
+                  width: "90%",
+                }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${GOLD}18`, border: `1.5px solid ${GOLD}50`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+                    <Lock size={16} color={GOLD} />
+                  </div>
+                  <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
+                    {lockedClients.length} cliente{lockedClients.length !== 1 ? "s" : ""} más
+                  </p>
+                  <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.4 }}>
+                    Desbloquea todos tus clientes con un plan superior.
+                  </p>
+                  <Link href="/panel/planes" style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "9px 18px", borderRadius: 9,
+                    background: GOLD, color: "#1a1a1a",
+                    fontFamily: F, fontSize: "0.8rem", fontWeight: 800,
+                    textDecoration: "none",
+                  }}>
+                    Ver planes
+                  </Link>
                 </div>
-              </PlanGate>
+              </div>
             </div>
           )}
         </>
