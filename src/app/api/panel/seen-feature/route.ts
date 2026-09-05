@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const VALID = new Set(["loyalty", "valoraciones", "ordering"]);
+const VALID = new Set(["loyalty", "valoraciones", "ordering", "administracion"]);
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get("panel_token")?.value;

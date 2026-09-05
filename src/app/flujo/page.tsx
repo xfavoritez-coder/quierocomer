@@ -81,10 +81,6 @@ function buildCatGroups(categories: Category[], stats: CatStat[]) {
   return { topCats, restCats };
 }
 
-function currentMonth() {
-  const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`;
-}
 
 export default function FlujoPage() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
@@ -108,7 +104,7 @@ export default function FlujoPage() {
       .catch(() => {});
     fetch("/api/flujo/category-stats")
       .then(r => r.json()).then(setCatStats).catch(() => {});
-    fetch(`/api/flujo/resumen?restaurantId=${HORUS_ID}&month=${currentMonth()}`)
+    fetch(`/api/flujo/resumen?restaurantId=${HORUS_ID}`)
       .then(r => r.json()).then(setResumen).catch(() => {});
   }, []);
 
@@ -186,7 +182,7 @@ export default function FlujoPage() {
             borderRadius: 12, padding: "14px 16px",
           }}>
             <p style={{ fontFamily: F_DISPLAY, fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, margin: "0 0 10px" }}>
-              Este mes
+              Balance acumulado
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>

@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/flujo/resumen?restaurantId=X&month=YYYY-MM
-// Retorna cuánto retiró el agente del banco vs cuánto reportó en /flujo
+// Sin month → balance global acumulado (todos los movimientos sin justificar de cualquier mes)
+// Con month → datos solo del mes indicado
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
-  const monthParam = req.nextUrl.searchParams.get("month"); // "2026-08" opcional
+  const monthParam = req.nextUrl.searchParams.get("month"); // "2026-08" — si omite, retorna global
   if (!restaurantId) return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
 
-  const now = new Date();
-  const [y, m] = monthParam
-    ? monthParam.split("-").map(Number)
-    : [now.getFullYear(), now.getMonth() + 1];
-
-  const start = new Date(y, m - 1, 1);
-  const end = new Date(y, m, 1);
+  const dateFilter = monthParam
+    ? (() => {
+        const [y, m] = monthParam.split("-").map(Number);
+        return { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) };
+      })()
+    : undefined; // sin filtro de fecha → todos los meses
 
   // Agentes del restaurante
   const agents = await prisma.cashAgent.findMany({
@@ -31,18 +31,18 @@ export async function GET(req: NextRequest) {
     where: {
       restaurantId,
       agentId: { in: agentIds },
-      date: { gte: start, lt: end },
+      ...(dateFilter ? { date: dateFilter } : {}),
       status: { not: "RECONCILED" },
     },
     select: { agentId: true, debit: true },
   });
 
-  // Lo reportado en /flujo (FinancialEntry source FLUJO del mes — solo lo que Carlos registró)
+  // Lo reportado en /flujo (FinancialEntry source FLUJO — solo lo que el agente registró)
   const reported = await prisma.financialEntry.aggregate({
     where: {
       restaurantId,
       source: "FLUJO",
-      date: { gte: start, lt: end },
+      ...(dateFilter ? { date: dateFilter } : {}),
     },
     _sum: { amount: true },
   });
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   const totalReportado = reported._sum.amount || 0;
 
   return NextResponse.json({
-    month: `${y}-${String(m).padStart(2, "0")}`,
+    month: monthParam ?? "global",
     totalRetirado,
     totalReportado,
     sinJustificar: Math.max(0, totalRetirado - totalReportado),
