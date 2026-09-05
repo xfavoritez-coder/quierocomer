@@ -36,7 +36,8 @@ function catLabel(cat: Category) {
   return cat.icon ? `${cat.icon} ${cat.name}` : cat.name;
 }
 
-type Resumen = { totalRetirado: number; totalReportado: number; sinJustificar: number };
+type ResumenMes = { month: string; totalRetirado: number; totalReportado: number; sinJustificar: number };
+type Resumen = { month: string; months?: ResumenMes[]; totalSinJustificar?: number };
 
 const TOP_N = 10;
 
@@ -174,34 +175,40 @@ export default function FlujoPage() {
         )}
       </div>
 
-      {/* Banner de reconciliación con el banco */}
-      {resumen && resumen.totalRetirado > 0 && (
-        <div style={{ padding: "12px 20px 0", maxWidth: "480px", margin: "0 auto" }}>
-          <div style={{
-            background: "rgba(255,255,255,0.03)",
-            border: `1px solid ${resumen.sinJustificar > 0 ? "rgba(239,68,68,0.3)" : "rgba(34,197,94,0.25)"}`,
-            borderRadius: 12, padding: "14px 16px",
-          }}>
-            <p style={{ fontFamily: F_DISPLAY, fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, margin: "0 0 10px" }}>
-              Balance acumulado
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              <div>
-                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Retirado</p>
-                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: TEXT, margin: 0 }}>{formatCLP(resumen.totalRetirado)}</p>
-              </div>
-              <div>
-                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Reportado</p>
-                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: "#22c55e", margin: 0 }}>{formatCLP(resumen.totalReportado)}</p>
-              </div>
-              <div>
-                <p style={{ fontFamily: F_BODY, fontSize: "0.68rem", color: MUTED, margin: "0 0 2px" }}>Por justificar</p>
-                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: resumen.sinJustificar > 0 ? "#ef4444" : "#22c55e", margin: 0 }}>
-                  {resumen.sinJustificar > 0 ? formatCLP(resumen.sinJustificar) : "✓ Todo OK"}
+      {/* Balance por mes */}
+      {resumen?.months && resumen.months.length > 0 && (
+        <div style={{ padding: "12px 20px 0", maxWidth: "480px", margin: "0 auto", display: "flex", flexDirection: "column", gap: 8 }}>
+          {resumen.months.map((m) => {
+            const hasPending = m.sinJustificar > 0;
+            const monthLabel = new Date(m.month + "-15").toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+            return (
+              <div key={m.month} style={{
+                background: "rgba(255,255,255,0.03)",
+                border: `1px solid ${hasPending ? "rgba(239,68,68,0.3)" : "rgba(34,197,94,0.2)"}`,
+                borderRadius: 12, padding: "12px 16px",
+              }}>
+                <p style={{ fontFamily: F_DISPLAY, fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, margin: "0 0 8px" }}>
+                  {monthLabel}
                 </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div>
+                    <p style={{ fontFamily: F_BODY, fontSize: "0.63rem", color: MUTED, margin: "0 0 2px" }}>Retirado</p>
+                    <p style={{ fontFamily: F_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: TEXT, margin: 0 }}>{formatCLP(m.totalRetirado)}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: F_BODY, fontSize: "0.63rem", color: MUTED, margin: "0 0 2px" }}>Reportado</p>
+                    <p style={{ fontFamily: F_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: "#22c55e", margin: 0 }}>{formatCLP(m.totalReportado)}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: F_BODY, fontSize: "0.63rem", color: MUTED, margin: "0 0 2px" }}>Por justificar</p>
+                    <p style={{ fontFamily: F_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: hasPending ? "#ef4444" : "#22c55e", margin: 0 }}>
+                      {hasPending ? formatCLP(m.sinJustificar) : "✓ OK"}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       )}
 
