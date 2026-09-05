@@ -15,13 +15,17 @@ export async function POST(req: NextRequest) {
   const monto = parseInt(body.monto, 10);
   const comentario = (body.comentario ?? "").trim();
   const categoryId: string | null = body.categoryId || null;
+  // fecha en formato "YYYY-MM-DD"; si no viene o es inválida, usar hoy
+  const entryDate = body.fecha && /^\d{4}-\d{2}-\d{2}$/.test(body.fecha)
+    ? new Date(body.fecha + "T12:00:00")
+    : new Date();
 
   if (!monto || monto <= 0) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
   if (!categoryId) return NextResponse.json({ error: "Categoría requerida" }, { status: 400 });
 
   const [gasto] = await prisma.$queryRaw<{ id: string; monto: number; comentario: string; createdAt: Date }[]>`
     INSERT INTO "GastoFlujo" (id, monto, comentario, "createdAt")
-    VALUES (gen_random_uuid(), ${monto}, ${comentario}, NOW())
+    VALUES (gen_random_uuid(), ${monto}, ${comentario}, ${entryDate})
     RETURNING id, monto, comentario, "createdAt"
   `;
 
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
             categoryId,
             amount: monto,
             type: cat.type,
-            date: new Date(),
+            date: entryDate,
             description: comentario,
             source: "FLUJO",
           },

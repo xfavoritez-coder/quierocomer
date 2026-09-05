@@ -89,6 +89,7 @@ export default function FlujoPage() {
   const [monto, setMonto] = useState("");
   const [comentario, setComentario] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -122,7 +123,7 @@ export default function FlujoPage() {
       const res = await fetch("/api/flujo/gastos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ monto: montoNum, comentario: comentario.trim(), categoryId: categoryId || null }),
+        body: JSON.stringify({ monto: montoNum, comentario: comentario.trim(), categoryId: categoryId || null, fecha }),
       });
       if (!res.ok) { const d = await res.json(); setError(d.error ?? "Error"); setLoading(false); return; }
       const nuevo = await res.json();
@@ -133,7 +134,7 @@ export default function FlujoPage() {
         if (existing) return prev.map(s => s.categoryId === categoryId ? { ...s, uses: s.uses + 1 } : s);
         return [...prev, { categoryId, uses: 1 }];
       });
-      setMonto(""); setComentario(""); setCategoryId("");
+      setMonto(""); setComentario(""); setCategoryId(""); setFecha(new Date().toISOString().slice(0, 10));
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
       montoRef.current?.focus();
@@ -254,6 +255,25 @@ export default function FlujoPage() {
               </select>
             </div>
           )}
+
+          {/* Fecha */}
+          <div style={{ marginTop: 18 }}>
+            <label style={labelS}>
+              Fecha del gasto
+              {fecha.slice(0, 7) !== new Date().toISOString().slice(0, 7) && (
+                <span style={{ marginLeft: 8, fontSize: "0.6rem", color: ACCENT, fontWeight: 600, textTransform: "none", letterSpacing: 0 }}>
+                  ← cubriendo mes anterior
+                </span>
+              )}
+            </label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={e => setFecha(e.target.value)}
+              className="flujo-input"
+              style={{ ...selectS, colorScheme: "dark" }}
+            />
+          </div>
 
           {/* Detalle */}
           <label style={{ ...labelS, marginTop: "18px" }}>Detalle <span style={{ opacity: 0.45, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(opcional)</span></label>
