@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-type Gasto = { id: string; monto: number; comentario: string; createdAt: string };
+type Gasto = { id: string; monto: number; comentario: string; createdAt: string; categoryName?: string; categoryIcon?: string | null };
 type Category = { id: string; name: string; type: string; color: string | null; icon: string | null; position: number };
 type CatStat = { categoryId: string; uses: number };
 
@@ -333,7 +333,14 @@ function GastoRow({ gasto, onDelete, deleting }: { gasto: Gasto; onDelete: (id: 
     <div style={rowS}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: F_DISPLAY, fontSize: "1.05rem", color: ACCENT, margin: "0 0 3px", fontWeight: 700 }}>{formatCLP(gasto.monto)}</p>
-        <p style={{ fontFamily: F_BODY, fontSize: "0.85rem", color: TEXT, margin: "0 0 4px", lineHeight: 1.4, wordBreak: "break-word" }}>{gasto.comentario}</p>
+        {gasto.categoryName && (
+          <p style={{ fontFamily: F_BODY, fontSize: "0.75rem", color: MUTED, margin: "0 0 3px", fontWeight: 600 }}>
+            {gasto.categoryIcon ? `${gasto.categoryIcon} ${gasto.categoryName}` : gasto.categoryName}
+          </p>
+        )}
+        {gasto.comentario && (
+          <p style={{ fontFamily: F_BODY, fontSize: "0.85rem", color: TEXT, margin: "0 0 4px", lineHeight: 1.4, wordBreak: "break-word" }}>{gasto.comentario}</p>
+        )}
         <p style={{ fontFamily: F_BODY, fontSize: "0.72rem", color: MUTED, margin: 0, textTransform: "capitalize" }}>{formatFecha(gasto.createdAt)}</p>
       </div>
       <div style={{ marginLeft: "12px", flexShrink: 0 }}>
