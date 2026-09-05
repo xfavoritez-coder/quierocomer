@@ -58,11 +58,6 @@ const STEPS = [
   },
 ];
 
-const STATS = [
-  { value: "0", label: "Apps necesarias" },
-  { value: "2", label: "Wallets soportados" },
-  { value: "5min", label: "Para lanzar" },
-];
 
 function WalletMockup({ restaurantName }: { restaurantName?: string }) {
   const name = restaurantName || "Tu Restaurante";
@@ -161,15 +156,6 @@ export default function LoyaltyHowPage() {
             <p style={{ fontFamily: FB, fontSize: "0.87rem", color: "var(--adm-text2)", margin: "0 0 18px", lineHeight: 1.55 }}>
               Tarjetas de fidelidad digitales que viven en el teléfono del cliente. Configuras en minutos, funciona solo.
             </p>
-            {/* Stats */}
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              {STATS.map((s) => (
-                <div key={s.label} style={{ textAlign: "center", padding: "8px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-                  <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: GOLD, margin: "0 0 1px" }}>{s.value}</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.67rem", color: "var(--adm-text2)", margin: 0 }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Wallet mockup */}
