@@ -208,11 +208,11 @@ export default function TemaHuerto({ restaurant, sections, incluirFotos, qrDataU
           {/* Header */}
           <div className="huerto-header" style={{ position: "relative" }}>
             {qrDataUrl && (
-              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ padding: 5, background: "rgba(63,107,76,0.08)", borderRadius: 6, border: "2px solid #3f6b4c" }}>
-                  <img src={qrDataUrl} alt="QR" style={{ width: 60, height: 60, display: "block", borderRadius: 3 }} />
+              <div style={{ position: "absolute", top: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <div style={{ padding: 3, background: "rgba(63,107,76,0.08)", borderRadius: 4, border: "1px solid #3f6b4c" }}>
+                  <img src={qrDataUrl} alt="QR" style={{ width: 44, height: 44, display: "block", borderRadius: 2 }} />
                 </div>
-                <span style={{ fontSize: "6.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
+                <span style={{ fontSize: "5.5pt", color: "#3f6b4c", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Cormorant Garamond', serif", textAlign: "center" }}>Ver carta QR</span>
               </div>
             )}
             {restaurant.logoUrl && (
