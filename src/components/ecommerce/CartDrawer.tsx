@@ -13,9 +13,10 @@ interface Props {
   tenant: StoreTenant;
   primaryColor: string;
   onOpenDeliveryModal: () => void;
+  mobileOnly?: boolean; // true (default): se oculta en desktop (el base usa panel lateral)
 }
 
-export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal }: Props) {
+export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true }: Props) {
   const router = useRouter();
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
@@ -36,7 +37,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
   const belowMin = minReq != null && subtotal < minReq;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className={`fixed inset-0 z-50 ${mobileOnly ? "lg:hidden" : ""}`}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col">
         {/* Header */}
