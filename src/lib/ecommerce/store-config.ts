@@ -24,7 +24,10 @@ export interface EcommerceStoreConfig {
   waitTimePickup: string; // tiempo estimado de retiro (ej: "20-30")
   waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
   favoritesEnabled: boolean; // permitir que el cliente marque favoritos
+  theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
 }
+
+export type StoreTheme = EcommerceStoreConfig["theme"];
 
 interface Fallback {
   accent?: string | null;
@@ -59,6 +62,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     waitTimePickup: typeof o.waitTimePickup === "string" ? o.waitTimePickup : (fb.waitTime ?? ""),
     waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
     favoritesEnabled: o.favoritesEnabled === true,
+    theme: o.theme === "impact" ? "impact" : "base",
   };
 }
 

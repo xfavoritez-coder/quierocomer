@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { loadEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
+import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,8 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   const data = await loadEcommerceStorefront(slug);
   if (!data) return notFound();
 
+  if (data.tenant.theme === "impact") {
+    return <ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} />;
+  }
   return <StoreFront tenant={data.tenant} categories={data.categories} products={data.products} />;
 }

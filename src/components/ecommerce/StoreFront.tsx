@@ -556,7 +556,7 @@ function AddressMiniMap({ lat, lng, onMove }: { lat: number; lng: number; onMove
 }
 
 // ── Modal selección de entrega (retiro / delivery) ──────────────
-function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
+export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
   const distanceMode = tenant.deliveryConfig.mode === "distance";

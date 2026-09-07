@@ -186,6 +186,31 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Tema de la tienda */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Palette} title="Tema de la tienda" sub="El diseño con el que se ve tu tienda online." />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+              <ThemeOption
+                active={(cfg.theme ?? "base") === "base"}
+                onClick={() => patch({ theme: "base" })}
+                title="Base"
+                desc="Claro y limpio."
+                swatch={<div style={{ display: "flex", height: "100%" }}><div style={{ flex: 1, background: "#f7f7f8" }} /><div style={{ width: 26, background: cfg.primaryColor }} /></div>}
+                accent={cfg.primaryColor}
+              />
+              <ThemeOption
+                active={cfg.theme === "impact"}
+                onClick={() => patch({ theme: "impact" })}
+                title="Impact"
+                desc="Oscuro, con fotos y acento de marca."
+                swatch={<div style={{ display: "flex", height: "100%", background: "#111" }}><div style={{ flex: 1 }} /><div style={{ width: 26, background: cfg.primaryColor }} /></div>}
+                accent={cfg.primaryColor}
+              />
+            </div>
+          </section>
+          )}
+
           {/* Notificaciones de pedidos (dentro de Tienda) */}
           {tab === "tienda" && (
           <section style={card}>
@@ -363,6 +388,21 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         <input value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", padding: "7px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.82rem", outline: "none" }} />
       </div>
     </div>
+  );
+}
+
+function ThemeOption({ active, onClick, title, desc, swatch, accent }: { active: boolean; onClick: () => void; title: string; desc: string; swatch: React.ReactNode; accent: string }) {
+  return (
+    <button onClick={onClick} style={{ textAlign: "left", borderRadius: 12, overflow: "hidden", cursor: "pointer", padding: 0, background: "var(--adm-card)", border: `2px solid ${active ? accent : "var(--adm-card-border)"}` }}>
+      <div style={{ height: 64 }}>{swatch}</div>
+      <div style={{ padding: "8px 10px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)" }}>{title}</span>
+          {active && <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#fff", background: accent, borderRadius: 999, padding: "1px 7px" }}>Activo</span>}
+        </div>
+        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{desc}</p>
+      </div>
+    </button>
   );
 }
 
