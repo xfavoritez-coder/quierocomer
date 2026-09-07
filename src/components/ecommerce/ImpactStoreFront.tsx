@@ -236,9 +236,10 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             return (
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
-                border: on ? `1px solid color-mix(in srgb, ${accent} 14%, rgba(255,255,255,0.06))` : "1px solid rgba(255,255,255,0.05)",
-                background: on ? `color-mix(in srgb, ${accent} 8%, transparent)` : "transparent",
-                boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.12)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
+                backdropFilter: "blur(18px) saturate(185%) brightness(1.06)", WebkitBackdropFilter: "blur(18px) saturate(185%) brightness(1.06)",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.22))` : "1px solid rgba(255,255,255,0.18)",
+                background: on ? `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.12)",
+                boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.32), 0 5px 14px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.28), 0 5px 14px rgba(0,0,0,0.3)",
                 color: on ? "#fff" : "#eaeaea",
                 textShadow: "0 1px 6px rgba(0,0,0,0.5)",
               }}>{cat.name}</button>
@@ -271,10 +272,10 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           <button onClick={() => setCartOpen(true)} style={{
             pointerEvents: "auto", width: "auto", maxWidth: "94%", padding: "12px 28px", borderRadius: 999,
             display: "flex", justifyContent: "center", gap: 32, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
-            background: `color-mix(in srgb, ${accent} 10%, rgba(255,255,255,0.035))`,
-            backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
-            border: `1px solid color-mix(in srgb, ${accent} 16%, rgba(255,255,255,0.14))`,
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.30), 0 10px 28px color-mix(in srgb, ${accent} 28%, rgba(0,0,0,0.4))`,
+            background: `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))`,
+            backdropFilter: "blur(18px) saturate(185%) brightness(1.06)", WebkitBackdropFilter: "blur(18px) saturate(185%) brightness(1.06)",
+            border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.22))`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.32), 0 10px 28px color-mix(in srgb, ${accent} 30%, rgba(0,0,0,0.4))`,
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
