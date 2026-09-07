@@ -237,9 +237,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
                 backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
-                border: on ? `1px solid color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.16))` : "1px solid rgba(255,255,255,0.13)",
-                background: on ? `color-mix(in srgb, ${accent} 15%, transparent)` : "transparent",
-                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.30), 0 5px 16px color-mix(in srgb, ${accent} 28%, rgba(0,0,0,0.35))` : "inset 0 1px 0 rgba(255,255,255,0.22), 0 5px 14px rgba(0,0,0,0.30)",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 18%, rgba(255,255,255,0.11))` : "1px solid rgba(255,255,255,0.09)",
+                background: on ? `color-mix(in srgb, ${accent} 10%, transparent)` : "transparent",
+                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.21), 0 5px 14px color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.3))` : "inset 0 1px 0 rgba(255,255,255,0.15), 0 5px 12px rgba(0,0,0,0.25)",
                 color: on ? "#fff" : "#eaeaea",
               }}>{cat.name}</button>
             );
@@ -269,18 +269,18 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "12px 16px", paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))", background: "transparent", pointerEvents: "none", display: "flex", justifyContent: "center" }}>
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
           <button onClick={() => setCartOpen(true)} style={{
-            pointerEvents: "auto", width: "100%", maxWidth: 460, padding: "12px 18px", borderRadius: 999,
-            display: "flex", justifyContent: "center", gap: 42, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
-            background: `color-mix(in srgb, ${accent} 14%, rgba(255,255,255,0.05))`,
+            pointerEvents: "auto", width: "auto", maxWidth: "92%", padding: "10px 22px", borderRadius: 999,
+            display: "flex", justifyContent: "center", gap: 26, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
+            background: `color-mix(in srgb, ${accent} 10%, rgba(255,255,255,0.035))`,
             backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
-            border: `1px solid color-mix(in srgb, ${accent} 22%, rgba(255,255,255,0.18))`,
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.08), 0 12px 34px color-mix(in srgb, ${accent} 38%, rgba(0,0,0,0.45))`,
+            border: `1px solid color-mix(in srgb, ${accent} 16%, rgba(255,255,255,0.14))`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.30), 0 10px 28px color-mix(in srgb, ${accent} 28%, rgba(0,0,0,0.4))`,
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount}&nbsp;&nbsp;Ver carrito</span>
+              <span style={{ fontWeight: 800, fontSize: "0.85rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount}&nbsp;&nbsp;Ver carrito</span>
             </span>
-            <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
+            <span style={{ fontWeight: 800, fontSize: "0.85rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
           </button>
         </div>
       )}
