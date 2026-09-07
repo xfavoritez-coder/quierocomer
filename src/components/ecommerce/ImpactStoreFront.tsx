@@ -14,6 +14,8 @@ import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import ProductModal from "./ProductModal";
 import CartDrawer from "./CartDrawer";
 import CustomerMenu from "./CustomerMenu";
+import StoreStyles from "./StoreStyles";
+import ImpactSkin from "./ImpactSkin";
 import { DeliveryModal } from "./StoreFront";
 
 interface Props {
@@ -106,7 +108,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   const accentSoft = hexA(accent, 0.4);
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#0e0e0e", color: "#f0f0f0", fontFamily: BODY_SANS }}>
+    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", background: "#0e0e0e", color: "#f0f0f0", fontFamily: BODY_SANS }}>
+      <StoreStyles />
+      <ImpactSkin />
       <style>{`
         .imp-scroll::-webkit-scrollbar{display:none}
         .imp-wrap{max-width:660px;margin:0 auto;padding-left:14px;padding-right:14px}

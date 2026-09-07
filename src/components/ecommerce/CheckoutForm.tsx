@@ -19,6 +19,7 @@ type AppliedCoupon = {
 };
 import { storeFontVars, shortAddr } from "./StoreFront";
 import StoreStyles from "./StoreStyles";
+import ImpactSkin from "./ImpactSkin";
 import AccompanimentsSection from "./AccompanimentsSection";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 
@@ -33,6 +34,7 @@ const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?
 
 export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const primaryColor = tenant.primaryColor;
+  const impact = tenant.theme === "impact";
   useFavicon(tenant.logoUrl);
   const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
@@ -341,8 +343,9 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const onlineSel = payment ? PAY_META[payment]?.online : false;
 
   return (
-    <div className="qc-storefront min-h-screen bg-gray-50" style={storeFontVars}>
+    <div className={`qc-storefront min-h-screen ${impact ? "qc-impact" : "bg-gray-50"}`} style={impact ? { ...storeFontVars, background: "#0e0e0e" } : storeFontVars}>
       <StoreStyles />
+      {impact && <ImpactSkin />}
       <Toaster position="top-center" richColors />
 
       <header className="sticky top-0 z-40 bg-white shadow-sm">
