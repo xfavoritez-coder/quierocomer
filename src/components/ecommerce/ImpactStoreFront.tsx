@@ -41,6 +41,12 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Diagnóstico: /ecommerce/<slug>?nobanner=1 desactiva el carrusel de destacados
+  // para aislar si el parpadeo viene del banner.
+  const [noBanner, setNoBanner] = useState(false);
+  useEffect(() => {
+    try { setNoBanner(new URLSearchParams(window.location.search).has("nobanner")); } catch {}
+  }, []);
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
   const addItem = useCartStore((s) => s.addItem);
@@ -84,6 +90,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   }, [categories, byCategory, q]);
 
   const heroProducts = useMemo(() => {
+    if (noBanner) return [];
     // 1) Selección explícita del local (Catálogo → banner), respetando el orden.
     const ids = tenant.bannerProductIds ?? [];
     if (ids.length) {
@@ -95,7 +102,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
     const withImg = products.filter((p) => p.image_url && !p.is_sold_out);
     const hero = withImg.filter((p) => p.is_hero);
     return (hero.length ? hero : withImg).slice(0, 5);
-  }, [products, tenant.bannerProductIds]);
+  }, [products, tenant.bannerProductIds, noBanner]);
 
   const isOpen = tenant.openStatus.open;
 
@@ -147,13 +154,12 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
           <button onClick={() => setCartOpen(true)} aria-label="Carrito" style={{
             position: "relative", width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
-            background: mounted && itemCount > 0 ? `color-mix(in srgb, ${accent} 34%, rgba(255,255,255,0.06))` : "rgba(255,255,255,0.06)",
-            backdropFilter: "blur(14px) saturate(185%) brightness(1.08)", WebkitBackdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
-            border: mounted && itemCount > 0 ? `1px solid color-mix(in srgb, ${accent} 38%, rgba(255,255,255,0.22))` : "1px solid rgba(255,255,255,0.14)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.30), 0 4px 14px rgba(0,0,0,0.28)",
+            background: mounted && itemCount > 0 ? `color-mix(in srgb, ${accent} 55%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.12)",
+            border: mounted && itemCount > 0 ? `1px solid color-mix(in srgb, ${accent} 38%, rgba(255,255,255,0.24))` : "1px solid rgba(255,255,255,0.16)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.32), 0 2px 8px rgba(0,0,0,0.28)",
           }}>
             <ShoppingCart size={17} color="#fff" />
-            {mounted && itemCount > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "rgba(255,255,255,0.22)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)", color: "#fff", fontSize: "0.62rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>}
+            {mounted && itemCount > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "rgba(255,255,255,0.28)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)", color: "#fff", fontSize: "0.62rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>}
           </button>
         </div>
       </div>
@@ -260,11 +266,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
 const glassBtn: React.CSSProperties = {
   width: 40, height: 40, borderRadius: "50%",
-  border: "1px solid rgba(255,255,255,0.14)",
-  background: "rgba(255,255,255,0.06)",
-  backdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
-  WebkitBackdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 14px rgba(0,0,0,0.28)",
+  border: "1px solid rgba(255,255,255,0.16)",
+  background: "rgba(255,255,255,0.12)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.30), 0 2px 8px rgba(0,0,0,0.28)",
   display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
 };
 
@@ -318,10 +322,9 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
           </div>
           <button onClick={(e) => { e.stopPropagation(); if (hasOpts) onSelect(d); else onAdd(d); }} style={{
             width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.10))`,
-            backdropFilter: "blur(12px) saturate(185%) brightness(1.1)", WebkitBackdropFilter: "blur(12px) saturate(185%) brightness(1.1)",
-            border: `1px solid color-mix(in srgb, ${accent} 28%, rgba(255,255,255,0.28))`,
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 18px color-mix(in srgb, ${accent} 32%, rgba(0,0,0,0.4))`,
+            background: `color-mix(in srgb, ${accent} 62%, rgba(0,0,0,0.25))`,
+            border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.30))`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 18px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.45))`,
           }}>
             <Plus size={20} color="#fff" />
           </button>
@@ -398,10 +401,9 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
         <span role="button" onClick={hasOpts ? undefined : onAdd} style={{
           position: "absolute", bottom: 10, right: 10, width: 33, height: 33, borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasOpts ? "none" : "auto",
-          background: `color-mix(in srgb, ${accent} 28%, rgba(255,255,255,0.10))`,
-          backdropFilter: "blur(10px) saturate(185%) brightness(1.1)", WebkitBackdropFilter: "blur(10px) saturate(185%) brightness(1.1)",
-          border: `1px solid color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.26))`,
-          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.40), 0 4px 14px color-mix(in srgb, ${accent} 30%, rgba(0,0,0,0.35))`,
+          background: `color-mix(in srgb, ${accent} 60%, rgba(255,255,255,0.14))`,
+          border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.30))`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 4px 12px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.4))`,
         }}>
           <Plus size={16} color="#fff" />
         </span>
