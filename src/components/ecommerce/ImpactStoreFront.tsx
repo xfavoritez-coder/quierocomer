@@ -373,7 +373,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
             width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
             background: "transparent", border: "none", padding: 0,
           }}>
-            <Plus size={32} color={accent} strokeWidth={3.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.75))" }} />
+            <Plus size={32} color="#fff" strokeWidth={4.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
           </button>
         </div>
         {heroProducts.length > 1 && (
@@ -448,7 +448,7 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
           position: "absolute", bottom: 6, right: 8, width: 34, height: 34,
           display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasOpts ? "none" : "auto",
         }}>
-          <Plus size={26} color={accent} strokeWidth={3.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.75))" }} />
+          <Plus size={26} color="#fff" strokeWidth={4.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
         </span>
       )}
     </button>
