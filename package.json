@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:webpack": "next dev --webpack",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && rm -rf .next/dev/types .next/types && next build",
     "build": "prisma generate && next build",
