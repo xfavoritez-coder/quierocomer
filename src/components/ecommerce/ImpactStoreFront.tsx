@@ -127,7 +127,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   } as React.CSSProperties;
 
   return (
-    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", background: "var(--carta-bg)", color: "var(--carta-text)", position: "relative", ...themeVars }}>
+    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", color: "var(--carta-text)", position: "relative", background: `radial-gradient(120% 420px at 72% 0%, color-mix(in srgb, ${accent} 26%, transparent), transparent 60%), radial-gradient(90% 340px at 6% 6%, color-mix(in srgb, ${accent} 12%, transparent), transparent 55%), #0e0e0e`, backgroundRepeat: "no-repeat", ...themeVars }}>
       <StoreStyles />
       <ImpactSkin />
       <style>{`
@@ -137,13 +137,8 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
       `}</style>
 
-      {/* ── Fondo ambiental difuminado (capas fijas aisladas en GPU para no
-             parpadear al hacer scroll en Android) ── */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, transform: "translateZ(0)", willChange: "transform", backfaceVisibility: "hidden", background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} 28%, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} 15%, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", transform: "translateZ(0)", backfaceVisibility: "hidden", opacity: 0.18, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
-
       {/* ── Header glass ── */}
-      <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(3,3,3,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", willChange: "transform" }}>
+      <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "#131313", borderBottom: "1px solid var(--carta-border)" }}>
         <div className="imp-menu-grid" style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(10px + env(safe-area-inset-top)) 16px 10px" }}>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={glassBtn}><MenuIcon size={18} color="#eaeaea" /></button>
           {tenant.logoUrl
@@ -194,7 +189,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Chips de categorías (sticky bajo el header al hacer scroll) ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "8px 14px 8px", scrollbarWidth: "none", background: "rgba(14,14,14,0.92)", borderBottom: "1px solid rgba(255,255,255,0.06)", transform: "translateZ(0)" }}>
+        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "8px 14px 8px", scrollbarWidth: "none", background: "#0e0e0e", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
@@ -228,7 +223,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Barra de carrito glass ── */}
       {mounted && itemCount > 0 && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "10px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: "rgba(3,3,3,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "10px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: "#131313", borderTop: "1px solid var(--carta-border)" }}>
           <button onClick={() => setCartOpen(true)} style={{ width: "100%", maxWidth: 520, margin: "0 auto", padding: "14px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, rgba(3,3,3,0.75))`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
@@ -242,7 +237,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
-      {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} />}
+      {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" />}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} tenant={tenant} primaryColor={accent} mobileOnly={false} onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }} />
     </div>
   );

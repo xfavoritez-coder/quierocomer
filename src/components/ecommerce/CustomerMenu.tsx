@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Acep
 
 type View = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
 
-export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right" }) {
   const [view, setView] = useState<View>("root");
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -36,9 +36,9 @@ export default function CustomerMenu({ tenant, primaryColor, onClose }: { tenant
   const go = (v: View) => { if (needsLogin(v)) { setLoginExpanded(true); return; } setView(v); };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className={`fixed inset-0 z-50 flex ${side === "left" ? "justify-start" : "justify-end"}`}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-gray-50 w-full max-w-sm h-full shadow-2xl flex flex-col">
+      <div className="relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
           {view !== "root" ? (
