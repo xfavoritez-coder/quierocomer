@@ -1,12 +1,14 @@
 "use client";
 // ═══════════════════════════════════════════════════════════
-//  Tema "Impact" del storefront del Ecommerce — diseño oscuro
-//  (liquid glass) portado del tema impact de /pedir. Responsive
-//  (mobile + desktop). Reutiliza el cart-store y los flujos
-//  (ProductModal, CartDrawer, DeliveryModal, CustomerMenu).
+//  Tema "Impact" del storefront del Ecommerce — calco fiel del
+//  tema impact de /pedir (OrderMenuPage): fondo ambiental
+//  difuminado, header glass, banner de destacados, tiles de
+//  categorías, tarjetas glass y botones "+" con glow. Reutiliza
+//  el cart-store y los flujos (ProductModal, CartDrawer,
+//  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, Heart } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -24,8 +26,8 @@ interface Props {
   products: StoreProduct[];
 }
 
-const BODY_SANS = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const DISPLAY_SERIF = "Georgia, 'Times New Roman', serif";
+const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 
 export default function ImpactStoreFront({ tenant, categories, products }: Props) {
   const accent = tenant.primaryColor;
@@ -35,12 +37,10 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   const [cartOpen, setCartOpen] = useState(false);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [activeCat, setActiveCat] = useState<string>("");
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [bump, setBump] = useState(false);
-  const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
   const addItem = useCartStore((s) => s.addItem);
@@ -53,21 +53,6 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
 
-  useEffect(() => {
-    if (!tenant.favoritesEnabled) return;
-    fetch("/api/qr/favorites").then((r) => (r.ok ? r.json() : null)).then((d) => {
-      if (Array.isArray(d?.dishIds)) setFavIds(new Set(d.dishIds));
-    }).catch(() => {});
-  }, [tenant.favoritesEnabled]);
-  const toggleFav = useCallback((dishId: string) => {
-    setFavIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(dishId)) { next.delete(dishId); fetch(`/api/qr/favorites?dishId=${encodeURIComponent(dishId)}`, { method: "DELETE" }).catch(() => {}); }
-      else { next.add(dishId); fetch("/api/qr/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishId, restaurantId: tenant.id }) }).catch(() => {}); }
-      return next;
-    });
-  }, [tenant.id]);
-
   const byCategory = useMemo(() => {
     const m = new Map<string, StoreProduct[]>();
     for (const p of products) { const arr = m.get(p.category_id) ?? []; arr.push(p); m.set(p.category_id, arr); }
@@ -75,28 +60,34 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   }, [products]);
 
   const q = search.trim().toLowerCase();
-  const visibleCats = useMemo(() => {
+  const grouped = useMemo(() => {
     return categories
       .map((c) => {
         let items = byCategory.get(c.id) ?? [];
-        if (activeCat && c.id !== activeCat) items = [];
         if (q) items = items.filter((p) => p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q));
         return { cat: c, items };
       })
       .filter((g) => g.items.length > 0);
-  }, [categories, byCategory, activeCat, q]);
+  }, [categories, byCategory, q]);
+
+  const heroProducts = useMemo(() => {
+    const withImg = products.filter((p) => p.image_url && !p.is_sold_out);
+    const hero = withImg.filter((p) => p.is_hero);
+    return (hero.length ? hero : withImg).slice(0, 5);
+  }, [products]);
 
   const isOpen = tenant.openStatus.open;
 
-  function pulseBump() { setBump(true); setTimeout(() => setBump(false), 250); }
-
-  function onCardClick(p: StoreProduct) { if (!p.is_sold_out) setSelectedProduct(p); }
-  function quickAdd(e: React.MouseEvent, p: StoreProduct) {
-    e.stopPropagation();
+  const openProduct = useCallback((p: StoreProduct) => { if (!p.is_sold_out) setSelectedProduct(p); }, []);
+  const directAdd = useCallback((p: StoreProduct) => {
     if (p.is_sold_out || !isOpen) return;
     if (p.option_groups && p.option_groups.length > 0) { setSelectedProduct(p); return; }
     addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, options: [] });
-    pulseBump();
+  }, [addItem, isOpen]);
+
+  function scrollToCategory(id: string) {
+    setActiveCat(id);
+    document.getElementById(`impact-cat-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   const deliveryLabel = !mounted
@@ -105,135 +96,129 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       ? (deliveryType === "delivery" ? (deliveryAddress?.address ? `Entrega · ${deliveryAddress.address.split(",")[0]}` : "Delivery") : "Retiro en el local")
       : "Elige entrega o retiro";
 
-  const accentSoft = hexA(accent, 0.4);
+  // Tokens oscuros del tema impact (idénticos a OrderMenuPage dark).
+  const themeVars = {
+    "--carta-bg": "#0e0e0e", "--carta-surface": "#1a1a1a",
+    "--carta-text": "#f0f0f0", "--carta-text2": "#aaa", "--carta-text3": "#555",
+    "--carta-border": "#262626", "--carta-accent": accent,
+    "--carta-plus-icon": "#fff", "--carta-btn-text": "#fff",
+    fontFamily: FB,
+  } as React.CSSProperties;
 
   return (
-    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", background: "#0e0e0e", color: "#f0f0f0", fontFamily: BODY_SANS }}>
+    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", background: "var(--carta-bg)", color: "var(--carta-text)", position: "relative", ...themeVars }}>
       <StoreStyles />
       <ImpactSkin />
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
         .imp-scroll::-webkit-scrollbar{display:none}
-        .imp-wrap{max-width:660px;margin:0 auto;padding-left:14px;padding-right:14px}
-        @media(min-width:980px){.imp-wrap{max-width:1120px;padding-left:28px;padding-right:28px}}
-        .imp-grid{display:flex;flex-direction:column;gap:12px}
-        @media(min-width:620px){.imp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
-        @media(min-width:1024px){.imp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-        .imp-card{transition:border-color .15s, transform .12s, box-shadow .15s}
-        .imp-card:hover{transform:translateY(-3px);border-color:${accentSoft};box-shadow:0 10px 30px rgba(0,0,0,.45)}
-        .imp-hero{height:230px}
-        @media(min-width:980px){.imp-hero{height:300px}}
-        .imp-catbar{width:34px;height:3px;border-radius:2px;background:${accent};margin-bottom:12px}
-        @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
-        .imp-bump{animation:imp-bump .25s ease}
-        .imp-addbtn:hover{transform:scale(1.12)}
+        .imp-menu-grid{max-width:1200px;margin:0 auto}
+        @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
       `}</style>
 
-      {/* ── HERO ── */}
-      <div className="imp-hero" style={{ position: "relative", width: "100%", overflow: "hidden", background: `linear-gradient(135deg, #1a0000 0%, #201014 42%, #141414 100%)` }}>
-        <div style={{ position: "absolute", top: -70, left: "50%", transform: "translateX(-50%)", width: 420, height: 260, background: `radial-gradient(ellipse, ${hexA(accent, 0.32)} 0%, transparent 70%)`, pointerEvents: "none" }} />
-        {tenant.bannerUrl && (
-          <img src={tenant.bannerUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.32 }} />
-        )}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(14,14,14,0.85) 100%)" }} />
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "0 20px" }}>
-          {tenant.logoUrl && (
-            <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 78, height: 78, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.92)", boxShadow: "0 6px 24px rgba(0,0,0,0.55)" }} />
-          )}
-          <div style={{ fontFamily: DISPLAY_SERIF, fontSize: "1.6rem", fontWeight: 700, color: "#fff", textAlign: "center", textShadow: "0 2px 14px rgba(0,0,0,0.65)", letterSpacing: "0.01em" }}>{tenant.name}</div>
-          {(tenant.waitTimeDelivery || tenant.waitTimePickup) && (
-            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.78)", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 999, padding: "4px 12px" }}>⏱ {tenant.waitTimeDelivery || tenant.waitTimePickup} min</div>
-          )}
-        </div>
-      </div>
+      {/* ── Fondo ambiental difuminado ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} 28%, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} 15%, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.22, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.5, background: `radial-gradient(ellipse at 50% 8%, color-mix(in srgb, ${accent} 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, ${accent} 10%, transparent), transparent 28%)`, filter: "blur(10px)" }} />
 
-      {/* ── STICKY HEADER ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(14,14,14,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="imp-wrap" style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px" }}>
-          <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={iconBtn}><MenuIcon style={{ width: 18, height: 18 }} /></button>
-          {tenant.logoUrl && <img src={tenant.logoUrl} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "1.5px solid rgba(255,255,255,0.15)" }} />}
-          <div style={{ flex: 1, minWidth: 0, fontSize: "0.95rem", fontWeight: 800, color: "#f0f0f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</div>
-          <button onClick={() => { setSearchOpen((o) => !o); if (searchOpen) setSearch(""); }} aria-label="Buscar" style={iconBtn}>
-            {searchOpen ? <X style={{ width: 18, height: 18 }} /> : <Search style={{ width: 18, height: 18 }} />}
-          </button>
-          <button onClick={() => setCartOpen(true)} aria-label="Carrito" className={bump ? "imp-bump" : ""}
-            style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: mounted && itemCount > 0 ? accent : "#222", color: "#fff" }}>
-            <ShoppingCart style={{ width: 18, height: 18 }} />
-            {mounted && itemCount > 0 && (
-              <span style={{ position: "absolute", top: -3, right: -3, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "#fff", color: accent, fontSize: "0.62rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
-            )}
+      {/* ── Header glass ── */}
+      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(3,3,3,0.32)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--carta-border)" }}>
+        <div className="imp-menu-grid" style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(10px + env(safe-area-inset-top)) 16px 10px" }}>
+          <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={glassBtn}><MenuIcon size={18} color="#eaeaea" /></button>
+          {tenant.logoUrl
+            ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
+            : <div style={{ width: 36, height: 36, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontWeight: 800, color: "#0e0e0e" }}>{tenant.name.charAt(0).toUpperCase()}</div>}
+          <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
+          <button onClick={() => setCartOpen(true)} aria-label="Carrito" style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.13)", background: mounted && itemCount > 0 ? accent : "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
+            <ShoppingCart size={17} color={mounted && itemCount > 0 ? "#fff" : "#aaa"} />
+            {mounted && itemCount > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 17, height: 17, padding: "0 4px", borderRadius: 999, background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>}
           </button>
         </div>
-
-        {searchOpen ? (
-          <div className="imp-wrap" style={{ paddingBottom: 10 }}>
-            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar productos…"
-              style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: "16px", outline: "none" }} />
-          </div>
-        ) : (
-          <div className="imp-scroll imp-wrap" style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none" }}>
-            <Pill label="Todo" active={activeCat === null} accent={accent} onClick={() => setActiveCat(null)} />
-            {categories.map((c) => (
-              <Pill key={c.id} label={c.name} active={activeCat === c.id} accent={accent} onClick={() => setActiveCat(c.id)} />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Selector de entrega ── */}
-      <div className="imp-wrap" style={{ paddingTop: 12 }}>
-        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "11px 13px", color: "#f0f0f0", cursor: "pointer", textAlign: "left" }}>
-          <MapPin style={{ width: 16, height: 16, color: accent, flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, fontSize: "0.84rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
-          <span style={{ fontSize: "0.74rem", color: accent, fontWeight: 800 }}>Cambiar</span>
+      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
+        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 14, padding: "12px 14px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
+          <MapPin size={16} color={accent} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0, fontSize: "0.86rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
+          <span style={{ fontSize: "0.76rem", color: accent, fontWeight: 800 }}>Cambiar</span>
         </button>
       </div>
 
-      {/* ── Banner cerrado ── */}
-      {!isOpen && (
-        <div className="imp-wrap" style={{ paddingTop: 10 }}>
-          <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 12px", fontSize: "0.82rem", color: "#ddd", textAlign: "center" }}>
-            🔒 Estamos cerrados ahora{tenant.openStatus.opensAt ? ` · abrimos a las ${tenant.openStatus.opensAt}` : ""}
-          </div>
+      {/* ── Banner de destacados ── */}
+      {heroProducts.length > 0 && (
+        <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, paddingTop: 14 }}>
+          <ImpactHero heroProducts={heroProducts} accent={accent} onSelect={openProduct} onAdd={directAdd} />
         </div>
       )}
 
-      {/* ── DISHES ── */}
-      <div className="imp-wrap" style={{ padding: `8px 14px ${mounted && itemCount > 0 ? 120 : 48}px` }}>
-        {visibleCats.map((g) => (
-          <div key={g.cat.id} style={{ marginTop: 22 }}>
-            <div className="imp-catbar" />
-            <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#fff", letterSpacing: "0.01em", margin: "0 0 12px" }}>{g.cat.name}</h2>
-            <div className="imp-grid">
-              {g.items.map((p) => (
-                <ImpactCard key={p.id} product={p} accent={accent} soldOut={p.is_sold_out}
-                  showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)}
-                  onClick={() => onCardClick(p)} onAdd={(e) => quickAdd(e, p)} />
-              ))}
-            </div>
+      {/* ── Categorías (tiles) ── */}
+      {grouped.length >= 3 && (
+        <CategoriesSection grouped={grouped} accent={accent} activeId={activeCat} onTap={scrollToCategory} />
+      )}
+
+      {/* ── Título MENÚ + búsqueda ── */}
+      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "22px 14px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <h2 style={{ fontFamily: DISPLAY, fontSize: 24, letterSpacing: "0.8px", margin: 0, lineHeight: 0.9, color: "rgba(255,255,255,0.55)", flex: searchOpen ? "0 0 0" : 1, overflow: "hidden", opacity: searchOpen ? 0 : 1, transition: "flex .22s ease, opacity .15s ease", whiteSpace: "nowrap" }}>MENÚ</h2>
+        <div style={{ flex: searchOpen ? 1 : "0 0 0", overflow: "hidden", opacity: searchOpen ? 1 : 0, transition: "flex .22s ease, opacity .18s ease", display: "flex", alignItems: "center", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 38, background: "rgba(255,255,255,0.1)", borderRadius: 999, padding: "0 12px", border: "1px solid rgba(255,255,255,0.18)", width: "100%" }}>
+            <Search size={14} color="rgba(255,255,255,0.5)" style={{ flexShrink: 0 }} />
+            <input id="imp-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "#fff", background: "transparent", minWidth: 0 }} />
           </div>
-        ))}
-        {visibleCats.length === 0 && (
-          <div style={{ textAlign: "center", padding: "70px 20px", color: "#666" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: 8 }}>🔍</div>
-            <div style={{ fontSize: "0.9rem" }}>No encontramos productos</div>
-          </div>
-        )}
+        </div>
+        <button onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); setTimeout(() => document.getElementById("imp-search")?.focus(), 250); } }} style={{ ...glassBtn, width: 38, height: 38 }}>
+          {searchOpen ? <X size={16} color="#fff" /> : <Search size={16} color="#fff" />}
+        </button>
       </div>
 
-      {/* ── STICKY CART BAR ── */}
+      {/* ── Chips de categorías ── */}
+      {!searchOpen && grouped.length > 0 && (
+        <div className="imp-scroll imp-menu-grid" style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, overflowX: "auto", padding: "0 14px 6px", scrollbarWidth: "none" }}>
+          {grouped.map(({ cat }) => {
+            const on = cat.id === activeCat;
+            return (
+              <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
+                whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
+                border: on ? `1px solid color-mix(in srgb, ${accent} 55%, transparent)` : "1px solid rgba(255,255,255,0.13)",
+                background: on ? `color-mix(in srgb, ${accent} 12%, transparent)` : "rgba(255,255,255,0.055)",
+                color: on ? "#fff" : "#888",
+              }}>{cat.name}</button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Platos (cards glass) ── */}
+      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: `4px 14px ${mounted && itemCount > 0 ? 120 : 48}px` }}>
+        {grouped.length === 0 ? (
+          <div style={{ padding: "64px 20px", textAlign: "center", color: "#888" }}>
+            <div style={{ fontSize: "2.2rem", marginBottom: 10 }}>🔍</div>
+            <p style={{ fontSize: "0.95rem" }}>No encontramos productos{q ? ` para “${search}”` : ""}</p>
+          </div>
+        ) : grouped.map((g) => (
+          <div key={g.cat.id} id={`impact-cat-${g.cat.id}`} style={{ marginBottom: 18, scrollMarginTop: 84 }}>
+            <h3 style={{ fontFamily: DISPLAY, fontSize: 22, color: "rgba(255,255,255,0.6)", margin: "30px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{g.cat.name}</h3>
+            {g.items.map((p) => (
+              <ImpactCard key={p.id} product={p} accent={accent} onClick={() => openProduct(p)} onAdd={(e) => { e.stopPropagation(); directAdd(p); }} />
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Barra de carrito glass ── */}
       {mounted && itemCount > 0 && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "10px 16px calc(16px + env(safe-area-inset-bottom))", background: "rgba(14,14,14,0.97)", borderTop: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", maxWidth: 560, margin: "0 auto", padding: "15px 20px", borderRadius: 14, border: "none", background: accent, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 4px 22px ${hexA(accent, 0.4)}`, fontFamily: BODY_SANS }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "10px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: "rgba(3,3,3,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid var(--carta-border)" }}>
+          <button onClick={() => setCartOpen(true)} style={{ width: "100%", maxWidth: 520, margin: "0 auto", padding: "14px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, rgba(3,3,3,0.75))`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 25, height: 25, borderRadius: "50%", background: "rgba(0,0,0,0.28)", fontSize: "0.8rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
-              <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>Ver carrito</span>
+              <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
+              <span style={{ fontWeight: 700, fontSize: "0.92rem" }}>Ver carrito</span>
             </span>
-            <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>{clp(subtotal)}</span>
+            <span style={{ fontWeight: 700, fontSize: "0.92rem" }}>{clp(subtotal)}</span>
           </button>
         </div>
       )}
 
-      {/* ── Sub-componentes de flujo (reutilizados) ── */}
+      {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} />}
@@ -242,79 +227,136 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   );
 }
 
-const iconBtn: React.CSSProperties = {
-  width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)",
-  background: "rgba(255,255,255,0.06)", color: "#f0f0f0", display: "flex", alignItems: "center",
-  justifyContent: "center", cursor: "pointer", flexShrink: 0,
+const glassBtn: React.CSSProperties = {
+  width: 40, height: 40, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.13)",
+  background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
 };
 
-function Pill({ label, active, accent, onClick }: { label: string; active: boolean; accent: string; onClick: () => void }) {
+// ── Banner de destacados (carrusel) ──
+function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
+  heroProducts: StoreProduct[]; accent: string; onSelect: (p: StoreProduct) => void; onAdd: (p: StoreProduct) => void;
+}) {
+  const [current, setCurrent] = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const touchX = useRef(0);
+  const wasSwipe = useRef(false);
+  const reset = useCallback(() => {
+    if (timer.current) clearInterval(timer.current);
+    timer.current = setInterval(() => setCurrent((c) => (c + 1) % heroProducts.length), 5000);
+  }, [heroProducts.length]);
+  useEffect(() => { if (heroProducts.length <= 1) return; reset(); return () => { if (timer.current) clearInterval(timer.current); }; }, [heroProducts.length, reset]);
+
+  const d = heroProducts[current];
+  if (!d) return null;
+  const discountPct = d.original_price && d.original_price > d.price ? Math.round(((d.original_price - d.price) / d.original_price) * 100) : 0;
+  const hasOpts = (d.option_groups?.length ?? 0) > 0;
+
   return (
-    <button onClick={onClick} style={{
-      flexShrink: 0, padding: "7px 16px", borderRadius: 999, cursor: "pointer",
-      fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap",
-      border: `1.5px solid ${active ? accent : "rgba(255,255,255,0.12)"}`,
-      background: active ? accent : "transparent", color: active ? "#fff" : "#9a9a9a",
-    }}>{label}</button>
+    <section
+      style={{ minHeight: "52vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "72px 20px 16px", borderRadius: 28, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
+      onClick={() => { if (!wasSwipe.current) onSelect(d); wasSwipe.current = false; }}
+      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; wasSwipe.current = false; }}
+      onTouchEnd={(e) => { const diff = e.changedTouches[0].clientX - touchX.current; if (Math.abs(diff) > 50) { wasSwipe.current = true; setCurrent((c) => diff < 0 ? (c + 1) % heroProducts.length : (c - 1 + heroProducts.length) % heroProducts.length); reset(); } }}
+    >
+      {heroProducts.map((p, i) => (
+        <div key={p.id} style={{ position: "absolute", inset: 0, zIndex: 1, opacity: i === current ? 1 : 0, transition: "opacity .8s ease" }}>
+          {p.image_url
+            ? <img src={p.image_url} alt={p.name} loading={i === 0 ? "eager" : "lazy"} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            : <div style={{ position: "absolute", inset: 0, background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 18%, #1a1a2e), color-mix(in srgb, ${accent} 6%, #0f3460))` }} />}
+        </div>
+      ))}
+      <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3, background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)" }} />
+      <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4 }}>
+        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 56, lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
+          {d.name.split(" ").map((w, i, arr) => i === arr.length - 1
+            ? <span key={i} style={{ display: "inline-block", color: accent, fontWeight: 900, textShadow: `0 0 20px color-mix(in srgb, ${accent} 50%, transparent)` }}>{w}</span>
+            : <span key={i}>{w} </span>)}
+        </h1>
+        {d.description && <p style={{ maxWidth: 320, margin: "14px 0 16px", color: "#b0a89e", fontSize: 15, lineHeight: 1.5, textShadow: "0 1px 8px rgba(0,0,0,0.6)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{d.description}</p>}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {discountPct > 0 && <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", background: accent, padding: "4px 11px", borderRadius: 50 }}>-{discountPct}%</span>}
+            <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{clp(d.price)}</span>
+            {discountPct > 0 && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{clp(d.original_price!)}</span>}
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); if (hasOpts) onSelect(d); else onAdd(d); }} style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)`, flexShrink: 0 }}>
+            <Plus size={20} color="#fff" />
+          </button>
+        </div>
+        {heroProducts.length > 1 && (
+          <div style={{ display: "flex", gap: 7, marginTop: 17 }}>
+            {heroProducts.map((_, i) => (
+              <button key={i} onClick={(e) => { e.stopPropagation(); setCurrent(i); reset(); }} style={{ width: i === current ? 22 : 7, height: 7, borderRadius: 50, background: i === current ? accent : "rgba(255,255,255,0.38)", border: "none", cursor: "pointer", transition: "all .3s ease", padding: 0 }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
-function ImpactCard({ product, accent, soldOut, showFav, isFav, onToggleFav, onClick, onAdd }: {
-  product: StoreProduct; accent: string; soldOut: boolean;
-  showFav?: boolean; isFav?: boolean; onToggleFav?: () => void;
-  onClick: () => void; onAdd: (e: React.MouseEvent) => void;
+// ── Tiles de categorías ──
+function CategoriesSection({ grouped, accent, activeId, onTap }: {
+  grouped: { cat: StoreCategory; items: StoreProduct[] }[]; accent: string; activeId: string; onTap: (id: string) => void;
 }) {
   return (
-    <div onClick={soldOut ? undefined : onClick} className="imp-card" style={{
-      background: "#1a1a1a", borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)",
-      display: "flex", alignItems: "stretch", overflow: "hidden", minHeight: 120,
-      cursor: soldOut ? "not-allowed" : "pointer", opacity: soldOut ? 0.55 : 1,
-    }}>
-      <div style={{ flex: 1, padding: "15px 10px 15px 15px", display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0 }}>
-        <div>
-          <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "#f5f5f5", lineHeight: 1.3, marginBottom: 5 }}>{product.name}</div>
-          {product.description && (
-            <div style={{ fontSize: "0.72rem", color: "#8a8a8a", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{product.description}</div>
-          )}
-        </div>
-        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          {soldOut ? (
-            <span style={{ fontSize: "0.72rem", fontWeight: 800, textTransform: "uppercase", color: "#888" }}>Agotado</span>
-          ) : product.original_price ? (
-            <>
-              <span style={{ fontSize: "0.95rem", fontWeight: 800, color: accent }}>{clp(product.price)}</span>
-              <span style={{ fontSize: "0.8rem", color: "#666", textDecoration: "line-through" }}>{clp(product.original_price)}</span>
-            </>
-          ) : (
-            <span style={{ fontSize: "0.95rem", fontWeight: 800, color: accent }}>{clp(product.price)}</span>
-          )}
-        </div>
+    <section className="imp-menu-grid" style={{ padding: "24px 14px 0", position: "relative", zIndex: 1 }}>
+      <h2 style={{ fontFamily: DISPLAY, fontSize: 22, letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9, color: "rgba(255,255,255,0.55)" }}>CATEGORÍAS</h2>
+      <div className="imp-scroll" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "4px 0 16px", scrollbarWidth: "none" }}>
+        {grouped.map(({ cat, items }) => {
+          const photo = items.find((p) => p.image_url)?.image_url ?? null;
+          const on = cat.id === activeId;
+          return (
+            <button key={cat.id} onClick={() => onTap(cat.id)} style={{ width: 128, minWidth: 128, height: 148, borderRadius: 28, position: "relative", overflow: "hidden", padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer", flexShrink: 0, background: "var(--carta-surface)", border: on ? `1px solid color-mix(in srgb, ${accent} 90%, transparent)` : "1px solid rgba(255,255,255,0.14)", boxShadow: on ? `0 0 28px color-mix(in srgb, ${accent} 20%, transparent), 0 4px 16px rgba(0,0,0,0.12)` : "0 4px 16px rgba(0,0,0,0.08)" }}>
+              {photo
+                ? <img src={photo} alt={cat.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}><span style={{ fontSize: "2rem", opacity: 0.35 }}>🍽️</span></div>}
+              <div style={{ position: "absolute", inset: 0, background: photo ? "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.72))" : "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.52))" }} />
+              <b style={{ position: "relative", zIndex: 1, fontSize: 14, lineHeight: 1.15, textShadow: "0 2px 14px #000", color: "#fff", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", width: "100%" }}>{cat.name}</b>
+            </button>
+          );
+        })}
       </div>
-      <div style={{ width: 128, flexShrink: 0, position: "relative", background: "#222" }}>
-        {product.image_url
-          ? <img src={product.image_url} alt={product.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🍽️</div>}
-        {showFav && (
-          <span role="button" aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"} onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
-            style={{ position: "absolute", top: 8, left: 8, width: 27, height: 27, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <Heart style={{ width: 14, height: 14 }} fill={isFav ? accent : "none"} color={isFav ? accent : "#fff"} />
-          </span>
-        )}
-        {!soldOut && (
-          <button onClick={onAdd} aria-label="Agregar" className="imp-addbtn" style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: "50%", background: accent, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 2px 12px ${hexA(accent, 0.45)}`, transition: "transform .1s" }}>
-            <Plus style={{ width: 17, height: 17 }} />
-          </button>
-        )}
-      </div>
-    </div>
+    </section>
   );
 }
 
-/** Convierte un hex (#rgb o #rrggbb) a rgba con alpha. Fallback: el color tal cual. */
-function hexA(hex: string, alpha: number): string {
-  const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  if (full.length !== 6) return hex;
-  const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
+// ── Card glass (foto izquierda, texto derecha) ──
+function ImpactCard({ product, accent, onClick, onAdd }: {
+  product: StoreProduct; accent: string; onClick: () => void; onAdd: (e: React.MouseEvent) => void;
+}) {
+  const soldOut = product.is_sold_out;
+  const discountPct = product.original_price && product.original_price > product.price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0;
+  const hasOpts = (product.option_groups?.length ?? 0) > 0;
+  return (
+    <button onClick={soldOut ? undefined : onClick} style={{
+      width: "100%", display: "grid", gridTemplateColumns: "118px 1fr", gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
+      background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
+      border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
+      position: "relative", overflow: "hidden", textAlign: "left", cursor: soldOut ? "not-allowed" : "pointer", opacity: soldOut ? 0.55 : 1, fontFamily: "inherit",
+    }}>
+      <div style={{ position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
+        {product.image_url
+          ? <img src={product.image_url} alt={product.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
+        <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</h4>
+        {product.description && <p style={{ margin: "0 0 8px", color: "var(--carta-text2)", fontSize: 13, lineHeight: 1.42, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{product.description}</p>}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {soldOut ? <span style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", color: "#888" }}>Agotado</span> : (<>
+            {discountPct > 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: accent, padding: "3px 10px", borderRadius: 50 }}>-{discountPct}%</span>}
+            <b style={{ color: accent, fontSize: 16 }}>{clp(product.price)}</b>
+            {discountPct > 0 && <span style={{ fontSize: "0.78rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>{clp(product.original_price!)}</span>}
+          </>)}
+        </div>
+      </div>
+      {!soldOut && (
+        <span role="button" onClick={hasOpts ? undefined : onAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 18%, transparent)`, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 14px color-mix(in srgb, ${accent} 50%, transparent)`, pointerEvents: hasOpts ? "none" : "auto" }}>
+          <Plus size={16} color="#fff" />
+        </span>
+      )}
+    </button>
+  );
 }

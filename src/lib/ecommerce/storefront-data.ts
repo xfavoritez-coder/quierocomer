@@ -76,6 +76,7 @@ export interface StoreProduct {
   original_price: number | null; // precio tachado (si hay oferta)
   image_url: string | null;
   is_sold_out: boolean;
+  is_hero: boolean; // destacado (para el banner del tema impact)
   toteat_code: string | null;
   option_groups: StoreOptionGroup[];
 }
@@ -146,7 +147,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         select: {
           id: true, categoryId: true, name: true, description: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true,
-          toteatProductId: true,
+          toteatProductId: true, isHero: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -208,6 +209,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         original_price: hasOffer ? d.price : null,
         image_url: d.photos?.[0] ?? null,
         is_sold_out: d.stockCountdown != null && d.stockCountdown <= 0,
+        is_hero: d.isHero === true,
         toteat_code: d.toteatProductId ?? null,
         option_groups: optionGroups,
       });
