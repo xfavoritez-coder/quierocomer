@@ -61,6 +61,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
   // Altura del header (para dejar los chips de categoría sticky justo debajo).
   const headerRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useRef<HTMLDivElement>(null);
   const [headerH, setHeaderH] = useState(62);
   useEffect(() => {
     const el = headerRef.current;
@@ -105,6 +106,30 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   }, [products, tenant.bannerProductIds, noBanner]);
 
   const isOpen = tenant.openStatus.open;
+
+  // Scroll-spy: marca la categoría activa según la sección visible al hacer scroll.
+  useEffect(() => {
+    const ids = grouped.map((g) => g.cat.id);
+    if (ids.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (vis[0]) setActiveCat(vis[0].target.id.replace("impact-cat-", ""));
+      },
+      { rootMargin: `-${headerH + 56}px 0px -55% 0px`, threshold: 0 },
+    );
+    ids.forEach((id) => { const el = document.getElementById(`impact-cat-${id}`); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grouped, headerH]);
+
+  // Auto-desplazar el chip activo para que quede a la vista en la barra.
+  useEffect(() => {
+    const cont = chipsRef.current;
+    if (!cont || !activeCat) return;
+    const el = cont.querySelector(`[data-cat="${activeCat}"]`) as HTMLElement | null;
+    if (el) cont.scrollTo({ left: el.offsetLeft - 16, behavior: "smooth" });
+  }, [activeCat]);
 
   const openProduct = useCallback((p: StoreProduct) => { if (!p.is_sold_out) setSelectedProduct(p); }, []);
   const directAdd = useCallback((p: StoreProduct) => {
@@ -205,16 +230,17 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
+        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
-              <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
+              <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
-                border: on ? `1px solid color-mix(in srgb, ${accent} 45%, rgba(255,255,255,0.30))` : "1px solid rgba(255,255,255,0.14)",
-                background: on ? `color-mix(in srgb, ${accent} 60%, rgba(20,20,22,0.5))` : "rgba(28,28,30,0.55)",
-                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 5px 16px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.45))` : "inset 0 1px 0 rgba(255,255,255,0.20), 0 5px 14px rgba(0,0,0,0.45)",
-                color: on ? "#fff" : "#cfcfcf",
+                backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 35%, rgba(255,255,255,0.24))` : "1px solid rgba(255,255,255,0.18)",
+                background: on ? `color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.10)",
+                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 5px 16px color-mix(in srgb, ${accent} 32%, rgba(0,0,0,0.4))` : "inset 0 1px 0 rgba(255,255,255,0.28), 0 5px 14px rgba(0,0,0,0.35)",
+                color: on ? "#fff" : "#eaeaea",
               }}>{cat.name}</button>
             );
           })}
@@ -252,8 +278,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 25, height: 25, borderRadius: "50%", background: "#fff", color: accent, fontSize: "0.8rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
-              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>Ver carrito</span>
+              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount} · Ver carrito</span>
             </span>
             <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
           </button>
