@@ -193,15 +193,6 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         </div>
       </div>
 
-      {/* ── Selector de entrega ── */}
-      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
-        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 999, padding: "13px 18px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
-          <MapPin size={16} color={accent} style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, fontSize: "0.86rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
-          <span style={{ fontSize: "0.76rem", color: accent, fontWeight: 800 }}>Cambiar</span>
-        </button>
-      </div>
-
       {/* ── Banner de destacados ── */}
       {heroProducts.length > 0 && (
         <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "14px 14px 0" }}>
@@ -213,6 +204,15 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       {grouped.length >= 3 && (
         <CategoriesSection grouped={grouped} accent={accent} activeId={activeCat} onTap={scrollToCategory} />
       )}
+
+      {/* ── Selector de entrega (debajo de las categorías) ── */}
+      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "16px 14px 0" }}>
+        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 999, padding: "13px 18px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
+          <MapPin size={16} color={accent} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0, fontSize: "0.86rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
+          <span style={{ fontSize: "0.76rem", color: accent, fontWeight: 800 }}>Cambiar</span>
+        </button>
+      </div>
 
       {/* ── Título MENÚ + búsqueda ── */}
       <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "22px 14px 12px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -342,7 +342,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
   return (
     <section
       ref={sectionRef}
-      style={{ minHeight: "40vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "56px 18px 16px", borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
+      style={{ minHeight: "54vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "72px 18px 16px", borderRadius: 26, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
       onClick={() => { if (!wasSwipe.current) onSelect(d); wasSwipe.current = false; }}
       onTouchStart={(e) => { touchX.current = e.touches[0].clientX; wasSwipe.current = false; }}
       onTouchEnd={(e) => { const diff = e.changedTouches[0].clientX - touchX.current; if (Math.abs(diff) > 50) { wasSwipe.current = true; setCurrent((c) => diff < 0 ? (c + 1) % heroProducts.length : (c - 1 + heroProducts.length) % heroProducts.length); reset(); } }}
@@ -357,7 +357,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
       <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)" }} />
       <div style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3, background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)" }} />
       <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4 }}>
-        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 44, lineHeight: 0.84, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
+        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 52, lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
           {d.name.split(" ").map((w, i, arr) => i === arr.length - 1
             ? <span key={i} style={{ display: "inline-block", color: accent, fontWeight: 900, textShadow: `0 0 20px color-mix(in srgb, ${accent} 50%, transparent)` }}>{w}</span>
             : <span key={i}>{w} </span>)}
@@ -422,12 +422,12 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
   const hasOpts = (product.option_groups?.length ?? 0) > 0;
   return (
     <button onClick={soldOut ? undefined : onClick} style={{
-      width: "100%", display: "grid", gridTemplateColumns: "118px 1fr", gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
+      width: "100%", display: "grid", gridTemplateColumns: "132px 1fr", gap: 16, padding: 10, marginBottom: 11, borderRadius: 26, minHeight: 152,
       background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
       border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
       position: "relative", overflow: "hidden", textAlign: "left", cursor: soldOut ? "not-allowed" : "pointer", opacity: soldOut ? 0.55 : 1, fontFamily: "inherit",
     }}>
-      <div style={{ position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 132, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>}
