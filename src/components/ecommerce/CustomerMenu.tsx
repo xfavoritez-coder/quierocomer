@@ -47,7 +47,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           <h2 className="flex-1 text-center font-black text-gray-900">
             {view === "root" ? "Menú" : view === "profile" ? "Mi perfil" : view === "orders" ? "Mis pedidos" : view === "favorites" ? "Mis favoritos" : view === "contact" ? "Contáctanos" : "Redes sociales"}
           </h2>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">

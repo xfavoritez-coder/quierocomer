@@ -633,7 +633,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
       <div className="relative bg-white w-full sm:rounded-3xl sm:max-w-md shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
           <h2 className="font-black text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition"><X className="w-5 h-5" /></button>
         </div>
 
         {/* Tabs */}

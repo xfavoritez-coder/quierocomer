@@ -103,7 +103,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
           <div className="h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl shrink-0">🍱</div>
         )}
 
-        <button onClick={onClose} className="absolute top-3 right-3 bg-white/90 rounded-full p-1.5 shadow">
+        <button onClick={onClose} className="qc-glass-x absolute top-3 right-3 bg-white/90 rounded-full p-1.5 shadow">
           <X className="w-5 h-5 text-gray-700" />
         </button>
 

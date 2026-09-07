@@ -223,13 +223,22 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Barra de carrito glass ── */}
       {mounted && itemCount > 0 && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "10px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))", background: "#131313", borderTop: "1px solid var(--carta-border)" }}>
-          <button onClick={() => setCartOpen(true)} style={{ width: "100%", maxWidth: 520, margin: "0 auto", padding: "14px 18px", borderRadius: 14, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, background: `color-mix(in srgb, ${accent} 18%, rgba(3,3,3,0.75))`, color: "#fff", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: `0 4px 24px color-mix(in srgb, ${accent} 50%, transparent), inset 0 0 12px color-mix(in srgb, ${accent} 8%, transparent)`, fontFamily: FB }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "12px 16px", paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))", background: "transparent", pointerEvents: "none", display: "flex", justifyContent: "center" }}>
+          {/* Botón flotante liquid glass (sin recuadro de fondo) */}
+          <button onClick={() => setCartOpen(true)} style={{
+            pointerEvents: "auto", width: "100%", maxWidth: 520, padding: "15px 20px", borderRadius: 999,
+            display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
+            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.10))`,
+            backdropFilter: "blur(16px) saturate(170%)", WebkitBackdropFilter: "blur(16px) saturate(170%)",
+            border: `1px solid color-mix(in srgb, ${accent} 40%, rgba(255,255,255,0.40))`,
+            boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.12), 0 12px 34px color-mix(in srgb, ${accent} 42%, rgba(0,0,0,0.45))`,
+            transform: "translateZ(0)",
+          }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 24, height: 24, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 25%, transparent)`, fontSize: "0.78rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
-              <span style={{ fontWeight: 700, fontSize: "0.92rem" }}>Ver carrito</span>
+              <span style={{ width: 25, height: 25, borderRadius: "50%", background: "rgba(255,255,255,0.22)", fontSize: "0.8rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)" }}>{itemCount}</span>
+              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>Ver carrito</span>
             </span>
-            <span style={{ fontWeight: 700, fontSize: "0.92rem" }}>{clp(subtotal)}</span>
+            <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
           </button>
         </div>
       )}

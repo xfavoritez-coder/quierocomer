@@ -43,7 +43,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
         {/* Header */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100 shrink-0">
           <h2 className="font-black text-lg text-gray-900">Tu pedido</h2>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
+          <button onClick={onClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
