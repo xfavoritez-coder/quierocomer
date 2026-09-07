@@ -277,6 +277,8 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
   heroProducts: StoreProduct[]; accent: string; onSelect: (p: StoreProduct) => void; onAdd: (p: StoreProduct) => void;
 }) {
   const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const touchX = useRef(0);
   const wasSwipe = useRef(false);
@@ -284,7 +286,23 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
     if (timer.current) clearInterval(timer.current);
     timer.current = setInterval(() => setCurrent((c) => (c + 1) % heroProducts.length), 5000);
   }, [heroProducts.length]);
-  useEffect(() => { if (heroProducts.length <= 1) return; reset(); return () => { if (timer.current) clearInterval(timer.current); }; }, [heroProducts.length, reset]);
+
+  // Solo auto-avanzar cuando el banner está a la vista (y la pestaña visible).
+  // Al bajar al menú el carrusel se detiene → sin repintados = sin parpadeo.
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    const onVis = () => { const r = el.getBoundingClientRect(); setVisible(!document.hidden && r.bottom > 0 && r.top < window.innerHeight); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { io.disconnect(); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
+  useEffect(() => {
+    if (heroProducts.length <= 1 || !visible || document.hidden) return;
+    reset();
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [heroProducts.length, reset, visible]);
 
   const d = heroProducts[current];
   if (!d) return null;
@@ -293,6 +311,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
 
   return (
     <section
+      ref={sectionRef}
       style={{ minHeight: "52vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "72px 20px 16px", borderRadius: 28, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
       onClick={() => { if (!wasSwipe.current) onSelect(d); wasSwipe.current = false; }}
       onTouchStart={(e) => { touchX.current = e.touches[0].clientX; wasSwipe.current = false; }}
