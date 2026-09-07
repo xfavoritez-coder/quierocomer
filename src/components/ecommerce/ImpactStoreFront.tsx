@@ -270,7 +270,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
           <button onClick={() => setCartOpen(true)} style={{
             pointerEvents: "auto", width: "100%", maxWidth: 520, padding: "15px 20px", borderRadius: 999,
-            display: "flex", justifyContent: "center", gap: 20, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
+            display: "flex", justifyContent: "center", gap: 48, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
             background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.09))`,
             backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
             border: `1px solid color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.22))`,
@@ -278,7 +278,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount} · Ver carrito</span>
+              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount}&nbsp;&nbsp;Ver carrito</span>
             </span>
             <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
           </button>
@@ -370,12 +370,10 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
             {discountPct > 0 && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{clp(d.original_price!)}</span>}
           </div>
           <button onClick={(e) => { e.stopPropagation(); if (hasOpts) onSelect(d); else onAdd(d); }} style={{
-            width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-            background: `color-mix(in srgb, ${accent} 62%, rgba(0,0,0,0.25))`,
-            border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.30))`,
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 18px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.45))`,
+            width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+            background: "transparent", border: "none", padding: 0,
           }}>
-            <Plus size={20} color="#fff" />
+            <Plus size={32} color={accent} strokeWidth={3.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.75))" }} />
           </button>
         </div>
         {heroProducts.length > 1 && (
@@ -447,13 +445,10 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
       </div>
       {!soldOut && (
         <span role="button" onClick={hasOpts ? undefined : onAdd} style={{
-          position: "absolute", bottom: 10, right: 10, width: 33, height: 33, borderRadius: "50%",
+          position: "absolute", bottom: 6, right: 8, width: 34, height: 34,
           display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasOpts ? "none" : "auto",
-          background: `color-mix(in srgb, ${accent} 60%, rgba(255,255,255,0.14))`,
-          border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.30))`,
-          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 4px 12px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.4))`,
         }}>
-          <Plus size={16} color="#fff" />
+          <Plus size={26} color={accent} strokeWidth={3.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.75))" }} />
         </span>
       )}
     </button>
