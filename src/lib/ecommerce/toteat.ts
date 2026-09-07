@@ -29,6 +29,7 @@ export interface PosOrder {
   deliveryFee: number;
   notes: string | null;
   total: number;
+  discount: number; // descuento del cupón (se manda como línea negativa a Toteat)
   paymentMethod: string;
   paymentStatus: string; // "paid" | "pending" | ...
   vendorName?: string; // distintivo de origen que se ve en Toteat (ej: "QC-Hand Roll")
@@ -143,6 +144,21 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
     if (withoutCode.length) itemOptionNotes.push(`${item.product_name}: ${withoutCode.join(", ")}`);
   }
 
+  // Descuento (cupón) — Toteat EXIGE productCode en líneas con monto negativo
+  // (sin él rechaza el pedido). Default "DESCUENTO": crea ese producto a $0 en el
+  // catálogo Toteat para que la comanda lo muestre limpio. Configurable en creds.
+  if (order.discount > 0) {
+    lines.push(buildLine({
+      lineNumber: lineNum++,
+      productCode: creds.discountCode || "DESCUENTO",
+      productName: "Descuento",
+      quantity: 1,
+      amountAfterTax: -order.discount,
+      isExtra: false,
+      referenceLine: null,
+    }));
+  }
+
   // Costo de envío — código oficial Toteat para delivery.
   if (isDelivery && order.deliveryFee > 0) {
     lines.push(buildLine({
@@ -172,7 +188,11 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
   const isPaid = order.paymentStatus === "paid" || ["flow", "webpay"].includes(order.paymentMethod);
   const payNote = isPaid ? `PAGADO: ${payLabel}` : `POR PAGAR: ${payLabel}`;
 
-  let comment = `Pedido ${order.orderNumber} | ${payNote}`;
+  // Origen: "QC-<local>". Va en vendorName y, además, al inicio del comentario para
+  // que sea visible en la comanda aunque Toteat muestre el canal en la columna vendor.
+  const vendorName = order.vendorName?.trim() || "QuieroComer";
+
+  let comment = `${vendorName} | Pedido ${order.orderNumber} | ${payNote}`;
   if (order.notes) comment += ` | ${order.notes}`;
   if (itemOptionNotes.length) comment += ` | ${itemOptionNotes.join(" | ")}`;
 
@@ -189,7 +209,7 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
     status: "new",
     type: isDelivery ? "delivery" : "takeaway",
     channel: "webstore",
-    vendorName: order.vendorName?.trim() || "QuieroComer",
+    vendorName,
     comment,
     document: { customer, line: lines },
     operationDate: now,

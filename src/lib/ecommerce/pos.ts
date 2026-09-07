@@ -43,9 +43,11 @@ export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean
     deliveryFee: order.deliveryFee ?? 0,
     notes: order.notes,
     total: order.total,
+    discount: order.discount ?? 0,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
-    vendorName: `QC-${order.restaurant.name}`, // distintivo de origen en Toteat
+    // Distintivo de origen en Toteat: "QC-<nombre del local>" (nunca vacío).
+    vendorName: `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`,
   };
 
   const res = await sendOrderToToteat(posOrder, items, cfg.pos.toteat ?? {});

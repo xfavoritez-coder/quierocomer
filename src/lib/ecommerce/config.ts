@@ -47,6 +47,7 @@ export interface ToteatPosCreds {
   xil?: string; // Local ID
   xiu?: string; // User ID (por defecto = xil)
   token?: string; // xapitoken
+  discountCode?: string; // código de producto Toteat para la línea de descuento (default "DESCUENTO")
 }
 
 export type PosProvider = "none" | "toteat";
