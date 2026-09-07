@@ -124,26 +124,28 @@ export function orderInDeliveryEmailHtml(opts: {
   restaurantName: string;
   total: number;
   orderType: string;
+  orderNumber: string;
   estimatedTime?: string | null;
 }): string {
-  const emoji = opts.orderType === "DELIVERY" ? "🛵" : "✅";
-  const headline = opts.orderType === "DELIVERY" ? "¡Tu pedido está en camino!" : "¡Tu pedido está listo para retirar!";
-  const sub = opts.orderType === "DELIVERY"
-    ? "Nuestro repartidor ya salió con tu pedido."
-    : "Puedes pasar a retirar tu pedido al local.";
+  const isDelivery = opts.orderType === "DELIVERY";
+  const emoji = isDelivery ? "🛵" : "✅";
+  const headline = isDelivery ? "¡Tu pedido va en camino!" : "¡Tu pedido está listo!";
+  const firstName = (opts.customerName || "").trim().split(" ")[0] || "";
+  const hola = firstName ? `Hola ${firstName}, ` : "";
+  const line = isDelivery
+    ? `${hola}tu pedido en <strong>${opts.restaurantName}</strong> ya salió con el repartidor. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.`
+    : `${hola}tu pedido en <strong>${opts.restaurantName}</strong> ya está listo para retirar en el local. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.`;
 
   return wrap(`
   <tr><td style="padding-bottom:20px;text-align:center;">
     <div style="font-size:48px;line-height:1;margin-bottom:12px;">${emoji}</div>
     <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">${headline}</h1>
-    <p style="font-size:15px;color:#555;margin:0;">${sub}</p>
+    <p style="font-size:15px;color:#555;margin:0;">Pedido #${opts.orderNumber} · ${opts.restaurantName}</p>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
     ${card(`
-      ${label("Tu pedido")}
-      <div style="font-size:15px;color:#111;font-weight:700;margin-bottom:4px;">${opts.restaurantName}</div>
-      <div style="font-size:14px;color:#555;">Hola ${opts.customerName}, tu pedido por <strong>$${opts.total.toLocaleString("es-CL")}</strong> ya está en camino.</div>
-      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:6px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+      <div style="font-size:15px;color:#333;line-height:1.6;">${line}</div>
+      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
     `, true)}
   </td></tr>
   `);
@@ -155,29 +157,30 @@ export function orderAcceptedEmailHtml(opts: {
   restaurantName: string;
   total: number;
   orderType: string;
+  orderNumber: string;
   estimatedTime?: string | null;
   trackingUrl: string;
 }): string {
+  const firstName = (opts.customerName || "").trim().split(" ")[0] || "";
+  const hola = firstName ? `Hola ${firstName}, ` : "";
   const nextNote = opts.orderType === "DELIVERY"
-    ? "Te avisaremos cuando tu pedido salga a reparto."
-    : "Te avisaremos cuando tu pedido esté listo para retirar.";
+    ? "Te avisaremos por aquí cuando salga a reparto."
+    : "Te avisaremos por aquí cuando esté listo para retirar.";
 
   return wrap(`
   <tr><td style="padding-bottom:20px;text-align:center;">
     <div style="font-size:48px;line-height:1;margin-bottom:12px;">🎉</div>
-    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡${opts.restaurantName} aceptó tu pedido!</h1>
-    <p style="font-size:15px;color:#555;margin:0;">${opts.restaurantName} ya está preparando tu pedido.</p>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡Pedido confirmado!</h1>
+    <p style="font-size:15px;color:#555;margin:0;">Pedido #${opts.orderNumber} · ${opts.restaurantName}</p>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
     ${card(`
-      ${label("Tu pedido")}
-      <div style="font-size:15px;color:#111;font-weight:700;margin-bottom:4px;">${opts.restaurantName}</div>
-      <div style="font-size:14px;color:#555;">Hola ${opts.customerName}, tu pedido por <strong>$${opts.total.toLocaleString("es-CL")}</strong> fue aceptado.</div>
-      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:6px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+      <div style="font-size:15px;color:#333;line-height:1.6;">${hola}<strong>${opts.restaurantName}</strong> ya recibió tu pedido y lo está preparando. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.</div>
+      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
     `, true)}
   </td></tr>
   <tr><td style="padding-bottom:16px;">
-    ${btn(opts.trackingUrl, "Ver mi pedido en vivo")}
+    ${btn(opts.trackingUrl, "Seguir mi pedido en vivo")}
   </td></tr>
   <tr><td style="font-size:13px;color:#888;text-align:center;padding-bottom:4px;">
     ${nextNote}

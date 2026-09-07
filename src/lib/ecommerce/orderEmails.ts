@@ -14,7 +14,7 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
     const order = await prisma.onlineOrder.findUnique({
       where: { id: orderId },
       select: {
-        id: true, customerName: true, customerEmail: true, total: true, orderType: true,
+        id: true, orderNumber: true, customerName: true, customerEmail: true, total: true, orderType: true,
         restaurant: { select: { name: true, orderingWaitTime: true } },
       },
     });
@@ -22,18 +22,20 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
 
     const restaurantName = order.restaurant?.name ?? "";
     const rn = restaurantName || "el local";
+    const orderNumber = String(order.orderNumber ?? order.id.slice(-6));
     const trackingUrl = `https://quierocomer.com/pedido/${order.id}`;
     const estimatedTime = order.restaurant?.orderingWaitTime ?? null;
 
     const opts =
       status === "ACCEPTED"
         ? {
-            subject: `${rn} · recibimos tu pedido ✅`,
+            subject: `Pedido #${orderNumber} confirmado · ${rn} ✅`,
             html: orderAcceptedEmailHtml({
               customerName: order.customerName,
               restaurantName,
               total: order.total,
               orderType: order.orderType,
+              orderNumber,
               estimatedTime,
               trackingUrl,
             }),
@@ -41,13 +43,14 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
         : {
             subject:
               status === "IN_DELIVERY"
-                ? `${rn} · ¡tu pedido está en camino! 🛵`
-                : `${rn} · ¡tu pedido está listo! ✅`,
+                ? `Pedido #${orderNumber} en camino · ${rn} 🛵`
+                : `Pedido #${orderNumber} listo · ${rn} ✅`,
             html: orderInDeliveryEmailHtml({
               customerName: order.customerName,
               restaurantName,
               total: order.total,
               orderType: order.orderType,
+              orderNumber,
               estimatedTime,
             }),
           };
