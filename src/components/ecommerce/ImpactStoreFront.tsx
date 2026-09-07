@@ -195,7 +195,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Selector de entrega ── */}
       <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
-        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 14, padding: "12px 14px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
+        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 999, padding: "13px 18px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
           <MapPin size={16} color={accent} style={{ flexShrink: 0 }} />
           <span style={{ flex: 1, minWidth: 0, fontSize: "0.86rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
           <span style={{ fontSize: "0.76rem", color: accent, fontWeight: 800 }}>Cambiar</span>
@@ -270,7 +270,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
           <button onClick={() => setCartOpen(true)} style={{
             pointerEvents: "auto", width: "100%", maxWidth: 520, padding: "15px 20px", borderRadius: 999,
-            display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
+            display: "flex", justifyContent: "center", gap: 20, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
             background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.09))`,
             backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
             border: `1px solid color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.22))`,
@@ -400,9 +400,8 @@ function CategoriesSection({ grouped, accent, activeId, onTap }: {
       <div className="imp-scroll" style={{ display: "flex", gap: 10, overflowX: "auto", padding: "4px 0 16px", scrollbarWidth: "none" }}>
         {grouped.map(({ cat, items }) => {
           const photo = items.find((p) => p.image_url)?.image_url ?? null;
-          const on = cat.id === activeId;
           return (
-            <button key={cat.id} onClick={() => onTap(cat.id)} style={{ width: 128, minWidth: 128, height: 148, borderRadius: 28, position: "relative", overflow: "hidden", padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer", flexShrink: 0, background: "var(--carta-surface)", border: on ? `1px solid color-mix(in srgb, ${accent} 90%, transparent)` : "1px solid rgba(255,255,255,0.14)", boxShadow: on ? `0 0 28px color-mix(in srgb, ${accent} 20%, transparent), 0 4px 16px rgba(0,0,0,0.12)` : "0 4px 16px rgba(0,0,0,0.08)" }}>
+            <button key={cat.id} onClick={() => onTap(cat.id)} style={{ width: 128, minWidth: 128, height: 148, borderRadius: 28, position: "relative", overflow: "hidden", padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer", flexShrink: 0, background: "var(--carta-surface)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}>
               {photo
                 ? <img src={photo} alt={cat.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}><span style={{ fontSize: "2rem", opacity: 0.35 }}>🍽️</span></div>}
