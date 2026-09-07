@@ -237,8 +237,8 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
                 backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
-                border: on ? `1px solid color-mix(in srgb, ${accent} 35%, rgba(255,255,255,0.24))` : "1px solid rgba(255,255,255,0.18)",
-                background: on ? `color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.10)",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 28%, rgba(255,255,255,0.18))` : "1px solid rgba(255,255,255,0.14)",
+                background: on ? `color-mix(in srgb, ${accent} 22%, rgba(255,255,255,0.05))` : "rgba(255,255,255,0.055)",
                 boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 5px 16px color-mix(in srgb, ${accent} 32%, rgba(0,0,0,0.4))` : "inset 0 1px 0 rgba(255,255,255,0.28), 0 5px 14px rgba(0,0,0,0.35)",
                 color: on ? "#fff" : "#eaeaea",
               }}>{cat.name}</button>
@@ -271,9 +271,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           <button onClick={() => setCartOpen(true)} style={{
             pointerEvents: "auto", width: "100%", maxWidth: 520, padding: "15px 20px", borderRadius: 999,
             display: "flex", justifyContent: "center", gap: 48, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
-            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.09))`,
+            background: `color-mix(in srgb, ${accent} 20%, rgba(255,255,255,0.07))`,
             backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
-            border: `1px solid color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.22))`,
+            border: `1px solid color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.20))`,
             boxShadow: `inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.08), 0 12px 34px color-mix(in srgb, ${accent} 38%, rgba(0,0,0,0.45))`,
             transform: "translateZ(0)",
           }}>
@@ -373,7 +373,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
             width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
             background: "transparent", border: "none", padding: 0,
           }}>
-            <Plus size={32} color="#fff" strokeWidth={4.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
+            <Plus size={30} color="#fff" strokeWidth={2} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
           </button>
         </div>
         {heroProducts.length > 1 && (
@@ -448,7 +448,7 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
           position: "absolute", bottom: 6, right: 8, width: 34, height: 34,
           display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasOpts ? "none" : "auto",
         }}>
-          <Plus size={26} color="#fff" strokeWidth={4.5} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
+          <Plus size={24} color="#fff" strokeWidth={2} style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }} />
         </span>
       )}
     </button>
