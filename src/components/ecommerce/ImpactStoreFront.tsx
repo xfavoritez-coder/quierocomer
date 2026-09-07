@@ -134,7 +134,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   } as React.CSSProperties;
 
   return (
-    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", color: "var(--carta-text)", position: "relative", background: `radial-gradient(150% 520px at 75% -2%, color-mix(in srgb, ${accent} 26%, transparent), transparent 60%), radial-gradient(130% 520px at 4% 20%, color-mix(in srgb, ${accent} 15%, transparent), transparent 58%), radial-gradient(130% 560px at 98% 46%, color-mix(in srgb, ${accent} 13%, transparent), transparent 58%), radial-gradient(140% 600px at 12% 72%, color-mix(in srgb, ${accent} 13%, transparent), transparent 60%), radial-gradient(140% 560px at 85% 100%, color-mix(in srgb, ${accent} 15%, transparent), transparent 62%), #0b0b0b`, backgroundRepeat: "no-repeat", ...themeVars }}>
+    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", color: "var(--carta-text)", position: "relative", background: "#0b0b0b", ...themeVars }}>
       <StoreStyles />
       <ImpactSkin />
       <style>{`
@@ -143,6 +143,10 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         .imp-menu-grid{max-width:1200px;margin:0 auto}
         @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
       `}</style>
+
+      {/* Degradado del color de la tienda, FIJO (una sola capa de gradiente puro,
+          sin blur ni backdrop-filter) — visible arriba y al hacer scroll. */}
+      <div aria-hidden style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", background: `radial-gradient(120% 55% at 50% -8%, color-mix(in srgb, ${accent} 42%, transparent), transparent 62%), radial-gradient(90% 45% at 100% 28%, color-mix(in srgb, ${accent} 20%, transparent), transparent 58%), radial-gradient(95% 48% at 0% 66%, color-mix(in srgb, ${accent} 18%, transparent), transparent 58%), radial-gradient(120% 50% at 50% 108%, color-mix(in srgb, ${accent} 22%, transparent), transparent 62%)` }} />
 
       {/* ── Header glass ── */}
       <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(16,16,16,0.45)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", borderBottom: "1px solid rgba(255,255,255,0.10)" }}>
