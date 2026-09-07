@@ -179,7 +179,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Banner de destacados ── */}
       {heroProducts.length > 0 && (
-        <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, paddingTop: 14 }}>
+        <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "14px 14px 0" }}>
           <ImpactHero heroProducts={heroProducts} accent={accent} onSelect={openProduct} onAdd={directAdd} />
         </div>
       )}
@@ -203,17 +203,18 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         </button>
       </div>
 
-      {/* ── Chips de categorías (sticky bajo el header al hacer scroll) ── */}
+      {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "8px 14px 8px", scrollbarWidth: "none", background: "#0e0e0e", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
               <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
-                border: on ? `1px solid color-mix(in srgb, ${accent} 55%, transparent)` : "1px solid rgba(255,255,255,0.13)",
-                background: on ? `color-mix(in srgb, ${accent} 12%, transparent)` : "rgba(255,255,255,0.055)",
-                color: on ? "#fff" : "#888",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 45%, rgba(255,255,255,0.30))` : "1px solid rgba(255,255,255,0.14)",
+                background: on ? `color-mix(in srgb, ${accent} 60%, rgba(20,20,22,0.5))` : "rgba(28,28,30,0.55)",
+                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 5px 16px color-mix(in srgb, ${accent} 35%, rgba(0,0,0,0.45))` : "inset 0 1px 0 rgba(255,255,255,0.20), 0 5px 14px rgba(0,0,0,0.45)",
+                color: on ? "#fff" : "#cfcfcf",
               }}>{cat.name}</button>
             );
           })}
@@ -251,7 +252,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 25, height: 25, borderRadius: "50%", background: "rgba(255,255,255,0.22)", fontSize: "0.8rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)" }}>{itemCount}</span>
+              <span style={{ width: 25, height: 25, borderRadius: "50%", background: "#fff", color: accent, fontSize: "0.8rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>
               <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>Ver carrito</span>
             </span>
             <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
@@ -316,7 +317,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
   return (
     <section
       ref={sectionRef}
-      style={{ minHeight: "52vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "72px 20px 16px", borderRadius: 28, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
+      style={{ minHeight: "40vh", position: "relative", display: "flex", alignItems: "flex-end", padding: "56px 18px 16px", borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", cursor: "pointer" }}
       onClick={() => { if (!wasSwipe.current) onSelect(d); wasSwipe.current = false; }}
       onTouchStart={(e) => { touchX.current = e.touches[0].clientX; wasSwipe.current = false; }}
       onTouchEnd={(e) => { const diff = e.changedTouches[0].clientX - touchX.current; if (Math.abs(diff) > 50) { wasSwipe.current = true; setCurrent((c) => diff < 0 ? (c + 1) % heroProducts.length : (c - 1 + heroProducts.length) % heroProducts.length); reset(); } }}
@@ -331,7 +332,7 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
       <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)" }} />
       <div style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3, background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)" }} />
       <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4 }}>
-        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 56, lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
+        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 44, lineHeight: 0.84, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
           {d.name.split(" ").map((w, i, arr) => i === arr.length - 1
             ? <span key={i} style={{ display: "inline-block", color: accent, fontWeight: 900, textShadow: `0 0 20px color-mix(in srgb, ${accent} 50%, transparent)` }}>{w}</span>
             : <span key={i}>{w} </span>)}
