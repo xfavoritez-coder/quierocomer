@@ -14,7 +14,7 @@ const DAY_LABELS: Record<string, string> = { D: "Dom", L: "Lun", M: "Mar", Mi: "
 type Dish = { id: string; name: string };
 
 function newCoupon(): Coupon {
-  return { id: Math.random().toString(36).slice(2, 9), code: "", label: "", isEnabled: true, type: "discount", discountType: "fixed", discountValue: 0, maxDiscountAmount: null, startDate: null, endDate: null, startTime: null, endTime: null, daysOfWeek: [], appliesDelivery: true, appliesPickup: true, minOrderAmount: null, maxUses: null, maxUsesPerUser: null, freeProductId: null };
+  return { id: Math.random().toString(36).slice(2, 9), code: "", label: "", isEnabled: true, type: "discount", discountType: "fixed", discountValue: 0, maxDiscountAmount: null, discountIncludesDelivery: false, startDate: null, endDate: null, startTime: null, endTime: null, daysOfWeek: [], appliesDelivery: true, appliesPickup: true, minOrderAmount: null, maxUses: null, maxUsesPerUser: null, freeProductId: null };
 }
 
 export default function CouponsPage() {
@@ -104,11 +104,19 @@ export default function CouponsPage() {
                     </Field>
 
                     {c.type === "discount" ? (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px,1fr))", gap: 10 }}>
-                        <Field label="Modo"><Seg options={[{ v: "fixed", l: "$ Fijo" }, { v: "percent", l: "% Porcentaje" }]} value={c.discountType} onChange={(v) => upd(c.id, { discountType: v as Coupon["discountType"] })} /></Field>
-                        <Field label={c.discountType === "percent" ? "Porcentaje" : "Monto $"}><input value={c.discountValue || ""} onChange={(e) => upd(c.id, { discountValue: numOrNull(e.target.value) ?? 0 })} inputMode="numeric" placeholder={c.discountType === "percent" ? "20" : "2000"} style={inp} /></Field>
-                        {c.discountType === "percent" && <Field label="Tope $ (opc)"><input value={c.maxDiscountAmount ?? ""} onChange={(e) => upd(c.id, { maxDiscountAmount: numOrNull(e.target.value) })} inputMode="numeric" placeholder="—" style={inp} /></Field>}
-                      </div>
+                      <>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px,1fr))", gap: 10 }}>
+                          <Field label="Modo"><Seg options={[{ v: "fixed", l: "$ Fijo" }, { v: "percent", l: "% Porcentaje" }]} value={c.discountType} onChange={(v) => upd(c.id, { discountType: v as Coupon["discountType"] })} /></Field>
+                          <Field label={c.discountType === "percent" ? "Porcentaje" : "Monto $"}><input value={c.discountValue || ""} onChange={(e) => upd(c.id, { discountValue: numOrNull(e.target.value) ?? 0 })} inputMode="numeric" placeholder={c.discountType === "percent" ? "20" : "2000"} style={inp} /></Field>
+                          {c.discountType === "percent" && <Field label="Tope $ (opc)"><input value={c.maxDiscountAmount ?? ""} onChange={(e) => upd(c.id, { maxDiscountAmount: numOrNull(e.target.value) })} inputMode="numeric" placeholder="—" style={inp} /></Field>}
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <Check label="El descuento también aplica al despacho (delivery)" on={c.discountIncludesDelivery} onClick={() => upd(c.id, { discountIncludesDelivery: !c.discountIncludesDelivery })} />
+                          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+                            {c.discountIncludesDelivery ? "El descuento se calcula sobre la comida + el despacho." : "El despacho se cobra completo; el descuento aplica solo sobre la comida."}
+                          </p>
+                        </div>
+                      </>
                     ) : (
                       <Field label="Producto gratis"><select value={c.freeProductId ?? ""} onChange={(e) => upd(c.id, { freeProductId: e.target.value || null })} style={inp}><option value="">Elige un producto…</option>{dishes.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></Field>
                     )}

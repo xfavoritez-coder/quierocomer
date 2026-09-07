@@ -12,8 +12,8 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, code, subtotal, orderType, phone } = body as {
-      restaurantSlug?: string; restaurantId?: string; code?: string; subtotal?: number; orderType?: string; phone?: string;
+    const { restaurantSlug, restaurantId, code, subtotal, deliveryFee, orderType, phone } = body as {
+      restaurantSlug?: string; restaurantId?: string; code?: string; subtotal?: number; deliveryFee?: number; orderType?: string; phone?: string;
     };
     if ((!restaurantSlug && !restaurantId) || !code) return NextResponse.json({ valid: false, error: "Datos incompletos" });
 
@@ -40,11 +40,16 @@ export async function POST(req: NextRequest) {
       if (usedByUser >= coupon.maxUsesPerUser) return NextResponse.json({ valid: false, error: "Ya usaste este cupón el máximo de veces" });
     }
 
-    const discount = computeDiscount(coupon, Number(subtotal) || 0);
+    const discount = computeDiscount(coupon, Number(subtotal) || 0, Number(deliveryFee) || 0);
     return NextResponse.json({
       valid: true,
       discount,
-      coupon: { id: coupon.id, code: coupon.code, type: coupon.type, label: coupon.label, freeProductId: coupon.freeProductId },
+      coupon: {
+        id: coupon.id, code: coupon.code, type: coupon.type, label: coupon.label, freeProductId: coupon.freeProductId,
+        // Parámetros para que el cliente recalcule el descuento en vivo (misma fórmula).
+        discountType: coupon.discountType, discountValue: coupon.discountValue,
+        maxDiscountAmount: coupon.maxDiscountAmount, discountIncludesDelivery: coupon.discountIncludesDelivery,
+      },
     });
   } catch (e) {
     console.error("[ecommerce/coupons/validate]", e);

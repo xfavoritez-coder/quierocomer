@@ -6,7 +6,17 @@ import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet,
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
+import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { clp } from "@/lib/ecommerce/format";
+
+// Cupón aplicado: guardamos sus parámetros para recalcular el descuento en vivo
+// (misma fórmula que el servidor) según subtotal y costo de despacho.
+type AppliedCoupon = {
+  code: string; label?: string | null; type: "discount" | "product";
+  discountType: "fixed" | "percent"; discountValue: number;
+  maxDiscountAmount?: number | null; discountIncludesDelivery: boolean;
+  freeProductId?: string | null;
+};
 import { storeFontVars, shortAddr } from "./StoreFront";
 import StoreStyles from "./StoreStyles";
 import AccompanimentsSection from "./AccompanimentsSection";
@@ -47,7 +57,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
   const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
   const [couponCode, setCouponCode] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; discount: number; label?: string | null } | null>(null);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
 
@@ -80,9 +90,9 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     try {
       const raw = localStorage.getItem(EXTRA_KEY);
       if (raw) {
-        const d = JSON.parse(raw) as { couponCode?: string; coupon?: { code: string; discount: number; label?: string | null } | null; notes?: string };
+        const d = JSON.parse(raw) as { couponCode?: string; coupon?: AppliedCoupon | null; notes?: string };
         if (d.couponCode) setCouponCode(d.couponCode);
-        if (d.coupon) setCoupon(d.coupon);
+        if (d.coupon && d.coupon.discountType) setCoupon(d.coupon); // ignora formato viejo
         if (d.notes) setNotes(d.notes);
       }
     } catch {}
@@ -167,7 +177,9 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
   // cupón). Para el resto de métodos el correo es opcional (para el comprobante) y no
   // requiere verificarse — así no molesta al recargar / volver del medio de pago.
   const emailReady = emailNeeded ? emailVerifiedOk : true;
-  const discount = coupon?.discount ?? 0;
+  // Descuento en vivo: si el cupón NO incluye delivery, el fee de despacho no entra
+  // en la base (se cobra completo y el descuento es solo sobre la comida).
+  const discount = coupon ? computeDiscount(coupon, subtotal, deliveryFee) : 0;
   const finalTotal = Math.max(0, total - discount);
   const isOpen = tenant.openStatus.open;
   const isValid = isOpen && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
@@ -209,11 +221,16 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     try {
       const res = await fetch("/api/ecommerce/coupons/validate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
+        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.valid) {
-        setCoupon({ code: data.coupon.code, discount: data.discount, label: data.coupon.label });
+        const c = data.coupon;
+        setCoupon({
+          code: c.code, label: c.label, type: c.type, freeProductId: c.freeProductId,
+          discountType: c.discountType, discountValue: c.discountValue,
+          maxDiscountAmount: c.maxDiscountAmount, discountIncludesDelivery: c.discountIncludesDelivery === true,
+        });
         setCouponMsg(null);
       } else {
         setCoupon(null);

@@ -19,6 +19,10 @@ export interface Coupon {
   discountType: DiscountType;
   discountValue: number; // $ si fixed, % si percent
   maxDiscountAmount?: number | null; // tope del descuento (opcional)
+  // Si es true, el descuento se calcula también sobre el costo de despacho
+  // (delivery). Si es false (por defecto), el despacho se cobra completo y el
+  // descuento aplica solo sobre la comida (subtotal de productos).
+  discountIncludesDelivery: boolean;
   startDate?: string | null; // "YYYY-MM-DD"
   endDate?: string | null;
   startTime?: string | null; // "HH:MM"
@@ -53,6 +57,7 @@ export function parseCoupons(raw: unknown): Coupon[] {
         discountType: o.discountType === "percent" ? "percent" : "fixed",
         discountValue: Math.max(0, num(o.discountValue) ?? 0),
         maxDiscountAmount: num(o.maxDiscountAmount),
+        discountIncludesDelivery: o.discountIncludesDelivery === true, // default false (solo comida)
         startDate: o.startDate ? String(o.startDate) : null,
         endDate: o.endDate ? String(o.endDate) : null,
         startTime: o.startTime ? String(o.startTime) : null,
@@ -101,10 +106,21 @@ export function validateCoupon(c: Coupon, ctx: CouponContext): { valid: boolean;
   return { valid: true };
 }
 
-/** Descuento en pesos que aplica un cupón sobre el subtotal. */
-export function computeDiscount(c: Coupon, subtotal: number): number {
+/**
+ * Descuento en pesos que aplica un cupón.
+ * La base es el subtotal de productos (comida). Solo si el cupón tiene
+ * `discountIncludesDelivery`, se suma el costo de despacho a esa base (así el
+ * descuento puede reducir también el delivery). Por defecto el despacho NO
+ * entra: se cobra completo y el descuento aplica solo sobre la comida.
+ */
+export function computeDiscount(
+  c: Pick<Coupon, "type" | "discountType" | "discountValue" | "maxDiscountAmount" | "discountIncludesDelivery">,
+  subtotal: number,
+  deliveryFee = 0,
+): number {
   if (c.type !== "discount") return 0; // "product" → producto gratis, no descuenta $
-  let d = c.discountType === "percent" ? Math.round((subtotal * c.discountValue) / 100) : c.discountValue;
+  const base = c.discountIncludesDelivery ? subtotal + Math.max(0, deliveryFee) : subtotal;
+  let d = c.discountType === "percent" ? Math.round((base * c.discountValue) / 100) : c.discountValue;
   if (c.maxDiscountAmount) d = Math.min(d, c.maxDiscountAmount);
-  return Math.max(0, Math.min(d, subtotal));
+  return Math.max(0, Math.min(d, base));
 }

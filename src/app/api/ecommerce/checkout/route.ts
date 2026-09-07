@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
           if (okUses && found.maxUsesPerUser) okUses = (await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: found.code, customerPhone: String(customerPhone).trim() } })) < found.maxUsesPerUser;
           if (okUses) {
             appliedCoupon = found;
-            discount = computeDiscount(found, subtotal);
+            discount = computeDiscount(found, subtotal, deliveryFee);
             if (found.type === "product") couponNote = `🎁 Cupón ${found.code}: producto gratis${found.label ? ` (${found.label})` : ""}`;
           }
         }
