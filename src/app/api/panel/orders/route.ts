@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendAdminEmail, orderInDeliveryEmailHtml, orderAcceptedEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -83,43 +83,10 @@ export async function PATCH(req: NextRequest) {
     },
   });
 
-  // Send email to customer on status changes
+  // Aviso al cliente por correo en cambios de estado (incluye nombre del
+  // restaurante en asunto y cuerpo + link de seguimiento).
   if ((body.status === "ACCEPTED" || body.status === "IN_DELIVERY" || body.status === "READY") && order.customerEmail) {
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: order.restaurantId },
-      select: { name: true, orderingWaitTime: true },
-    });
-
-    const emailOpts = body.status === "ACCEPTED"
-      ? {
-          subject: `${restaurant?.name ?? "El local"} aceptó tu pedido ✅`,
-          html: orderAcceptedEmailHtml({
-            customerName: order.customerName,
-            restaurantName: restaurant?.name ?? "",
-            total: order.total,
-            orderType: order.orderType,
-            estimatedTime: restaurant?.orderingWaitTime ?? null,
-            trackingUrl: `https://quierocomer.com/pedido/${order.id}`,
-          }),
-        }
-      : {
-          subject: body.status === "IN_DELIVERY" ? "¡Tu pedido está en camino! 🛵" : "¡Tu pedido está listo! ✅",
-          html: orderInDeliveryEmailHtml({
-            customerName: order.customerName,
-            restaurantName: restaurant?.name ?? "",
-            total: order.total,
-            orderType: order.orderType,
-            estimatedTime: restaurant?.orderingWaitTime ?? null,
-          }),
-        };
-
-    sendAdminEmail({
-      to: order.customerEmail,
-      ...emailOpts,
-      purpose: "order",
-    }).catch((err) => {
-      console.error(`[orders PATCH] email send failed to ${order.customerEmail}:`, err?.message ?? err);
-    });
+    void sendOrderStatusEmail(order.id, body.status);
   }
 
   return NextResponse.json({ order: updated });

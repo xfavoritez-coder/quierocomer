@@ -9,6 +9,7 @@ import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/l
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
+import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { parseHours, getOpenStatus } from "@/lib/ecommerce/hours";
 
 export const runtime = "nodejs";
@@ -212,6 +213,8 @@ export async function POST(req: NextRequest) {
     if (!isOnline) {
       const pos = await dispatchOrderToPos(order.id).catch((e) => ({ ok: false, message: String(e) }));
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
+      // Correo de confirmación al cliente (con el link de seguimiento).
+      if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");
       return NextResponse.json({ ok: true, orderId: order.id, paid: false, pos });
     }
 

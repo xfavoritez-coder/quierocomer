@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { webpayConfirm, webpaySettingsFor } from "@/lib/payments/webpay";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
+import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 
 export const runtime = "nodejs";
@@ -54,6 +55,7 @@ async function handle(req: NextRequest) {
       data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" },
     });
     await registerCouponUse(order);
+    void sendOrderStatusEmail(order.id, "ACCEPTED");
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
     await dispatchOrderToPos(order.id).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
