@@ -53,6 +53,19 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
 
+  // Altura del header (para dejar los chips de categoría sticky justo debajo).
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerH, setHeaderH] = useState(62);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => setHeaderH(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const byCategory = useMemo(() => {
     const m = new Map<string, StoreProduct[]>();
     for (const p of products) { const arr = m.get(p.category_id) ?? []; arr.push(p); m.set(p.category_id, arr); }
@@ -124,13 +137,13 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
       `}</style>
 
-      {/* ── Fondo ambiental difuminado ── */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} 28%, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} 15%, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.22, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.5, background: `radial-gradient(ellipse at 50% 8%, color-mix(in srgb, ${accent} 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, ${accent} 10%, transparent), transparent 28%)`, filter: "blur(10px)" }} />
+      {/* ── Fondo ambiental difuminado (capas fijas aisladas en GPU para no
+             parpadear al hacer scroll en Android) ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, transform: "translateZ(0)", willChange: "transform", backfaceVisibility: "hidden", background: `radial-gradient(circle at 70% 0%, color-mix(in srgb, ${accent} 28%, transparent), transparent 30%), radial-gradient(circle at 8% 28%, color-mix(in srgb, ${accent} 15%, transparent), transparent 36%), radial-gradient(circle at 90% 72%, color-mix(in srgb, ${accent} 5%, transparent), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))` }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", transform: "translateZ(0)", backfaceVisibility: "hidden", opacity: 0.18, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)`, backgroundSize: "38px 38px", maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)", WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)" }} />
 
       {/* ── Header glass ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(3,3,3,0.32)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--carta-border)" }}>
+      <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(3,3,3,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)", willChange: "transform" }}>
         <div className="imp-menu-grid" style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(10px + env(safe-area-inset-top)) 16px 10px" }}>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={glassBtn}><MenuIcon size={18} color="#eaeaea" /></button>
           {tenant.logoUrl
@@ -179,9 +192,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         </button>
       </div>
 
-      {/* ── Chips de categorías ── */}
+      {/* ── Chips de categorías (sticky bajo el header al hacer scroll) ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div className="imp-scroll imp-menu-grid" style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, overflowX: "auto", padding: "0 14px 6px", scrollbarWidth: "none" }}>
+        <div className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "8px 14px 8px", scrollbarWidth: "none", background: "rgba(14,14,14,0.92)", borderBottom: "1px solid rgba(255,255,255,0.06)", transform: "translateZ(0)" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
@@ -204,7 +217,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             <p style={{ fontSize: "0.95rem" }}>No encontramos productos{q ? ` para “${search}”` : ""}</p>
           </div>
         ) : grouped.map((g) => (
-          <div key={g.cat.id} id={`impact-cat-${g.cat.id}`} style={{ marginBottom: 18, scrollMarginTop: 84 }}>
+          <div key={g.cat.id} id={`impact-cat-${g.cat.id}`} style={{ marginBottom: 18, scrollMarginTop: headerH + 60 }}>
             <h3 style={{ fontFamily: DISPLAY, fontSize: 22, color: "rgba(255,255,255,0.6)", margin: "30px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{g.cat.name}</h3>
             {g.items.map((p) => (
               <ImpactCard key={p.id} product={p} accent={accent} onClick={() => openProduct(p)} onAdd={(e) => { e.stopPropagation(); directAdd(p); }} />

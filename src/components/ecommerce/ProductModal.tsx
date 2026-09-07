@@ -93,10 +93,11 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
 
       {/* Modal — pantalla completa en mobile, centrado en desktop */}
       <div className="relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl">
-        {/* Imagen */}
+        {/* Imagen — con degradado que la funde con el fondo del modal (estilo Apple Music) */}
         {product.image_url ? (
-          <div className="aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden shrink-0">
+          <div className="relative aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden shrink-0">
             <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: "45%", background: "linear-gradient(to bottom, transparent, var(--carta-surface, #ffffff))" }} />
           </div>
         ) : (
           <div className="h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl shrink-0">🍱</div>
