@@ -45,11 +45,11 @@ const CSS = `
 .qc-impact .shadow-sm,.qc-impact .shadow,.qc-impact .shadow-md,.qc-impact .shadow-lg,.qc-impact .shadow-xl,.qc-impact .shadow-2xl{box-shadow:0 8px 30px rgba(0,0,0,0.5) !important}
 /* Botón cerrar (X) 100% liquid glass */
 .qc-impact .qc-glass-x{
-  background:rgba(255,255,255,0.12) !important;
-  -webkit-backdrop-filter:blur(14px) saturate(160%);
-  backdrop-filter:blur(14px) saturate(160%);
-  border:1px solid rgba(255,255,255,0.30) !important;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(255,255,255,0.12), 0 6px 20px rgba(0,0,0,0.4) !important;
+  background:rgba(255,255,255,0.07) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(185%) brightness(1.08);
+  backdrop-filter:blur(14px) saturate(185%) brightness(1.08);
+  border:1px solid rgba(255,255,255,0.16) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.32), 0 6px 18px rgba(0,0,0,0.35) !important;
 }
 .qc-impact .qc-glass-x svg{color:#fff !important}
 `;

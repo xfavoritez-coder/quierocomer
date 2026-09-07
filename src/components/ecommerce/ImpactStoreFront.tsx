@@ -127,7 +127,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   } as React.CSSProperties;
 
   return (
-    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", color: "var(--carta-text)", position: "relative", background: `radial-gradient(120% 420px at 72% 0%, color-mix(in srgb, ${accent} 26%, transparent), transparent 60%), radial-gradient(90% 340px at 6% 6%, color-mix(in srgb, ${accent} 12%, transparent), transparent 55%), #0e0e0e`, backgroundRepeat: "no-repeat", ...themeVars }}>
+    <div className="qc-storefront qc-impact" style={{ minHeight: "100dvh", color: "var(--carta-text)", position: "relative", background: `radial-gradient(150% 520px at 75% -2%, color-mix(in srgb, ${accent} 26%, transparent), transparent 60%), radial-gradient(130% 520px at 4% 20%, color-mix(in srgb, ${accent} 15%, transparent), transparent 58%), radial-gradient(130% 560px at 98% 46%, color-mix(in srgb, ${accent} 13%, transparent), transparent 58%), radial-gradient(140% 600px at 12% 72%, color-mix(in srgb, ${accent} 13%, transparent), transparent 60%), radial-gradient(140% 560px at 85% 100%, color-mix(in srgb, ${accent} 15%, transparent), transparent 62%), #0b0b0b`, backgroundRepeat: "no-repeat", ...themeVars }}>
       <StoreStyles />
       <ImpactSkin />
       <style>{`
@@ -138,16 +138,22 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       `}</style>
 
       {/* ── Header glass ── */}
-      <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "#131313", borderBottom: "1px solid var(--carta-border)" }}>
+      <div ref={headerRef} style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(16,16,16,0.45)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", borderBottom: "1px solid rgba(255,255,255,0.10)" }}>
         <div className="imp-menu-grid" style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(10px + env(safe-area-inset-top)) 16px 10px" }}>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" style={glassBtn}><MenuIcon size={18} color="#eaeaea" /></button>
           {tenant.logoUrl
             ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
             : <div style={{ width: 36, height: 36, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontWeight: 800, color: "#0e0e0e" }}>{tenant.name.charAt(0).toUpperCase()}</div>}
           <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
-          <button onClick={() => setCartOpen(true)} aria-label="Carrito" style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.13)", background: mounted && itemCount > 0 ? accent : "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
-            <ShoppingCart size={17} color={mounted && itemCount > 0 ? "#fff" : "#aaa"} />
-            {mounted && itemCount > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 17, height: 17, padding: "0 4px", borderRadius: 999, background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "0.6rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>}
+          <button onClick={() => setCartOpen(true)} aria-label="Carrito" style={{
+            position: "relative", width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
+            background: mounted && itemCount > 0 ? `color-mix(in srgb, ${accent} 34%, rgba(255,255,255,0.06))` : "rgba(255,255,255,0.06)",
+            backdropFilter: "blur(14px) saturate(185%) brightness(1.08)", WebkitBackdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
+            border: mounted && itemCount > 0 ? `1px solid color-mix(in srgb, ${accent} 38%, rgba(255,255,255,0.22))` : "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.30), 0 4px 14px rgba(0,0,0,0.28)",
+          }}>
+            <ShoppingCart size={17} color="#fff" />
+            {mounted && itemCount > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "rgba(255,255,255,0.22)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.55)", color: "#fff", fontSize: "0.62rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{itemCount}</span>}
           </button>
         </div>
       </div>
@@ -228,10 +234,10 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           <button onClick={() => setCartOpen(true)} style={{
             pointerEvents: "auto", width: "100%", maxWidth: 520, padding: "15px 20px", borderRadius: 999,
             display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
-            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.10))`,
-            backdropFilter: "blur(16px) saturate(170%)", WebkitBackdropFilter: "blur(16px) saturate(170%)",
-            border: `1px solid color-mix(in srgb, ${accent} 40%, rgba(255,255,255,0.40))`,
-            boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.12), 0 12px 34px color-mix(in srgb, ${accent} 42%, rgba(0,0,0,0.45))`,
+            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.09))`,
+            backdropFilter: "blur(18px) saturate(190%) brightness(1.08)", WebkitBackdropFilter: "blur(18px) saturate(190%) brightness(1.08)",
+            border: `1px solid color-mix(in srgb, ${accent} 32%, rgba(255,255,255,0.22))`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.08), 0 12px 34px color-mix(in srgb, ${accent} 38%, rgba(0,0,0,0.45))`,
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -253,8 +259,13 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 }
 
 const glassBtn: React.CSSProperties = {
-  width: 40, height: 40, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.13)",
-  background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
+  width: 40, height: 40, borderRadius: "50%",
+  border: "1px solid rgba(255,255,255,0.14)",
+  background: "rgba(255,255,255,0.06)",
+  backdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
+  WebkitBackdropFilter: "blur(14px) saturate(185%) brightness(1.08)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 14px rgba(0,0,0,0.28)",
+  display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
 };
 
 // ── Banner de destacados (carrusel) ──
@@ -305,7 +316,13 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
             <span style={{ fontSize: 22, fontWeight: 800, color: accent, letterSpacing: "-0.8px" }}>{clp(d.price)}</span>
             {discountPct > 0 && <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>{clp(d.original_price!)}</span>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); if (hasOpts) onSelect(d); else onAdd(d); }} style={{ width: 42, height: 42, borderRadius: "50%", border: `1px solid color-mix(in srgb, ${accent} 60%, transparent)`, background: `color-mix(in srgb, ${accent} 20%, rgba(0,0,0,0.45))`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 18px color-mix(in srgb, ${accent} 55%, transparent)`, flexShrink: 0 }}>
+          <button onClick={(e) => { e.stopPropagation(); if (hasOpts) onSelect(d); else onAdd(d); }} style={{
+            width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+            background: `color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.10))`,
+            backdropFilter: "blur(12px) saturate(185%) brightness(1.1)", WebkitBackdropFilter: "blur(12px) saturate(185%) brightness(1.1)",
+            border: `1px solid color-mix(in srgb, ${accent} 28%, rgba(255,255,255,0.28))`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 18px color-mix(in srgb, ${accent} 32%, rgba(0,0,0,0.4))`,
+          }}>
             <Plus size={20} color="#fff" />
           </button>
         </div>
@@ -378,7 +395,14 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
         </div>
       </div>
       {!soldOut && (
-        <span role="button" onClick={hasOpts ? undefined : onAdd} style={{ position: "absolute", bottom: 10, right: 10, width: 32, height: 32, borderRadius: "50%", background: `color-mix(in srgb, ${accent} 18%, transparent)`, border: `1px solid color-mix(in srgb, ${accent} 55%, transparent)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 14px color-mix(in srgb, ${accent} 50%, transparent)`, pointerEvents: hasOpts ? "none" : "auto" }}>
+        <span role="button" onClick={hasOpts ? undefined : onAdd} style={{
+          position: "absolute", bottom: 10, right: 10, width: 33, height: 33, borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: hasOpts ? "none" : "auto",
+          background: `color-mix(in srgb, ${accent} 28%, rgba(255,255,255,0.10))`,
+          backdropFilter: "blur(10px) saturate(185%) brightness(1.1)", WebkitBackdropFilter: "blur(10px) saturate(185%) brightness(1.1)",
+          border: `1px solid color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.26))`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.40), 0 4px 14px color-mix(in srgb, ${accent} 30%, rgba(0,0,0,0.35))`,
+        }}>
           <Plus size={16} color="#fff" />
         </span>
       )}
