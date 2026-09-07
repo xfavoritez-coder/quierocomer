@@ -230,7 +230,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
+        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
@@ -270,8 +270,8 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "12px 16px", paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))", background: "transparent", pointerEvents: "none", display: "flex", justifyContent: "center" }}>
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
           <button onClick={() => setCartOpen(true)} style={{
-            pointerEvents: "auto", width: "auto", maxWidth: "94%", padding: "12px 28px", borderRadius: 999,
-            display: "flex", justifyContent: "center", gap: 32, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
+            pointerEvents: "auto", width: "auto", maxWidth: "96%", padding: "15px 34px", borderRadius: 999,
+            display: "flex", justifyContent: "center", gap: 38, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
             background: `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))`,
             backdropFilter: "blur(18px) saturate(185%) brightness(1.06)", WebkitBackdropFilter: "blur(18px) saturate(185%) brightness(1.06)",
             border: `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.22))`,
@@ -279,9 +279,9 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             transform: "translateZ(0)",
           }}>
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount}&nbsp;&nbsp;Ver carrito</span>
+              <span style={{ fontWeight: 800, fontSize: "1.05rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{itemCount}&nbsp;&nbsp;Ver carrito</span>
             </span>
-            <span style={{ fontWeight: 800, fontSize: "0.95rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
+            <span style={{ fontWeight: 800, fontSize: "1.05rem", textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}>{clp(subtotal)}</span>
           </button>
         </div>
       )}
