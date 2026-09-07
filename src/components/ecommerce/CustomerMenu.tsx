@@ -37,7 +37,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
 
   return (
     <div className={`fixed inset-0 z-50 flex ${side === "left" ? "justify-start" : "justify-end"}`}>
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0" onClick={onClose} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
       <div className="relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
