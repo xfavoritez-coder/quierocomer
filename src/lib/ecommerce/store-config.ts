@@ -25,6 +25,7 @@ export interface EcommerceStoreConfig {
   waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
   favoritesEnabled: boolean; // permitir que el cliente marque favoritos
   theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
+  bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
 }
 
 export type StoreTheme = EcommerceStoreConfig["theme"];
@@ -63,6 +64,9 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
     favoritesEnabled: o.favoritesEnabled === true,
     theme: o.theme === "impact" ? "impact" : "base",
+    bannerProductIds: Array.isArray(o.bannerProductIds)
+      ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
+      : [],
   };
 }
 

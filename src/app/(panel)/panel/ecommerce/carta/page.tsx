@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import type { StorefrontData } from "@/lib/ecommerce/storefront-data";
@@ -22,6 +22,31 @@ export default function EcommerceCatalogoPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"productos" | "modificadores">("productos");
   const [search, setSearch] = useState("");
+
+  // Banner destacado (tema impact): hasta 5 productos, guardado en ecommerceStoreConfig.
+  const BANNER_MAX = 5;
+  const [bannerIds, setBannerIds] = useState<string[]>([]);
+  const cfgRef = useRef<Record<string, unknown>>({});
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.config) { cfgRef.current = d.config; setBannerIds(Array.isArray(d.config.bannerProductIds) ? d.config.bannerProductIds : []); } })
+      .catch(() => {});
+  }, [restaurantId]);
+  const toggleBanner = useCallback((id: string) => {
+    setBannerIds((prev) => {
+      const has = prev.includes(id);
+      if (!has && prev.length >= BANNER_MAX) { toast.error(`Máximo ${BANNER_MAX} productos en el banner`); return prev; }
+      const next = has ? prev.filter((x) => x !== id) : [...prev, id];
+      const cfg = { ...cfgRef.current, bannerProductIds: next };
+      cfgRef.current = cfg;
+      fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: cfg }) })
+        .then((r) => { if (!r.ok) throw new Error(); })
+        .catch(() => toast.error("No se pudo guardar el banner"));
+      return next;
+    });
+  }, [restaurantId]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -98,6 +123,11 @@ export default function EcommerceCatalogoPage() {
 
           {tab === "productos" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px" }}>
+                <Star size={16} color={ACCENT} fill={ACCENT} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>Toca la ⭐ para destacar productos en el <b>banner</b> de la tienda (tema Impact).</span>
+                <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 800, color: bannerIds.length ? ACCENT : "var(--adm-text3)" }}>{bannerIds.length}/{BANNER_MAX}</span>
+              </div>
               {(q ? [{ id: "_all", name: "", position: 0 }] : categories).map((cat) => {
                 const catProducts = q ? filteredProducts : filteredProducts.filter((p) => p.category_id === cat.id);
                 if (!catProducts.length) return null;
@@ -106,7 +136,8 @@ export default function EcommerceCatalogoPage() {
                     {!q && <h2 style={sectionTitle}>{cat.name}</h2>}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {catProducts.map((p) => (
-                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} />
+                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`}
+                          star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
                   </div>
@@ -146,9 +177,18 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
   );
 }
 
-function Row({ name, initial, endpoint }: { name: string; initial: string | null; endpoint: string }) {
+function Row({ name, initial, endpoint, star }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void } }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+      {star && (
+        <button
+          onClick={star.disabled ? undefined : star.onClick}
+          title={star.on ? "Quitar del banner" : star.disabled ? "Máximo 5 en el banner" : "Destacar en el banner"}
+          style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", cursor: star.disabled ? "not-allowed" : "pointer", display: "grid", placeItems: "center", opacity: star.disabled ? 0.35 : 1 }}
+        >
+          <Star size={18} color={star.on ? ACCENT : "var(--adm-text3)"} fill={star.on ? ACCENT : "none"} />
+        </button>
+      )}
       <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
       <CodeInput initial={initial} endpoint={endpoint} />
     </div>

@@ -71,10 +71,18 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   }, [categories, byCategory, q]);
 
   const heroProducts = useMemo(() => {
+    // 1) Selección explícita del local (Catálogo → banner), respetando el orden.
+    const ids = tenant.bannerProductIds ?? [];
+    if (ids.length) {
+      const byId = new Map(products.map((p) => [p.id, p]));
+      const picked = ids.map((id) => byId.get(id)).filter((p): p is StoreProduct => !!p);
+      if (picked.length) return picked.slice(0, 5);
+    }
+    // 2) Fallback: destacados (isHero) o, si no hay, productos con foto.
     const withImg = products.filter((p) => p.image_url && !p.is_sold_out);
     const hero = withImg.filter((p) => p.is_hero);
     return (hero.length ? hero : withImg).slice(0, 5);
-  }, [products]);
+  }, [products, tenant.bannerProductIds]);
 
   const isOpen = tenant.openStatus.open;
 
