@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { mpGetPayment, mercadopagoSettingsFor } from "@/lib/payments/mercadopago";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 
 /**
@@ -20,6 +21,7 @@ export async function confirmMercadoPagoPayment(orderId: string | null, paymentI
   const pay = await mpGetPayment(paymentId, mercadopagoSettingsFor(order.restaurant));
   if (pay.ok && pay.paid && (!pay.externalReference || pay.externalReference === order.id)) {
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" } });
+    await registerCouponUse(order);
     await dispatchOrderToPos(order.id).catch((e) => console.error("[mpConfirm] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return true;

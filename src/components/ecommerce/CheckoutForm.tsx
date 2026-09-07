@@ -92,7 +92,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
       if (raw) {
         const d = JSON.parse(raw) as { couponCode?: string; coupon?: AppliedCoupon | null; notes?: string };
         if (d.couponCode) setCouponCode(d.couponCode);
-        if (d.coupon && d.coupon.discountType) setCoupon(d.coupon); // ignora formato viejo
+        if (d.coupon && d.coupon.discountType) { setCoupon(d.coupon); restoredCouponRef.current = true; } // ignora formato viejo; revalidar
         if (d.notes) setNotes(d.notes);
       }
     } catch {}
@@ -107,6 +107,33 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coupon, couponCode, notes]);
+
+  // Revalidar (una sola vez) un cupón restaurado desde localStorage: si ya no es
+  // válido (expiró, superó usos, no aplica), quitarlo para no mostrar un descuento
+  // que el servidor no aplicará; si sigue válido, refrescar sus parámetros.
+  const restoredCouponRef = useRef(false);
+  useEffect(() => {
+    if (!restoredCouponRef.current || !coupon) return;
+    restoredCouponRef.current = false;
+    const code = coupon.code;
+    (async () => {
+      try {
+        const res = await fetch("/api/ecommerce/coupons/validate", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!data.valid) { setCoupon(null); setCouponCode(""); setCouponMsg("El cupón guardado ya no está disponible"); return; }
+        const c = data.coupon;
+        setCoupon({
+          code: c.code, label: c.label, type: c.type, freeProductId: c.freeProductId,
+          discountType: c.discountType, discountValue: c.discountValue,
+          maxDiscountAmount: c.maxDiscountAmount, discountIncludesDelivery: c.discountIncludesDelivery === true,
+        });
+      } catch {}
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coupon]);
 
   // Reusar la sesión del cliente: si ya verificó su correo alguna vez (cookie
   // qr_user_id de un verify-otp previo), lo reconocemos al volver — prellenamos
@@ -266,7 +293,11 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) { toast.error(data.error || "No se pudo crear el pedido"); setSending(false); return; }
+      if (!res.ok || !data.ok) {
+        if (data.couponInvalid) { setCoupon(null); setCouponCode(""); } // quitar cupón que el servidor rechazó
+        toast.error(data.error || "No se pudo crear el pedido");
+        setSending(false); return;
+      }
 
       // Pago online: NO vaciamos el carrito todavía. Guardamos el pedido pendiente:
       // si el cliente vuelve sin pagar, marcamos el pago fallido y conserva su carrito.

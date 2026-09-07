@@ -8,6 +8,7 @@ import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
+import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { parseHours, getOpenStatus } from "@/lib/ecommerce/hours";
 
 export const runtime = "nodejs";
@@ -104,22 +105,34 @@ export async function POST(req: NextRequest) {
     let discount = 0;
     let appliedCoupon: ReturnType<typeof parseCoupons>[number] | null = null;
     let couponNote: string | null = null;
+    let couponError: string | null = null;
     if (couponCode) {
       const found = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === String(couponCode).toUpperCase().trim());
-      if (found) {
+      if (!found) {
+        couponError = "El cupón ya no existe";
+      } else {
         const v = validateCoupon(found, { subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP" });
-        if (v.valid) {
+        if (!v.valid) {
+          couponError = v.error || "El cupón no es válido";
+        } else {
           // Chequear límites de uso.
           let okUses = true;
           if (found.maxUses) okUses = (await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: found.code } })) < found.maxUses;
           if (okUses && found.maxUsesPerUser) okUses = (await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: found.code, customerPhone: String(customerPhone).trim() } })) < found.maxUsesPerUser;
-          if (okUses) {
+          if (!okUses) {
+            couponError = "Este cupón ya alcanzó su límite de usos";
+          } else {
             appliedCoupon = found;
             discount = computeDiscount(found, subtotal, deliveryFee);
             if (found.type === "product") couponNote = `🎁 Cupón ${found.code}: producto gratis${found.label ? ` (${found.label})` : ""}`;
           }
         }
       }
+    }
+    // Si se envió un cupón pero no se pudo aplicar, NO seguir en silencio a precio
+    // completo: avisar para que el cliente lo quite o corrija (evita cobrar de más).
+    if (couponCode && !appliedCoupon) {
+      return NextResponse.json({ error: `No se pudo aplicar el cupón: ${couponError || "no es válido"}. Quítalo e inténtalo de nuevo.`, couponInvalid: true }, { status: 400 });
     }
 
     const total = Math.max(0, subtotal + deliveryFee - discount);
@@ -172,9 +185,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Registrar el uso del cupón (para los límites de uso).
-    if (appliedCoupon) {
-      await prisma.ecommerceCouponUse.create({ data: { restaurantId: restaurant.id, couponCode: appliedCoupon.code, orderId: order.id, customerPhone: String(customerPhone).trim() } }).catch(() => {});
+    // Registrar el uso del cupón (para los límites de uso) SOLO si el pago es
+    // offline (el pedido ya queda ACCEPTED). En pagos online el uso se registra al
+    // confirmarse el pago, para no "quemar" el cupón si el cliente abandona el pago.
+    if (appliedCoupon && !isOnline) {
+      await registerCouponUse({ id: order.id, restaurantId: restaurant.id, couponCode: appliedCoupon.code, customerPhone: String(customerPhone).trim() });
     }
 
     // Guardar la dirección en el perfil del cliente logueado (para "Mis direcciones").

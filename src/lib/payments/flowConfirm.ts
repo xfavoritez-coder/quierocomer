@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { flowGetStatus, flowSettingsFor } from "@/lib/payments/flow";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 
 /**
@@ -16,6 +17,7 @@ export async function confirmFlowPayment(token: string | null): Promise<boolean>
   const status = await flowGetStatus(token, flowSettingsFor(order.restaurant));
   if (status.ok && status.paid) {
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" } });
+    await registerCouponUse(order);
     await dispatchOrderToPos(order.id).catch((e) => console.error("[flowConfirm] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return true;
