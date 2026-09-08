@@ -163,14 +163,14 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   }
 
   const deliveryLabel = !mounted
-    ? "Entrega o retiro"
+    ? "Delivery o Retiro"
     : deliverySelected
       ? (deliveryType === "delivery" ? (deliveryAddress?.address ? deliveryAddress.address.split(",")[0] : "Envío a domicilio") : "Listo para retirar")
-      : "Elige entrega o retiro";
+      : "Elige Delivery o Retiro";
   const deliveryEyebrow = !mounted
     ? " "
     : deliverySelected
-      ? (deliveryType === "delivery" ? "Entrega a domicilio" : "Retiro en el local")
+      ? (deliveryType === "delivery" ? "Delivery a domicilio" : "Retiro en el local")
       : "Empieza tu pedido aquí";
 
   // Tokens oscuros del tema impact (idénticos a OrderMenuPage dark).
@@ -224,15 +224,15 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
           padding: "13px 15px", color: "#fff", cursor: "pointer", textAlign: "left",
           background: deliverySelected
             ? "rgba(255,255,255,0.07)"
-            : `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.06))`,
+            : `color-mix(in srgb, ${accent} 13%, rgba(255,255,255,0.06))`,
           backdropFilter: "blur(16px) saturate(160%)",
           WebkitBackdropFilter: "blur(16px) saturate(160%)",
           border: deliverySelected
             ? "1px solid rgba(255,255,255,0.16)"
-            : `1px solid color-mix(in srgb, ${accent} 60%, rgba(255,255,255,0.28))`,
+            : `1px solid color-mix(in srgb, ${accent} 34%, rgba(255,255,255,0.26))`,
           boxShadow: deliverySelected
             ? "inset 0 1px 0 rgba(255,255,255,0.16)"
-            : `inset 0 1px 0 rgba(255,255,255,0.24), 0 8px 26px color-mix(in srgb, ${accent} 42%, transparent)`,
+            : `inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 24px color-mix(in srgb, ${accent} 22%, transparent)`,
         }}>
           <span style={{ flexShrink: 0, width: 42, height: 42, borderRadius: 13, display: "grid", placeItems: "center", background: accent, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 10px rgba(0,0,0,0.3)" }}>
             <MapPin size={21} color="#fff" strokeWidth={2.4} />
