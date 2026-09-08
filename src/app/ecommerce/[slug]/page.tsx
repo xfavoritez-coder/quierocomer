@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { loadEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
+import GtmScript from "@/components/ecommerce/GtmScript";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +34,9 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // en ese caso las URLs internas son limpias (base ""); en el dominio principal usamos /ecommerce/<slug>.
   const basePath = data.tenant.customDomain && slug === data.tenant.customDomain ? "" : `/ecommerce/${data.tenant.slug}`;
 
+  const gtm = <GtmScript id={data.tenant.gtmId} />;
   if (data.tenant.theme === "impact") {
-    return <ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} />;
+    return <>{gtm}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
   }
-  return <StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} />;
+  return <>{gtm}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
 }

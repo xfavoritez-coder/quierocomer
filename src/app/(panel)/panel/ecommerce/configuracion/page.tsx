@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -176,6 +176,25 @@ export default function EcommerceConfiguracionPage() {
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
                 Escribe solo el dominio, sin “https://” ni “www” (ej: <b>haruna.cl</b>). Además debes: (1) agregar el dominio a este proyecto en Vercel y (2) en tu proveedor DNS apuntarlo a Vercel — registro <b>A</b> <code>@</code> → <code>76.76.21.21</code> y <b>CNAME</b> <code>www</code> → <code>cname.vercel-dns.com</code>. Déjalo vacío para usar el dominio de quierocomer.
+              </p>
+            </div>
+          </section>
+          )}
+
+          {/* Google Tag Manager */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={BarChart3} title="Google Tag Manager" sub="Mide el tráfico de tu tienda online. Pega el ID de tu contenedor (formato GTM-XXXXXX)." />
+            <div style={{ marginTop: 12 }}>
+              <input
+                value={cfg.gtmId ?? ""}
+                onChange={(e) => patch({ gtmId: e.target.value.trim() ? e.target.value.trim().toUpperCase() : null })}
+                placeholder="GTM-XXXXXX"
+                autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+              />
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Lo encuentras en tu cuenta de Google Tag Manager (Espacio de trabajo → arriba, junto al nombre del contenedor). El script se carga solo en tu tienda y checkout. Déjalo vacío para desactivarlo.
               </p>
             </div>
           </section>
