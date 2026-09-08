@@ -75,6 +75,7 @@ export interface StoreProduct {
   category_id: string;
   name: string;
   description: string | null;
+  detailed_description: string | null; // descripción larga (lista tipo "Incluye")
   price: number;
   original_price: number | null; // precio tachado (si hay oferta)
   image_url: string | null;
@@ -155,7 +156,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         where: { isActive: true, deletedAt: null },
         orderBy: { position: "asc" },
         select: {
-          id: true, categoryId: true, name: true, description: true,
+          id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true,
           toteatProductId: true, isHero: true,
           modifierTemplates: {
@@ -215,6 +216,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         category_id: d.categoryId,
         name: d.name,
         description: d.description,
+        detailed_description: d.detailedDescription ?? null,
         price: hasOffer ? d.discountPrice! : d.price,
         original_price: hasOffer ? d.price : null,
         image_url: d.photos?.[0] ?? null,

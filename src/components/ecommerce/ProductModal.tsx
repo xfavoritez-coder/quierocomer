@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -12,12 +12,26 @@ interface Props {
   onClose: () => void;
 }
 
+// Convierte la "descripción detallada" (una línea por ítem) en una lista tipo "Incluye".
+// El texto entre paréntesis, o tras "-", "–", "—" o ":", se muestra como detalle.
+function parseIncludes(text: string | null): { title: string; detail: string }[] {
+  if (!text) return [];
+  return text.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
+    const paren = line.match(/^(.*?)\s*\((.+)\)\s*$/);
+    if (paren) return { title: paren[1].trim(), detail: paren[2].trim() };
+    const sep = line.match(/^(.*?)\s*[-–—:]\s+(.+)$/);
+    if (sep) return { title: sep[1].trim(), detail: sep[2].trim() };
+    return { title: line, detail: "" };
+  }).filter((x) => x.title).slice(0, 40);
+}
+
 export default function ProductModal({ product, primaryColor, onClose }: Props) {
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const addItem = useCartStore((s) => s.addItem);
 
   const groups = product.option_groups ?? [];
+  const includeItems = parseIncludes(product.detailed_description);
 
   // Bloquear scroll del body sin salto por la barra de scroll
   useEffect(() => {
@@ -120,6 +134,22 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
               <p className="mt-1 text-lg font-black" style={{ color: primaryColor }}>{clp(product.price)}</p>
             )}
             {product.description && <p className="mt-2 text-sm text-gray-500 leading-relaxed whitespace-pre-line">{product.description}</p>}
+            {includeItems.length > 0 && (
+              <div className="mt-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Check className="w-4 h-4" style={{ color: primaryColor }} strokeWidth={3} />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-gray-500">Incluye</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {includeItems.map((it, i) => (
+                    <div key={i} className="bg-gray-50 rounded-xl pl-3 pr-3 py-2.5" style={{ borderLeft: `3px solid ${primaryColor}` }}>
+                      <p className="text-sm font-bold text-gray-900 leading-snug">{it.title}</p>
+                      {it.detail && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{it.detail}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Grupos de opciones */}

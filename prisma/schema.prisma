@@ -664,6 +664,7 @@ model Dish {
   categoryId            String
   name                  String
   description           String?
+  detailedDescription   String? // descripción larga (ej: "qué incluye" un combo); se muestra en el ecommerce
   price                 Float
   discountPrice         Float?
   photos                String[]

@@ -32,7 +32,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
-  id: string; name: string; description: string | null; price: number; discountPrice: number | null;
+  id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
   category: { id: string; name: string };
@@ -829,6 +829,7 @@ export default function AdminMenus() {
   const editFromCategoriesRef = useRef(false);
   const [eName, setEName] = useState("");
   const [eDesc, setEDesc] = useState("");
+  const [eDetailedDesc, setEDetailedDesc] = useState("");
   const [ePrice, setEPrice] = useState("");
   const [eDiscountPrice, setEDiscountPrice] = useState("");
   const [eIngredients, setEIngredients] = useState("");
@@ -947,6 +948,7 @@ export default function AdminMenus() {
     setEditMode(true);
     setEName(d.name);
     setEDesc(d.description || "");
+    setEDetailedDesc(d.detailedDescription || "");
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
     setEIngredients(d.ingredients || "");
@@ -991,6 +993,7 @@ export default function AdminMenus() {
     const updates: Record<string, any> = {
       name: eName,
       description: eDesc || null,
+      detailedDescription: eDetailedDesc || null,
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
       photos: ePhotoUrl ? [ePhotoUrl] : [],
@@ -1246,6 +1249,13 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>{t("menu_desc_edit")}</label>
                 <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={4} style={{ ...INP, resize: "vertical", minHeight: 80 }} />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Descripción detallada <span style={{ fontWeight: 400, color: "var(--adm-text3, #999)" }}>· opcional</span></label>
+                <textarea value={eDetailedDesc} onChange={e => setEDetailedDesc(e.target.value)} rows={5} placeholder={"Una línea por elemento. Ej:\n10 Envueltos en panko (Pollo, queso crema y cebollín)\n10 Envueltos en palta (Camarón)"} style={{ ...INP, resize: "vertical", minHeight: 92 }} />
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3, #999)", margin: "6px 0 0", lineHeight: 1.5 }}>
+                  Se muestra en el ecommerce como una lista tipo &ldquo;Incluye&rdquo; debajo de la descripción. Escribe una línea por ítem; el texto entre paréntesis o tras &ldquo;-&rdquo; se ve como detalle.
+                </p>
               </div>
               <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                 <div style={{ flex: 1 }}>
