@@ -235,10 +235,13 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             const on = cat.id === activeCat;
             return (
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
-                whiteSpace: "nowrap", flexShrink: 0, padding: "8px 12px", fontSize: 15, fontWeight: 800, cursor: "pointer",
-                background: "transparent", border: "none", borderRadius: 999,
-                color: on ? accent : "#cfcfcf",
-                textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+                whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
+                backdropFilter: "blur(16px) saturate(150%)", WebkitBackdropFilter: "blur(16px) saturate(150%)",
+                border: on ? `1px solid color-mix(in srgb, ${accent} 45%, rgba(255,255,255,0.20))` : "1px solid rgba(255,255,255,0.16)",
+                background: on ? `color-mix(in srgb, ${accent} 42%, rgba(14,14,16,0.42))` : "rgba(14,14,16,0.42)",
+                boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.25), 0 5px 14px rgba(0,0,0,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.18), 0 5px 14px rgba(0,0,0,0.3)",
+                color: on ? "#fff" : "#e8e8e8",
+                textShadow: "0 1px 4px rgba(0,0,0,0.55)",
               }}>{cat.name}</button>
             );
           })}
