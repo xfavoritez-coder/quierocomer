@@ -190,6 +190,8 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
         .imp-scroll::-webkit-scrollbar{display:none}
         .imp-menu-grid{max-width:1200px;margin:0 auto}
+        .imp-plato-grid{display:grid;grid-template-columns:1fr;gap:11px}
+        @media (min-width:1024px){.imp-plato-grid{grid-template-columns:repeat(3,1fr);gap:16px}}
         @keyframes imp-bump{0%{transform:scale(1)}30%{transform:scale(1.16)}100%{transform:scale(1)}}
       `}</style>
 
@@ -311,9 +313,11 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         ) : grouped.map((g) => (
           <div key={g.cat.id} id={`impact-cat-${g.cat.id}`} style={{ marginBottom: 18, scrollMarginTop: headerH + 60 }}>
             <h3 style={{ fontFamily: DISPLAY, fontSize: 22, color: "rgba(255,255,255,0.6)", margin: "30px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9 }}>{g.cat.name}</h3>
-            {g.items.map((p) => (
-              <ImpactCard key={p.id} product={p} accent={accent} onClick={() => openProduct(p)} onAdd={(e) => { e.stopPropagation(); directAdd(p); }} />
-            ))}
+            <div className="imp-plato-grid">
+              {g.items.map((p) => (
+                <ImpactCard key={p.id} product={p} accent={accent} onClick={() => openProduct(p)} onAdd={(e) => { e.stopPropagation(); directAdd(p); }} />
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -479,7 +483,7 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
   const hasOpts = (product.option_groups?.length ?? 0) > 0;
   return (
     <button onClick={soldOut ? undefined : onClick} style={{
-      width: "100%", display: "grid", gridTemplateColumns: "132px 1fr", gap: 16, padding: 10, marginBottom: 11, borderRadius: 26, minHeight: 152,
+      width: "100%", display: "grid", gridTemplateColumns: "132px 1fr", gap: 16, padding: 10, borderRadius: 26, minHeight: 152,
       background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
       border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
       position: "relative", overflow: "hidden", textAlign: "left", cursor: soldOut ? "not-allowed" : "pointer", opacity: soldOut ? 0.55 : 1, fontFamily: "inherit",
