@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -81,6 +81,8 @@ export default function EcommercePedidosPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [view, setView] = useState<"activos" | "historial">("activos");
   const [statusFilter, setStatusFilter] = useState<"todos" | OrderStatus>("todos");
+  const [query, setQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState(""); // YYYY-MM-DD (local)
   const [loading, setLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<Order | null>(null);
@@ -195,6 +197,26 @@ export default function EcommercePedidosPage() {
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
 
+  // Filtros de búsqueda + fecha (se aplican sobre la lista visible actual).
+  const q = query.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
+  const filtered = shown.filter((o) => {
+    if (dateFilter) {
+      const d = new Date(o.createdAt);
+      const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (local !== dateFilter) return false;
+    }
+    if (q) {
+      const hay = [o.customerName, o.customerEmail, o.deliveryAddress, o.orderNumber != null ? `#${o.orderNumber}` : ""].filter(Boolean).join(" ").toLowerCase();
+      const phone = (o.customerPhone || "").replace(/\D/g, "");
+      const matchText = hay.includes(q);
+      const matchPhone = qDigits.length >= 3 && phone.includes(qDigits);
+      if (!matchText && !matchPhone) return false;
+    }
+    return true;
+  });
+  const hasFilter = !!q || !!dateFilter;
+
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
       <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 18 }}>
@@ -232,13 +254,31 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
+      {/* Buscador + fecha */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: "1 1 220px", minWidth: 0 }}>
+          <Search size={15} color="var(--adm-text3)" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, correo, teléfono o dirección…"
+            style={{ width: "100%", boxSizing: "border-box", padding: "9px 30px 9px 34px", borderRadius: 10, border: `1px solid ${query ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
+          {query && <button onClick={() => setQuery("")} title="Limpiar" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", display: "flex" }}><X size={14} /></button>}
+        </div>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <Calendar size={15} color="var(--adm-text3)" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+          <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
+            style={{ boxSizing: "border-box", padding: "9px 10px 9px 34px", borderRadius: 10, border: `1px solid ${dateFilter ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
+        </div>
+        {dateFilter && <button onClick={() => setDateFilter("")} title="Quitar fecha" style={iconBtn}><X size={15} /></button>}
+      </div>
+
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</p>
-      ) : shown.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>No hay pedidos aquí.</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>
+          {hasFilter ? <>No hay pedidos que coincidan con la búsqueda{view === "activos" ? <> · prueba en <b>Historial</b></> : ""}.</> : "No hay pedidos aquí."}
+        </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {shown.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />)}
+          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />)}
         </div>
       )}
 
