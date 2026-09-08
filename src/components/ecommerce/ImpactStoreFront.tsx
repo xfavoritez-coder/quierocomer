@@ -8,13 +8,13 @@
 //  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import ProductModal from "./ProductModal";
-import CartDrawer from "./CartDrawer";
 import CustomerMenu from "./CustomerMenu";
 import StoreStyles from "./StoreStyles";
 import ImpactSkin from "./ImpactSkin";
@@ -33,10 +33,11 @@ const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 export default function ImpactStoreFront({ tenant, categories, products, basePath }: Props) {
   const accent = tenant.primaryColor;
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  const router = useRouter();
+  const goCheckout = () => router.push(`${storeBase}/checkout`);
   useFavicon(tenant.logoUrl);
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("");
@@ -209,7 +210,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
             ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
             : <div style={{ width: 36, height: 36, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontWeight: 800, color: "#0e0e0e" }}>{tenant.name.charAt(0).toUpperCase()}</div>}
           <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
-          <button onClick={() => setCartOpen(true)} aria-label="Carrito" style={{
+          <button onClick={goCheckout} aria-label="Carrito" style={{
             position: "relative", width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
             background: mounted && itemCount > 0 ? `color-mix(in srgb, ${accent} 55%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.12)",
             border: mounted && itemCount > 0 ? `1px solid color-mix(in srgb, ${accent} 38%, rgba(255,255,255,0.24))` : "1px solid rgba(255,255,255,0.16)",
@@ -328,7 +329,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {mounted && itemCount > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "12px 16px", paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))", background: "transparent", pointerEvents: "none", display: "flex", justifyContent: "center" }}>
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
-          <button onClick={() => setCartOpen(true)} style={{
+          <button onClick={goCheckout} style={{
             pointerEvents: "auto", width: "auto", maxWidth: "96%", padding: "15px 34px", borderRadius: 999,
             display: "flex", justifyContent: "center", gap: 38, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
             background: `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))`,
@@ -349,7 +350,6 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} tenant={tenant} primaryColor={accent} mobileOnly={false} basePath={storeBase} onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }} />
     </div>
   );
 }

@@ -11,7 +11,6 @@ import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/deli
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import ProductModal from "./ProductModal";
-import CartDrawer from "./CartDrawer";
 import StoreStyles from "./StoreStyles";
 
 interface Props {
@@ -41,6 +40,7 @@ export const storeFontVars: React.CSSProperties = {
 
 export default function StoreFront({ tenant, categories, products, basePath }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  const router = useRouter();
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
   useFavicon(tenant.logoUrl);
@@ -48,7 +48,6 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartBump, setCartBump] = useState(false);
@@ -172,9 +171,9 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             )}
           </div>
           <div className="flex items-center gap-2">
-            {/* Carrito móvil */}
+            {/* Carrito móvil → va directo al checkout (el resumen es editable allí) */}
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={() => router.push(`${storeBase}/checkout`)}
               className={`relative lg:hidden flex items-center gap-1.5 rounded-xl px-3 py-2 text-white font-bold text-sm shadow transition hover:opacity-90 whitespace-nowrap ${cartBump ? "cart-bump" : ""}`}
               style={{ background: primaryColor }}
             >
@@ -313,15 +312,6 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
         <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} products={products} />
       )}
 
-      {/* Drawer carrito (mobile) */}
-      <CartDrawer
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        tenant={tenant}
-        primaryColor={primaryColor}
-        basePath={storeBase}
-        onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }}
-      />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -17,7 +17,7 @@ type AppliedCoupon = {
   maxDiscountAmount?: number | null; discountIncludesDelivery: boolean;
   freeProductId?: string | null;
 };
-import { storeFontVars, shortAddr } from "./StoreFront";
+import { storeFontVars, shortAddr, DeliveryModal } from "./StoreFront";
 import StoreStyles from "./StoreStyles";
 import ImpactSkin from "./ImpactSkin";
 import AccompanimentsSection from "./AccompanimentsSection";
@@ -37,7 +37,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const primaryColor = tenant.primaryColor;
   const impact = tenant.theme === "impact";
   useFavicon(tenant.logoUrl);
-  const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart } = useCartStore();
+  const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart, updateQty, removeItem } = useCartStore();
+  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
 
@@ -212,7 +213,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const discount = coupon ? computeDiscount(coupon, subtotal, deliveryFee) : 0;
   const finalTotal = Math.max(0, total - discount);
   const isOpen = tenant.openStatus.open;
-  const isValid = isOpen && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+  const isValid = isOpen && deliverySelected && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
 
   function onEmailChange(v: string) {
     setEmail(v);
@@ -438,31 +439,43 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             </div>
           </section>
 
-          {/* Entrega */}
+          {/* Entrega — se elige aquí mismo (DeliveryModal inline) */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-black text-sm text-gray-900">Entrega</h2>
-              <Link href={storeHref} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</Link>
+              {deliverySelected && <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</button>}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                {isDelivery ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
+            {deliverySelected ? (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  {isDelivery ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
+                </div>
+                <div className="min-w-0">
+                  {isDelivery && deliveryAddress ? (
+                    <>
+                      <p className="text-sm font-bold text-gray-800">🛵 Delivery</p>
+                      <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-gray-800">🏠 Retiro en tienda</p>
+                      {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="min-w-0">
-                {isDelivery && deliveryAddress ? (
-                  <>
-                    <p className="text-sm font-bold text-gray-800">🛵 Delivery</p>
-                    <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-bold text-gray-800">🏠 Retiro en tienda</p>
-                    {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
-                  </>
-                )}
-              </div>
-            </div>
+            ) : (
+              <button type="button" onClick={() => setDeliveryModalOpen(true)} className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left" style={{ borderColor: primaryColor, background: `${primaryColor}0d` }}>
+                <span className="flex items-center gap-2 min-w-0">
+                  <MapPin className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                  <span className="text-sm font-bold truncate" style={{ color: primaryColor }}>Elige cómo recibir tu pedido</span>
+                </span>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+              </button>
+            )}
           </section>
+
+          {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />}
 
           {/* Pago */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -534,12 +547,20 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             {mounted && (
               <div className="flex flex-col gap-2">
                 {items.map((it) => (
-                  <div key={`${it.product_id}-${it.options.map((o) => o.value_id).join(",")}`} className="flex justify-between gap-3 text-sm">
-                    <div className="min-w-0">
-                      <span className="text-gray-700">{it.quantity}× {it.name}</span>
+                  <div key={`${it.product_id}-${it.options.map((o) => o.value_id).join(",")}`} className="flex justify-between gap-3 text-sm items-start">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-gray-700 font-medium">{it.name}</span>
                       {it.options.length > 0 && (
                         <span className="block text-xs text-gray-400 truncate">{it.options.map((o) => o.value).join(", ")}</span>
                       )}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg">
+                          <button type="button" onClick={() => updateQty(it.product_id, it.options, -1)} className="p-1.5 text-gray-600" aria-label="Quitar uno"><Minus className="w-3.5 h-3.5" /></button>
+                          <span className="w-5 text-center font-black text-xs text-gray-900">{it.quantity}</span>
+                          <button type="button" onClick={() => updateQty(it.product_id, it.options, 1)} className="p-1.5 text-gray-600" aria-label="Agregar uno"><Plus className="w-3.5 h-3.5" /></button>
+                        </div>
+                        <button type="button" onClick={() => removeItem(it.product_id, it.options)} className="text-gray-400 hover:text-red-500 p-1" aria-label="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     </div>
                     <span className="font-semibold text-gray-700 shrink-0">{clp(it.unit_price * it.quantity)}</span>
                   </div>
