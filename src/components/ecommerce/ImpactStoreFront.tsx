@@ -8,7 +8,7 @@
 //  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin } from "lucide-react";
+import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -131,12 +131,31 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
     if (el) cont.scrollTo({ left: el.offsetLeft - 16, behavior: "smooth" });
   }, [activeCat]);
 
-  const openProduct = useCallback((p: StoreProduct) => { if (!p.is_sold_out) setSelectedProduct(p); }, []);
+  // Si el cliente aún no ha definido entrega/retiro, cualquier intento de abrir o
+  // agregar un producto abre PRIMERO el modal de entrega; el producto queda "pendiente"
+  // y se abre solo cuando el cliente completa la selección.
+  const [pendingProduct, setPendingProduct] = useState<StoreProduct | null>(null);
+
+  const openProduct = useCallback((p: StoreProduct) => {
+    if (p.is_sold_out) return;
+    if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
+    setSelectedProduct(p);
+  }, [deliverySelected]);
+
   const directAdd = useCallback((p: StoreProduct) => {
     if (p.is_sold_out || !isOpen) return;
+    if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
     if (p.option_groups && p.option_groups.length > 0) { setSelectedProduct(p); return; }
     addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, options: [] });
-  }, [addItem, isOpen]);
+  }, [addItem, isOpen, deliverySelected]);
+
+  // Al cerrarse el modal de entrega con un producto pendiente: si el cliente eligió
+  // entrega/retiro, abrimos el producto; si canceló, simplemente descartamos el pendiente.
+  useEffect(() => {
+    if (deliveryModalOpen || !pendingProduct) return;
+    if (deliverySelected) setSelectedProduct(pendingProduct);
+    setPendingProduct(null);
+  }, [deliveryModalOpen, deliverySelected, pendingProduct]);
 
   function scrollToCategory(id: string) {
     setActiveCat(id);
@@ -146,8 +165,13 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
   const deliveryLabel = !mounted
     ? "Entrega o retiro"
     : deliverySelected
-      ? (deliveryType === "delivery" ? (deliveryAddress?.address ? `Entrega · ${deliveryAddress.address.split(",")[0]}` : "Delivery") : "Retiro en el local")
+      ? (deliveryType === "delivery" ? (deliveryAddress?.address ? deliveryAddress.address.split(",")[0] : "Envío a domicilio") : "Listo para retirar")
       : "Elige entrega o retiro";
+  const deliveryEyebrow = !mounted
+    ? " "
+    : deliverySelected
+      ? (deliveryType === "delivery" ? "Entrega a domicilio" : "Retiro en el local")
+      : "Empieza tu pedido aquí";
 
   // Tokens oscuros del tema impact (idénticos a OrderMenuPage dark).
   const themeVars = {
@@ -193,6 +217,36 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
         </div>
       </div>
 
+      {/* ── Selector de entrega — DISTINTIVO, arriba del banner (puerta de entrada al pedido) ── */}
+      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "14px 14px 0" }}>
+        <button onClick={() => setDeliveryModalOpen(true)} style={{
+          width: "100%", display: "flex", alignItems: "center", gap: 12, borderRadius: 18,
+          padding: "13px 15px", color: "#fff", cursor: "pointer", textAlign: "left",
+          background: deliverySelected
+            ? "rgba(255,255,255,0.07)"
+            : `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.06))`,
+          backdropFilter: "blur(16px) saturate(160%)",
+          WebkitBackdropFilter: "blur(16px) saturate(160%)",
+          border: deliverySelected
+            ? "1px solid rgba(255,255,255,0.16)"
+            : `1px solid color-mix(in srgb, ${accent} 60%, rgba(255,255,255,0.28))`,
+          boxShadow: deliverySelected
+            ? "inset 0 1px 0 rgba(255,255,255,0.16)"
+            : `inset 0 1px 0 rgba(255,255,255,0.24), 0 8px 26px color-mix(in srgb, ${accent} 42%, transparent)`,
+        }}>
+          <span style={{ flexShrink: 0, width: 42, height: 42, borderRadius: 13, display: "grid", placeItems: "center", background: accent, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 10px rgba(0,0,0,0.3)" }}>
+            <MapPin size={21} color="#fff" strokeWidth={2.4} />
+          </span>
+          <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+            <span style={{ fontSize: "0.68rem", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase", color: deliverySelected ? "rgba(255,255,255,0.5)" : `color-mix(in srgb, ${accent} 45%, #ffffff)` }}>{deliveryEyebrow}</span>
+            <span style={{ fontSize: "1rem", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.15 }}>{deliveryLabel}</span>
+          </span>
+          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2, fontSize: "0.8rem", fontWeight: 800, color: accent }}>
+            {deliverySelected ? "Cambiar" : "Elegir"}<ChevronRight size={16} color={accent} />
+          </span>
+        </button>
+      </div>
+
       {/* ── Banner de destacados ── */}
       {heroProducts.length > 0 && (
         <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "14px 14px 0" }}>
@@ -204,15 +258,6 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       {grouped.length >= 3 && (
         <CategoriesSection grouped={grouped} accent={accent} activeId={activeCat} onTap={scrollToCategory} />
       )}
-
-      {/* ── Selector de entrega (debajo de las categorías) ── */}
-      <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "16px 14px 0" }}>
-        <button onClick={() => setDeliveryModalOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "color-mix(in srgb, var(--carta-text) 5%, transparent)", border: "1px solid var(--carta-border)", borderRadius: 999, padding: "13px 18px", color: "var(--carta-text)", cursor: "pointer", textAlign: "left" }}>
-          <MapPin size={16} color={accent} style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, fontSize: "0.86rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliveryLabel}</span>
-          <span style={{ fontSize: "0.76rem", color: accent, fontWeight: 800 }}>Cambiar</span>
-        </button>
-      </div>
 
       {/* ── Título MENÚ + búsqueda ── */}
       <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "22px 14px 12px", display: "flex", alignItems: "center", gap: 8 }}>
