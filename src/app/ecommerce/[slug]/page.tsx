@@ -29,8 +29,12 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   const data = await loadEcommerceStorefront(slug);
   if (!data) return notFound();
 
+  // Si el request llegó por el dominio propio, el `slug` param es el host (= customDomain):
+  // en ese caso las URLs internas son limpias (base ""); en el dominio principal usamos /ecommerce/<slug>.
+  const basePath = data.tenant.customDomain && slug === data.tenant.customDomain ? "" : `/ecommerce/${data.tenant.slug}`;
+
   if (data.tenant.theme === "impact") {
-    return <ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} />;
+    return <ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} />;
   }
-  return <StoreFront tenant={data.tenant} categories={data.categories} products={data.products} />;
+  return <StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} />;
 }

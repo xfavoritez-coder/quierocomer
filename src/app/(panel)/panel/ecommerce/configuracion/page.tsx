@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -159,6 +159,25 @@ export default function EcommerceConfiguracionPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>Deja en 0 para no exigir mínimo. En delivery, la zona puede tener su propio mínimo (se aplica el mayor).</p>
               </div>
             )}
+          </section>
+          )}
+
+          {/* Dominio propio */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Globe} title="Dominio propio" sub="Conecta tu propio dominio para que tu tienda se vea en él con URLs limpias (ej: haruna.cl/checkout)." />
+            <div style={{ marginTop: 12 }}>
+              <input
+                value={cfg.customDomain ?? ""}
+                onChange={(e) => patch({ customDomain: e.target.value.trim() || null })}
+                placeholder="haruna.cl"
+                autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+              />
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Escribe solo el dominio, sin “https://” ni “www” (ej: <b>haruna.cl</b>). Además debes: (1) agregar el dominio a este proyecto en Vercel y (2) en tu proveedor DNS apuntarlo a Vercel — registro <b>A</b> <code>@</code> → <code>76.76.21.21</code> y <b>CNAME</b> <code>www</code> → <code>cname.vercel-dns.com</code>. Déjalo vacío para usar el dominio de quierocomer.
+              </p>
+            </div>
           </section>
           )}
 

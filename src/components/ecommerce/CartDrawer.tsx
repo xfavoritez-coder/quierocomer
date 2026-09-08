@@ -14,9 +14,11 @@ interface Props {
   primaryColor: string;
   onOpenDeliveryModal: () => void;
   mobileOnly?: boolean; // true (default): se oculta en desktop (el base usa panel lateral)
+  basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
 }
 
-export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true }: Props) {
+export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true, basePath }: Props) {
+  const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const router = useRouter();
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
@@ -136,7 +138,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               </div>
             ) : (
               <button
-                onClick={() => router.push(`/ecommerce/${tenant.slug}/checkout`)}
+                onClick={() => router.push(`${storeBase}/checkout`)}
                 className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90"
                 style={{ background: primaryColor }}
               >

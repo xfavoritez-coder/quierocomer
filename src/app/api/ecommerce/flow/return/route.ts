@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { confirmFlowPayment } from "@/lib/payments/flowConfirm";
+import { parseStoreConfig, storeBasePath } from "@/lib/ecommerce/store-config";
 
 export const runtime = "nodejs";
 
@@ -24,14 +25,15 @@ async function handle(req: NextRequest) {
 
   const order = await prisma.onlineOrder.findFirst({
     where: { flowToken: token },
-    select: { id: true, paymentStatus: true, restaurant: { select: { slug: true } } },
+    select: { id: true, paymentStatus: true, restaurant: { select: { slug: true, ecommerceStoreConfig: true } } },
   });
   if (!order) return NextResponse.redirect(`${baseUrl}/?pago=error`, 303);
 
   // Confirmar como respaldo (por si el webhook aún no llegó).
   const paid = order.paymentStatus === "paid" ? true : await confirmFlowPayment(token).catch(() => false);
 
-  const checkout = `${baseUrl}/ecommerce/${order.restaurant.slug}/checkout`;
+  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain });
+  const checkout = `${baseUrl}${base}/checkout`;
   if (paid) return NextResponse.redirect(`${checkout}?pago=exito&order=${order.id}`, 303);
 
   if (order.paymentStatus === "pending") {

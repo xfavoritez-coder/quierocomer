@@ -18,6 +18,7 @@ interface Props {
   tenant: StoreTenant;
   categories: StoreCategory[];
   products: StoreProduct[];
+  basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
 }
 
 // Muestra solo hasta la primera coma de la dirección
@@ -38,7 +39,8 @@ export const storeFontVars: React.CSSProperties = {
   ["--font-product-detail" as string]: STORE_SANS,
 } as React.CSSProperties;
 
-export default function StoreFront({ tenant, categories, products }: Props) {
+export default function StoreFront({ tenant, categories, products, basePath }: Props) {
+  const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
   useFavicon(tenant.logoUrl);
@@ -290,6 +292,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
               primaryColor={primaryColor}
               cartBump={cartBump}
               mounted={mounted}
+              storeBase={storeBase}
               onOpenDeliveryModal={() => setDeliveryModalOpen(true)}
             />
           </div>
@@ -316,6 +319,7 @@ export default function StoreFront({ tenant, categories, products }: Props) {
         onClose={() => setCartOpen(false)}
         tenant={tenant}
         primaryColor={primaryColor}
+        basePath={storeBase}
         onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }}
       />
     </div>
@@ -417,8 +421,8 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
 }
 
 // ── Panel carrito (desktop) ──────────────────────────────────────
-function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModal }: {
-  tenant: StoreTenant; primaryColor: string; cartBump: boolean; mounted: boolean; onOpenDeliveryModal: () => void;
+function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModal, storeBase }: {
+  tenant: StoreTenant; primaryColor: string; cartBump: boolean; mounted: boolean; onOpenDeliveryModal: () => void; storeBase: string;
 }) {
   const router = useRouter();
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty } = useCartStore();
@@ -516,7 +520,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(minReq!)}</div>
             ) : (
-              <button onClick={() => router.push(`/ecommerce/${tenant.slug}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
+              <button onClick={() => router.push(`${storeBase}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
                 Continuar con mi pedido →
               </button>
             )}

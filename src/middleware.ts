@@ -1,104 +1,51 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
-const PUBLIC_PANEL_ROUTES = [
-  "/panel/login",
-  "/panel/forgot-password",
-  "/panel/reset-password",
-  "/panel/invite",
-  "/panel/verificar-email",
-];
-const PUBLIC_PANEL_API_ROUTES = [
-  "/api/panel/login",
-  "/api/panel/demo-auth",
-  "/api/panel/invite",
-  "/api/panel/auto-login",
-  "/api/panel/magic-entry",
-  "/api/panel/resend-verification",
-  "/api/panel/change-email",
-];
-const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password"];
+// ═══════════════════════════════════════════════════════════
+//  Enrutado por dominio propio (custom domain) del Ecommerce.
+//  Un local puede tener su propio dominio (ej: haruna.cl). Cuando el request
+//  llega por ese dominio, reescribimos internamente a la ruta del storefront
+//  correspondiente SIN cambiar la URL que ve el usuario → URLs limpias:
+//    haruna.cl/           →  (interno) /ecommerce/haruna.cl
+//    haruna.cl/checkout   →  (interno) /ecommerce/haruna.cl/checkout
+//  El resto de rutas (/pedido/…, etc.) pasan como rutas reales. El loader
+//  resuelve la tienda por slug o por customDomain (ecommerceStoreConfig).
+// ═══════════════════════════════════════════════════════════
 
-const BLOCKED_UA_PATTERNS = [
-  "meta-externalagent",
-  "facebookbot",
-  "AdsBot-Google",
-];
+const MAIN_DOMAIN = (process.env.NEXT_PUBLIC_APP_DOMAIN || "quierocomer.com").toLowerCase();
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+// Hosts que pertenecen a la app (no son dominios de tienda) → sin reescritura.
+function isAppHost(host: string): boolean {
+  if (!host) return true;
+  if (host === "localhost" || host === "127.0.0.1") return true;
+  if (host.endsWith(".vercel.app")) return true; // previews y dominio por defecto
+  if (host === MAIN_DOMAIN || host === `www.${MAIN_DOMAIN}`) return true;
+  return false;
+}
 
-  const ua = request.headers.get("user-agent") || "";
-  if (BLOCKED_UA_PATTERNS.some(p => ua.toLowerCase().includes(p.toLowerCase()))) {
-    return new NextResponse(null, { status: 403 });
+export function middleware(req: NextRequest) {
+  const rawHost = (req.headers.get("host") || "").split(":")[0].toLowerCase();
+  if (isAppHost(rawHost)) return NextResponse.next();
+
+  // Dominio de tienda → normalizamos (sin www) y usamos el host como clave.
+  const host = rawHost.replace(/^www\./, "");
+  const { pathname, search } = req.nextUrl;
+
+  // El panel y el admin no se sirven desde dominios de tienda → al dominio principal.
+  if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL(pathname + search, `https://${MAIN_DOMAIN}`));
   }
 
-  if (pathname === "/qr" || pathname === "/qr/") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // Solo reescribimos las páginas propias de la tienda (menú y checkout).
+  // Lo demás (/pedido/…, etc.) se sirve como ruta real de la app.
+  const isStorePage = pathname === "/" || pathname === "/checkout" || pathname.startsWith("/checkout/");
+  if (!isStorePage) return NextResponse.next();
 
-  if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) {
-    const rest = pathname.slice("/loyalty".length);
-    return NextResponse.redirect(new URL(`/panel/loyalty${rest}`, request.url));
-  }
-
-  // Panel page routes (owner panel)
-  if (pathname.startsWith("/panel")) {
-    // WhatsApp short links: /panel/123 (numeric) — entry point, no token required
-    if (/^\/panel\/\d+$/.test(pathname)) return NextResponse.next();
-
-    if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-      return NextResponse.next();
-    }
-    const token = request.cookies.get("panel_token")?.value;
-    if (!token) {
-      return NextResponse.redirect(new URL("/panel/login", request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Panel API routes
-  if (pathname.startsWith("/api/panel")) {
-    if (PUBLIC_PANEL_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-      return NextResponse.next();
-    }
-    const token = request.cookies.get("panel_token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-    return NextResponse.next();
-  }
-
-  // Admin page routes (superadmin)
-  if (pathname.startsWith("/admin")) {
-    if (PUBLIC_ADMIN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-      return NextResponse.next();
-    }
-    const token = request.cookies.get("admin_token")?.value;
-    if (!token) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Admin API routes
-  if (pathname.startsWith("/api/admin")) {
-    if (PUBLIC_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-      return NextResponse.next();
-    }
-    const token = request.cookies.get("admin_token")?.value || request.cookies.get("panel_token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-    return NextResponse.next();
-  }
-
-  return NextResponse.next();
+  const url = req.nextUrl.clone();
+  url.pathname = `/ecommerce/${host}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.rewrite(url);
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon|og\\.png|robots\\.txt|sitemap).*)",
-  ],
+  // Excluye API, assets de Next, favicon y archivos con extensión.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

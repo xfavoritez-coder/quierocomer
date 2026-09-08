@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
 import { parseHours, getOpenStatus, type OpenStatus } from "@/lib/ecommerce/hours";
 
@@ -30,6 +31,7 @@ export interface StoreTenant {
   favoritesEnabled: boolean;
   theme: "base" | "impact"; // tema visual del storefront
   bannerProductIds: string[]; // productos destacados del banner (tema impact)
+  customDomain: string | null; // dominio propio de la tienda (null = usa quierocomer.com/ecommerce/<slug>)
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   waitTime: string | null;
@@ -89,10 +91,17 @@ export interface StorefrontData {
 }
 
 
+// Resuelve el restaurante por su `slug` (dominio principal) o por su dominio propio
+// guardado en ecommerceStoreConfig.customDomain (cuando el request llega por haruna.cl).
+// `key` es el slug o el host, según de dónde venga la request (lo decide el middleware).
+function restaurantByKey(key: string): Prisma.RestaurantWhereInput {
+  return { OR: [{ slug: key }, { ecommerceStoreConfig: { path: ["customDomain"], equals: key } }] };
+}
+
 /** Solo el tenant (para el checkout), sin cargar el catálogo. */
 export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | null> {
-  const r = await prisma.restaurant.findUnique({
-    where: { slug },
+  const r = await prisma.restaurant.findFirst({
+    where: restaurantByKey(slug),
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
@@ -107,7 +116,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
-    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds,
+    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain,
     deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled,
     waitTime: r.orderingWaitTime, waitTimePickup: store.waitTimePickup, waitTimeDelivery: store.waitTimeDelivery, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
@@ -124,8 +133,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
  * Devuelve null si el local no existe o no tiene el pilar habilitado.
  */
 export async function loadEcommerceStorefront(slug: string): Promise<StorefrontData | null> {
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { slug },
+  const restaurant = await prisma.restaurant.findFirst({
+    where: restaurantByKey(slug),
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
       cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
@@ -241,6 +250,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       favoritesEnabled: store.favoritesEnabled,
       theme: store.theme,
       bannerProductIds: store.bannerProductIds,
+      customDomain: store.customDomain,
       deliveryEnabled: store.deliveryEnabled,
       pickupEnabled: store.pickupEnabled,
       waitTime: restaurant.orderingWaitTime,

@@ -26,6 +26,7 @@ export interface EcommerceStoreConfig {
   favoritesEnabled: boolean; // permitir que el cliente marque favoritos
   theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
+  customDomain: string | null; // dominio propio (ej: "haruna.cl"); null = quierocomer.com/ecommerce/<slug>
 }
 
 export type StoreTheme = EcommerceStoreConfig["theme"];
@@ -67,7 +68,25 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     bannerProductIds: Array.isArray(o.bannerProductIds)
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],
+    customDomain: normalizeDomain(o.customDomain),
   };
+}
+
+/** Normaliza un dominio: minúsculas, sin protocolo, sin "www.", sin ruta ni espacios.
+ *  Devuelve null si no parece un dominio válido. */
+export function normalizeDomain(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const d = v.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+  return d && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) ? d : null;
+}
+
+/** Ruta base de la tienda según el host de la request:
+ *  - dominio propio (host === customDomain) → "" (URLs limpias: haruna.cl/checkout)
+ *  - dominio principal → "/ecommerce/<slug>" (quierocomer.com/ecommerce/haruna) */
+export function storeBasePath(opts: { host?: string | null; slug: string; customDomain?: string | null }): string {
+  const host = (opts.host || "").split(":")[0].toLowerCase().replace(/^www\./, "");
+  if (opts.customDomain && host === opts.customDomain) return "";
+  return `/ecommerce/${opts.slug}`;
 }
 
 // Entero ≥ 0 o el fallback si el valor no es válido.

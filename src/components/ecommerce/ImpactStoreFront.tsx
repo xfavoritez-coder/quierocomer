@@ -24,13 +24,15 @@ interface Props {
   tenant: StoreTenant;
   categories: StoreCategory[];
   products: StoreProduct[];
+  basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
 }
 
 const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 
-export default function ImpactStoreFront({ tenant, categories, products }: Props) {
+export default function ImpactStoreFront({ tenant, categories, products, basePath }: Props) {
   const accent = tenant.primaryColor;
+  const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   useFavicon(tenant.logoUrl);
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
@@ -347,7 +349,7 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" />}
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} tenant={tenant} primaryColor={accent} mobileOnly={false} onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }} />
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} tenant={tenant} primaryColor={accent} mobileOnly={false} basePath={storeBase} onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }} />
     </div>
   );
 }

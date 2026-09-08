@@ -19,5 +19,6 @@ export default async function EcommerceCheckoutPage({ params }: { params: Promis
   const { slug } = await params;
   const tenant = await loadEcommerceTenant(slug);
   if (!tenant) return notFound();
-  return <CheckoutForm tenant={tenant} />;
+  const basePath = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
+  return <CheckoutForm tenant={tenant} basePath={basePath} />;
 }

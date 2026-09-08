@@ -5,6 +5,7 @@ import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
+import { parseStoreConfig, storeBasePath } from "@/lib/ecommerce/store-config";
 
 export const runtime = "nodejs";
 
@@ -27,24 +28,26 @@ async function handle(req: NextRequest) {
     tbkToken = req.nextUrl.searchParams.get("TBK_TOKEN");
   }
 
-  const checkoutFor = (slug: string, q: string) => `${baseUrl}/ecommerce/${slug}/checkout?${q}`;
+  // base = "" en dominio propio (haruna.cl/checkout) o /ecommerce/<slug> en el principal.
+  const checkoutFor = (base: string, q: string) => `${baseUrl}${base}/checkout?${q}`;
 
   // Pago cancelado/abortado por el usuario → fallido, volver al checkout a reintentar.
   if (tbkToken && !tokenWs) {
-    const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tbkToken }, select: { id: true, restaurant: { select: { slug: true } } } });
+    const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tbkToken }, select: { id: true, restaurant: { select: { slug: true, ecommerceStoreConfig: true } } } });
     if (order) await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
-    return NextResponse.redirect(order ? checkoutFor(order.restaurant.slug, "pago=fallido") : `${baseUrl}/?pago=cancelado`, 303);
+    const base = order ? storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain }) : "";
+    return NextResponse.redirect(order ? checkoutFor(base, "pago=fallido") : `${baseUrl}/?pago=cancelado`, 303);
   }
 
   if (!tokenWs) return NextResponse.redirect(`${baseUrl}/?pago=error`, 303);
 
-  const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tokenWs }, include: { restaurant: { select: { slug: true, ecommerceConfig: true } } } });
+  const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tokenWs }, include: { restaurant: { select: { slug: true, ecommerceConfig: true, ecommerceStoreConfig: true } } } });
   if (!order) return NextResponse.redirect(`${baseUrl}/?pago=error`, 303);
-  const slug = order.restaurant.slug;
+  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain });
 
   // Si ya se confirmó antes, redirigir según su estado (idempotente)
   if (order.paymentStatus === "paid") {
-    return NextResponse.redirect(checkoutFor(slug, `pago=exito&order=${order.id}`), 303);
+    return NextResponse.redirect(checkoutFor(base, `pago=exito&order=${order.id}`), 303);
   }
 
   const result = await webpayConfirm(tokenWs, webpaySettingsFor({ ecommerceConfig: order.restaurant.ecommerceConfig }));
@@ -59,11 +62,11 @@ async function handle(req: NextRequest) {
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
     await dispatchOrderToPos(order.id).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
-    return NextResponse.redirect(checkoutFor(slug, `pago=exito&order=${order.id}`), 303);
+    return NextResponse.redirect(checkoutFor(base, `pago=exito&order=${order.id}`), 303);
   }
 
   await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } });
-  return NextResponse.redirect(checkoutFor(slug, "pago=fallido"), 303);
+  return NextResponse.redirect(checkoutFor(base, "pago=fallido"), 303);
 }
 
 export async function GET(req: NextRequest) { return handle(req); }

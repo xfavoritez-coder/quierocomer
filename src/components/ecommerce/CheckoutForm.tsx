@@ -32,7 +32,8 @@ const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?
   tarjeta: { label: "Tarjeta", hint: "Pagas con tarjeta al recibir", Icon: CreditCard },
 };
 
-export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
+export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant; basePath?: string }) {
+  const storeHref = (basePath ?? `/ecommerce/${tenant.slug}`) || "/";
   const primaryColor = tenant.primaryColor;
   const impact = tenant.theme === "impact";
   useFavicon(tenant.logoUrl);
@@ -350,7 +351,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
 
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
-          <Link href={`/ecommerce/${tenant.slug}`} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
+          <Link href={storeHref} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="font-black text-lg text-gray-900">Finalizar pedido</h1>
@@ -366,7 +367,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <p className="text-4xl mb-3">🛒</p>
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
-          <Link href={`/ecommerce/${tenant.slug}`} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
+          <Link href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
         </div>
       ) : (
         <div className="max-w-2xl mx-auto px-4 py-5 flex flex-col gap-4">
@@ -389,7 +390,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
               <div className="min-w-0 flex-1">
                 <p className="font-black text-sm text-amber-700 m-0">Falta tu dirección de entrega</p>
                 <p className="text-xs text-amber-600 mt-1 leading-relaxed">Este local solo hace delivery. Vuelve a la tienda para ingresar tu dirección y continuar.</p>
-                <Link href={`/ecommerce/${tenant.slug}`} className="inline-block mt-2 text-xs font-black underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
+                <Link href={storeHref} className="inline-block mt-2 text-xs font-black underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
               </div>
             </div>
           )}
@@ -432,7 +433,7 @@ export default function CheckoutForm({ tenant }: { tenant: StoreTenant }) {
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-black text-sm text-gray-900">Entrega</h2>
-              <Link href={`/ecommerce/${tenant.slug}`} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</Link>
+              <Link href={storeHref} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</Link>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
