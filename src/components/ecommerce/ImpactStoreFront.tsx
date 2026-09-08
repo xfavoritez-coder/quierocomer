@@ -411,9 +411,12 @@ function ImpactHero({ heroProducts, accent, onSelect, onAdd }: {
       <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%)" }} />
       <div style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: 3, background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)" }} />
       <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 4 }}>
-        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: 52, lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 5px 30px rgba(0,0,0,0.92)", color: "#fff" }}>
+        {/* fontSize responsivo (clamp+vw) y resplandor en em → el glow escala con el
+            titulo y su proporcion respecto a la pantalla es constante en cualquier
+            tamaño (antes: 52px y 20px fijos se veian mas fuertes en pantallas chicas). */}
+        <h1 style={{ margin: 0, fontFamily: DISPLAY, fontSize: "clamp(2.9rem, 12.5vw, 3.35rem)", lineHeight: 0.82, letterSpacing: "0.5px", textShadow: "0 0.1em 0.55em rgba(0,0,0,0.9)", color: "#fff" }}>
           {d.name.split(" ").map((w, i, arr) => i === arr.length - 1
-            ? <span key={i} style={{ display: "inline-block", color: accent, fontWeight: 900, textShadow: `0 0 20px color-mix(in srgb, ${accent} 50%, transparent)` }}>{w}</span>
+            ? <span key={i} style={{ display: "inline-block", color: accent, fontWeight: 900, textShadow: `0 0 0.32em color-mix(in srgb, ${accent} 46%, transparent)` }}>{w}</span>
             : <span key={i}>{w} </span>)}
         </h1>
         {d.description && <p style={{ maxWidth: 320, margin: "14px 0 16px", color: "#b0a89e", fontSize: 15, lineHeight: 1.5, textShadow: "0 1px 8px rgba(0,0,0,0.6)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{d.description}</p>}
