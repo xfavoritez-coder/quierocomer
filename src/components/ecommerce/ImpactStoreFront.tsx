@@ -236,10 +236,11 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             return (
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
-                backdropFilter: "blur(18px) saturate(185%) brightness(1.06)", WebkitBackdropFilter: "blur(18px) saturate(185%) brightness(1.06)",
-                background: on ? `color-mix(in srgb, ${accent} 40%, rgba(255,255,255,0.10))` : `color-mix(in srgb, ${accent} 20%, rgba(255,255,255,0.08))`,
-                border: on ? `1px solid color-mix(in srgb, ${accent} 48%, rgba(255,255,255,0.24))` : `1px solid color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.18))`,
-                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px color-mix(in srgb, ${accent} 30%, rgba(0,0,0,0.35))` : `inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 12px rgba(0,0,0,0.30)`,
+                // Sin backdrop-filter a proposito: dentro de un scroll sticky no recorta el
+                // radio y dibuja un rectangulo. Un fondo normal siempre recorta al pill.
+                background: on ? `color-mix(in srgb, ${accent} 62%, rgba(18,18,20,0.34))` : `color-mix(in srgb, ${accent} 34%, rgba(18,18,20,0.42))`,
+                border: on ? `1px solid color-mix(in srgb, ${accent} 55%, rgba(255,255,255,0.26))` : `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.18))`,
+                boxShadow: on ? `inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 14px rgba(0,0,0,0.35)` : `inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.3)`,
                 color: "#fff",
                 textShadow: "0 1px 5px rgba(0,0,0,0.6)",
               }}>{cat.name}</button>
