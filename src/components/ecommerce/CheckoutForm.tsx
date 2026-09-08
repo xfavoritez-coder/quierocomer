@@ -360,7 +360,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       <Toaster position="top-center" richColors />
 
       <header className="sticky top-0 z-40 bg-white shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
           <Link href={storeHref} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -380,7 +380,9 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           <Link href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</Link>
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto px-4 py-5 flex flex-col gap-4">
+        <div className="max-w-5xl mx-auto px-4 py-5 flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start">
+          {/* ── Columna izquierda: datos, entrega, pago, acompañamientos, cupón ── */}
+          <div className="flex flex-col gap-4 min-w-0">
           {/* Aviso de pago fallido: el cliente volvió sin completar el pago. */}
           {paymentFailed && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
@@ -541,9 +543,13 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             {couponMsg && <p className="text-xs text-red-500 mt-2">{couponMsg}</p>}
           </section>
 
+          </div>
+
+          {/* ── Columna derecha (sticky en escritorio): detalles de la compra + pagar ── */}
+          <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           {/* Resumen */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">Resumen</h2>
+            <h2 className="font-black text-sm text-gray-900 mb-3">Detalles de tu compra</h2>
             {mounted && (
               <div className="flex flex-col gap-2">
                 {items.map((it) => (
@@ -585,13 +591,14 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           <button
             onClick={placeOrder}
             disabled={!isValid || sending}
-            className="w-full py-4 rounded-2xl text-white font-black text-sm transition hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2 sticky bottom-3 shadow-lg"
+            className="w-full py-4 rounded-2xl text-white font-black text-sm transition hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2 sticky bottom-3 lg:static shadow-lg"
             style={{ background: primaryColor }}
           >
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             {sending ? "Procesando…" : onlineSel ? `Ir a pagar · ${clp(finalTotal)}` : `Confirmar pedido · ${clp(finalTotal)}`}
           </button>
           {onlineSel && <p className="text-center text-xs text-gray-400 -mt-1">Serás redirigido a {payment === "flow" ? "Flow" : "Webpay"} para pagar de forma segura.</p>}
+          </div>
         </div>
       )}
     </div>
