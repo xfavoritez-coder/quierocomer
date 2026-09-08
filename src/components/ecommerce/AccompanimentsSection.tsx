@@ -66,8 +66,9 @@ export default function AccompanimentsSection({ config, items, subtotal, primary
   const inc = (name: string, max: number) => setQty((p) => ({ ...p, [name]: Math.min(max, (p[name] ?? 0) + 1) }));
 
   return (
-    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <h2 className="font-black text-sm text-gray-900 mb-1.5">Acompañamientos</h2>
+    <div className="flex flex-col gap-2">
+      <h2 className="font-black text-sm text-gray-900 px-1">Acompañamientos</h2>
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <div className="flex flex-col divide-y divide-gray-100">
         {unifiedList.map((entry) => {
           const isDeclined = !!declined[entry.name];
@@ -102,6 +103,7 @@ export default function AccompanimentsSection({ config, items, subtotal, primary
           );
         })}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -39,6 +39,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   useFavicon(tenant.logoUrl);
   const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart, updateQty, removeItem } = useCartStore();
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [couponOpen, setCouponOpen] = useState(false);
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
 
@@ -408,8 +409,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           )}
 
           {/* Datos del cliente */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">Tus datos</h2>
+          <Block title="Tus datos">
             <div className="flex flex-col gap-3">
               <Field label="Nombre">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
@@ -439,14 +439,10 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 {emailNeeded && !emailVerifiedOk && !otpMsg && <p className="text-xs text-gray-400 mt-1.5">Necesario para {payment === "flow" ? "pagar con Flow" : "usar el cupón"}. Verifícalo para continuar.</p>}
               </Field>
             </div>
-          </section>
+          </Block>
 
           {/* Entrega — se elige aquí mismo (DeliveryModal inline) */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-black text-sm text-gray-900">Entrega</h2>
-              {deliverySelected && <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</button>}
-            </div>
+          <Block title="Entrega" action={deliverySelected ? <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</button> : undefined}>
             {deliverySelected ? (
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
@@ -475,13 +471,12 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <ChevronRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
               </button>
             )}
-          </section>
+          </Block>
 
           {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />}
 
           {/* Pago */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">¿Cómo quieres pagar?</h2>
+          <Block title="¿Cómo quieres pagar?">
             <div className="flex flex-col gap-2">
               {methods.map((m) => {
                 const meta = PAY_META[m];
@@ -499,57 +494,56 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
               })}
               {!methods.length && <p className="text-sm text-gray-400">Esta tienda aún no tiene métodos de pago configurados.</p>}
             </div>
-          </section>
+          </Block>
 
           {/* Acompañamientos */}
           <AccompanimentsSection config={tenant.accompaniments} items={items} subtotal={subtotal} primaryColor={primaryColor} onResolve={onAccomResolve} persistKey={`qc-accom:${tenant.id}`} />
 
           {/* Notas */}
           {tenant.notesEnabled && (
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-black text-sm text-gray-900 mb-3">Notas (opcional)</h2>
+            <Block title="Notas (opcional)">
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Ej: sin cebolla, tocar el timbre…" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 resize-none" />
-            </section>
+            </Block>
           )}
 
-          {/* Cupón */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">Cupón de descuento</h2>
-            {coupon ? (
-              <div className="flex items-center gap-2 rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}10` }}>
-                <span className="text-sm font-black" style={{ color: primaryColor }}>{coupon.code}</span>
-                <span className="text-sm text-gray-500">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
-                <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); }} className="ml-auto text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
+          {/* Cupón — colapsable: por defecto solo el enlace "¿Tienes un cupón?" */}
+          {(() => {
+            const emailNotice = coupon && emailNeeded && !emailVerifiedOk ? (
+              <div className="rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}12` }}>
+                <p className="text-xs font-bold text-gray-800">{otpSent ? "Te enviamos un código a tu correo. Ingrésalo para aplicar el cupón." : "Para usar este cupón necesitas verificar tu correo."}</p>
+                <button type="button" onClick={goVerifyEmail} className="mt-1.5 text-xs font-black underline" style={{ color: primaryColor }}>{otpSent ? "Ir al código →" : "Verificar mi correo ahora →"}</button>
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400" />
-                <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+            ) : null;
+            if (coupon) return (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 border self-start" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}10` }}>
+                  <span className="text-sm font-black" style={{ color: primaryColor }}>{coupon.code}</span>
+                  <span className="text-xs text-gray-500">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
+                  <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); setCouponOpen(false); }} className="ml-1 text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
+                </div>
+                {emailNotice}
               </div>
-            )}
-            {/* Aviso contextual: al aplicar un cupón se exige verificar el correo. Se muestra
-                aquí mismo (donde el cliente aplica el cupón) para que entienda qué falta,
-                con un botón que lo lleva directo a verificar. */}
-            {coupon && emailNeeded && !emailVerifiedOk && (
-              <div className="mt-3 rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}12` }}>
-                <p className="text-xs font-bold text-gray-800">
-                  {otpSent ? "Te enviamos un código a tu correo. Ingrésalo para aplicar el cupón." : "Para usar este cupón necesitas verificar tu correo."}
-                </p>
-                <button type="button" onClick={goVerifyEmail} className="mt-1.5 text-xs font-black underline" style={{ color: primaryColor }}>
-                  {otpSent ? "Ir al código →" : "Verificar mi correo ahora →"}
-                </button>
+            );
+            if (couponOpen) return (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <input autoFocus value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400" />
+                  <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+                </div>
+                {couponMsg && <p className="text-xs text-red-500">{couponMsg}</p>}
               </div>
-            )}
-            {couponMsg && <p className="text-xs text-red-500 mt-2">{couponMsg}</p>}
-          </section>
+            );
+            return (
+              <button type="button" onClick={() => setCouponOpen(true)} className="text-sm font-bold underline self-start px-1" style={{ color: primaryColor }}>¿Tienes un cupón?</button>
+            );
+          })()}
 
           </div>
 
           {/* ── Columna derecha (sticky en escritorio): detalles de la compra + pagar ── */}
           <div className="flex flex-col gap-4 lg:sticky lg:top-20">
           {/* Resumen */}
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-black text-sm text-gray-900 mb-3">Detalles de tu compra</h2>
+          <Block title="Detalles de tu compra">
             {mounted && (
               <div className="flex flex-col gap-2">
                 {items.map((it) => (
@@ -577,7 +571,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <div className="flex justify-between font-black text-base text-gray-900"><span>Total</span><span style={{ color: primaryColor }}>{clp(finalTotal)}</span></div>
               </div>
             )}
-          </section>
+          </Block>
 
           {!isOpen && (
             <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
@@ -601,6 +595,21 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Bloque con el título FUERA de la tarjeta (estilo Niu): encabezado arriba + card.
+function Block({ title, action, children }: { title?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {(title || action) && (
+        <div className="flex items-center justify-between px-1">
+          {title ? <h2 className="font-black text-sm text-gray-900">{title}</h2> : <span />}
+          {action}
+        </div>
+      )}
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">{children}</section>
     </div>
   );
 }
