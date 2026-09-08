@@ -9,8 +9,12 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
  */
 export async function POST(request: Request) {
   try {
-    const { email, name } = await request.json();
+    const { email, name, storeName } = await request.json();
     const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+    // Nombre del local que solicita el código (opcional; el flujo QR no lo envía).
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+    const storePlain = typeof storeName === "string" && storeName.trim() ? storeName.trim().slice(0, 60) : null; // para el asunto (texto plano)
+    const store = storePlain ? esc(storePlain) : null; // para el HTML (escapado)
     if (!cleanEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleanEmail)) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
@@ -43,13 +47,14 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
           to: cleanEmail,
-          subject: `${code} es tu código de acceso a QuieroComer`,
+          subject: storePlain ? `${code} · tu código para pedir en ${storePlain}` : `${code} es tu código de acceso a QuieroComer`,
           html: `
             <div style="font-family:'DM Sans',sans-serif;background:#faf6ee;padding:40px 20px">
               <div style="max-width:480px;margin:0 auto;background:white;border-radius:12px;padding:32px;text-align:center">
                 <p style="font-size:18px;font-weight:700;color:#0e0e0e;margin:0 0 4px">Quiero<span style="color:#F4A623">Comer</span>.cl</p>
+                ${store ? `<p style="color:#F4A623;font-weight:700;font-size:14px;margin:6px 0 0">Pedido en ${store}</p>` : ""}
                 <h1 style="font-size:22px;font-weight:800;color:#0e0e0e;margin:24px 0 8px">Tu código de acceso</h1>
-                <p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 20px">Usa este código para iniciar sesión. Vence en 10 minutos.</p>
+                <p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 20px">${store ? `Úsalo para completar tu pedido en <b>${store}</b>. Vence en 10 minutos.` : "Usa este código para iniciar sesión. Vence en 10 minutos."}</p>
                 <div style="font-size:38px;font-weight:800;letter-spacing:8px;color:#0e0e0e;background:#faf6ee;border-radius:12px;padding:16px 0;margin:0 0 20px">${code}</div>
                 <p style="color:#aaa;font-size:13px;margin:0">Si no solicitaste esto, ignora este correo.</p>
               </div>

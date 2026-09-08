@@ -223,7 +223,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     if (!emailOk || otpBusy) return;
     setOtpBusy(true); setOtpMsg(null);
     try {
-      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, name: name.trim() || null }) });
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, name: name.trim() || null, storeName: tenant.name }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setOtpMsg(d.error || "No se pudo enviar el código"); setOtpBusy(false); return; }
       setOtpSent(true); setOtpMsg(d.devCode ? `Código (dev): ${d.devCode}` : "Te enviamos un código a tu correo.");
@@ -423,7 +423,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                   ) : otpSent ? (
                     <div className="mt-2 flex flex-col gap-2">
                       <div className="flex gap-2">
-                        <input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="Código de 6 dígitos" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm tracking-widest text-center outline-none focus:border-gray-400" />
+                        <input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="Código de 6 dígitos" className="flex-1 min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-sm tracking-widest text-center outline-none focus:border-gray-400" />
                         <button type="button" onClick={verifyOtp} disabled={otpBusy || otpCode.length !== 6} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>{otpBusy ? "…" : "Verificar"}</button>
                       </div>
                       <button type="button" onClick={sendOtp} disabled={otpBusy} className="text-xs text-gray-400 self-start hover:text-gray-600">Reenviar código</button>
