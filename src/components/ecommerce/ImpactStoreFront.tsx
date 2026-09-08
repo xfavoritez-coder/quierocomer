@@ -236,13 +236,18 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
             return (
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
-                // NO usar backdrop-filter (dentro de un scroll sticky no recorta el radio y
-                // dibuja un rectangulo) NI relleno gris NI sombra externa oscura: ambos, sobre
-                // las fotos claras de los platos, se ven como una "franja gris" detras de los
-                // chips. Relleno = acento translucido puro + solo brillo interno (especular).
-                background: on ? `color-mix(in srgb, ${accent} 70%, transparent)` : `color-mix(in srgb, ${accent} 46%, transparent)`,
-                border: on ? `1px solid color-mix(in srgb, ${accent} 55%, rgba(255,255,255,0.26))` : `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.18))`,
-                boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.32)" : "inset 0 1px 0 rgba(255,255,255,0.22)",
+                // Liquid glass NEUTRO (sin tinte de la tienda). El backdrop-filter recorta bien
+                // al pill porque el radio y el filtro van en el MISMO elemento. Nada de sombra
+                // externa oscura (creaba la "franja gris" sobre fotos claras): solo vidrio
+                // translucido + brillo interno especular + borde blanco tenue.
+                // Activo = el mismo vidrio, un poco mas opaco y con borde mas marcado.
+                background: on ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.11)",
+                backdropFilter: "blur(18px) saturate(180%) brightness(1.06)",
+                WebkitBackdropFilter: "blur(18px) saturate(180%) brightness(1.06)",
+                border: on ? "1px solid rgba(255,255,255,0.5)" : "1px solid rgba(255,255,255,0.26)",
+                boxShadow: on
+                  ? "inset 0 1px 0.5px rgba(255,255,255,0.6), inset 0 -6px 12px rgba(255,255,255,0.07)"
+                  : "inset 0 1px 0.5px rgba(255,255,255,0.5), inset 0 -6px 12px rgba(255,255,255,0.06)",
                 color: "#fff",
                 textShadow: "0 1px 5px rgba(0,0,0,0.6)",
               }}>{cat.name}</button>
