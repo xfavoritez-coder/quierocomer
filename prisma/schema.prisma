@@ -352,6 +352,7 @@ model Restaurant {
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
   reviewReward               String? // Descripción del premio (null = sin premio)
   privateReviews             PrivateReview[]
+  surveyResponses            EcommerceSurveyResponse[]
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]
@@ -461,6 +462,8 @@ model OnlineOrder {
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")
   statusHistory Json   @default("[]") // Array<{ status: string; ts: string }>
+
+  surveySentAt  DateTime? // cuándo se envió la encuesta de satisfacción (null = no enviada)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2723,4 +2726,19 @@ model PlatformSetting {
   key       String   @id
   value     String?
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+// Respuesta a una encuesta de satisfacción del ecommerce (una por pedido).
+// La config y las preguntas viven en Restaurant.ecommerceStoreConfig (JSON).
+model EcommerceSurveyResponse {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderId      String?    @unique // pedido asociado (null en pruebas); unique evita doble respuesta
+  customerName String?
+  ratings      Json       @default("{}") // { [questionId]: 1..5 } + snapshot del texto de la pregunta
+  comment      String?
+  createdAt    DateTime   @default(now())
+
+  @@index([restaurantId, createdAt])
 }

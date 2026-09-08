@@ -27,6 +27,62 @@ export interface EcommerceStoreConfig {
   theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
   customDomain: string | null; // dominio propio (ej: "haruna.cl"); null = quierocomer.com/ecommerce/<slug>
+  survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
+}
+
+// ── Encuestas de satisfacción ──
+export interface SurveyQuestion {
+  id: string;
+  text: string;
+  active: boolean;
+}
+export interface SurveyConfig {
+  enabled: boolean; // enviar encuestas automáticamente
+  hoursAfter: number; // horas después de que el pedido queda Entregado (DONE)
+  subject: string; // asunto del correo (admite {nombre} y {local})
+  intro: string; // texto de introducción (admite {nombre} y {local})
+  thankYou: string; // mensaje tras responder
+  questions: SurveyQuestion[]; // preguntas (orden = orden del array); escala 1-5
+}
+
+export const DEFAULT_SURVEY_QUESTIONS: SurveyQuestion[] = [
+  { id: "q_web", text: "¿Cómo calificarías tu experiencia en la página web?", active: true },
+  { id: "q_delivery", text: "¿Cómo calificarías la rapidez de la entrega?", active: true },
+  { id: "q_food", text: "¿Cómo calificarías la comida?", active: true },
+];
+
+const DEFAULT_SURVEY: SurveyConfig = {
+  enabled: false,
+  hoursAfter: 3,
+  subject: "¿Cómo estuvo tu pedido?",
+  intro: "Nos encantaría conocer tu opinión. Califica tu experiencia del 1 al 5.",
+  thankYou: "¡Gracias por tu respuesta!",
+  questions: DEFAULT_SURVEY_QUESTIONS,
+};
+
+function parseSurvey(raw: unknown): SurveyConfig {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const hasSurvey = Object.keys(o).length > 0;
+  const questions = Array.isArray(o.questions)
+    ? (o.questions as unknown[])
+        .map((q) => (q && typeof q === "object" ? (q as Record<string, unknown>) : {}))
+        .map((q) => ({
+          id: typeof q.id === "string" && q.id ? q.id : `s_${Math.random().toString(36).slice(2, 10)}`,
+          text: typeof q.text === "string" ? q.text.trim().slice(0, 160) : "",
+          active: q.active !== false,
+        }))
+        .filter((q) => q.text)
+        .slice(0, 12)
+    : DEFAULT_SURVEY_QUESTIONS;
+  return {
+    enabled: o.enabled === true,
+    hoursAfter: nonNegInt(o.hoursAfter, DEFAULT_SURVEY.hoursAfter) || DEFAULT_SURVEY.hoursAfter,
+    subject: typeof o.subject === "string" && o.subject.trim() ? o.subject.trim().slice(0, 160) : DEFAULT_SURVEY.subject,
+    intro: typeof o.intro === "string" && o.intro.trim() ? o.intro.trim().slice(0, 400) : DEFAULT_SURVEY.intro,
+    thankYou: typeof o.thankYou === "string" && o.thankYou.trim() ? o.thankYou.trim().slice(0, 200) : DEFAULT_SURVEY.thankYou,
+    // Si nunca se configuró, usa las preguntas por defecto; si ya hay config, respeta la lista guardada.
+    questions: hasSurvey && Array.isArray(o.questions) ? questions : DEFAULT_SURVEY_QUESTIONS,
+  };
 }
 
 export type StoreTheme = EcommerceStoreConfig["theme"];
@@ -69,6 +125,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],
     customDomain: normalizeDomain(o.customDomain),
+    survey: parseSurvey(o.survey),
   };
 }
 
