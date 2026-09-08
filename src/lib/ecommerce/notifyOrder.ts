@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sendNewOrderEmailToStore } from "@/lib/ecommerce/newOrderEmail";
 
 /**
  * Envía push a los dispositivos del local suscritos (OrderPushSubscription),
@@ -7,6 +8,9 @@ import { prisma } from "@/lib/prisma";
  */
 export async function notifyNewEcommerceOrder(order: { id: string; restaurantId: string; customerName: string; total: number; orderType: string }): Promise<void> {
   try {
+    // Aviso por correo al local (best-effort, independiente del push).
+    void sendNewOrderEmailToStore(order.id).catch(() => {});
+
     const subs = await prisma.orderPushSubscription.findMany({ where: { restaurantId: order.restaurantId, isActive: true } });
     if (!subs.length) return;
     const { sendOrderNotification } = await import("@/lib/qr/utils/orderPush");

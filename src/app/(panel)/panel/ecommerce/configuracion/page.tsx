@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3 } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -268,6 +268,23 @@ export default function EcommerceConfiguracionPage() {
               )}
             </div>
             {pushState === "denied" && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>Habilita las notificaciones para este sitio en la configuración del navegador y vuelve a intentar.</p>}
+          </section>
+          )}
+
+          {/* Aviso de pedidos por correo (dentro de Tienda) */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Mail} title="Aviso de pedidos por correo" sub="Te enviamos un correo con los datos de cada pedido nuevo (cliente, monto, medio de pago, entrega)." />
+            <div style={{ marginTop: 12 }}>
+              <input
+                value={cfg.orderNotifyEmail ?? ""}
+                onChange={(e) => patch({ orderNotifyEmail: e.target.value.trim() || null })}
+                placeholder="pedidos@tulocal.cl"
+                inputMode="email" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+              />
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>Déjalo vacío para no recibir correos. Es independiente de las notificaciones push de arriba.</p>
+            </div>
           </section>
           )}
 

@@ -28,7 +28,15 @@ export interface EcommerceStoreConfig {
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
   customDomain: string | null; // dominio propio (ej: "haruna.cl"); null = quierocomer.com/ecommerce/<slug>
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
+  orderNotifyEmail: string | null; // correo del local que recibe aviso de cada pedido nuevo
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
+}
+
+/** Normaliza un email; null si no tiene forma válida. */
+export function normalizeEmail(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const e = v.trim().toLowerCase();
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) ? e : null;
 }
 
 /** Normaliza un ID de Google Tag Manager ("GTM-XXXXXX"); null si no es válido. */
@@ -134,6 +142,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
       : [],
     customDomain: normalizeDomain(o.customDomain),
     gtmId: normalizeGtmId(o.gtmId),
+    orderNotifyEmail: normalizeEmail(o.orderNotifyEmail),
     survey: parseSurvey(o.survey),
   };
 }
