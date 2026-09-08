@@ -243,6 +243,15 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     setOtpBusy(false);
   }
 
+  // Lleva al cliente al campo de correo (arriba) y, si ya escribió un email válido y
+  // aún no envió el código, lo dispara — para que la verificación ocurra sin fricción
+  // desde donde aplicó el cupón.
+  function goVerifyEmail() {
+    const el = document.getElementById("qc-email") as HTMLInputElement | null;
+    if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => el.focus(), 300); }
+    if (emailOk && !otpSent && !emailVerifiedOk) sendOtp();
+  }
+
   async function applyCoupon() {
     const code = couponCode.trim();
     if (!code || couponBusy) return;
@@ -406,7 +415,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
               <Field label={emailNeeded ? "Email *" : "Email"}>
-                <input value={email} onChange={(e) => onEmailChange(e.target.value)} inputMode="email" placeholder="tu@email.com"
+                <input id="qc-email" value={email} onChange={(e) => onEmailChange(e.target.value)} inputMode="email" placeholder="tu@email.com"
                   className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${emailNeeded && emailVerifiedOk ? "border-green-400 bg-green-50" : "border-gray-200 focus:border-gray-400"}`} />
                 {emailNeeded && emailOk ? (
                   emailVerifiedOk ? (
@@ -501,6 +510,19 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
               <div className="flex gap-2">
                 <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400" />
                 <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+              </div>
+            )}
+            {/* Aviso contextual: al aplicar un cupón se exige verificar el correo. Se muestra
+                aquí mismo (donde el cliente aplica el cupón) para que entienda qué falta,
+                con un botón que lo lleva directo a verificar. */}
+            {coupon && emailNeeded && !emailVerifiedOk && (
+              <div className="mt-3 rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}12` }}>
+                <p className="text-xs font-bold text-gray-800">
+                  {otpSent ? "Te enviamos un código a tu correo. Ingrésalo para aplicar el cupón." : "Para usar este cupón necesitas verificar tu correo."}
+                </p>
+                <button type="button" onClick={goVerifyEmail} className="mt-1.5 text-xs font-black underline" style={{ color: primaryColor }}>
+                  {otpSent ? "Ir al código →" : "Verificar mi correo ahora →"}
+                </button>
               </div>
             )}
             {couponMsg && <p className="text-xs text-red-500 mt-2">{couponMsg}</p>}
