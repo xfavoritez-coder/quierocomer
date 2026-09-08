@@ -45,7 +45,12 @@ export async function GET(req: NextRequest) {
       if (done.length) doneTs = Math.max(...done);
     } catch {}
 
-    if (now - doneTs < s.hoursAfter * 60 * 60 * 1000) { skipped++; continue; } // aún no toca
+    // Ventana de envío: solo entre hoursAfter y hoursAfter+24h desde que quedó DONE.
+    // Así, al ACTIVAR la encuesta no se dispara a pedidos entregados hace días
+    // (evita spam a clientes viejos); solo a los que recién cruzaron el umbral.
+    const ageMs = now - doneTs;
+    const minMs = s.hoursAfter * 60 * 60 * 1000;
+    if (ageMs < minMs || ageMs > minMs + 24 * 60 * 60 * 1000) { skipped++; continue; }
 
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
