@@ -98,7 +98,7 @@ export default function EcommerceCatalogoPage() {
         <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><ShoppingBag size={20} color={ACCENT} /></div>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Catálogo</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Asigna el código de Toteat a cada producto y modificador para enviar los pedidos al POS.</p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Asigna el código POS a cada producto y modificador para enviar los pedidos a tu punto de venta.</p>
         </div>
       </div>
 
@@ -195,7 +195,7 @@ function Row({ name, initial, endpoint, star }: { name: string; initial: string 
   );
 }
 
-// Input de código Toteat con guardado on-blur (usa los endpoints map-toteat).
+// Input de código POS con guardado on-blur (usa los endpoints map-toteat).
 function CodeInput({ initial, endpoint }: { initial: string | null; endpoint: string }) {
   const [value, setValue] = useState(initial ?? "");
   const [saved, setSaved] = useState<string>(initial ?? "");
@@ -222,7 +222,7 @@ function CodeInput({ initial, endpoint }: { initial: string | null; endpoint: st
         onChange={(e) => setValue(e.target.value)}
         onBlur={save}
         onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-        placeholder="Código Toteat"
+        placeholder="Código POS"
         style={{ width: "100%", boxSizing: "border-box", padding: "8px 26px 8px 10px", borderRadius: 8, border: `1px solid ${dirty ? ACCENT : saved ? GREEN + "66" : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.82rem", outline: "none" }}
       />
       <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center" }}>
