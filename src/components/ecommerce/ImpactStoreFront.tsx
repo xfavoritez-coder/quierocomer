@@ -230,14 +230,15 @@ export default function ImpactStoreFront({ tenant, categories, products }: Props
 
       {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "rgba(12,12,12,0.4)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)" }}>
+        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
               <button key={cat.id} data-cat={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                 whiteSpace: "nowrap", flexShrink: 0, padding: "10px 18px", fontSize: 15, fontWeight: 800, cursor: "pointer", borderRadius: 999,
+                backdropFilter: "blur(18px) saturate(185%) brightness(1.06)", WebkitBackdropFilter: "blur(18px) saturate(185%) brightness(1.06)",
                 border: on ? `1px solid color-mix(in srgb, ${accent} 30%, rgba(255,255,255,0.22))` : "1px solid rgba(255,255,255,0.18)",
-                background: on ? `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.12)",
+                background: on ? `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.10)",
                 boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.32), 0 5px 14px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.28), 0 5px 14px rgba(0,0,0,0.3)",
                 color: on ? "#fff" : "#eaeaea",
                 textShadow: "0 1px 6px rgba(0,0,0,0.5)",
