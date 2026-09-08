@@ -82,7 +82,8 @@ export default function EcommercePedidosPage() {
   const [view, setView] = useState<"activos" | "historial">("activos");
   const [statusFilter, setStatusFilter] = useState<"todos" | OrderStatus>("todos");
   const [query, setQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState(""); // YYYY-MM-DD (local)
+  const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD (local)
+  const [dateTo, setDateTo] = useState(""); // YYYY-MM-DD (local)
   const [loading, setLoading] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<Order | null>(null);
@@ -201,10 +202,11 @@ export default function EcommercePedidosPage() {
   const q = query.trim().toLowerCase();
   const qDigits = q.replace(/\D/g, "");
   const filtered = shown.filter((o) => {
-    if (dateFilter) {
+    if (dateFrom || dateTo) {
       const d = new Date(o.createdAt);
       const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      if (local !== dateFilter) return false;
+      if (dateFrom && local < dateFrom) return false;
+      if (dateTo && local > dateTo) return false;
     }
     if (q) {
       const hay = [o.customerName, o.customerEmail, o.deliveryAddress, o.orderNumber != null ? `#${o.orderNumber}` : ""].filter(Boolean).join(" ").toLowerCase();
@@ -215,7 +217,7 @@ export default function EcommercePedidosPage() {
     }
     return true;
   });
-  const hasFilter = !!q || !!dateFilter;
+  const hasFilter = !!q || !!dateFrom || !!dateTo;
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
@@ -262,12 +264,15 @@ export default function EcommercePedidosPage() {
             style={{ width: "100%", boxSizing: "border-box", padding: "9px 30px 9px 34px", borderRadius: 10, border: `1px solid ${query ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
           {query && <button onClick={() => setQuery("")} title="Limpiar" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", display: "flex" }}><X size={14} /></button>}
         </div>
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <Calendar size={15} color="var(--adm-text3)" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
-          <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
-            style={{ boxSizing: "border-box", padding: "9px 10px 9px 34px", borderRadius: 10, border: `1px solid ${dateFilter ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <Calendar size={15} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
+          <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} aria-label="Desde"
+            style={{ boxSizing: "border-box", padding: "9px 10px", borderRadius: 10, border: `1px solid ${dateFrom ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" }} />
+          <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)" }}>–</span>
+          <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} aria-label="Hasta"
+            style={{ boxSizing: "border-box", padding: "9px 10px", borderRadius: 10, border: `1px solid ${dateTo ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" }} />
+          {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(""); setDateTo(""); }} title="Quitar fechas" style={iconBtn}><X size={15} /></button>}
         </div>
-        {dateFilter && <button onClick={() => setDateFilter("")} title="Quitar fecha" style={iconBtn}><X size={15} /></button>}
       </div>
 
       {loading ? (
