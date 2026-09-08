@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Plus, Minus, Check } from "lucide-react";
+import { X, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -136,10 +136,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
             {product.description && <p className="mt-2 text-sm text-gray-500 leading-relaxed whitespace-pre-line">{product.description}</p>}
             {includeItems.length > 0 && (
               <div className="mt-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Check className="w-4 h-4" style={{ color: primaryColor }} strokeWidth={3} />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-gray-500">Incluye</span>
-                </div>
+                <p className="text-[11px] font-black uppercase tracking-wider text-gray-500 mb-2">Incluye</p>
                 <div className="flex flex-col gap-1.5">
                   {includeItems.map((it, i) => (
                     <div key={i} className="bg-gray-50 rounded-xl pl-3 pr-3 py-2.5" style={{ borderLeft: `3px solid ${primaryColor}` }}>
