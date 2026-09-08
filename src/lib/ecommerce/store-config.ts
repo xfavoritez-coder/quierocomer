@@ -54,7 +54,7 @@ export const DEFAULT_SURVEY_QUESTIONS: SurveyQuestion[] = [
 const DEFAULT_SURVEY: SurveyConfig = {
   enabled: false,
   hoursAfter: 3,
-  subject: "¿Cómo estuvo tu pedido?",
+  subject: "¿Cómo estuvo tu pedido de {local}?",
   intro: "Nos encantaría conocer tu opinión. Califica tu experiencia del 1 al 5.",
   thankYou: "¡Gracias por tu respuesta!",
   questions: DEFAULT_SURVEY_QUESTIONS,

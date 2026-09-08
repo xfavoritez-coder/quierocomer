@@ -41,22 +41,20 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
   const accent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(args.accent) ? args.accent : "#e63946";
 
   const greeting = firstName ? `Hola ${esc(firstName)},` : "Hola,";
-  const logo = args.logoUrl
-    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" width="56" height="56" style="width:56px;height:56px;border-radius:14px;object-fit:cover;display:block;margin:0 auto 14px" />`
-    : "";
 
+  // Correo TRANSACCIONAL a propósito (sobrio y personal, no promocional): alineado a
+  // la izquierda, sin imágenes ni botón tipo banner, con enlace de texto + versión en
+  // texto plano. Eso reduce que Gmail lo clasifique en la pestaña "Promociones".
   const html = `
-    <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#f5f5f7;padding:40px 20px">
-      <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;text-align:center;border:1px solid #eee">
-        ${logo}
-        <p style="font-size:16px;font-weight:800;color:#111;margin:0 0 2px">${esc(args.storeName)}</p>
-        <h1 style="font-size:22px;font-weight:800;color:#111;margin:18px 0 8px">${greeting}</h1>
-        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">${esc(intro)}</p>
-        <a href="${esc(args.link)}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:14px 32px;border-radius:999px">Calificar mi pedido →</a>
-        <p style="color:#aaa;font-size:12px;margin:26px 0 0">Solo te tomará unos segundos. Si el botón no funciona, copia y pega este enlace:<br><span style="color:#888;word-break:break-all">${esc(args.link)}</span></p>
-      </div>
-      <p style="text-align:center;color:#ccc;font-size:12px;margin-top:18px">Enviado por ${esc(args.storeName)} · vía QuieroComer.cl</p>
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#222;font-size:15px;line-height:1.6;max-width:520px;margin:0 auto;padding:24px 20px">
+      <p style="margin:0 0 14px">${greeting}</p>
+      <p style="margin:0 0 16px">Gracias por tu pedido en <strong>${esc(args.storeName)}</strong>. ${esc(intro)}</p>
+      <p style="margin:0 0 18px"><a href="${esc(args.link)}" style="color:${accent};font-weight:700;text-decoration:underline">Dejar mi opinión</a></p>
+      <p style="margin:0 0 4px;color:#888;font-size:13px">Si el enlace no funciona, cópialo en tu navegador:</p>
+      <p style="margin:0 0 20px;color:#888;font-size:13px;word-break:break-all">${esc(args.link)}</p>
+      <p style="margin:22px 0 0;color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:14px">${esc(args.storeName)} · vía QuieroComer</p>
     </div>`;
+  const text = `${firstName ? `Hola ${firstName},` : "Hola,"}\n\nGracias por tu pedido en ${args.storeName}. ${intro}\n\nDeja tu opinión aquí:\n${args.link}\n\n${args.storeName} · vía QuieroComer`;
 
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
@@ -72,6 +70,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
         to: args.to,
         subject,
         html,
+        text,
       }),
       signal: AbortSignal.timeout(10000),
     });
