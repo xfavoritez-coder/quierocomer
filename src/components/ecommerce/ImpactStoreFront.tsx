@@ -348,7 +348,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
-      {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" />}
+      {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} tenant={tenant} primaryColor={accent} mobileOnly={false} basePath={storeBase} onOpenDeliveryModal={() => { setCartOpen(false); setDeliveryModalOpen(true); }} />
     </div>
   );

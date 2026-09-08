@@ -310,7 +310,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       )}
 
       {menuOpen && (
-        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} />
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} products={products} />
       )}
 
       {/* Drawer carrito (mobile) */}

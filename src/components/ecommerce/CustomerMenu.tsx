@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, Share2, MapPin, LogOut, Camera, Globe, Mail, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
+import type { StoreTenant, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 
@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Acep
 
 type View = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
 
-export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right" }) {
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [] }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[] }) {
   const [view, setView] = useState<View>("root");
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -100,7 +100,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           )}
 
           {view === "profile" && user && <ProfileView user={user} primaryColor={primaryColor} onUpdate={loadUser} />}
-          {view === "orders" && user && <OrdersView tenant={tenant} primaryColor={primaryColor} onClose={onClose} />}
+          {view === "orders" && user && <OrdersView tenant={tenant} primaryColor={primaryColor} onClose={onClose} products={products} />}
           {view === "favorites" && user && <FavoritesView tenant={tenant} primaryColor={primaryColor} />}
           {view === "contact" && <ContactView tenant={tenant} primaryColor={primaryColor} />}
           {view === "social" && <SocialView tenant={tenant} primaryColor={primaryColor} />}
@@ -228,7 +228,7 @@ function ProfileView({ user, primaryColor, onUpdate }: { user: QrUser; primaryCo
 }
 
 // ── Mis pedidos ─────────────────────────────────────────────────
-function OrdersView({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
+function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; products: StoreProduct[] }) {
   const [orders, setOrders] = useState<MyOrder[] | null>(null);
   const addItem = useCartStore((s) => s.addItem);
 
@@ -237,18 +237,29 @@ function OrdersView({ tenant, primaryColor, onClose }: { tenant: StoreTenant; pr
   }, [tenant.id]);
 
   function reorder(o: MyOrder) {
+    // "Volver a pedir" re-agrega usando SIEMPRE los precios ACTUALES de la carta
+    // (no los del pedido viejo). Los productos que ya no existen o están agotados
+    // se omiten (no se pueden repedir a precio actual).
+    const byId = new Map(products.map((p) => [p.id, p]));
     const items = Array.isArray(o.items) ? o.items : [];
-    let added = 0;
+    let added = 0, skipped = 0;
     for (const it of items) {
-      const options = (it.options ?? []) as CartItemOption[];
-      const unit = it.unit_price ?? it.unitTotal ?? 0;
-      const base = unit - options.reduce((s, op) => s + (op.price_delta ?? 0), 0);
-      if (!it.product_id) continue;
-      addItem({ product_id: it.product_id, name: it.name || it.dishName || "Producto", unit_price: unit, base_price: base, quantity: it.quantity || 1, image_url: null, toteat_code: it.toteat_code ?? null, options });
+      const prod = it.product_id ? byId.get(it.product_id) : undefined;
+      if (!prod || prod.is_sold_out) { skipped++; continue; }
+      // Reconstruir las opciones con nombre/precio actuales del catálogo.
+      const options: CartItemOption[] = [];
+      for (const op of (it.options ?? []) as CartItemOption[]) {
+        const group = prod.option_groups.find((g) => g.id === op.group_id);
+        const val = group?.values.find((v) => v.id === op.value_id);
+        if (group && val) options.push({ group_id: group.id, group_name: group.name, value_id: val.id, value: val.name, price_delta: val.price_delta, toteat_modifier_code: val.toteat_modifier_code });
+      }
+      const base = prod.price; // precio base actual
+      const unit = base + options.reduce((s, op) => s + (op.price_delta ?? 0), 0);
+      addItem({ product_id: prod.id, name: prod.name, unit_price: unit, base_price: base, quantity: it.quantity || 1, image_url: prod.image_url, toteat_code: prod.toteat_code, options });
       added++;
     }
-    if (added) { toast.success("Productos agregados al carrito"); onClose(); }
-    else toast.error("No se pudieron re-agregar los productos");
+    if (added) { toast.success(skipped ? `Productos agregados (${skipped} ya no disponibles)` : "Productos agregados al carrito"); onClose(); }
+    else toast.error("Esos productos ya no están disponibles");
   }
 
   if (orders === null) return <p className="text-sm text-gray-400">Cargando…</p>;
