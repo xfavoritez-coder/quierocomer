@@ -43,7 +43,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
 
   if (billingExempt || hasLoyalty) return <>{children}</>;
 
-  // Sin Plan Pro → invitar a activar
+  // Sin Plan Premium → invitar a activar
   return (
     <>
       {showPlans && <PlanesModal onClose={() => setShowPlans(false)} highlightPlan="PREMIUM" />}
@@ -51,7 +51,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "32px 20px", textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>🎁</div>
         <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: PURPLE, margin: "0 0 8px", opacity: 0.85 }}>
-          Incluido en Plan Pro
+          Incluido en Plan Premium
         </p>
         <h2 style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 10px" }}>
           Loyalty Fidelización
@@ -84,7 +84,7 @@ export default function LoyaltyGate({ children }: { children: React.ReactNode })
             boxShadow: "0 6px 20px rgba(109,40,217,0.3)",
           }}
         >
-          Activar Plan Pro →
+          Activar Plan Premium →
         </button>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
           7 días de prueba gratis · Sin contratos · Cancelas cuando quieras

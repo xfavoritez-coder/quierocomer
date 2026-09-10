@@ -56,7 +56,7 @@ const es = {
   plan_addon: "Pruébalo 7 días",
   plan_loyalty: "Módulo Loyalty",
   plan_price_loyalty: "$29.900",
-  plan_loyalty_note: "Se suma al Plan Pro",
+  plan_loyalty_note: "Incluido en Plan Premium",
   plan_cta_loyalty: "Probar Loyalty gratis",
 
   // Home final CTA
@@ -182,7 +182,7 @@ const en: typeof es = {
   plan_addon: "Try it 7 days",
   plan_loyalty: "Loyalty Module",
   plan_price_loyalty: "$29,900",
-  plan_loyalty_note: "Added to Pro Plan",
+  plan_loyalty_note: "Included in Premium Plan",
   plan_cta_loyalty: "Try Loyalty free",
 
   // Home final CTA

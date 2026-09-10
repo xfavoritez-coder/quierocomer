@@ -616,7 +616,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
       <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
         {/* Header modal */}
         <div style={{ padding: "20px 24px 0", borderBottom: "1px solid var(--adm-card-border, #f0f0f0)" }}>
-          <p style={{ margin: "0 0 14px", fontFamily: FD, fontSize: "0.72rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "#7c3aed", textAlign: "center" }}>⚡ Plan Pro</p>
+          <p style={{ margin: "0 0 14px", fontFamily: FD, fontSize: "0.72rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "#7c3aed", textAlign: "center" }}>⚡ Plan Premium</p>
         </div>
 
         <div style={{ padding: "20px 24px 24px" }}>
@@ -777,7 +777,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
 
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", color: "#7c3aed", fontWeight: 700, marginBottom: 8, fontFamily: FD }}>Resumen</div>
-                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan Pro</h3>
+                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Plan Premium</h3>
               </div>
 
               <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>

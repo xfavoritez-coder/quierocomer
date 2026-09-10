@@ -295,7 +295,7 @@ export default function MiRestaurantePage() {
         });
         const d = await res.json();
         if (!res.ok) { toast.error(d.error || "No se pudo activar la prueba"); setSubscribing(false); return; }
-        toast.success("¡Plan Pro activado! 7 días gratis.");
+        toast.success("¡Plan Premium activado! 7 días gratis.");
         setTimeout(() => window.location.reload(), 1200);
         return;
       }
@@ -371,7 +371,7 @@ export default function MiRestaurantePage() {
 
         const isFree = (plan as string) === "FREE";
         const planEmoji = "📋";
-        const planName = isFree ? "Sin plan" : "Pro";
+        const planName = isFree ? "Sin plan" : "Premium";
 
         const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(plan as PlanKey);
         const gross = grossOf(net);
@@ -388,7 +388,7 @@ export default function MiRestaurantePage() {
                   ? `Acceso hasta el ${formatDate(billingStatus.currentPeriodEnd)}`
                   : null;
 
-        // Modal de planes — solo Plan Pro
+        // Modal de planes — solo Plan Premium
         const proAccent = "#7c3aed";
         const proNet = planNetAmount("PREMIUM");
         const proGross = grossOf(proNet);
@@ -506,7 +506,7 @@ export default function MiRestaurantePage() {
                     <div style={{ padding: "16px 18px 14px", background: `${proAccent}0e`, borderBottom: "1px solid var(--adm-card-border)" }}>
                       {isCurrentPlan && <div style={{ display: "inline-block", padding: "2px 8px", background: `${proAccent}20`, border: `1px solid ${proAccent}40`, borderRadius: 99, marginBottom: 8 }}><span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: proAccent }}>✓ Tu plan actual</span></div>}
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                        <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>Plan Pro</span>
+                        <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>Plan Premium</span>
                       </div>
                       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Incluye carta QR, pedidos online y valoraciones</p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
@@ -529,7 +529,7 @@ export default function MiRestaurantePage() {
                   {/* Acción */}
                   {!isCurrentPlan && (
                     <button onClick={() => handleSubscribePlan("PREMIUM")} disabled={subscribing} style={{ width: "100%", padding: "13px 0", border: "none", borderRadius: 999, background: proAccent, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: "pointer", boxShadow: `0 4px 14px ${proAccent}44`, opacity: subscribing ? 0.7 : 1 }}>
-                      {subscribing ? "Redirigiendo…" : isPremiumTrial ? "Empezar 7 días gratis" : "Contratar Plan Pro"}
+                      {subscribing ? "Redirigiendo…" : isPremiumTrial ? "Empezar 7 días gratis" : "Contratar Plan Premium"}
                     </button>
                   )}
                   {isCurrentPlan && (
@@ -617,7 +617,7 @@ export default function MiRestaurantePage() {
       {/* ── Cobro automático ── */}
       {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
         const hasAutoRenew = billingStatus.hasAutoRenewal;
-        const planName = plan === "FREE" ? "Gratis" : "Pro";
+        const planName = plan === "FREE" ? "Gratis" : "Premium";
         return (
           <div style={{ background: "var(--adm-card)", border: `1px solid ${hasAutoRenew ? "rgba(22,163,74,0.25)" : "var(--adm-card-border)"}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
