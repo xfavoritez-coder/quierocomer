@@ -186,12 +186,12 @@ function MovRow({
   // Simple categorize — value is categoryId or "agent:{agentId}"
   const [selCat, setSelCat] = useState("");
 
-  // Split
+  // Split — pre-llenar con entries existentes si el movimiento ya tiene split parcial
   type SplitRow = { categoryId: string; amount: string; description: string };
-  const [splits, setSplits] = useState<SplitRow[]>([
-    { categoryId: "", amount: "", description: "" },
-    { categoryId: "", amount: "", description: "" },
-  ]);
+  const initialSplits: SplitRow[] = m.entries.length >= 2
+    ? m.entries.map(e => ({ categoryId: e.category.id, amount: String(e.amount), description: "" }))
+    : [{ categoryId: "", amount: "", description: "" }, { categoryId: "", amount: "", description: "" }];
+  const [splits, setSplits] = useState<SplitRow[]>(initialSplits);
 
   const amount = movAmount(m);
   const isExpense = amount < 0;
@@ -390,7 +390,7 @@ function MovRow({
           {mode === "split" && (
             <div>
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2,#666)", margin: "0 0 10px" }}>
-                Total: {fmtClp(absAmount)} · Distribuido: {fmtClp(splitTotal)} · <span style={{ color: remaining === 0 ? "#22c55e" : remaining < 0 ? "#ef4444" : "#f59e0b", fontWeight: 700 }}>Restante: {fmtClp(remaining)}</span>
+                Total: {fmtClp(absAmount)} · Distribuido: {fmtClp(splitTotal)} · <span style={{ color: remaining === 0 ? "#22c55e" : remaining < 0 ? "#ef4444" : "#f59e0b", fontWeight: 700 }}>{remaining < 0 ? `⚠ Te pasaste por ${fmtClp(remaining)}` : remaining === 0 ? "Cuadra exacto ✓" : `Restante: ${fmtClp(remaining)}`}</span>
               </p>
               {splits.map((s, i) => (
                 <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
