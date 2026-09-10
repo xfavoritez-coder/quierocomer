@@ -199,7 +199,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const movAmount = movement.debit ?? movement.credit ?? 0;
+  const movAmount = Math.abs(movement.debit ?? movement.credit ?? 0);
   const movType = movement.debit ? "EXPENSE" : "INCOME";
 
   // ── CATEGORIZACIÓN SIMPLE ──

@@ -57,8 +57,8 @@ export function parseBCIXLSX(buffer: Buffer): ParsedRow[] {
       else continue;
     }
 
-    const debit = row[3] && row[3] !== "" ? Math.round(Number(row[3])) : null;
-    const credit = row[4] && row[4] !== "" ? Math.round(Number(row[4])) : null;
+    const debit = row[3] && row[3] !== "" ? Math.abs(Math.round(Number(row[3]))) : null;
+    const credit = row[4] && row[4] !== "" ? Math.abs(Math.round(Number(row[4]))) : null;
     const balance = row[5] ? Math.round(Number(row[5])) : null;
     if (!debit && !credit) continue;
 

@@ -83,8 +83,10 @@ function currentMonth() {
 }
 
 function movAmount(m: Movement): number {
-  if (m.credit && m.credit > 0) return m.credit;
-  if (m.debit && m.debit > 0) return -m.debit;
+  const credit = m.credit ? Math.abs(m.credit) : 0;
+  const debit = m.debit ? Math.abs(m.debit) : 0;
+  if (credit > 0) return credit;
+  if (debit > 0) return -debit;
   return 0;
 }
 
@@ -174,7 +176,7 @@ function MovRow({
   m: Movement;
   categories: Category[];
   agents: CashAgent[];
-  onAction: (movementId: string, params: Record<string, unknown>) => Promise<void>;
+  onAction: (movementId: string, params: Record<string, unknown>) => Promise<boolean>;
   onDelete: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -205,17 +207,17 @@ function MovRow({
     const agentId = selCat.replace("agent:", "");
     if (!agentId) return;
     setSaving(true);
-    await onAction(m.id, { action: "assign_agent", agentId });
+    const ok = await onAction(m.id, { action: "assign_agent", agentId });
     setSaving(false);
-    setOpen(false);
+    if (ok) setOpen(false);
   }
 
   async function doSimple() {
     if (!selCat) return;
     setSaving(true);
-    await onAction(m.id, { action: "categorize", categoryId: selCat });
+    const ok = await onAction(m.id, { action: "categorize", categoryId: selCat });
     setSaving(false);
-    setOpen(false);
+    if (ok) setOpen(false);
   }
 
   async function doSplit() {
@@ -223,7 +225,7 @@ function MovRow({
     if (valid.length < 2) return;
     if (remaining < 0) return; // no permitir si se excede el monto total
     setSaving(true);
-    await onAction(m.id, {
+    const ok = await onAction(m.id, {
       action: "split",
       splits: valid.map(s => ({
         categoryId: s.categoryId,
@@ -232,7 +234,7 @@ function MovRow({
       })),
     });
     setSaving(false);
-    setOpen(false);
+    if (ok) setOpen(false);
   }
 
   async function doConfirmSuggested() {
@@ -244,8 +246,9 @@ function MovRow({
 
   async function doIgnore() {
     setSaving(true);
-    await onAction(m.id, { action: "ignore" });
+    const ok = await onAction(m.id, { action: "ignore" });
     setSaving(false);
+    if (ok) setOpen(false);
   }
 
   async function doUndo() {
@@ -665,6 +668,7 @@ export default function ConciliacionPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; autoSuggested?: number } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   type PreviewData = {
     total: number; newCount: number; duplicateCount: number;
@@ -746,14 +750,21 @@ export default function ConciliacionPage() {
     }
   };
 
-  const handleAction = useCallback(async (movementId: string, params: Record<string, unknown>) => {
-    if (!restaurantId) return;
-    await fetch("/api/admin/financial/movements", {
+  const handleAction = useCallback(async (movementId: string, params: Record<string, unknown>): Promise<boolean> => {
+    if (!restaurantId) return false;
+    setActionError(null);
+    const res = await fetch("/api/admin/financial/movements", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ movementId, restaurantId, ...params }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setActionError(data.error || "Error al guardar el movimiento");
+      return false;
+    }
     if (restaurantId) await load(restaurantId, month);
+    return true;
   }, [restaurantId, month, load]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -953,6 +964,13 @@ export default function ConciliacionPage() {
           <AlertCircle size={16} color="#ef4444" />
           <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#dc2626" }}>{importError}</span>
           <button onClick={() => setImportError(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#dc2626" }}><X size={14} /></button>
+        </div>
+      )}
+      {actionError && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 10, marginBottom: 14 }}>
+          <AlertCircle size={16} color="#ef4444" />
+          <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#dc2626" }}>{actionError}</span>
+          <button onClick={() => setActionError(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#dc2626" }}><X size={14} /></button>
         </div>
       )}
 
