@@ -224,16 +224,19 @@ function MovRow({
     const valid = splits.filter(s => s.categoryId && parseInt(s.amount.replace(/\D/g, ""), 10) > 0);
     if (valid.length < 2) return;
     setSaving(true);
-    const ok = await onAction(m.id, {
-      action: "split",
-      splits: valid.map(s => ({
-        categoryId: s.categoryId,
-        amount: parseInt(s.amount.replace(/\D/g, ""), 10),
-        description: s.description.trim() || undefined,
-      })),
-    });
-    setSaving(false);
-    if (ok) setOpen(false);
+    try {
+      const ok = await onAction(m.id, {
+        action: "split",
+        splits: valid.map(s => ({
+          categoryId: s.categoryId,
+          amount: parseInt(s.amount.replace(/\D/g, ""), 10),
+          description: s.description.trim() || undefined,
+        })),
+      });
+      if (ok) setOpen(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function doConfirmSuggested() {
