@@ -428,9 +428,9 @@ export default function LandingPage() {
               {t("hero_subtitle")}
             </p>
             <div className="qc-hero-cta">
-              <button className="qc-btn-ambar qc-btn-ambar-xl" onClick={() => openModal()}>
+              <a href="/subircarta" className="qc-btn-ambar qc-btn-ambar-xl">
                 {t("hero_cta")}
-              </button>
+              </a>
               <a href="https://quierocomer.com/qr/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
                 {t("hero_demo")}
               </a>
@@ -602,9 +602,9 @@ export default function LandingPage() {
                     <li key={i}><span className="qc-check">✓</span>{f}</li>
                   ))}
                 </ul>
-                <button className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15 }} onClick={() => openModal()}>
+                <a href="/subircarta" className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, display: "block", textAlign: "center", textDecoration: "none" }}>
                   {t("plan_cta_pro")}
-                </button>
+                </a>
               </div>
 
             </div>
@@ -616,7 +616,7 @@ export default function LandingPage() {
           <div className="qc-cta-final-card">
             <h2>{t("final_title")}</h2>
             <p style={{color:"rgba(255,255,255,0.75)"}}>{t("final_subtitle")}</p>
-            <button className="qc-btn-white" onClick={() => openModal()}>{t("final_cta")}</button>
+            <a href="/subircarta" className="qc-btn-white" style={{ display: "inline-block", textDecoration: "none" }}>{t("final_cta")}</a>
             <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>{t("final_note")}</p>
           </div>
         </section>
