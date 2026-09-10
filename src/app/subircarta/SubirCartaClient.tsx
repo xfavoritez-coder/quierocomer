@@ -147,15 +147,15 @@ function PhoneCountrySelector({ country, onChange, style }: PhoneSelectorProps) 
         style={{
           display: "flex", alignItems: "center", gap: 5,
           padding: "0 10px", height: "100%", minHeight: 44,
-          background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)",
-          borderRadius: 12, color: "#E8DDC8", fontSize: 14, cursor: "pointer",
+          background: "#F5F5F3", border: "1.5px solid #DDDDD8",
+          borderRadius: 10, color: "#111", fontSize: 14, cursor: "pointer",
           whiteSpace: "nowrap", ...style,
         }}
       >
         {current.flag}
         <span style={{ fontWeight: 600 }}>{current.dial}</span>
         <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: 2 }}>
-          <path d="M1 1l4 4 4-4" stroke="#E8DDC8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1 1l4 4 4-4" stroke="#A8A8A2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
       {open && (
@@ -163,9 +163,9 @@ function PhoneCountrySelector({ country, onChange, style }: PhoneSelectorProps) 
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9 }} />
           <div style={{
             position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 10,
-            background: "#1a1a2e", border: "1px solid rgba(255,255,255,.12)",
-            borderRadius: 12, overflow: "hidden", minWidth: 140,
-            boxShadow: "0 8px 24px rgba(0,0,0,.5)",
+            background: "#fff", border: "1.5px solid #DDDDD8",
+            borderRadius: 10, overflow: "hidden", minWidth: 140,
+            boxShadow: "0 8px 24px rgba(0,0,0,.1)",
           }}>
             {PHONE_COUNTRIES.map(c => (
               <button
@@ -175,13 +175,13 @@ function PhoneCountrySelector({ country, onChange, style }: PhoneSelectorProps) 
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
                   width: "100%", padding: "10px 14px", border: "none", cursor: "pointer",
-                  background: c.code === country ? "rgba(255,255,255,.08)" : "transparent",
-                  color: "#E8DDC8", fontSize: 14, fontWeight: c.code === country ? 600 : 400,
+                  background: c.code === country ? "#FFF7EA" : "transparent",
+                  color: "#111", fontSize: 14, fontWeight: c.code === country ? 600 : 400,
                 }}
               >
                 {c.flag}
                 <span>{c.dial}</span>
-                <span style={{ color: "rgba(232,221,200,.5)", fontSize: 12 }}>{c.code}</span>
+                <span style={{ color: "#A8A8A2", fontSize: 12 }}>{c.code}</span>
               </button>
             ))}
           </div>
@@ -469,12 +469,10 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
 
-      <div className="grain" />
-
       <main className="page">
-        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "20px clamp(22px,4vw,64px)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(9,8,6,.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-          <a href="/" style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 600, color: "var(--cream)", display: "flex", alignItems: "center", gap: 10, letterSpacing: ".02em", textDecoration: "none" }}>
-            <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
+        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "0 24px", height: 60, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid #ECECEA" }}>
+          <a href="/" style={{ fontSize: 18, fontWeight: 700, color: "#111", display: "flex", alignItems: "center", gap: 7, letterSpacing: "-0.02em", textDecoration: "none", fontFamily: "Instrument Sans, sans-serif" }}>
+            <img src="/logo.png" alt="" style={{ height: 22, width: 22, objectFit: "contain" }} />
             QuieroComer
           </a>
           <NavHamburger />
@@ -551,7 +549,7 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
                     {photoFiles.length > 0 ? (
                       <>
                         <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
-                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Toca para agregar más fotos</div>
+                        <div style={{ color: "var(--text-2)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Toca para agregar más fotos</div>
                       </>
                     ) : (
                       <>
@@ -566,18 +564,18 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
                 {photoFiles.length > 0 && (
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, justifyContent: "center" }}>
                     {photoFiles.map((f, i) => (
-                      <div key={`${f.name}-${i}`} style={{ position: "relative", width: 64, height: 64, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,.12)" }}>
+                      <div key={`${f.name}-${i}`} style={{ position: "relative", width: 64, height: 64, borderRadius: 10, overflow: "hidden", border: "1px solid #ECECEA" }}>
                         <img src={URL.createObjectURL(f)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         <button
                           onClick={(e) => { e.stopPropagation(); setPhotoFiles(prev => { const next = prev.filter((_, j) => j !== i); setFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} fotos (${(next.reduce((s, f2) => s + f2.size, 0) / 1024 / 1024).toFixed(1)}MB)`); return next; }); }}
-                          style={{ position: "absolute", top: 2, right: 2, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,.7)", border: "none", color: "#fff", fontSize: 12, cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 1 }}
+                          style={{ position: "absolute", top: 2, right: 2, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,.55)", border: "none", color: "#fff", fontSize: 12, cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 1 }}
                         >×</button>
                       </div>
                     ))}
                     {photoFiles.length < 10 && (
                       <div
                         onClick={(e) => { e.stopPropagation(); photoRef.current?.click(); }}
-                        style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed rgba(255,255,255,.2)", display: "grid", placeItems: "center", cursor: "pointer", color: "rgba(255,255,255,.4)", fontSize: 24 }}
+                        style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed #DDDDD8", display: "grid", placeItems: "center", cursor: "pointer", color: "#A8A8A2", fontSize: 24 }}
                       >+</div>
                     )}
                   </div>
@@ -594,7 +592,7 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
                       <svg viewBox="0 0 64 64" fill="none"><path d="M32 12v40M12 32h40" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><rect x="14" y="14" width="36" height="36" rx="8" stroke="currentColor" strokeWidth="3"/></svg>
                     </div>
                     <div className="upload-title" style={{ textAlign: "center", marginBottom: 4 }}>Creamos tu carta con platos de ejemplo</div>
-                    <div className="upload-link" style={{ textAlign: "center", marginBottom: 18, fontSize: "0.82rem", fontWeight: 400, color: "var(--muted)" }}>Luego la personalizas desde tu panel</div>
+                    <div className="upload-link" style={{ textAlign: "center", marginBottom: 18, fontSize: "0.82rem", fontWeight: 400, color: "var(--text-2)" }}>Luego la personalizas desde tu panel</div>
                     <div style={{ display: "grid", gap: 10 }}>
                       <div>
                         <label className="field-label">Nombre del local *</label>
@@ -675,29 +673,29 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(67,209,123,.12)", border: "1px solid rgba(67,209,123,.3)", display: "grid", placeItems: "center", margin: "0 auto 14px" }}>
                   <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M5 13l4 4L19 7" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-                <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 7vw, 36px)", lineHeight: 1, fontWeight: 500, letterSpacing: "-.03em", marginBottom: 8 }}>
-                  ¡Tu carta se subió <span style={{ color: "var(--amber-2)", fontStyle: "italic" }}>correctamente</span>!
+                <h2 style={{ fontFamily: "Instrument Sans, sans-serif", fontSize: "clamp(24px, 5vw, 32px)", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-.02em", marginBottom: 8, color: "#111" }}>
+                  ¡Tu carta se subió <span style={{ color: "#F59E1B" }}>correctamente</span>!
                 </h2>
-                <p style={{ color: "var(--cream-2)", fontSize: 14, lineHeight: 1.45, maxWidth: 380, margin: "0 auto" }}>
+                <p style={{ color: "#71716C", fontSize: 14, lineHeight: 1.5, maxWidth: 380, margin: "0 auto" }}>
                   Déjanos tus datos para enviarte tu nueva carta digital lista.
                 </p>
               </div>
 
               <div style={{ display: "grid", gap: 12 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Nombre del local</label>
+                  <label style={{ display: "block", fontSize: 13, color: "#111", marginBottom: 4, paddingLeft: 2, fontWeight: 600, textAlign: "left" }}>Nombre del local</label>
                   <input type="text" placeholder="Ej: Mi Restaurante" value={fbLocalName} onChange={(e) => { setFbLocalName(e.target.value); setFbError(""); }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Tu nombre</label>
+                  <label style={{ display: "block", fontSize: 13, color: "#111", marginBottom: 4, paddingLeft: 2, fontWeight: 600, textAlign: "left" }}>Tu nombre</label>
                   <input type="text" placeholder="Ej: Juan Pérez" value={fbOwnerName} onChange={(e) => { setFbOwnerName(e.target.value); setFbError(""); }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Correo electrónico</label>
+                  <label style={{ display: "block", fontSize: 13, color: "#111", marginBottom: 4, paddingLeft: 2, fontWeight: 600, textAlign: "left" }}>Correo electrónico</label>
                   <input type="email" placeholder="tu@correo.com" value={fbEmail} onChange={(e) => { setFbEmail(e.target.value); setFbError(""); }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>WhatsApp</label>
+                  <label style={{ display: "block", fontSize: 13, color: "#111", marginBottom: 4, paddingLeft: 2, fontWeight: 600, textAlign: "left" }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <PhoneCountrySelector country={dialCountry} onChange={c => { setDialCountry(c); setScratchWA(""); setFbWhatsapp(""); }} />
                     <input type="tel" placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder} value={fbWhatsapp} onChange={(e) => { setFbWhatsapp(formatPhone(e.target.value, dialCountry)); setFbError(""); }} style={{ flex: 1 }} />
@@ -714,7 +712,7 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
               <button type="button" className="cta" onClick={handleFallbackSubmit} disabled={fbLoading} style={{ opacity: fbLoading ? 0.6 : 1 }}>
                 {fbLoading ? "Enviando..." : "Recibir mi nueva carta"} <span>→</span>
               </button>
-              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
+              <p style={{ textAlign: "center", color: "#A8A8A2", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
             </div>
           </section>
         )}
@@ -726,13 +724,13 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(67,209,123,.12)", border: "1px solid rgba(67,209,123,.3)", display: "grid", placeItems: "center", margin: "0 auto 16px" }}>
                 <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><path d="M5 13l4 4L19 7" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
-              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 7vw, 36px)", lineHeight: 1, fontWeight: 500, letterSpacing: "-.03em", marginBottom: 10 }}>
+              <h2 style={{ fontFamily: "Instrument Sans, sans-serif", fontSize: "clamp(24px, 5vw, 32px)", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-.02em", marginBottom: 10, color: "#111" }}>
                 ¡Recibimos tu carta!
               </h2>
-              <p style={{ color: "var(--cream-2)", fontSize: 15, lineHeight: 1.5, maxWidth: 400, margin: "0 auto" }}>
-                Estamos preparando tu nueva carta digital. Te enviaremos todo listo a <strong style={{ color: "var(--cream)" }}>{fbEmail}</strong>.
+              <p style={{ color: "#71716C", fontSize: 15, lineHeight: 1.5, maxWidth: 400, margin: "0 auto" }}>
+                Estamos preparando tu nueva carta digital. Te enviaremos todo listo a <strong style={{ color: "#111" }}>{fbEmail}</strong>.
               </p>
-              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 14 }}>Puedes cerrar esta página.</p>
+              <p style={{ color: "#A8A8A2", fontSize: 13, marginTop: 14 }}>Puedes cerrar esta página.</p>
             </div>
           </section>
         )}
@@ -746,68 +744,65 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
 
 const STYLES = `
 :root {
-  --black: #090806;--black-2: #120f0b;--card: rgba(18, 14, 10, .76);--card-2: rgba(255, 255, 255, .045);
-  --line: rgba(242, 229, 207, .14);--line-strong: rgba(232, 163, 61, .44);
-  --amber: #E8A33D;--amber-2: #E8A33D;--amber-3: #B8801A;
-  --cream: #F2E5CF;--cream-2: #CDBB9D;--muted: #887B68;
-  --font-display: 'Cormorant Garamond', serif;--font-body: 'Inter', sans-serif;
+  --amber: #F59E1B; --amber-hover: #E08E10;
+  --border: #ECECEA; --border-amber: rgba(245,158,27,.4);
+  --bg-amber: #FFF7EA;
+  --text: #111; --text-2: #71716C; --text-3: #A8A8A2;
+  --font: 'Instrument Sans', system-ui, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { min-height: 100vh!important; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat!important; background-size: cover!important; background-attachment: fixed!important; color: var(--cream)!important; font-family: var(--font-body)!important; line-height: 1.55!important; -webkit-font-smoothing: antialiased; overflow-x: hidden!important; }
-.grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
+body { min-height: 100vh!important; background: #fff!important; color: var(--text)!important; font-family: var(--font)!important; line-height: 1.55!important; -webkit-font-smoothing: antialiased; overflow-x: hidden!important; }
 a { color: inherit; text-decoration: none; }
-.page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
-.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 8px auto 12px; max-width: 480px; }
-.step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-.step-line { width: 28px; height: 1px; background: rgba(232,163,61,.15); margin: 0 6px; }
-.step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; border: 1px solid rgba(232,163,61,.2); background: transparent; color: var(--muted); }
-.step.active { color: var(--amber-2); }
-.step.active .step-number { color: var(--amber-2); border-color: var(--amber); background: rgba(232,163,61,.1); }
-.shell { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(14,11,8,.86), rgba(14,11,8,.62)); border-radius: 28px; padding: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.38); backdrop-filter: blur(14px); position: relative; overflow: hidden; }
+.page { width: min(100% - 28px, 760px); margin: 0 auto; padding: 80px 0 60px; }
+.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 8px auto 20px; max-width: 480px; }
+.step { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 13px; }
+.step-line { width: 28px; height: 1px; background: var(--border); margin: 0 6px; }
+.step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--text-3); }
+.step.active { color: var(--text); }
+.step.active .step-number { color: var(--amber); border-color: var(--amber); background: var(--bg-amber); }
+.shell { border: 1px solid var(--border); background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
 .centered-shell { max-width: 760px; margin: 0 auto; text-align: center; }
-.shell::before { content: ''; position: absolute; width: 360px; height: 360px; right: -140px; top: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(232,163,61,.16), transparent 70%); filter: blur(8px); pointer-events: none; }
-h1 { font-family: var(--font-display); font-size: clamp(44px, 11.8vw, 67px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
-h1 span { color: var(--amber-2); font-style: italic; }
+h1 { font-family: var(--font); font-size: clamp(26px, 6vw, 36px); line-height: 1.15; font-weight: 700; letter-spacing: -.025em; margin-bottom: 20px; color: var(--text); }
+h1 span { color: var(--amber); }
 h1 br.desktop-break { display: none; }
-.method-title { text-align: center; margin: 28px 0 14px; color: var(--cream-2); }
-.first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
+.method-title { text-align: center; margin: 28px 0 14px; color: var(--text-2); }
+.first-title { margin-top: 0; color: var(--text); font-weight: 600; font-size: 19px; }
 .centered-form { max-width: 620px; margin: 0 auto; }
 .methods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 12px 8px; text-align: center; min-height: 100px; display: grid; align-content: center; gap: 6px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
-.method strong { margin-bottom: -4px; }
-.method span { line-height: 1.1; }
-.method:hover, .method.active { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(232,163,61,.075); }
-.method svg { width: 26px; height: 26px; margin: 0 auto; color: var(--amber-2); }
-.method span { font-size: 13px; color: var(--cream-2); }
+.method { border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 12px 8px; text-align: center; min-height: 100px; display: grid; align-content: center; gap: 6px; color: var(--text); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.method strong { margin-bottom: -4px; color: var(--text); }
+.method:hover, .method.active { transform: translateY(-2px); border-color: var(--border-amber); background: var(--bg-amber); }
+.method svg { width: 26px; height: 26px; margin: 0 auto; color: var(--amber); }
+.method span { font-size: 13px; color: var(--text-2); line-height: 1.1; }
 .input-panel { margin-top: 18px; }
-.upload-card { margin-top: 20px; border: 1px dashed rgba(244,189,105,.75); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.12), transparent 42%), rgba(255,255,255,.035); border-radius: 24px; min-height: 230px; display: grid; place-items: center; text-align: center; padding: 32px 20px; box-shadow: inset 0 0 50px rgba(232,163,61,.055), 0 0 34px rgba(232,163,61,.08); transition: transform .22s ease, border-color .22s ease, background .22s ease; }
-.compact-upload { margin-top: 18px; min-height: 160px; padding: 24px 20px; }
-.upload-card:hover { transform: translateY(-2px); border-color: var(--amber-2); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.18), transparent 44%), rgba(255,255,255,.052); }
-.upload-icon { width: 50px; height: 50px; margin: 0 auto 2px; display: grid; place-items: center; color: var(--amber-2); }
-.upload-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-.upload-link { color: var(--amber-2); font-weight: 600; }
-.formats { margin-top: 16px; color: var(--muted); font-size: 13px; }
-.field-label { display: block; text-align: left; margin: 0 0 8px; color: var(--amber-2); font-size: 13px; font-weight: 700; }
-input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; }
-input::placeholder { color: rgba(136,123,104,.5) !important; }
-input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
-.trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
-.trust svg { flex-shrink: 0; color: var(--amber-2); width: 16px; height: 16px; }
+.upload-card { margin-top: 20px; border: 1.5px dashed rgba(245,158,27,.5); background: var(--bg-amber); border-radius: 20px; min-height: 200px; display: grid; place-items: center; text-align: center; padding: 32px 20px; transition: transform .2s ease, border-color .2s ease; cursor: pointer; }
+.compact-upload { margin-top: 18px; min-height: 150px; padding: 24px 20px; }
+.upload-card:hover { transform: translateY(-2px); border-color: var(--amber); }
+.upload-icon { width: 48px; height: 48px; margin: 0 auto 8px; display: grid; place-items: center; color: var(--amber); }
+.upload-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+.upload-link { color: var(--amber); font-weight: 600; font-size: 14px; }
+.formats { margin-top: 12px; color: var(--text-3); font-size: 13px; }
+.field-label { display: block; text-align: left; margin: 0 0 6px; color: var(--text); font-size: 13px; font-weight: 600; }
+input { width: 100%; height: 52px; border-radius: 14px; border: 1.5px solid var(--border); background: #fff; color: var(--text); padding: 0 16px; font: inherit; outline: none; font-size: 15px; }
+input::placeholder { color: var(--text-3) !important; }
+input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,27,.1); }
+.trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--text-2); font-size: 13px; margin: 22px 0 18px; }
+.trust svg { flex-shrink: 0; color: var(--amber); width: 16px; height: 16px; }
 .below-cta { margin: 10px auto 0; max-width: 520px; }
-.cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
-.cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 60px; } h1 br.desktop-break { display: block; } .methods { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
-@media (max-width: 390px) { h1 { font-size: 40px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
+.cta { width: 100%; min-height: 58px; border: 0; border-radius: 16px; background: var(--amber); color: #fff; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: transform .2s ease, background .2s ease, opacity .3s ease; margin-top: 20px; font-family: var(--font); }
+.cta:hover:not(:disabled) { transform: translateY(-2px); background: var(--amber-hover); }
+@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 20px; } .shell { padding: 40px; } h1 br.desktop-break { display: block; } .methods { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
+@media (max-width: 390px) { h1 { font-size: 24px; } .methods { grid-template-columns: 1fr; } .method { min-height: 90px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
 @keyframes fallbackReveal { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-.social-proof { text-align: center; margin: 32px auto 0; max-width: 620px; }
-.social-proof-title { font-family: var(--font-display); font-size: 20px; color: var(--cream-2); font-weight: 500; letter-spacing: -.01em; margin-bottom: 16px; }
-.social-proof-logos { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
-.social-proof-logo { width: 52px; height: 52px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(242,229,207,.1); background: rgba(255,255,255,.04); display: grid; place-items: center; transition: transform .2s, border-color .2s; }
-.social-proof-logo:hover { transform: scale(1.1); border-color: rgba(232,163,61,.4); }
+.social-proof { text-align: center; margin: 40px auto 0; max-width: 620px; }
+.social-proof-title { font-family: var(--font); font-size: 15px; color: var(--text-2); font-weight: 500; letter-spacing: -.01em; margin-bottom: 16px; }
+.social-proof-logos { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+.social-proof-logo { width: 52px; height: 52px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #F9F9F8; display: grid; place-items: center; transition: transform .2s, border-color .2s; }
+.social-proof-logo:hover { transform: scale(1.1); border-color: var(--border-amber); }
 .social-proof-logo img { width: 100%; height: 100%; object-fit: cover; }
 .social-proof-fallback { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 700; letter-spacing: .03em; }
-.social-proof-sub { font-size: 11px; color: rgba(136,123,104,.65); margin-top: 10px; }
+.social-proof-sub { font-size: 11px; color: var(--text-3); margin-top: 10px; }
 `;
