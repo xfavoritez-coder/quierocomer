@@ -259,13 +259,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const totalSplit: number = splits.reduce((s: number, sp: { amount: number }) => s + sp.amount, 0);
-    if (totalSplit > movAmount) {
-      return NextResponse.json(
-        { error: `La suma de los splits ($${totalSplit}) supera el monto del movimiento ($${movAmount})` },
-        { status: 400 }
-      );
-    }
-    const isPartial = totalSplit < movAmount;
+    const isPartial = totalSplit !== movAmount;
 
     // Borrar entries previas
     await prisma.financialEntry.deleteMany({ where: { bankMovementId: movementId } });
