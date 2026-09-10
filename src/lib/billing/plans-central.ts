@@ -33,7 +33,8 @@ export type Feature =
   | "modifiers"           // Modificadores de platos
   | "multi_menu"          // Multi-menú (un QR, múltiples cartas)
   | "print_menu"          // Exportar carta imprimible (PDF)
-  | "online_ordering";    // Página web de pedidos online (carta + checkout + WhatsApp)
+  | "online_ordering"     // Página web de pedidos online (carta + checkout + WhatsApp)
+  | "loyalty";            // Programa de fidelización (tarjeta de sellos, Apple/Google Wallet)
 
 // --- Plan definitions ---
 
@@ -139,7 +140,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "multilang", "suggestions",
       "waiter", "campaigns", "automations", "clients_full", "clients_export",
       "toteat_integration", "live_dashboard", "multi_menu", "print_menu",
-      "online_ordering",
+      "online_ordering", "loyalty",
     ]),
     featureDisplay: [
       { text: "Carta QR que aumenta tus ventas", tip: "Tus clientes escanean un QR y ven tu carta al instante. Edita precios y fotos desde tu celular." },
@@ -148,6 +149,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       { text: "Multilenguaje (ES / EN / PT)", tip: "Tu carta se traduce automáticamente a inglés y portugués." },
       { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación push." },
       { text: "Exportar carta imprimible", tip: "Genera un PDF profesional de tu carta para imprimir con 3 diseños a elegir." },
+      { text: "Loyalty · Tarjeta de fidelización", tip: "Tarjeta de sellos digital con Apple Wallet y Google Wallet. Notificaciones push, recompensas y estadísticas de clientes." },
     ],
     inheritsFrom: null,
     isFeatured: false,

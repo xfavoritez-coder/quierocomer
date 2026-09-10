@@ -8,6 +8,7 @@ import {
   IVA_RATE,
   missingBillingFields,
 } from "@/lib/billing/plans-config";
+import { effectivePlan } from "@/lib/billing/plans-central";
 
 /**
  * GET /api/billing/status?restaurantId=...
@@ -89,13 +90,17 @@ export async function GET(req: NextRequest) {
     sessions30d,
     plans: plansWithIva,
     ivaRate: IVA_RATE,
-    // Loyalty module billing
+    // Loyalty: incluido en Plan Pro. También se mantiene acceso legacy si tenían loyalty billing activo.
     loyaltyStatus: restaurant.loyaltyStatus,
     loyaltyPeriodEnd: restaurant.loyaltyPeriodEnd,
     loyaltyTrialEndsAt: restaurant.loyaltyTrialEndsAt,
     loyaltyLastPaymentAt: restaurant.loyaltyLastPaymentAt,
     loyaltyTrialUsed: !!restaurant.loyaltyTrialEndsAt,
-    hasLoyalty: restaurant.loyaltyStatus === "ACTIVE" || restaurant.loyaltyStatus === "TRIALING",
+    hasLoyalty: (
+      effectivePlan(restaurant.plan, restaurant.subscriptionStatus) === "PREMIUM" ||
+      restaurant.loyaltyStatus === "ACTIVE" ||
+      restaurant.loyaltyStatus === "TRIALING"
+    ),
     billingInfo: {
       billingCompanyName: restaurant.billingCompanyName,
       billingRut: restaurant.billingRut,

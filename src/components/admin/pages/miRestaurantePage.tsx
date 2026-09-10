@@ -110,9 +110,6 @@ export default function MiRestaurantePage() {
   const [activatingAutoRenew, setActivatingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [loyaltyModalOpen, setLoyaltyModalOpen] = useState(false);
-  const [loyaltyModalConfirm, setLoyaltyModalConfirm] = useState(false);
-  const [loyaltyPaying, setLoyaltyPaying] = useState(false);
 
   // Form state
   const [name, setName] = useState("");
@@ -551,80 +548,6 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Módulo Loyalty ── */}
-      {billingStatus && !billingStatus.billingExempt && (() => {
-        const ls = (billingStatus as any).loyaltyStatus as string ?? "NONE";
-        const lEnd = (billingStatus as any).loyaltyPeriodEnd as string | null;
-        const lTrial = (billingStatus as any).loyaltyTrialEndsAt as string | null;
-        const loyaltyTrialUsed = !!(billingStatus as any).loyaltyTrialUsed;
-        const isLoyaltyActive = ls === "ACTIVE";
-        const isLoyaltyTrial = ls === "TRIALING";
-        const isLoyaltyNone = ls === "NONE" || ls === "CANCELED";
-        const loyaltyNet = 29900;
-        const loyaltyGross = loyaltyNet + ivaOf(loyaltyNet);
-        const PURPLE = "#6d28d9";
-
-        return (
-          <div style={{ background: "var(--adm-card)", border: `1.5px solid ${isLoyaltyActive || isLoyaltyTrial ? PURPLE + "55" : "var(--adm-card-border)"}`, borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: isLoyaltyActive || isLoyaltyTrial ? `0 4px 20px ${PURPLE}15` : "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: "1.6rem" }}>🎁</span>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "0.75rem", color: PURPLE, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 700, margin: 0, opacity: 0.8 }}>Módulo adicional</p>
-                <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>Loyalty Fidelización</p>
-              </div>
-              {(isLoyaltyActive || isLoyaltyTrial) && (
-                <span style={{ padding: "3px 10px", borderRadius: 99, background: isLoyaltyTrial ? "rgba(109,40,217,0.1)" : "rgba(22,163,74,0.1)", border: `1px solid ${isLoyaltyTrial ? "rgba(109,40,217,0.3)" : "rgba(22,163,74,0.3)"}`, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, color: isLoyaltyTrial ? PURPLE : "#16a34a" }}>
-                  {isLoyaltyTrial ? "En prueba" : "Activo"}
-                </span>
-              )}
-            </div>
-
-            {isLoyaltyActive && lEnd && (
-              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 14px" }}>
-                Vigente hasta el {formatDate(lEnd)} · ${loyaltyNet.toLocaleString("es-CL")}/mes
-              </p>
-            )}
-            {isLoyaltyTrial && lTrial && (
-              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: PURPLE, margin: "0 0 14px", fontWeight: 600 }}>
-                Prueba hasta el {formatDate(lTrial)}
-              </p>
-            )}
-            {isLoyaltyNone && (
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
-                Tarjeta de fidelización digital con Apple Wallet y Google Wallet.
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 8 }}>
-              {isLoyaltyNone && !loyaltyTrialUsed && (
-                <button
-                  onClick={async () => {
-                    if (!rid) return;
-                    try {
-                      const res = await fetch("/api/billing/loyalty/start-trial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
-                      const d = await res.json();
-                      if (!res.ok) { toast.error(d.error || "Error"); return; }
-                      toast.success("¡Loyalty activado! 7 días gratis.");
-                      setTimeout(() => window.location.reload(), 1000);
-                    } catch { toast.error("Error de conexión"); }
-                  }}
-                  style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                >
-                  ✨ Probar 7 días gratis
-                </button>
-              )}
-              {isLoyaltyNone && loyaltyTrialUsed && (
-                <button
-                  onClick={() => setLoyaltyModalOpen(true)}
-                  style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 999, background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
-                >
-                  Activar Loyalty →
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Facturación ── */}
       <div style={{ marginBottom: 16 }}>
@@ -741,94 +664,6 @@ export default function MiRestaurantePage() {
         <QRGeneratorModal restaurant={selectedRestaurant} onClose={() => setQrModalOpen(false)} />
       )}
 
-      {/* Loyalty Modal */}
-      {loyaltyModalOpen && (() => {
-        const PURPLE = "#6d28d9";
-        const loyaltyNet = 29900;
-        const loyaltyIva = ivaOf(loyaltyNet);
-        const loyaltyGross = loyaltyNet + loyaltyIva;
-        const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
-        const FEATURES = [
-          { icon: "🎁", text: "Tarjeta de sellos digital para tus clientes" },
-          { icon: "🍎", text: "Compatible con Apple Wallet y Google Wallet" },
-          { icon: "🔔", text: "Notificaciones push cuando acumulan sellos" },
-          { icon: "⭐", text: "Recompensas y premios configurables" },
-          { icon: "📊", text: "Panel con clientes, canjes y estadísticas" },
-          { icon: "🔗", text: "Link propio de tu programa de fidelización" },
-        ];
-        const handlePay = async () => {
-          if (!rid || loyaltyPaying) return;
-          setLoyaltyPaying(true);
-          try {
-            const res = await fetch("/api/billing/loyalty/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: rid }) });
-            const d = await res.json();
-            if (!res.ok || !d.url) { toast.error(d.error || "No se pudo iniciar el pago"); setLoyaltyPaying(false); return; }
-            window.location.href = d.url;
-          } catch { toast.error("Error de conexión"); setLoyaltyPaying(false); }
-        };
-        return (
-          <div onClick={() => { setLoyaltyModalOpen(false); setLoyaltyModalConfirm(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-bg, #fff)", borderRadius: 24, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", border: "1px solid var(--adm-card-border, #eee)", position: "relative", overflow: "hidden" }}>
-              {!loyaltyModalConfirm ? (
-                <>
-                  <div style={{ padding: "28px 24px 22px", textAlign: "center", position: "relative", background: "linear-gradient(160deg, rgba(109,40,217,0.12) 0%, rgba(109,40,217,0.04) 60%, transparent 100%)", borderBottom: "1px solid rgba(109,40,217,0.1)" }}>
-                    <button onClick={() => { setLoyaltyModalOpen(false); setLoyaltyModalConfirm(false); }} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
-                    <div style={{ fontSize: "2.4rem", marginBottom: 10, lineHeight: 1 }}>🎁</div>
-                    <p style={{ margin: "0 0 6px", fontFamily: F, fontSize: "0.65rem", fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: PURPLE, opacity: 0.85 }}>Módulo Loyalty</p>
-                    <h3 style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: "1.55rem", fontWeight: 700, color: "var(--adm-text, #1a1a1a)", lineHeight: 1.2, letterSpacing: "-0.3px" }}>
-                      Convierte a tus clientes<br />
-                      <span style={{ color: PURPLE }}>en fans de tu negocio</span>
-                    </h3>
-                  </div>
-                  <div style={{ padding: "20px 24px 24px" }}>
-                    <div style={{ background: "rgba(109,40,217,0.05)", border: "1px solid rgba(109,40,217,0.14)", borderRadius: 14, padding: "14px 16px", marginBottom: 18 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                        {FEATURES.map(f => (
-                          <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0, width: 22, textAlign: "center" }}>{f.icon}</span>
-                            <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text, #333)", lineHeight: 1.4 }}>{f.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <button onClick={() => setLoyaltyModalConfirm(true)} style={{ display: "block", width: "100%", padding: "15px 20px", border: "none", borderRadius: 999, textAlign: "center", background: PURPLE, color: "#fff", fontFamily: F, fontSize: "0.94rem", fontWeight: 700, cursor: "pointer", marginBottom: 10, boxShadow: "0 6px 24px rgba(109,40,217,0.35)", boxSizing: "border-box" }}>
-                      Activar Loyalty — {fmt(loyaltyNet)} neto →
-                    </button>
-                    <button onClick={() => { setLoyaltyModalOpen(false); setLoyaltyModalConfirm(false); }} style={{ display: "block", width: "100%", background: "none", border: "none", color: "var(--adm-text3, #999)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer", padding: "8px 0" }}>Cerrar</button>
-                  </div>
-                </>
-              ) : (
-                <div style={{ padding: "28px 24px", display: "flex", flexDirection: "column" }}>
-                  <button onClick={() => setLoyaltyModalConfirm(false)} style={{ position: "absolute", top: 14, left: 16, background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>←</button>
-                  <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <div style={{ fontSize: "0.68rem", letterSpacing: ".15em", textTransform: "uppercase", color: PURPLE, fontWeight: 700, marginBottom: 8, fontFamily: F }}>Resumen</div>
-                    <h3 style={{ fontFamily: "Georgia,serif", fontSize: "1.3rem", fontWeight: 400, color: "var(--adm-text, #1a1a1a)", margin: 0 }}>Módulo Loyalty</h3>
-                  </div>
-                  <div style={{ background: "var(--adm-input, #f5f5f5)", border: "1px solid var(--adm-card-border, #eee)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text, #333)" }}>
-                      <span>Mensual</span><span style={{ fontWeight: 700 }}>{fmt(loyaltyNet)}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: "var(--adm-text2, #555)" }}>
-                      <span>IVA (19%)</span><span>{fmt(loyaltyIva)}</span>
-                    </div>
-                    <div style={{ borderTop: "1px solid var(--adm-card-border, #ddd)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "var(--adm-text, #1a1a1a)" }}>
-                      <span>Total mensual</span><span>{fmt(loyaltyGross)}</span>
-                    </div>
-                  </div>
-                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2, #555)", textAlign: "center", marginBottom: 20, lineHeight: 1.5 }}>Serás redirigido a Flow para pagar de forma segura. Sin contratos, cancelas cuando quieras.</p>
-                  <button onClick={handlePay} disabled={loyaltyPaying} style={{ width: "100%", padding: 15, border: "none", borderRadius: 999, background: loyaltyPaying ? "#ccc" : PURPLE, color: "#fff", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, cursor: loyaltyPaying ? "wait" : "pointer", boxShadow: loyaltyPaying ? "none" : "0 4px 16px rgba(109,40,217,0.3)", marginBottom: 12 }}>
-                    {loyaltyPaying ? "Redirigiendo…" : `Pagar ${fmt(loyaltyGross)}`}
-                  </button>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, color: "var(--adm-text3, #888)" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                    Pago seguro vía Flow
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }

@@ -221,7 +221,7 @@ function MovRow({
   async function doSplit() {
     const valid = splits.filter(s => s.categoryId && parseInt(s.amount.replace(/\D/g, ""), 10) > 0);
     if (valid.length < 2) return;
-    if (remaining !== 0) return;
+    if (remaining < 0) return; // no permitir si se excede el monto total
     setSaving(true);
     await onAction(m.id, {
       action: "split",
@@ -420,12 +420,17 @@ function MovRow({
                 + Agregar split
               </button>
               <br />
+              {remaining > 0 && (
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "#f59e0b", margin: "0 0 8px", background: "#fef3c722", border: "1px solid #fde68a", borderRadius: 6, padding: "5px 10px" }}>
+                  ⚠ Quedarán {fmtClp(remaining)} sin asignar — el movimiento quedará pendiente
+                </p>
+              )}
               <button
                 onClick={doSplit}
-                disabled={remaining !== 0 || saving || splits.filter(s => s.categoryId && parseInt(s.amount.replace(/\D/g, ""), 10) > 0).length < 2}
-                style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: remaining === 0 ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: remaining === 0 ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: remaining === 0 ? "pointer" : "default" }}
+                disabled={remaining < 0 || saving || splits.filter(s => s.categoryId && parseInt(s.amount.replace(/\D/g, ""), 10) > 0).length < 2}
+                style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: remaining >= 0 ? "#F4A623" : "var(--adm-card-border,#e5e7eb)", color: remaining >= 0 ? "#fff" : "var(--adm-text3,#aaa)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: remaining >= 0 ? "pointer" : "default" }}
               >
-                {saving ? "Guardando..." : "Guardar split"}
+                {saving ? "Guardando..." : remaining > 0 ? "Guardar parcial" : "Guardar split"}
               </button>
             </div>
           )}
