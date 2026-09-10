@@ -20,7 +20,7 @@ const RESTAURANTS = [
 
 
 export default function LandingPage() {
-  const { t, testimonials, proFeatures, loyaltyFeatures } = useLandingLang();
+  const { t, testimonials, proFeatures } = useLandingLang();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<"trial" | "free">("trial");
   const [submitting, setSubmitting] = useState(false);
@@ -151,8 +151,7 @@ export default function LandingPage() {
         .qc-section-title { font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 8px; }
         .qc-section-sub { font-size: 16px; color: var(--gris); margin-bottom: 48px; line-height: 1.5; }
 
-        .qc-modulos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 600px) { .qc-modulos-grid { grid-template-columns: 1fr; } }
+        .qc-modulos-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 680px; margin: 0 auto; }
 
         .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; text-align: center; }
         .qc-card-amber { background: var(--ambar-fondo); border: 1.5px solid rgba(245,158,27,0.2); }
@@ -274,8 +273,7 @@ export default function LandingPage() {
 
         /* PRECIOS */
         .qc-precios-section { padding: 40px 24px 80px; background: white; }
-        .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
-        @media (max-width: 900px) { .qc-precios-grid { grid-template-columns: 1fr 1fr; } }
+        .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px; margin: 0 auto; }
         @media (max-width: 580px) { .qc-precios-grid { grid-template-columns: 1fr; } }
         .qc-precio-card { border-radius: 20px; padding: 36px; border: 2px solid var(--linea); }
         .qc-precio-card-featured { border-color: var(--ambar); background: var(--ambar-fondo); }
@@ -395,7 +393,6 @@ export default function LandingPage() {
             <a href="/" className="qc-logo"><img src="/logo.png" alt="" />QuieroComer</a>
             <div className="qc-nav-links">
               <a href="/carta-qr" className="qc-nav-link">Carta QR</a>
-              <a href="/fidelizacion" className="qc-nav-link">Loyalty</a>
               <a href="#precios" className="qc-nav-link">Precios</a>
             </div>
             <div className="qc-nav-actions">
@@ -446,29 +443,6 @@ export default function LandingPage() {
         <section className="qc-section" style={{ background: "white", paddingTop: 16 }}>
           <div className="qc-section-inner">
             <div className="qc-modulos-grid">
-
-              {/* Loyalty */}
-              <div className="qc-card qc-card-light">
-                <span className="qc-badge qc-badge-dark">Nuevo</span>
-                <h2>{t("module_loyalty_label")}</h2>
-                <p>{t("module_loyalty_desc")}</p>
-                <div className="qc-card-btns">
-                  <a href="/fidelizacion" className="qc-btn-outline">{t("module_qr_more")}</a>
-                  <a href="https://quierocomer.com/fidelidad/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_loyalty_demo")}</a>
-                </div>
-                <div className="qc-loyalty-mock">
-                  <div className="qc-loyalty-mock-header">{t("loyalty_mock_header")}</div>
-                  <h4>{t("loyalty_card_title")}</h4>
-                  <div className="qc-stamps">
-                    {[true, true, true, true, true, true, false, false, false, false].map((filled, i) => (
-                      <div key={i} className={`qc-stamp ${filled ? "qc-stamp-filled" : "qc-stamp-empty"}`}>
-                        {filled ? "⭐" : ""}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="qc-loyalty-mock-footer">{t("loyalty_progress")}</div>
-                </div>
-              </div>
 
               {/* Carta QR */}
               <div className="qc-card qc-card-amber">
@@ -614,22 +588,6 @@ export default function LandingPage() {
                   onClick={() => openModal("free")}
                 >
                   Empezar gratis →
-                </button>
-              </div>
-
-              {/* Loyalty */}
-              <div className="qc-precio-card qc-precio-card-purple">
-                <span className="qc-badge qc-badge-purple" style={{ marginBottom: 16 }}>{t("plan_addon")}</span>
-                <div className="qc-precio-name">{t("plan_loyalty")}</div>
-                <div className="qc-precio-price" style={{ color: "var(--purpura)" }}>{t("plan_price_loyalty")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
-                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
-                <ul className="qc-feature-list">
-                  {loyaltyFeatures.map((f, i) => (
-                    <li key={i}><span className="qc-check-purple">✓</span>{f}</li>
-                  ))}
-                </ul>
-                <button className="qc-btn-purple" onClick={() => openModal()}>
-                  {t("plan_cta_loyalty")}
                 </button>
               </div>
 

@@ -11,11 +11,11 @@ const es = {
   nav_cta: "Probar gratis",
 
   // Home hero
-  hero_label: "Plataforma de marketing para restaurantes",
-  hero_title: "Haz que tus clientes vuelvan justo cuando tienen hambre",
-  hero_title_highlight: "cuando tienen hambre",
-  hero_subtitle: "Transforma tu negocio en una máquina de fidelización. Los locales que usan QuieroComer aumentan un 30% sus ventas.",
-  hero_cta: "Probar gratis por 7 días",
+  hero_label: "Para dueños de restaurantes",
+  hero_title: "Tu carta ya existe. Haz que haga más.",
+  hero_title_highlight: "Haz que haga más.",
+  hero_subtitle: "Sube la que ya tienes. QuieroComer la convierte en una carta que recomienda platos, se traduce y permite llamar al garzón desde la mesa.",
+  hero_cta: "Sube tu carta",
   hero_demo: "Ver demo →",
   hero_note: "Sin tarjeta · Sin contratos",
 
@@ -52,7 +52,7 @@ const es = {
   plan_price_pro: "$44.900",
   plan_price_unit: "/mes",
   plan_price_tax: "\u00a0",
-  plan_cta_pro: "Empezar gratis 7 días",
+  plan_cta_pro: "Sube tu carta →",
   plan_addon: "Pruébalo 7 días",
   plan_loyalty: "Módulo Loyalty",
   plan_price_loyalty: "$29.900",
