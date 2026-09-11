@@ -475,10 +475,10 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
           <button
             onClick={onClick}
             aria-label={`Agregar ${product.name}`}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
             style={{ background: primaryColor }}
           >
-            <Plus className="w-5 h-5" strokeWidth={3} />
+            <Plus className="w-3.5 h-3.5" strokeWidth={3} />
           </button>
         )}
       </div>
