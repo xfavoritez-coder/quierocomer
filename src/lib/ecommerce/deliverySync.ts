@@ -98,14 +98,18 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Info del repartidor normalizada para persistir en OnlineOrder.courier / mostrar al cliente. */
+/** Info del repartidor normalizada para persistir en OnlineOrder.courier / mostrar al cliente.
+ *  Devuelve null si aún NO hay repartidor real (sin nombre asignado y sin ubicación válida);
+ *  así no se muestra "Repartidor asignado" cuando DH solo reporta el estado de preparación. */
 export function dhCourier(d: DhDelivery | null): { lat: number | null; lng: number | null; name: string | null; label: string | null } | null {
   if (!d) return null;
-  const lat = num(d.last_lat);
-  const lng = num(d.last_lng);
+  let lat = num(d.last_lat);
+  let lng = num(d.last_lng);
+  // (0,0) o valores inválidos = todavía sin ubicación real del repartidor.
+  if (!(lat != null && lng != null && (Math.abs(lat) > 0.01 || Math.abs(lng) > 0.01))) { lat = null; lng = null; }
   const name = typeof d.assigned_to === "string" && d.assigned_to.trim() ? d.assigned_to.trim() : null;
   const label = typeof d.public_status_label === "string" ? d.public_status_label : null;
-  if (lat == null && lng == null && !name) return null;
+  if (lat == null && lng == null && !name) return null; // sin repartidor todavía
   return { lat, lng, name, label };
 }
 

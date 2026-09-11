@@ -310,6 +310,14 @@ function etaText(iso: string | null): string | null {
   return `~${mins} min`;
 }
 
+// ¿Hay un repartidor real para mostrar? Para deliveryhandroll solo cuando ya hay
+// nombre asignado o ubicación (evita "Repartidor asignado" durante la preparación).
+function hasRealCourier(c: CourierInfo | null | undefined): boolean {
+  if (!c) return false;
+  if (c.source === "deliveryhandroll") return !!(c.courierName || c.location);
+  return true; // Uber Direct: mostrar mientras exista la entrega
+}
+
 // Tarjeta de seguimiento del repartidor (Uber Direct). Se actualiza en vivo por
 // Realtime cuando llega un webhook de Uber.
 function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: CourierInfo; mapsKey: string | null; dropoff: { lat: number; lng: number } | null; compact?: boolean }) {
@@ -410,7 +418,18 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
           <Bike size={15} /> {courierBusy ? "Solicitando…" : "Solicitar repartidor externo (Uber)"}
         </button>
       )}
-      {order.courier && <CourierCard courier={order.courier} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
+      {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
+
+      {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
+      <a
+        href={`/pedido/${order.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        style={{ marginTop: 8, width: "100%", padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
+      >
+        <ExternalLink size={14} /> Ver seguimiento del cliente
+      </a>
 
       {cancelOpen && (
         <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -475,7 +494,17 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
               <Bike size={16} /> {courierBusy ? "Solicitando…" : "Solicitar repartidor externo (Uber)"}
             </button>
           )}
-          {order.courier && <CourierCard courier={order.courier} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} />}
+          {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} />}
+
+          {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
+          <a
+            href={`/pedido/${order.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.84rem", fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
+          >
+            <ExternalLink size={16} /> Ver seguimiento del cliente
+          </a>
 
           {/* Items */}
           <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
