@@ -71,8 +71,11 @@ function genSpacingCss(): string {
   css += `.qc-storefront .qc-modal-in{animation:qc-sheet-up .3s ${EASE}}`;
   css += `.qc-storefront .qc-modal-out{animation:qc-sheet-down .26s ${EASE} forwards}`;
   css += `@media(min-width:640px){.qc-storefront .qc-modal-in{animation:qc-pop-in .2s ease}.qc-storefront .qc-modal-out{animation:qc-pop-out .18s ease forwards}}`;
+  // Corazón de favorito: crece y vuelve al tamaño normal (al marcar favorito)
+  css += `@keyframes qc-heart-pop{0%{transform:scale(1)}40%{transform:scale(1.4)}70%{transform:scale(.9)}100%{transform:scale(1)}}`;
+  css += `.qc-storefront .qc-heart-pop{animation:qc-heart-pop .34s ease}`;
   // Respeta la preferencia de menos movimiento
-  css += `@media(prefers-reduced-motion:reduce){.qc-storefront .qc-sheet-in,.qc-storefront .qc-sheet-out,.qc-storefront .qc-fade-in,.qc-storefront .qc-fade-out,.qc-storefront .qc-drawer-left-in,.qc-storefront .qc-drawer-left-out,.qc-storefront .qc-drawer-right-in,.qc-storefront .qc-drawer-right-out,.qc-storefront .qc-modal-in,.qc-storefront .qc-modal-out{animation-duration:.01ms}}`;
+  css += `@media(prefers-reduced-motion:reduce){.qc-storefront .qc-sheet-in,.qc-storefront .qc-sheet-out,.qc-storefront .qc-fade-in,.qc-storefront .qc-fade-out,.qc-storefront .qc-drawer-left-in,.qc-storefront .qc-drawer-left-out,.qc-storefront .qc-drawer-right-in,.qc-storefront .qc-drawer-right-out,.qc-storefront .qc-modal-in,.qc-storefront .qc-modal-out,.qc-storefront .qc-heart-pop{animation-duration:.01ms}}`;
   return css;
 }
 

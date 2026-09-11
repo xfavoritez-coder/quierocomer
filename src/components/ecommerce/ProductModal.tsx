@@ -99,7 +99,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
       options,
     });
     window.dispatchEvent(new CustomEvent("cart:item-added"));
-    requestClose();
+    onClose(); // cierre inmediato al agregar: solo se anima el carrito, no el modal
   }
 
   return (

@@ -317,7 +317,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             <button
               onClick={() => router.push(`${storeBase}/checkout`)}
               aria-label="Ver carrito"
-              className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 active:scale-95 ${cartBump ? "cart-bump" : ""}`}
+              className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white ${cartBump ? "cart-bump" : ""}`}
               style={{ background: primaryColor }}
             >
               <ShoppingBag className="w-6 h-6" />
@@ -392,6 +392,13 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 // apilados, y un botón + a la derecha (abre el producto). Sin estrellas.
 function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void }) {
   const soldOut = product.is_sold_out;
+  const [heartPop, setHeartPop] = useState(false);
+  const handleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const willFav = !isFav;
+    onToggleFav?.();
+    if (willFav) { setHeartPop(true); setTimeout(() => setHeartPop(false), 340); }
+  };
   return (
     <div className={`relative bg-white rounded-2xl shadow-sm p-3 flex items-stretch gap-3 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
       {/* Miniatura */}
@@ -426,11 +433,11 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
       <div className="flex flex-col items-end justify-between shrink-0">
         {showFav ? (
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
+            onClick={handleFav}
             aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
           >
-            <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
+            <Heart className={`w-4 h-4 ${heartPop ? "qc-heart-pop" : ""}`} fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
           </button>
         ) : <span className="w-8 h-8" />}
         {!soldOut && (
