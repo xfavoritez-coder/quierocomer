@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Acep
 export type CustomerMenuView = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
 type View = CustomerMenuView;
 
-export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet" }) {
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer", initialLoginExpanded = false }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet"; initialLoginExpanded?: boolean }) {
   const [view, setView] = useState<View>(initialView);
   const sheet = variant === "sheet";
   const { closing, requestClose } = useCloseAnimation(onClose);
@@ -27,7 +27,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
       : (closing ? "qc-drawer-right-out" : "qc-drawer-right-in");
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [loginExpanded, setLoginExpanded] = useState(false);
+  const [loginExpanded, setLoginExpanded] = useState(initialLoginExpanded);
 
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
 

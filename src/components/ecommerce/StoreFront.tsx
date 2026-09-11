@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
@@ -52,11 +52,13 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<CustomerMenuView>("root");
+  const [menuLoginExpanded, setMenuLoginExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"home" | "favorites" | "contact" | "profile">("home");
-  const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuOpen(true); }, []);
+  const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuLoginExpanded(false); setMenuOpen(true); }, []);
   const [cartBump, setCartBump] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null); // null = aún sin verificar
 
   const headerRef = useRef<HTMLElement>(null);
   const catNavRef = useRef<HTMLDivElement>(null);
@@ -69,13 +71,25 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
 
-  // Favoritos del cliente (si el local lo tiene habilitado)
-  useEffect(() => {
+  // Favoritos del cliente + estado de sesión (si el local tiene favoritos habilitados).
+  // Los favoritos requieren cuenta iniciada (no invitado), así que verificamos /user/me.
+  const loadFavState = useCallback(() => {
     if (!tenant.favoritesEnabled) return;
+    fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null)).then((d) => setLoggedIn(!!d?.user)).catch(() => setLoggedIn(false));
     fetch("/api/qr/favorites").then((r) => (r.ok ? r.json() : null)).then((d) => {
       if (Array.isArray(d?.dishIds)) setFavIds(new Set(d.dishIds));
     }).catch(() => {});
   }, [tenant.favoritesEnabled]);
+  useEffect(() => { loadFavState(); }, [loadFavState]);
+
+  // Pide iniciar sesión (abre el menú de cuenta con el login desplegado).
+  const promptLogin = useCallback(() => {
+    setMenuView("root");
+    setMenuLoginExpanded(true);
+    setActiveTab("profile");
+    setMenuOpen(true);
+    toast("Inicia sesión para guardar tus favoritos");
+  }, []);
 
   const toggleFav = useCallback((dishId: string) => {
     setFavIds((prev) => {
@@ -258,7 +272,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
-                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} />
+                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
                     ))}
                   </div>
                 </section>
@@ -298,7 +312,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       )}
 
       {menuOpen && (
-        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setActiveTab("home"); }} products={products} initialView={menuView} variant="sheet" />
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setActiveTab("home"); setMenuLoginExpanded(false); loadFavState(); }} products={products} initialView={menuView} initialLoginExpanded={menuLoginExpanded} variant="sheet" />
       )}
 
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
@@ -390,11 +404,13 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 // ── Tarjeta de producto ──────────────────────────────────────────
 // Estilo referencia: miniatura a la izquierda, nombre + descripción + precio
 // apilados, y un botón + a la derecha (abre el producto). Sin estrellas.
-function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void }) {
+function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav, favNeedsLogin, onRequireLogin }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void; favNeedsLogin?: boolean; onRequireLogin?: () => void }) {
   const soldOut = product.is_sold_out;
   const [heartPop, setHeartPop] = useState(false);
   const handleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Sin sesión iniciada: pedir login antes de favoritear (no togglea ni anima).
+    if (favNeedsLogin) { onRequireLogin?.(); return; }
     const willFav = !isFav;
     onToggleFav?.();
     if (willFav) { setHeartPop(true); setTimeout(() => setHeartPop(false), 340); }
