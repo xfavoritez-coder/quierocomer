@@ -304,18 +304,28 @@ function MovRow({
         </span>
 
         {/* Status / actions */}
-        {m.status === "RECONCILED" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            {m.entries.map(e => (
-              <span key={e.id} style={{ fontFamily: FB, fontSize: "0.7rem", padding: "2px 8px", borderRadius: 20, background: (e.category.color || "#6366f1") + "22", border: `1px solid ${e.category.color || "#6366f1"}55`, color: e.category.color || "#6366f1" }}>
-                {e.category.icon ? `${e.category.icon} ` : ""}{e.category.name}
-              </span>
-            ))}
-            <button onClick={doUndo} disabled={saving} title="Deshacer" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3,#ccc)", padding: 2, flexShrink: 0, display: "flex" }}>
-              <Undo2 size={13} />
-            </button>
-          </div>
-        )}
+        {m.status === "RECONCILED" && (() => {
+          const entryTotal = m.entries.reduce((s, e) => s + e.amount, 0);
+          const remaining = absAmount - entryTotal;
+          const isPartial = remaining !== 0 && m.entries.length > 0;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              {m.entries.map(e => (
+                <span key={e.id} style={{ fontFamily: FB, fontSize: "0.7rem", padding: "2px 8px", borderRadius: 20, background: (e.category.color || "#6366f1") + "22", border: `1px solid ${e.category.color || "#6366f1"}55`, color: e.category.color || "#6366f1" }}>
+                  {e.category.icon ? `${e.category.icon} ` : ""}{e.category.name}
+                </span>
+              ))}
+              {isPartial && (
+                <span title={`${remaining > 0 ? "Faltaron" : "Sobraron"} ${fmtClp(Math.abs(remaining))} sin asignar`} style={{ fontFamily: FB, fontSize: "0.68rem", padding: "2px 7px", borderRadius: 20, background: "#f59e0b22", border: "1px solid #f59e0b55", color: "#b45309", whiteSpace: "nowrap" }}>
+                  ⚠ {remaining > 0 ? `+${fmtClp(remaining)}` : fmtClp(remaining)} sin asignar
+                </span>
+              )}
+              <button onClick={doUndo} disabled={saving} title="Deshacer" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3,#ccc)", padding: 2, flexShrink: 0, display: "flex" }}>
+                <Undo2 size={13} />
+              </button>
+            </div>
+          );
+        })()}
 
         {m.status === "IGNORED" && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>

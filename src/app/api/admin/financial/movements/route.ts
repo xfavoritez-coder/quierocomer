@@ -287,8 +287,8 @@ export async function PATCH(req: NextRequest) {
 
     await prisma.bankMovement.update({
       where: { id: movementId },
-      // Si el split es parcial, el movimiento queda PENDING para que el usuario lo complete
-      data: { status: isPartial ? "PENDING" : "RECONCILED", suggestedCatId: null },
+      // Siempre RECONCILED — el split parcial se distingue comparando entries vs monto total en la UI
+      data: { status: "RECONCILED", suggestedCatId: null },
     });
 
     // Aprender la regla de split (ratios)
