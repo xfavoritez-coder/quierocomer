@@ -11,6 +11,8 @@ interface Props {
   product: StoreProduct;
   primaryColor: string;
   onClose: () => void;
+  // Tema base: la foto se scrollea junto con la descripción y sin degradado.
+  scrollImage?: boolean;
 }
 
 // Convierte la "descripción detallada" (una línea por ítem) en una lista tipo "Incluye".
@@ -26,7 +28,7 @@ function parseIncludes(text: string | null): { title: string; detail: string }[]
   }).filter((x) => x.title).slice(0, 40);
 }
 
-export default function ProductModal({ product, primaryColor, onClose }: Props) {
+export default function ProductModal({ product, primaryColor, onClose, scrollImage }: Props) {
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const addItem = useCartStore((s) => s.addItem);
@@ -102,6 +104,86 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
     onClose(); // cierre inmediato al agregar: solo se anima el carrito, no el modal
   }
 
+  // Imagen del producto. En el tema base (scrollImage) va sin degradado y sin
+  // fijarse (shrink-0), para que se desplace junto con la descripción.
+  const imageBlock = product.image_url ? (
+    <div className={`relative aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden ${scrollImage ? "" : "shrink-0"}`}>
+      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+      {!scrollImage && (
+        <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: "45%", background: "linear-gradient(to bottom, transparent, var(--carta-surface, #ffffff))" }} />
+      )}
+    </div>
+  ) : (
+    <div className={`h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl ${scrollImage ? "" : "shrink-0"}`}>🍱</div>
+  );
+
+  const details = (
+    <>
+      <div>
+        <h2 className="text-xl font-black text-gray-900 leading-tight">{product.name}</h2>
+        {product.original_price ? (
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-lg font-black" style={{ color: primaryColor }}>{clp(product.price)}</span>
+            <span className="text-sm text-gray-400 line-through">{clp(product.original_price)}</span>
+          </div>
+        ) : (
+          <p className="mt-1 text-lg font-black" style={{ color: primaryColor }}>{clp(product.price)}</p>
+        )}
+        {product.description && <p className="mt-2 text-sm text-gray-500 leading-relaxed whitespace-pre-line">{product.description}</p>}
+        {includeItems.length > 0 && (
+          <div className="mt-4">
+            <p className="text-[11px] font-black uppercase tracking-wider text-gray-500 mb-2">Incluye</p>
+            <div className="flex flex-col gap-1.5">
+              {includeItems.map((it, i) => (
+                <div key={i} className="bg-gray-50 rounded-xl pl-3 pr-3 py-2.5" style={{ borderLeft: `3px solid ${primaryColor}` }}>
+                  <p className="text-sm font-bold text-gray-900 leading-snug">{it.title}</p>
+                  {it.detail && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{it.detail}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Grupos de opciones */}
+      {groups.map((group) => (
+        <div key={group.id}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-bold text-sm text-gray-800">{group.name}</span>
+            {group.is_required && (
+              <span className="text-[10px] font-black bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">Obligatorio</span>
+            )}
+            {group.max_select > 1 && (
+              <span className="text-[10px] font-semibold text-gray-400">Hasta {group.max_select}</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {group.values.map((v) => {
+              const sel = isSelected(group.id, v.id);
+              return (
+                <label key={v.id} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 cursor-pointer transition ${sel ? "border-2" : "border-gray-200 hover:border-gray-300"}`} style={sel ? { borderColor: primaryColor, background: `${primaryColor}10` } : {}}>
+                  <span className="text-sm font-medium text-gray-700">{v.name}</span>
+                  <div className="flex items-center gap-2">
+                    {v.price_delta !== 0 && (
+                      <span className="text-xs text-gray-500">{v.price_delta > 0 ? "+" : ""}{clp(v.price_delta)}</span>
+                    )}
+                    <input
+                      type={group.max_select === 1 ? "radio" : "checkbox"}
+                      name={`group-${group.id}`}
+                      checked={sel}
+                      onChange={() => toggleOption(group.id, v.id, group.max_select)}
+                      style={{ accentColor: primaryColor }}
+                    />
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Overlay — solo visible en desktop */}
@@ -109,85 +191,23 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
 
       {/* Modal — pantalla completa en mobile, centrado en desktop */}
       <div className={`relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
-        {/* Imagen — con degradado que la funde con el fondo del modal (estilo Apple Music) */}
-        {product.image_url ? (
-          <div className="relative aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden shrink-0">
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: "45%", background: "linear-gradient(to bottom, transparent, var(--carta-surface, #ffffff))" }} />
-          </div>
-        ) : (
-          <div className="h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl shrink-0">🍱</div>
-        )}
-
-        <button onClick={requestClose} className="qc-glass-x absolute top-3 right-3 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition">
+        <button onClick={requestClose} className="qc-glass-x absolute top-3 right-3 z-10 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition">
           <X className="w-5 h-5 text-gray-700" />
         </button>
 
-        {/* Detalle + opciones */}
-        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-          <div>
-            <h2 className="text-xl font-black text-gray-900 leading-tight">{product.name}</h2>
-            {product.original_price ? (
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-lg font-black" style={{ color: primaryColor }}>{clp(product.price)}</span>
-                <span className="text-sm text-gray-400 line-through">{clp(product.original_price)}</span>
-              </div>
-            ) : (
-              <p className="mt-1 text-lg font-black" style={{ color: primaryColor }}>{clp(product.price)}</p>
-            )}
-            {product.description && <p className="mt-2 text-sm text-gray-500 leading-relaxed whitespace-pre-line">{product.description}</p>}
-            {includeItems.length > 0 && (
-              <div className="mt-4">
-                <p className="text-[11px] font-black uppercase tracking-wider text-gray-500 mb-2">Incluye</p>
-                <div className="flex flex-col gap-1.5">
-                  {includeItems.map((it, i) => (
-                    <div key={i} className="bg-gray-50 rounded-xl pl-3 pr-3 py-2.5" style={{ borderLeft: `3px solid ${primaryColor}` }}>
-                      <p className="text-sm font-bold text-gray-900 leading-snug">{it.title}</p>
-                      {it.detail && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{it.detail}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        {scrollImage ? (
+          // Tema base: imagen + detalle scrollean juntos; solo el footer queda fijo.
+          <div className="flex-1 overflow-y-auto flex flex-col">
+            {imageBlock}
+            <div className="p-5 flex flex-col gap-4">{details}</div>
           </div>
-
-          {/* Grupos de opciones */}
-          {groups.map((group) => (
-            <div key={group.id}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-bold text-sm text-gray-800">{group.name}</span>
-                {group.is_required && (
-                  <span className="text-[10px] font-black bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">Obligatorio</span>
-                )}
-                {group.max_select > 1 && (
-                  <span className="text-[10px] font-semibold text-gray-400">Hasta {group.max_select}</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {group.values.map((v) => {
-                  const sel = isSelected(group.id, v.id);
-                  return (
-                    <label key={v.id} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 cursor-pointer transition ${sel ? "border-2" : "border-gray-200 hover:border-gray-300"}`} style={sel ? { borderColor: primaryColor, background: `${primaryColor}10` } : {}}>
-                      <span className="text-sm font-medium text-gray-700">{v.name}</span>
-                      <div className="flex items-center gap-2">
-                        {v.price_delta !== 0 && (
-                          <span className="text-xs text-gray-500">{v.price_delta > 0 ? "+" : ""}{clp(v.price_delta)}</span>
-                        )}
-                        <input
-                          type={group.max_select === 1 ? "radio" : "checkbox"}
-                          name={`group-${group.id}`}
-                          checked={sel}
-                          onChange={() => toggleOption(group.id, v.id, group.max_select)}
-                          style={{ accentColor: primaryColor }}
-                        />
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        ) : (
+          // Otros temas: imagen fija arriba y detalle con scroll propio.
+          <>
+            {imageBlock}
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">{details}</div>
+          </>
+        )}
 
         {/* Footer — cantidad + agregar */}
         <div className="border-t border-gray-100 p-4 flex items-center gap-3 shrink-0">

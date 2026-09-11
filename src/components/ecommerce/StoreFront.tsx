@@ -324,7 +324,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
 
       {/* Modal producto */}
       {selectedProduct && (
-        <ProductModal product={selectedProduct} primaryColor={primaryColor} onClose={() => setSelectedProduct(null)} />
+        <ProductModal product={selectedProduct} primaryColor={primaryColor} onClose={() => setSelectedProduct(null)} scrollImage />
       )}
 
       {/* Modal delivery/retiro */}
