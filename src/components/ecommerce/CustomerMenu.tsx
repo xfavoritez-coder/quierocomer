@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { StoreTenant, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
+import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 
 interface QrUser { id: string; name: string | null; email: string; savedAddresses?: { address: string; lat?: number | null; lng?: number | null }[] | null }
 interface OrderItemStored { name?: string; dishName?: string; product_id?: string; unit_price?: number; unitTotal?: number; quantity: number; toteat_code?: string | null; options?: CartItemOption[] }
@@ -18,6 +19,12 @@ type View = CustomerMenuView;
 export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet" }) {
   const [view, setView] = useState<View>(initialView);
   const sheet = variant === "sheet";
+  const { closing, requestClose } = useCloseAnimation(onClose);
+  const panelAnim = sheet
+    ? (closing ? "qc-sheet-out" : "qc-sheet-in")
+    : side === "left"
+      ? (closing ? "qc-drawer-left-out" : "qc-drawer-left-in")
+      : (closing ? "qc-drawer-right-out" : "qc-drawer-right-in");
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loginExpanded, setLoginExpanded] = useState(false);
@@ -39,10 +46,10 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
 
   return (
     <div className={`fixed inset-0 z-50 flex ${sheet ? "justify-center items-end sm:items-center" : side === "left" ? "justify-start" : "justify-end"}`}>
-      <div className="absolute inset-0" onClick={onClose} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
-      <div className={sheet
-        ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden qc-sheet-in"
-        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"}>
+      <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
+      <div className={`${sheet
+        ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`}>
         {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
@@ -52,7 +59,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           <h2 className="flex-1 text-center font-black text-gray-900">
             {view === "root" ? "Menú" : view === "profile" ? "Mi perfil" : view === "orders" ? "Mis pedidos" : view === "favorites" ? "Mis favoritos" : view === "contact" ? "Contáctanos" : "Redes sociales"}
           </h2>
-          <button onClick={onClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50"><X className="w-5 h-5" /></button>
+          <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 active:scale-90 transition"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -105,7 +112,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           )}
 
           {view === "profile" && user && <ProfileView user={user} primaryColor={primaryColor} onUpdate={loadUser} />}
-          {view === "orders" && user && <OrdersView tenant={tenant} primaryColor={primaryColor} onClose={onClose} products={products} />}
+          {view === "orders" && user && <OrdersView tenant={tenant} primaryColor={primaryColor} onClose={requestClose} products={products} />}
           {view === "favorites" && user && <FavoritesView tenant={tenant} primaryColor={primaryColor} />}
           {view === "contact" && <ContactView tenant={tenant} primaryColor={primaryColor} />}
           {view === "social" && <SocialView tenant={tenant} primaryColor={primaryColor} />}

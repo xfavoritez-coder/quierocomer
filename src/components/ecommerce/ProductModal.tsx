@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
+import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 
 interface Props {
   product: StoreProduct;
@@ -29,6 +30,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const addItem = useCartStore((s) => s.addItem);
+  const { closing, requestClose } = useCloseAnimation(onClose);
 
   const groups = product.option_groups ?? [];
   const includeItems = parseIncludes(product.detailed_description);
@@ -97,16 +99,16 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
       options,
     });
     window.dispatchEvent(new CustomEvent("cart:item-added"));
-    onClose();
+    requestClose();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Overlay — solo visible en desktop */}
-      <div className="absolute inset-0 bg-black/50 hidden sm:block" onClick={onClose} />
+      <div className={`absolute inset-0 bg-black/50 hidden sm:block ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
 
       {/* Modal — pantalla completa en mobile, centrado en desktop */}
-      <div className="relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl">
+      <div className={`relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
         {/* Imagen — con degradado que la funde con el fondo del modal (estilo Apple Music) */}
         {product.image_url ? (
           <div className="relative aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden shrink-0">
@@ -117,7 +119,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
           <div className="h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl shrink-0">🍱</div>
         )}
 
-        <button onClick={onClose} className="qc-glass-x absolute top-3 right-3 bg-white/90 rounded-full p-1.5 shadow">
+        <button onClick={requestClose} className="qc-glass-x absolute top-3 right-3 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition">
           <X className="w-5 h-5 text-gray-700" />
         </button>
 
@@ -198,7 +200,7 @@ export default function ProductModal({ product, primaryColor, onClose }: Props) 
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={handleAdd} className="flex-1 py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
+          <button onClick={handleAdd} className="flex-1 py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90 active:scale-[0.98]" style={{ background: primaryColor }}>
             Agregar · {clp(unitPrice * qty)}
           </button>
         </div>

@@ -44,9 +44,35 @@ function genSpacingCss(): string {
   // Animación del carrito (bump) al agregar
   css += `@keyframes qc-cart-bump{0%{transform:scale(1)}30%{transform:scale(1.12)}100%{transform:scale(1)}}`;
   css += `.qc-storefront .cart-bump{animation:qc-cart-bump .45s ease}`;
-  // Bottom sheet (menú flotante): entra deslizando de abajo hacia arriba
+  // ── Animaciones de overlays (entrada + salida) ──────────────────
+  const EASE = "cubic-bezier(.32,.72,0,1)";
+  // Bottom sheet: sube al abrir, baja (regresa hacia su icono) al cerrar
   css += `@keyframes qc-sheet-up{from{transform:translateY(100%)}to{transform:translateY(0)}}`;
-  css += `.qc-storefront .qc-sheet-in{animation:qc-sheet-up .28s cubic-bezier(.32,.72,0,1)}`;
+  css += `@keyframes qc-sheet-down{from{transform:translateY(0)}to{transform:translateY(100%)}}`;
+  css += `.qc-storefront .qc-sheet-in{animation:qc-sheet-up .3s ${EASE}}`;
+  css += `.qc-storefront .qc-sheet-out{animation:qc-sheet-down .26s ${EASE} forwards}`;
+  // Backdrop: fade
+  css += `@keyframes qc-fade-in{from{opacity:0}to{opacity:1}}`;
+  css += `@keyframes qc-fade-out{from{opacity:1}to{opacity:0}}`;
+  css += `.qc-storefront .qc-fade-in{animation:qc-fade-in .25s ease}`;
+  css += `.qc-storefront .qc-fade-out{animation:qc-fade-out .25s ease forwards}`;
+  // Drawer lateral (tema impact / desktop): entra/sale por su costado
+  css += `@keyframes qc-dl-in{from{transform:translateX(-100%)}to{transform:translateX(0)}}`;
+  css += `@keyframes qc-dl-out{from{transform:translateX(0)}to{transform:translateX(-100%)}}`;
+  css += `@keyframes qc-dr-in{from{transform:translateX(100%)}to{transform:translateX(0)}}`;
+  css += `@keyframes qc-dr-out{from{transform:translateX(0)}to{transform:translateX(100%)}}`;
+  css += `.qc-storefront .qc-drawer-left-in{animation:qc-dl-in .3s ${EASE}}`;
+  css += `.qc-storefront .qc-drawer-left-out{animation:qc-dl-out .26s ${EASE} forwards}`;
+  css += `.qc-storefront .qc-drawer-right-in{animation:qc-dr-in .3s ${EASE}}`;
+  css += `.qc-storefront .qc-drawer-right-out{animation:qc-dr-out .26s ${EASE} forwards}`;
+  // Modal de producto/entrega: en móvil sube desde abajo; en desktop hace "pop"
+  css += `@keyframes qc-pop-in{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}`;
+  css += `@keyframes qc-pop-out{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}`;
+  css += `.qc-storefront .qc-modal-in{animation:qc-sheet-up .3s ${EASE}}`;
+  css += `.qc-storefront .qc-modal-out{animation:qc-sheet-down .26s ${EASE} forwards}`;
+  css += `@media(min-width:640px){.qc-storefront .qc-modal-in{animation:qc-pop-in .2s ease}.qc-storefront .qc-modal-out{animation:qc-pop-out .18s ease forwards}}`;
+  // Respeta la preferencia de menos movimiento
+  css += `@media(prefers-reduced-motion:reduce){.qc-storefront .qc-sheet-in,.qc-storefront .qc-sheet-out,.qc-storefront .qc-fade-in,.qc-storefront .qc-fade-out,.qc-storefront .qc-drawer-left-in,.qc-storefront .qc-drawer-left-out,.qc-storefront .qc-drawer-right-in,.qc-storefront .qc-drawer-right-out,.qc-storefront .qc-modal-in,.qc-storefront .qc-modal-out{animation-duration:.01ms}}`;
   return css;
 }
 

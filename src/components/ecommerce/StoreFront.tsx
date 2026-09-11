@@ -10,6 +10,7 @@ import { clp } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
+import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
 
@@ -316,7 +317,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             <button
               onClick={() => router.push(`${storeBase}/checkout`)}
               aria-label="Ver carrito"
-              className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 ${cartBump ? "cart-bump" : ""}`}
+              className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 active:scale-95 ${cartBump ? "cart-bump" : ""}`}
               style={{ background: primaryColor }}
             >
               <ShoppingBag className="w-6 h-6" />
@@ -341,7 +342,7 @@ function FabBtn({ children, label, onClick, active, color }: { children: React.R
       onClick={onClick}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`w-11 h-11 flex items-center justify-center rounded-full transition ${active ? "" : "text-gray-400 hover:text-gray-700"}`}
+      className={`w-11 h-11 flex items-center justify-center rounded-full transition active:scale-90 ${active ? "" : "text-gray-400 hover:text-gray-700"}`}
       style={active ? { color } : undefined}
     >
       {children}
@@ -436,7 +437,7 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
           <button
             onClick={onClick}
             aria-label={`Agregar ${product.name}`}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
             style={{ background: primaryColor }}
           >
             <Plus className="w-4 h-4" strokeWidth={3} />
@@ -588,6 +589,7 @@ function AddressMiniMap({ lat, lng, onMove }: { lat: number; lng: number; onMove
 
 // ── Modal selección de entrega (retiro / delivery) ──────────────
 export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
+  const { closing, requestClose } = useCloseAnimation(onClose);
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
   const distanceMode = tenant.deliveryConfig.mode === "distance";
@@ -644,27 +646,27 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
   }
 
   function confirm() {
-    if (tab === "pickup") { confirmPickup(); onClose(); return; }
+    if (tab === "pickup") { confirmPickup(); requestClose(); return; }
     if (distanceMode) {
       if (!feeResult?.available || !dest) return;
       setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null });
-      onClose();
+      requestClose();
       return;
     }
     if (!selectedZone || !address.trim()) return;
     setDeliveryAddress({ address: `${address.trim()}, ${selectedZone.name}`, details: details.trim(), lat: null, lng: null, fee: selectedZone.fee, zoneName: selectedZone.name, minOrder: selectedZone.minOrder ?? null });
-    onClose();
+    requestClose();
   }
 
   const noZones = !distanceMode && zones.length === 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white w-full sm:rounded-3xl sm:max-w-md shadow-2xl flex flex-col">
+      <div className={`absolute inset-0 bg-black/50 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
+      <div className={`relative bg-white w-full sm:rounded-3xl sm:max-w-md shadow-2xl flex flex-col ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
           <h2 className="font-black text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
-          <button onClick={onClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition"><X className="w-5 h-5" /></button>
+          <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition active:scale-90"><X className="w-5 h-5" /></button>
         </div>
 
         {/* Tabs */}
