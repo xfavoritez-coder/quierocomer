@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { deliveryHandrollVendor, fetchDhTracking, mapDhStatus, dhCourier, dhCourierRecord } from "@/lib/ecommerce/deliverySync";
+import { deliveryHandrollVendor, fetchDhTracking, mapDhStatus, dhCourier, dhCourierRecord, dhStatusLabelEs } from "@/lib/ecommerce/deliverySync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,7 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ord
     ok: true,
     enabled: true,
     status,
-    courier: courier ? { lat: courier.lat, lng: courier.lng, name: courier.name, label: courier.label } : null,
+    courier: courier ? { lat: courier.lat, lng: courier.lng, name: courier.name, label: dhStatusLabelEs(track?.public_status_code) || courier.label } : null,
     customer: custFromDh || customer,
     live: true,
   });

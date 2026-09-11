@@ -28,6 +28,35 @@ export const DH_TO_ORDER_STATUS: Record<string, string> = {
   cancelled: "CANCELLED",
 };
 
+// Etiquetas en español para los estados que devuelve deliveryhandroll (evita
+// mostrar anglicismos/códigos crudos como "on_the_way" en el panel y al cliente).
+export const DH_STATUS_LABEL_ES: Record<string, string> = {
+  received: "Pedido recibido",
+  preparing: "En preparación",
+  ready: "Listo para entregar",
+  ready_for_delivery: "Listo para entregar",
+  assigned: "Repartidor asignado",
+  accepted: "Repartidor asignado",
+  picked_up: "Pedido retirado",
+  pickup: "Repartidor en el local",
+  on_the_way: "En camino al cliente",
+  in_delivery: "En camino al cliente",
+  completed: "Entregado",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+  canceled: "Cancelado",
+};
+
+/** Etiqueta en español para un public_status_code de DH. Si es desconocido, lo
+ *  "prettifica" (snake_case → "Snake case"). null si no hay código. */
+export function dhStatusLabelEs(code?: string | null): string | null {
+  if (!code) return null;
+  const key = String(code).toLowerCase();
+  if (DH_STATUS_LABEL_ES[key]) return DH_STATUS_LABEL_ES[key];
+  const pretty = key.replace(/[_-]+/g, " ").trim();
+  return pretty ? pretty.charAt(0).toUpperCase() + pretty.slice(1) : null;
+}
+
 /** vname que espera DH para un local: "QC-" + vendorName. */
 export function dhVendorName(vendorName: string): string {
   return `QC-${vendorName.trim()}`;
@@ -99,7 +128,7 @@ export function dhCourierRecord(
     ...prev,
     source: "deliveryhandroll",
     status: track?.public_status_code ?? null,
-    statusLabel: courier.label,
+    statusLabel: dhStatusLabelEs(track?.public_status_code) || courier.label,
     courierName: courier.name,
     location: validCoord(courier.lat, courier.lng) ? { lat: courier.lat, lng: courier.lng } : null,
     lat: courier.lat,
