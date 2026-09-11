@@ -275,7 +275,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       </div>
 
       {/* ── Contenido principal ─────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pt-6 pb-28 lg:pb-6">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-6">
         <div className="flex gap-6 items-start">
           {/* Columna productos */}
           <div className="flex-1 min-w-0 flex flex-col gap-8">
@@ -315,6 +315,12 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
           </div>
         </div>
       </div>
+
+      {/* ── Footer ───────────────────────────────────────────────── */}
+      {/* pb extra en móvil para que el texto quede por encima del menú flotante */}
+      <footer className="border-t border-gray-100 bg-white pt-12 pb-32 lg:pt-14 lg:pb-14">
+        <p className="text-center text-xs text-gray-400">powered by QuieroComer · 2026</p>
+      </footer>
 
       {/* Modal producto */}
       {selectedProduct && (
