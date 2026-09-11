@@ -1197,6 +1197,9 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [posXil, setPosXil] = useState("");
   const [posXiu, setPosXiu] = useState("");
   const [posToken, setPosToken] = useState("");
+  // deliveryhandroll (sincronización de estado + ubicación del repartidor)
+  const [dhEnabled, setDhEnabled] = useState(false);
+  const [dhVendor, setDhVendor] = useState("");
 
   useEffect(() => {
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
@@ -1208,6 +1211,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setGmapsKey(c.googleMaps?.apiKey || "");
     setPosProvider(c.pos?.provider || "none");
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
+    setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
     setZonesCopied(false);
     setMsg(null);
@@ -1229,6 +1233,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       pos: posProvider === "toteat"
         ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
         : { provider: "none" },
+      deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
     };
     // Zonas de reparto: si el textarea trae JSON válido, se guardan junto con las credenciales.
     const bodyOut: Record<string, unknown> = { ecommerceConfig: next };
@@ -1339,6 +1344,11 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
                 <Input label="Token (xapitoken)" value={posToken} onChange={setPosToken} placeholder="CoN2rv5sTcYAdks..." type="password" />
               </>
             )}
+          </IntegrationGroup>
+
+          <IntegrationGroup title="deliveryhandroll" sub="Sincroniza estado + ubicación del repartidor en vivo desde deliveryhandroll.cl" ok={dhEnabled && !!dhVendor.trim()}>
+            <EnvSelect label="Sincronización de estado" value={dhEnabled ? "on" : "off"} onChange={(v) => setDhEnabled(v === "on")} options={[{ value: "off", label: "Desactivada" }, { value: "on", label: "Activada" }]} />
+            {dhEnabled && <Input label="Vendor name" value={dhVendor} onChange={setDhVendor} placeholder="Haruna (se consulta como QC-Haruna)" />}
           </IntegrationGroup>
 
           {msg && (

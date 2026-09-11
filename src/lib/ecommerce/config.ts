@@ -58,6 +58,14 @@ export interface PosConfig {
   toteat?: ToteatPosCreds;
 }
 
+/** Sincronización de estado + ubicación del repartidor desde deliveryhandroll.cl.
+ *  Solo los locales que el superadmin habilite aquí reciben los status. El vname que
+ *  espera DH se arma como "QC-" + vendorName (ej: vendorName "Haruna" → "QC-Haruna"). */
+export interface DeliveryHandrollCreds {
+  enabled?: boolean;
+  vendorName?: string;
+}
+
 export interface EcommerceConfig {
   webpay?: WebpayCreds;
   flow?: FlowCreds;
@@ -66,6 +74,7 @@ export interface EcommerceConfig {
   pedidosya?: PedidosYaCreds;
   googleMaps?: GoogleMapsCreds;
   pos?: PosConfig;
+  deliveryHandroll?: DeliveryHandrollCreds;
 }
 
 export const TOTEAT_DEFAULT_API_URL = "https://api.toteat.com/mw/or/1.0";

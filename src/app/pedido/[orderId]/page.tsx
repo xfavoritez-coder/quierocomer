@@ -1,7 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { use } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
+
+const OrderTrackingMap = dynamic(() => import("@/components/ecommerce/OrderTrackingMap"), { ssr: false });
+
+interface TrackingInfo {
+  enabled: boolean;
+  live: boolean;
+  status: string;
+  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null } | null;
+  customer: { lat: number; lng: number } | null;
+}
 
 interface OrderItem {
   dishName: string;
@@ -199,7 +210,27 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const { orderId } = use(params);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState(false);
+  const [tracking, setTracking] = useState<TrackingInfo | null>(null);
   const orderRef = useRef<OrderData | null>(null);
+
+  // Estado + ubicación del repartidor desde deliveryhandroll (solo locales habilitados).
+  async function fetchTracking() {
+    try {
+      const r = await fetch(`/api/ecommerce/order-tracking/${orderId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (!d?.ok) return;
+      setTracking(d);
+      if (d.status && orderRef.current && d.status !== orderRef.current.status) {
+        setOrder((prev) => {
+          if (!prev) return prev;
+          const updated = { ...prev, status: d.status };
+          orderRef.current = updated;
+          return updated;
+        });
+      }
+    } catch { /* best-effort */ }
+  }
 
   async function fetchOrder() {
     try {
@@ -225,6 +256,18 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     }, 12000);
     return () => clearInterval(interval);
   }, [orderId]);
+
+  // Polling del repartidor (cada 15s) mientras el pedido delivery esté activo.
+  useEffect(() => {
+    if (order?.orderType !== "DELIVERY") return;
+    fetchTracking();
+    const id = setInterval(() => {
+      const c = orderRef.current;
+      if (c && c.orderType === "DELIVERY" && c.status !== "DONE" && c.status !== "CANCELLED") fetchTracking();
+    }, 15000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, order?.orderType]);
 
   // Supabase Realtime
   useEffect(() => {
@@ -394,6 +437,25 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: theme.text, margin: 0 }}>{st.t}</h2>
           {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
+
+        {/* Mapa en vivo del repartidor (deliveryhandroll) — solo delivery con ubicación */}
+        {order.orderType === "DELIVERY" && tracking?.enabled && tracking.courier?.lat != null && (
+          <div style={{ ...cardStyle, padding: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
+              <span style={{ fontSize: 22 }}>🛵</span>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: theme.text, margin: 0 }}>{tracking.courier.name || "Tu repartidor va en camino"}</p>
+                <p style={{ fontSize: 12, color: theme.text2, margin: "2px 0 0" }}>{tracking.courier.label || "Ubicación en tiempo real"}</p>
+              </div>
+            </div>
+            <OrderTrackingMap
+              driver={{ lat: tracking.courier.lat!, lng: tracking.courier.lng! }}
+              customer={tracking.customer}
+              store={null}
+              dark={(order.colorMode ?? "LIGHT") === "DARK"}
+            />
+          </div>
+        )}
 
         {/* Stepper */}
         <div style={{ ...cardStyle, padding: "20px 12px" }}>
