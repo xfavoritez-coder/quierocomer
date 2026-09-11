@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
+import { TRACKING_TEXT_GROUPS, DEFAULT_TRACKING_TEXTS, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -39,6 +40,9 @@ export default function AjustesPage() {
   const [googleKey, setGoogleKey] = useState("");
   const [keyLoaded, setKeyLoaded] = useState(false);
   const [keySaving, setKeySaving] = useState(false);
+  const [texts, setTexts] = useState<TrackingTexts>(DEFAULT_TRACKING_TEXTS);
+  const [textsLoaded, setTextsLoaded] = useState(false);
+  const [textsSaving, setTextsSaving] = useState(false);
 
   const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
 
@@ -49,6 +53,24 @@ export default function AjustesPage() {
       .catch(() => {})
       .finally(() => setKeyLoaded(true));
   }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/tracking-texts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setTexts(d); })
+      .catch(() => {})
+      .finally(() => setTextsLoaded(true));
+  }, []);
+
+  const saveTexts = async () => {
+    setTextsSaving(true);
+    try {
+      const res = await fetch("/api/admin/tracking-texts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(texts) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setTextsSaving(false); return; }
+      toast.success("Textos de seguimiento guardados");
+    } catch { toast.error("Error de conexión"); }
+    setTextsSaving(false);
+  };
 
   const saveKeys = async () => {
     setKeySaving(true);
@@ -168,6 +190,60 @@ export default function AjustesPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Textos del seguimiento del pedido */}
+      <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 22, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 6px" }}>Textos del seguimiento del pedido</h2>
+        <p style={{ fontSize: "0.85rem", color: "#999", lineHeight: 1.5, margin: "0 0 18px" }}>
+          Todo lo que ve el cliente en su página de seguimiento (<code style={{ background: "#000", padding: "1px 6px", borderRadius: 3, color: "#F4A623" }}>/pedido/…</code>, el link que llega por correo), en cada estado. Aplica a todos los locales. Deja un campo vacío para usar el texto por defecto.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {TRACKING_TEXT_GROUPS.map((grp) => (
+            <div key={grp.group}>
+              <h3 style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 10px" }}>{grp.group}</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {grp.fields.map((f) => (
+                  <label key={f.key} style={{ display: "block" }}>
+                    <span style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "#888", marginBottom: 5 }}>{f.label}</span>
+                    {f.multiline ? (
+                      <textarea
+                        value={texts[f.key]}
+                        onChange={(e) => setTexts((p) => ({ ...p, [f.key]: e.target.value }))}
+                        placeholder={textsLoaded ? DEFAULT_TRACKING_TEXTS[f.key] : "Cargando…"}
+                        rows={2}
+                        style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: FB, fontSize: "0.85rem", outline: "none", resize: "vertical" }}
+                      />
+                    ) : (
+                      <input
+                        value={texts[f.key]}
+                        onChange={(e) => setTexts((p) => ({ ...p, [f.key]: e.target.value }))}
+                        placeholder={textsLoaded ? DEFAULT_TRACKING_TEXTS[f.key] : "Cargando…"}
+                        style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: FB, fontSize: "0.85rem", outline: "none" }}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={saveTexts} disabled={textsSaving || !textsLoaded} style={{
+            padding: "10px 18px", background: GOLD, color: "#1a1a1a", border: "none", borderRadius: 8,
+            fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: textsSaving ? "wait" : "pointer", opacity: textsSaving || !textsLoaded ? 0.6 : 1,
+          }}>
+            {textsSaving ? "Guardando…" : "Guardar textos"}
+          </button>
+          <button onClick={() => setTexts({ ...DEFAULT_TRACKING_TEXTS })} disabled={textsSaving} style={{
+            padding: "10px 18px", background: "transparent", color: "#999", border: "1px solid #2A2A2A", borderRadius: 8,
+            fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer",
+          }}>
+            Restaurar por defecto
+          </button>
+        </div>
       </div>
     </div>
   );

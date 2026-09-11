@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { use } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_TRACKING_TEXTS, trackingStatusText, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
 
 const OrderTrackingMap = dynamic(() => import("@/components/ecommerce/OrderTrackingMap"), { ssr: false });
 
@@ -50,6 +51,7 @@ interface OrderData {
   updatedAt: string;
   colorMode: string;
   accentColor: string | null;
+  trackingTexts?: TrackingTexts;
 }
 
 interface Theme {
@@ -109,28 +111,16 @@ const STEP_STATUSES: string[][] = [
   ["DONE"],
 ];
 
-function getSteps(orderType: "PICKUP" | "DELIVERY") {
+function getSteps(orderType: "PICKUP" | "DELIVERY", t: TrackingTexts) {
   return [
-    { icon: "📋", label: "Recibido" },
-    { icon: "✅", label: "Aceptado" },
-    { icon: "👨‍🍳", label: "Preparando" },
+    { icon: "📋", label: t.stepReceived },
+    { icon: "✅", label: t.stepAccepted },
+    { icon: "👨‍🍳", label: t.stepPreparing },
     orderType === "DELIVERY"
-      ? { icon: "🛵", label: "En reparto" }
-      : { icon: "🏁", label: "Listo" },
-    { icon: "🎉", label: "Entregado" },
+      ? { icon: "🛵", label: t.stepInDelivery }
+      : { icon: "🏁", label: t.stepReady },
+    { icon: "🎉", label: t.stepDone },
   ];
-}
-
-function statusTitle(status: string, orderType: "PICKUP" | "DELIVERY"): { t: string; s: string } {
-  switch (status) {
-    case "PENDING": return { t: "Pedido recibido", s: "Recibimos tu pedido, en breve lo confirmamos." };
-    case "ACCEPTED": return { t: "¡Pedido aceptado!", s: "El local va a empezar a prepararlo." };
-    case "PREPARING": return { t: "Preparando tu pedido", s: "Manos a la obra en la cocina 👨‍🍳" };
-    case "IN_DELIVERY": return { t: "Tu pedido va en camino", s: "El repartidor ya salió con tu pedido 🛵" };
-    case "READY": return { t: "¡Tu pedido está listo!", s: orderType === "DELIVERY" ? "Ya puede salir a reparto." : "Puedes pasar a retirarlo 🏠" };
-    case "DONE": return { t: "¡Pedido entregado!", s: "Gracias por tu compra 🎉" };
-    default: return { t: "Seguimiento de pedido", s: "" };
-  }
 }
 
 function fmtTime(iso: string) {
@@ -145,14 +135,15 @@ function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt:
   return entry ? fmtTime(entry.ts) : null;
 }
 
-function Stepper({ status, orderType, statusHistory, createdAt, theme }: {
+function Stepper({ status, orderType, statusHistory, createdAt, theme, texts }: {
   status: string;
   orderType: "PICKUP" | "DELIVERY";
   statusHistory: StatusEntry[];
   createdAt: string;
   theme: Theme;
+  texts: TrackingTexts;
 }) {
-  const steps = getSteps(orderType);
+  const steps = getSteps(orderType, texts);
   const currentStep = STATUS_STEP[status] ?? 0;
 
   return (
@@ -301,6 +292,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
   // Theme derivado del pedido (usa LIGHT como fallback mientras carga)
   const theme = buildTheme(order?.colorMode ?? "LIGHT", order?.accentColor ?? null);
+  const texts = order?.trackingTexts ?? DEFAULT_TRACKING_TEXTS;
 
   const cardStyle: React.CSSProperties = {
     background: theme.surface,
@@ -369,14 +361,14 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       <div style={{ minHeight: "100vh", background: theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, padding: 24 }}>
         <div style={{ textAlign: "center", maxWidth: 320 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>😔</div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: RED, margin: "0 0 8px" }}>Pedido cancelado</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: RED, margin: "0 0 8px" }}>{texts.cancelledTitle}</h2>
           {order.cancellationReason && (
             <p style={{ fontFamily: FONT, fontSize: "0.88rem", color: "#fca5a5", margin: "8px 0 0", lineHeight: 1.5 }}>
               Motivo: {order.cancellationReason}
             </p>
           )}
           <p style={{ fontSize: 14, color: theme.text2, margin: "0 0 20px", lineHeight: 1.6 }}>
-            Lamentamos informarte que tu pedido fue cancelado.
+            {texts.cancelledBody}
           </p>
           {waPhone && (
             <a
@@ -403,7 +395,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   }
 
   const items = Array.isArray(order.items) ? order.items : [];
-  const st = statusTitle(order.status, order.orderType);
+  const st = trackingStatusText(texts, order.status, order.orderType);
 
   return (
     <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT }}>
@@ -429,7 +421,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           <h1 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: theme.text, margin: 0 }}>
             {order.restaurantName}
           </h1>
-          <p style={{ fontSize: 13, color: theme.text2, margin: "4px 0 0" }}>Seguimiento de pedido</p>
+          <p style={{ fontSize: 13, color: theme.text2, margin: "4px 0 0" }}>{texts.headerSubtitle}</p>
         </div>
 
         {/* Título del estado actual */}
@@ -466,6 +458,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
             statusHistory={order.statusHistory}
             createdAt={order.createdAt}
             theme={theme}
+            texts={texts}
           />
         </div>
 

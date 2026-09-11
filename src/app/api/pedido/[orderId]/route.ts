@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPlatformSetting } from "@/lib/platformSettings";
+import { parseTrackingTexts } from "@/lib/ecommerce/trackingTexts";
 
 export async function GET(
   _req: NextRequest,
@@ -43,7 +45,17 @@ export async function GET(
 
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
 
+  // Textos configurables del seguimiento (superadmin en /admin/ajustes)
+  let trackingTexts;
+  try {
+    const raw = await getPlatformSetting("tracking_texts");
+    trackingTexts = parseTrackingTexts(raw ? JSON.parse(raw) : null);
+  } catch {
+    trackingTexts = parseTrackingTexts(null);
+  }
+
   return NextResponse.json({
+    trackingTexts,
     id: order.id,
     restaurantName: order.restaurant.name,
     restaurantLogoUrl: order.restaurant.logoUrl ?? null,
