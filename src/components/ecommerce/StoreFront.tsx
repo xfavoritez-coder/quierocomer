@@ -71,19 +71,34 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
 
+  // Favorito que el usuario intentó marcar sin sesión: se aplica automáticamente
+  // en cuanto inicia sesión.
+  const pendingFavRef = useRef<string | null>(null);
+
   // Favoritos del cliente + estado de sesión (si el local tiene favoritos habilitados).
   // Los favoritos requieren cuenta iniciada (no invitado), así que verificamos /user/me.
-  const loadFavState = useCallback(() => {
+  // Secuencial: verifica sesión → aplica favorito pendiente → recarga la lista final.
+  const loadFavState = useCallback(async () => {
     if (!tenant.favoritesEnabled) return;
-    fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null)).then((d) => setLoggedIn(!!d?.user)).catch(() => setLoggedIn(false));
-    fetch("/api/qr/favorites").then((r) => (r.ok ? r.json() : null)).then((d) => {
-      if (Array.isArray(d?.dishIds)) setFavIds(new Set(d.dishIds));
-    }).catch(() => {});
-  }, [tenant.favoritesEnabled]);
+    let isLogged = false;
+    try { const d = await fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null)); isLogged = !!d?.user; } catch {}
+    setLoggedIn(isLogged);
+    const pend = pendingFavRef.current;
+    if (pend && isLogged) {
+      pendingFavRef.current = null;
+      await fetch("/api/qr/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishId: pend, restaurantId: tenant.id }) }).catch(() => {});
+    }
+    try {
+      const f = await fetch("/api/qr/favorites").then((r) => (r.ok ? r.json() : null));
+      if (Array.isArray(f?.dishIds)) setFavIds(new Set(f.dishIds));
+    } catch {}
+  }, [tenant.favoritesEnabled, tenant.id]);
   useEffect(() => { loadFavState(); }, [loadFavState]);
 
-  // Pide iniciar sesión (abre el menú de cuenta con el login desplegado).
-  const promptLogin = useCallback(() => {
+  // Pide iniciar sesión (abre el menú de cuenta con el login desplegado) y recuerda
+  // el producto para marcarlo al volver con sesión.
+  const promptLogin = useCallback((dishId: string) => {
+    pendingFavRef.current = dishId;
     setMenuView("root");
     setMenuLoginExpanded(true);
     setActiveTab("profile");
@@ -404,21 +419,21 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 // ── Tarjeta de producto ──────────────────────────────────────────
 // Estilo referencia: miniatura a la izquierda, nombre + descripción + precio
 // apilados, y un botón + a la derecha (abre el producto). Sin estrellas.
-function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav, favNeedsLogin, onRequireLogin }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void; favNeedsLogin?: boolean; onRequireLogin?: () => void }) {
+function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav, favNeedsLogin, onRequireLogin }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void; favNeedsLogin?: boolean; onRequireLogin?: (dishId: string) => void }) {
   const soldOut = product.is_sold_out;
   const [heartPop, setHeartPop] = useState(false);
   const handleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Sin sesión iniciada: pedir login antes de favoritear (no togglea ni anima).
-    if (favNeedsLogin) { onRequireLogin?.(); return; }
+    if (favNeedsLogin) { onRequireLogin?.(product.id); return; }
     const willFav = !isFav;
     onToggleFav?.();
     if (willFav) { setHeartPop(true); setTimeout(() => setHeartPop(false), 340); }
   };
   return (
-    <div className={`relative bg-white rounded-2xl shadow-sm p-3 flex items-stretch gap-3 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
+    <div className={`relative bg-white rounded-2xl shadow-sm p-4 flex items-stretch gap-4 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
       {/* Miniatura */}
-      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-gray-100">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
@@ -433,14 +448,14 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
 
       {/* Texto (nombre · descripción · precio) */}
       <button onClick={soldOut ? undefined : onClick} disabled={soldOut} className="flex-1 min-w-0 flex flex-col justify-center text-left">
-        <p className="font-bold text-gray-900 text-sm leading-snug">{product.name}</p>
+        <p className="font-bold text-gray-900 text-base leading-snug">{product.name}</p>
         {product.description && (
-          <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
+          <p className="text-sm text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
         )}
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="font-black text-sm" style={{ color: primaryColor }}>{clp(product.price)}</span>
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="font-black text-base" style={{ color: primaryColor }}>{clp(product.price)}</span>
           {product.original_price ? (
-            <span className="text-xs text-gray-400 line-through">{clp(product.original_price)}</span>
+            <span className="text-sm text-gray-400 line-through">{clp(product.original_price)}</span>
           ) : null}
         </div>
       </button>
@@ -451,19 +466,19 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
           <button
             onClick={handleFav}
             aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
           >
-            <Heart className={`w-4 h-4 ${heartPop ? "qc-heart-pop" : ""}`} fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
+            <Heart className={`w-5 h-5 ${heartPop ? "qc-heart-pop" : ""}`} fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
           </button>
-        ) : <span className="w-8 h-8" />}
+        ) : <span className="w-10 h-10" />}
         {!soldOut && (
           <button
             onClick={onClick}
             aria-label={`Agregar ${product.name}`}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
             style={{ background: primaryColor }}
           >
-            <Plus className="w-4 h-4" strokeWidth={3} />
+            <Plus className="w-5 h-5" strokeWidth={3} />
           </button>
         )}
       </div>
