@@ -44,6 +44,9 @@ function genSpacingCss(): string {
   // Animación del carrito (bump) al agregar
   css += `@keyframes qc-cart-bump{0%{transform:scale(1)}30%{transform:scale(1.12)}100%{transform:scale(1)}}`;
   css += `.qc-storefront .cart-bump{animation:qc-cart-bump .45s ease}`;
+  // Bottom sheet (menú flotante): entra deslizando de abajo hacia arriba
+  css += `@keyframes qc-sheet-up{from{transform:translateY(100%)}to{transform:translateY(0)}}`;
+  css += `.qc-storefront .qc-sheet-in{animation:qc-sheet-up .28s cubic-bezier(.32,.72,0,1)}`;
   return css;
 }
 

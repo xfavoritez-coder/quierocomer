@@ -15,8 +15,9 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Acep
 export type CustomerMenuView = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
 type View = CustomerMenuView;
 
-export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView }) {
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet" }) {
   const [view, setView] = useState<View>(initialView);
+  const sheet = variant === "sheet";
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loginExpanded, setLoginExpanded] = useState(false);
@@ -37,9 +38,12 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
   const go = (v: View) => { if (needsLogin(v)) { setLoginExpanded(true); return; } setView(v); };
 
   return (
-    <div className={`fixed inset-0 z-50 flex ${side === "left" ? "justify-start" : "justify-end"}`}>
+    <div className={`fixed inset-0 z-50 flex ${sheet ? "justify-center items-end sm:items-center" : side === "left" ? "justify-start" : "justify-end"}`}>
       <div className="absolute inset-0" onClick={onClose} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
-      <div className="relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col">
+      <div className={sheet
+        ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden qc-sheet-in"
+        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"}>
+        {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
           {view !== "root" ? (

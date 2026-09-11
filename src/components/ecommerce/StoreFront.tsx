@@ -2,7 +2,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Toaster } from "sonner";
-import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle } from "lucide-react";
+import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -297,28 +297,28 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       )}
 
       {menuOpen && (
-        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setActiveTab("home"); }} products={products} initialView={menuView} />
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setActiveTab("home"); }} products={products} initialView={menuView} variant="sheet" />
       )}
 
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
       <nav className="lg:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto flex items-end gap-1 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-2.5 py-2">
-          <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-5 h-5" /></FabBtn>
-          <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-5 h-5" /></FabBtn>
+        <div className="pointer-events-auto flex items-center gap-2 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-3 py-2">
+          <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
+          <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
           {/* Carrito — botón central elevado */}
           <button
             onClick={() => router.push(`${storeBase}/checkout`)}
             aria-label="Ver carrito"
-            className={`relative -mt-7 mx-0.5 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 ${cartBump ? "cart-bump" : ""}`}
+            className={`relative -mt-7 mx-1 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 ${cartBump ? "cart-bump" : ""}`}
             style={{ background: primaryColor }}
           >
-            <ShoppingCart className="w-6 h-6" />
+            <ShoppingBag className="w-6 h-6" />
             {badge > 0 && (
               <span className="absolute -top-1 -right-1 bg-white text-[11px] font-black rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow" style={{ color: primaryColor }}>{badge}</span>
             )}
           </button>
-          <FabBtn label="Contacto" color={primaryColor} active={activeTab === "contact"} onClick={() => { setActiveTab("contact"); openMenu("contact"); }}><MessageCircle className="w-5 h-5" /></FabBtn>
-          <FabBtn label="Perfil" color={primaryColor} active={activeTab === "profile"} onClick={() => { setActiveTab("profile"); openMenu("root"); }}><User className="w-5 h-5" /></FabBtn>
+          <FabBtn label="Contacto" color={primaryColor} active={activeTab === "contact"} onClick={() => { setActiveTab("contact"); openMenu("contact"); }}><MessageCircle className="w-6 h-6" /></FabBtn>
+          <FabBtn label="Perfil" color={primaryColor} active={activeTab === "profile"} onClick={() => { setActiveTab("profile"); openMenu("root"); }}><User className="w-6 h-6" /></FabBtn>
         </div>
       </nav>
 
@@ -326,7 +326,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   );
 }
 
-// ── Botón del menú flotante (móvil) ─────────────────────────────
+// ── Botón del menú flotante (móvil) — solo icono, estilo referencia ──
 // Cuando está activo se pinta con el color de la tienda (los iconos lucide usan
 // currentColor, así que basta con fijar el color del texto del botón).
 function FabBtn({ children, label, onClick, active, color }: { children: React.ReactNode; label: string; onClick: () => void; active?: boolean; color: string }) {
@@ -335,11 +335,10 @@ function FabBtn({ children, label, onClick, active, color }: { children: React.R
       onClick={onClick}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`w-14 flex flex-col items-center justify-center gap-0.5 py-1 rounded-2xl transition ${active ? "" : "text-gray-500 hover:text-gray-900"}`}
+      className={`w-11 h-11 flex items-center justify-center rounded-full transition ${active ? "" : "text-gray-400 hover:text-gray-700"}`}
       style={active ? { color } : undefined}
     >
       {children}
-      <span className="text-[9px] font-bold leading-none">{label}</span>
     </button>
   );
 }
@@ -373,8 +372,8 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
         )}
       </button>
       {deliverySelected && estimatedTime && (
-        <p className="text-center text-xs text-gray-500">
-          ⏱ Tiempo estimado: <span className="font-bold" style={{ color: primaryColor }}>{estimatedTime} min</span>
+        <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1">
+          <Clock className="w-3.5 h-3.5 shrink-0" /> Tiempo estimado: <span className="font-bold" style={{ color: primaryColor }}>{estimatedTime} min</span>
         </p>
       )}
     </div>
@@ -484,7 +483,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
         </button>
         {deliverySelected && estimatedTime && (
           <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-            <p className="text-xs text-gray-500">⏱ Tiempo estimado: <span className="font-bold" style={{ color: primaryColor }}>{estimatedTime} min</span></p>
+            <p className="text-xs text-gray-500 flex items-center gap-1"><Clock className="w-3.5 h-3.5 shrink-0" /> Tiempo estimado: <span className="font-bold" style={{ color: primaryColor }}>{estimatedTime} min</span></p>
           </div>
         )}
       </div>
