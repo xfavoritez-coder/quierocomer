@@ -2,8 +2,8 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Toaster } from "sonner";
-import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart } from "lucide-react";
-import CustomerMenu from "./CustomerMenu";
+import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle } from "lucide-react";
+import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -50,6 +50,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuView, setMenuView] = useState<CustomerMenuView>("root");
+  const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuOpen(true); }, []);
   const [cartBump, setCartBump] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
@@ -120,7 +122,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const scrollToCategory = useCallback((catId: string) => {
     const el = document.getElementById(`cat-${catId}`);
     if (!el) return;
-    const offset = (headerRef.current?.offsetHeight ?? 80) + (catNavRef.current?.offsetHeight ?? 48) + 8;
+    const offset = (catNavRef.current?.offsetHeight ?? 56) + 8;
     const y = el.getBoundingClientRect().top + window.scrollY - offset;
     setActiveCat(catId);
     centerCatChip(catId);
@@ -132,7 +134,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   useEffect(() => {
     function onScroll() {
       if (lockSpyRef.current) return;
-      const offset = (headerRef.current?.offsetHeight ?? 80) + (catNavRef.current?.offsetHeight ?? 48) + 16;
+      const offset = (catNavRef.current?.offsetHeight ?? 56) + 16;
       let current: string | null = null;
       for (const cat of categories) {
         const el = document.getElementById(`cat-${cat.id}`);
@@ -160,9 +162,9 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       <StoreStyles />
       <Toaster position="top-center" richColors />
 
-      {/* ── Header — solo logo ─────────────────────────────────── */}
-      <header ref={headerRef} className="sticky top-0 z-40 shadow-sm" style={{ background: tenant.headerBgColor }}>
-        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between gap-4">
+      {/* ── Header — logo centrado, NO sticky (se scrollea) ────── */}
+      <header ref={headerRef} className="shadow-sm" style={{ background: tenant.headerBgColor }}>
+        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-center relative">
           <div className="flex items-center">
             {tenant.logoUrl ? (
               <img src={tenant.logoUrl} alt={tenant.name} className="h-16 w-auto object-contain" />
@@ -170,25 +172,10 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               <span className="font-black text-xl text-gray-900">{tenant.name}</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* Carrito móvil → va directo al checkout (el resumen es editable allí) */}
-            <button
-              onClick={() => router.push(`${storeBase}/checkout`)}
-              className={`relative lg:hidden flex items-center gap-1.5 rounded-xl px-3 py-2 text-white font-bold text-sm shadow transition hover:opacity-90 whitespace-nowrap ${cartBump ? "cart-bump" : ""}`}
-              style={{ background: primaryColor }}
-            >
-              <ShoppingCart className="w-4 h-4 shrink-0" />
-              <span>Mi pedido</span>
-              {badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center shadow" style={{ color: primaryColor }}>
-                  {badge}
-                </span>
-              )}
-            </button>
-            <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition shrink-0">
-              <MenuIcon className="w-6 h-6" />
-            </button>
-          </div>
+          {/* Acceso a cuenta/menú — solo desktop (en móvil está el menú flotante) */}
+          <button onClick={() => openMenu("root")} aria-label="Menú" className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition">
+            <MenuIcon className="w-6 h-6" />
+          </button>
         </div>
       </header>
 
@@ -220,8 +207,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
         <MobileDeliveryBar tenant={tenant} primaryColor={primaryColor} onOpen={() => setDeliveryModalOpen(true)} />
       </div>
 
-      {/* ── Barra de categorías — sticky bajo el header ─────────── */}
-      <div ref={catNavRef} className="sticky top-20 z-30 bg-white border-b border-gray-100 shadow-sm">
+      {/* ── Barra de categorías — sticky al top (el header se scrollea) ── */}
+      <div ref={catNavRef} className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 flex items-center">
           <button
             onClick={() => { setSearchOpen((o) => !o); if (searchOpen) setSearch(""); }}
@@ -257,7 +244,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       </div>
 
       {/* ── Contenido principal ─────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-28 lg:pb-6">
         <div className="flex gap-6 items-start">
           {/* Columna productos */}
           <div className="flex-1 min-w-0 flex flex-col gap-8">
@@ -285,7 +272,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
           </div>
 
           {/* Carrito lateral — solo desktop */}
-          <div className="hidden lg:block w-80 shrink-0 sticky top-[136px]">
+          <div className="hidden lg:block w-80 shrink-0 sticky top-[72px]">
             <CartPanel
               tenant={tenant}
               primaryColor={primaryColor}
@@ -309,10 +296,42 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       )}
 
       {menuOpen && (
-        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} products={products} />
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => setMenuOpen(false)} products={products} initialView={menuView} />
       )}
 
+      {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
+      <nav className="lg:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto flex items-end gap-1 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-2.5 py-2">
+          <FabBtn label="Inicio" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><Home className="w-5 h-5" /></FabBtn>
+          <FabBtn label="Favoritos" onClick={() => openMenu("favorites")}><Heart className="w-5 h-5" /></FabBtn>
+          {/* Carrito — botón central elevado */}
+          <button
+            onClick={() => router.push(`${storeBase}/checkout`)}
+            aria-label="Ver carrito"
+            className={`relative -mt-7 mx-0.5 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white transition hover:opacity-90 ${cartBump ? "cart-bump" : ""}`}
+            style={{ background: primaryColor }}
+          >
+            <ShoppingCart className="w-6 h-6" />
+            {badge > 0 && (
+              <span className="absolute -top-1 -right-1 bg-white text-[11px] font-black rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow" style={{ color: primaryColor }}>{badge}</span>
+            )}
+          </button>
+          <FabBtn label="Contacto" onClick={() => openMenu("contact")}><MessageCircle className="w-5 h-5" /></FabBtn>
+          <FabBtn label="Perfil" onClick={() => openMenu("root")}><User className="w-5 h-5" /></FabBtn>
+        </div>
+      </nav>
+
     </div>
+  );
+}
+
+// ── Botón del menú flotante (móvil) ─────────────────────────────
+function FabBtn({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} aria-label={label} className="w-14 flex flex-col items-center justify-center gap-0.5 py-1 rounded-2xl text-gray-500 hover:text-gray-900 transition">
+      {children}
+      <span className="text-[9px] font-bold leading-none">{label}</span>
+    </button>
   );
 }
 
@@ -354,61 +373,63 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 }
 
 // ── Tarjeta de producto ──────────────────────────────────────────
-// Layout: imagen a la izquierda · texto al centro · precio a la derecha.
+// Estilo referencia: miniatura a la izquierda, nombre + descripción + precio
+// apilados, y un botón + a la derecha (abre el producto). Sin estrellas.
 function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void }) {
   const soldOut = product.is_sold_out;
   return (
-    <button
-      onClick={soldOut ? undefined : onClick}
-      disabled={soldOut}
-      className={`relative bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow group grid grid-cols-[7rem_1fr_auto] sm:grid-cols-[9rem_1fr_auto] min-h-[8rem] w-full text-left ${soldOut ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
-    >
-      {/* Imagen (izquierda) */}
-      <div className="relative">
+    <div className={`relative bg-white rounded-2xl shadow-sm p-3 flex items-stretch gap-3 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
+      {/* Miniatura */}
+      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover block" />
+          <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-4xl">🍱</div>
+          <div className="w-full h-full flex items-center justify-center text-3xl">🍱</div>
         )}
         {soldOut && (
           <div className="absolute inset-0 bg-white/55 flex items-center justify-center">
-            <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-900/80 text-white">Agotado</span>
+            <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-900/80 text-white">Agotado</span>
           </div>
         )}
-        {showFav && (
-          <span
-            role="button"
-            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-            onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
-            className="absolute top-2 left-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur cursor-pointer hover:scale-105 transition"
-          >
-            <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#9ca3af"} />
-          </span>
-        )}
-      </div>
+      </button>
 
-      {/* Texto (centro) */}
-      <div className="p-4 flex flex-col justify-center min-w-0">
+      {/* Texto (nombre · descripción · precio) */}
+      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} className="flex-1 min-w-0 flex flex-col justify-center text-left">
         <p className="font-bold text-gray-900 text-sm leading-snug">{product.name}</p>
         {product.description && (
-          <p className="text-xs text-gray-400 mt-1.5 line-clamp-3 leading-relaxed">{product.description}</p>
+          <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
         )}
-      </div>
+        <div className="mt-1.5 flex items-baseline gap-2">
+          <span className="font-black text-sm" style={{ color: primaryColor }}>{clp(product.price)}</span>
+          {product.original_price ? (
+            <span className="text-xs text-gray-400 line-through">{clp(product.original_price)}</span>
+          ) : null}
+        </div>
+      </button>
 
-      {/* Precio (derecha) */}
-      <div className="p-4 pl-2 flex flex-col items-end justify-center gap-1 text-right shrink-0">
-        {soldOut ? (
-          <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-200 text-gray-500">Agotado</span>
-        ) : product.original_price ? (
-          <>
-            <span className="text-[12px] font-black px-2.5 py-1 rounded-full text-white whitespace-nowrap" style={{ background: primaryColor }}>OFERTA {clp(product.price)}</span>
-            <span className="text-[12px] text-gray-600 line-through whitespace-nowrap">{clp(product.original_price)}</span>
-          </>
-        ) : (
-          <span className="font-black text-sm whitespace-nowrap" style={{ color: primaryColor }}>{clp(product.price)}</span>
+      {/* Columna derecha: favorito (arriba) + agregar (abajo) */}
+      <div className="flex flex-col items-end justify-between shrink-0">
+        {showFav ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
+            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
+          >
+            <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
+          </button>
+        ) : <span className="w-8 h-8" />}
+        {!soldOut && (
+          <button
+            onClick={onClick}
+            aria-label={`Agregar ${product.name}`}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition"
+            style={{ background: primaryColor }}
+          >
+            <Plus className="w-4 h-4" strokeWidth={3} />
+          </button>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 

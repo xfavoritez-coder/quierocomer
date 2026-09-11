@@ -12,10 +12,11 @@ interface MyOrder { id: string; orderNumber: number | null; total: number; statu
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Aceptado", PREPARING: "Preparando", IN_DELIVERY: "En reparto", READY: "Listo", DONE: "Entregado", CANCELLED: "Cancelado" };
 
-type View = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
+export type CustomerMenuView = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
+type View = CustomerMenuView;
 
-export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [] }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[] }) {
-  const [view, setView] = useState<View>("root");
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView }) {
+  const [view, setView] = useState<View>(initialView);
   const [user, setUser] = useState<QrUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loginExpanded, setLoginExpanded] = useState(false);
@@ -322,10 +323,15 @@ function FavoritesView({ tenant, primaryColor }: { tenant: StoreTenant; primaryC
   );
 }
 
-// ── Contáctanos ─────────────────────────────────────────────────
+// ── Contáctanos (incluye redes sociales) ────────────────────────
 function ContactView({ tenant, primaryColor }: { tenant: StoreTenant; primaryColor: string }) {
   const wa = (tenant.whatsapp || tenant.phone || "").replace(/\D/g, "");
   const email = tenant.contactEmail;
+  const ig = tenant.instagram?.trim();
+  const igUrl = ig ? (ig.startsWith("http") ? ig : `https://instagram.com/${ig.replace(/^@/, "")}`) : null;
+  const web = tenant.website?.trim();
+  const webUrl = web ? (web.startsWith("http") ? web : `https://${web}`) : null;
+  const nothing = !wa && !email && !igUrl && !webUrl;
   return (
     <div className="flex flex-col gap-3">
       {wa ? (
@@ -340,7 +346,19 @@ function ContactView({ tenant, primaryColor }: { tenant: StoreTenant; primaryCol
           <div className="min-w-0"><p className="text-sm font-black text-gray-900">Correo</p><p className="text-xs text-gray-400 truncate">{email}</p></div>
         </a>
       ) : null}
-      {!wa && !email && <p className="text-sm text-gray-400 text-center py-8">El local aún no cargó sus datos de contacto.</p>}
+      {igUrl ? (
+        <a href={igUrl} target="_blank" rel="noopener noreferrer" className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 hover:bg-gray-50">
+          <Camera className="w-6 h-6 text-pink-500 shrink-0" />
+          <div className="min-w-0"><p className="text-sm font-black text-gray-900">Instagram</p><p className="text-xs text-gray-400 truncate">{ig}</p></div>
+        </a>
+      ) : null}
+      {webUrl ? (
+        <a href={webUrl} target="_blank" rel="noopener noreferrer" className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 hover:bg-gray-50">
+          <Globe className="w-6 h-6 shrink-0" style={{ color: primaryColor }} />
+          <div className="min-w-0"><p className="text-sm font-black text-gray-900">Sitio web</p><p className="text-xs text-gray-400 truncate">{web}</p></div>
+        </a>
+      ) : null}
+      {nothing && <p className="text-sm text-gray-400 text-center py-8">El local aún no cargó sus datos de contacto.</p>}
     </div>
   );
 }
