@@ -125,7 +125,7 @@ function statusTitle(status: string, orderType: "PICKUP" | "DELIVERY"): { t: str
   switch (status) {
     case "PENDING": return { t: "Pedido recibido", s: "Recibimos tu pedido, en breve lo confirmamos." };
     case "ACCEPTED": return { t: "¡Pedido aceptado!", s: "El local va a empezar a prepararlo." };
-    case "PREPARING": return { t: "Preparando tu pedido", s: "Están cocinando lo tuyo 👨‍🍳" };
+    case "PREPARING": return { t: "Preparando tu pedido", s: "Manos a la obra en la cocina 👨‍🍳" };
     case "IN_DELIVERY": return { t: "Tu pedido va en camino", s: "El repartidor ya salió con tu pedido 🛵" };
     case "READY": return { t: "¡Tu pedido está listo!", s: orderType === "DELIVERY" ? "Ya puede salir a reparto." : "Puedes pasar a retirarlo 🏠" };
     case "DONE": return { t: "¡Pedido entregado!", s: "Gracias por tu compra 🎉" };
@@ -438,8 +438,9 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
 
-        {/* Mapa en vivo del repartidor (deliveryhandroll) — solo delivery con ubicación */}
-        {order.orderType === "DELIVERY" && tracking?.enabled && tracking.courier?.lat != null && (
+        {/* Mapa en vivo del repartidor (deliveryhandroll) — solo cuando el pedido
+            ya salió a reparto (IN_DELIVERY) y tenemos ubicación del repartidor. */}
+        {order.orderType === "DELIVERY" && order.status === "IN_DELIVERY" && tracking?.enabled && tracking.courier?.lat != null && (
           <div style={{ ...cardStyle, padding: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
               <span style={{ fontSize: 22 }}>🛵</span>
