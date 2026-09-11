@@ -105,9 +105,9 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
   }
 
   // Imagen del producto. En el tema base (scrollImage) tiene SIEMPRE la misma
-  // altura (1/3 de la pantalla) y va sin degradado; se desplaza junto con la
+  // altura (1/2 de la pantalla) y va sin degradado; se desplaza junto con la
   // descripción (por eso shrink-0: nunca se comprime según el texto).
-  const imgSizeCls = scrollImage ? "h-[33vh] shrink-0" : "aspect-square sm:aspect-auto sm:h-52 shrink-0";
+  const imgSizeCls = scrollImage ? "h-[50vh] shrink-0" : "aspect-square sm:aspect-auto sm:h-52 shrink-0";
   const imageBlock = product.image_url ? (
     <div className={`relative ${imgSizeCls} sm:rounded-t-3xl overflow-hidden`}>
       <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
@@ -116,7 +116,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       )}
     </div>
   ) : (
-    <div className={`${scrollImage ? "h-[33vh] shrink-0" : "h-32 shrink-0"} sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl`}>🍱</div>
+    <div className={`${scrollImage ? "h-[50vh] shrink-0" : "h-32 shrink-0"} sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl`}>🍱</div>
   );
 
   const details = (
