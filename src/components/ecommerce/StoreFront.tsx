@@ -268,8 +268,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
                 <section key={cat.id} id={`cat-${cat.id}`}>
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {catProducts.map((p, i) => (
-                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} reverse={i % 2 === 1} />
+                    {catProducts.map((p) => (
+                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} />
                     ))}
                   </div>
                 </section>
@@ -354,47 +354,17 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
 }
 
 // ── Tarjeta de producto ──────────────────────────────────────────
-function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav, reverse }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void; reverse?: boolean }) {
+// Layout: imagen a la izquierda · texto al centro · precio a la derecha.
+function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleFav }: { product: StoreProduct; primaryColor: string; onClick: () => void; showFav?: boolean; isFav?: boolean; onToggleFav?: () => void }) {
   const soldOut = product.is_sold_out;
   return (
     <button
       onClick={soldOut ? undefined : onClick}
       disabled={soldOut}
-      className={`relative bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow group grid ${reverse ? "grid-cols-[8rem_1fr] sm:grid-cols-[9rem_1fr]" : "grid-cols-[1fr_8rem] sm:grid-cols-[1fr_9rem]"} min-h-[8rem] w-full text-left ${soldOut ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
+      className={`relative bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow group grid grid-cols-[7rem_1fr_auto] sm:grid-cols-[9rem_1fr_auto] min-h-[8rem] w-full text-left ${soldOut ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"}`}
     >
-      {showFav && (
-        <span
-          role="button"
-          aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-          onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
-          className={`absolute top-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur cursor-pointer hover:scale-105 transition ${reverse ? "left-2" : "right-2"}`}
-        >
-          <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#9ca3af"} />
-        </span>
-      )}
-      {/* Texto */}
-      <div className={`p-4 flex flex-col justify-between ${reverse ? "order-2" : "order-1"}`}>
-        <div>
-          <p className="font-bold text-gray-900 text-sm leading-snug">{product.name}</p>
-          {product.description && (
-            <p className="text-xs text-gray-400 mt-1.5 line-clamp-3 leading-relaxed">{product.description}</p>
-          )}
-        </div>
-        <div className="mt-3 flex items-center gap-2 flex-wrap">
-          {soldOut ? (
-            <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-200 text-gray-500">Agotado</span>
-          ) : product.original_price ? (
-            <>
-              <span className="text-[12px] font-black px-2.5 py-1 rounded-full text-white" style={{ background: primaryColor }}>OFERTA {clp(product.price)}</span>
-              <span className="text-[12px] text-gray-600 line-through">{clp(product.original_price)}</span>
-            </>
-          ) : (
-            <span className="font-black text-[13px]" style={{ color: primaryColor }}>{clp(product.price)}</span>
-          )}
-        </div>
-      </div>
-      {/* Imagen */}
-      <div className={`relative ${reverse ? "order-1" : "order-2"}`}>
+      {/* Imagen (izquierda) */}
+      <div className="relative">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover block" />
         ) : (
@@ -404,6 +374,38 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
           <div className="absolute inset-0 bg-white/55 flex items-center justify-center">
             <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-900/80 text-white">Agotado</span>
           </div>
+        )}
+        {showFav && (
+          <span
+            role="button"
+            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+            onClick={(e) => { e.stopPropagation(); onToggleFav?.(); }}
+            className="absolute top-2 left-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur cursor-pointer hover:scale-105 transition"
+          >
+            <Heart className="w-4 h-4" fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#9ca3af"} />
+          </span>
+        )}
+      </div>
+
+      {/* Texto (centro) */}
+      <div className="p-4 flex flex-col justify-center min-w-0">
+        <p className="font-bold text-gray-900 text-sm leading-snug">{product.name}</p>
+        {product.description && (
+          <p className="text-xs text-gray-400 mt-1.5 line-clamp-3 leading-relaxed">{product.description}</p>
+        )}
+      </div>
+
+      {/* Precio (derecha) */}
+      <div className="p-4 pl-2 flex flex-col items-end justify-center gap-1 text-right shrink-0">
+        {soldOut ? (
+          <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-gray-200 text-gray-500">Agotado</span>
+        ) : product.original_price ? (
+          <>
+            <span className="text-[12px] font-black px-2.5 py-1 rounded-full text-white whitespace-nowrap" style={{ background: primaryColor }}>OFERTA {clp(product.price)}</span>
+            <span className="text-[12px] text-gray-600 line-through whitespace-nowrap">{clp(product.original_price)}</span>
+          </>
+        ) : (
+          <span className="font-black text-sm whitespace-nowrap" style={{ color: primaryColor }}>{clp(product.price)}</span>
         )}
       </div>
     </button>
