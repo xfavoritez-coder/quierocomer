@@ -450,7 +450,7 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
       <button onClick={soldOut ? undefined : onClick} disabled={soldOut} className="flex-1 min-w-0 flex flex-col justify-center text-left">
         <p className="font-bold text-gray-900 text-base leading-snug">{product.name}</p>
         {product.description && (
-          <p className="text-sm text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
+          <p className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed">{product.description}</p>
         )}
         <div className="mt-2 flex items-baseline gap-2">
           <span className="font-black text-base" style={{ color: primaryColor }}>{clp(product.price)}</span>
