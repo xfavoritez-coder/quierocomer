@@ -37,6 +37,112 @@ export default function LandingPage() {
   const openModal = (tier: "trial" | "free" = "trial") => { setSelectedTier(tier); setModalOpen(true); setFormError(""); };
   const closeModal = () => { setModalOpen(false); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
 
+  // Upload carta modal state
+  const [ucOpen, setUcOpen] = useState(false);
+  const [ucStep, setUcStep] = useState<"options" | "link" | "photo">("options");
+  const [ucLink, setUcLink] = useState("");
+  const [ucFiles, setUcFiles] = useState<File[]>([]);
+  const [ucFileName, setUcFileName] = useState("");
+  const [ucLoading, setUcLoading] = useState(false);
+  const [ucError, setUcError] = useState("");
+  const [ucProgress, setUcProgress] = useState("");
+  const ucPhotoRef = useRef<HTMLInputElement>(null);
+
+  function ucSafeTimeout(ms: number): AbortSignal {
+    try { return AbortSignal.timeout(ms); }
+    catch { const c = new AbortController(); setTimeout(() => c.abort(new DOMException("TimeoutError", "TimeoutError")), ms); return c.signal; }
+  }
+
+  async function ucCompress(file: File): Promise<File> {
+    if (!file.type.startsWith("image/")) return file;
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const maxSize = 1600;
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height);
+          width = Math.round(width * ratio); height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(file); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob && blob.size < file.size) resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+          else resolve(file);
+        }, "image/jpeg", 0.85);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  const openUcModal = () => {
+    setUcOpen(true); setUcStep("options"); setUcLink(""); setUcFiles([]); setUcFileName(""); setUcError(""); setUcProgress("");
+  };
+  const closeUcModal = () => setUcOpen(false);
+
+  const handleUcFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files);
+    setUcFiles(prev => {
+      const combined = [...prev, ...newFiles].slice(0, 10);
+      const totalSize = combined.reduce((s, f) => s + f.size, 0);
+      if (totalSize > 50 * 1024 * 1024) { setUcError("El peso total excede 50MB."); return prev; }
+      const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+      setUcFileName(combined.length === 1 ? combined[0].name : `${combined.length} archivos (${totalMB}MB)`);
+      setUcError("");
+      return combined;
+    });
+    e.target.value = "";
+    setUcStep("photo");
+  };
+
+  const handleUcSubmit = async () => {
+    if (ucLoading) return;
+    setUcLoading(true); setUcError("");
+    try {
+      if (ucStep === "link") {
+        let url = ucLink.trim();
+        if (!url.match(/^https?:\/\//)) url = "https://" + url;
+        if (url.includes("quierocomer.com")) { setUcError("Esta ya es una carta en QuieroComer. Si necesitas editarla, accede a tu panel."); setUcLoading(false); return; }
+        const res = await fetch("/api/subircarta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cartaType: "LINK", cartaUrl: url }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setUcError(data.error || "Error al procesar tu carta."); setUcLoading(false); return; }
+        window.location.href = `/subircarta/paso2?id=${data.id}`;
+      } else if (ucStep === "photo") {
+        if (ucFiles.length === 0) { setUcError("Selecciona al menos un archivo."); setUcLoading(false); return; }
+        const total = Math.min(ucFiles.length, 10);
+        let leadId = "";
+        for (let i = 0; i < total; i++) {
+          setUcProgress(total > 1 ? `Procesando archivo ${i + 1} de ${total}` : "Procesando archivo");
+          const compressed = await ucCompress(ucFiles[i]);
+          const formData = new FormData();
+          formData.append("file", compressed);
+          if (leadId) formData.append("leadId", leadId);
+          const res = await fetch("/api/subircarta/upload", { method: "POST", body: formData, signal: ucSafeTimeout(30000) });
+          let data: any;
+          try { data = await res.json(); } catch { setUcError(`Error del servidor (${res.status}). Intenta de nuevo.`); setUcLoading(false); return; }
+          if (!res.ok) { setUcError(data.error || `Error al subir ${ucFiles[i].name}`); setUcLoading(false); return; }
+          if (!leadId) leadId = data.id;
+        }
+        window.location.href = `/subircarta/paso2?id=${leadId}`;
+      }
+    } catch (err: any) {
+      const msg = err?.name === "TimeoutError" ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
+        : `Error: ${err?.message || "conexión fallida"}`;
+      setUcError(msg);
+      setUcLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -372,6 +478,32 @@ export default function LandingPage() {
         .qc-success-feature:last-child { margin-bottom: 0; }
         .qc-success-note { font-size: 12px; color: var(--gris); margin-top: 12px; }
 
+        /* UPLOAD CARTA MODAL */
+        .qc-uc-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(17,17,17,.58); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn .2s ease; }
+        .qc-uc-card { background: white; border-radius: 24px; width: 100%; max-width: 470px; padding: 42px 34px 30px; position: relative; text-align: center; box-shadow: 0 30px 90px rgba(0,0,0,.32); animation: slideUp .25s ease; }
+        .qc-uc-close { position: absolute; top: 16px; right: 18px; background: none; border: 0; cursor: pointer; font-size: 26px; line-height: 1; color: #A09F97; width: 38px; height: 38px; border-radius: 50%; transition: .15s ease; display: flex; align-items: center; justify-content: center; }
+        .qc-uc-close:hover { background: #F5F5F3; color: var(--tinta); }
+        .qc-uc-back { position: absolute; top: 16px; left: 18px; background: none; border: 0; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--gris); padding: 9px 12px; border-radius: 10px; transition: .15s ease; font-family: inherit; }
+        .qc-uc-back:hover { background: #F5F5F3; color: var(--tinta); }
+        .qc-uc-title { margin: 0 0 24px; font-size: 26px; font-weight: 700; letter-spacing: -.04em; line-height: 1.1; color: var(--tinta); }
+        .qc-uc-opcion { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--tinta); background: white; border: 1.5px solid var(--linea); border-radius: 16px; padding: 20px 22px; margin-bottom: 12px; cursor: pointer; transition: .15s ease; font-family: inherit; }
+        .qc-uc-opcion:hover { border-color: var(--tinta); background: #FAFAF8; transform: translateY(-1px); }
+        .qc-uc-desde-cero { display: block; width: 100%; margin-top: 18px; font-size: 14px; color: var(--gris); background: none; border: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--linea); text-underline-offset: 4px; transition: .15s ease; font-family: inherit; }
+        .qc-uc-desde-cero:hover { color: var(--tinta); }
+        .qc-uc-input { width: 100%; border: 1.5px solid var(--linea); border-radius: 14px; padding: 18px 20px; font-size: 16px; background: #FAFAF8; margin-bottom: 14px; text-align: left; outline: none; transition: .15s ease; font-family: inherit; display: block; }
+        .qc-uc-input:focus { border-color: var(--tinta); background: white; }
+        .qc-uc-btn { width: 100%; min-height: 56px; border: 0; border-radius: 14px; background: var(--ambar); color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit; transition: .18s ease; letter-spacing: -.02em; }
+        .qc-uc-btn:hover:not(:disabled) { background: var(--ambar-hover); transform: translateY(-1px); }
+        .qc-uc-btn:disabled { opacity: .5; cursor: default; transform: none; }
+        .qc-uc-dropzone { border: 1.5px dashed rgba(245,158,27,.5); background: var(--ambar-fondo); border-radius: 18px; padding: 32px 20px; margin-bottom: 16px; cursor: pointer; transition: .18s ease; }
+        .qc-uc-dropzone:hover { border-color: var(--ambar); transform: translateY(-1px); }
+        .qc-uc-thumbnails { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+        .qc-uc-thumb { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea); flex-shrink: 0; }
+        .qc-uc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .qc-uc-thumb-del { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,.55); border: none; color: #fff; font-size: 12px; cursor: pointer; display: grid; place-items: center; line-height: 1; padding: 0; }
+        .qc-uc-error { color: #e85d5d; font-size: 14px; margin-bottom: 12px; }
+        @media (max-width: 480px) { .qc-uc-card { padding: 40px 20px 26px; } .qc-uc-title { font-size: 22px; } }
+
         /* Mobile nav */
         @media (max-width: 680px) {
           .qc-nav-links { display: none; }
@@ -428,14 +560,13 @@ export default function LandingPage() {
               {t("hero_subtitle")}
             </p>
             <div className="qc-hero-cta">
-              <a href="/subircarta" className="qc-btn-ambar qc-btn-ambar-xl">
+              <button onClick={openUcModal} className="qc-btn-ambar qc-btn-ambar-xl">
                 {t("hero_cta")}
-              </a>
+              </button>
               <a href="https://quierocomer.com/qr/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
                 {t("hero_demo")}
               </a>
             </div>
-            <p className="qc-hero-note">{t("hero_note")}</p>
           </div>
         </section>
 
@@ -602,9 +733,9 @@ export default function LandingPage() {
                     <li key={i}><span className="qc-check">✓</span>{f}</li>
                   ))}
                 </ul>
-                <a href="/subircarta" className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, display: "block", textAlign: "center", textDecoration: "none" }}>
+                <button onClick={openUcModal} className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, border: "none", fontFamily: "inherit", cursor: "pointer" }}>
                   {t("plan_cta_pro")}
-                </a>
+                </button>
               </div>
 
             </div>
@@ -616,12 +747,121 @@ export default function LandingPage() {
           <div className="qc-cta-final-card">
             <h2>{t("final_title")}</h2>
             <p style={{color:"rgba(255,255,255,0.75)"}}>{t("final_subtitle")}</p>
-            <a href="/subircarta" className="qc-btn-white" style={{ display: "inline-block", textDecoration: "none" }}>{t("final_cta")}</a>
+            <button onClick={openUcModal} className="qc-btn-white" style={{ display: "inline-block" }}>{t("final_cta")}</button>
             <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>{t("final_note")}</p>
           </div>
         </section>
 
         <LandingFooter />
+
+        {/* UPLOAD CARTA MODAL */}
+        <input ref={ucPhotoRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.pdf" multiple style={{ display: "none" }} onChange={handleUcFileSelect} />
+        {ucOpen && (
+          <div className="qc-uc-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeUcModal(); }}>
+            <div className="qc-uc-card" role="dialog" aria-modal="true">
+              {ucStep !== "options" && (
+                <button className="qc-uc-back" onClick={() => { setUcStep("options"); setUcError(""); setUcFiles([]); setUcFileName(""); setUcLink(""); }}>← Volver</button>
+              )}
+              <button className="qc-uc-close" onClick={closeUcModal} aria-label="Cerrar">×</button>
+
+              {ucStep === "options" && (
+                <>
+                  <h3 className="qc-uc-title">¿Cómo tienes tu carta hoy?</h3>
+                  <button className="qc-uc-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
+                      <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
+                    </svg>
+                    Tengo un link
+                  </button>
+                  <button className="qc-uc-opcion" onClick={() => ucPhotoRef.current?.click()}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <path d="M14 2v6h6"/>
+                    </svg>
+                    Tengo una foto o un PDF
+                  </button>
+                  <button className="qc-uc-desde-cero" onClick={() => { window.location.href = "/subircarta"; }}>
+                    No tengo carta, empezar de cero
+                  </button>
+                </>
+              )}
+
+              {ucStep === "link" && (
+                <>
+                  <h3 className="qc-uc-title">Pega el link de tu carta</h3>
+                  <input
+                    className="qc-uc-input"
+                    type="url"
+                    placeholder="https://turestaurante.cl/carta"
+                    value={ucLink}
+                    onChange={(e) => { setUcLink(e.target.value); setUcError(""); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleUcSubmit(); }}
+                    autoFocus
+                  />
+                  {ucError && <div className="qc-uc-error">{ucError}</div>}
+                  <button
+                    className="qc-uc-btn"
+                    onClick={handleUcSubmit}
+                    disabled={ucLoading || !ucLink.trim()}
+                  >
+                    {ucLoading ? (ucProgress || "Procesando...") : "Continuar →"}
+                  </button>
+                </>
+              )}
+
+              {ucStep === "photo" && (
+                <>
+                  <h3 className="qc-uc-title">Sube tu carta</h3>
+                  {ucFiles.length === 0 ? (
+                    <div className="qc-uc-dropzone" onClick={() => ucPhotoRef.current?.click()}>
+                      <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+                      <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--tinta)" }}>Toca para seleccionar archivos</div>
+                      <div style={{ fontSize: 13, color: "var(--gris)" }}>JPG, PNG, PDF · Máx. 10 archivos · 50MB</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="qc-uc-thumbnails">
+                        {ucFiles.map((f, i) => (
+                          <div key={i} className="qc-uc-thumb">
+                            {f.type.startsWith("image/") ? (
+                              <img src={URL.createObjectURL(f)} alt={f.name} />
+                            ) : (
+                              <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", background: "#F5F5F3", fontSize: 10, color: "#666", fontWeight: 700 }}>PDF</div>
+                            )}
+                            <button
+                              className="qc-uc-thumb-del"
+                              onClick={() => setUcFiles(prev => {
+                                const next = prev.filter((_, j) => j !== i);
+                                setUcFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} archivos`);
+                                return next;
+                              })}
+                            >×</button>
+                          </div>
+                        ))}
+                        {ucFiles.length < 10 && (
+                          <div
+                            onClick={() => ucPhotoRef.current?.click()}
+                            style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed #DDDDD8", display: "grid", placeItems: "center", cursor: "pointer", color: "#A8A8A2", fontSize: 24 }}
+                          >+</div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--gris)", marginBottom: 14 }}>{ucFileName}</div>
+                    </>
+                  )}
+                  {ucError && <div className="qc-uc-error">{ucError}</div>}
+                  <button
+                    className="qc-uc-btn"
+                    onClick={ucFiles.length > 0 ? handleUcSubmit : () => ucPhotoRef.current?.click()}
+                    disabled={ucLoading}
+                  >
+                    {ucLoading ? (ucProgress || "Subiendo...") : ucFiles.length > 0 ? "Subir mi carta →" : "Seleccionar archivos"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* MODAL */}
         {modalOpen && (

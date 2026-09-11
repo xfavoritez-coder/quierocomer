@@ -12,8 +12,8 @@ const es = {
 
   // Home hero
   hero_label: "Para dueños de restaurantes",
-  hero_title: "Tu carta ya existe. Haz que haga más.",
-  hero_title_highlight: "Haz que haga más.",
+  hero_title: "Haz que tu carta venda más.",
+  hero_title_highlight: "venda más.",
   hero_subtitle: "Sube la que ya tienes. QuieroComer la convierte en una carta que recomienda platos, se traduce y permite llamar al garzón desde la mesa.",
   hero_cta: "Sube tu carta",
   hero_demo: "Ver demo →",
