@@ -1,43 +1,50 @@
 "use client";
 import { useState, useRef } from "react";
-import Link from "next/link";
-import { trackPurchase } from "@/lib/metaPixel";
 import LandingFooter from "@/components/landing/LandingFooter";
-import { useLandingLang } from "@/lib/i18n/landing";
 
-const RESTAURANTS = [
-  { name: "Hand Roll", url: "https://quierocomer.com/qr/hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
-  { name: "Horus Vegan", url: "https://quierocomer.com/qr/horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
-  { name: "Juana la Brava", url: "https://quierocomer.com/qr/juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
-  { name: "Alleria Pizza", url: "https://quierocomer.com/qr/alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-  { name: "La Oveja Negra", url: "https://quierocomer.com/qr/la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
-  { name: "El Menú de la Esquina", url: "https://quierocomer.com/qr/el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779594834786-i3nhsddtw68.png" },
-  { name: "Entre Pisco y Pebre", url: "https://quierocomer.com/qr/entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
-  { name: "Guffsushi Nikkei", url: "https://quierocomer.com/qr/guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
-  { name: "Nascosto Pizzeria", url: "https://quierocomer.com/qr/nascosto-pizzeria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777586747684-596ypo9g4nu.png" },
-  { name: "Krua Thai", url: "https://quierocomer.com/qr/krua-thai", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781025353917-x9yx2cbbcrn.webp" },
-];
+// ─── Upload helpers ───────────────────────────────────────────────────────────
 
+function safeTimeout(ms: number): AbortSignal {
+  try { return AbortSignal.timeout(ms); }
+  catch {
+    const c = new AbortController();
+    setTimeout(() => c.abort(new DOMException("TimeoutError", "TimeoutError")), ms);
+    return c.signal;
+  }
+}
+
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const maxSize = 1600;
+      if (width > maxSize || height > maxSize) {
+        const ratio = Math.min(maxSize / width, maxSize / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (blob && blob.size < file.size)
+          resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+        else resolve(file);
+      }, "image/jpeg", 0.85);
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const { t, testimonials, proFeatures } = useLandingLang();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<"trial" | "free">("trial");
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [formData, setFormData] = useState({ ownerName: "", localName: "", email: "", whatsapp: "" });
-
-  const testimonialsRef = useRef<HTMLDivElement>(null);
-  const scrollTestimonials = (dir: "left" | "right") => {
-    if (testimonialsRef.current) {
-      testimonialsRef.current.scrollBy({ left: dir === "left" ? -340 : 340, behavior: "smooth" });
-    }
-  };
-
-  const openModal = (tier: "trial" | "free" = "trial") => { setSelectedTier(tier); setModalOpen(true); setFormError(""); };
-  const closeModal = () => { setModalOpen(false); setFormData({ ownerName: "", localName: "", email: "", whatsapp: "" }); };
-
-  // Upload carta modal state
+  // Modal state
   const [ucOpen, setUcOpen] = useState(false);
   const [ucStep, setUcStep] = useState<"options" | "link" | "photo">("options");
   const [ucLink, setUcLink] = useState("");
@@ -46,45 +53,16 @@ export default function LandingPage() {
   const [ucLoading, setUcLoading] = useState(false);
   const [ucError, setUcError] = useState("");
   const [ucProgress, setUcProgress] = useState("");
-  const ucPhotoRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
-  function ucSafeTimeout(ms: number): AbortSignal {
-    try { return AbortSignal.timeout(ms); }
-    catch { const c = new AbortController(); setTimeout(() => c.abort(new DOMException("TimeoutError", "TimeoutError")), ms); return c.signal; }
-  }
-
-  async function ucCompress(file: File): Promise<File> {
-    if (!file.type.startsWith("image/")) return file;
-    return new Promise((resolve) => {
-      const img = new window.Image();
-      img.onload = () => {
-        let { width, height } = img;
-        const maxSize = 1600;
-        if (width > maxSize || height > maxSize) {
-          const ratio = Math.min(maxSize / width, maxSize / height);
-          width = Math.round(width * ratio); height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { resolve(file); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob && blob.size < file.size) resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
-          else resolve(file);
-        }, "image/jpeg", 0.85);
-      };
-      img.onerror = () => resolve(file);
-      img.src = URL.createObjectURL(file);
-    });
-  }
-
-  const openUcModal = () => {
-    setUcOpen(true); setUcStep("options"); setUcLink(""); setUcFiles([]); setUcFileName(""); setUcError(""); setUcProgress("");
+  const openModal = () => {
+    setUcOpen(true); setUcStep("options"); setUcLink(""); setUcFiles([]);
+    setUcFileName(""); setUcError(""); setUcProgress("");
+    document.body.style.overflow = "hidden";
   };
-  const closeUcModal = () => setUcOpen(false);
+  const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
 
-  const handleUcFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const newFiles = Array.from(files);
@@ -101,14 +79,17 @@ export default function LandingPage() {
     setUcStep("photo");
   };
 
-  const handleUcSubmit = async () => {
+  const handleSubmit = async () => {
     if (ucLoading) return;
     setUcLoading(true); setUcError("");
     try {
       if (ucStep === "link") {
         let url = ucLink.trim();
         if (!url.match(/^https?:\/\//)) url = "https://" + url;
-        if (url.includes("quierocomer.com")) { setUcError("Esta ya es una carta en QuieroComer. Si necesitas editarla, accede a tu panel."); setUcLoading(false); return; }
+        if (url.includes("quierocomer.com")) {
+          setUcError("Esta ya es una carta en QuieroComer. Si necesitas editarla, accede a tu panel.");
+          setUcLoading(false); return;
+        }
         const res = await fetch("/api/subircarta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -123,822 +104,564 @@ export default function LandingPage() {
         let leadId = "";
         for (let i = 0; i < total; i++) {
           setUcProgress(total > 1 ? `Procesando archivo ${i + 1} de ${total}` : "Procesando archivo");
-          const compressed = await ucCompress(ucFiles[i]);
+          const compressed = await compressImage(ucFiles[i]);
           const formData = new FormData();
           formData.append("file", compressed);
           if (leadId) formData.append("leadId", leadId);
-          const res = await fetch("/api/subircarta/upload", { method: "POST", body: formData, signal: ucSafeTimeout(30000) });
+          const res = await fetch("/api/subircarta/upload", { method: "POST", body: formData, signal: safeTimeout(30000) });
           let data: any;
-          try { data = await res.json(); } catch { setUcError(`Error del servidor (${res.status}). Intenta de nuevo.`); setUcLoading(false); return; }
+          try { data = await res.json(); } catch { setUcError(`Error del servidor (${res.status}).`); setUcLoading(false); return; }
           if (!res.ok) { setUcError(data.error || `Error al subir ${ucFiles[i].name}`); setUcLoading(false); return; }
           if (!leadId) leadId = data.id;
         }
         window.location.href = `/subircarta/paso2?id=${leadId}`;
       }
     } catch (err: any) {
-      const msg = err?.name === "TimeoutError" ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
+      const msg = err?.name === "TimeoutError"
+        ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
         : `Error: ${err?.message || "conexión fallida"}`;
       setUcError(msg);
       setUcLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setFormError("");
-    if (formData.whatsapp.trim()) {
-      const digits = formData.whatsapp.replace(/\D/g, "");
-      if (!/^9\d{8}$/.test(digits)) {
-        setFormError("Número de WhatsApp inválido. Ingresa 9 dígitos comenzando con 9 (ej: 912345678)");
-        setSubmitting(false);
-        return;
-      }
-    }
-    try {
-      const res = await fetch("/api/activar/registrar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, tier: selectedTier }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al enviar");
-      trackPurchase("PREMIUM", 49900);
-      // Store basic info in sessionStorage for /bienvenida (pre-confirmation state, no credentials)
-      try {
-        sessionStorage.setItem("qc_welcome", JSON.stringify({
-          localName: data.localName || formData.localName,
-          ownerName: data.ownerName || formData.ownerName,
-          email: data.email || formData.email,
-          password: "",
-          slug: data.slug || "",
-        }));
-      } catch {}
-      window.location.href = "/bienvenida";
-    } catch (err) {
-      setFormError((err as Error).message || "Ocurrió un error, intenta de nuevo.");
-      setSubmitting(false);
-    }
-  };
-
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
-        :root {
-          --blanco: #FFFFFF;
-          --tinta: #111111;
-          --gris: #71716C;
-          --gris-claro: #A8A8A2;
-          --ambar: #F59E1B;
-          --ambar-hover: #E08D0C;
-          --ambar-tinta: #8F5A05;
-          --ambar-fondo: #FFF7EA;
-          --linea: #ECECEA;
-          --purpura: #6d28d9;
-          font-family: 'Instrument Sans', sans-serif;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Instrument Sans', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-        .qc-landing { font-family: 'Instrument Sans', sans-serif; color: var(--tinta); background: var(--blanco); }
+        :root {
+          --yellow: #FFD400;
+          --yellow-hover: #F3C900;
+          --ink: #111111;
+          --muted: #73736D;
+          --paper: #FCFBF7;
+          --white: #FFFFFF;
+          --line: #EAE8E1;
+          --max: 1080px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+          background: var(--paper);
+          color: var(--ink);
+          font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button, input { font: inherit; }
+
+        .lp-container {
+          width: min(calc(100% - 32px), var(--max));
+          margin: 0 auto;
+        }
 
         /* NAV */
-        .qc-nav {
-          position: sticky; top: 0; z-index: 100;
-          background: rgba(255,255,255,0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid var(--linea);
-          padding: 0 24px;
-          height: 60px;
-          display: flex; align-items: center; justify-content: space-between;
+        .lp-header {
+          height: 76px;
+          display: flex;
+          align-items: center;
+          border-bottom: 1px solid var(--line);
+          background: rgba(252,251,247,.94);
+          backdrop-filter: blur(12px);
+          position: sticky;
+          top: 0;
+          z-index: 40;
         }
-        .qc-nav-inner { max-width: 1200px; width: 100%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .qc-logo { font-size: 18px; font-weight: 700; color: var(--tinta); text-decoration: none; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
-        .qc-logo img { width: 22px; height: 22px; display: block; flex-shrink: 0; }
-        .qc-nav-links { display: flex; align-items: center; gap: 28px; }
-        .qc-nav-link { font-size: 14px; color: var(--gris); text-decoration: none; font-weight: 500; transition: color .2s; }
-        .qc-nav-link:hover { color: var(--tinta); }
-        .qc-nav-actions { display: flex; align-items: center; gap: 10px; }
-        .qc-btn-ghost { font-size: 14px; font-weight: 500; color: var(--tinta); text-decoration: none; padding: 8px 16px; border: 1.5px solid var(--linea); border-radius: 8px; transition: border-color .2s, background .2s; background: transparent; cursor: pointer; font-family: inherit; }
-        .qc-btn-ghost:hover { border-color: #ccc; background: #f5f5f5; }
-        .qc-btn-ambar { font-size: 14px; font-weight: 600; color: #fff; background: var(--ambar); border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; transition: background .2s; font-family: inherit; text-decoration: none; display: inline-block; }
-        .qc-btn-ambar:hover { background: var(--ambar-hover); }
-        .qc-btn-ambar-lg { font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 12px; }
-        .qc-btn-ambar-xl { font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 12px; }
+
+        .lp-logo {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 22px;
+          font-weight: 850;
+          letter-spacing: -.04em;
+          text-decoration: none;
+          color: var(--ink);
+        }
+
+        .lp-logo-mark {
+          width: 32px; height: 32px; border-radius: 10px;
+          background: var(--yellow);
+          display: grid; place-items: center;
+          font-size: 14px; font-weight: 900;
+          color: var(--ink);
+          flex-shrink: 0;
+        }
 
         /* HERO */
-        .qc-hero {
-          padding: 96px 24px 80px;
-          text-align: center;
-          background: linear-gradient(180deg, #FFFDF8 0%, #FFFFFF 100%);
+        .lp-hero { padding: 104px 0 72px; text-align: center; }
+
+        .lp-eyebrow {
+          margin-bottom: 18px;
+          color: #8A897F;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .12em;
+          text-transform: uppercase;
         }
-        .qc-hero-inner { max-width: 760px; margin: 0 auto; }
-        .qc-label {
-          display: inline-block;
-          font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-          color: var(--ambar-tinta); background: var(--ambar-fondo);
-          border-radius: 100px; padding: 5px 14px; margin-bottom: 24px;
+
+        .lp-hero h1 {
+          max-width: 900px;
+          margin: 0 auto;
+          font-size: clamp(54px, 7vw, 96px);
+          line-height: .92;
+          letter-spacing: -.07em;
+          font-weight: 850;
         }
-        .qc-hero h1 {
-          font-size: clamp(36px, 6vw, 64px); font-weight: 700; color: var(--tinta);
-          line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 20px;
+
+        .lp-hero-sub {
+          max-width: 650px;
+          margin: 24px auto 0;
+          color: var(--muted);
+          font-size: 18px;
+          line-height: 1.55;
+          letter-spacing: -.01em;
         }
-        .qc-hero-sub { font-size: 18px; color: var(--gris); line-height: 1.6; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
-        .qc-hero-cta { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
-        .qc-link-ghost { font-size: 15px; font-weight: 600; color: var(--tinta); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 14px 24px; border-radius: 12px; border: 1.5px solid var(--linea); transition: border-color .2s, background .2s; }
-        .qc-link-ghost:hover { border-color: #bbb; background: #fafafa; }
-        .qc-hero-note { font-size: 13px; color: var(--gris-claro); }
 
-        /* MODULOS */
-        .qc-section { padding: 80px 24px; }
-        .qc-section-inner { max-width: 1200px; margin: 0 auto; }
-        .qc-section-title { font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 8px; }
-        .qc-section-sub { font-size: 16px; color: var(--gris); margin-bottom: 48px; line-height: 1.5; }
-
-        .qc-modulos-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 680px; margin: 0 auto; }
-
-        .qc-card { border-radius: 20px; overflow: hidden; padding: 40px; position: relative; text-align: center; }
-        .qc-card-amber { background: var(--ambar-fondo); border: 1.5px solid rgba(245,158,27,0.2); }
-        .qc-card-light { background: #F7F7F5; border: 1.5px solid var(--linea); }
-
-        .qc-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 100px; padding: 4px 12px; margin-bottom: 18px; }
-        .qc-badge-amber { background: var(--ambar); color: #fff; }
-        .qc-badge-dark { background: var(--tinta); color: #fff; }
-        .qc-badge-purple { background: var(--purpura); color: #fff; }
-
-        .qc-card h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--tinta); margin-bottom: 12px; }
-        .qc-card p { font-size: 15px; color: var(--gris); line-height: 1.65; margin-bottom: 28px; }
-        .qc-card-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; justify-content: center; }
-
-        .qc-btn-outline { font-size: 14px; font-weight: 600; color: var(--tinta); text-decoration: none; border: 1.5px solid rgba(0,0,0,0.2); border-radius: 8px; padding: 9px 18px; transition: border-color .2s, background .2s; background: transparent; cursor: pointer; font-family: inherit; display: inline-block; }
-        .qc-btn-outline:hover { border-color: var(--tinta); background: rgba(0,0,0,0.04); }
-
-        /* Carta mock */
-        .qc-carta-mock {
-          background: #fff; border-radius: 16px; padding: 20px;
-          box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-          max-width: 260px;
+        .lp-hero-cta {
+          margin-top: 34px;
+          display: flex;
+          justify-content: center;
         }
-        .qc-carta-mock-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-        .qc-carta-logo { width: 36px; height: 36px; border-radius: 10px; background: var(--ambar); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .qc-carta-mock-header h4 { font-size: 14px; font-weight: 700; color: var(--tinta); }
-        .qc-carta-mock-header p { font-size: 11px; color: var(--gris); }
-        .qc-dish-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0F0EE; }
-        .qc-dish-row:last-child { border-bottom: none; }
-        .qc-dish-img { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #FFE4B5 0%, #FFC97A 100%); flex-shrink: 0; }
-        .qc-dish-info h5 { font-size: 13px; font-weight: 600; color: var(--tinta); margin-bottom: 2px; }
-        .qc-dish-info p { font-size: 11px; color: var(--gris); margin: 0; }
-        .qc-dish-price { font-size: 13px; font-weight: 700; color: var(--ambar-tinta); margin-left: auto; flex-shrink: 0; }
 
-        /* Loyalty mock */
-        .qc-loyalty-mock {
-          background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%);
-          border-radius: 16px; padding: 20px;
-          box-shadow: 0 8px 40px rgba(109,40,217,0.25);
-          max-width: 260px; color: white; margin: 0 auto;
+        .lp-btn {
+          border: 0;
+          border-radius: 16px;
+          background: var(--yellow);
+          color: #fff;
+          min-width: 270px;
+          min-height: 64px;
+          padding: 0 30px;
+          font-size: 18px;
+          font-weight: 850;
+          letter-spacing: -.02em;
+          cursor: pointer;
+          box-shadow: 0 12px 34px rgba(255,212,0,.28);
+          transition: .18s ease;
         }
-        .qc-loyalty-mock-header { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin-bottom: 6px; }
-        .qc-loyalty-mock h4 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-        .qc-stamps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
-        .qc-stamp { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-        .qc-stamp-filled { background: rgba(255,255,255,0.9); }
-        .qc-stamp-empty { border: 2px dashed rgba(255,255,255,0.3); }
-        .qc-loyalty-mock-footer { font-size: 11px; opacity: 0.6; text-align: center; }
 
-/* iPhone carta mock en módulo */
-        .qc-iphone-wrap { display: flex; justify-content: center; margin-top: 16px; }
-        .qc-iphone {
-          width: 200px; height: 360px;
-          background: #0A0A0A; border-radius: 26px;
-          border: 5px solid #2a2a2a;
-          box-shadow: 0 0 0 1px #3a3a3a, 0 12px 32px rgba(0,0,0,0.18);
-          overflow: hidden; position: relative; flex-shrink: 0;
+        .lp-btn:hover {
+          background: var(--yellow-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 16px 40px rgba(255,212,0,.34);
         }
-        .qc-iphone-notch { width: 80px; height: 18px; background: #0A0A0A; border-radius: 0 0 10px 10px; margin: 0 auto; position: relative; z-index: 3; }
-        .qc-iphone-screen { position: absolute; inset: 0; background: #111; overflow: hidden; display: flex; flex-direction: column; }
-        .qc-iphone-hero { height: 130px; flex-shrink: 0; position: relative; }
-        .qc-iphone-hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .qc-iphone-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%); }
-        .qc-iphone-hero-text { position: absolute; bottom: 9px; left: 10px; right: 10px; }
-        .qc-iphone-hero-text h4 { font-size: 12px; font-weight: 700; color: white; margin-bottom: 1px; }
-        .qc-iphone-hero-text p { font-size: 8px; color: rgba(255,255,255,0.7); }
-        .qc-iphone-pills { display: flex; gap: 5px; padding: 8px 8px 5px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
-        .qc-iphone-pills::-webkit-scrollbar { display: none; }
-        .qc-iphone-pill { padding: 3px 8px; border-radius: 100px; font-size: 7px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-        .qc-iphone-pill-a { background: var(--ambar); color: #000; }
-        .qc-iphone-pill-i { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
-        .qc-iphone-dishes { flex: 1; overflow-y: auto; padding: 2px 8px; scrollbar-width: none; }
-        .qc-iphone-dishes::-webkit-scrollbar { display: none; }
-        .qc-iphone-dish { display: flex; gap: 7px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
-        .qc-iphone-dish:last-child { border-bottom: none; }
-        .qc-iphone-dish img { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
-        .qc-iphone-dish-info { flex: 1; min-width: 0; }
-        .qc-iphone-dish-info h5 { font-size: 8px; font-weight: 600; color: white; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .qc-iphone-dish-info p { font-size: 7px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .qc-iphone-price { font-size: 8px; font-weight: 700; color: var(--ambar); flex-shrink: 0; }
 
-        /* RESTAURANTES */
-        .qc-rest-section { padding: 72px 0; background: #FFF9F0; overflow: hidden; }
-        .qc-rest-section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        .qc-rest-title { text-align: center; font-size: clamp(1.3rem, 3vw, 1.75rem); font-weight: 700; letter-spacing: -0.02em; color: var(--tinta); margin: 0 0 8px; }
-        .qc-rest-subtitle { text-align: center; font-size: 0.9rem; color: var(--gris-claro); margin: 0 0 40px; }
-        .qc-rest-marquee-wrap { position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); }
-        .qc-rest-marquee-track { display: flex; gap: 16px; width: max-content; animation: qcMarquee 32s linear infinite; }
-        .qc-rest-marquee-track:hover { animation-play-state: paused; }
-        @keyframes qcMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .qc-rest-card {
-          flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
-          background: white; border-radius: 18px; border: 1.5px solid rgba(245,158,27,0.12);
-          padding: 20px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-          text-decoration: none; color: var(--tinta);
-          font-size: 13px; font-weight: 600; width: 136px; text-align: center;
-          transition: box-shadow .2s, transform .2s, border-color .2s;
+        /* VIDEO */
+        .lp-video-section { padding: 18px 0 104px; }
+        .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
+        .lp-video-card {
+          position: relative;
+          overflow: hidden;
+          aspect-ratio: 16/9;
+          border-radius: 26px;
+          background: #111;
+          box-shadow: 0 24px 80px rgba(0,0,0,.10);
         }
-        .qc-rest-card:hover { box-shadow: 0 8px 28px rgba(245,158,27,0.14); transform: translateY(-3px); border-color: rgba(245,158,27,0.35); }
-        .qc-rest-card img { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; }
-        .qc-rest-card-initials { width: 54px; height: 54px; border-radius: 14px; background: var(--ambar-fondo); display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: var(--ambar-tinta); flex-shrink: 0; }
-
-        /* TESTIMONIOS */
-        .qc-testimonios-wrap { position: relative; }
-        .qc-testimonios-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 8px; scroll-behavior: smooth; }
-        .qc-testimonios-scroll::-webkit-scrollbar { display: none; }
-        .qc-testimonios-arrow { display: none; position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; background: white; border: 1.5px solid var(--linea); box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer; font-size: 16px; color: var(--tinta); align-items: center; justify-content: center; transition: border-color .2s, box-shadow .2s; z-index: 2; }
-        .qc-testimonios-arrow:hover { border-color: #bbb; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-        .qc-testimonios-arrow-left { left: -18px; }
-        .qc-testimonios-arrow-right { right: -18px; }
-        @media (min-width: 681px) { .qc-testimonios-arrow { display: flex; } }
-        .qc-test-card { background: #FAFAF8; border: 1.5px solid var(--linea); border-radius: 16px; padding: 28px; min-width: 300px; max-width: 340px; flex-shrink: 0; scroll-snap-align: start; }
-        .qc-stars { color: var(--ambar); font-size: 16px; letter-spacing: 2px; margin-bottom: 14px; }
-        .qc-test-quote { font-size: 15px; line-height: 1.65; color: var(--tinta); margin-bottom: 20px; font-style: italic; }
-        .qc-test-author { display: flex; align-items: center; gap: 12px; }
-        .qc-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--ambar); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
-        .qc-test-author-info strong { display: block; font-size: 14px; font-weight: 600; color: var(--tinta); }
-        .qc-test-author-info span { font-size: 13px; color: var(--gris); }
-
-        /* PRECIOS */
-        .qc-precios-section { padding: 40px 24px 80px; background: white; }
-        .qc-precios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px; margin: 0 auto; }
-        @media (max-width: 580px) { .qc-precios-grid { grid-template-columns: 1fr; } }
-        .qc-precio-card { border-radius: 20px; padding: 36px; border: 2px solid var(--linea); }
-        .qc-precio-card-featured { border-color: var(--ambar); background: var(--ambar-fondo); }
-        .qc-precio-card-purple { border-color: var(--purpura); background: #FAF5FF; }
-        .qc-precio-name { font-size: 22px; font-weight: 700; color: var(--tinta); margin-bottom: 6px; }
-        .qc-precio-price { font-size: 37px; font-weight: 700; color: var(--tinta); letter-spacing: -0.02em; margin-bottom: 2px; }
-        .qc-precio-sub { font-size: 13px; color: var(--gris); margin-bottom: 28px; }
-        .qc-feature-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
-        .qc-feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--tinta); line-height: 1.5; }
-        .qc-check { color: var(--ambar); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-        .qc-check-purple { color: var(--purpura); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-        .qc-precio-note { font-size: 12px; color: var(--gris); margin-bottom: 20px; font-style: italic; }
-        .qc-btn-purple { font-size: 15px; font-weight: 600; color: #fff; background: var(--purpura); border: none; border-radius: 10px; padding: 13px 24px; cursor: pointer; font-family: inherit; width: 100%; transition: opacity .2s; }
-        .qc-btn-purple:hover { opacity: 0.88; }
-
-        /* CTA FINAL */
-        .qc-cta-final { padding: 8px 24px 64px; }
-        .qc-cta-final-card {
-          max-width: 680px; margin: 0 auto; background: #111;
-          border-radius: 24px; padding: 56px 40px; text-align: center;
+        .lp-video-placeholder {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          background:
+            radial-gradient(circle at 50% 35%, rgba(255,212,0,.18), transparent 26%),
+            linear-gradient(145deg, #202020 0%, #0E0E0E 100%);
+          color: white;
         }
-        .qc-cta-final-card h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 12px; }
-        .qc-cta-final-card p { font-size: 16px; color: rgba(255,255,255,0.65); margin-bottom: 32px; line-height: 1.55; }
-        .qc-btn-white { font-size: 16px; font-weight: 700; color: #111; background: var(--ambar); border: none; border-radius: 12px; padding: 15px 36px; cursor: pointer; font-family: inherit; transition: opacity .2s; }
-        .qc-btn-white:hover { opacity: 0.9; }
-        .qc-cta-note { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 14px; }
+        .lp-video-center { max-width: 590px; padding: 34px; text-align: center; }
+        .lp-play {
+          width: 74px; height: 74px; margin: 0 auto 24px;
+          border: 0; border-radius: 50%;
+          background: var(--yellow); color: #111;
+          display: grid; place-items: center;
+          font-size: 22px; cursor: pointer;
+          box-shadow: 0 14px 36px rgba(0,0,0,.24);
+        }
+        .lp-video-center strong {
+          display: block;
+          font-size: clamp(26px, 3vw, 40px);
+          line-height: 1.04;
+          letter-spacing: -.045em;
+          font-weight: 800;
+        }
+        .lp-video-center span {
+          display: block;
+          margin-top: 12px;
+          color: rgba(255,255,255,.58);
+          font-size: 13px;
+        }
 
         /* MODAL */
-        .qc-modal-overlay {
-          position: fixed; inset: 0; z-index: 9999;
-          background: rgba(0,0,0,0.5);
+        .lp-velo {
+          position: fixed;
+          inset: 0;
+          background: rgba(17,17,17,.58);
           backdrop-filter: blur(4px);
-          display: flex; align-items: center; justify-content: center;
-          padding: 20px;
-          animation: fadeIn .2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 90;
+          padding: 24px;
+          animation: lpFadeIn .2s ease;
         }
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        .qc-modal-card {
-          background: white; border-radius: 20px;
-          width: 100%; max-width: 440px;
-          padding: 36px 32px;
+        @keyframes lpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .lp-modal {
+          background: var(--white);
+          border-radius: 24px;
+          width: 100%;
+          max-width: 470px;
+          padding: 42px 34px 30px;
           position: relative;
-          animation: slideUp .25s ease;
+          text-align: center;
+          box-shadow: 0 30px 90px rgba(0,0,0,.32);
+          animation: lpSlideUp .22s ease;
         }
-        @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-        .qc-modal-close {
-          position: absolute; top: 16px; right: 16px;
-          background: #F5F5F3; border: none; border-radius: 50%;
-          width: 32px; height: 32px; font-size: 18px; cursor: pointer;
+        @keyframes lpSlideUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .lp-modal h3 {
+          margin: 0 0 28px;
+          font-size: 28px;
+          font-weight: 850;
+          letter-spacing: -.045em;
+          line-height: 1.08;
+          color: var(--ink);
+        }
+
+        .lp-cerrar {
+          position: absolute; top: 16px; right: 18px;
+          background: none; border: 0; cursor: pointer;
+          font-size: 26px; line-height: 1;
+          color: #A09F97;
+          width: 38px; height: 38px; border-radius: 50%;
+          transition: .15s ease;
           display: flex; align-items: center; justify-content: center;
-          color: var(--gris); transition: background .2s;
-          line-height: 1;
         }
-        .qc-modal-close:hover { background: #EBEBEA; color: var(--tinta); }
-        .qc-modal-emoji { font-size: 32px; margin-bottom: 10px; display: block; text-align: center; }
-        .qc-modal-title { font-size: 22px; font-weight: 700; color: var(--tinta); margin-bottom: 4px; text-align: center; }
-        .qc-modal-sub { font-size: 14px; color: var(--gris); margin-bottom: 28px; text-align: center; }
-        .qc-form-group { margin-bottom: 16px; }
-        .qc-form-label { display: block; font-size: 13px; font-weight: 600; color: var(--tinta); margin-bottom: 6px; }
-        .qc-form-input {
-          width: 100%; padding: 11px 14px;
-          border: 1.5px solid #DDDDD8; border-radius: 10px;
-          font-size: 15px; font-family: inherit; color: var(--tinta);
-          background: white; transition: border-color .2s;
+        .lp-cerrar:hover { background: var(--paper); color: var(--ink); }
+
+        .lp-volver {
+          position: absolute; top: 16px; left: 18px;
+          background: none; border: 0; cursor: pointer;
+          font-size: 14px; font-weight: 700;
+          color: var(--muted);
+          padding: 9px 12px; border-radius: 10px;
+          transition: .15s ease;
+        }
+        .lp-volver:hover { background: var(--paper); color: var(--ink); }
+
+        .lp-opcion {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          width: 100%;
+          text-align: left;
+          font-size: 17px;
+          font-weight: 700;
+          letter-spacing: -.025em;
+          color: var(--ink);
+          background: var(--white);
+          border: 1.5px solid var(--line);
+          border-radius: 16px;
+          padding: 21px 22px;
+          margin-bottom: 12px;
+          cursor: pointer;
+          transition: .15s ease;
+        }
+        .lp-opcion:hover { border-color: var(--ink); background: var(--paper); transform: translateY(-1px); }
+        .lp-opcion svg { flex-shrink: 0; }
+
+        .lp-desde-cero {
+          display: block;
+          width: 100%;
+          margin-top: 18px;
+          font-size: 14px;
+          color: var(--muted);
+          background: none; border: 0; cursor: pointer;
+          text-decoration: underline;
+          text-decoration-color: var(--line);
+          text-underline-offset: 4px;
+          transition: .15s ease;
+        }
+        .lp-desde-cero:hover { color: var(--ink); }
+
+        .lp-campo {
+          width: 100%;
+          border: 1.5px solid var(--line);
+          border-radius: 14px;
+          padding: 18px 20px;
+          font-size: 16px;
+          background: var(--paper);
+          margin-bottom: 14px;
+          text-align: left;
           outline: none;
+          transition: .15s ease;
+          display: block;
         }
-        .qc-form-input:focus { border-color: var(--ambar); }
-        .qc-form-input::placeholder { color: #B8B8B2; }
-        .qc-btn-submit {
-          width: 100%; padding: 14px;
-          background: var(--ambar); color: white;
-          border: none; border-radius: 12px;
-          font-size: 15px; font-weight: 700; font-family: inherit;
-          cursor: pointer; transition: background .2s;
-          margin-top: 8px;
+        .lp-campo:focus { border-color: var(--ink); background: var(--white); }
+
+        .lp-modal-btn {
+          width: 100%;
+          min-height: 56px;
+          border: 0;
+          border-radius: 14px;
+          background: var(--yellow);
+          color: #fff;
+          font-size: 17px;
+          font-weight: 850;
+          letter-spacing: -.02em;
+          cursor: pointer;
+          transition: .18s ease;
+          box-shadow: 0 8px 24px rgba(255,212,0,.22);
         }
-        .qc-btn-submit:hover:not(:disabled) { background: var(--ambar-hover); }
-        .qc-btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
-        .qc-form-error { font-size: 13px; color: #DC2626; background: #FEF2F2; border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
-        .qc-form-legal { font-size: 12px; color: var(--gris-claro); text-align: center; margin-top: 14px; line-height: 1.5; }
+        .lp-modal-btn:hover:not(:disabled) { background: var(--yellow-hover); transform: translateY(-1px); }
+        .lp-modal-btn:disabled { opacity: .5; cursor: default; transform: none; }
 
-        /* PHONE GROUP */
-        .qc-phone-group { display: flex; border: 1.5px solid #DDDDD8; border-radius: 10px; overflow: hidden; transition: border-color .2s; }
-        .qc-phone-group:focus-within { border-color: var(--ambar); }
-        .qc-phone-prefix { display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #F5F5F3; border-right: 1.5px solid #DDDDD8; font-size: 13px; font-weight: 600; color: #444; white-space: nowrap; flex-shrink: 0; }
-        .qc-phone-group .qc-form-input { border: none; border-radius: 0; }
-        .qc-phone-group .qc-form-input:focus { border-color: transparent; }
-
-        /* SUCCESS */
-        .qc-success { text-align: center; }
-        .qc-success-icon { font-size: 48px; display: block; margin-bottom: 16px; }
-        .qc-success h2 { font-size: 24px; font-weight: 700; color: var(--tinta); margin-bottom: 10px; }
-        .qc-success-desc { font-size: 15px; color: var(--gris); line-height: 1.65; margin-bottom: 24px; }
-        .qc-success-features { background: var(--ambar-fondo); border-radius: 12px; padding: 18px 20px; margin-bottom: 24px; text-align: left; }
-        .qc-success-feature { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ambar-tinta); line-height: 1.5; margin-bottom: 8px; }
-        .qc-success-feature:last-child { margin-bottom: 0; }
-        .qc-success-note { font-size: 12px; color: var(--gris); margin-top: 12px; }
-
-        /* UPLOAD CARTA MODAL */
-        .qc-uc-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(17,17,17,.58); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn .2s ease; }
-        .qc-uc-card { background: white; border-radius: 24px; width: 100%; max-width: 470px; padding: 42px 34px 30px; position: relative; text-align: center; box-shadow: 0 30px 90px rgba(0,0,0,.32); animation: slideUp .25s ease; }
-        .qc-uc-close { position: absolute; top: 16px; right: 18px; background: none; border: 0; cursor: pointer; font-size: 26px; line-height: 1; color: #A09F97; width: 38px; height: 38px; border-radius: 50%; transition: .15s ease; display: flex; align-items: center; justify-content: center; }
-        .qc-uc-close:hover { background: #F5F5F3; color: var(--tinta); }
-        .qc-uc-back { position: absolute; top: 16px; left: 18px; background: none; border: 0; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--gris); padding: 9px 12px; border-radius: 10px; transition: .15s ease; font-family: inherit; }
-        .qc-uc-back:hover { background: #F5F5F3; color: var(--tinta); }
-        .qc-uc-title { margin: 0 0 24px; font-size: 26px; font-weight: 700; letter-spacing: -.04em; line-height: 1.1; color: var(--tinta); }
-        .qc-uc-opcion { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--tinta); background: white; border: 1.5px solid var(--linea); border-radius: 16px; padding: 20px 22px; margin-bottom: 12px; cursor: pointer; transition: .15s ease; font-family: inherit; }
-        .qc-uc-opcion:hover { border-color: var(--tinta); background: #FAFAF8; transform: translateY(-1px); }
-        .qc-uc-desde-cero { display: block; width: 100%; margin-top: 18px; font-size: 14px; color: var(--gris); background: none; border: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--linea); text-underline-offset: 4px; transition: .15s ease; font-family: inherit; }
-        .qc-uc-desde-cero:hover { color: var(--tinta); }
-        .qc-uc-input { width: 100%; border: 1.5px solid var(--linea); border-radius: 14px; padding: 18px 20px; font-size: 16px; background: #FAFAF8; margin-bottom: 14px; text-align: left; outline: none; transition: .15s ease; font-family: inherit; display: block; }
-        .qc-uc-input:focus { border-color: var(--tinta); background: white; }
-        .qc-uc-btn { width: 100%; min-height: 56px; border: 0; border-radius: 14px; background: var(--ambar); color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit; transition: .18s ease; letter-spacing: -.02em; }
-        .qc-uc-btn:hover:not(:disabled) { background: var(--ambar-hover); transform: translateY(-1px); }
-        .qc-uc-btn:disabled { opacity: .5; cursor: default; transform: none; }
-        .qc-uc-dropzone { border: 1.5px dashed rgba(245,158,27,.5); background: var(--ambar-fondo); border-radius: 18px; padding: 32px 20px; margin-bottom: 16px; cursor: pointer; transition: .18s ease; }
-        .qc-uc-dropzone:hover { border-color: var(--ambar); transform: translateY(-1px); }
-        .qc-uc-thumbnails { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
-        .qc-uc-thumb { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea); flex-shrink: 0; }
-        .qc-uc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .qc-uc-thumb-del { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,.55); border: none; color: #fff; font-size: 12px; cursor: pointer; display: grid; place-items: center; line-height: 1; padding: 0; }
-        .qc-uc-error { color: #e85d5d; font-size: 14px; margin-bottom: 12px; }
-        @media (max-width: 480px) { .qc-uc-card { padding: 40px 20px 26px; } .qc-uc-title { font-size: 22px; } }
-
-        /* Mobile nav */
-        @media (max-width: 680px) {
-          .qc-nav-links { display: none; }
-          .qc-hero { padding: 64px 20px 56px; }
-          .qc-section { padding: 56px 20px; }
-          .qc-cta-final-card { padding: 40px 24px; }
-          .qc-modal-card { padding: 28px 20px; }
-          /* Acercar testimonios y precios */
-          .qc-testimonios-section { padding-bottom: 24px; }
-          .qc-precios-section { padding-top: 24px; }
+        .lp-dropzone {
+          border: 1.5px dashed rgba(17,17,17,.2);
+          background: var(--paper);
+          border-radius: 18px;
+          padding: 32px 20px;
+          margin-bottom: 16px;
+          cursor: pointer;
+          transition: .18s ease;
+          text-align: center;
         }
+        .lp-dropzone:hover { border-color: var(--ink); }
+
+        .lp-thumbs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+        .lp-thumb { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); flex-shrink: 0; }
+        .lp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .lp-thumb-del {
+          position: absolute; top: 2px; right: 2px;
+          width: 20px; height: 20px; border-radius: 50%;
+          background: rgba(0,0,0,.55); border: none; color: #fff;
+          font-size: 12px; cursor: pointer; display: grid; place-items: center; padding: 0;
+        }
+
+        .lp-error { color: #e85d5d; font-size: 14px; margin-bottom: 12px; }
+
+        @media (max-width: 760px) {
+          .lp-header { height: 64px; }
+          .lp-logo { font-size: 20px; }
+          .lp-logo-mark { width: 30px; height: 30px; }
+          .lp-hero { padding: 72px 0 48px; }
+          .lp-hero h1 { font-size: clamp(48px, 15vw, 68px); }
+          .lp-hero-sub { font-size: 16px; max-width: 94%; }
+          .lp-btn { width: 100%; min-width: 0; min-height: 60px; }
+          .lp-video-section { padding-bottom: 76px; }
+          .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
+          .lp-video-center { padding: 22px; }
+          .lp-play { width: 62px; height: 62px; }
+          .lp-modal { padding: 40px 22px 26px; }
+          .lp-modal h3 { font-size: 24px; }
+        }
+
+        @media (max-width: 420px) {
+          .lp-container { width: min(calc(100% - 24px), var(--max)); }
+          .lp-hero { padding-top: 58px; }
+          .lp-hero h1 { font-size: 48px; }
+          .lp-eyebrow { font-size: 10px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { transition: none !important; animation: none !important; }
+          html { scroll-behavior: auto; }
+        }
+
+        :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
       `}</style>
 
-      <div className="qc-landing">
+      {/* HEADER */}
+      <header className="lp-header">
+        <div className="lp-container">
+          <a href="/" className="lp-logo" aria-label="QuieroComer">
+            <span className="lp-logo-mark">Q</span>
+            <span>QuieroComer</span>
+          </a>
+        </div>
+      </header>
 
-        {/* NAV */}
-        <nav className="qc-nav">
-          <div className="qc-nav-inner">
-            <a href="/" className="qc-logo"><img src="/logo.png" alt="" />QuieroComer</a>
-            <div className="qc-nav-links">
-              <a href="/carta-qr" className="qc-nav-link">Carta QR</a>
-              <a href="#precios" className="qc-nav-link">Precios</a>
-            </div>
-            <div className="qc-nav-actions">
-              <a href="/panel/login" className="qc-btn-ghost">{t("nav_login")}</a>
-              <a href="https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer" target="_blank" rel="noopener noreferrer" className="qc-btn-ambar" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                {t("nav_contact")}
-              </a>
-            </div>
-          </div>
-        </nav>
+      <main style={{ textAlign: "center" }}>
 
         {/* HERO */}
-        <section className="qc-hero">
-          <div className="qc-hero-inner">
-            <span className="qc-label">{t("hero_label")}</span>
-            <h1>
-              {(() => {
-                const full = t("hero_title");
-                const hl = t("hero_title_highlight");
-                const idx = full.indexOf(hl);
-                if (idx === -1) return full;
-                return (
-                  <>
-                    {full.slice(0, idx)}
-                    <span style={{ color: "var(--ambar)" }}>{hl}</span>
-                    {full.slice(idx + hl.length)}
-                  </>
-                );
-              })()}
+        <section className="lp-hero">
+          <div className="lp-container">
+            <div className="lp-eyebrow">Tu restaurante, mejor servido</div>
+
+            <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
+              Haz que tu carta<br />venda más.
             </h1>
-            <p className="qc-hero-sub">
-              {t("hero_subtitle")}
+
+            <p className="lp-hero-sub">
+              Convierte la carta que ya tienes en una experiencia digital simple,
+              rápida y pensada para tus clientes.
             </p>
-            <div className="qc-hero-cta">
-              <button onClick={openUcModal} className="qc-btn-ambar qc-btn-ambar-xl">
-                {t("hero_cta")}
+
+            <div className="lp-hero-cta">
+              <button className="lp-btn" onClick={openModal}>
+                Subir mi carta
               </button>
-              <a href="https://quierocomer.com/qr/el-menu-de-la-esquina" target="_blank" rel="noopener noreferrer" className="qc-link-ghost">
-                {t("hero_demo")}
-              </a>
             </div>
           </div>
         </section>
 
-        {/* MÓDULOS */}
-        <section className="qc-section" style={{ background: "white", paddingTop: 16 }}>
-          <div className="qc-section-inner">
-            <div className="qc-modulos-grid">
-
-              {/* Carta QR */}
-              <div className="qc-card qc-card-amber">
-                <span className="qc-badge qc-badge-dark">Otras herramientas</span>
-                <h2>{t("module_qr_label")}</h2>
-                <p>{t("module_qr_desc")}</p>
-
-                <div className="qc-card-btns">
-                  <a href="/carta-qr" className="qc-btn-outline">{t("module_qr_more")}</a>
-                  <a href="https://quierocomer.com/qr/horusvegan" target="_blank" rel="noopener noreferrer" className="qc-btn-outline">{t("module_qr_demo")}</a>
-                </div>
-                <div className="qc-iphone-wrap">
-                  <div className="qc-iphone">
-                    <div className="qc-iphone-notch"></div>
-                    <div className="qc-iphone-screen">
-                      <div className="qc-iphone-hero">
-                        <img src="https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" alt="" className="qc-iphone-hero-img" />
-                        <div className="qc-iphone-hero-overlay"></div>
-                        <div className="qc-iphone-hero-text">
-                          <h4>Alleria Pizza</h4>
-                          <p>📍 Providencia · Carta digital</p>
-                        </div>
-                      </div>
-                      <div className="qc-iphone-pills">
-                        <span className="qc-iphone-pill qc-iphone-pill-a">Todo</span>
-                        <span className="qc-iphone-pill qc-iphone-pill-i">Entradas</span>
-                        <span className="qc-iphone-pill qc-iphone-pill-i">Pizzas</span>
-                        <span className="qc-iphone-pill qc-iphone-pill-i">Postres</span>
-                      </div>
-                      <div className="qc-iphone-dishes">
-                        {[
-                          { name: "Pizza alla Genovese", desc: "Filete y cebollas 10 hrs.", price: "$24.680", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783901270166-pizza-alla-genovese.webp" },
-                          { name: "Arancinis di Riso", desc: "Risotto con carne y ragú", price: "$13.400", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1778093711966-arancinis-di-riso.webp" },
-                          { name: "Pasta alla Genovese", desc: "Receta tradicional Nonna", price: "$18.980", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1783875855139-pasta-alla-genovese.webp" },
-                          { name: "Baba Napolitana", desc: "Nutella, chantilly, ron", price: "$10.900", img: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/dishes/cmoj3lr3c0000lb04i3p3fuao-1780618444541-baba-napolitana.webp" },
-                        ].map((dish, i) => (
-                          <div key={i} className="qc-iphone-dish">
-                            <img src={dish.img} alt={dish.name} />
-                            <div className="qc-iphone-dish-info">
-                              <h5>{dish.name}</h5>
-                              <p>{dish.desc}</p>
-                            </div>
-                            <span className="qc-iphone-price">{dish.price}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+        {/* VIDEO (placeholder) */}
+        <section className="lp-video-section">
+          <div className="lp-container">
+            <div className="lp-video-wrap">
+              <div className="lp-video-card">
+                <div className="lp-video-placeholder">
+                  <div className="lp-video-center">
+                    <button className="lp-play" aria-label="Ver cómo funciona">▶</button>
+                    <strong>Mira cómo funciona desde los ojos de un cliente.</strong>
+                    <span>Video POV grabado con Ray-Ban Meta</span>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </section>
 
-        {/* RESTAURANTES */}
-        <section className="qc-rest-section">
-          <div className="qc-rest-section-inner">
-            <h2 className="qc-rest-title">
-              {t("restaurants_trust_title")}{t("restaurants_trust_highlight")}{t("restaurants_trust_suffix")}
-            </h2>
-            <p className="qc-rest-subtitle">{t("restaurants_label")}</p>
-          </div>
-          <div className="qc-rest-marquee-wrap">
-            <div className="qc-rest-marquee-track">
-              {[...RESTAURANTS, ...RESTAURANTS].map((r, i) => {
-                const initials = r.name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                return (
-                  <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className="qc-rest-card">
-                    {r.logo ? (
-                      <img
-                        src={r.logo}
-                        alt={r.name}
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = "none";
-                          const sib = img.nextElementSibling as HTMLElement | null;
-                          if (sib) sib.style.display = "flex";
-                        }}
-                      />
-                    ) : null}
-                    <span
-                      className="qc-rest-card-initials"
-                      style={{ display: r.logo ? "none" : "flex" }}
-                    >
-                      {initials}
-                    </span>
-                    {r.name}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+      </main>
 
-        {/* TESTIMONIOS */}
-        <section className="qc-section qc-testimonios-section" style={{ background: "white" }}>
-          <div className="qc-section-inner">
-            <h2 className="qc-section-title" style={{ textAlign: "center", marginBottom: 48 }}>{t("testimonials_title")}</h2>
-            <div className="qc-testimonios-wrap">
-              <button className="qc-testimonios-arrow qc-testimonios-arrow-left" onClick={() => scrollTestimonials("left")} aria-label="Anterior">‹</button>
-              <div className="qc-testimonios-scroll" ref={testimonialsRef}>
-                {testimonials.map((t, i) => (
-                  <div key={i} className="qc-test-card">
-                    <div className="qc-stars">★★★★★</div>
-                    <p className="qc-test-quote">"{t.quote}"</p>
-                    <div className="qc-test-author">
-                      <div className="qc-avatar" style={{ background: ["#F59E1B","#6d28d9","#10B981","#EF4444","#3B82F6","#EC4899"][i % 6] }}>{t.initials}</div>
-                      <div className="qc-test-author-info">
-                        <strong>{t.name}</strong>
-                        <span>{t.restaurant}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button className="qc-testimonios-arrow qc-testimonios-arrow-right" onClick={() => scrollTestimonials("right")} aria-label="Siguiente">›</button>
-            </div>
-          </div>
-        </section>
+      <LandingFooter />
 
-        {/* PRECIOS */}
-        <section className="qc-precios-section" id="precios">
-          <div className="qc-section-inner" style={{ textAlign: "center" }}>
-            <span className="qc-label">{t("pricing_label")}</span>
-            <h2 className="qc-section-title" style={{ marginBottom: 8 }}>{t("pricing_title")}</h2>
-            <p className="qc-section-sub">{t("pricing_subtitle")}</p>
-            <div className="qc-precios-grid">
+      {/* FILE INPUT */}
+      <input
+        ref={photoRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.pdf"
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileSelect}
+      />
 
-              {/* Gratis */}
-              <div className="qc-precio-card" style={{ background: "#FAFAF8", borderColor: "#DDDDD8" }}>
-                <span className="qc-badge" style={{ background: "#ECECEA", color: "#555", marginBottom: 16 }}>Para siempre gratis</span>
-                <div className="qc-precio-name">Carta QR</div>
-                <div className="qc-precio-price" style={{ color: "#555" }}>$0 <span style={{ fontSize: 18 }}>/ mes</span></div>
-                <div className="qc-precio-sub">Sin tarjeta. Sin vencimiento.</div>
-                <ul className="qc-feature-list">
-                  {["Carta digital con fotos", "Navegación por categorías", "QR listo para imprimir", "Panel autoadministrable"].map((f, i) => (
-                    <li key={i}><span className="qc-check" style={{ color: "#999" }}>✓</span>{f}</li>
-                  ))}
-                </ul>
+      {/* MODAL */}
+      {ucOpen && (
+        <div
+          className="lp-velo"
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+        >
+          <div className="lp-modal" role="dialog" aria-modal="true">
+            {ucStep !== "options" && (
+              <button
+                className="lp-volver"
+                onClick={() => { setUcStep("options"); setUcError(""); setUcFiles([]); setUcFileName(""); setUcLink(""); }}
+              >
+                ← Volver
+              </button>
+            )}
+            <button className="lp-cerrar" onClick={closeModal} aria-label="Cerrar">×</button>
+
+            {/* STEP 1: elegir método */}
+            {ucStep === "options" && (
+              <>
+                <h3>¿Cómo tienes tu carta hoy?</h3>
+
+                <button className="lp-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
+                    <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
+                    <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
+                  </svg>
+                  Tengo un link
+                </button>
+
+                <button className="lp-opcion" onClick={() => photoRef.current?.click()}>
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                  Tengo una foto o un PDF
+                </button>
+
+                <button className="lp-desde-cero" onClick={() => { closeModal(); window.location.href = "/subircarta"; }}>
+                  No tengo carta, empezar de cero
+                </button>
+              </>
+            )}
+
+            {/* STEP 2: link */}
+            {ucStep === "link" && (
+              <>
+                <h3>Pega el link de tu carta</h3>
+                <input
+                  className="lp-campo"
+                  type="url"
+                  placeholder="https://..."
+                  value={ucLink}
+                  onChange={(e) => { setUcLink(e.target.value); setUcError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                  autoFocus
+                />
+                {ucError && <div className="lp-error">{ucError}</div>}
                 <button
-                  style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, background: "transparent", border: "1.5px solid #DDDDD8", color: "#555", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-                  onClick={() => openModal("free")}
+                  className="lp-modal-btn"
+                  onClick={handleSubmit}
+                  disabled={ucLoading || !ucLink.trim()}
                 >
-                  Empezar gratis →
+                  {ucLoading ? (ucProgress || "Procesando...") : "Continuar →"}
                 </button>
-              </div>
+              </>
+            )}
 
-              {/* Pro */}
-              <div className="qc-precio-card qc-precio-card-featured">
-                <span className="qc-badge qc-badge-amber" style={{ marginBottom: 16 }}>{t("pricing_trial")}</span>
-                <div className="qc-precio-name">{t("plan_pro")}</div>
-                <div className="qc-precio-price">{t("plan_price_pro")} <span style={{ fontSize: 18 }}>{t("plan_price_unit")}</span></div>
-                <div className="qc-precio-sub">{t("plan_price_tax")}</div>
-                <ul className="qc-feature-list">
-                  {proFeatures.map((f, i) => (
-                    <li key={i}><span className="qc-check">✓</span>{f}</li>
-                  ))}
-                </ul>
-                <button onClick={openUcModal} className="qc-btn-ambar" style={{ width: "100%", padding: "14px", borderRadius: 10, fontSize: 15, border: "none", fontFamily: "inherit", cursor: "pointer" }}>
-                  {t("plan_cta_pro")}
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* CTA FINAL */}
-        <section className="qc-cta-final">
-          <div className="qc-cta-final-card">
-            <h2>{t("final_title")}</h2>
-            <p style={{color:"rgba(255,255,255,0.75)"}}>{t("final_subtitle")}</p>
-            <button onClick={openUcModal} className="qc-btn-white" style={{ display: "inline-block" }}>{t("final_cta")}</button>
-            <p className="qc-cta-note" style={{color:"rgba(255,255,255,0.4)"}}>{t("final_note")}</p>
-          </div>
-        </section>
-
-        <LandingFooter />
-
-        {/* UPLOAD CARTA MODAL */}
-        <input ref={ucPhotoRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.pdf" multiple style={{ display: "none" }} onChange={handleUcFileSelect} />
-        {ucOpen && (
-          <div className="qc-uc-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeUcModal(); }}>
-            <div className="qc-uc-card" role="dialog" aria-modal="true">
-              {ucStep !== "options" && (
-                <button className="qc-uc-back" onClick={() => { setUcStep("options"); setUcError(""); setUcFiles([]); setUcFileName(""); setUcLink(""); }}>← Volver</button>
-              )}
-              <button className="qc-uc-close" onClick={closeUcModal} aria-label="Cerrar">×</button>
-
-              {ucStep === "options" && (
-                <>
-                  <h3 className="qc-uc-title">¿Cómo tienes tu carta hoy?</h3>
-                  <button className="qc-uc-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                      <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-                    </svg>
-                    Tengo un link
-                  </button>
-                  <button className="qc-uc-opcion" onClick={() => ucPhotoRef.current?.click()}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <path d="M14 2v6h6"/>
-                    </svg>
-                    Tengo una foto o un PDF
-                  </button>
-                  <button className="qc-uc-desde-cero" onClick={() => { window.location.href = "/subircarta"; }}>
-                    No tengo carta, empezar de cero
-                  </button>
-                </>
-              )}
-
-              {ucStep === "link" && (
-                <>
-                  <h3 className="qc-uc-title">Pega el link de tu carta</h3>
-                  <input
-                    className="qc-uc-input"
-                    type="url"
-                    placeholder="https://turestaurante.cl/carta"
-                    value={ucLink}
-                    onChange={(e) => { setUcLink(e.target.value); setUcError(""); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleUcSubmit(); }}
-                    autoFocus
-                  />
-                  {ucError && <div className="qc-uc-error">{ucError}</div>}
-                  <button
-                    className="qc-uc-btn"
-                    onClick={handleUcSubmit}
-                    disabled={ucLoading || !ucLink.trim()}
-                  >
-                    {ucLoading ? (ucProgress || "Procesando...") : "Continuar →"}
-                  </button>
-                </>
-              )}
-
-              {ucStep === "photo" && (
-                <>
-                  <h3 className="qc-uc-title">Sube tu carta</h3>
-                  {ucFiles.length === 0 ? (
-                    <div className="qc-uc-dropzone" onClick={() => ucPhotoRef.current?.click()}>
-                      <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                      <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--tinta)" }}>Toca para seleccionar archivos</div>
-                      <div style={{ fontSize: 13, color: "var(--gris)" }}>JPG, PNG, PDF · Máx. 10 archivos · 50MB</div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="qc-uc-thumbnails">
-                        {ucFiles.map((f, i) => (
-                          <div key={i} className="qc-uc-thumb">
-                            {f.type.startsWith("image/") ? (
-                              <img src={URL.createObjectURL(f)} alt={f.name} />
-                            ) : (
-                              <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", background: "#F5F5F3", fontSize: 10, color: "#666", fontWeight: 700 }}>PDF</div>
-                            )}
-                            <button
-                              className="qc-uc-thumb-del"
-                              onClick={() => setUcFiles(prev => {
-                                const next = prev.filter((_, j) => j !== i);
-                                setUcFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} archivos`);
-                                return next;
-                              })}
-                            >×</button>
-                          </div>
-                        ))}
-                        {ucFiles.length < 10 && (
-                          <div
-                            onClick={() => ucPhotoRef.current?.click()}
-                            style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed #DDDDD8", display: "grid", placeItems: "center", cursor: "pointer", color: "#A8A8A2", fontSize: 24 }}
-                          >+</div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--gris)", marginBottom: 14 }}>{ucFileName}</div>
-                    </>
-                  )}
-                  {ucError && <div className="qc-uc-error">{ucError}</div>}
-                  <button
-                    className="qc-uc-btn"
-                    onClick={ucFiles.length > 0 ? handleUcSubmit : () => ucPhotoRef.current?.click()}
-                    disabled={ucLoading}
-                  >
-                    {ucLoading ? (ucProgress || "Subiendo...") : ucFiles.length > 0 ? "Subir mi carta →" : "Seleccionar archivos"}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* MODAL */}
-        {modalOpen && (
-          <div className="qc-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-            <div className="qc-modal-card">
-              <button className="qc-modal-close" onClick={closeModal} aria-label="Cerrar">×</button>
-
-              <span className="qc-modal-emoji">✨</span>
-              <h2 className="qc-modal-title">{t("modal_title")}</h2>
-              <p className="qc-modal-sub">{t("modal_subtitle")}</p>
-              <form onSubmit={handleSubmit}>
-                <div className="qc-form-group">
-                  <label className="qc-form-label">{t("form_owner")}</label>
-                  <input
-                    className="qc-form-input"
-                    type="text"
-                    placeholder={t("form_owner_ph")}
-                    value={formData.ownerName}
-                    onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <div className="qc-form-group">
-                  <label className="qc-form-label">{t("form_local")}</label>
-                  <input
-                    className="qc-form-input"
-                    type="text"
-                    placeholder={t("form_local_ph")}
-                    value={formData.localName}
-                    onChange={(e) => setFormData({ ...formData, localName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="qc-form-group">
-                  <label className="qc-form-label">{t("form_email")}</label>
-                  <input
-                    className="qc-form-input"
-                    type="email"
-                    placeholder={t("form_email_ph")}
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="qc-form-group">
-                  <label className="qc-form-label">{t("form_whatsapp")}</label>
-                  <div className="qc-phone-group">
-                    <span className="qc-phone-prefix">
-                      <svg width="18" height="13" viewBox="0 0 20 14" style={{borderRadius:2,flexShrink:0}}>
-                        <rect width="20" height="7" fill="#fff"/>
-                        <rect y="7" width="20" height="7" fill="#D52B1E"/>
-                        <rect width="7" height="7" fill="#0039A6"/>
-                        <polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/>
-                      </svg>
-                      +56
-                    </span>
-                    <input
-                      className="qc-form-input"
-                      type="tel"
-                      placeholder={t("form_whatsapp_ph")}
-                      value={formData.whatsapp}
-                      maxLength={9}
-                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value.replace(/\D/g, "") })}
-                    />
+            {/* STEP 3: foto/PDF */}
+            {ucStep === "photo" && (
+              <>
+                <h3>Sube tu carta</h3>
+                {ucFiles.length === 0 ? (
+                  <div className="lp-dropzone" onClick={() => photoRef.current?.click()}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Toca para seleccionar archivos</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>JPG, PNG, PDF · Máx. 10 archivos · 50MB</div>
                   </div>
-                </div>
-                {formError && <div className="qc-form-error">{formError}</div>}
-                <button className="qc-btn-submit" type="submit" disabled={submitting}>
-                  {submitting ? t("form_loading") : t("form_submit")}
+                ) : (
+                  <>
+                    <div className="lp-thumbs">
+                      {ucFiles.map((f, i) => (
+                        <div key={i} className="lp-thumb">
+                          {f.type.startsWith("image/") ? (
+                            <img src={URL.createObjectURL(f)} alt={f.name} />
+                          ) : (
+                            <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", background: "#F5F5F3", fontSize: 10, color: "#666", fontWeight: 700 }}>PDF</div>
+                          )}
+                          <button
+                            className="lp-thumb-del"
+                            onClick={() => setUcFiles(prev => {
+                              const next = prev.filter((_, j) => j !== i);
+                              setUcFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} archivos`);
+                              return next;
+                            })}
+                          >×</button>
+                        </div>
+                      ))}
+                      {ucFiles.length < 10 && (
+                        <div
+                          onClick={() => photoRef.current?.click()}
+                          style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed #DDDDD8", display: "grid", placeItems: "center", cursor: "pointer", color: "#A8A8A2", fontSize: 24 }}
+                        >+</div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>{ucFileName}</div>
+                  </>
+                )}
+                {ucError && <div className="lp-error">{ucError}</div>}
+                <button
+                  className="lp-modal-btn"
+                  onClick={ucFiles.length > 0 ? handleSubmit : () => photoRef.current?.click()}
+                  disabled={ucLoading}
+                >
+                  {ucLoading
+                    ? (ucProgress || "Subiendo...")
+                    : ucFiles.length > 0 ? "Subir mi carta →" : "Seleccionar archivos"}
                 </button>
-              </form>
-            </div>
+              </>
+            )}
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </>
   );
 }
