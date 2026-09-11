@@ -104,17 +104,19 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
     onClose(); // cierre inmediato al agregar: solo se anima el carrito, no el modal
   }
 
-  // Imagen del producto. En el tema base (scrollImage) va sin degradado y sin
-  // fijarse (shrink-0), para que se desplace junto con la descripción.
+  // Imagen del producto. En el tema base (scrollImage) tiene SIEMPRE la misma
+  // altura (1/3 de la pantalla) y va sin degradado; se desplaza junto con la
+  // descripción (por eso shrink-0: nunca se comprime según el texto).
+  const imgSizeCls = scrollImage ? "h-[33vh] shrink-0" : "aspect-square sm:aspect-auto sm:h-52 shrink-0";
   const imageBlock = product.image_url ? (
-    <div className={`relative aspect-square sm:aspect-auto sm:h-52 sm:rounded-t-3xl overflow-hidden ${scrollImage ? "" : "shrink-0"}`}>
+    <div className={`relative ${imgSizeCls} sm:rounded-t-3xl overflow-hidden`}>
       <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
       {!scrollImage && (
         <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: "45%", background: "linear-gradient(to bottom, transparent, var(--carta-surface, #ffffff))" }} />
       )}
     </div>
   ) : (
-    <div className={`h-32 sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl ${scrollImage ? "" : "shrink-0"}`}>🍱</div>
+    <div className={`${scrollImage ? "h-[33vh] shrink-0" : "h-32 shrink-0"} sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl`}>🍱</div>
   );
 
   const details = (
