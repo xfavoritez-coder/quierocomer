@@ -28,6 +28,8 @@ interface Order {
 }
 
 interface CourierInfo {
+  source?: string | null; // "deliveryhandroll" cuando lo gestiona DH; ausente/otro = Uber Direct
+  statusLabel?: string | null; // etiqueta de estado ya traducida (DH)
   deliveryId: string; status: string; trackingUrl: string | null; fee: number | null; eta: string | null;
   courierName: string | null; courierPhone: string | null; courierVehicle: string | null; courierImg: string | null;
   location: { lat: number; lng: number } | null; proofPhotoUrl: string | null; updatedAt: string;
@@ -311,9 +313,12 @@ function etaText(iso: string | null): string | null {
 // Tarjeta de seguimiento del repartidor (Uber Direct). Se actualiza en vivo por
 // Realtime cuando llega un webhook de Uber.
 function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: CourierInfo; mapsKey: string | null; dropoff: { lat: number; lng: number } | null; compact?: boolean }) {
-  const label = UBER_STATUS_LABEL[c.status] || c.status;
-  const delivered = c.status === "delivered";
-  const color = delivered ? GREEN : c.status === "canceled" || c.status === "returned" ? RED : GREEN;
+  const isDh = c.source === "deliveryhandroll";
+  const label = isDh ? (c.statusLabel || "Repartidor en camino") : (UBER_STATUS_LABEL[c.status] || c.status);
+  const delivered = isDh ? c.status === "completed" : c.status === "delivered";
+  const cancelled = isDh ? c.status === "cancelled" : c.status === "canceled" || c.status === "returned";
+  const color = delivered ? GREEN : cancelled ? RED : GREEN;
+  const fallbackName = isDh ? "Repartidor asignado" : "Repartidor Uber";
   const eta = etaText(c.eta);
 
   // Mini mapa estático: courier (verde) + destino (rojo).
@@ -331,7 +336,7 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{label}{!delivered && eta ? <span style={{ color, fontWeight: 700 }}> · {eta}</span> : null}</p>
           <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>
-            {c.courierName ? c.courierName : "Repartidor Uber"}{c.courierVehicle ? ` · ${c.courierVehicle}` : ""}
+            {c.courierName ? c.courierName : fallbackName}{c.courierVehicle ? ` · ${c.courierVehicle}` : ""}
           </p>
         </div>
         {c.courierPhone && (

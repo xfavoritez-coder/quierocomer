@@ -79,3 +79,33 @@ export function dhCourier(d: DhDelivery | null): { lat: number | null; lng: numb
   if (lat == null && lng == null && !name) return null;
   return { lat, lng, name, label };
 }
+
+/** Coordenada válida: no nula y no el (0,0) que DH devuelve cuando aún no hay ubicación real. */
+function validCoord(lat: number | null, lng: number | null): boolean {
+  return lat != null && lng != null && (Math.abs(lat) > 0.01 || Math.abs(lng) > 0.01);
+}
+
+/**
+ * Registro que se guarda en OnlineOrder.courier para un repartidor de deliveryhandroll.
+ * Comparte forma con el courier de Uber Direct pero se marca con source="deliveryhandroll"
+ * para que el panel lo muestre con su nombre/estado real y NO como "Repartidor Uber".
+ */
+export function dhCourierRecord(
+  track: DhDelivery | null,
+  courier: { lat: number | null; lng: number | null; name: string | null; label: string | null },
+  prev: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    ...prev,
+    source: "deliveryhandroll",
+    status: track?.public_status_code ?? null,
+    statusLabel: courier.label,
+    courierName: courier.name,
+    location: validCoord(courier.lat, courier.lng) ? { lat: courier.lat, lng: courier.lng } : null,
+    lat: courier.lat,
+    lng: courier.lng,
+    name: courier.name,
+    label: courier.label,
+    updatedAt: new Date().toISOString(),
+  };
+}

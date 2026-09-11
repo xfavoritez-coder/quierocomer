@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { deliveryHandrollVendor, fetchDhTracking, mapDhStatus, dhCourier } from "@/lib/ecommerce/deliverySync";
+import { deliveryHandrollVendor, fetchDhTracking, mapDhStatus, dhCourier, dhCourierRecord } from "@/lib/ecommerce/deliverySync";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     }
     if (courier && (courier.lat != null || courier.name)) {
       const prev = (o.courier && typeof o.courier === "object" ? o.courier : {}) as Record<string, unknown>;
-      data.courier = { ...prev, lat: courier.lat, lng: courier.lng, name: courier.name, label: courier.label, updatedAt: new Date().toISOString() };
+      data.courier = dhCourierRecord(track, courier, prev);
     }
     if (Object.keys(data).length) {
       const { error } = await prisma.onlineOrder.update({ where: { id: o.id }, data }).then(() => ({ error: null })).catch((e) => ({ error: e }));
