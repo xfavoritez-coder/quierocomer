@@ -376,8 +376,16 @@ export default function Paso2Client() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Estamos <span>revisando</span> tu carta</h1>
-            <p className="subcopy">Estamos leyendo tu carta y preparando una nueva versión.</p>
+            <h1 key={Math.min(completedSteps, 2)} style={{ animation: "titleFade .5s ease" }}>
+              {animDone || completedSteps >= 2
+                ? "Tu carta está lista"
+                : completedSteps === 1
+                ? "Transformando tu carta"
+                : "Estamos revisando tu carta"}
+            </h1>
+            <p className="subcopy">
+              {animDone ? "Lista para recibir. Solo faltan tus datos." : "Estamos leyendo tu carta y preparando una nueva versión."}
+            </p>
           </div>
 
           <div className="centered-form">
@@ -403,7 +411,7 @@ export default function Paso2Client() {
             {/* Progress */}
             <div className="progress-area">
               <div className="progress-head">
-                <strong>Preparando demo</strong>
+                <strong>Preparando tu carta</strong>
                 <span>{progress}%</span>
               </div>
               <div className="progress-track">
@@ -426,9 +434,55 @@ export default function Paso2Client() {
             {/* Form — hidden until animation completes, then slides up */}
             {animDone && (
             <div ref={formSectionRef} className="form-section form-reveal">
+
+              {/* Blurred preview tease */}
+              <div style={{ marginBottom: 24, textAlign: "center" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(67,209,123,.1)", border: "1px solid rgba(67,209,123,.3)", color: "#2d9e5f", fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 999, marginBottom: 14 }}>
+                  <svg viewBox="0 0 20 20" width="14" height="14" fill="none"><circle cx="10" cy="10" r="10" fill="#43d17b"/><path d="M6 10.5l2.5 2.5L14 8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Tu carta está lista
+                </div>
+                <div style={{ position: "relative", border: "1.5px solid var(--line)", borderRadius: 16, overflow: "hidden", background: "var(--white)", textAlign: "left" }}>
+                  {/* Blurred fake menu content */}
+                  <div style={{ padding: 16, filter: "blur(5px)", userSelect: "none", pointerEvents: "none" }}>
+                    {/* Header */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: "#E9E8E3", flexShrink: 0 }} />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ height: 13, width: 130, borderRadius: 5, background: "#E9E8E3" }} />
+                        <div style={{ height: 9, width: 80, borderRadius: 5, background: "#F0EFEA" }} />
+                      </div>
+                    </div>
+                    {/* Category pills */}
+                    <div style={{ display: "flex", gap: 7, marginBottom: 16, flexWrap: "wrap" }}>
+                      {["Entrantes", "Principales", "Postres", "Bebidas"].map(c => (
+                        <div key={c} style={{ height: 28, padding: "0 13px", borderRadius: 999, background: "#F59E1B", opacity: .75, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", color: "#fff" }}>{c}</div>
+                      ))}
+                    </div>
+                    {/* Fake dish rows */}
+                    {[1,2,3].map(i => (
+                      <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "center" }}>
+                        <div style={{ width: 58, height: 58, borderRadius: 10, background: i === 1 ? "#DDD" : i === 2 ? "#E5E0DA" : "#E9E5E0", flexShrink: 0 }} />
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
+                          <div style={{ height: 11, width: `${[82,68,75][i-1]}%`, borderRadius: 4, background: "#E9E8E3" }} />
+                          <div style={{ height: 9, width: `${[55,45,60][i-1]}%`, borderRadius: 4, background: "#F0EFEA" }} />
+                          <div style={{ height: 10, width: 52, borderRadius: 4, background: "#F59E1B", opacity: .35 }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Overlay con candado */}
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(252,251,247,.55)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1.5px solid #EAE8E1", borderRadius: 999, padding: "10px 22px", fontSize: 13, fontWeight: 700, color: "#111", boxShadow: "0 4px 20px rgba(0,0,0,.1)" }}>
+                      <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" stroke="#111" strokeWidth="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#111" strokeWidth="2" strokeLinecap="round"/></svg>
+                      Ingresa tus datos para desbloquear
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="form-title">
-                <h2>¿Dónde te la enviamos?</h2>
-                <p className="form-sub">Déjanos tus datos para enviar tu carta viva lista.</p>
+                <h2>¿A dónde te la enviamos?</h2>
+                <p className="form-sub">Déjanos tus datos y te mandamos el link de tu carta al instante.</p>
               </div>
 
               <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -624,6 +678,7 @@ h1 span { color: var(--yellow); }
 .form-reveal { animation: formSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes formSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pillMetaFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes titleFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .form-title { text-align: center; margin-bottom: 18px; }
 .form-title h2 { font-size: clamp(22px, 5vw, 28px); font-weight: 800; letter-spacing: -.04em; color: var(--ink); margin-bottom: 5px; }
 .form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
