@@ -496,12 +496,13 @@ export default function LandingPage() {
         <section className="lp-hero">
           <div className="lp-container">
             <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
-              Haz que tu carta<br />venda más.
+              Convierte tu carta en una herramienta que vende más.
             </h1>
 
             <p className="lp-hero-sub">
-              Convierte la carta que ya tienes en una experiencia digital simple,
-              rápida y pensada para tus clientes.
+              Sube lo que ya tienes — un link, una foto o un PDF — y en minutos
+              tienes una carta digital que hace que tus clientes elijan más fácil
+              y pidan más.
             </p>
 
             <div className="lp-hero-cta">
