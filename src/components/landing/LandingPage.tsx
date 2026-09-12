@@ -256,7 +256,7 @@ export default function LandingPage() {
         .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
 
         /* VIDEO */
-        .lp-video-section { padding: 18px 0 56px; }
+        .lp-video-section { padding: 18px 0 12px; }
         .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
         .lp-video-card {
           position: relative;
@@ -360,9 +360,10 @@ export default function LandingPage() {
         .lp-opcion {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 15px;
           width: 100%;
-          text-align: left;
+          text-align: center;
           font-size: 17px;
           font-weight: 700;
           letter-spacing: -.025em;
@@ -379,7 +380,7 @@ export default function LandingPage() {
         .lp-opcion svg { flex-shrink: 0; }
 
         /* SHOWCASE */
-        .lp-showcase { padding: 40px 0 96px; }
+        .lp-showcase { padding: 20px 0 96px; }
         .lp-showcase-title {
           font-size: 13px;
           font-weight: 700;
@@ -537,14 +538,14 @@ export default function LandingPage() {
             </h1>
 
             <p className="lp-hero-sub">
-              Sube lo que ya tienes — un link, una foto o un PDF — y en minutos
-              tienes una carta digital que hace que tus clientes elijan más fácil
-              y pidan más.
+              Transforma tu carta actual en una herramienta que{" "}
+              <strong style={{ color: "var(--ink)", fontWeight: 750 }}>aumenta tus ventas</strong>{" "}
+              y mejora la experiencia de tus clientes.
             </p>
 
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
-                Subir carta gratis
+                Subir carta
               </button>
             </div>
           </div>
@@ -650,7 +651,7 @@ export default function LandingPage() {
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <path d="M14 2v6h6"/>
                   </svg>
-                  Tengo una foto o un PDF
+                  Tengo fotos
                 </button>
 
                 <button className="lp-opcion" style={{ marginBottom: 0 }} onClick={() => { closeModal(); window.location.href = "/subircarta"; }}>
