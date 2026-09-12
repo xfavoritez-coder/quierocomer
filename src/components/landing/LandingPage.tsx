@@ -346,7 +346,7 @@ export default function LandingPage() {
           max-width: 480px;
           max-height: 90vh;
           overflow-y: auto;
-          padding: 42px 34px 30px;
+          padding: 64px 34px 32px;
           position: relative;
           text-align: center;
           box-shadow: 0 30px 90px rgba(0,0,0,.32);
