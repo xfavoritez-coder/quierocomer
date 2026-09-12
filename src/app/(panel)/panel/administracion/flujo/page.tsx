@@ -208,7 +208,6 @@ function PLStatement({ categories, entries, monthStr }: {
             <GroupHead label={groupName} icon={GROUP_ICONS[groupName]} value={groupTotal} base={totalIncome} />
             {cats.map(c => {
               const v = catTotals[c.id] || 0;
-              if (!v) return null;
               return <DataRow key={c.id} label={c.name} icon={c.icon} value={v} base={totalIncome} indent deep />;
             })}
           </div>
@@ -278,14 +277,15 @@ function DataRow({ label, icon, value, base, indent, deep, isIncome }: {
   label: string; icon?: string | null; value: number; base: number;
   indent?: boolean; deep?: boolean; isIncome?: boolean;
 }) {
+  const isEmpty = !value;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", gap: 0, padding: "5px 12px", paddingLeft: deep ? 28 : indent ? 20 : 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", gap: 0, padding: "5px 12px", paddingLeft: deep ? 28 : indent ? 20 : 12, opacity: isEmpty ? 0.38 : 1 }}>
       <span style={{ fontFamily: FB, fontSize: "0.845rem", color: "var(--adm-text2,#555)", display: "flex", alignItems: "center", gap: 5 }}>
         {icon && <span style={{ fontSize: 13, flexShrink: 0 }}>{icon}</span>}
         {label}
       </span>
-      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{pct(value, base)}</span>
-      <span style={{ fontFamily: FM, fontSize: "0.855rem", fontWeight: 600, color: isIncome ? "#16a34a" : "var(--adm-text,#333)", textAlign: "right", alignSelf: "center" }}>{clp(value)}</span>
+      <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{isEmpty ? "—" : pct(value, base)}</span>
+      <span style={{ fontFamily: FM, fontSize: "0.855rem", fontWeight: 600, color: isIncome ? "#16a34a" : "var(--adm-text,#333)", textAlign: "right", alignSelf: "center" }}>{isEmpty ? "—" : clp(value)}</span>
     </div>
   );
 }
