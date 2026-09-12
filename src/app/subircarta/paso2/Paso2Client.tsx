@@ -8,7 +8,6 @@ import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { resumeAdTracker } from "@/lib/adTracker";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
-import NavHamburger from "@/components/NavHamburger";
 
 const PROGRESS_STEPS = [
   { label: "Detectando platos y categorías", duration: 3500 },
@@ -300,7 +299,7 @@ export default function Paso2Client() {
       <>
         <style dangerouslySetInnerHTML={{ __html: STYLES }} />
         <div style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
-          <p>No se encontró la referencia. <a href="/subircarta" style={{ color: "var(--amber-2)" }}>Volver al paso 1</a></p>
+          <p>No se encontró la referencia. <a href="/subircarta" style={{ color: "#F59E1B" }}>Volver al paso 1</a></p>
         </div>
       </>
     );
@@ -357,15 +356,13 @@ export default function Paso2Client() {
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
 
-      <div className="grain" />
-
       <main className="page">
-        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "20px clamp(22px,4vw,64px)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(9,8,6,.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-          <a href="/" style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 600, color: "var(--cream)", display: "flex", alignItems: "center", gap: 10, letterSpacing: ".02em", textDecoration: "none" }}>
-            <img src="/logo.png" alt="" style={{ height: 26, width: 26, objectFit: "contain" }} />
+        <nav className="nav-bar">
+          <a href="/" className="nav-logo">
+            <img src="/logo.png" alt="" style={{ height: 22, width: 22, objectFit: "contain" }} />
             QuieroComer
           </a>
-          <NavHamburger />
+          <a href="/panel" className="nav-ingresar">Ingresar</a>
         </nav>
 
         {/* Steps — step 1 done, step 2 active */}
@@ -418,7 +415,7 @@ export default function Paso2Client() {
                     {i < completedSteps ? (
                       <svg viewBox="0 0 20 20" width="15" height="15" fill="none"><circle cx="10" cy="10" r="10" fill="#43d17b"/><path d="M6 10.5l2.5 2.5L14 8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     ) : (
-                      <svg viewBox="0 0 20 20" width="15" height="15" fill="none"><circle cx="10" cy="10" r="9" stroke="var(--amber)" strokeWidth="2"/><path d="M10 6v4l2 2" stroke="var(--amber)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      <svg viewBox="0 0 20 20" width="15" height="15" fill="none"><circle cx="10" cy="10" r="9" stroke="#F59E1B" strokeWidth="2"/><path d="M10 6v4l2 2" stroke="#F59E1B" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     )}
                     {step.label}
                   </div>
@@ -450,21 +447,21 @@ export default function Paso2Client() {
                 <div className="field-row">
                   <label style={{ display: "block", fontSize: 15, color: "var(--muted)", marginBottom: 5, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "#F5F5F3", border: "1.5px solid #EAE8E1", borderRadius: 10, color: "#111", fontSize: 14, flexShrink: 0 }}>
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
                       <span style={{ fontWeight: 600 }}>+56</span>
                     </div>
                     <input type="tel" placeholder="9 1234 5678" value={whatsapp} onChange={(e) => { setWhatsapp(formatPhone(e.target.value)); setError(""); setPhoneWarning(""); }} style={{ flex: 1 }} />
                   </div>
                   {phoneWarning && (
-                    <div style={{ color: "var(--amber-2)", fontSize: 12, marginTop: 4, textAlign: "left", paddingLeft: 4 }}>
+                    <div style={{ color: "#F59E1B", fontSize: 12, marginTop: 4, textAlign: "left", paddingLeft: 4 }}>
                       {phoneWarning}
                     </div>
                   )}
                 </div>
 
                 {emailWarning && !emailWarningDismissed && (
-                  <div style={{ background: "rgba(232,163,61,.1)", border: "1px solid rgba(232,163,61,.3)", borderRadius: 14, padding: "16px 18px", marginBottom: 12, textAlign: "left", fontSize: 14, color: "var(--cream-2)", lineHeight: 1.5 }}>
+                  <div style={{ background: "#FFF7EA", border: "1.5px solid rgba(245,158,27,.3)", borderRadius: 14, padding: "14px 16px", marginBottom: 12, textAlign: "left", fontSize: 14, color: "#111", lineHeight: 1.5 }}>
                     <div style={{ fontWeight: 600 }}>{emailWarning}</div>
                     {emailWarningType === "active" && (
                       <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -472,12 +469,12 @@ export default function Paso2Client() {
                         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                           <a href="/panel/forgot-password" style={{
                             display: "inline-block", padding: "8px 16px", borderRadius: 10,
-                            background: "var(--amber-2, #E8A33D)", color: "#0e0c0a",
+                            background: "#F59E1B", color: "#fff",
                             fontSize: 13, fontWeight: 700, textDecoration: "none",
                           }}>Recuperar contraseña</a>
                           <button type="button" onClick={() => { setEmailWarningDismissed(true); setEmailWarning(""); }} style={{
-                            background: "none", border: "1px solid rgba(255,255,255,.12)", borderRadius: 10,
-                            padding: "8px 14px", color: "var(--muted)", fontSize: 13, cursor: "pointer",
+                            background: "none", border: "1.5px solid #EAE8E1", borderRadius: 10,
+                            padding: "8px 14px", color: "#73736D", fontSize: 13, cursor: "pointer",
                           }}>Crear otro local</button>
                         </div>
                       </div>
@@ -488,12 +485,12 @@ export default function Paso2Client() {
                         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                           <a href="/panel" style={{
                             display: "inline-block", padding: "8px 16px", borderRadius: 10,
-                            background: "var(--amber-2, #E8A33D)", color: "#0e0c0a",
+                            background: "#F59E1B", color: "#fff",
                             fontSize: 13, fontWeight: 700, textDecoration: "none",
                           }}>Ir a mi panel</a>
                           <button type="button" onClick={() => { setEmailWarningDismissed(true); setEmailWarning(""); }} style={{
-                            background: "none", border: "1px solid rgba(255,255,255,.12)", borderRadius: 10,
-                            padding: "8px 14px", color: "var(--muted)", fontSize: 13, cursor: "pointer",
+                            background: "none", border: "1.5px solid #EAE8E1", borderRadius: 10,
+                            padding: "8px 14px", color: "#73736D", fontSize: 13, cursor: "pointer",
                           }}>Crear otro local</button>
                         </div>
                       </div>
@@ -512,7 +509,7 @@ export default function Paso2Client() {
                 </button>
               </form>
 
-              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
+              <p style={{ textAlign: "center", color: "#A8A8A2", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
 
             </div>
             )}
@@ -527,47 +524,36 @@ export default function Paso2Client() {
       {exitModal && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 10000,
-          background: "rgba(0,0,0,.75)", backdropFilter: "blur(6px)",
+          background: "rgba(17,17,17,.5)", backdropFilter: "blur(4px)",
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }}>
           <div style={{
-            background: "#1a1710", border: "1px solid rgba(232,163,61,.25)",
-            borderRadius: 24, maxWidth: 380, width: "100%", padding: "32px 24px",
-            textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,.5)",
+            background: "#fff", border: "1.5px solid #EAE8E1",
+            borderRadius: 24, maxWidth: 360, width: "100%", padding: "32px 24px",
+            textAlign: "center", boxShadow: "0 24px 64px rgba(0,0,0,.18)",
           }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🍽️</div>
-            <h2 style={{
-              fontFamily: "Georgia, serif", fontSize: "1.4rem", fontWeight: 400,
-              color: "#E8DDC8", margin: "0 0 10px", lineHeight: 1.25,
-            }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🍽️</div>
+            <h2 style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-.04em", color: "#111", margin: "0 0 10px", lineHeight: 1.2 }}>
               Tu carta ya casi está lista
             </h2>
-            <p style={{
-              fontSize: "0.92rem", color: "#9a8b73", lineHeight: 1.5, margin: "0 0 24px",
-            }}>
-              Solo faltan tus datos para crearla. Son 30 segundos y tu carta queda lista para usar.
+            <p style={{ fontSize: "0.9rem", color: "#73736D", lineHeight: 1.5, margin: "0 0 22px" }}>
+              Solo faltan tus datos para crearla. Son 30 segundos.
             </p>
             <button
-              onClick={() => {
-                setExitModal(false);
-                setTimeout(() => firstInputRef.current?.focus(), 200);
-              }}
+              onClick={() => { setExitModal(false); setTimeout(() => firstInputRef.current?.focus(), 200); }}
               style={{
-                width: "100%", padding: "14px 20px", borderRadius: 999, border: "none",
-                background: "linear-gradient(135deg, #ffc44f, #F4A623)", color: "#1a1710",
-                fontFamily: "var(--font-display, Georgia, serif)", fontSize: "1rem", fontWeight: 800,
-                cursor: "pointer", boxShadow: "0 4px 18px rgba(244,166,35,.3)",
-                marginBottom: 10,
+                width: "100%", padding: "14px 20px", borderRadius: 14, border: "none",
+                background: "#F59E1B", color: "#fff",
+                fontSize: "1rem", fontWeight: 800, cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(245,158,27,.22)",
+                marginBottom: 10, letterSpacing: "-.02em",
               }}
             >
               Completar mis datos →
             </button>
             <button
               onClick={() => setExitModal(false)}
-              style={{
-                background: "none", border: "none", color: "#666",
-                fontSize: "0.78rem", cursor: "pointer", padding: "8px 0",
-              }}
+              style={{ background: "none", border: "none", color: "#A8A8A2", fontSize: "0.8rem", cursor: "pointer", padding: "6px 0" }}
             >
               Cerrar
             </button>
@@ -578,63 +564,76 @@ export default function Paso2Client() {
   );
 }
 
-/* Same design system as paso 1 (/subircarta) */
+/* Minimal light design system — matches landing page */
 const STYLES = `
 :root {
-  --black: #090806;--black-2: #120f0b;--card: rgba(18, 14, 10, .76);--card-2: rgba(255, 255, 255, .045);
-  --line: rgba(242, 229, 207, .14);--line-strong: rgba(232, 163, 61, .44);
-  --amber: #E8A33D;--amber-2: #E8A33D;--amber-3: #B8801A;
-  --cream: #F2E5CF;--cream-2: #CDBB9D;--muted: #887B68;
-  --font-display: 'Cormorant Garamond', serif;--font-body: 'Inter', sans-serif;
+  --ink: #111111; --muted: #73736D; --muted-light: #A8A8A2;
+  --paper: #FCFBF7; --white: #FFFFFF;
+  --line: #EAE8E1;
+  --yellow: #F59E1B; --yellow-hover: #E08D0C; --yellow-bg: #FFF7EA;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { min-height: 100vh!important; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat!important; background-size: cover!important; background-attachment: fixed!important; color: var(--cream)!important; font-family: var(--font-body)!important; line-height: 1.55!important; -webkit-font-smoothing: antialiased; overflow-x: hidden!important; }
-.grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
+body { min-height: 100vh!important; background: var(--paper)!important; color: var(--ink)!important; font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif!important; -webkit-font-smoothing: antialiased; overflow-x: hidden!important; }
 a { color: inherit; text-decoration: none; }
-.page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
-.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 8px auto 12px; max-width: 480px; }
-.step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-.step-line { width: 28px; height: 1px; background: rgba(232,163,61,.15); margin: 0 6px; }
-.step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; border: 1px solid rgba(232,163,61,.2); background: transparent; color: var(--muted); }
-.step.active { color: var(--amber-2); }
-.step.active .step-number { color: var(--amber-2); border-color: var(--amber); background: rgba(232,163,61,.1); }
-.step.done .step-number { background: var(--amber); color: #0e0e0e; border-color: var(--amber); font-size: 11px; }
-.step.done { color: var(--cream-2); }
-.shell { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(14,11,8,.86), rgba(14,11,8,.62)); border-radius: 28px; padding: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.38); backdrop-filter: blur(14px); position: relative; overflow: hidden; }
-.centered-shell { max-width: 760px; margin: 0 auto; text-align: center; }
-.shell::before { content: ''; position: absolute; width: 360px; height: 360px; right: -140px; top: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(232,163,61,.16), transparent 70%); filter: blur(8px); pointer-events: none; }
-h1 { font-family: var(--font-display); font-size: clamp(38px, 10vw, 60px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 14px; }
-h1 span { color: var(--amber-2); font-style: italic; }
-.subcopy { color: var(--cream-2); font-size: 15px; line-height: 1.45; margin: 0 auto 22px; max-width: 420px; }
-.centered-form { max-width: 620px; margin: 0 auto; }
-.file-pill { border: 1px solid var(--line); background: rgba(255,255,255,.04); border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; text-align: left; }
-.file-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: var(--amber-2); border: 1px solid rgba(232,163,61,.3); background: rgba(232,163,61,.08); flex: 0 0 auto; }
-.file-name { font-size: 14px; font-weight: 600; color: var(--cream); margin-bottom: 1px; }
-.file-meta { font-size: 12px; color: var(--muted); }
+.page { width: min(100% - 28px, 760px); margin: 0 auto; padding: 80px 0 64px; }
+
+/* NAV */
+.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(16px,4vw,48px); background: rgba(252,251,247,.94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.nav-logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 800; letter-spacing: -.03em; color: var(--ink); }
+.nav-ingresar { font-size: 13px; font-weight: 600; color: var(--ink); padding: 7px 16px; border: 1.5px solid var(--line); border-radius: 10px; transition: .15s; }
+.nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
+
+/* STEPS */
+.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 0 auto 28px; max-width: 480px; }
+.step { display: flex; align-items: center; gap: 8px; color: var(--muted-light); font-size: 13px; font-weight: 500; }
+.step-line { width: 28px; height: 1px; background: var(--line); margin: 0 6px; }
+.step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 1.5px solid var(--line); background: transparent; color: var(--muted-light); }
+.step.active { color: var(--ink); }
+.step.active .step-number { color: #8F5A05; border-color: var(--yellow); background: var(--yellow-bg); }
+.step.done { color: var(--muted); }
+.step.done .step-number { background: var(--yellow); color: #fff; border-color: var(--yellow); }
+
+/* SHELL */
+.shell { border: 1.5px solid var(--line); background: var(--white); border-radius: 20px; padding: 28px 24px; box-shadow: 0 2px 16px rgba(0,0,0,.05); }
+.centered-shell { max-width: 680px; margin: 0 auto; text-align: center; }
+.centered-form { max-width: 540px; margin: 0 auto; }
+
+/* H1 */
+h1 { font-size: clamp(26px, 6vw, 38px); line-height: 1.1; font-weight: 800; letter-spacing: -.04em; margin-bottom: 10px; color: var(--ink); }
+h1 span { color: var(--yellow); }
+.subcopy { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0 auto 22px; max-width: 420px; }
+
+/* FILE PILL */
+.file-pill { border: 1.5px solid var(--line); background: var(--paper); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; text-align: left; }
+.file-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--yellow); border: 1.5px solid rgba(245,158,27,.3); background: var(--yellow-bg); flex: 0 0 auto; }
+.file-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.file-meta { font-size: 11px; color: var(--muted); }
+
+/* PROGRESS */
 .progress-area { margin-bottom: 20px; }
-.progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; color: var(--cream); font-weight: 600; }
-.progress-head span { color: var(--amber-2); }
-.progress-track { height: 7px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--amber-2)); border-radius: 999px; transition: width 0.3s ease; }
-.checks { display: grid; gap: 7px; margin-top: 12px; color: var(--cream-2); font-size: 13px; }
+.progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; color: var(--ink); font-weight: 600; }
+.progress-head span { color: var(--yellow); }
+.progress-track { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--yellow); border-radius: 999px; transition: width 0.3s ease; }
+.checks { display: grid; gap: 7px; margin-top: 12px; color: var(--muted); font-size: 13px; }
 .check { display: flex; align-items: center; gap: 8px; }
-.form-section { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 28px; }
-.form-reveal { animation: formSlideUp 0.6s cubic-bezier(0.16,1,0.3,1) both; }
-@keyframes formSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+/* FORM */
+.form-section { margin-top: 8px; border-top: 1.5px solid var(--line); padding-top: 24px; }
+.form-reveal { animation: formSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes formSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pillMetaFade { from { opacity: 0; } to { opacity: 1; } }
-.form-title { text-align: center; margin-bottom: 14px; }
-.form-title h2 { font-family: var(--font-display); font-size: clamp(26px, 7vw, 34px); line-height: 1; letter-spacing: -.03em; font-weight: 500; margin-bottom: 6px; color: var(--cream); }
-.form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
-.field-row { margin-bottom: 14px; }
-input { width: 100%; height: 58px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 18px; font: inherit; outline: none; font-size: 19px; }
-input::placeholder { color: rgba(180,165,140,.35) !important; }
-input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
-.trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
-.trust svg { flex-shrink: 0; color: var(--amber-2); width: 16px; height: 16px; }
-.below-cta { margin: 10px auto 0; max-width: 520px; }
-.cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 14px; }
-.cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } }
-@media (max-width: 390px) { h1 { font-size: 36px; } }
+.form-title { text-align: center; margin-bottom: 18px; }
+.form-title h2 { font-size: clamp(22px, 5vw, 28px); font-weight: 800; letter-spacing: -.04em; color: var(--ink); margin-bottom: 5px; }
+.form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
+.field-row { margin-bottom: 12px; text-align: left; }
+input { width: 100%; height: 52px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--white); color: var(--ink); padding: 0 16px; font: inherit; font-size: 15px; outline: none; transition: border-color .15s; }
+input::placeholder { color: #B8B8B2 !important; }
+input:focus { border-color: var(--ink); }
+.cta { width: 100%; min-height: 54px; border: 0; border-radius: 14px; background: var(--yellow); color: #fff; font-size: 17px; font-weight: 850; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: background .18s, transform .18s; margin-top: 16px; font-family: inherit; letter-spacing: -.02em; box-shadow: 0 8px 24px rgba(245,158,27,.22); }
+.cta:hover:not(:disabled) { background: var(--yellow-hover); transform: translateY(-1px); }
+.cta:disabled { opacity: .5; cursor: default; }
+@media (min-width: 680px) { .page { padding-top: 80px; } .steps { margin-bottom: 32px; } .shell { padding: 40px; } }
+@media (max-width: 390px) { h1 { font-size: 24px; } }
 `;
