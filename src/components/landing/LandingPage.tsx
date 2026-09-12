@@ -46,20 +46,26 @@ async function compressImage(file: File): Promise<File> {
 export default function LandingPage() {
   // Modal state
   const [ucOpen, setUcOpen] = useState(false);
-  const [ucStep, setUcStep] = useState<"options" | "link" | "photo">("options");
+  const [ucStep, setUcStep] = useState<"options" | "link" | "photo" | "scratch">("options");
   const [ucLink, setUcLink] = useState("");
   const [ucFiles, setUcFiles] = useState<File[]>([]);
   const [ucFileName, setUcFileName] = useState("");
   const [ucLoading, setUcLoading] = useState(false);
   const [ucError, setUcError] = useState("");
   const [ucProgress, setUcProgress] = useState("");
+  // Scratch (crear desde cero) form
+  const [ucScratchName, setUcScratchName] = useState("");
+  const [ucScratchOwner, setUcScratchOwner] = useState("");
+  const [ucScratchEmail, setUcScratchEmail] = useState("");
+  const [ucScratchWA, setUcScratchWA] = useState("");
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const openModal = () => {
-    setUcOpen(true); setUcStep("options"); setUcLink(""); setUcFiles([]);
-    setUcFileName(""); setUcError(""); setUcProgress("");
-    document.body.style.overflow = "hidden";
+  const resetModal = () => {
+    setUcStep("options"); setUcLink(""); setUcFiles([]); setUcFileName("");
+    setUcError(""); setUcProgress("");
+    setUcScratchName(""); setUcScratchOwner(""); setUcScratchEmail(""); setUcScratchWA("");
   };
+  const openModal = () => { setUcOpen(true); resetModal(); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,18 +77,37 @@ export default function LandingPage() {
       const totalSize = combined.reduce((s, f) => s + f.size, 0);
       if (totalSize > 50 * 1024 * 1024) { setUcError("El peso total excede 50MB."); return prev; }
       const totalMB = (totalSize / 1024 / 1024).toFixed(1);
-      setUcFileName(combined.length === 1 ? combined[0].name : `${combined.length} archivos (${totalMB}MB)`);
+      setUcFileName(combined.length === 1 ? combined[0].name : `${combined.length} fotos (${totalMB}MB)`);
       setUcError("");
       return combined;
     });
     e.target.value = "";
-    setUcStep("photo");
   };
 
   const handleSubmit = async () => {
     if (ucLoading) return;
     setUcLoading(true); setUcError("");
     try {
+      if (ucStep === "scratch") {
+        if (!ucScratchName.trim() || !ucScratchEmail.trim() || !ucScratchEmail.includes("@")) {
+          setUcError("Completa el nombre del local y el correo."); setUcLoading(false); return;
+        }
+        const res = await fetch("/api/activar/registrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            localName: ucScratchName.trim(),
+            ownerName: ucScratchOwner.trim() || undefined,
+            email: ucScratchEmail.trim(),
+            whatsapp: ucScratchWA.trim() ? `+56${ucScratchWA.replace(/\D/g, "")}` : undefined,
+          }),
+        });
+        let data: any;
+        try { data = await res.json(); } catch { setUcError("Error del servidor."); setUcLoading(false); return; }
+        if (!res.ok || !data.slug) { setUcError(data?.error || "Error al crear tu carta."); setUcLoading(false); return; }
+        window.location.href = `/registrar/${data.slug}?plan=PREMIUM`;
+        return;
+      }
       if (ucStep === "link") {
         let url = ucLink.trim();
         if (!url.match(/^https?:\/\//)) url = "https://" + url;
@@ -99,11 +124,11 @@ export default function LandingPage() {
         if (!res.ok) { setUcError(data.error || "Error al procesar tu carta."); setUcLoading(false); return; }
         window.location.href = `/subircarta/paso2?id=${data.id}`;
       } else if (ucStep === "photo") {
-        if (ucFiles.length === 0) { setUcError("Selecciona al menos un archivo."); setUcLoading(false); return; }
+        if (ucFiles.length === 0) { setUcError("Selecciona al menos una foto."); setUcLoading(false); return; }
         const total = Math.min(ucFiles.length, 10);
         let leadId = "";
         for (let i = 0; i < total; i++) {
-          setUcProgress(total > 1 ? `Procesando archivo ${i + 1} de ${total}` : "Procesando archivo");
+          setUcProgress(total > 1 ? `Procesando foto ${i + 1} de ${total}` : "Procesando foto");
           const compressed = await compressImage(ucFiles[i]);
           const formData = new FormData();
           formData.append("file", compressed);
@@ -318,7 +343,9 @@ export default function LandingPage() {
           background: var(--white);
           border-radius: 24px;
           width: 100%;
-          max-width: 470px;
+          max-width: 480px;
+          max-height: 90vh;
+          overflow-y: auto;
           padding: 42px 34px 30px;
           position: relative;
           text-align: center;
@@ -360,24 +387,26 @@ export default function LandingPage() {
         .lp-opcion {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 15px;
+          gap: 16px;
           width: 100%;
-          text-align: center;
-          font-size: 17px;
-          font-weight: 700;
-          letter-spacing: -.025em;
+          text-align: left;
           color: var(--ink);
           background: var(--white);
           border: 1.5px solid var(--line);
           border-radius: 16px;
-          padding: 21px 22px;
-          margin-bottom: 12px;
+          padding: 18px 20px;
+          margin-bottom: 10px;
           cursor: pointer;
           transition: .15s ease;
         }
         .lp-opcion:hover { border-color: var(--ink); background: var(--paper); transform: translateY(-1px); }
-        .lp-opcion svg { flex-shrink: 0; }
+        .lp-opcion svg { flex-shrink: 0; opacity: .7; }
+        .lp-opcion-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .lp-opcion-title { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+        .lp-opcion-sub { font-size: 12px; color: var(--muted); font-weight: 400; }
+        .lp-hint { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+        .lp-campo-label { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; text-align: left; }
+        .lp-scratch-grid { display: grid; gap: 12px; text-align: left; margin-bottom: 14px; }
 
         /* SHOWCASE */
         .lp-showcase { padding: 20px 0 96px; }
@@ -639,27 +668,35 @@ export default function LandingPage() {
                 <h3>¿Cómo tienes tu carta?</h3>
 
                 <button className="lp-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
-                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
                     <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
                     <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
                   </svg>
-                  Tengo un link
+                  <span className="lp-opcion-text">
+                    <span className="lp-opcion-title">Tengo un link</span>
+                    <span className="lp-opcion-sub">De mi carta QR, web o menú online</span>
+                  </span>
                 </button>
 
-                <button className="lp-opcion" onClick={() => photoRef.current?.click()}>
-                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <path d="M14 2v6h6"/>
+                <button className="lp-opcion" onClick={() => { setUcStep("photo"); setUcError(""); }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
                   </svg>
-                  Tengo fotos
+                  <span className="lp-opcion-text">
+                    <span className="lp-opcion-title">Tengo fotos</span>
+                    <span className="lp-opcion-sub">Fotos de la carta física, tomadas con el celular</span>
+                  </span>
                 </button>
 
-                <button className="lp-opcion" style={{ marginBottom: 0 }} onClick={() => { closeModal(); window.location.href = "/subircarta"; }}>
-                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                <button className="lp-opcion" style={{ marginBottom: 0 }} onClick={() => { setUcStep("scratch"); setUcError(""); }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                   </svg>
-                  Crear desde cero
+                  <span className="lp-opcion-text">
+                    <span className="lp-opcion-title">Crear desde cero</span>
+                    <span className="lp-opcion-sub">Arrancamos con platos de ejemplo y tú la personalizas</span>
+                  </span>
                 </button>
               </>
             )}
@@ -668,10 +705,11 @@ export default function LandingPage() {
             {ucStep === "link" && (
               <>
                 <h3>Pega el link de tu carta</h3>
+                <p className="lp-hint">Puede ser tu carta web, el link de tu QR, o cualquier menú online.</p>
                 <input
                   className="lp-campo"
                   type="url"
-                  placeholder="https://..."
+                  placeholder="https://turestaurante.cl/carta"
                   value={ucLink}
                   onChange={(e) => { setUcLink(e.target.value); setUcError(""); }}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
@@ -683,20 +721,21 @@ export default function LandingPage() {
                   onClick={handleSubmit}
                   disabled={ucLoading || !ucLink.trim()}
                 >
-                  {ucLoading ? (ucProgress || "Procesando...") : "Continuar →"}
+                  {ucLoading ? (ucProgress || "Procesando...") : "Transformar mi carta →"}
                 </button>
               </>
             )}
 
-            {/* STEP 3: foto/PDF */}
+            {/* STEP 3: fotos */}
             {ucStep === "photo" && (
               <>
-                <h3>Sube tu carta</h3>
+                <h3>Sube fotos de tu carta</h3>
+                <p className="lp-hint">Pueden ser fotos tomadas con el celular de tu carta física o pizarra. JPG, PNG · Máx. 10 fotos · 50MB.</p>
                 {ucFiles.length === 0 ? (
                   <div className="lp-dropzone" onClick={() => photoRef.current?.click()}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Toca para seleccionar archivos</div>
-                    <div style={{ fontSize: 13, color: "var(--muted)" }}>JPG, PNG, PDF · Máx. 10 archivos · 50MB</div>
+                    <div style={{ fontSize: 34, marginBottom: 8 }}>📷</div>
+                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Toca para seleccionar fotos</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>O arrastra aquí los archivos</div>
                   </div>
                 ) : (
                   <>
@@ -712,7 +751,7 @@ export default function LandingPage() {
                             className="lp-thumb-del"
                             onClick={() => setUcFiles(prev => {
                               const next = prev.filter((_, j) => j !== i);
-                              setUcFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} archivos`);
+                              setUcFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} fotos`);
                               return next;
                             })}
                           >×</button>
@@ -736,7 +775,66 @@ export default function LandingPage() {
                 >
                   {ucLoading
                     ? (ucProgress || "Subiendo...")
-                    : ucFiles.length > 0 ? "Subir mi carta →" : "Seleccionar archivos"}
+                    : ucFiles.length > 0 ? "Transformar mi carta →" : "Seleccionar fotos"}
+                </button>
+              </>
+            )}
+
+            {/* STEP 4: crear desde cero */}
+            {ucStep === "scratch" && (
+              <>
+                <h3>Creamos tu carta desde cero</h3>
+                <p className="lp-hint">Armamos una carta con platos de ejemplo y tú la editas desde tu panel. Listo en minutos.</p>
+                <div className="lp-scratch-grid">
+                  <div>
+                    <label className="lp-campo-label">Nombre del local *</label>
+                    <input
+                      className="lp-campo"
+                      type="text"
+                      placeholder="Ej: Mi Restaurante"
+                      value={ucScratchName}
+                      onChange={(e) => { setUcScratchName(e.target.value); setUcError(""); }}
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="lp-campo-label">Tu nombre</label>
+                    <input
+                      className="lp-campo"
+                      type="text"
+                      placeholder="Ej: Juan Pérez"
+                      value={ucScratchOwner}
+                      onChange={(e) => setUcScratchOwner(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="lp-campo-label">Correo electrónico *</label>
+                    <input
+                      className="lp-campo"
+                      type="email"
+                      placeholder="tu@correo.com"
+                      value={ucScratchEmail}
+                      onChange={(e) => { setUcScratchEmail(e.target.value); setUcError(""); }}
+                    />
+                  </div>
+                  <div>
+                    <label className="lp-campo-label">WhatsApp</label>
+                    <input
+                      className="lp-campo"
+                      type="tel"
+                      placeholder="9 1234 5678"
+                      value={ucScratchWA}
+                      onChange={(e) => setUcScratchWA(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {ucError && <div className="lp-error">{ucError}</div>}
+                <button
+                  className="lp-modal-btn"
+                  onClick={handleSubmit}
+                  disabled={ucLoading || !ucScratchName.trim() || !ucScratchEmail.includes("@")}
+                >
+                  {ucLoading ? "Creando..." : "Crear mi carta →"}
                 </button>
               </>
             )}
