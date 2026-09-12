@@ -568,9 +568,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="lp-hero-sub">
-              Transforma tu carta actual en una herramienta que{" "}
-              <strong style={{ color: "var(--ink)", fontWeight: 750 }}>aumenta tus ventas</strong>{" "}
-              y mejora la experiencia de tus clientes.
+              Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.
             </p>
 
             <div className="lp-hero-cta">
