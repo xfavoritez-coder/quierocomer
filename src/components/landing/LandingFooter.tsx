@@ -5,10 +5,11 @@ export default function LandingFooter() {
     <footer style={{ background: "#111111", color: "rgba(255,255,255,.5)", fontSize: 13, fontFamily: "Inter, ui-sans-serif, sans-serif" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "52px clamp(16px,4vw,48px) 40px" }}>
 
-        {/* Tagline */}
-        <p style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.75)", letterSpacing: "-.02em", marginBottom: 32 }}>
-          Carta digital para restaurantes chilenos.
-        </p>
+        {/* Brand mark */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, opacity: .18, marginBottom: 32 }}>
+          <img src="/logo.png" alt="" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+          <span style={{ fontSize: 20, fontWeight: 850, letterSpacing: "-.04em", color: "#fff", fontFamily: "Inter, sans-serif" }}>QuieroComer</span>
+        </div>
 
         {/* Links + copyright row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
