@@ -378,19 +378,56 @@ export default function LandingPage() {
         .lp-opcion:hover { border-color: var(--ink); background: var(--paper); transform: translateY(-1px); }
         .lp-opcion svg { flex-shrink: 0; }
 
-        .lp-desde-cero {
-          display: block;
-          width: 100%;
-          margin-top: 18px;
-          font-size: 14px;
-          color: var(--muted);
-          background: none; border: 0; cursor: pointer;
-          text-decoration: underline;
-          text-decoration-color: var(--line);
-          text-underline-offset: 4px;
-          transition: .15s ease;
+        /* SHOWCASE */
+        .lp-showcase { padding: 80px 0 96px; }
+        .lp-showcase-title {
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+          color: #A09F97;
+          margin-bottom: 40px;
         }
-        .lp-desde-cero:hover { color: var(--ink); }
+        .lp-logos-track-wrap { overflow: hidden; position: relative; }
+        .lp-logos-track-wrap::before,
+        .lp-logos-track-wrap::after {
+          content: "";
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 80px;
+          z-index: 2;
+          pointer-events: none;
+        }
+        .lp-logos-track-wrap::before { left: 0; background: linear-gradient(to right, var(--paper), transparent); }
+        .lp-logos-track-wrap::after { right: 0; background: linear-gradient(to left, var(--paper), transparent); }
+        .lp-logos-track {
+          display: flex;
+          gap: 16px;
+          width: max-content;
+          animation: lpScroll 36s linear infinite;
+        }
+        .lp-logos-track:hover { animation-play-state: paused; }
+        @keyframes lpScroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .lp-logo-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          width: 112px;
+          text-decoration: none;
+          padding: 20px 12px;
+          border-radius: 18px;
+          border: 1.5px solid var(--line);
+          background: var(--white);
+          transition: .18s ease;
+          flex-shrink: 0;
+        }
+        .lp-logo-card:hover { border-color: #bbb; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
+        .lp-logo-card img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: var(--paper); }
+        .lp-logo-card span { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.3; }
 
         .lp-campo {
           width: 100%;
@@ -496,7 +533,7 @@ export default function LandingPage() {
         <section className="lp-hero">
           <div className="lp-container">
             <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
-              Convierte tu carta en una herramienta que vende más.
+              Tu local puede vender más.
             </h1>
 
             <p className="lp-hero-sub">
@@ -507,18 +544,11 @@ export default function LandingPage() {
 
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
-                Subir mi carta
+                Subir mi carta gratis
               </button>
             </div>
           </div>
         </section>
-
-        {/* DIVIDER */}
-        <div style={{ padding: "0 0 48px" }}>
-          <div className="lp-container">
-            <p className="lp-eyebrow">Mira cómo funciona</p>
-          </div>
-        </div>
 
         {/* VIDEO (placeholder) */}
         <section className="lp-video-section">
@@ -533,6 +563,42 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* SHOWCASE */}
+        <section className="lp-showcase">
+          <div className="lp-container">
+            <p className="lp-showcase-title">Locales que ya usan QuieroComer</p>
+          </div>
+          {(() => {
+            const items = [
+              { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
+              { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
+              { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
+              { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
+              { name: "Nascosto Pizzeria", slug: "nascosto-pizzeria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777586747684-596ypo9g4nu.png" },
+              { name: "Oasis Restaurante", slug: "oasis-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780332276920-lzqm6nk2r7b.png" },
+              { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
+              { name: "Yume Sushi", slug: "yume-sushi-cevicheria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779722298018-sz7jj2v1v9.png" },
+              { name: "Ceviche a lo Tigre", slug: "ceviche-a-lo-tigre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780810063195-17i4btgndfu.webp" },
+              { name: "Mechas Con Tutti", slug: "mechas-con-tutti", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780510112143-patj9rsryf.webp" },
+              { name: "Lufin Selected Dishes", slug: "lufin-selected-dishes", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779902865990-5mqs5w2juk.jpg" },
+              { name: "Protein Gains", slug: "protein-gains", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1784768748556-ue8nbqumjgm.webp" },
+            ];
+            const doubled = [...items, ...items];
+            return (
+              <div className="lp-logos-track-wrap">
+                <div className="lp-logos-track">
+                  {doubled.map((r, i) => (
+                    <a key={i} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
+                      <img src={r.logo} alt={r.name} loading="lazy" />
+                      <span>{r.name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </section>
 
       </main>
@@ -569,7 +635,7 @@ export default function LandingPage() {
             {/* STEP 1: elegir método */}
             {ucStep === "options" && (
               <>
-                <h3>¿Cómo tienes tu carta hoy?</h3>
+                <h3>¿Cómo tienes tu carta?</h3>
 
                 <button className="lp-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
                   <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
@@ -587,8 +653,12 @@ export default function LandingPage() {
                   Tengo una foto o un PDF
                 </button>
 
-                <button className="lp-desde-cero" onClick={() => { closeModal(); window.location.href = "/subircarta"; }}>
-                  No tengo carta, empezar de cero
+                <button className="lp-opcion" style={{ marginBottom: 0 }} onClick={() => { closeModal(); window.location.href = "/subircarta"; }}>
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                  Crear desde cero
                 </button>
               </>
             )}
