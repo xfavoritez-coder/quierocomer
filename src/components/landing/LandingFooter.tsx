@@ -2,15 +2,17 @@
 
 export default function LandingFooter() {
   return (
-    <footer style={{ background: "#111111", color: "rgba(255,255,255,.6)", padding: "36px 0 30px", fontSize: 14 }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 clamp(16px,4vw,48px)" }}>
-        {/* Top row: logo + links */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 26, flexWrap: "wrap", paddingBottom: 26 }}>
-          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "#fff", fontSize: 20, fontWeight: 850, letterSpacing: "-.04em", textDecoration: "none", fontFamily: "Instrument Sans, sans-serif" }}>
-            <img src="/logo.png" alt="" style={{ width: 26, height: 26, objectFit: "contain", flexShrink: 0 }} />
-            QuieroComer
-          </a>
-          <nav style={{ display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
+    <footer style={{ background: "#111111", color: "rgba(255,255,255,.5)", fontSize: 13, fontFamily: "Inter, ui-sans-serif, sans-serif" }}>
+      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "52px clamp(16px,4vw,48px) 40px" }}>
+
+        {/* Tagline */}
+        <p style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,.75)", letterSpacing: "-.02em", marginBottom: 32 }}>
+          Carta digital para restaurantes chilenos.
+        </p>
+
+        {/* Links + copyright row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <nav style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
             {[
               { label: "Productos", href: "/#productos" },
               { label: "Precios", href: "/#precios" },
@@ -20,20 +22,15 @@ export default function LandingFooter() {
                 key={label}
                 href={href}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                style={{ color: "rgba(255,255,255,.65)", textDecoration: "none", fontFamily: "Instrument Sans, sans-serif", transition: "color .15s" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#FFD400")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,.65)")}
+                style={{ color: "rgba(255,255,255,.45)", textDecoration: "none", transition: "color .15s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#F59E1B")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,.45)")}
               >
                 {label}
               </a>
             ))}
           </nav>
-        </div>
-
-        {/* Bottom bar */}
-        <div style={{ borderTop: "1px solid rgba(255,255,255,.13)", paddingTop: 22, fontSize: 12, opacity: .5, display: "flex", justifyContent: "space-between", gap: 18, flexWrap: "wrap" }}>
-          <span>© 2026 QuieroComer</span>
-          <span>Santiago de Chile</span>
+          <span style={{ fontSize: 12 }}>© 2026 · Santiago de Chile</span>
         </div>
       </div>
     </footer>

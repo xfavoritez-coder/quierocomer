@@ -256,7 +256,7 @@ export default function LandingPage() {
         .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
 
         /* VIDEO */
-        .lp-video-section { padding: 18px 0 104px; }
+        .lp-video-section { padding: 18px 0 56px; }
         .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
         .lp-video-card {
           position: relative;
@@ -379,7 +379,7 @@ export default function LandingPage() {
         .lp-opcion svg { flex-shrink: 0; }
 
         /* SHOWCASE */
-        .lp-showcase { padding: 80px 0 96px; }
+        .lp-showcase { padding: 40px 0 96px; }
         .lp-showcase-title {
           font-size: 13px;
           font-weight: 700;
