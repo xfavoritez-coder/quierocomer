@@ -495,8 +495,6 @@ export default function LandingPage() {
         {/* HERO */}
         <section className="lp-hero">
           <div className="lp-container">
-            <div className="lp-eyebrow">Tu restaurante, mejor servido</div>
-
             <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
               Haz que tu carta<br />venda más.
             </h1>
@@ -514,6 +512,13 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* DIVIDER */}
+        <div style={{ padding: "0 0 48px" }}>
+          <div className="lp-container">
+            <p className="lp-eyebrow">Mira cómo funciona</p>
+          </div>
+        </div>
+
         {/* VIDEO (placeholder) */}
         <section className="lp-video-section">
           <div className="lp-container">
@@ -522,8 +527,6 @@ export default function LandingPage() {
                 <div className="lp-video-placeholder">
                   <div className="lp-video-center">
                     <button className="lp-play" aria-label="Ver cómo funciona">▶</button>
-                    <strong>Mira cómo funciona desde los ojos de un cliente.</strong>
-                    <span>Video POV grabado con Ray-Ban Meta</span>
                   </div>
                 </div>
               </div>
