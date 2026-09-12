@@ -281,7 +281,7 @@ export default function LandingPage() {
         .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
 
         /* VIDEO */
-        .lp-video-section { padding: 18px 0 12px; }
+        .lp-video-section { padding: 18px 0 0; }
         .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
         .lp-video-card {
           position: relative;
@@ -387,9 +387,10 @@ export default function LandingPage() {
         .lp-opcion {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 16px;
           width: 100%;
-          text-align: left;
+          text-align: center;
           color: var(--ink);
           background: var(--white);
           border: 1.5px solid var(--line);
@@ -401,7 +402,7 @@ export default function LandingPage() {
         }
         .lp-opcion:hover { border-color: var(--ink); background: var(--paper); transform: translateY(-1px); }
         .lp-opcion svg { flex-shrink: 0; opacity: .7; }
-        .lp-opcion-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .lp-opcion-text { display: flex; flex-direction: column; gap: 2px; }
         .lp-opcion-title { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
         .lp-opcion-sub { font-size: 12px; color: var(--muted); font-weight: 400; }
         .lp-hint { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
@@ -409,7 +410,7 @@ export default function LandingPage() {
         .lp-scratch-grid { display: grid; gap: 12px; text-align: left; margin-bottom: 14px; }
 
         /* SHOWCASE */
-        .lp-showcase { padding: 20px 0 96px; }
+        .lp-showcase { padding: 8px 0 80px; }
         .lp-showcase-title {
           font-size: 13px;
           font-weight: 700;
