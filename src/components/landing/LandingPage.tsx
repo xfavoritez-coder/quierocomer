@@ -544,7 +544,7 @@ export default function LandingPage() {
 
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
-                Subir mi carta gratis
+                Subir carta gratis
               </button>
             </div>
           </div>
