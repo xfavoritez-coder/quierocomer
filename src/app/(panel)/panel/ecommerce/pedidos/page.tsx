@@ -6,7 +6,7 @@ import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChe
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
-import ComandaPrint from "@/components/ecommerce/ComandaPrint";
+import ComandaPrinter from "@/components/ecommerce/ComandaPrinter";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -112,12 +112,6 @@ export default function EcommercePedidosPage() {
       .catch(() => {});
   }, [restaurantId]);
 
-  // Imprime la comanda: monta el ticket y dispara el diálogo (silencioso con --kiosk-printing)
-  useEffect(() => {
-    if (!printOrder) return;
-    const id = setTimeout(() => { window.print(); setPrintOrder(null); }, 80);
-    return () => clearTimeout(id);
-  }, [printOrder]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -316,8 +310,8 @@ export default function EcommercePedidosPage() {
 
       {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(detail)} />}
 
-      {/* Comanda térmica (oculta en pantalla; visible solo al imprimir) */}
-      {printOrder && <ComandaPrint order={printOrder} storeName={storeName} paperWidth={paperWidth} />}
+      {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
+      <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
     </div>
   );
 }

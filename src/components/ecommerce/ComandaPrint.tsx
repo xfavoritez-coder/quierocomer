@@ -40,21 +40,17 @@ export default function ComandaPrint({ order, storeName, paperWidth = 80 }: { or
   const pay = PAY_LABEL[order.paymentMethod] || order.paymentMethod;
   const paid = order.paymentStatus === "paid";
 
-  // CSS de impresión: solo #comanda-print visible; ancho de página = papel.
+  // Se renderiza dentro de un iframe aislado (solo la comanda), por eso el
+  // documento no tiene nada más: no hace falta ocultar el resto. El @page fija
+  // el ancho al papel y el alto exacto al contenido (evita el "papel infinito").
   const css = `
-    @media screen { #comanda-print { display: none; } }
-    @media print {
-      @page { size: ${w}mm auto; margin: 0; }
-      html, body { background: #fff !important; }
-      body * { visibility: hidden !important; }
-      #comanda-print, #comanda-print * { visibility: visible !important; }
-      #comanda-print {
-        position: absolute; left: 0; top: 0; width: ${w}mm;
-        padding: 3mm 2mm; box-sizing: border-box;
-        color: #000; background: #fff;
-        font-family: ui-monospace, "Courier New", monospace;
-        font-size: ${w === 58 ? "11px" : "12.5px"}; line-height: 1.35;
-      }
+    @page { size: ${w}mm auto; margin: 0; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    #comanda-print {
+      width: ${w}mm; padding: 3mm 2mm; box-sizing: border-box;
+      color: #000; background: #fff;
+      font-family: ui-monospace, "Courier New", monospace;
+      font-size: ${w === 58 ? "11px" : "12.5px"}; line-height: 1.35;
     }
   `;
 
