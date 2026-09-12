@@ -131,8 +131,8 @@ export default function LandingPage() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
         :root {
-          --yellow: #FFD400;
-          --yellow-hover: #F3C900;
+          --yellow: #F59E1B;
+          --yellow-hover: #E08D0C;
           --ink: #111111;
           --muted: #73736D;
           --paper: #FCFBF7;
@@ -183,15 +183,6 @@ export default function LandingPage() {
           color: var(--ink);
         }
 
-        .lp-logo-mark {
-          width: 32px; height: 32px; border-radius: 10px;
-          background: var(--yellow);
-          display: grid; place-items: center;
-          font-size: 14px; font-weight: 900;
-          color: var(--ink);
-          flex-shrink: 0;
-        }
-
         /* HERO */
         .lp-hero { padding: 104px 0 72px; text-align: center; }
 
@@ -240,15 +231,29 @@ export default function LandingPage() {
           font-weight: 850;
           letter-spacing: -.02em;
           cursor: pointer;
-          box-shadow: 0 12px 34px rgba(255,212,0,.28);
+          box-shadow: 0 12px 34px rgba(245,158,27,.28);
           transition: .18s ease;
         }
 
         .lp-btn:hover {
           background: var(--yellow-hover);
           transform: translateY(-2px);
-          box-shadow: 0 16px 40px rgba(255,212,0,.34);
+          box-shadow: 0 16px 40px rgba(245,158,27,.38);
         }
+
+        .lp-nav-ingresar {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--ink);
+          text-decoration: none;
+          padding: 8px 18px;
+          border: 1.5px solid var(--line);
+          border-radius: 10px;
+          background: transparent;
+          transition: border-color .15s, background .15s;
+          white-space: nowrap;
+        }
+        .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
 
         /* VIDEO */
         .lp-video-section { padding: 18px 0 104px; }
@@ -414,7 +419,7 @@ export default function LandingPage() {
           letter-spacing: -.02em;
           cursor: pointer;
           transition: .18s ease;
-          box-shadow: 0 8px 24px rgba(255,212,0,.22);
+          box-shadow: 0 8px 24px rgba(245,158,27,.22);
         }
         .lp-modal-btn:hover:not(:disabled) { background: var(--yellow-hover); transform: translateY(-1px); }
         .lp-modal-btn:disabled { opacity: .5; cursor: default; transform: none; }
@@ -476,11 +481,12 @@ export default function LandingPage() {
 
       {/* HEADER */}
       <header className="lp-header">
-        <div className="lp-container">
+        <div className="lp-container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/" className="lp-logo" aria-label="QuieroComer">
-            <span className="lp-logo-mark">Q</span>
+            <img src="/logo.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }} />
             <span>QuieroComer</span>
           </a>
+          <a href="/panel" className="lp-nav-ingresar">Ingresar</a>
         </div>
       </header>
 
