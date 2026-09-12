@@ -30,6 +30,8 @@ export interface EcommerceStoreConfig {
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
   orderNotifyEmail: string | null; // correo del local que recibe aviso de cada pedido nuevo
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
+  printMode: "off" | "manual" | "auto"; // impresión de comandas: off | botón manual | automática al llegar
+  printPaperWidth: 58 | 80; // ancho del papel térmico en mm
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -144,6 +146,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     gtmId: normalizeGtmId(o.gtmId),
     orderNotifyEmail: normalizeEmail(o.orderNotifyEmail),
     survey: parseSurvey(o.survey),
+    printMode: o.printMode === "auto" ? "auto" : o.printMode === "off" ? "off" : "manual",
+    printPaperWidth: Number(o.printPaperWidth) === 58 ? 58 : 80,
   };
 }
 

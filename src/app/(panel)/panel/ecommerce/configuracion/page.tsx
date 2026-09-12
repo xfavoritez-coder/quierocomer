@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -284,6 +284,43 @@ export default function EcommerceConfiguracionPage() {
                 style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>Déjalo vacío para no recibir correos. Es independiente de las notificaciones push de arriba.</p>
+            </div>
+          </section>
+          )}
+
+          {/* Impresión de comandas */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={Printer} title="Impresión de comandas" sub="Imprime un ticket con cada pedido en tu impresora térmica. La automática requiere abrir Chrome con la opción de kiosco en el equipo del local." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Modo de impresión</span>
+                <select
+                  value={cfg.printMode}
+                  onChange={(e) => patch({ printMode: e.target.value as "off" | "manual" | "auto" })}
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                >
+                  <option value="off">Desactivada</option>
+                  <option value="manual">Manual (botón en cada pedido)</option>
+                  <option value="auto">Automática (imprime al llegar el pedido)</option>
+                </select>
+              </label>
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Ancho del papel</span>
+                <select
+                  value={cfg.printPaperWidth}
+                  onChange={(e) => patch({ printPaperWidth: Number(e.target.value) === 58 ? 58 : 80 })}
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                >
+                  <option value={80}>80 mm (estándar)</option>
+                  <option value={58}>58 mm (chica)</option>
+                </select>
+              </label>
+              {cfg.printMode === "auto" && (
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                  Para que imprima sola y sin diálogo: abre esta pantalla de <strong>Pedidos</strong> en el equipo del local con Google Chrome iniciado con la opción de kiosco de impresión (<code>--kiosk-printing</code>) y déjala abierta.
+                </p>
+              )}
             </div>
           </section>
           )}

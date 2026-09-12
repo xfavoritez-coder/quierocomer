@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
+import ComandaPrint from "@/components/ecommerce/ComandaPrint";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -92,8 +93,31 @@ export default function EcommercePedidosPage() {
   const [live, setLive] = useState(false);
   const [uberEnabled, setUberEnabled] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
+  const [printMode, setPrintMode] = useState<"off" | "manual" | "auto">("off");
+  const [paperWidth, setPaperWidth] = useState<58 | 80>(80);
+  const [printOrder, setPrintOrder] = useState<Order | null>(null);
+  const printModeRef = useRef<"off" | "manual" | "auto">("off");
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
+  const storeName = session?.restaurants.find((r) => r.id === restaurantId)?.name || "";
+
+  useEffect(() => { printModeRef.current = printMode; }, [printMode]);
+
+  // Config de impresión de comandas (owner en Configuración → Impresión)
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.config) { setPrintMode(d.config.printMode ?? "off"); setPaperWidth(d.config.printPaperWidth === 58 ? 58 : 80); } })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  // Imprime la comanda: monta el ticket y dispara el diálogo (silencioso con --kiosk-printing)
+  useEffect(() => {
+    if (!printOrder) return;
+    const id = setTimeout(() => { window.print(); setPrintOrder(null); }, 80);
+    return () => clearTimeout(id);
+  }, [printOrder]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -132,6 +156,7 @@ export default function EcommercePedidosPage() {
     beep();
     setNewIds((s) => new Set([...s, o.id]));
     if (jump) { setView("activos"); setStatusFilter("todos"); }
+    if (printModeRef.current === "auto") setPrintOrder(o); // impresión automática de comanda
   }, []);
 
   const fetchOrders = useCallback(async (announce = false) => {
@@ -285,11 +310,14 @@ export default function EcommercePedidosPage() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />)}
+          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(o)} />)}
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(detail)} />}
+
+      {/* Comanda térmica (oculta en pantalla; visible solo al imprimir) */}
+      {printOrder && <ComandaPrint order={printOrder} storeName={storeName} paperWidth={paperWidth} />}
     </div>
   );
 }
@@ -373,7 +401,7 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void> }) {
+function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -420,16 +448,26 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
       )}
       {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
 
-      {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
-      <a
-        href={`/pedido/${order.id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        style={{ marginTop: 8, width: "100%", padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
-      >
-        <ExternalLink size={14} /> Ver seguimiento del cliente
-      </a>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
+        <a
+          href={`/pedido/${order.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
+        >
+          <ExternalLink size={14} /> Ver seguimiento
+        </a>
+        {printEnabled && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPrint?.(); }}
+            style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+          >
+            <Printer size={14} /> Imprimir comanda
+          </button>
+        )}
+      </div>
 
       {cancelOpen && (
         <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -444,7 +482,7 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onRequestCourier }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void> }) {
+function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -505,6 +543,15 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
           >
             <ExternalLink size={16} /> Ver seguimiento del cliente
           </a>
+
+          {printEnabled && (
+            <button
+              onClick={() => onPrint?.()}
+              style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            >
+              <Printer size={16} /> Imprimir comanda
+            </button>
+          )}
 
           {/* Items */}
           <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
