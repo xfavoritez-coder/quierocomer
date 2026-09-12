@@ -11,12 +11,10 @@ export default function LandingFooter() {
             QuieroComer
           </a>
           <nav style={{ display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
-            {[
-              { label: "Carta QR", href: "/carta-qr" },
+            [
+              { label: "Productos", href: "/#productos" },
               { label: "Precios", href: "/#precios" },
-              { label: "WhatsApp", href: "https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer", external: true },
-              { label: "Instagram", href: "https://instagram.com/quierocomer", external: true },
-              { label: "Ingresar", href: "/panel/login" },
+              { label: "Contacto", href: "https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer", external: true },
             ].map(({ label, href, external }) => (
               <a
                 key={label}
