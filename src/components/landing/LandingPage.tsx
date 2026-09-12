@@ -606,14 +606,13 @@ export default function LandingPage() {
               { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
               { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
               { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-              { name: "Nascosto Pizzeria", slug: "nascosto-pizzeria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777586747684-596ypo9g4nu.png" },
-              { name: "Oasis Restaurante", slug: "oasis-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780332276920-lzqm6nk2r7b.png" },
               { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
-              { name: "Yume Sushi", slug: "yume-sushi-cevicheria", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779722298018-sz7jj2v1v9.png" },
-              { name: "Ceviche a lo Tigre", slug: "ceviche-a-lo-tigre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780810063195-17i4btgndfu.webp" },
-              { name: "Mechas Con Tutti", slug: "mechas-con-tutti", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1780510112143-patj9rsryf.webp" },
-              { name: "Lufin Selected Dishes", slug: "lufin-selected-dishes", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779902865990-5mqs5w2juk.jpg" },
-              { name: "Protein Gains", slug: "protein-gains", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1784768748556-ue8nbqumjgm.webp" },
+              { name: "Guffsushi Nikkei", slug: "guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
+              { name: "La Oveja Negra", slug: "la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
+              { name: "Alleria Delivery", slug: "alleria-delivery", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
+              { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
+              { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
+              { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
             ];
             const doubled = [...items, ...items];
             return (
