@@ -11,7 +11,7 @@ export default function LandingFooter() {
             QuieroComer
           </a>
           <nav style={{ display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
-            [
+            {[
               { label: "Productos", href: "/#productos" },
               { label: "Precios", href: "/#precios" },
               { label: "Contacto", href: "https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer", external: true },
