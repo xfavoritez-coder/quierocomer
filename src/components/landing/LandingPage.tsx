@@ -281,7 +281,19 @@ export default function LandingPage() {
         .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
 
         /* VIDEO */
-        .lp-video-section { padding: 18px 0 0; }
+        .lp-video-section {
+          background: #111111;
+          padding: 56px 0 64px;
+        }
+        .lp-como-funciona-label {
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,.42);
+          text-align: center;
+          margin-bottom: 28px;
+        }
         .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
         .lp-video-card {
           position: relative;
@@ -516,14 +528,15 @@ export default function LandingPage() {
         .lp-error { color: #e85d5d; font-size: 14px; margin-bottom: 12px; }
 
         @media (max-width: 760px) {
+          .lp-container { width: min(calc(100% - 48px), var(--max)); }
           .lp-header { height: 64px; }
           .lp-logo { font-size: 20px; }
           .lp-logo-mark { width: 30px; height: 30px; }
           .lp-hero { padding: 72px 0 48px; }
           .lp-hero h1 { font-size: clamp(48px, 15vw, 68px); }
-          .lp-hero-sub { font-size: 16px; max-width: 94%; }
+          .lp-hero-sub { font-size: 16px; }
           .lp-btn { width: 100%; min-width: 0; min-height: 60px; }
-          .lp-video-section { padding-bottom: 76px; }
+          .lp-video-section { padding: 44px 0 52px; }
           .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
           .lp-video-center { padding: 22px; }
           .lp-play { width: 62px; height: 62px; }
@@ -532,7 +545,7 @@ export default function LandingPage() {
         }
 
         @media (max-width: 420px) {
-          .lp-container { width: min(calc(100% - 24px), var(--max)); }
+          .lp-container { width: min(calc(100% - 40px), var(--max)); }
           .lp-hero { padding-top: 58px; }
           .lp-hero h1 { font-size: 48px; }
           .lp-eyebrow { font-size: 10px; }
@@ -581,6 +594,7 @@ export default function LandingPage() {
         {/* VIDEO (placeholder) */}
         <section className="lp-video-section">
           <div className="lp-container">
+            <p className="lp-como-funciona-label">Cómo funciona</p>
             <div className="lp-video-wrap">
               <div className="lp-video-card">
                 <div className="lp-video-placeholder">
