@@ -6,10 +6,15 @@ export default function LandingFooter() {
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "52px clamp(16px,4vw,48px) 40px" }}>
 
         {/* Brand mark */}
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, opacity: .18, marginBottom: 32 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, opacity: .18, marginBottom: 16 }}>
           <img src="/logo.png" alt="" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
           <span style={{ fontSize: 20, fontWeight: 850, letterSpacing: "-.04em", color: "#fff", fontFamily: "Inter, sans-serif" }}>QuieroComer</span>
         </div>
+
+        {/* Tagline */}
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,.38)", lineHeight: 1.6, maxWidth: 340, marginBottom: 32, letterSpacing: "-.01em" }}>
+          Carta QR inteligente y herramientas de fidelización para que tu local venda más y tus clientes vuelvan.
+        </p>
 
         {/* Links + copyright row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
