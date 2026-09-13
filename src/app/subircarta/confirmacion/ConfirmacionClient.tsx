@@ -192,7 +192,7 @@ export default function ConfirmacionClient() {
           <div className="step-line" />
           <div className="step done"><div className="step-number">&#10003;</div><span>Transformación</span></div>
           <div className="step-line" />
-          <div className="step done"><div className="step-number">&#10003;</div><span>Carta viva</span></div>
+          <div className="step done"><div className="step-number">&#10003;</div><span>Carta lista</span></div>
         </section>
 
         <section className="shell centered-shell">

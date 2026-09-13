@@ -371,7 +371,7 @@ export default function Paso2Client() {
           <div className="step-line" />
           <div className="step active"><div className="step-number">2</div><span>Transformación</span></div>
           <div className="step-line" />
-          <div className="step"><div className="step-number">3</div><span>Carta viva</span></div>
+          <div className="step"><div className="step-number">3</div><span>Carta lista</span></div>
         </section>
 
         <section className="shell centered-shell">
