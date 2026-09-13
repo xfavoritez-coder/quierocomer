@@ -440,14 +440,32 @@ export default function LandingPage() {
           color: #A3A098;
           margin-bottom: 50px;
         }
-        .lp-logos-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 20px;
-          max-width: 680px;
-          margin: 0 auto;
+        .lp-logos-track-wrap { overflow: hidden; position: relative; }
+        .lp-logos-track-wrap::before,
+        .lp-logos-track-wrap::after {
+          content: "";
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 80px;
+          z-index: 2;
+          pointer-events: none;
+        }
+        .lp-logos-track-wrap::before { left: 0; background: linear-gradient(to right, var(--paper), transparent); }
+        .lp-logos-track-wrap::after { right: 0; background: linear-gradient(to left, var(--paper), transparent); }
+        .lp-logos-track {
+          display: flex;
+          gap: 16px;
+          width: max-content;
+          animation: lpScroll 36s linear infinite;
+        }
+        .lp-logos-track:hover { animation-play-state: paused; }
+        @keyframes lpScroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
         .lp-logo-card {
+          width: 130px;
+          flex-shrink: 0;
           min-height: 165px;
           border: 1px solid var(--line);
           border-radius: 20px;
@@ -532,7 +550,6 @@ export default function LandingPage() {
           .lp-btn { width: 100%; min-width: 0; min-height: 60px; }
           .lp-video-section { padding: 44px 0 60px; }
           .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
-          .lp-logos-grid { grid-template-columns: repeat(2, 1fr); }
           .lp-showcase { padding: 72px 0 80px; }
           .lp-video-center { padding: 22px; }
           .lp-play { width: 62px; height: 62px; }
@@ -610,8 +627,8 @@ export default function LandingPage() {
         <section className="lp-showcase">
           <div className="lp-container">
             <p className="lp-showcase-eyebrow">Locales que ya usan QuieroComer</p>
-            <div className="lp-logos-grid">
-              {[
+            {(() => {
+              const items = [
                 { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
                 { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
                 { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
@@ -623,13 +640,21 @@ export default function LandingPage() {
                 { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
                 { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
                 { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
-              ].map((r) => (
-                <a key={r.slug} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
-                  <img src={r.logo} alt={r.name} loading="lazy" />
-                  <span>{r.name}</span>
-                </a>
-              ))}
-            </div>
+              ];
+              const doubled = [...items, ...items];
+              return (
+                <div className="lp-logos-track-wrap">
+                  <div className="lp-logos-track">
+                    {doubled.map((r, i) => (
+                      <a key={i} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
+                        <img src={r.logo} alt={r.name} loading="lazy" />
+                        <span>{r.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </section>
 
