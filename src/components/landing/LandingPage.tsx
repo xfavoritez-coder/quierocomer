@@ -346,7 +346,7 @@ export default function LandingPage() {
           max-width: 480px;
           max-height: 90vh;
           overflow-y: auto;
-          padding: 64px 34px 32px;
+          padding: 80px 34px 32px;
           position: relative;
           text-align: center;
           box-shadow: 0 30px 90px rgba(0,0,0,.32);
@@ -364,7 +364,7 @@ export default function LandingPage() {
         }
 
         .lp-cerrar {
-          position: absolute; top: 16px; right: 18px;
+          position: absolute; top: 20px; right: 20px;
           background: none; border: 0; cursor: pointer;
           font-size: 26px; line-height: 1;
           color: #A09F97;
@@ -375,7 +375,7 @@ export default function LandingPage() {
         .lp-cerrar:hover { background: var(--paper); color: var(--ink); }
 
         .lp-volver {
-          position: absolute; top: 16px; left: 18px;
+          position: absolute; top: 20px; left: 20px;
           background: none; border: 0; cursor: pointer;
           font-size: 14px; font-weight: 700;
           color: var(--muted);
