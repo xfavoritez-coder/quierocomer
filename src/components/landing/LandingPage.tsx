@@ -536,7 +536,7 @@ export default function LandingPage() {
           .lp-showcase { padding: 72px 0 80px; }
           .lp-video-center { padding: 22px; }
           .lp-play { width: 62px; height: 62px; }
-          .lp-modal { padding: 40px 22px 26px; }
+          .lp-modal { padding: 76px 22px 26px; }
           .lp-modal h3 { font-size: 24px; }
         }
 
