@@ -282,17 +282,27 @@ export default function LandingPage() {
 
         /* VIDEO */
         .lp-video-section {
-          background: #111111;
-          padding: 56px 0 64px;
+          background: #F5F2EB;
+          padding: 58px 0 86px;
+          border-top: 1px solid rgba(0,0,0,.04);
         }
-        .lp-como-funciona-label {
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: .12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,.42);
+        .lp-video-head {
           text-align: center;
           margin-bottom: 28px;
+        }
+        .lp-video-head h2 {
+          margin: 0;
+          font-size: 25px;
+          font-weight: 800;
+          letter-spacing: -.04em;
+          line-height: 1.15;
+          color: var(--ink);
+        }
+        .lp-video-head p {
+          margin: 8px 0 0;
+          color: #8C8982;
+          font-size: 15px;
+          letter-spacing: .01em;
         }
         .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
         .lp-video-card {
@@ -421,55 +431,39 @@ export default function LandingPage() {
         .lp-scratch-grid { display: grid; gap: 12px; text-align: left; margin-bottom: 14px; }
 
         /* SHOWCASE */
-        .lp-showcase { padding: 8px 0 80px; }
-        .lp-showcase-title {
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: .1em;
+        .lp-showcase { padding: 96px 0 100px; }
+        .lp-showcase-eyebrow {
+          font-size: 14px;
+          font-weight: 800;
+          letter-spacing: .12em;
           text-transform: uppercase;
-          color: #A09F97;
-          margin-bottom: 40px;
+          color: #A3A098;
+          margin-bottom: 50px;
         }
-        .lp-logos-track-wrap { overflow: hidden; position: relative; }
-        .lp-logos-track-wrap::before,
-        .lp-logos-track-wrap::after {
-          content: "";
-          position: absolute;
-          top: 0; bottom: 0;
-          width: 80px;
-          z-index: 2;
-          pointer-events: none;
-        }
-        .lp-logos-track-wrap::before { left: 0; background: linear-gradient(to right, var(--paper), transparent); }
-        .lp-logos-track-wrap::after { right: 0; background: linear-gradient(to left, var(--paper), transparent); }
-        .lp-logos-track {
-          display: flex;
-          gap: 16px;
-          width: max-content;
-          animation: lpScroll 36s linear infinite;
-        }
-        .lp-logos-track:hover { animation-play-state: paused; }
-        @keyframes lpScroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+        .lp-logos-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 20px;
+          max-width: 680px;
+          margin: 0 auto;
         }
         .lp-logo-card {
+          min-height: 165px;
+          border: 1px solid var(--line);
+          border-radius: 20px;
+          background: rgba(255,255,255,.6);
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
-          width: 112px;
+          justify-content: center;
+          gap: 14px;
+          padding: 18px 12px;
           text-decoration: none;
-          padding: 20px 12px;
-          border-radius: 18px;
-          border: 1.5px solid var(--line);
-          background: var(--white);
           transition: .18s ease;
-          flex-shrink: 0;
         }
         .lp-logo-card:hover { border-color: #bbb; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
-        .lp-logo-card img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: var(--paper); }
-        .lp-logo-card span { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.3; }
+        .lp-logo-card img { width: 66px; height: 66px; border-radius: 18px; object-fit: cover; }
+        .lp-logo-card span { font-size: 14px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; }
 
         .lp-campo {
           width: 100%;
@@ -536,8 +530,10 @@ export default function LandingPage() {
           .lp-hero h1 { font-size: clamp(48px, 15vw, 68px); }
           .lp-hero-sub { font-size: 16px; }
           .lp-btn { width: 100%; min-width: 0; min-height: 60px; }
-          .lp-video-section { padding: 44px 0 52px; }
+          .lp-video-section { padding: 44px 0 60px; }
           .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
+          .lp-logos-grid { grid-template-columns: repeat(2, 1fr); }
+          .lp-showcase { padding: 72px 0 80px; }
           .lp-video-center { padding: 22px; }
           .lp-play { width: 62px; height: 62px; }
           .lp-modal { padding: 40px 22px 26px; }
@@ -594,7 +590,10 @@ export default function LandingPage() {
         {/* VIDEO (placeholder) */}
         <section className="lp-video-section">
           <div className="lp-container">
-            <p className="lp-como-funciona-label">Cómo funciona</p>
+            <div className="lp-video-head">
+              <h2>Mira cómo funciona</h2>
+              <p>En menos de 1 minuto.</p>
+            </div>
             <div className="lp-video-wrap">
               <div className="lp-video-card">
                 <div className="lp-video-placeholder">
@@ -610,36 +609,28 @@ export default function LandingPage() {
         {/* SHOWCASE */}
         <section className="lp-showcase">
           <div className="lp-container">
-            <p className="lp-showcase-title">Locales que ya usan QuieroComer</p>
+            <p className="lp-showcase-eyebrow">Locales que ya usan QuieroComer</p>
+            <div className="lp-logos-grid">
+              {[
+                { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
+                { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
+                { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
+                { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
+                { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
+                { name: "Guffsushi Nikkei", slug: "guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
+                { name: "La Oveja Negra", slug: "la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
+                { name: "Alleria Delivery", slug: "alleria-delivery", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
+                { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
+                { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
+                { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
+              ].map((r) => (
+                <a key={r.slug} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
+                  <img src={r.logo} alt={r.name} loading="lazy" />
+                  <span>{r.name}</span>
+                </a>
+              ))}
+            </div>
           </div>
-          {(() => {
-            const items = [
-              { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
-              { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
-              { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
-              { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-              { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
-              { name: "Guffsushi Nikkei", slug: "guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
-              { name: "La Oveja Negra", slug: "la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
-              { name: "Alleria Delivery", slug: "alleria-delivery", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-              { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
-              { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
-              { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
-            ];
-            const doubled = [...items, ...items];
-            return (
-              <div className="lp-logos-track-wrap">
-                <div className="lp-logos-track">
-                  {doubled.map((r, i) => (
-                    <a key={i} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
-                      <img src={r.logo} alt={r.name} loading="lazy" />
-                      <span>{r.name}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
         </section>
 
       </main>
