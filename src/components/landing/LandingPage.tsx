@@ -249,7 +249,8 @@ export default function LandingPage() {
           border-radius: 16px;
           background: var(--yellow);
           color: #fff;
-          min-width: 270px;
+          width: 100%;
+          max-width: 560px;
           min-height: 64px;
           padding: 0 30px;
           font-size: 18px;
@@ -304,7 +305,7 @@ export default function LandingPage() {
           font-size: 15px;
           letter-spacing: .01em;
         }
-        .lp-video-wrap { width: min(100%, 900px); margin: 0 auto; }
+        .lp-video-wrap { width: min(100%, 640px); margin: 0 auto; }
         .lp-video-card {
           position: relative;
           overflow: hidden;
