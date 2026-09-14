@@ -13,7 +13,7 @@ export default function LandingFooter() {
 
         {/* Tagline */}
         <p style={{ fontSize: 13, color: "rgba(255,255,255,.38)", lineHeight: 1.6, maxWidth: 340, marginBottom: 32, letterSpacing: "-.01em" }}>
-          Carta QR inteligente y herramientas de fidelización para que tu local venda más y tus clientes vuelvan.
+          Carta QR inteligente y herramientas de fidelización para que tu restaurante venda más y tus clientes vuelvan.
         </p>
 
         {/* Links + copyright row */}

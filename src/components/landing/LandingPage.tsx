@@ -90,7 +90,7 @@ export default function LandingPage() {
     try {
       if (ucStep === "scratch") {
         if (!ucScratchName.trim() || !ucScratchEmail.trim() || !ucScratchEmail.includes("@")) {
-          setUcError("Completa el nombre del local y el correo."); setUcLoading(false); return;
+          setUcError("Completa el nombre del restaurante y el correo."); setUcLoading(false); return;
         }
         const res = await fetch("/api/activar/registrar", {
           method: "POST",
@@ -590,7 +590,7 @@ export default function LandingPage() {
         <section className="lp-hero">
           <div className="lp-container">
             <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
-              Tu local puede vender más.
+              Tu restaurante puede vender más.
             </h1>
 
             <p className="lp-hero-sub">
@@ -627,7 +627,7 @@ export default function LandingPage() {
         {/* SHOWCASE */}
         <section className="lp-showcase">
           <div className="lp-container">
-            <p className="lp-showcase-eyebrow">Locales que ya usan QuieroComer</p>
+            <p className="lp-showcase-eyebrow">Restaurantes que ya usan QuieroComer</p>
             {(() => {
               const items = [
                 { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
@@ -815,7 +815,7 @@ export default function LandingPage() {
                 <p className="lp-hint">Armamos una carta con platos de ejemplo y tú la editas desde tu panel. Listo en minutos.</p>
                 <div className="lp-scratch-grid">
                   <div>
-                    <label className="lp-campo-label">Nombre del local *</label>
+                    <label className="lp-campo-label">Nombre del restaurante *</label>
                     <input
                       className="lp-campo"
                       type="text"
