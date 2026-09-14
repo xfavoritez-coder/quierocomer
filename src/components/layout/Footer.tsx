@@ -43,7 +43,7 @@ export default function Footer() {
             {
               titulo: "Para Locales",
               links: [
-                { label: "Registra tu local",  href: "/solo-locales" },
+                { label: "Registra tu restaurante",  href: "/solo-locales" },
                 { label: "Iniciar sesión",     href: "/login-local" },
                 { label: "Panel de control",   href: "/panel" },
               ],

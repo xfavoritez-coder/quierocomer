@@ -170,7 +170,7 @@ export default function ClientesClient({ clients, totalDishes, totalCategories, 
 
         {/* CTA */}
         <section className="cl-cta">
-          <h2 className="cl-h2">Tu local también puede <span className="cl-italic-gold">verse así.</span></h2>
+          <h2 className="cl-h2">Tu restaurante también puede <span className="cl-italic-gold">verse así.</span></h2>
           <p>Sube tu carta. Nosotros hacemos el resto.</p>
           <a className="cl-primary-btn" href="/subircarta">Subir mi carta ahora →</a>
         </section>
