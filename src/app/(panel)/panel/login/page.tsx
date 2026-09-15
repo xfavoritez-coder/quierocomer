@@ -214,7 +214,7 @@ export default function PanelLogin() {
             width: "100%", height: 48, marginTop: 14,
             cursor: loading ? "wait" : "pointer",
           }}>
-            {loading ? "Entrando..." : "Frotar lámpara"}
+            {loading ? "Entrando..." : "Entrar"}
           </button>
 
           <div style={{ textAlign: "center", marginTop: 12 }}>
