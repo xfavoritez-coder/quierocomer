@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
-import { chileHourOf } from "@/lib/toteat/timezone";
+import { chileHourOf } from "@/lib/timezone";
 
 export const maxDuration = 30;
 
@@ -13,8 +13,7 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true, dietType: true } });
-  const hasToteat = !!restaurantData?.toteatRestaurantId;
+  const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { dietType: true } });
 
   const [sessions, dishes, topViewed, previousInsights, categories] = await Promise.all([
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: oneWeekAgo } }, select: { durationMs: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
@@ -44,7 +43,7 @@ DATOS (esta semana):
 - Duración promedio: ${avgDuration}s
 - Categorías de la carta: ${categoryNames || "sin datos"}
 - Top platos vistos esta semana: ${topViewed.slice(0, 5).map((t: any) => `${dishMap[t.dishId] || "?"}: ${t._count.id} vistas`).join(", ")}
-${hasToteat ? `- DATOS DE VENTAS DISPONIBLES: este local tiene POS conectado, puedes hablar de ventas` : `- NO hay datos de ventas. Solo puedes hablar de vistas, clicks y comportamiento en la carta.`}
+- NO hay datos de ventas. Solo puedes hablar de vistas, clicks y comportamiento en la carta.
 IMPORTANTE: Los números que menciones DEBEN coincidir exactamente con los datos de arriba. No inventes cifras.
 
 ${prevTitles ? `NO REPITAS estos consejos anteriores: ${prevTitles}` : ""}

@@ -60,7 +60,6 @@ export interface StoreOptionValue {
   id: string;
   name: string;
   price_delta: number;
-  toteat_modifier_code: string | null;
 }
 
 export interface StoreOptionGroup {
@@ -83,7 +82,6 @@ export interface StoreProduct {
   image_url: string | null;
   is_sold_out: boolean;
   is_hero: boolean; // destacado (para el banner del tema impact)
-  toteat_code: string | null;
   option_groups: StoreOptionGroup[];
 }
 
@@ -160,7 +158,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true,
-          toteatProductId: true, isHero: true,
+          isHero: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -170,7 +168,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
                   options: {
                     where: { isHidden: false },
                     orderBy: { position: "asc" },
-                    select: { id: true, name: true, priceAdjustment: true, toteatProductId: true },
+                    select: { id: true, name: true, priceAdjustment: true },
                   },
                 },
               },
@@ -207,7 +205,6 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
               id: o.id,
               name: o.name,
               price_delta: o.priceAdjustment,
-              toteat_modifier_code: o.toteatProductId ?? null,
             })),
           });
         }
@@ -224,7 +221,6 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         image_url: d.photos?.[0] ?? null,
         is_sold_out: d.stockCountdown != null && d.stockCountdown <= 0,
         is_hero: d.isHero === true,
-        toteat_code: d.toteatProductId ?? null,
         option_groups: optionGroups,
       });
     }

@@ -9,7 +9,6 @@ interface PanelRestaurant {
   logoUrl?: string | null;
   qrToken?: string | null;
   plan?: string;
-  hasToteat?: boolean;
   isDemo?: boolean;
   multiMenuEnabled?: boolean;
   hasControl?: boolean;

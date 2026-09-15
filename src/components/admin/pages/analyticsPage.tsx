@@ -182,15 +182,13 @@ const DEMO_ANALYTICS = {
 
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
   const { t } = usePanelLang();
-  const { activePlan, restaurants } = usePanelSession();
+  const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
-  const hasToteatPlan = canAccess(activePlan, "toteat_integration");
   const [metrics, setMetrics] = useState<any>(null);
   const [clientes, setClientes] = useState<any>(null);
   const [dishes, setDishes] = useState<any>(null);
   const [searches, setSearches] = useState<any[]>([]);
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
-  const [cross, setCross] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -200,21 +198,14 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       if (rid) p.set("restaurantId", rid);
       return fetch(`/api/admin/analytics?${p}`).then(r => r.json()).catch(() => null);
     };
-    const crossPromise = hasToteatPlan && rid
-      ? (() => {
-          const p = new URLSearchParams({ from, to, restaurantId: rid });
-          return fetch(`/api/admin/analytics/carta-vs-caja?${p}`).then(r => r.json()).catch(() => null);
-        })()
-      : Promise.resolve(null);
-    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour"), crossPromise])
-      .then(([m, c, d, s, ph, cv]) => {
+    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour")])
+      .then(([m, c, d, s, ph]) => {
         setMetrics(m); setClientes(c); setDishes(d);
         setSearches(Array.isArray(s) ? s.map((x: any) => ({ ...x, count: x.timesSearched || x.count || 0 })) : []);
         setPopularByHour(Array.isArray(ph) ? ph : []);
-        setCross(cv && !cv.error ? cv : null);
       })
       .finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatPlan]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
@@ -229,28 +220,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   const topDevice = clientes?.acquisition?.devices?.[0];
   const totalDevices = clientes?.acquisition?.devices?.reduce((s: number, d: any) => s + d.count, 0) || 0;
 
-  // Toteat: el local tiene Toteat conectado solo si hay platos mapeados.
-  const hasToteat = !!(cross?.summary?.mappedDishes && cross.summary.mappedDishes > 0);
-  // Conversion a venta: ventas / vistas de detalle (sobre platos mapeados).
-  const conversionPct = hasToteat && cross.summary.totalOpens > 0
-    ? Math.round((cross.summary.totalSales / cross.summary.totalOpens) * 100)
-    : 0;
-  // Mapa dishId → ventas en el periodo (para enriquecer top platos / estrella por horario)
-  const salesByDish = new Map<string, number>();
-  if (hasToteat && Array.isArray(cross?.rows)) {
-    for (const r of cross.rows) {
-      if (r.dishId && (r.sales || 0) > 0) salesByDish.set(r.dishId, r.sales);
-    }
-  }
-  // Mapa nombre → ventas (mostViewed solo trae name, no dishId)
-  const salesByName = new Map<string, number>();
-  if (hasToteat && Array.isArray(cross?.rows)) {
-    for (const r of cross.rows) {
-      if (r.name && (r.sales || 0) > 0) salesByName.set(r.name, r.sales);
-    }
-  }
-  const champions = hasToteat ? (cross?.insights?.estrellas || []).slice(0, 5) : [];
-  const ghosts = hasToteat ? (cross?.insights?.fantasmas || []).slice(0, 5) : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -274,7 +243,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
               <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{topDish.name}</p>
               <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>
                 <strong style={{ color: "#F4A623" }}>{topDish.count} {typeof topDish.count === "number" ? t("analytics_views") : t("analytics_times")}</strong>
-                {hasToteat && salesByName.has(topDish.name) && <> · <strong style={{ color: "#16a34a" }}>{salesByName.get(topDish.name)} {t("analytics_sales")}</strong></>}
               </p>
             </div>
           </div>
@@ -366,7 +334,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {dishes.mostViewed.slice(0, 3).map((d: any, i: number) => {
                 const medal = ["🥇", "🥈", "🥉"][i];
-                const sales = hasToteat ? salesByName.get(d.name) || 0 : 0;
                 return (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>{medal}</span>
@@ -377,11 +344,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                      {hasToteat && sales > 0 && (
-                        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.count} {t("analytics_views")} · <span style={{ color: "#16a34a", fontWeight: 700 }}>{sales} {t("analytics_sales")}</span></p>
-                      )}
                     </div>
-                    {!hasToteat && <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>}
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>
                   </div>
                 );
               })}
@@ -400,145 +364,37 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         </div>
       )}
 
-      {/* ═══ Bloques solo Toteat: Campeones + Fantasmas ═══ */}
-      {hasToteat && (champions.length > 0 || ghosts.length > 0) && (
-        <div className="adm-toteat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {/* Campeones */}
-          {champions.length > 0 && (
-            <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.06) 100%)", border: "1px solid rgba(22,163,74,0.18)", borderRadius: 14, padding: "16px 18px" }}>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{t("analytics_champion_dishes")}</span>
-                <InfoTip text="Los platos que la gente abre Y compra. Estrellas del menú con mejor conversión." />
-              </p>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_champion_desc")}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {champions.map((c: any) => (
-                  <div key={c.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(22,163,74,0.12)" }}>
-                    {c.photo ? (
-                      <img src={c.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-                    ) : (
-                      <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0 }} />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{c.opens} {t("analytics_views")} · <span style={{ color: "#16a34a", fontWeight: 700 }}>{c.sales} {t("analytics_sales")}</span></p>
-                    </div>
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#16a34a", flexShrink: 0 }}>{c.conversionPct}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Fantasmas */}
-          {ghosts.length > 0 && (
-            <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(239,68,68,0.04) 100%)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 14, padding: "16px 18px" }}>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{t("analytics_ghost_dishes")}</span>
-                <InfoTip text="La gente los abre pero casi nadie los pide. Revisa precio, descripción, foto, o si vale la pena tenerlos." />
-              </p>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{t("analytics_ghost_desc")}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {ghosts.map((g: any) => (
-                  <div key={g.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(239,68,68,0.12)" }}>
-                    {g.photo ? (
-                      <img src={g.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-                    ) : (
-                      <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0 }} />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{g.opens} {t("analytics_views")} · <span style={{ color: "#ef4444", fontWeight: 700 }}>{g.sales} {t("analytics_sales")}</span></p>
-                    </div>
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#ef4444", flexShrink: 0 }}>{g.conversionPct ?? 0}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
 /* ═══ TAB: Platos ═══ */
-type CrossSortKey = "name" | "opens" | "avgDetailMs" | "sales" | "conversionPct";
-type CrossSortDir = "asc" | "desc";
-
-function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
-  return (
-    <span aria-hidden style={{ display: "inline-flex", flexDirection: "column", lineHeight: 0.7, fontSize: 9, opacity: active ? 1 : 0.4 }}>
-      <span style={{ color: active && dir === "asc" ? "var(--adm-accent)" : "currentColor" }}>▲</span>
-      <span style={{ color: active && dir === "desc" ? "var(--adm-accent)" : "currentColor" }}>▼</span>
-    </span>
-  );
-}
 
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
   const { t } = usePanelLang();
-  const { activePlan, restaurants } = usePanelSession();
+  const { restaurants } = usePanelSession();
   const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
-  const hasToteatAccess = canAccess(activePlan, "toteat_integration");
   const [data, setData] = useState<any>(null);
-  const [cross, setCross] = useState<any>(null);
-  const [badges, setBadges] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tableOpen, setTableOpen] = useState(true);
-  const [showAllOrphans, setShowAllOrphans] = useState(false);
-  const [sortKey, setSortKey] = useState<CrossSortKey>("sales");
-  const [sortDir, setSortDir] = useState<CrossSortDir>("desc");
-
-  const toggleSort = (key: CrossSortKey) => {
-    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
-    else { setSortKey(key); setSortDir(key === "name" ? "asc" : "desc"); }
-  };
-
-  const sortedRows = (() => {
-    if (!cross?.rows) return [];
-    const rows = [...cross.rows];
-    rows.sort((a: any, b: any) => {
-      let av: any = a[sortKey];
-      let bv: any = b[sortKey];
-      // null / undefined go last
-      if (av === null || av === undefined) av = sortDir === "desc" ? -Infinity : Infinity;
-      if (bv === null || bv === undefined) bv = sortDir === "desc" ? -Infinity : Infinity;
-      if (typeof av === "string" && typeof bv === "string") {
-        const cmp = av.localeCompare(bv, "es");
-        return sortDir === "asc" ? cmp : -cmp;
-      }
-      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
-    });
-    return rows;
-  })();
 
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
   const [menuHealth, setMenuHealth] = useState<any>(null);
   useEffect(() => {
     setLoading(true);
     const p1 = new URLSearchParams({ type: "dishes", from, to });
-    const p2 = new URLSearchParams({ from, to });
     const p3 = new URLSearchParams({ type: "popular-by-hour", from, to });
     const p4 = new URLSearchParams({ type: "menu-health" });
-    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); p3.set("restaurantId", rid); p4.set("restaurantId", rid); }
-    const toteatRequests = hasToteatAccess
-      ? [
-          fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
-          fetch(`/api/admin/analytics/badge-accuracy?${p2}`).then(r => r.json()).catch(() => null),
-        ]
-      : [Promise.resolve(null), Promise.resolve(null)];
+    if (rid) { p1.set("restaurantId", rid); p3.set("restaurantId", rid); p4.set("restaurantId", rid); }
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p3}`).then(r => r.json()).catch(() => []),
       fetch(`/api/admin/analytics?${p4}`).then(r => r.json()).catch(() => null),
-      ...toteatRequests,
-    ]).then(([d, ph, mh, c, b]) => {
+    ]).then(([d, ph, mh]) => {
       setData(d);
       setPopularByHour(Array.isArray(ph) ? ph : []);
       setMenuHealth(mh && !mh.error ? mh : null);
-      if (c && !c.error) setCross(c);
-      if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatAccess]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>{t("analytics_no_data")}</p>;
@@ -598,16 +454,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     tooltip: undefined,
   };
 
-  // Premium-only insights — gated tanto por plan como por "Toteat connected".
-  // En planes inferiores nunca se muestran (ni se piden los datos al backend).
-  const hasToteat = hasToteatAccess && !!(cross && cross.summary?.mappedDishes && cross.summary.mappedDishes > 0);
-  const showBadgeAccuracy = hasToteat && badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-      {/* 🎖️ Acierto de los badges — premium + sales in window */}
-      {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
 
       {/* 🌟 Estrella por horario — qué plato gana en cada momento del día */}
       {popularByHour.length > 0 && (
@@ -649,302 +497,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
         {renderSection(topCategories)}
       </div>
 
-      {/* 🔀 Carta vs Caja — only shown when local has Toteat connected */}
-      {hasToteat && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{t("analytics_cart_vs_pos")}</p>
-            <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-              {cross.summary.mappedDishes}/{cross.summary.totalDishes} {t("analytics_mapeados")} · {cross.summary.totalOpens} {t("analytics_openings")} · {cross.summary.totalSales} {t("analytics_sales")} · {cross.summary.orphanCount} {t("analytics_out_of_menu")}
-            </span>
-          </div>
 
-          {/* Insights principales — Fantasmas + Estrellas full-width cada uno */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 10 }}>
-            {cross.insights.fantasmas.length > 0 && (
-              <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>{t("analytics_ghost_dishes")}</span>
-                  <InfoTip text="Platos que la gente abre pero casi nadie pide. Ejemplo: 'Gran Flor: 0 ventas de 6 aperturas' = 6 clientes lo miraron, 0 lo compraron." />
-                </p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_ghost_desc2")}</p>
-                {cross.insights.fantasmas.map((p: any) => (
-                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(239,68,68,0.15)", fontFamily: FB }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                      <span style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
-                        {p.conversionPct ?? 0}% conv
-                      </span>
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {p.sales} {p.sales === 1 ? t("analytics_sale_singular") : t("analytics_sale_plural")} · {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
-                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}${t("analytics_seeing")}`}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {cross.insights.estrellas.length > 0 && (
-              <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>{t("analytics_stars")}</span>
-                  <InfoTip text="Platos que la gente abre y termina pidiendo. Si la conversión es mayor a 100% es porque se vendieron más unidades de las que se vieron en la carta digital (los clientes los pidieron directo al mozo)." />
-                </p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_stars_desc")}</p>
-                {cross.insights.estrellas.map((p: any) => (
-                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(34,197,94,0.15)", fontFamily: FB }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                      <span style={{ fontSize: "0.78rem", color: "#16a34a", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
-                        {p.conversionPct}% conv
-                      </span>
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {p.sales} {p.sales === 1 ? t("analytics_sale_singular") : t("analytics_sale_plural")} · {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Vendidos fuera de la carta digital (orphans) — full width */}
-          {cross.orphans.length > 0 && (
-            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{t("analytics_sold_outside")} ({cross.orphans.length})</span>
-                <InfoTip text="Cosas que se vendieron en caja pero no están en tu carta digital. Suelen ser combos, salsas, extras o costos de delivery. El '×N' es cuántas unidades se vendieron." />
-              </p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_sold_outside_desc")}</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {(showAllOrphans ? cross.orphans : cross.orphans.slice(0, 10)).map((o: any) => (
-                  <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
-                    {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
-                  </span>
-                ))}
-                {cross.orphans.length > 10 && (
-                  <button
-                    onClick={() => setShowAllOrphans(v => !v)}
-                    style={{ background: "transparent", border: "1px dashed var(--adm-card-border)", color: "#F4A623", fontSize: "0.7rem", padding: "3px 10px", borderRadius: 6, fontFamily: FB, fontWeight: 600, cursor: "pointer" }}
-                  >
-                    {showAllOrphans ? t("analytics_show_less") : t("analytics_show_more").replace("{n}", String(cross.orphans.length - 10))}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Sospechosos sin mapear — abajo, full-width compacto, solo si existen */}
-          {cross.insights.sospechosos?.length > 0 && (
-            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{t("analytics_unmapped")}</span>
-                <InfoTip text="Platos con interés real que no están conectados a tu sistema de caja. No sabemos si vendieron. Andá a Carta → Toteat y conéctalos." />
-              </p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>{t("analytics_unmapped_desc")}</p>
-              {cross.insights.sospechosos.map((p: any) => (
-                <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                    <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
-                      {p.opens} {p.opens === 1 ? t("analytics_opening_singular") : t("analytics_opening_plural")}
-                    </span>
-                  </div>
-                  {p.avgDetailMs > 0 && (
-                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {Math.round(p.avgDetailMs / 1000)}{t("analytics_seeing")}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Full table — collapsible */}
-          <button
-            onClick={() => setTableOpen(!tableOpen)}
-            style={{ width: "100%", padding: "8px 10px", background: "transparent", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer", textAlign: "left" }}
-          >
-            {tableOpen ? "▼" : "▶"} {t("analytics_full_table").replace("{n}", String(cross.rows.length))}
-          </button>
-          {tableOpen && (
-            <div style={{ marginTop: 10, overflowX: "auto" }}>
-              <table style={{ width: "100%", fontFamily: FB, fontSize: "0.74rem", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
-                    {([
-                      { key: "name", label: t("analytics_col_dish"), align: "left" as const, tooltip: undefined },
-                      { key: "opens", label: t("analytics_col_openings"), align: "right" as const, tooltip: "Cuántos clientes abrieron el plato para verlo" },
-                      { key: "avgDetailMs", label: t("analytics_col_time"), align: "right" as const, tooltip: "Segundos promedio que pasaron mirando el plato" },
-                      { key: "sales", label: t("analytics_col_sales"), align: "right" as const, tooltip: "Unidades vendidas en el período" },
-                      { key: "conversionPct", label: t("analytics_col_conv"), align: "right" as const, tooltip: "Porcentaje de aperturas que terminaron en venta" },
-                    ] as { key: CrossSortKey; label: string; align: "left" | "right"; tooltip?: string }[]).map((col) => {
-                      const active = sortKey === col.key;
-                      return (
-                        <th
-                          key={col.key}
-                          onClick={() => toggleSort(col.key)}
-                          style={{ padding: "8px 6px", fontWeight: 600, textAlign: col.align, cursor: "pointer", userSelect: "none", color: active ? "var(--adm-text)" : "var(--adm-text3)" }}
-                          title={col.tooltip ? `${col.tooltip} · Click para ordenar` : `Ordenar por ${col.label}`}
-                        >
-                          {col.align === "right" ? (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                              {col.label}
-                              <SortIcon active={active} dir={sortDir} />
-                            </span>
-                          ) : (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                              <SortIcon active={active} dir={sortDir} />
-                              {col.label}
-                            </span>
-                          )}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRows.map((r: any) => {
-                    const isFantasma = r.mapped && r.opens >= 3 && (r.sales === 0 || (r.conversionPct ?? 0) < 20);
-                    const isStar = r.opens >= 3 && r.sales >= 2 && (r.conversionPct ?? 0) >= 50;
-                    const flag = isFantasma ? "👻" : isStar ? "🎯" : "";
-                    return (
-                      <tr key={r.dishId} className="adm-table-row" style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
-                        <td style={{ padding: "6px", color: "var(--adm-text)" }}>
-                          {flag && <span style={{ marginRight: 4 }}>{flag}</span>}
-                          {r.name}
-                          {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>{t("analytics_col_unmapped")}</span>}
-                        </td>
-                        <td style={{ padding: "6px", textAlign: "right", color: "var(--adm-text)" }}>{r.opens}</td>
-                        <td style={{ padding: "6px", textAlign: "right", color: r.avgDetailMs > 0 ? "var(--adm-text2)" : "var(--adm-text3)" }}>
-                          {r.avgDetailMs > 0 ? `${Math.round(r.avgDetailMs / 1000)}s` : "—"}
-                        </td>
-                        <td style={{ padding: "6px", textAlign: "right", color: r.sales > 0 ? "var(--adm-accent)" : "var(--adm-text3)", fontWeight: 700 }}>{r.sales}</td>
-                        <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 50 ? "#16a34a" : r.conversionPct >= 20 ? "var(--adm-text2)" : "#ef4444") : "var(--adm-text3)" }}>
-                          {r.conversionPct !== null ? `${r.conversionPct}%` : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-/* ═══ Badge accuracy section ═══ */
-function BadgeAccuracySection({ badges }: { badges: any }) {
-  const { t } = usePanelLang();
-  const renderCard = (
-    title: string,
-    subtitle: string,
-    accent: string,
-    bgRgb: string,
-    data: any,
-    tooltip: string,
-  ) => {
-    if (!data || data.distinctDishes === 0) return null;
-    return (
-      <div style={{ background: `rgba(${bgRgb},0.05)`, border: `1px solid rgba(${bgRgb},0.2)`, borderRadius: 10, padding: "14px 16px" }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: accent, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
-          <span>{title}</span>
-          <InfoTip text={tooltip} />
-        </p>
-        <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{subtitle}</p>
-
-        {/* Big numbers row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-          <div>
-            <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: accent, margin: 0 }}>
-              {data.hitRate !== null ? `${data.hitRate}%` : "—"}
-            </p>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <span>{t("analytics_badge_accuracy_label")}</span>
-              <InfoTip text="De los platos que mostramos con esta etiqueta, qué porcentaje también estuvo entre los más vendidos. Si dice 67%, 2 de cada 3 platos etiquetados sí vendieron bien — la etiqueta está acertando. Si dice 0%, ningún plato etiquetado fue de los más vendidos." />
-            </p>
-          </div>
-          <div>
-            <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: data.salesLift !== null && data.salesLift > 0 ? accent : "var(--adm-text2)", margin: 0 }}>
-              {data.salesLift !== null ? (data.salesLift > 0 ? `+${data.salesLift}%` : `${data.salesLift}%`) : "—"}
-            </p>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <span>{t("analytics_badge_more_sales")}</span>
-              <InfoTip text="Comparación de ventas entre platos etiquetados y no etiquetados. Si dice +50%, los platos con etiqueta vendieron en promedio 50% más unidades que los que no tuvieron etiqueta. Si es negativo, los platos sin etiqueta vendieron más." />
-            </p>
-          </div>
-        </div>
-
-        {/* Top items con foto */}
-        {data.topItems?.length > 0 && (
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
-              <span>{t("analytics_badge_sold_with")}</span>
-              <InfoTip text="Top platos que tuvieron la etiqueta en el período Y vendieron. Ordenados por ventas. La estrella ⭐ marca los que además fueron de los más vendidos del local. El % indica cuánto del periodo el plato estuvo con la etiqueta." />
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {data.topItems.map((it: any) => (
-                <div key={it.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0", borderBottom: `1px dashed rgba(${bgRgb},0.15)` }}>
-                  {it.photo ? (
-                    <img src={it.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem" }}>🍽️</div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}{it.name}
-                    </p>
-                    <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }} title={`Estuvo ${it.coveragePct}% del periodo con la etiqueta`}>
-                      {t("analytics_badge_time_pct").replace("{n}", String(it.coveragePct))}
-                    </p>
-                  </div>
-                  <span style={{ flexShrink: 0, color: accent, fontFamily: F, fontSize: "0.92rem", fontWeight: 700 }}>
-                    {it.sales}
-                    <span style={{ fontSize: "0.62rem", fontWeight: 600, marginLeft: 3, opacity: 0.85 }}>{it.sales === 1 ? t("analytics_badge_sale") : t("analytics_badge_sales")}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{t("analytics_badge_accuracy")}</p>
-        <InfoTip text="¿Las etiquetas que mostramos en la carta están funcionando? Comparamos los platos que tuvieron etiqueta contra los que más se vendieron." />
-        <span style={{ flex: 1 }} />
-        <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
-          {t("analytics_badge_runs").replace("{n}", String(badges.summary.popularRuns))}
-        </span>
-      </div>
-
-      <div className="adm-cols-2" style={{ alignItems: "start" }}>
-        {renderCard(
-          t("analytics_badge_popular_title"),
-          t("analytics_badge_popular_sub"),
-          "#ef4444",
-          "239,68,68",
-          badges.popular,
-          "Mide si los platos que destacamos automáticamente con 🔥 son los que realmente venden bien. Si el acierto es alto, el algoritmo está acertando.",
-        )}
-        {renderCard(
-          t("analytics_badge_recommended_title"),
-          t("analytics_badge_recommended_sub"),
-          "#F4A623",
-          "244,166,35",
-          badges.recommended,
-          "Mide si los platos que vos eligiste destacar son los que la gente pide. Si el acierto es alto, tu selección está dando en el clavo. Si es bajo, capaz convenga revisar qué destacás.",
-        )}
-      </div>
     </div>
   );
 }
@@ -1624,7 +1177,6 @@ const DEMO_SUGERIDOS = {
   clickRate: 15.1,
   sessionsWithSuggestions: 89,
   sessionsWithClicks: 34,
-  hasToteat: false,
   salesFromSuggestions: 0,
   topClicked: [
     { name: "Tiramisú", clicks: 14, shown: 52, rate: 26.9, photo: null },
@@ -1686,7 +1238,7 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
         </div>
       )}
 
-      {data.hasToteat && data.salesFromSuggestions > 0 && (
+      {data.salesFromSuggestions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: data.salesFromSuggestionsDishes?.length ? 12 : 0 }}>
             <span style={{ fontSize: "1.2rem" }}>💰</span>

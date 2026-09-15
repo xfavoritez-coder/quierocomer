@@ -22,8 +22,7 @@ interface CartItemIn {
   unit_price: number;
   quantity: number;
   image_url?: string | null;
-  toteat_code?: string | null;
-  options?: { group_id: string; group_name: string; value_id: string; value: string; price_delta: number; toteat_modifier_code?: string | null }[];
+  options?: { group_id: string; group_name: string; value_id: string; value: string; price_delta: number }[];
 }
 
 /**
@@ -145,18 +144,14 @@ export async function POST(req: NextRequest) {
 
     const isOnline = ONLINE_METHODS.includes(paymentMethod);
 
-    // Guardar cada item como superset: campos del visor/panel (dishName, unitTotal,
-    // selectedOptions) + campos que necesita el POS (name, unit_price, toteat_code, options).
     const storedItems = items.map((it) => ({
       dishName: it.name,
       quantity: it.quantity,
       unitTotal: it.unit_price,
       selectedOptions: (it.options ?? []).map((o) => ({ optionName: o.value })),
-      // datos para el POS (Toteat)
       name: it.name,
       product_id: it.product_id,
       unit_price: it.unit_price,
-      toteat_code: it.toteat_code ?? null,
       options: it.options ?? [],
     }));
 

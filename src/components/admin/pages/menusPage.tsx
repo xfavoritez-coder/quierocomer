@@ -6,7 +6,6 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
-import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
 import MenuGroupsManager from "@/components/admin/MenuGroupsManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -394,7 +393,7 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = ["productos", "categorias", "modificadores", "horarios", "multimenu", "toteat"] as const;
+  const validTabs = ["productos", "categorias", "modificadores", "horarios", "multimenu"] as const;
   type MenuTab = typeof validTabs[number];
   const tabFromUrl = searchParams.get("tab") as MenuTab | null;
   const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
@@ -2110,10 +2109,7 @@ export default function AdminMenus() {
       {menuTab === "multimenu" && selectedRestaurantId && (
         <MenuGroupsManager restaurantId={selectedRestaurantId} />
       )}
-      {/* ── Toteat tab ── */}
-      {menuTab === "toteat" && selectedRestaurantId && (
-        <ToteatMappingPanel restaurantId={selectedRestaurantId} />
-      )}
+
       {/* FAB — mobile only */}
 
       {photoModal && (

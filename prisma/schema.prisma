@@ -261,11 +261,7 @@ model Restaurant {
   dietType                   DishDietType             @default(OMNIVORE)
   enabledLangs               String[]                 @default(["es", "en", "pt"])
   plan                       RestaurantPlan           @default(FREE)
-  toteatApiToken             String?
-  toteatLastSyncAt           DateTime?
-  toteatLocalId              Int?
-  toteatRestaurantId         String?
-  toteatUserId               Int?
+
   currentPeriodEnd           DateTime?
   flowCustomerId             String?                  @unique
   flowPlanId                 String?
@@ -277,9 +273,7 @@ model Restaurant {
   pendingFlowPlanId          String?
   billingAnchorDay           Int?
   billingExempt              Boolean                  @default(false)
-  toteatImportDone           Boolean                  @default(false)
-  toteatLastVisibilitySyncAt DateTime?
-  toteatWebhookSecret        String?                  @unique
+
   billingAddress             String?
   billingCity                String?
   billingCompanyName         String?
@@ -355,7 +349,7 @@ model Restaurant {
   surveyResponses            EcommerceSurveyResponse[]
   announcements              Announcement[]
   automationRules            AutomationRule[]
-  badgeSnapshots             BadgeSnapshot[]
+
   birthdays                  BirthdayCampaign[]
   birthdayEmailLogs          BirthdayEmailLog[]
   campaigns                  Campaign[]
@@ -383,7 +377,7 @@ model Restaurant {
   sessions                   Session[]
   statEvents                 StatEvent[]
   teamMembers                TeamMember[]
-  toteatSales                ToteatSale[]
+
   waiterCalls                WaiterCall[]
   onlineOrders               OnlineOrder[]
   waiterSubscriptions        WaiterPushSubscription[]
@@ -516,66 +510,6 @@ model MenuGroup {
   @@index([restaurantId])
 }
 
-model ToteatSale {
-  id              String              @id @default(cuid())
-  restaurantId    String
-  toteatOrderId   BigInt              @unique
-  toteatTableId   String?
-  toteatTableName String?
-  numberClients   Int?
-  toteatWaiterId  BigInt?
-  waiterName      String?
-  dateOpen        DateTime
-  dateClosed      DateTime
-  total           Float
-  payed           Float
-  gratuity        Float               @default(0)
-  subtotal        Float
-  taxes           Float               @default(0)
-  fiscalType      String?
-  paymentMethod   String?
-  rawJson         Json
-  syncedAt        DateTime            @default(now())
-  restaurant      Restaurant          @relation(fields: [restaurantId], references: [id])
-  products        ToteatSaleProduct[]
-
-  @@index([restaurantId, dateClosed])
-  @@index([restaurantId, toteatTableId])
-}
-
-model ToteatSaleProduct {
-  id              String     @id @default(cuid())
-  saleId          String
-  toteatProductId String
-  productName     String
-  hierarchyId     String?
-  hierarchyName   String?
-  quantity        Float
-  netPrice        Float
-  payed           Float
-  taxes           Float      @default(0)
-  discounts       Float      @default(0)
-  sale            ToteatSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-  @@index([saleId])
-  @@index([toteatProductId])
-}
-
-model BadgeSnapshot {
-  id           String     @id @default(cuid())
-  restaurantId String
-  dishId       String
-  badgeType    String
-  score        Float?
-  position     Int?
-  capturedAt   DateTime   @default(now())
-  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@index([restaurantId, badgeType, capturedAt])
-  @@index([dishId, capturedAt])
-}
-
 model AbExperiment {
   id          String      @id @default(cuid())
   slug        String      @unique
@@ -694,11 +628,7 @@ model Dish {
   isGlutenFree          Boolean                @default(false)
   isLactoseFree         Boolean                @default(false)
   isSoyFree             Boolean                @default(false)
-  toteatMappedAt        DateTime?
-  toteatMappedBy        String?
-  toteatProductId       String?
-  toteatSynced          Boolean                @default(false)
-  toteatNoDirectMapping Boolean                @default(false)
+
   containsNuts          Boolean                @default(false)
   photoCredits          Json?
   embedding             Unsupported("vector")?
@@ -708,7 +638,6 @@ model Dish {
   imageEmbeddingHash    String?
   hiddenFromFeed        Boolean                @default(false)
   leafOverride          String?
-  badgeSnapshots        BadgeSnapshot[]
   category              Category               @relation(fields: [categoryId], references: [id])
   restaurant            Restaurant             @relation(fields: [restaurantId], references: [id])
   dishFavorites         DishFavorite[]
@@ -724,7 +653,6 @@ model Dish {
   reviews               Review[]
   modifierTemplates     ModifierTemplate[]     @relation("DishToModifierTemplate")
 
-  @@index([restaurantId, toteatProductId])
   @@index([restaurantId])
   @@index([categoryId])
 }
@@ -800,14 +728,10 @@ model ModifierTemplateOption {
   description     String?
   imageUrl        String?
   isHidden        Boolean                     @default(false)
-  toteatMappedAt  DateTime?
-  toteatMappedBy  String?
-  toteatProductId String?
   translations    ModifierOptionTranslation[]
   group           ModifierTemplateGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
-  @@index([toteatProductId])
 }
 
 model ModifierGroupTranslation {

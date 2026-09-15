@@ -10,7 +10,6 @@ interface AdminRestaurant {
   logoUrl?: string | null;
   qrToken?: string | null;
   plan?: string | null;
-  hasToteat?: boolean;
   ecommerceEnabled?: boolean;
 }
 

@@ -24,10 +24,10 @@ const PAY_METHODS = [
   { id: "transferencia", label: "Transferencia" },
 ];
 
-interface CartOption { group_id: string; group_name: string; value_id: string; value: string; price_delta: number; toteat_modifier_code: string | null }
+interface CartOption { group_id: string; group_name: string; value_id: string; value: string; price_delta: number }
 interface CartItem {
   key: string; product_id: string; name: string; base_price: number; unit_price: number;
-  quantity: number; toteat_code: string | null; options: CartOption[];
+  quantity: number; options: CartOption[];
   comment: string; courtesy: boolean; courtesyReason: string;
 }
 
@@ -189,7 +189,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
   const onProductClick = (p: StoreProduct) => {
     if (p.is_sold_out) { showToast("Agotado"); return; }
     if ((p.option_groups?.length ?? 0) > 0) setModalProduct(p);
-    else addToCart({ product_id: p.id, name: p.name, base_price: p.price, unit_price: p.price, toteat_code: p.toteat_code, options: [] }, 1);
+    else addToCart({ product_id: p.id, name: p.name, base_price: p.price, unit_price: p.price, options: [] }, 1);
     if (!isWide) setMobileTab("cart");
   };
   const changeQty = (key: string, d: number) => setCart((prev) => prev.flatMap((c) => (c.key !== key ? [c] : c.quantity + d <= 0 ? [] : [{ ...c, quantity: c.quantity + d }])));
@@ -228,7 +228,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
           discount, deliveryFee: fee, sendToPos: posAvailable && sendToPos,
           items: cart.map((i) => ({
             product_id: i.product_id, name: i.name, unit_price: i.courtesy ? 0 : i.unit_price, quantity: i.quantity,
-            toteat_code: i.toteat_code, comment: i.comment, courtesy: i.courtesy, courtesyReason: i.courtesyReason, options: i.options,
+            comment: i.comment, courtesy: i.courtesy, courtesyReason: i.courtesyReason, options: i.options,
           })),
         }),
       });
@@ -576,7 +576,7 @@ function ModifiersModal({ product, accent, onAdd, onClose }: { product: StorePro
 
   const optionsFlat: CartOption[] = groups.flatMap((g) => (selected[g.id] ?? []).map((vid) => {
     const val = (g.values ?? []).find((v) => v.id === vid)!;
-    return { group_id: g.id, group_name: g.name, value_id: vid, value: val.name, price_delta: val.price_delta, toteat_modifier_code: val.toteat_modifier_code };
+    return { group_id: g.id, group_name: g.name, value_id: vid, value: val.name, price_delta: val.price_delta };
   }));
   const unitPrice = product.price + optionsFlat.reduce((s, o) => s + o.price_delta, 0);
   const canAdd = groups.every((g) => !g.is_required || (selected[g.id]?.length ?? 0) >= Math.max(1, g.min_select));
@@ -620,7 +620,7 @@ function ModifiersModal({ product, accent, onAdd, onClose }: { product: StorePro
             <span style={{ width: 22, textAlign: "center", fontFamily: F, fontWeight: 700, color: C.text }}>{qty}</span>
             <RoundBtn onClick={() => setQty((q) => q + 1)}><Plus size={13} /></RoundBtn>
           </div>
-          <button onClick={() => onAdd({ product_id: product.id, name: product.name, base_price: product.price, unit_price: unitPrice, toteat_code: product.toteat_code, options: optionsFlat }, qty)} disabled={!canAdd}
+          <button onClick={() => onAdd({ product_id: product.id, name: product.name, base_price: product.price, unit_price: unitPrice, options: optionsFlat }, qty)} disabled={!canAdd}
             style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: canAdd ? "pointer" : "not-allowed", background: canAdd ? accent : C.border, color: canAdd ? "#1a1a1a" : C.text3 }}>Agregar — {fmt(unitPrice * qty)}</button>
         </div>
       </div>

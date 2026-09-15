@@ -86,7 +86,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       const ids = (selectedOptions[g.id] ?? "").split(",").filter(Boolean);
       for (const id of ids) {
         const v = g.values.find((vv) => vv.id === id);
-        if (v) options.push({ group_id: g.id, group_name: g.name, value_id: v.id, value: v.name, price_delta: v.price_delta, toteat_modifier_code: v.toteat_modifier_code });
+        if (v) options.push({ group_id: g.id, group_name: g.name, value_id: v.id, value: v.name, price_delta: v.price_delta });
       }
     }
 
@@ -97,7 +97,6 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       base_price: product.price,
       quantity: qty,
       image_url: product.image_url,
-      toteat_code: product.toteat_code,
       options,
     });
     window.dispatchEvent(new CustomEvent("cart:item-added"));

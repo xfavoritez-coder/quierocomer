@@ -263,11 +263,11 @@ function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: Store
       for (const op of (it.options ?? []) as CartItemOption[]) {
         const group = prod.option_groups.find((g) => g.id === op.group_id);
         const val = group?.values.find((v) => v.id === op.value_id);
-        if (group && val) options.push({ group_id: group.id, group_name: group.name, value_id: val.id, value: val.name, price_delta: val.price_delta, toteat_modifier_code: val.toteat_modifier_code });
+        if (group && val) options.push({ group_id: group.id, group_name: group.name, value_id: val.id, value: val.name, price_delta: val.price_delta });
       }
       const base = prod.price; // precio base actual
       const unit = base + options.reduce((s, op) => s + (op.price_delta ?? 0), 0);
-      addItem({ product_id: prod.id, name: prod.name, unit_price: unit, base_price: base, quantity: it.quantity || 1, image_url: prod.image_url, toteat_code: prod.toteat_code, options });
+      addItem({ product_id: prod.id, name: prod.name, unit_price: unit, base_price: base, quantity: it.quantity || 1, image_url: prod.image_url, options });
       added++;
     }
     if (added) { toast.success(skipped ? `Productos agregados (${skipped} ya no disponibles)` : "Productos agregados al carrito"); onClose(); }

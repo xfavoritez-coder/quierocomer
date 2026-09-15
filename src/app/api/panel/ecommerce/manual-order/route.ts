@@ -20,11 +20,10 @@ interface ManualItem {
   name: string;
   unit_price: number; // ya viene 0 si es cortesía
   quantity: number;
-  toteat_code?: string | null;
   comment?: string;
   courtesy?: boolean;
   courtesyReason?: string;
-  options?: { group_id: string; group_name: string; value_id: string; value: string; price_delta: number; toteat_modifier_code?: string | null }[];
+  options?: { group_id: string; group_name: string; value_id: string; value: string; price_delta: number }[];
 }
 
 /**
@@ -72,7 +71,6 @@ export async function POST(req: NextRequest) {
     }
     const finalNotes = [notes?.trim(), ...extraNotes].filter(Boolean).join(" · ") || null;
 
-    // Items en formato superset (visor/panel + POS), igual que el checkout.
     const storedItems = items.map((it) => ({
       dishName: it.name,
       quantity: it.quantity,
@@ -80,11 +78,9 @@ export async function POST(req: NextRequest) {
       selectedOptions: (it.options ?? []).map((o) => ({ optionName: o.value })),
       courtesy: !!it.courtesy,
       comment: it.comment?.trim() || null,
-      // datos para el POS (Toteat)
       name: it.name,
       product_id: it.product_id,
       unit_price: it.unit_price,
-      toteat_code: it.toteat_code ?? null,
       options: it.options ?? [],
     }));
 

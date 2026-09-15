@@ -40,22 +40,11 @@ export interface GoogleMapsCreds {
   apiKey?: string;
 }
 
-/** Credenciales del POS Toteat para inyectar pedidos (estilo Servio / deliveryhandroll). */
-export interface ToteatPosCreds {
-  apiUrl?: string; // default https://api.toteat.com/mw/or/1.0
-  xir?: string; // Restaurant ID
-  xil?: string; // Local ID
-  xiu?: string; // User ID (por defecto = xil)
-  token?: string; // xapitoken
-  discountCode?: string; // código de producto Toteat para la línea de descuento (default "DESCUENTO")
-}
+export type PosProvider = "none";
 
-export type PosProvider = "none" | "toteat";
-
-/** A qué POS se envían los pedidos del ecommerce (por ahora: ninguno o Toteat). */
+/** A qué POS se envían los pedidos del ecommerce. */
 export interface PosConfig {
   provider?: PosProvider;
-  toteat?: ToteatPosCreds;
 }
 
 /** Sincronización de estado + ubicación del repartidor desde deliveryhandroll.cl.
@@ -78,8 +67,6 @@ export interface EcommerceConfig {
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
 
-export const TOTEAT_DEFAULT_API_URL = "https://api.toteat.com/mw/or/1.0";
-
 /** Normaliza el JSON crudo de la DB a un EcommerceConfig seguro. */
 export function parseEcommerceConfig(raw: unknown): EcommerceConfig {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as EcommerceConfig;
@@ -98,8 +85,7 @@ export function integrationStatus(cfg: EcommerceConfig) {
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
     googleMaps: !!cfg.googleMaps?.apiKey,
-    // POS: configurado si hay un proveedor seleccionado con sus credenciales mínimas.
-    pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
+    pos: false,
   };
 }
 
