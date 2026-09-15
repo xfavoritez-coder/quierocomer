@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
@@ -56,7 +56,6 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const [sending, setSending] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [accom, setAccom] = useState<{ pending: string[]; notesPart: string }>({ pending: [], notesPart: "" });
   const onAccomResolve = useCallback((r: { pending: string[]; notesPart: string }) => setAccom(r), []);
@@ -169,7 +168,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       // Pedido completado: limpiar cupón/comentario/acompañamientos guardados.
       try { localStorage.removeItem(`qc-checkout-extra:${tenant.id}`); localStorage.removeItem(`qc-accom:${tenant.id}`); } catch {}
       clearCart();
-      if (orderParam) router.replace(`/pedido/${orderParam}`);
+      if (orderParam) window.location.replace(`/pedido/${orderParam}`);
       return;
     }
 
