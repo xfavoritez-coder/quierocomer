@@ -10,9 +10,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tenant = await loadEcommerceTenant(slug);
   if (!tenant) return {};
+  const iconUrl = tenant.faviconUrl || tenant.logoUrl;
   return {
     title: `Finalizar pedido · ${tenant.name}`,
-    ...(tenant.logoUrl ? { icons: { icon: tenant.logoUrl, shortcut: tenant.logoUrl, apple: tenant.logoUrl } } : {}),
+    ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
   };
 }
 

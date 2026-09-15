@@ -36,7 +36,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const storeHref = (basePath ?? `/ecommerce/${tenant.slug}`) || "/";
   const primaryColor = tenant.primaryColor;
   const impact = tenant.theme === "impact";
-  useFavicon(tenant.logoUrl);
+  useFavicon(tenant.faviconUrl || tenant.logoUrl);
   const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart, updateQty, removeItem } = useCartStore();
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);

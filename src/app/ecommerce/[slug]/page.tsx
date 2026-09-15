@@ -12,10 +12,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const data = await loadEcommerceStorefront(slug);
   if (!data) return {};
   const { tenant } = data;
+  const iconUrl = tenant.faviconUrl || tenant.logoUrl;
   return {
     title: `${tenant.name} · Pedir online`,
     description: `Haz tu pedido en ${tenant.name}. Rápido y fácil.`,
-    ...(tenant.logoUrl ? { icons: { icon: tenant.logoUrl, shortcut: tenant.logoUrl, apple: tenant.logoUrl } } : {}),
+    ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
     openGraph: {
       title: tenant.name,
       description: `Haz tu pedido en ${tenant.name}.`,
