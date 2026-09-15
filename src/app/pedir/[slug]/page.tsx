@@ -62,7 +62,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   // Only PREMIUM (or TRIALING or billingExempt) can use ordering (excepción: el-menu-de-la-esquina con plan GOLD)
   const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
   const isOnTrial = config.subscriptionStatus === "TRIALING";
-  if (config.plan !== "PREMIUM" && !isOnTrial && !config.billingExempt && !ORDERING_EXCEPTIONS.includes(slug)) {
+  if (config.plan !== "PREMIUM" && !isOnTrial && !config.billingExempt && !config.isDemo && !ORDERING_EXCEPTIONS.includes(slug)) {
     return (
       <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--font-body, sans-serif)", background: "#fafafa" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
