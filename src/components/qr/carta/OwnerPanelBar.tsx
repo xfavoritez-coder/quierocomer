@@ -13,6 +13,11 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
     } catch {}
   }, [slug]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--opb-h", visible ? "44px" : "0px");
+    return () => document.documentElement.style.setProperty("--opb-h", "0px");
+  }, [visible]);
+
   const dismiss = () => {
     try { localStorage.setItem(LS_KEY(slug), "1"); } catch {}
     setVisible(false);
@@ -41,15 +46,18 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           position: relative;
         }
         .opb-text {
+          font-family: "Inter", system-ui, sans-serif;
           font-size: 14px;
-          font-weight: 600;
-          color: rgba(255,255,255,0.75);
+          font-weight: 500;
+          color: rgba(255,255,255,0.65);
           letter-spacing: -0.01em;
           white-space: nowrap;
         }
         .opb-text strong {
+          font-family: "Space Grotesk", system-ui, sans-serif;
           color: #fff;
-          font-weight: 800;
+          font-weight: 700;
+          letter-spacing: -0.03em;
         }
         .opb-btn {
           display: inline-flex;
@@ -60,8 +68,9 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           border: none;
           border-radius: 20px;
           color: #1A0900;
+          font-family: "Space Grotesk", system-ui, sans-serif;
           font-size: 13px;
-          font-weight: 800;
+          font-weight: 700;
           letter-spacing: -0.02em;
           cursor: pointer;
           text-decoration: none;
@@ -90,7 +99,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
       `}</style>
       <div className="opb">
         <div className="opb-inner">
-          <span className="opb-text"><strong>¿Quieres cambiar algo?</strong> Este es tu local.</span>
+          <span className="opb-text"><strong>¿Quieres cambiar algo?</strong></span>
           <a href="/panel" className="opb-btn" onClick={dismiss}>
             Entrar a mi panel →
           </a>
