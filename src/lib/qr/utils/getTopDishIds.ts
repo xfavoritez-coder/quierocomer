@@ -113,5 +113,5 @@ export const getCachedTopDishIds = unstable_cache(
     return { dishIds: Array.from(result.dishIds), source: result.source, totalSalesToday: result.totalSalesToday };
   },
   ["qr-top-dishes"],
-  { revalidate: 300 }
+  { revalidate: 600 }
 );

@@ -201,7 +201,7 @@ export default async function CartaPage({
       orderBy: { createdAt: "desc" },
     }),
     ["qr-promos", restaurant.id],
-    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 300 }
+    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 600 }
   );
   const getAnnouncements = unstable_cache(
     (rid: string) => prisma.announcement.findMany({
@@ -210,7 +210,7 @@ export default async function CartaPage({
       select: { id: true, text: true, linkUrl: true, daysOfWeek: true, startDate: true, endDate: true },
     }),
     ["qr-announcements", restaurant.id],
-    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 300 }
+    { tags: [`qr-restaurant-${restaurant.slug}`], revalidate: 600 }
   );
   const [topDishesRaw, activePromos, rawAnnouncements] = await Promise.all([
     getCachedTopDishIds(restaurant.id).catch(() => ({ dishIds: [] as string[], source: "none" as const, totalSalesToday: 0 })),

@@ -116,7 +116,7 @@ export function getRestaurantBySlug(slug: string, lang: Lang = "es") {
     ["qr-restaurant", slug, lang],
     {
       tags: ["qr-restaurant", `qr-restaurant-${slug}`],
-      revalidate: 300,
+      revalidate: 600,
     }
   )().catch(() => null)
 }
