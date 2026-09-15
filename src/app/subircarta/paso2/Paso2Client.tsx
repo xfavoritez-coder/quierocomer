@@ -284,8 +284,16 @@ export default function Paso2Client() {
       trackFunnelEvent(leadId, "paso2_completed");
       trackCartaInfo();
       trackLead({ content_name: localName.trim() });
+
+      // Fire-and-forget the full processing pipeline
+      fetch("/api/subircarta/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      }).catch(() => {});
+
+      // Show inline success state instead of redirecting
       setSubmitted(true);
-      router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch (err: any) {
       trackFunnelEvent(leadId, "paso2_error", { error: err?.message || "conexión" });
       setError("Error de conexión. Intenta de nuevo.");
@@ -351,6 +359,95 @@ export default function Paso2Client() {
     "Preparando tu nueva carta...",
   ];
   const pillMeta = animDone ? pillMetaTexts[0] : pillMetaTexts[pillMetaIndex % pillMetaTexts.length];
+
+  // Derive the carta QR URL for the success screen
+  const cartaQrUrl = (() => {
+    if (!cartaUrl) return null;
+    try {
+      // If cartaUrl looks like a /qr/slug path, use it directly
+      const url = new URL(cartaUrl);
+      if (url.pathname.startsWith("/qr/")) return cartaUrl;
+    } catch {}
+    return null;
+  })();
+
+  if (submitted) {
+    return (
+      <>
+        <style dangerouslySetInnerHTML={{ __html: STYLES }} />
+        <main className="page">
+          <nav className="nav-bar">
+            <a href="/" className="nav-logo">
+              <img src="/logo.png" alt="" style={{ height: 22, width: 22, objectFit: "contain" }} />
+              QuieroComer
+            </a>
+            <a href="/panel" className="nav-ingresar">Ingresar</a>
+          </nav>
+
+          {/* Steps — all done */}
+          <section className="steps" aria-label="Progreso">
+            <div className="step done"><div className="step-number">&#10003;</div><span>Subir carta</span></div>
+            <div className="step-line" />
+            <div className="step done"><div className="step-number">&#10003;</div><span>Transformación</span></div>
+            <div className="step-line" />
+            <div className="step active"><div className="step-number">3</div><span>Carta lista</span></div>
+          </section>
+
+          <section className="shell centered-shell" style={{ animation: "formSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both" }}>
+            <div className="centered-form" style={{ maxWidth: 480, textAlign: "center", padding: "8px 0 16px" }}>
+              {/* Success icons */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 20 }}>
+                <span style={{ fontSize: 44, lineHeight: 1 }}>✉️</span>
+                <span style={{ fontSize: 22, color: "#A8A8A2" }}>+</span>
+                <span style={{ fontSize: 44, lineHeight: 1 }}>💬</span>
+              </div>
+
+              {/* Badge */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(67,209,123,.1)", border: "1px solid rgba(67,209,123,.3)", color: "#2d9e5f", fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 999, marginBottom: 18 }}>
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none"><circle cx="10" cy="10" r="10" fill="#43d17b"/><path d="M6 10.5l2.5 2.5L14 8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Listo
+              </div>
+
+              <h1 style={{ marginBottom: 10 }}>¡Tu carta está en camino!</h1>
+
+              <p className="subcopy" style={{ marginBottom: 6 }}>
+                En unos minutos recibirás tu carta<br />en tu correo y WhatsApp.
+              </p>
+
+              {email && (
+                <p style={{ fontSize: 13, color: "#A8A8A2", marginBottom: 28 }}>
+                  Te lo enviamos a <strong style={{ color: "#73736D" }}>{email}</strong>
+                </p>
+              )}
+
+              {cartaQrUrl ? (
+                <a
+                  href={cartaQrUrl}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: "#F59E1B", color: "#fff",
+                    fontSize: 16, fontWeight: 800,
+                    padding: "14px 28px", borderRadius: 14, border: "none",
+                    textDecoration: "none", letterSpacing: "-.02em",
+                    boxShadow: "0 8px 24px rgba(245,158,27,.22)",
+                  }}
+                >
+                  Ver mi carta <span>→</span>
+                </a>
+              ) : (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,158,27,.08)", border: "1.5px solid rgba(245,158,27,.25)", borderRadius: 14, padding: "12px 20px" }}>
+                  <svg viewBox="0 0 20 20" width="16" height="16" fill="none"><circle cx="10" cy="10" r="9" stroke="#F59E1B" strokeWidth="2"/><path d="M10 6v4l2 2" stroke="#F59E1B" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  <span style={{ fontSize: 13, color: "#73736D" }}>Tu carta se está preparando, ya llegará pronto.</span>
+                </div>
+              )}
+            </div>
+          </section>
+        </main>
+        <Footer onPlanesClick={() => setPlanesOpen(true)} />
+        {planesOpen && <PlanesModal onClose={() => setPlanesOpen(false)} />}
+      </>
+    );
+  }
 
   return (
     <>

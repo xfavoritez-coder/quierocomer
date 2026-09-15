@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { extractCommune } from "@/lib/communeUtils";
 import { extractJusto } from "./justo";
 import { extractGetagil } from "./getagil";
@@ -584,6 +585,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Create restaurant or reuse wiped demo
+    const ownerViewToken = crypto.randomBytes(20).toString("hex");
     const restaurant = existingRest?.isDemo
       ? existingRest
       : await prisma.restaurant.create({
@@ -593,7 +595,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             logoUrl: extraction.logoUrl,
             cartaTheme: "PREMIUM",
             cartaColorMode: "DARK",
-            defaultView: "lista",
+            defaultView: "impact",
             enabledLangs: ["es", "en", "pt"],
             isActive: true,
             isDemo: true,
@@ -604,6 +606,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             waiterPanelActive: true,
             menuImported: true,
             website: lead.cartaUrl,
+            ownerViewToken,
           },
         });
 
@@ -891,27 +894,38 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
-    // Send simple "carta lista" email (just a link to the carta, no credentials)
-    // The full welcome email with panel credentials is sent when the owner enters their panel.
+    // Send activation welcome email with panel credentials and carta link
     if (lead.email) {
       try {
-        const { sendAdminEmail, cartaListaSimpleEmailHtml } = await import("@/lib/email/sendAdminEmail");
+        const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
+        const { activationWelcomeEmailHtml } = await import("@/app/api/preview-email/activation/route");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-        const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
-        const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(`${baseUrl}/qr/${restaurant.slug}`)}`;
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+        const cartaUrl = `${baseUrl}/qr/${restaurant.slug}`;
+        const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+        // Use ownerViewToken from the restaurant record (works for both new and existing demo)
+        const activeToken = existingRest?.isDemo ? (existingRest as any).ownerViewToken : ownerViewToken;
+        const qrLink = activeToken ? `${cartaUrl}?ot=${activeToken}` : cartaUrl;
+        const password = `${restaurant.slug}2026`;
 
         await sendAdminEmail({
           to: lead.email,
           subject: `${ownerName}, tu carta de ${restaurant.name} está lista`,
-          html: cartaListaSimpleEmailHtml({ ownerName, restaurantName: restaurant.name, cartaUrl: clickUrl, openPixel, dishCount: createdDishes.length, categoryCount: categoryMap.size, logoUrl: extraction.logoUrl }),
+          html: activationWelcomeEmailHtml({
+            ownerName,
+            restaurantName: restaurant.name,
+            panelLink,
+            qrLink,
+            credentials: { email: lead.email, password },
+            planLabel: "Prueba gratis 7 días",
+          }),
           purpose: "funnel_carta_lista",
         });
 
         await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
-        console.log(`[Pipeline] Carta lista email sent to ${lead.email}`);
+        console.log(`[Pipeline] Activation welcome email sent to ${lead.email}`);
       } catch (emailErr) {
-        console.error(`[Pipeline] Failed to send carta lista email:`, emailErr);
+        console.error(`[Pipeline] Failed to send activation welcome email:`, emailErr);
         // Still mark as DELIVERED so funnel progresses
         await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } }).catch(() => {});
       }

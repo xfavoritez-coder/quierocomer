@@ -209,7 +209,13 @@ export default function LandingPage() {
         }
 
         /* HERO */
-        .lp-hero { padding: 104px 0 72px; text-align: center; }
+        .lp-hero {
+          padding: 104px 0 72px;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+        }
+        .lp-hero > .lp-container { position: relative; z-index: 1; }
 
         .lp-eyebrow {
           margin-bottom: 18px;

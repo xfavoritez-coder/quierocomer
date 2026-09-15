@@ -422,6 +422,9 @@ model Restaurant {
   communeSlug String?
   profileType String   @default("RESTAURANT") // "RESTAURANT" | "STORE"
 
+  ownerViewToken       String?   @unique
+  ownerViewTokenUsedAt DateTime?
+
   @@index([ownerId])
   @@index([communeSlug])
 }

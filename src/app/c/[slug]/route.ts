@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const destination = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com"}/qr/${slug}`;
+  const base = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
   // Find the lead by slug and track WhatsApp click
   const lead = await prisma.lead.findFirst({
@@ -29,6 +29,20 @@ export async function GET(
       },
     }).catch(() => {});
   }
+
+  // Check if restaurant has an unused ownerViewToken to pass through
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { slug },
+    select: { ownerViewToken: true, ownerViewTokenUsedAt: true },
+  }).catch(() => null);
+
+  const token = restaurant?.ownerViewToken && !restaurant.ownerViewTokenUsedAt
+    ? restaurant.ownerViewToken
+    : null;
+
+  const destination = token
+    ? `${base}/qr/${slug}?ot=${token}`
+    : `${base}/qr/${slug}`;
 
   return NextResponse.redirect(destination, { status: 302 });
 }
