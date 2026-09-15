@@ -85,7 +85,7 @@ export default function EcommerceCatalogoPage() {
         <>
           <div style={{ position: "relative", marginBottom: 14 }}>
             <Search size={15} color="var(--adm-text3)" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tab === "productos" ? "Buscar producto o código…" : "Buscar modificador o código…"} style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px 9px 34px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar producto o código…" style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px 9px 34px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
