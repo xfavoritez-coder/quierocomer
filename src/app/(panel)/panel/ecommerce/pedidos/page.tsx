@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -22,6 +22,7 @@ interface Order {
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
   source?: string | null;
+  webpayToken?: string | null; webpayBuyOrder?: string | null; flowToken?: string | null;
   deliveryLat?: number | null; deliveryLng?: number | null;
   uberDeliveryId?: string | null;
   courier?: CourierInfo | null;
@@ -93,6 +94,7 @@ export default function EcommercePedidosPage() {
   const [live, setLive] = useState(false);
   const [uberEnabled, setUberEnabled] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
+  const [showWebpayToken, setShowWebpayToken] = useState(false);
   const [printMode, setPrintMode] = useState<"off" | "manual" | "auto">("off");
   const [paperWidth, setPaperWidth] = useState<58 | 80>(80);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
@@ -117,7 +119,7 @@ export default function EcommercePedidosPage() {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/status?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); } })
+      .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); setShowWebpayToken(!!d.showWebpayToken); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -304,7 +306,7 @@ export default function EcommercePedidosPage() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(o)} />)}
+          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(o)} showToken={showWebpayToken} />)}
         </div>
       )}
 
@@ -395,7 +397,7 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
+function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint, showToken }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void; showToken?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -462,6 +464,20 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
           </button>
         )}
       </div>
+
+      {/* Token de la transacción (certificación Transbank) — solo si el local lo tiene activado */}
+      {showToken && (order.webpayToken || order.flowToken) && (
+        <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 10, border: "1px dashed var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.03em", flexShrink: 0 }}>{order.webpayToken ? "Token Webpay" : "Token Flow"}</span>
+          <code style={{ fontFamily: "monospace", fontSize: "0.72rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{order.webpayToken || order.flowToken}</code>
+          <button
+            onClick={(e) => { e.stopPropagation(); const t = order.webpayToken || order.flowToken || ""; navigator.clipboard?.writeText(t).then(() => toast.success("Token copiado")).catch(() => toast.error("No se pudo copiar")); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+          >
+            <Copy size={13} /> Copiar
+          </button>
+        </div>
+      )}
 
       {cancelOpen && (
         <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>

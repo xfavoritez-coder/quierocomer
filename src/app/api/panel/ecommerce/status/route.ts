@@ -40,5 +40,6 @@ export async function GET(req: NextRequest) {
     webpayEnv: cfg.webpay?.env || "integration",
     posProvider: cfg.pos?.provider || "none",
     googleMapsKey: cfg.googleMaps?.apiKey || null, // key de navegador, para el mini-mapa del courier
+    showWebpayToken: !!cfg.showWebpayToken, // mostrar token de transacción en Historial (certificación)
   });
 }

@@ -75,6 +75,7 @@ export interface EcommerceConfig {
   googleMaps?: GoogleMapsCreds;
   pos?: PosConfig;
   deliveryHandroll?: DeliveryHandrollCreds;
+  showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
 
 export const TOTEAT_DEFAULT_API_URL = "https://api.toteat.com/mw/or/1.0";

@@ -1200,6 +1200,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   // deliveryhandroll (sincronización de estado + ubicación del repartidor)
   const [dhEnabled, setDhEnabled] = useState(false);
   const [dhVendor, setDhVendor] = useState("");
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
@@ -1212,6 +1213,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setPosProvider(c.pos?.provider || "none");
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
+    setShowToken(c.showWebpayToken === true);
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
     setZonesCopied(false);
     setMsg(null);
@@ -1234,6 +1236,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
         : { provider: "none" },
       deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
+      showWebpayToken: showToken,
     };
     // Zonas de reparto: si el textarea trae JSON válido, se guardan junto con las credenciales.
     const bodyOut: Record<string, unknown> = { ecommerceConfig: next };
@@ -1283,6 +1286,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
                 <Input label="API Key (secret)" value={wpKey} onChange={setWpKey} placeholder="579B532A7440BB0C9079..." type="password" />
               </>
             )}
+            <EnvSelect label="Token en Historial (certificación)" value={showToken ? "on" : "off"} onChange={(v) => setShowToken(v === "on")} options={[{ value: "off", label: "Oculto" }, { value: "on", label: "Mostrar token de cada transacción" }]} />
           </IntegrationGroup>
 
           <IntegrationGroup title="Flow.cl" sub="Pago online (tarjetas, transferencia)" ok={st.flow}>
