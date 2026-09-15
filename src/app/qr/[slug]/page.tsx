@@ -18,6 +18,7 @@ import MenuPausedPage from "@/components/qr/MenuPausedPage";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
+import OwnerPanelBar from "@/components/qr/carta/OwnerPanelBar";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
@@ -354,11 +355,16 @@ export default async function CartaPage({
           }
         `}} />
       )}
-      {(restaurant as any).isDemo && !isShowcase && (restaurant as any).defaultView !== "impact" && (
+      {(restaurant as any).isDemo && !isShowcase && (
         <>
-          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
-          <div style={{ height: 0 }} />
-          <DemoViewToast restaurantId={restaurant.id} restaurantSlug={slug} defaultView={(restaurant as any).defaultView} />
+          <OwnerPanelBar slug={slug} />
+          {(restaurant as any).defaultView !== "impact" && (
+            <>
+              <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
+              <div style={{ height: 0 }} />
+              <DemoViewToast restaurantId={restaurant.id} restaurantSlug={slug} defaultView={(restaurant as any).defaultView} />
+            </>
+          )}
         </>
       )}
       {isShowcase && !isEmbed && (

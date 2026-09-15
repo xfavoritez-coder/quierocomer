@@ -8,6 +8,7 @@ import { OrderCartProvider } from "@/components/order/OrderCartContext";
 import MenuPausedPage from "@/components/qr/MenuPausedPage";
 import CartaProximamente from "@/components/qr/carta/CartaProximamente";
 import PageHitTracker from "@/components/PageHitTracker";
+import OwnerPanelBar from "@/components/qr/carta/OwnerPanelBar";
 
 export const dynamic = "force-dynamic";
 
@@ -180,6 +181,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <PageHitTracker restaurantId={config.id} page="pedir" />
+      {config.isDemo && <OwnerPanelBar slug={slug} />}
       <OrderCartProvider>
         {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
         <OrderMenuPage

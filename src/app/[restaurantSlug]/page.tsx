@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import PageHitTracker from '@/components/PageHitTracker'
+import OwnerPanelBar from '@/components/qr/carta/OwnerPanelBar'
 const BASE = 'https://quierocomer.com'
 
 export const revalidate = 3600
@@ -32,6 +33,7 @@ async function getRestaurantLanding(slug: string) {
       cartaAccentColor: true,
       cartaColorMode: true,
       profileType: true,
+      isDemo: true,
     },
   })
   if (!r) return null
@@ -467,7 +469,12 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
       redirect(`/qr/${restaurantSlug}`)
     }
     // Siempre mostrar landing con carta + features activas
-    return <RestaurantLanding r={rest} />
+    return (
+      <>
+        {rest.isDemo && <OwnerPanelBar slug={restaurantSlug} />}
+        <RestaurantLanding r={rest} />
+      </>
+    )
   }
 
   const match = await getCommuneBySlug(restaurantSlug)
