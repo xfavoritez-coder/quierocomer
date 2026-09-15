@@ -53,21 +53,22 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
     });
   };
 
-  const squareCrop = (file: File): Promise<File> => {
+  // Redimensiona el logo preservando su proporción (sin recorte a cuadrado, para
+  // no cortar logos anchos). Cap a 640px en el lado mayor; el server hace el resto.
+  const logoResize = (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const img = new window.Image();
       img.onload = () => {
-        const size = Math.min(img.width, img.height);
-        const x = Math.round((img.width - size) / 2);
-        const y = Math.round((img.height - size) / 2);
+        const MAX = 640;
+        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
         const canvas = document.createElement("canvas");
-        canvas.width = 400;
-        canvas.height = 400;
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
         const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, x, y, size, size, 0, 0, 400, 400);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
           resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, ".webp"), { type: "image/webp" }) : file);
-        }, "image/webp", 0.92);
+        }, "image/webp", 0.95);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);
@@ -80,7 +81,7 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
     if (rawFile.size > 10 * 1024 * 1024) { setError("Máximo 10MB por imagen"); return; }
     setUploading(true);
     setError(null);
-    const file = folder === "logos" ? await squareCrop(rawFile) : await compressImage(rawFile);
+    const file = folder === "logos" ? await logoResize(rawFile) : await compressImage(rawFile);
     setPreviewUrl(URL.createObjectURL(file));
 
     try {
