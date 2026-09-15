@@ -65,6 +65,10 @@ export default function AjustesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [birthdayPerk, setBirthdayPerk] = useState("");
+  const [titleMenu, setTitleMenu] = useState("");
+  const [titleRecomendados, setTitleRecomendados] = useState("");
+  const [titleCraving, setTitleCraving] = useState("");
+  const [titlesSaving, setTitlesSaving] = useState(false);
   const VIEW_OPTIONS = VIEW_OPTIONS_KEYS.map(o => ({ ...o, label: t(o.labelKey) }));
 
   const rid = selectedRestaurantId;
@@ -79,6 +83,9 @@ export default function AjustesPage() {
       console.log("AJUSTES fetch:", JSON.stringify({ cartaColorMode: d.cartaColorMode, waiterPanelActive: d.waiterPanelActive, allPhotosReferential: d.allPhotosReferential, defaultView: d.defaultView }));
       setData(d);
       setBirthdayPerk(d.birthdayPerk || "");
+      setTitleMenu(d.sectionTitleMenu || "");
+      setTitleRecomendados(d.sectionTitleRecomendados || "");
+      setTitleCraving(d.sectionTitleCraving || "");
     } catch {}
     setLoading(false);
   }, [rid]);
@@ -247,6 +254,45 @@ export default function AjustesPage() {
             active={data.filterBarEnabled !== false}
             onToggle={() => save({ filterBarEnabled: data.filterBarEnabled === false })}
           />
+        </div>
+      </div>
+
+      {/* Títulos de la carta */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><BookOpen size={16} color="var(--adm-text3)" /> Títulos de la carta</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>
+          Personaliza los títulos de sección en la carta QR. Déjalos en blanco para usar los valores por defecto.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Sección menú <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: "MENÚ")</span>
+            </label>
+            <input value={titleMenu} onChange={e => setTitleMenu(e.target.value)} placeholder="MENÚ" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Sección recomendados <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: "Recomendados")</span>
+            </label>
+            <input value={titleRecomendados} onChange={e => setTitleRecomendados(e.target.value)} placeholder="Recomendados" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Sección "¿Qué se te antoja?" <span style={{ color: "var(--adm-text3)", fontWeight: 400, textTransform: "none" }}>(por defecto: "¿Qué se te antoja?")</span>
+            </label>
+            <input value={titleCraving} onChange={e => setTitleCraving(e.target.value)} placeholder="¿Qué se te antoja?" style={inputStyle} />
+          </div>
+          <button
+            onClick={async () => {
+              setTitlesSaving(true);
+              await save({ sectionTitleMenu: titleMenu.trim() || null, sectionTitleRecomendados: titleRecomendados.trim() || null, sectionTitleCraving: titleCraving.trim() || null });
+              setTitlesSaving(false);
+            }}
+            disabled={titlesSaving}
+            style={{ alignSelf: "flex-start", marginTop: 4, padding: "9px 20px", borderRadius: 10, border: "none", background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: titlesSaving ? "default" : "pointer", opacity: titlesSaving ? 0.6 : 1, transition: "opacity 0.2s" }}
+          >
+            {titlesSaving ? "Guardando…" : "Guardar títulos"}
+          </button>
         </div>
       </div>
 
