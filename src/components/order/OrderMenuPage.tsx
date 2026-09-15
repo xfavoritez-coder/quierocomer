@@ -776,7 +776,11 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
   // Hero dishes: isHero (incl. promos destacadas) con foto; si no hay, nada
   const heroDishes = useMemo(() => {
     const hero = activeDishes.filter(d => (d as any).isHero && d.photos?.[0]);
-    return hero.length > 0 ? hero.slice(0, 5) : [];
+    if (hero.length > 0) return hero.slice(0, 5);
+    const recommended = activeDishes.filter(d => (d.tags || []).includes("RECOMMENDED") && d.photos?.[0]);
+    if (recommended.length > 0) return recommended.slice(0, 5);
+    const withPhoto = activeDishes.filter(d => d.photos?.[0]);
+    return withPhoto.slice(0, 5);
   }, [activeDishes]);
 
   const filtered = useMemo(() => {
