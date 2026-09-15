@@ -7,6 +7,7 @@ import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { clp } from "@/lib/ecommerce/format";
+import StoreLink from "./StoreLink";
 
 // Cupón aplicado: guardamos sus parámetros para recalcular el descuento en vivo
 // (misma fórmula que el servidor) según subtotal y costo de despacho.
@@ -360,9 +361,9 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
-          <a href={storeHref} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
+          <StoreLink href={storeHref} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
             <ArrowLeft className="w-5 h-5" />
-          </a>
+          </StoreLink>
           <h1 className="font-black text-lg text-gray-900">Finalizar pedido</h1>
         </div>
       </header>
@@ -376,7 +377,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <p className="text-4xl mb-3">🛒</p>
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
-          <a href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</a>
+          <StoreLink href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</StoreLink>
         </div>
       ) : (
         <div className="max-w-5xl mx-auto px-4 py-5 flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start">
@@ -401,7 +402,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
               <div className="min-w-0 flex-1">
                 <p className="font-black text-sm text-amber-700 m-0">Falta tu dirección de entrega</p>
                 <p className="text-xs text-amber-600 mt-1 leading-relaxed">Este local solo hace delivery. Vuelve a la tienda para ingresar tu dirección y continuar.</p>
-                <a href={storeHref} className="inline-block mt-2 text-xs font-black underline" style={{ color: primaryColor }}>Volver a la tienda</a>
+                <StoreLink href={storeHref} className="inline-block mt-2 text-xs font-black underline" style={{ color: primaryColor }}>Volver a la tienda</StoreLink>
               </div>
             </div>
           )}
