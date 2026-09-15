@@ -35,7 +35,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const router = useRouter();
   const goCheckout = () => router.push(`${storeBase}/checkout`);
-  useFavicon(tenant.logoUrl);
+  useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);

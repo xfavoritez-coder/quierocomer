@@ -4,6 +4,7 @@ import { use } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_TRACKING_TEXTS, trackingStatusText, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
+import { useFavicon } from "@/lib/ecommerce/useFavicon";
 
 const OrderTrackingMap = dynamic(() => import("@/components/ecommerce/OrderTrackingMap"), { ssr: false });
 
@@ -32,6 +33,7 @@ interface OrderData {
   id: string;
   restaurantName: string;
   restaurantLogoUrl: string | null;
+  restaurantFaviconUrl?: string | null;
   restaurantPhone: string | null;
   customerName: string;
   orderType: "PICKUP" | "DELIVERY";
@@ -203,6 +205,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const [error, setError] = useState(false);
   const [tracking, setTracking] = useState<TrackingInfo | null>(null);
   const orderRef = useRef<OrderData | null>(null);
+  useFavicon(order?.restaurantFaviconUrl || order?.restaurantLogoUrl);
 
   // Estado + ubicación del repartidor desde deliveryhandroll (solo locales habilitados).
   async function fetchTracking() {

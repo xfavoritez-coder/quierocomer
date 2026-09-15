@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlatformSetting } from "@/lib/platformSettings";
 import { parseTrackingTexts } from "@/lib/ecommerce/trackingTexts";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export async function GET(
   _req: NextRequest,
@@ -38,6 +39,7 @@ export async function GET(
           phone: true,
           cartaColorMode: true,
           cartaAccentColor: true,
+          ecommerceStoreConfig: true,
         },
       },
     },
@@ -59,6 +61,7 @@ export async function GET(
     id: order.id,
     restaurantName: order.restaurant.name,
     restaurantLogoUrl: order.restaurant.logoUrl ?? null,
+    restaurantFaviconUrl: parseStoreConfig(order.restaurant.ecommerceStoreConfig).faviconUrl,
     customerName: order.customerName,
     orderType: order.orderType as "PICKUP" | "DELIVERY",
     items: order.items,

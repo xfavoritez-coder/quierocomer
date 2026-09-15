@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer, Image as ImageIcon, Upload, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -29,6 +29,7 @@ export default function EcommerceConfiguracionPage() {
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"tienda" | "pagos" | "checkout" | "pos" | "mas">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
+  const [uploadingFav, setUploadingFav] = useState(false);
 
   // Estado inicial de las notificaciones push (suscripción del dispositivo).
   useEffect(() => {
@@ -77,6 +78,21 @@ export default function EcommerceConfiguracionPage() {
   }, [restaurantId]);
 
   const patch = (p: Partial<EcommerceStoreConfig>) => setCfg((c) => ({ ...c, ...p }));
+
+  async function uploadFavicon(file: File) {
+    setUploadingFav(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "favicons");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.url) { toast.error(d.error || "No se pudo subir el favicon"); setUploadingFav(false); return; }
+      patch({ faviconUrl: d.url });
+      toast.success("Favicon subido — recuerda Guardar");
+    } catch { toast.error("Error de conexión"); }
+    setUploadingFav(false);
+  }
   const togglePay = (m: string) => setCfg((c) => ({ ...c, paymentMethods: c.paymentMethods.includes(m) ? c.paymentMethods.filter((x) => x !== m) : [...c.paymentMethods, m] }));
 
   async function save() {
@@ -284,6 +300,35 @@ export default function EcommerceConfiguracionPage() {
                 style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>Déjalo vacío para no recibir correos. Es independiente de las notificaciones push de arriba.</p>
+            </div>
+          </section>
+          )}
+
+          {/* Favicon */}
+          {tab === "tienda" && (
+          <section style={card}>
+            <SectionTitle icon={ImageIcon} title="Favicon" sub="El ícono que se ve en la pestaña del navegador, en tu tienda y en la web de seguimiento del pedido. Si no subes uno, se usa tu logo. Ideal: imagen cuadrada (PNG)." />
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 12, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {cfg.faviconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cfg.faviconUrl} alt="Favicon" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                ) : (
+                  <ImageIcon size={22} color="var(--adm-text3)" />
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: uploadingFav ? "wait" : "pointer" }}>
+                  <Upload size={15} /> {uploadingFav ? "Subiendo…" : cfg.faviconUrl ? "Cambiar" : "Subir favicon"}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} disabled={uploadingFav}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFavicon(f); e.currentTarget.value = ""; }} />
+                </label>
+                {cfg.faviconUrl && (
+                  <button onClick={() => patch({ faviconUrl: null })} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                    <XIcon size={15} /> Quitar
+                  </button>
+                )}
+              </div>
             </div>
           </section>
           )}

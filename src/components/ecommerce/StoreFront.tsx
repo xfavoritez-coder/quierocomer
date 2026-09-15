@@ -44,7 +44,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const router = useRouter();
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
-  useFavicon(tenant.logoUrl);
+  useFavicon(tenant.faviconUrl || tenant.logoUrl);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
