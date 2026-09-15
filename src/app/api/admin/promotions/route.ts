@@ -10,6 +10,7 @@ import {
   isSuperAdmin,
 } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
+import { syncRestaurantDishDiscounts } from "@/lib/promos/syncDishDiscounts";
 
 async function revalidateRestaurant(restaurantId: string) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
@@ -114,13 +115,8 @@ export async function POST(req: NextRequest) {
     };
     const promo = await prisma.promotion.create({ data: promoData, include: { modifierTemplates: { select: { id: true, name: true } } } });
 
-    // Sync dish.discountPrice so pedidos online shows the same price as the carta QR promo
-    if (promo.status === "ACTIVE" && promo.promoPrice && promo.dishIds.length > 0) {
-      await prisma.dish.updateMany({
-        where: { id: { in: promo.dishIds } },
-        data: { discountPrice: promo.promoPrice },
-      });
-    }
+    // Sincroniza Dish.discountPrice respetando el día/rango de la promo.
+    await syncRestaurantDishDiscounts(restaurantId, promo.dishIds);
 
     await revalidateRestaurant(restaurantId);
     logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
@@ -183,23 +179,8 @@ export async function PUT(req: NextRequest) {
       });
     }
 
-    // Sync dish.discountPrice so pedidos online matches carta QR promo price
-    if (promo.dishIds.length > 0) {
-      const isNowActive = promo.status === "ACTIVE";
-      if (isNowActive && promo.promoPrice) {
-        // Active promo: apply discountPrice to all dishes
-        await prisma.dish.updateMany({
-          where: { id: { in: promo.dishIds } },
-          data: { discountPrice: promo.promoPrice },
-        });
-      } else if (!isNowActive) {
-        // Inactive/deleted promo: clear discountPrice
-        await prisma.dish.updateMany({
-          where: { id: { in: promo.dishIds } },
-          data: { discountPrice: null },
-        });
-      }
-    }
+    // Sincroniza Dish.discountPrice respetando el día/rango y demás promos activas.
+    await syncRestaurantDishDiscounts(existing.restaurantId, promo.dishIds);
 
     await revalidateRestaurant(existing.restaurantId);
     logActivity(existing.restaurantId, "promo_edit", { promoId: id, name: promo.name, status: promo.status });

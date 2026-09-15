@@ -27,6 +27,14 @@
     {
       "path": "/api/cron/ecommerce-delivery-sync",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/promos-daily-sync",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/promos-daily-sync",
+      "schedule": "0 4 * * *"
     }
   ]
 }
