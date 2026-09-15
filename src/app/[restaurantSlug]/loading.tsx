@@ -3,28 +3,29 @@ export default function RestaurantLandingLoading() {
     <>
       <style>{`
         @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-        .rll-shimmer {
-          background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+        .rll-s {
+          background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.5s infinite;
         }
       `}</style>
-      <div style={{ minHeight: "100dvh", background: "#111", padding: "0 0 40px" }}>
-        {/* Header */}
-        <div style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="rll-shimmer" style={{ width: 52, height: 52, borderRadius: "50%", flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div className="rll-shimmer" style={{ width: "55%", height: 18, borderRadius: 6, marginBottom: 8 }} />
-            <div className="rll-shimmer" style={{ width: "35%", height: 13, borderRadius: 5 }} />
-          </div>
-        </div>
-        {/* Feature buttons */}
-        <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="rll-shimmer" style={{ height: 80, borderRadius: 18 }} />
+      <div style={{
+        minHeight: '100svh',
+        background: 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 20px 60px',
+      }}>
+        {/* Logo circle */}
+        <div className="rll-s" style={{ width: 88, height: 88, borderRadius: '50%', marginBottom: 20 }} />
+        {/* Name */}
+        <div className="rll-s" style={{ width: 180, height: 24, borderRadius: 8, marginBottom: 8 }} />
+        {/* Buttons */}
+        <div style={{ marginTop: 36, display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 380 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rll-s" style={{ height: 72, borderRadius: 18 }} />
           ))}
         </div>
       </div>
     </>
-  );
+  )
 }
