@@ -4,13 +4,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import PageHitTracker from '@/components/PageHitTracker'
-import OwnerWelcomeBanner from '@/components/qr/carta/OwnerWelcomeBanner'
-
 const BASE = 'https://quierocomer.com'
 
 export const revalidate = 3600
 
-type Props = { params: Promise<{ restaurantSlug: string }>; searchParams: Promise<{ ot?: string }> }
+type Props = { params: Promise<{ restaurantSlug: string }> }
 
 // ---------------------------------------------------------------------------
 // Restaurant landing data
@@ -444,9 +442,8 @@ async function GlobalCategoryPage({ categorySlug }: { categorySlug: string }) {
 // Page component
 // ---------------------------------------------------------------------------
 
-export default async function CommuneOrNotFoundPage({ params, searchParams }: Props) {
+export default async function CommuneOrNotFoundPage({ params }: Props) {
   const { restaurantSlug } = await params
-  const { ot } = await searchParams
 
   // Check if slug is a global category
   if (CATEGORY_SLUGS[restaurantSlug]) {
@@ -470,12 +467,7 @@ export default async function CommuneOrNotFoundPage({ params, searchParams }: Pr
       redirect(`/qr/${restaurantSlug}`)
     }
     // Siempre mostrar landing con carta + features activas
-    return (
-      <>
-        <RestaurantLanding r={rest} />
-        {ot && <OwnerWelcomeBanner slug={restaurantSlug} token={ot} />}
-      </>
-    )
+    return <RestaurantLanding r={rest} />
   }
 
   const match = await getCommuneBySlug(restaurantSlug)

@@ -24,6 +24,23 @@ interface Props {
   };
 }
 
+function LogoOrInitial({ logo, name, accent }: { logo: string | null; name: string; accent: string }) {
+  const [failed, setFailed] = useState(false);
+  const sharedStyle: React.CSSProperties = {
+    width: 62, height: 62, borderRadius: "50%", margin: "0 auto 10px", display: "block",
+    border: `3px solid ${accent}`, boxShadow: `0 0 20px ${accent}66`,
+  };
+  if (logo && !failed) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} alt="" style={{ ...sharedStyle, objectFit: "cover" }} onError={() => setFailed(true)} />;
+  }
+  return (
+    <div style={{ ...sharedStyle, background: `${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: accent }}>
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 function isLight(hex: string) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
   if (!m) return false;
@@ -121,10 +138,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
         <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: `radial-gradient(circle, ${accent}15 0%, transparent 65%)`, bottom: -50, left: -50, pointerEvents: "none" }} />
 
         {/* Logo + nombre */}
-        {restaurantLogo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={restaurantLogo} alt="" style={{ width: 62, height: 62, borderRadius: "50%", objectFit: "cover", margin: "0 auto 10px", display: "block", border: `3px solid ${accent}`, boxShadow: `0 0 20px ${accent}66` }} />
-        )}
+        <LogoOrInitial logo={restaurantLogo} name={restaurantName} accent={accent} />
         <p style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.14em", margin: "0 0 2px" }}>{restaurantName}</p>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 900, margin: "0 0 20px", lineHeight: 1.15, color: isLightMode ? '#111' : '#fff' }}>{program.name || "Tarjeta de premios"}</h1>
 
