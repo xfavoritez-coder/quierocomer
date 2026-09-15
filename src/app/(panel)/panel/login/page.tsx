@@ -222,6 +222,11 @@ export default function PanelLogin() {
               ¿Olvidaste tu contraseña?
             </a>
           </div>
+          <div style={{ textAlign: "center", marginTop: 10 }}>
+            <a href="https://wa.me/56999946208?text=Hola%2C%20necesito%20ayuda%20para%20ingresar%20a%20mi%20panel" target="_blank" rel="noopener noreferrer" style={{ fontFamily: F, fontSize: "0.82rem", color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>
+              ¿Necesitas ayuda? Contáctanos
+            </a>
+          </div>
         </form>
       </div>
 
