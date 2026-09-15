@@ -5,7 +5,7 @@ import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { norm } from "@/lib/normalize";
 import SubirFoto from "@/components/SubirFoto";
-import { integrationStatus, type EcommerceConfig } from "@/lib/ecommerce/config";
+import { integrationStatus, TOTEAT_DEFAULT_API_URL, type EcommerceConfig } from "@/lib/ecommerce/config";
 
 interface Restaurant {
   id: string;
@@ -36,6 +36,11 @@ interface Restaurant {
   trialEndsAt?: string | null;
   flowSubscriptionId?: string | null;
   billingExempt?: boolean;
+  toteatRestaurantId: string | null;
+  toteatLocalId: number | null;
+  toteatUserId: number | null;
+  toteatApiToken: string | null;
+  toteatLastSyncAt: string | null;
   isDemo: boolean;
   ecommerceEnabled?: boolean;
   ecommerceConfig?: EcommerceConfig | null;
@@ -524,6 +529,14 @@ export default function AdminLocales() {
           </button>
         </div>
 
+        {/* Toteat integration — super-admin only */}
+        {isSuper && (
+          <ToteatSection
+            restaurant={selected}
+            onUpdate={(patch) => { const updated = { ...selected, ...patch }; setSelected(updated); setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x)); }}
+          />
+        )}
+
         {/* Inline QR */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 16 }}>
           <div style={{ background: "white", borderRadius: 10, padding: 8, flexShrink: 0 }}>
@@ -951,6 +964,156 @@ export default function AdminLocales() {
   );
 }
 
+function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
+  const isConfigured = !!(restaurant.toteatRestaurantId && restaurant.toteatLocalId !== null && restaurant.toteatUserId !== null && restaurant.toteatApiToken);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const [xir, setXir] = useState(restaurant.toteatRestaurantId || "");
+  const [xil, setXil] = useState(restaurant.toteatLocalId !== null ? String(restaurant.toteatLocalId) : "");
+  const [xiu, setXiu] = useState(restaurant.toteatUserId !== null ? String(restaurant.toteatUserId) : "");
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    setXir(restaurant.toteatRestaurantId || "");
+    setXil(restaurant.toteatLocalId !== null ? String(restaurant.toteatLocalId) : "");
+    setXiu(restaurant.toteatUserId !== null ? String(restaurant.toteatUserId) : "");
+    setToken("");
+    setEditing(false);
+    setMsg(null);
+  }, [restaurant.id]);
+
+  const save = async () => {
+    setBusy(true); setMsg(null);
+    const payload: any = {
+      toteatRestaurantId: xir.trim() || null,
+      toteatLocalId: xil.trim() || null,
+      toteatUserId: xiu.trim() || null,
+    };
+    // Only send token if user actually typed something — empty input means "leave existing token"
+    if (token.trim()) payload.toteatApiToken = token.trim();
+    try {
+      const res = await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) { setMsg({ type: "err", text: data.error || "Error al guardar" }); setBusy(false); return; }
+      onUpdate({
+        toteatRestaurantId: payload.toteatRestaurantId,
+        toteatLocalId: payload.toteatLocalId === null ? null : Number(payload.toteatLocalId),
+        toteatUserId: payload.toteatUserId === null ? null : Number(payload.toteatUserId),
+        ...(token.trim() && { toteatApiToken: token.trim() }),
+      });
+      setMsg({ type: "ok", text: "Configuración guardada" });
+      setEditing(false);
+      setToken("");
+    } catch {
+      setMsg({ type: "err", text: "Error de conexión" });
+    }
+    setBusy(false);
+  };
+
+  const disconnect = async () => {
+    if (!confirm("¿Desconectar este local de Toteat? Las ventas cacheadas se mantienen pero no se sincronizarán nuevas hasta que reconfigures.")) return;
+    setBusy(true);
+    try {
+      await fetch(`/api/admin/locales/${restaurant.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toteatRestaurantId: null, toteatLocalId: null, toteatUserId: null, toteatApiToken: null }) });
+      onUpdate({ toteatRestaurantId: null, toteatLocalId: null, toteatUserId: null, toteatApiToken: null });
+      setXir(""); setXil(""); setXiu(""); setToken("");
+      setMsg({ type: "ok", text: "Integración desconectada" });
+      setEditing(false);
+    } catch { setMsg({ type: "err", text: "Error" }); }
+    setBusy(false);
+  };
+
+  const triggerSync = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch("/api/admin/toteat/sync-now", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: restaurant.id, days: 7, force: true }) });
+      const data = await res.json();
+      if (!res.ok) { setMsg({ type: "err", text: data.error || "Error al sincronizar" }); }
+      else if (data.skipped) { setMsg({ type: "ok", text: `Sincronización debounced — última corrida hace pocos minutos` }); }
+      else { setMsg({ type: "ok", text: `Sincronización OK · ${data.upserted} ventas actualizadas` }); }
+    } catch { setMsg({ type: "err", text: "Error" }); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ marginTop: 16, padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
+        <div>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+            🔌 Integración Toteat {isConfigured ? <span style={{ color: "#4ade80", fontSize: "0.7rem", marginLeft: 6 }}>● Conectado</span> : <span style={{ color: "#666", fontSize: "0.7rem", marginLeft: 6 }}>○ Sin configurar</span>}
+          </p>
+          {isConfigured && (
+            <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "2px 0 0" }}>
+              {restaurant.toteatLastSyncAt ? `Última sincronización: ${new Date(restaurant.toteatLastSyncAt).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}` : "Sin sincronizar aún"}
+            </p>
+          )}
+        </div>
+        <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #2A2A2A", display: "flex", flexDirection: "column", gap: 10 }}>
+          {!editing && isConfigured ? (
+            <div style={{ fontFamily: F, fontSize: "0.78rem", color: "#aaa" }}>
+              <p style={{ margin: 0 }}><span style={{ color: "#666" }}>Restaurant ID (xir):</span> {restaurant.toteatRestaurantId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>Local ID (xil):</span> {restaurant.toteatLocalId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>User ID (xiu):</span> {restaurant.toteatUserId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>Token:</span> ••••••••{restaurant.toteatApiToken?.slice(-4)}</p>
+            </div>
+          ) : !editing && !isConfigured ? (
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: 0 }}>Este local todavía no tiene integración con Toteat. Configura las credenciales para activar el cruce de vistas vs ventas, dashboard live y badges en tiempo real.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Input label="Restaurant ID (xir)" value={xir} onChange={setXir} placeholder="1028812002756304" />
+              <Input label="Local ID (xil)" value={xil} onChange={setXil} placeholder="1" type="number" />
+              <Input label="User ID API (xiu)" value={xiu} onChange={setXiu} placeholder="1002" type="number" />
+              <Input label="Token (xapitoken)" value={token} onChange={setToken} placeholder={isConfigured ? "Dejar vacío para mantener el actual" : "CoN2rv5sTcYAdks..."} type="password" />
+            </div>
+          )}
+
+          {msg && (
+            <p style={{ fontFamily: F, fontSize: "0.74rem", margin: 0, color: msg.type === "ok" ? "#4ade80" : "#ef4444" }}>
+              {msg.type === "ok" ? "✓ " : "✗ "}{msg.text}
+            </p>
+          )}
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {editing ? (
+              <>
+                <button onClick={save} disabled={busy} style={{ padding: "8px 14px", background: "#F4A623", color: "#000", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+                  {busy ? "Guardando..." : "Guardar"}
+                </button>
+                <button onClick={() => { setEditing(false); setMsg(null); }} disabled={busy} style={{ padding: "8px 14px", background: "transparent", color: "#888", border: "1px solid #2A2A2A", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setEditing(true)} disabled={busy} style={{ padding: "8px 14px", background: "rgba(244,166,35,0.1)", color: "#F4A623", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>
+                  {isConfigured ? "Editar credenciales" : "Configurar"}
+                </button>
+                {isConfigured && (
+                  <>
+                    <button onClick={triggerSync} disabled={busy} style={{ padding: "8px 14px", background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+                      {busy ? "Sincronizando..." : "Sincronizar ahora"}
+                    </button>
+                    <button onClick={disconnect} disabled={busy} style={{ padding: "8px 14px", background: "transparent", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>
+                      Desconectar
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Input({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1029,6 +1192,11 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [zonesCopied, setZonesCopied] = useState(false);
   // POS destino (a qué POS se envían los pedidos)
   const [posProvider, setPosProvider] = useState("none");
+  const [posApiUrl, setPosApiUrl] = useState("");
+  const [posXir, setPosXir] = useState("");
+  const [posXil, setPosXil] = useState("");
+  const [posXiu, setPosXiu] = useState("");
+  const [posToken, setPosToken] = useState("");
   // deliveryhandroll (sincronización de estado + ubicación del repartidor)
   const [dhEnabled, setDhEnabled] = useState(false);
   const [dhVendor, setDhVendor] = useState("");
@@ -1043,6 +1211,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
     setGmapsKey(c.googleMaps?.apiKey || "");
     setPosProvider(c.pos?.provider || "none");
+    setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
     setShowToken(c.showWebpayToken === true);
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
@@ -1063,7 +1232,9 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined, signingKey: ubSigning.trim() || undefined },
       pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
       googleMaps: { apiKey: gmapsKey.trim() || undefined },
-      pos: { provider: "none" },
+      pos: posProvider === "toteat"
+        ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
+        : { provider: "none" },
       deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
       showWebpayToken: showToken,
     };
@@ -1167,7 +1338,16 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
           </div>
 
           <IntegrationGroup title="POS destino" sub="A qué punto de venta se envían los pedidos" ok={st.pos}>
-            <EnvSelect label="Proveedor POS" value={posProvider} onChange={setPosProvider} options={[{ value: "none", label: "Ninguno (no enviar a POS)" }]} />
+            <EnvSelect label="Proveedor POS" value={posProvider} onChange={setPosProvider} options={[{ value: "none", label: "Ninguno (no enviar a POS)" }, { value: "toteat", label: "Toteat" }]} />
+            {posProvider === "toteat" && (
+              <>
+                <Input label="URL API Toteat" value={posApiUrl} onChange={setPosApiUrl} placeholder={TOTEAT_DEFAULT_API_URL} />
+                <Input label="XIR (Restaurant ID)" value={posXir} onChange={setPosXir} placeholder="1028812002756304" />
+                <Input label="XIL (Local ID)" value={posXil} onChange={setPosXil} placeholder="1" />
+                <Input label="XIU (User ID)" value={posXiu} onChange={setPosXiu} placeholder="por defecto = XIL" />
+                <Input label="Token (xapitoken)" value={posToken} onChange={setPosToken} placeholder="CoN2rv5sTcYAdks..." type="password" />
+              </>
+            )}
           </IntegrationGroup>
 
           <IntegrationGroup title="deliveryhandroll" sub="Sincroniza estado + ubicación del repartidor en vivo desde deliveryhandroll.cl" ok={dhEnabled && !!dhVendor.trim()}>

@@ -4,7 +4,7 @@ import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
 import { buildTrialWeek1Html, buildTrialWeek2Html } from "@/app/api/preview-email/weekly-trial/route";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
-import { chileHourOf } from "@/lib/timezone";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export const maxDuration = 300;
 

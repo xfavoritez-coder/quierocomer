@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { chileHourOf } from "@/lib/timezone";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export async function POST(req: NextRequest) {
   try {

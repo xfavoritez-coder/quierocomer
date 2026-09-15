@@ -149,7 +149,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
     if (p.is_sold_out || !isOpen) return;
     if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
     if (p.option_groups && p.option_groups.length > 0) { setSelectedProduct(p); return; }
-    addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, options: [] });
+    addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, options: [] });
   }, [addItem, isOpen, deliverySelected]);
 
   // Al cerrarse el modal de entrega con un producto pendiente: si el cliente eligió

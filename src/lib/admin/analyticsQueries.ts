@@ -708,9 +708,43 @@ export async function getPopularByTimeOfDay(restaurantId: string | null, from: D
   const dishIds = top.map(t => t.dishId);
   const dishes = await prisma.dish.findMany({
     where: { id: { in: dishIds } },
-    select: { id: true, name: true, photos: true },
+    select: {
+      id: true, name: true, photos: true, toteatProductId: true,
+      modifierTemplates: { select: { groups: { select: { options: { where: { toteatProductId: { not: null } }, select: { toteatProductId: true } } } } } },
+    },
   });
   const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
+
+  // Cruzar con ventas de Toteat: si el plato tiene toteatProductId (o modifiers
+  // mapeados) y hay ventas en el periodo, contamos las unidades vendidas.
+  // Solo se aplica si el local tiene Toteat conectado — si no, salesByDish
+  // queda vacio y el frontend lo trata como sin Toteat.
+  const allToteatIds = new Set<string>();
+  for (const d of dishes) {
+    if (d.toteatProductId) allToteatIds.add(d.toteatProductId);
+    for (const tpl of d.modifierTemplates) for (const grp of tpl.groups) for (const opt of grp.options) {
+      if (opt.toteatProductId) allToteatIds.add(opt.toteatProductId);
+    }
+  }
+  const salesByDish: Record<string, number> = {};
+  if (allToteatIds.size > 0) {
+    const sales = await prisma.toteatSale.findMany({
+      where: { restaurantId, dateClosed: { gte: from, lte: to } },
+      select: { products: { select: { toteatProductId: true, quantity: true } } },
+    });
+    const qtyByCode = new Map<string, number>();
+    for (const s of sales) for (const p of s.products) {
+      qtyByCode.set(p.toteatProductId, (qtyByCode.get(p.toteatProductId) || 0) + (p.quantity || 0));
+    }
+    for (const d of dishes) {
+      let qty = 0;
+      if (d.toteatProductId) qty += qtyByCode.get(d.toteatProductId) || 0;
+      for (const tpl of d.modifierTemplates) for (const grp of tpl.groups) for (const opt of grp.options) {
+        if (opt.toteatProductId) qty += qtyByCode.get(opt.toteatProductId) || 0;
+      }
+      if (qty > 0) salesByDish[d.id] = qty;
+    }
+  }
 
   const ORDER = ["MORNING", "LUNCH", "AFTERNOON", "DINNER", "LATE"];
   return top
@@ -722,7 +756,7 @@ export async function getPopularByTimeOfDay(restaurantId: string | null, from: D
       name: dishMap[t.dishId]?.name || "?",
       photo: dishMap[t.dishId]?.photos?.[0] || null,
       count: t.count,
-      sales: 0,
+      sales: salesByDish[t.dishId] || 0,
     }))
     .sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
 }

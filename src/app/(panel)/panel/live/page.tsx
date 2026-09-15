@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { supabase } from "@/lib/supabase";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
-const REFRESH_MS = 5 * 60_000; // refresh cada 5 min
+const REFRESH_MS = 5 * 60_000; // fallback de 5 min (Realtime hace el trabajo principal)
+const SYNC_INTERVAL_MS = 10 * 60_000; // 10 min — matches the server-side debounce
 
 interface LiveData {
   now: string;
@@ -21,8 +23,8 @@ interface LiveData {
     ordersVsLastWeek: number | null;
   };
   byHour: { hour: number; units: number; revenue: number }[];
-  topNow: { name: string; qty: number }[];
-  topToday: { name: string; qty: number }[];
+  topNow: { toteatProductId: string; name: string; qty: number }[];
+  topToday: { toteatProductId: string; name: string; qty: number }[];
   error?: string;
 }
 
@@ -35,7 +37,10 @@ export default function LiveDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const tickRef = useRef<number | null>(null);
+  const syncTickRef = useRef<number | null>(null);
 
   const load = () => {
     if (!selectedRestaurantId) return;
@@ -49,14 +54,50 @@ export default function LiveDashboard() {
       .finally(() => setLoading(false));
   };
 
+  // Sync triggers a fresh fetch from Toteat (debounced server-side at 2 min)
+  // and then re-loads the dashboard to show the new data.
+  const triggerSync = async (force = false) => {
+    if (!selectedRestaurantId) return;
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/admin/toteat/sync-now", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, days: 1, force }),
+      });
+      const d = await res.json();
+      if (d.lastSyncAt) setLastSyncAt(new Date(d.lastSyncAt));
+      else if (d.ok) setLastSyncAt(new Date());
+    } catch {}
+    setSyncing(false);
+    load();
+  };
+
   useEffect(() => {
     setLoading(true);
-    load();
+    triggerSync();   // Initial sync on load
+    // Fallback refresh every 5 min (Realtime hace el trabajo principal)
     if (tickRef.current) window.clearInterval(tickRef.current);
     tickRef.current = window.setInterval(load, REFRESH_MS);
+    // Real Toteat sync every 10 min (matches server-side debounce)
+    if (syncTickRef.current) window.clearInterval(syncTickRef.current);
+    syncTickRef.current = window.setInterval(() => triggerSync(false), SYNC_INTERVAL_MS);
     return () => {
       if (tickRef.current) window.clearInterval(tickRef.current);
+      if (syncTickRef.current) window.clearInterval(syncTickRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRestaurantId]);
+
+  // Polling cada 8s: antes usabamos Supabase Realtime sobre ToteatSale, pero
+  // RLS habilitado bloquea el Realtime con anon (los datos de venta son
+  // sensibles, NO los queremos accesibles via REST publica). Polling es
+  // suficiente — un sync de Toteat trae varias ventas y queremos refresco
+  // visual, no event-driven.
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    const tick = window.setInterval(() => { load(); }, 8000);
+    return () => window.clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
 
@@ -95,7 +136,7 @@ export default function LiveDashboard() {
             {t("live_title")}
           </h1>
           <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-            {updatedAt ? `${t("live_synced")} ${minutesAgo(updatedAt)}` : t("live_loading")}
+            {lastSyncAt ? `${t("live_synced")} ${minutesAgo(lastSyncAt)}` : t("live_syncing")}
             <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>{t("live_auto")}</span>
           </p>
         </div>
@@ -150,7 +191,7 @@ export default function LiveDashboard() {
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>{t("live_no_movement")}</p>
           ) : (
             data.topNow.map((p, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topNow.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>
+              <div key={p.toteatProductId} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topNow.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>
                 <span>{p.name}</span>
                 <span style={{ color: "var(--adm-accent)", fontWeight: 700 }}>{p.qty}</span>
               </div>
@@ -163,7 +204,7 @@ export default function LiveDashboard() {
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>{t("live_no_sales_today")}</p>
           ) : (
             data.topToday.map((p, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topToday.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>
+              <div key={p.toteatProductId} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < data.topToday.length - 1 ? "1px dashed var(--adm-card-border)" : "none", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>
                 <span>
                   <span style={{ color: "var(--adm-text3)", marginRight: 6, fontWeight: 700, fontSize: "0.72rem" }}>{i + 1}.</span>
                   {p.name}

@@ -27,6 +27,7 @@ export type Feature =
   | "automations"         // Cumpleanos automaticos
   | "clients_full"        // Clientes captados
   | "clients_export"      // Exportar clientes a CSV
+  | "toteat_integration"  // Integracion con Toteat POS
   | "live_dashboard"      // Dashboard en vivo
   | "genio"               // Genio IA
   | "modifiers"           // Modificadores de platos
@@ -138,7 +139,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
       "stats_basic", "stats_advanced",
       "multilang", "suggestions",
       "waiter", "campaigns", "automations", "clients_full", "clients_export",
-      "live_dashboard", "multi_menu", "print_menu",
+      "toteat_integration", "live_dashboard", "multi_menu", "print_menu",
       "online_ordering", "loyalty",
     ]),
     featureDisplay: [

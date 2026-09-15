@@ -113,6 +113,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.loyaltyStatus !== undefined && { loyaltyStatus: body.loyaltyStatus }),
         ...(body.loyaltyPeriodEnd !== undefined && { loyaltyPeriodEnd: body.loyaltyPeriodEnd ? new Date(body.loyaltyPeriodEnd) : null }),
         ...(body.mpPayerEmail !== undefined && { mpPayerEmail: body.mpPayerEmail || null }),
+        // Toteat POS integration fields (super-admin only)
+        ...(body.toteatRestaurantId !== undefined && { toteatRestaurantId: body.toteatRestaurantId || null }),
+        ...(body.toteatLocalId !== undefined && { toteatLocalId: body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId) }),
+        ...(body.toteatUserId !== undefined && { toteatUserId: body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId) }),
+        ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
         ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
         ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
@@ -146,12 +151,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       if (body.lat !== undefined) data.lat = body.lat === null ? null : Number(body.lat);
       if (body.lng !== undefined) data.lng = body.lng === null ? null : Number(body.lng);
       // Plan checks: some fields require SILVER+ or PREMIUM
-      const needsPlanCheck = data.defaultView !== undefined;
+      const needsPlanCheck = data.defaultView !== undefined || body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
       if (needsPlanCheck) {
-        const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true } });
+        const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true, toteatWebhookSecret: true } });
         // Vista por defecto: solo SILVER+ (FREE solo puede tener "lista")
         if (data.defaultView !== undefined && r?.plan === "FREE") {
           delete data.defaultView;
+        }
+        // Toteat credentials: solo owners de locales PREMIUM pueden editarlos
+        const wantsToteat = body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
+        if (wantsToteat && r?.plan === "PREMIUM") {
+          if (body.toteatRestaurantId !== undefined) data.toteatRestaurantId = body.toteatRestaurantId || null;
+          if (body.toteatLocalId !== undefined) data.toteatLocalId = body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId);
+          if (body.toteatUserId !== undefined) data.toteatUserId = body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId);
+          if (body.toteatApiToken !== undefined) data.toteatApiToken = body.toteatApiToken || null;
+          // Generar secret de webhook la primera vez
+          if (!r.toteatWebhookSecret && body.toteatApiToken) {
+            data.toteatWebhookSecret = crypto.randomBytes(24).toString("hex");
+          }
         }
       }
     }

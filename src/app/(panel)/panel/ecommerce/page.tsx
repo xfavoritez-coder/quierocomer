@@ -16,7 +16,7 @@ type Status = {
   posProvider: string;
 };
 
-const POS_LABELS: Record<string, string> = { none: "Sin seleccionar" };
+const POS_LABELS: Record<string, string> = { toteat: "Toteat", none: "Sin seleccionar" };
 
 const CARD: React.CSSProperties = {
   background: "var(--adm-card)",

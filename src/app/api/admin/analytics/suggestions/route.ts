@@ -98,6 +98,66 @@ export async function GET(req: NextRequest) {
         };
       });
 
+    // Check if restaurant has Toteat for sales cross-reference
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: validated },
+      select: { toteatRestaurantId: true },
+    });
+    const hasToteat = !!restaurant?.toteatRestaurantId;
+
+    // If Toteat, check if clicked suggestions actually ended up in sales.
+    // For each click event, look for a sale of that specific dish within 3 hours
+    // after the click — a reasonable window for "click led to purchase".
+    const SALE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+    let salesFromSuggestions = 0;
+    let salesFromSuggestionsDishes: { name: string; photo: string | null; count: number }[] = [];
+    if (hasToteat && clickEvents.length > 0) {
+      const clickedDishIds = [...new Set(clickEvents.map(e => e.dishId).filter(Boolean))];
+      if (clickedDishIds.length > 0) {
+        const mappedDishes = await prisma.dish.findMany({
+          where: { id: { in: clickedDishIds as string[] }, toteatProductId: { not: null } },
+          select: { id: true, name: true, photos: true, toteatProductId: true },
+        });
+        const dishToToteat = new Map(mappedDishes.map(d => [d.id, d]));
+
+        // For each click, find sales of that dish within the time window
+        const matchedSales = new Set<string>(); // saleProduct IDs already counted
+        const salesByDishId: Record<string, number> = {};
+
+        for (const click of clickEvents) {
+          if (!click.dishId) continue;
+          const dish = dishToToteat.get(click.dishId);
+          if (!dish?.toteatProductId) continue;
+
+          const clickTime = new Date(click.createdAt);
+          const windowEnd = new Date(clickTime.getTime() + SALE_WINDOW_MS);
+
+          const candidates = await prisma.toteatSaleProduct.findMany({
+            where: {
+              toteatProductId: dish.toteatProductId,
+              sale: { restaurantId: validated, dateClosed: { gte: clickTime, lte: windowEnd } },
+            },
+            select: { id: true, quantity: true },
+            take: 5,
+          });
+
+          for (const sp of candidates) {
+            if (matchedSales.has(sp.id)) continue;
+            matchedSales.add(sp.id);
+            salesByDishId[click.dishId] = (salesByDishId[click.dishId] || 0) + (sp.quantity || 1);
+          }
+        }
+
+        salesFromSuggestions = Object.values(salesByDishId).reduce((s, n) => s + n, 0);
+        salesFromSuggestionsDishes = Object.entries(salesByDishId)
+          .map(([dishId, count]) => {
+            const dish = dishToToteat.get(dishId);
+            return { name: dish?.name || "Desconocido", photo: dish?.photos?.[0] || null, count };
+          })
+          .sort((a, b) => b.count - a.count);
+      }
+    }
+
     return NextResponse.json({
       totalShown,
       totalClicks,
@@ -106,9 +166,9 @@ export async function GET(req: NextRequest) {
       sessionsWithClicks,
       topClicked,
       topPairs,
-      hasToteat: false,
-      salesFromSuggestions: 0,
-      salesFromSuggestionsDishes: [],
+      hasToteat,
+      salesFromSuggestions,
+      salesFromSuggestionsDishes,
     });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

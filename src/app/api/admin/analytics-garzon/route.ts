@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
-import { chileHourOf } from "@/lib/timezone";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);

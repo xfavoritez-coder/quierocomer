@@ -11,6 +11,7 @@ import { extractQueresto } from "./queresto";
 import { extractMiCartaQR } from "./micartaqr";
 import { extractWithScraper } from "./scrape";
 import { extractOlaClick } from "./olaclick";
+import { extractToteat } from "./toteat";
 import { extractFromDocument } from "./document";
 import { extractGoogleDrive } from "./googledrive";
 import { extractHeyzine } from "./heyzine";
@@ -377,6 +378,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
     else if (cartaUrl.includes('pedidosya.cl')) providerName = 'PedidosYa'
     else if (cartaUrl.includes('queresto.com')) providerName = 'Queresto'
     else if (cartaUrl.includes('ola.click')) providerName = 'OlaClick'
+    else if (cartaUrl.includes('toteat.app')) providerName = 'Toteat'
   }
   // Route to the correct extractor
   switch (providerName) {
@@ -413,6 +415,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractInfluyeApp(cartaUrl);
     case "OlaClick":
       return extractOlaClick(cartaUrl);
+    case "Toteat":
+      return extractToteat(cartaUrl);
     case "Dropbox":
     case "OneDrive":
       // Cloud storage PDFs: treat as generic document via the scraper

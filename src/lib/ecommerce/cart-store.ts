@@ -14,6 +14,7 @@ export interface CartItemOption {
   value_id: string;
   value: string;
   price_delta: number;
+  toteat_modifier_code?: string | null;
 }
 
 export interface CartItem {
@@ -23,6 +24,7 @@ export interface CartItem {
   base_price: number;
   quantity: number;
   image_url: string | null;
+  toteat_code?: string | null;
   options: CartItemOption[];
 }
 

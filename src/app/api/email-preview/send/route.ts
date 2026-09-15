@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
-import { chileHourOf } from "@/lib/timezone";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export const maxDuration = 30;
 
