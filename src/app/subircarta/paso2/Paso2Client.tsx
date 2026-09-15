@@ -394,51 +394,25 @@ export default function Paso2Client() {
           </section>
 
           <section className="shell centered-shell" style={{ animation: "formSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) both" }}>
-            <div className="centered-form" style={{ maxWidth: 480, textAlign: "center", padding: "8px 0 16px" }}>
-              {/* Success icons */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 20 }}>
-                <span style={{ fontSize: 44, lineHeight: 1 }}>✉️</span>
-                <span style={{ fontSize: 22, color: "#A8A8A2" }}>+</span>
-                <span style={{ fontSize: 44, lineHeight: 1 }}>💬</span>
+            <div className="centered-form" style={{ maxWidth: 480, textAlign: "center", padding: "8px 0 24px" }}>
+
+              {/* Big checkmark */}
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(67,209,123,.12)", border: "1.5px solid rgba(67,209,123,.3)", display: "grid", placeItems: "center", margin: "0 auto 22px" }}>
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none"><path d="M5 13l4 4L19 7" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
 
-              {/* Badge */}
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(67,209,123,.1)", border: "1px solid rgba(67,209,123,.3)", color: "#2d9e5f", fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 999, marginBottom: 18 }}>
-                <svg viewBox="0 0 20 20" width="14" height="14" fill="none"><circle cx="10" cy="10" r="10" fill="#43d17b"/><path d="M6 10.5l2.5 2.5L14 8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Listo
-              </div>
+              <h1 style={{ marginBottom: 10 }}>
+                {ownerName ? `¡Listo, ${ownerName.split(" ")[0]}!` : "¡Listo!"}
+              </h1>
 
-              <h1 style={{ marginBottom: 10 }}>¡Tu carta está en camino!</h1>
-
-              <p className="subcopy" style={{ marginBottom: 6 }}>
+              <p className="subcopy" style={{ marginBottom: 8 }}>
                 En unos minutos recibirás tu carta<br />en tu correo y WhatsApp.
               </p>
 
               {email && (
-                <p style={{ fontSize: 13, color: "#A8A8A2", marginBottom: 28 }}>
-                  Te lo enviamos a <strong style={{ color: "#73736D" }}>{email}</strong>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 0 }}>
+                  Te lo enviamos a <strong style={{ color: "var(--muted-light)" }}>{email}</strong>
                 </p>
-              )}
-
-              {cartaQrUrl ? (
-                <a
-                  href={cartaQrUrl}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    background: "#F59E1B", color: "#fff",
-                    fontSize: 16, fontWeight: 800,
-                    padding: "14px 28px", borderRadius: 14, border: "none",
-                    textDecoration: "none", letterSpacing: "-.02em",
-                    boxShadow: "0 8px 24px rgba(245,158,27,.22)",
-                  }}
-                >
-                  Ver mi carta <span>→</span>
-                </a>
-              ) : (
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,158,27,.08)", border: "1.5px solid rgba(245,158,27,.25)", borderRadius: 14, padding: "12px 20px" }}>
-                  <svg viewBox="0 0 20 20" width="16" height="16" fill="none"><circle cx="10" cy="10" r="9" stroke="#F59E1B" strokeWidth="2"/><path d="M10 6v4l2 2" stroke="#F59E1B" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  <span style={{ fontSize: 13, color: "#73736D" }}>Tu carta se está preparando, ya llegará pronto.</span>
-                </div>
               )}
             </div>
           </section>
@@ -696,7 +670,7 @@ a { color: inherit; text-decoration: none; }
 
 /* STEPS */
 .steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 0 auto 28px; max-width: 480px; }
-.step { display: flex; align-items: center; gap: 8px; color: var(--muted-light); font-size: 13px; font-weight: 500; }
+.step { display: flex; align-items: center; gap: 8px; color: var(--muted-light); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .step-line { width: 28px; height: 1px; background: var(--line); margin: 0 6px; }
 .step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 1.5px solid var(--line); background: transparent; color: var(--muted-light); }
 .step.active { color: var(--ink); }

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         ownerViewToken: token,
         ownerViewTokenUsedAt: null,
       },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true, logoUrl: true },
     });
 
     if (!restaurant) {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
     const panelUrl = `${baseUrl}/api/panel/demo-auth?slug=${slug}`;
 
-    return NextResponse.json({ valid: true, panelUrl });
+    return NextResponse.json({ valid: true, panelUrl, restaurantName: restaurant.name, logoUrl: restaurant.logoUrl });
   } catch (err) {
     console.error("[owner-token] Error:", err);
     return NextResponse.json({ valid: false });

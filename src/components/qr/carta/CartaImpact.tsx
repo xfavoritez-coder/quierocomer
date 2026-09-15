@@ -1680,22 +1680,6 @@ export default function CartaImpact({
                         onClick={() => handleDishClick(dish)}
                       />
                     </div>
-                    {showTranslationBanner && (
-                      <div
-                        className="font-[family-name:var(--font-dm)]"
-                        style={{
-                          margin: "4px 0 14px", padding: "12px 14px",
-                          background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.03))",
-                          border: "1px solid rgba(59,130,246,0.15)", borderRadius: 14,
-                          display: "flex", alignItems: "center", gap: 10,
-                        }}
-                      >
-                        <span style={{ fontSize: "1.1rem", flexShrink: 0 }}>🌍</span>
-                        <span style={{ fontSize: "0.85rem", color: "var(--carta-text2, rgba(255,255,255,0.55))", lineHeight: 1.45 }}>
-                          Tradujimos los primeros platos para que lo veas. Al activar tu carta, se traduce completa.
-                        </span>
-                      </div>
-                    )}
                   </div>
                 );
               })}
