@@ -8,7 +8,6 @@
 //  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -33,8 +32,7 @@ const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 export default function ImpactStoreFront({ tenant, categories, products, basePath }: Props) {
   const accent = tenant.primaryColor;
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
-  const router = useRouter();
-  const goCheckout = () => router.push(`${storeBase}/checkout`);
+  const goCheckout = () => { window.location.href = `${storeBase}/checkout`; };
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);

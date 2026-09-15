@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
@@ -41,7 +40,6 @@ export const storeFontVars: React.CSSProperties = {
 
 export default function StoreFront({ tenant, categories, products, basePath }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
-  const router = useRouter();
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
@@ -350,7 +348,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               para que la animación cart-bump (scale) no descentre el botón. */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-6">
             <button
-              onClick={() => router.push(`${storeBase}/checkout`)}
+              onClick={() => (window.location.href = `${storeBase}/checkout`)}
               aria-label="Ver carrito"
               className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white ${cartBump ? "cart-bump" : ""}`}
               style={{ background: primaryColor }}
@@ -496,7 +494,6 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
 function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModal, storeBase }: {
   tenant: StoreTenant; primaryColor: string; cartBump: boolean; mounted: boolean; onOpenDeliveryModal: () => void; storeBase: string;
 }) {
-  const router = useRouter();
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
@@ -592,7 +589,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(minReq!)}</div>
             ) : (
-              <button onClick={() => router.push(`${storeBase}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
+              <button onClick={() => (window.location.href = `${storeBase}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
                 Continuar con mi pedido →
               </button>
             )}
