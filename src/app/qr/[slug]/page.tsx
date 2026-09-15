@@ -19,7 +19,6 @@ import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
 import DemoViewToast from "@/components/qr/carta/DemoViewToast";
-import OwnerWelcomeBanner from "@/components/qr/carta/OwnerWelcomeBanner";
 import ShowcaseMobileOnly from "@/components/qr/carta/ShowcaseMobileOnly";
 import MultiMenuLanding from "@/components/qr/carta/MultiMenuLanding";
 import { prisma } from "@/lib/prisma";
@@ -71,10 +70,10 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string; menu?: string; carta?: string; ot?: string }>;
+  searchParams: Promise<{ mesa?: string; vista?: string; lang?: string; showcase?: string; embed?: string; menu?: string; carta?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed, menu: menuSlug, carta: cartaParam, ot: ownerToken } = await searchParams;
+  const { mesa: tableId, vista: urlView, lang: urlLang, showcase, embed, menu: menuSlug, carta: cartaParam } = await searchParams;
   const isShowcase = showcase === "1";
   const isEmbed = embed === "mobile";
   const isQrScan = !!tableId;
@@ -290,7 +289,8 @@ export default async function CartaPage({
     return <CartaProximamente restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
   }
 
-  const colorMode = hasDesignFeatures ? ((restaurant as any).cartaColorMode || "LIGHT") : "LIGHT";
+  const isImpactDemo = (restaurant as any).isDemo && (restaurant as any).defaultView === "impact";
+  const colorMode = hasDesignFeatures ? ((restaurant as any).cartaColorMode || "LIGHT") : isImpactDemo ? "DARK" : "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;
 
@@ -397,7 +397,6 @@ export default async function CartaPage({
       )}
     </div>
     {isPaused && <MenuPausedPage restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />}
-    {ownerToken && <OwnerWelcomeBanner slug={slug} token={ownerToken} />}
-    </>
+</>
   );
 }

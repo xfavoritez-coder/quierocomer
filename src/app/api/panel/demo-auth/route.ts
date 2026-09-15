@@ -15,6 +15,15 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) return NextResponse.redirect(new URL("/panel/login", req.url));
 
+  // If an owner token is present, consume it now (owner is entering the panel)
+  const ot = req.nextUrl.searchParams.get("ot");
+  if (ot) {
+    prisma.restaurant.updateMany({
+      where: { slug, ownerViewToken: ot, ownerViewTokenUsedAt: null },
+      data: { ownerViewTokenUsedAt: new Date() },
+    }).catch(() => {});
+  }
+
   // Find restaurant (demo or recently activated)
   const restaurant = await prisma.restaurant.findFirst({
     where: { slug },

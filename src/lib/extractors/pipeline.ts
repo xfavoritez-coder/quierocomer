@@ -894,6 +894,39 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
+    // Auto-provision: loyalty, orders, reviews
+    try {
+      const defaultRewards = [
+        { stamp: 5, reward: "Bebida a elección gratis" },
+        { stamp: 10, reward: "Plato del día gratis" },
+      ];
+      await prisma.loyaltyProgram.upsert({
+        where: { restaurantId: restaurant.id },
+        create: {
+          restaurantId: restaurant.id,
+          active: true,
+          stampGoal: 10,
+          name: "Tarjeta de fidelidad",
+          rewards: defaultRewards,
+          description: "Un sello por visita. Canjeable en cualquier consumo. Sin fecha de vencimiento.",
+          cardColorHex: "#111111",
+          stampColorHex: "#F4A623",
+          heroText: "¡Acumula sellos y gana premios cada vez que nos visitas!",
+          showGiftBadge: true,
+        },
+        update: {}, // don't override if already configured by owner
+      });
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: {
+          orderingEnabled: true,
+          reviewMode: "private",
+        },
+      });
+    } catch (provisionErr) {
+      console.error("[Pipeline] Auto-provision failed (non-fatal):", provisionErr);
+    }
+
     // Send activation welcome email with panel credentials and carta link
     if (lead.email) {
       try {
@@ -901,11 +934,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const { activationWelcomeEmailHtml } = await import("@/app/api/preview-email/activation/route");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
-        const cartaUrl = `${baseUrl}/qr/${restaurant.slug}`;
         const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
         // Use ownerViewToken from the restaurant record (works for both new and existing demo)
         const activeToken = existingRest?.isDemo ? (existingRest as any).ownerViewToken : ownerViewToken;
-        const qrLink = activeToken ? `${cartaUrl}?ot=${activeToken}` : cartaUrl;
+        const qrLink = activeToken ? `${baseUrl}/${restaurant.slug}?ot=${activeToken}` : `${baseUrl}/${restaurant.slug}`;
         const password = `${restaurant.slug}2026`;
 
         await sendAdminEmail({

@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
  * Body: { slug: string, token: string }
  *
  * Validates the ownerViewToken for a restaurant.
- * If valid and unused → marks as used, returns { valid: true, panelUrl: string }
+ * If valid and unused → returns { valid: true, restaurantName, logoUrl }
  * If invalid or already used → returns { valid: false }
+ * Does NOT consume the token — token is consumed when the owner clicks into the panel.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -32,16 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false });
     }
 
-    // Mark token as used
-    await prisma.restaurant.update({
-      where: { id: restaurant.id },
-      data: { ownerViewTokenUsedAt: new Date() },
-    });
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-    const panelUrl = `${baseUrl}/api/panel/demo-auth?slug=${slug}`;
-
-    return NextResponse.json({ valid: true, panelUrl, restaurantName: restaurant.name, logoUrl: restaurant.logoUrl });
+    return NextResponse.json({ valid: true, restaurantName: restaurant.name, logoUrl: restaurant.logoUrl });
   } catch (err) {
     console.error("[owner-token] Error:", err);
     return NextResponse.json({ valid: false });

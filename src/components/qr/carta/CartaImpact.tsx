@@ -792,10 +792,11 @@ export default function CartaImpact({
   const hasActiveHH = !!getActiveHappyHour(happyHours || []);
   const hasBannerActive = hasActiveHH || !!(announcements && announcements.length > 0);
 
-  // Language select — multilang is Gold+ only
+  // Language select — multilang is Gold+ only, but impact demo always shows it
   const planKey = effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus);
-  const hasMultilang = canAccess(planKey, "multilang");
-  const enabledLangs: string[] = hasMultilang ? ((restaurant as any).enabledLangs || ["es"]) : ["es"];
+  const isImpactDemo = !!(restaurant as any).isDemo && (restaurant as any).defaultView === "impact";
+  const hasMultilang = canAccess(planKey, "multilang") || isImpactDemo;
+  const enabledLangs: string[] = hasMultilang ? ((restaurant as any).enabledLangs?.length > 1 ? (restaurant as any).enabledLangs : ["es", "en"]) : ["es"];
   const [langOpen, setLangOpen] = useState(false);
   const LANG_FLAG_IMG: Record<string, string> = {
     es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
@@ -1196,7 +1197,7 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 105 : 0 }}
+      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: 0 }}
     >
       {/* Ambient background */}
       <div style={{

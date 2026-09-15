@@ -41,8 +41,8 @@ export async function GET(
     : null;
 
   const destination = token
-    ? `${base}/qr/${slug}?ot=${token}`
-    : `${base}/qr/${slug}`;
+    ? `${base}/${slug}?ot=${token}`
+    : `${base}/${slug}`;
 
   return NextResponse.redirect(destination, { status: 302 });
 }

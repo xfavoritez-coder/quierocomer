@@ -265,11 +265,12 @@ export default function CartaRouter(props: Props) {
   const plan = (props.restaurant as any).plan || "FREE";
   const showViewSelector = canAccess(plan, "view_selector");
 
-  // Force view based on plan
+  // Force view based on plan (demo restaurants always get their defaultView)
+  const isDemo = !!(props.restaurant as any).isDemo;
   const effectiveView = (() => {
     if (view === "feed" && !canAccess(plan, "view_feed")) return "lista";
-    if (view === "impact" && !canAccess(plan, "view_space")) return "lista";
-    if (view === "premium" && !canAccess(plan, "view_gallery")) return "lista";
+    if (view === "impact" && !canAccess(plan, "view_space") && !isDemo) return "lista";
+    if (view === "premium" && !canAccess(plan, "view_gallery") && !isDemo) return "lista";
     return view;
   })();
 
