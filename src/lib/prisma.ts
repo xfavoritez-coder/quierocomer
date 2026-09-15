@@ -9,9 +9,10 @@ function getDbUrl(): string {
   const base = process.env.DATABASE_URL || "";
   const url = new URL(base);
   if (process.env.NODE_ENV === "production") {
-    // 1 connection per serverless instance — PgBouncer multiplexes on the DB side
-    url.searchParams.set("connection_limit", "1");
-    url.searchParams.set("pool_timeout", "10");
+    // Fluid Compute reutiliza instancias para requests concurrentes — necesita > 1 conexión.
+    // 3 conexiones por instancia × max ~20 instancias = 60 conexiones a PgBouncer, dentro del límite Pro.
+    url.searchParams.set("connection_limit", "3");
+    url.searchParams.set("pool_timeout", "20");
     url.searchParams.set("pgbouncer", "true");
   } else {
     // Dev: más conexiones para soportar hot-reload y requests paralelos
