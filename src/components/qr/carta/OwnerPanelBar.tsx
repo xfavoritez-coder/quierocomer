@@ -54,15 +54,9 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
         .opb-text {
           font-family: "Inter", system-ui, sans-serif;
           font-size: 13px;
-          font-weight: 500;
-          color: rgba(255,255,255,0.6);
+          font-weight: 400;
+          color: rgba(255,255,255,0.4);
           white-space: nowrap;
-        }
-        .opb-text strong {
-          font-family: "Space Grotesk", system-ui, sans-serif;
-          color: #fff;
-          font-weight: 700;
-          letter-spacing: -0.02em;
         }
         .opb-btn {
           display: inline-flex;
@@ -105,9 +99,9 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
 
       <div className="opb">
         <div className="opb-inner">
-          <span className="opb-text"><strong>¿Quieres cambiar algo?</strong></span>
+          <span className="opb-text">¿Quieres editar algo?</span>
           <a href="/panel" className="opb-btn" onClick={dismiss}>
-            Entrar a mi panel →
+            Ir al panel →
           </a>
           <button className="opb-close" onClick={dismiss} aria-label="Cerrar">×</button>
         </div>
