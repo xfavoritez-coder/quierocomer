@@ -308,6 +308,17 @@ export default function LandingPage() {
             max-height: 820px;
             padding: 0 24px;
           }
+          .lp-hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 820px;
+            height: 520px;
+            background: radial-gradient(ellipse at center, rgba(244,166,35,0.18) 0%, rgba(244,166,35,0.05) 45%, transparent 70%);
+            pointer-events: none;
+          }
           .lp-hero-bg,
           .lp-hero-overlay,
           .lp-hero-vignette {
