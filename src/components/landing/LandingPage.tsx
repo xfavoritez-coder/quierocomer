@@ -228,39 +228,34 @@ export default function LandingPage() {
           color: #fff;
         }
 
-        /* HERO */
+        /* HERO — base (mobile first) */
         .lp-hero {
           position: relative;
           overflow: hidden;
-          height: 85vh;
-          min-height: 500px;
+          background:
+            radial-gradient(ellipse 90% 65% at 50% 30%, rgba(244,166,35,0.3) 0%, rgba(244,166,35,0.07) 55%, transparent 75%),
+            radial-gradient(ellipse 55% 45% at 10% 90%, rgba(220,100,10,0.13) 0%, transparent 60%),
+            radial-gradient(ellipse 55% 45% at 90% 90%, rgba(244,166,35,0.09) 0%, transparent 60%),
+            #080808;
+          padding: 80px 24px 88px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100svh;
         }
-        .lp-hero-bg {
-          position: absolute;
-          inset: 0;
-          background-image: url('/hero.png');
-          background-size: cover;
-        }
-        .lp-hero-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(10,10,10,0.58);
-        }
-        .lp-hero-vignette {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 20%, rgba(0,0,0,0.82) 100%);
-          pointer-events: none;
-        }
+        .lp-hero-bg { display: none; }
+        .lp-hero-overlay { display: none; }
+        .lp-hero-vignette { display: none; }
+
         .lp-hero-content {
-          position: absolute;
-          inset: 0;
+          position: relative;
+          z-index: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
           text-align: center;
-          padding: 40px 24px;
+          width: 100%;
+          max-width: 480px;
         }
 
         .lp-eyebrow {
@@ -273,7 +268,7 @@ export default function LandingPage() {
         }
 
         .lp-hero h1 {
-          font-size: clamp(40px, 4.5vw, 64px);
+          font-size: clamp(42px, 10vw, 56px);
           line-height: 1.06;
           letter-spacing: -.04em;
           font-weight: 850;
@@ -284,33 +279,36 @@ export default function LandingPage() {
         .lp-hero-sub {
           margin: 22px auto 0;
           color: rgba(255,255,255,0.55);
-          font-size: 19px;
+          font-size: 20px;
           line-height: 1.65;
-          max-width: 480px;
+          max-width: 400px;
         }
 
         .lp-hero-cta {
-          margin-top: 36px;
+          margin-top: 40px;
           display: flex;
           justify-content: center;
+          width: 100%;
+        }
+        .lp-hero-cta .lp-btn {
+          min-height: 68px !important;
+          padding: 0 48px !important;
+          font-size: 22px !important;
+          width: auto !important;
         }
 
         /* HERO DESKTOP */
         @media (min-width: 860px) {
           .lp-hero {
+            min-height: unset;
             height: 84vh;
             max-height: 820px;
-            background:
-              radial-gradient(ellipse 80% 70% at 50% 35%, rgba(244,166,35,0.32) 0%, rgba(244,166,35,0.08) 50%, transparent 75%),
-              radial-gradient(ellipse 50% 45% at 15% 85%, rgba(220,100,10,0.14) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 45% at 85% 85%, rgba(244,166,35,0.1) 0%, transparent 60%),
-              #080808;
+            padding: 0 24px;
           }
-          .lp-hero-bg { display: none; }
-          .lp-hero-overlay { display: none; }
           .lp-hero-content {
-            justify-content: flex-start;
-            padding-top: 72px;
+            max-width: 680px;
+            padding-top: 0;
+            margin-top: -60px;
           }
           .lp-hero-cta .lp-btn {
             min-height: 76px !important;
@@ -319,11 +317,10 @@ export default function LandingPage() {
           }
           .lp-hero h1 {
             font-size: clamp(48px, 5.5vw, 76px);
-            max-width: 760px;
           }
           .lp-hero-sub {
-            font-size: 20px;
-            max-width: 520px;
+            font-size: 21px;
+            max-width: 500px;
           }
         }
 
@@ -781,12 +778,6 @@ export default function LandingPage() {
           .lp-container { width: min(calc(100% - 48px), var(--max)); }
           .lp-header { height: 64px; }
           .lp-logo { font-size: 20px; }
-          .lp-hero { max-height: 85vh; }
-          .lp-hero-overlay { background: rgba(10,10,10,0.58); }
-          .lp-hero h1 { font-size: clamp(32px, 8vw, 44px); }
-          .lp-hero-sub { font-size: 17px; }
-          .lp-btn { min-height: 58px; font-size: 18px; width: 100%; }
-          .lp-hero-cta { display: block; }
           .lp-video-section { padding: 44px 0 60px; }
           .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
           .lp-showcase { padding: 60px 0 80px; }
