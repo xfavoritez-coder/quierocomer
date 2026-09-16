@@ -308,8 +308,13 @@ export default function LandingPage() {
             max-height: 820px;
             padding: 0 24px;
           }
+          .lp-hero-bg,
+          .lp-hero-overlay,
+          .lp-hero-vignette {
+            display: none;
+          }
           .lp-hero-content {
-            max-width: 680px;
+            max-width: 780px;
             padding-top: 0;
             margin-top: -60px;
           }
@@ -320,10 +325,11 @@ export default function LandingPage() {
           }
           .lp-hero h1 {
             font-size: clamp(48px, 5.5vw, 76px);
+            max-width: 700px;
           }
           .lp-hero-sub {
             font-size: 21px;
-            max-width: 500px;
+            max-width: 520px;
           }
         }
 
