@@ -210,7 +210,7 @@ function ImpactHeroSlider({
   return (
     <section
       style={{
-        minHeight: "55vh",
+        minHeight: "65vh",
         position: "relative",
         display: "flex",
         alignItems: "flex-end",
