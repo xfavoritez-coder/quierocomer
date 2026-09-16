@@ -36,7 +36,7 @@ export default function LandingFooter() {
               </a>
             ))}
           </nav>
-          <span style={{ fontSize: 12 }}>© 2026 · Santiago de Chile</span>
+          <span style={{ fontSize: 12 }}>© 2026 · Hecho en Chile</span>
         </div>
       </div>
     </footer>
