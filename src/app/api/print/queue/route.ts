@@ -43,11 +43,7 @@ export async function GET(req: NextRequest) {
   // Excluir intentos de pago online no completados (no son pedidos reales todavía).
   const real = orders.filter((o) => !(o.paymentGateway && o.paymentStatus !== "paid"));
 
-  return NextResponse.json({
-    ok: true,
-    store: restaurant.name,
-    paperWidth,
-    orders: real.map((o) => ({
+  const mapped = real.map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       customerName: o.customerName,
@@ -63,6 +59,32 @@ export async function GET(req: NextRequest) {
       couponCode: o.couponCode,
       notes: o.notes,
       createdAt: o.createdAt.toISOString(),
-    })),
-  });
+    }));
+
+  // Impresión de prueba: si el dueño la solicitó y el agente aún no la confirmó,
+  // anteponemos un ticket sintético (id "test-<printTestAt>") que el agente
+  // imprime y confirma en /api/print/ack para no repetirlo.
+  const testPending =
+    cfg.printTestAt && (!cfg.printTestAckAt || new Date(cfg.printTestAckAt) < new Date(cfg.printTestAt));
+  if (testPending) {
+    mapped.unshift({
+      id: `test-${cfg.printTestAt}`,
+      orderNumber: 0,
+      customerName: "*** IMPRESION DE PRUEBA ***",
+      customerPhone: null,
+      orderType: "PICKUP",
+      deliveryAddress: null,
+      paymentMethod: "efectivo",
+      paymentStatus: "paid",
+      items: [{ dishName: "Ticket de prueba", quantity: 1, unitTotal: 0 }],
+      total: 0,
+      deliveryFee: 0,
+      discount: 0,
+      couponCode: null,
+      notes: "Si lees este ticket, el agente de impresion funciona correctamente.",
+      createdAt: new Date().toISOString(),
+    } as unknown as (typeof mapped)[number]);
+  }
+
+  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, orders: mapped });
 }

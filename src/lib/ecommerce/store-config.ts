@@ -35,6 +35,8 @@ export interface EcommerceStoreConfig {
   printPaperWidth: 58 | 80; // ancho del papel térmico en mm
   printToken: string | null; // token del agente de impresión local (ESC/POS); null = sin agente
   printTokenAt: string | null; // ISO: cuándo se generó el token (el agente solo imprime pedidos posteriores)
+  printTestAt: string | null; // ISO: solicitud de impresión de prueba pendiente (el agente la imprime en su próximo sondeo)
+  printTestAckAt: string | null; // ISO: cuándo el agente confirmó la última prueba (para no repetirla)
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -154,6 +156,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     printPaperWidth: Number(o.printPaperWidth) === 58 ? 58 : 80,
     printToken: typeof o.printToken === "string" && o.printToken.trim() ? o.printToken.trim() : null,
     printTokenAt: typeof o.printTokenAt === "string" && o.printTokenAt.trim() ? o.printTokenAt.trim() : null,
+    printTestAt: typeof o.printTestAt === "string" && o.printTestAt.trim() ? o.printTestAt.trim() : null,
+    printTestAckAt: typeof o.printTestAckAt === "string" && o.printTestAckAt.trim() ? o.printTestAckAt.trim() : null,
   };
 }
 

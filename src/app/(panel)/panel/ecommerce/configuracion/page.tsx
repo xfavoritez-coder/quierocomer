@@ -111,6 +111,20 @@ export default function EcommerceConfiguracionPage() {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
+  // Solicita una impresión de prueba: el agente la imprime en su próximo sondeo (~5s).
+  async function testPrint() {
+    if (!restaurantId || !cfg.printToken) return;
+    const next = { ...cfg, printTestAt: new Date().toISOString() };
+    setCfg(next);
+    try {
+      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "No se pudo solicitar"); return; }
+      setCfg(data.config);
+      toast.success("Prueba enviada — sale en unos segundos si el agente está corriendo");
+    } catch { toast.error("Error de conexión"); }
+  }
+
   async function uploadFavicon(file: File) {
     setUploadingFav(true);
     try {
@@ -413,6 +427,7 @@ export default function EcommerceConfiguracionPage() {
                         <button type="button" onClick={downloadAgent} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: "pointer" }}>
                           <Printer size={15} /> Descargar agente (Windows)
                         </button>
+                        <button type="button" onClick={testPrint} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Imprimir de prueba</button>
                         <button type="button" onClick={generatePrintToken} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Regenerar token</button>
                       </div>
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
