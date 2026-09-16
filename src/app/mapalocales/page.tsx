@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import MapaLocalesClient from './MapaLocalesClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Mapa de locales — QuieroComer',
 }
