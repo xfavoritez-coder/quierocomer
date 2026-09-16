@@ -63,12 +63,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  const restaurantPages: MetadataRoute.Sitemap = restaurants.map(r => ({
-    url: `${BASE}/qr/${r.slug}`,
-    lastModified: r.updatedAt,
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  }))
+  const restaurantPages: MetadataRoute.Sitemap = restaurants.flatMap(r => ([
+    {
+      url: `${BASE}/${r.slug}`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${BASE}/qr/${r.slug}`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
+  ]))
 
   // Demo/funnel restaurant carta QR pages (leads that got a digital menu)
   const demoRestaurantPages: MetadataRoute.Sitemap = demoRestaurants.map(r => ({

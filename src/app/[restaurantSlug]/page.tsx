@@ -28,6 +28,8 @@ async function getRestaurantLanding(slug: string) {
       address: true,
       commune: true,
       googleReviewUrl: true,
+      googleRating: true,
+      googleRatingCount: true,
       reviewReward: true,
       reviewMode: true,
       cartaAccentColor: true,
@@ -77,8 +79,21 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
     color: accent,
   }
 
+  const jsonLd: Record<string, any> = {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    name: r.name,
+    url: `${BASE}/${r.slug}`,
+    ...(r.logoUrl ? { image: r.logoUrl } : {}),
+    ...(r.address ? { address: { '@type': 'PostalAddress', streetAddress: r.address, addressLocality: r.commune ?? '', addressCountry: 'CL' } } : {}),
+    ...(r.primaryCategory ? { servesCuisine: r.primaryCategory } : {}),
+    hasMenu: `${BASE}/qr/${r.slug}`,
+    ...((r as any).googleRating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (r as any).googleRating, reviewCount: (r as any).googleRatingCount || 1 } } : {}),
+  }
+
   return (
     <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <PageHitTracker restaurantId={r.id} page="landing" />
     <main style={{
       minHeight: '100svh',
@@ -306,19 +321,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Check if slug is a restaurant
   const rest = await getRestaurantLanding(restaurantSlug)
   if (rest) {
-    const title = `${rest.name} · QuieroComer`
+    const communePart = rest.commune ? ` · ${rest.commune}` : ''
+    const categoryPart = rest.primaryCategory ? ` · ${rest.primaryCategory}` : ''
+    const title = `Carta de ${rest.name}${communePart}${categoryPart} | QuieroComer`
     const description = rest.orderingEnabled
-      ? `Ver la carta y hacer pedidos en ${rest.name} · Rápido, sin apps.`
-      : `Ver la carta digital de ${rest.name} con fotos, precios y recomendaciones.`
+      ? `Menú completo de ${rest.name}${communePart}. Ver platos, precios y pedir online sin apps.`
+      : `Carta digital de ${rest.name}${communePart}. Ver menú completo con fotos y precios actualizados.`
     return {
       title,
       description,
+      keywords: [`carta ${rest.name}`, `menú ${rest.name}`, `menu ${rest.name}`, rest.name, rest.commune ?? '', rest.primaryCategory ?? ''].filter(Boolean),
       alternates: { canonical: `${BASE}/${restaurantSlug}` },
       openGraph: {
         title,
         description,
         url: `${BASE}/${restaurantSlug}`,
         type: 'website',
+        siteName: 'QuieroComer',
         // og:image viene del opengraph-image.tsx dinámico (1200×630 branded)
       },
       twitter: { card: 'summary_large_image', title, description },
