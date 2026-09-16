@@ -9,14 +9,16 @@ function getDbUrl(): string {
   const base = process.env.DATABASE_URL || "";
   const url = new URL(base);
   if (process.env.NODE_ENV === "production") {
-    // Fluid Compute reutiliza instancias para requests concurrentes — necesita > 1 conexión.
-    // 3 conexiones por instancia × max ~20 instancias = 60 conexiones a PgBouncer, dentro del límite Pro.
-    url.searchParams.set("connection_limit", "3");
-    url.searchParams.set("pool_timeout", "20");
+    // PgBouncer transaction mode: 1 conexión por instancia es suficiente.
+    // Con tráfico alto Vercel escala a 100+ instancias → 1×100=100 conex, bajo el límite Pro.
+    // Antes connection_limit=3 causaba saturación en picos de tráfico.
+    url.searchParams.set("connection_limit", "1");
+    url.searchParams.set("pool_timeout", "30");
+    url.searchParams.set("connect_timeout", "10");
     url.searchParams.set("pgbouncer", "true");
   } else {
     // Dev: más conexiones para soportar hot-reload y requests paralelos
-    url.searchParams.set("connection_limit", "5");
+    url.searchParams.set("connection_limit", "3");
     url.searchParams.set("pool_timeout", "15");
   }
   return url.toString();
@@ -29,8 +31,13 @@ function getDbUrl(): string {
 //  P1008 = Operations timed out          P1017 = Server has closed the connection
 const RETRYABLE_CODES = new Set(["P2024", "P1001", "P1002", "P1008", "P1017"]);
 function isRetryable(e: unknown): boolean {
+  // Prisma P-codes
   const code = (e as { code?: string } | null)?.code;
-  return typeof code === "string" && RETRYABLE_CODES.has(code);
+  if (typeof code === "string" && RETRYABLE_CODES.has(code)) return true;
+  // OS-level TCP reset (e.g. Supabase PgBouncer corta la conexión bajo carga):
+  // Windows 10054 / POSIX ECONNRESET — aparece en el mensaje del error
+  const msg = String((e as any)?.message ?? "");
+  return msg.includes("ConnectionReset") || msg.includes("ECONNRESET") || msg.includes("10054");
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
