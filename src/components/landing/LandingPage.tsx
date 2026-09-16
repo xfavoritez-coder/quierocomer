@@ -223,12 +223,19 @@ export default function LandingPage() {
           min-height: unset;
           padding: 100px 24px 108px;
         }
+        @keyframes heroFloat {
+          0%   { transform: scale(1)    translateY(0px); }
+          50%  { transform: scale(1.04) translateY(-6px); }
+          100% { transform: scale(1)    translateY(0px); }
+        }
         .lp-hero-bg {
           position: absolute;
-          inset: 0;
+          inset: -8%;
           background-image: url('/hero.png');
           background-size: cover;
           background-position: center 55%;
+          animation: heroFloat 14s ease-in-out infinite;
+          will-change: transform;
         }
         .lp-hero-overlay {
           position: absolute;
