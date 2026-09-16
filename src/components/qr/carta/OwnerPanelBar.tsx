@@ -55,20 +55,20 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           font-family: "Inter", system-ui, sans-serif;
           font-size: 14px;
           font-weight: 400;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.68);
           white-space: nowrap;
         }
         .opb-btn {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          padding: 6px 14px;
+          padding: 4px 14px;
           background: #F4A623;
           border: none;
           border-radius: 20px;
           color: #1A0900;
           font-family: "Space Grotesk", system-ui, sans-serif;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           letter-spacing: -0.02em;
           cursor: pointer;
