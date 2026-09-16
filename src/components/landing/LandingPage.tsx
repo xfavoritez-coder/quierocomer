@@ -408,14 +408,14 @@ export default function LandingPage() {
         }
         .lp-feat-card h3 {
           font-family: "Space Grotesk", system-ui, sans-serif;
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 700;
           letter-spacing: -.02em;
           color: #0D0D0D;
           margin: 0 0 6px;
         }
         .lp-feat-card p {
-          font-size: 13.5px;
+          font-size: 16px;
           color: rgba(0,0,0,0.48);
           line-height: 1.65;
           margin: 0;
