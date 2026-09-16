@@ -1234,10 +1234,10 @@ export default function CartaImpact({
             <img
               src={(restaurant as any).logoUrl} alt={restaurant.name}
               loading="lazy"
-              style={{ width: 34, height: 34, borderRadius: 10, objectFit: "contain" }}
+              style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover" }}
             />
           ) : (
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--carta-accent, #F4A623)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: "#0e0e0e", flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "2px solid var(--carta-accent, #F4A623)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: "var(--carta-accent, #F4A623)", flexShrink: 0 }}>
               {restaurant.name?.charAt(0)?.toUpperCase() || "Q"}
             </div>
           )}

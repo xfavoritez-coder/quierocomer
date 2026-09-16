@@ -954,9 +954,9 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
               <a href={`/qr/${restaurant.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
                 {restaurant.logoUrl ? (
-                  <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: 10, objectFit: "contain" }} />
+                  <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover" }} />
                 ) : (
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: isDark ? "#0e0e0e" : "#fff", flexShrink: 0 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: `2px solid ${accent}`, display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: accent, flexShrink: 0 }}>
                     {restaurant.name.charAt(0).toUpperCase()}
                   </div>
                 )}
