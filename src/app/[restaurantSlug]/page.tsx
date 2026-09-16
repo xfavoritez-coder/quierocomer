@@ -96,7 +96,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
         {r.logoUrl ? (
           <img src={r.logoUrl} alt={r.name} style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.12)', display: 'block' }} />
         ) : (
-          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'linear-gradient(135deg, #F4A623, #e8920f)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 700, color: '#0a0a0a' }}>{initials}</div>
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', border: `3px solid ${accent}`, boxShadow: `0 0 24px ${accent}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, color: accent }}>{initials}</div>
         )}
       </div>
 
