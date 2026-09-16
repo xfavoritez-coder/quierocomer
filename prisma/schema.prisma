@@ -467,6 +467,7 @@ model OnlineOrder {
   statusHistory Json   @default("[]") // Array<{ status: string; ts: string }>
 
   surveySentAt  DateTime? // cuándo se envió la encuesta de satisfacción (null = no enviada)
+  printedAt     DateTime? // cuándo el agente de impresión imprimió la comanda (null = pendiente)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

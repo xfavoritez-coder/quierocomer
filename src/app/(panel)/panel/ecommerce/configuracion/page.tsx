@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
 import HorarioEditor from "@/components/ecommerce/HorarioEditor";
+import { buildPrintAgentPs1 } from "@/lib/ecommerce/printAgentScript";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -78,6 +79,37 @@ export default function EcommerceConfiguracionPage() {
   }, [restaurantId]);
 
   const patch = (p: Partial<EcommerceStoreConfig>) => setCfg((c) => ({ ...c, ...p }));
+
+  // Genera (o regenera) el token del agente de impresión y lo persiste de inmediato.
+  async function generatePrintToken() {
+    if (!restaurantId) return;
+    const rnd = (globalThis.crypto?.randomUUID?.() ?? `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`).replace(/-/g, "");
+    const next = { ...cfg, printToken: rnd, printTokenAt: new Date().toISOString() };
+    setCfg(next);
+    try {
+      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "No se pudo generar"); return; }
+      setCfg(data.config);
+      toast.success("Token generado");
+    } catch { toast.error("Error de conexión"); }
+  }
+
+  // Descarga el agente PowerShell con el token y la URL ya embebidos.
+  function downloadAgent() {
+    if (!cfg.printToken) return;
+    const base = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com";
+    const script = buildPrintAgentPs1(cfg.printToken, base);
+    const blob = new Blob([script], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "agente-impresion.ps1";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
 
   async function uploadFavicon(file: File) {
     setUploadingFav(true);
@@ -362,9 +394,37 @@ export default function EcommerceConfiguracionPage() {
                 </select>
               </label>
               {cfg.printMode === "auto" && (
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                  Para que imprima sola y sin diálogo: abre esta pantalla de <strong>Pedidos</strong> en el equipo del local con Google Chrome iniciado con la opción de kiosco de impresión (<code>--kiosk-printing</code>) y déjala abierta.
-                </p>
+                <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Impresión automática — 2 opciones</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                    <strong>A) Sin instalar nada:</strong> abre esta misma pantalla de <strong>Pedidos</strong> en el equipo del local con Chrome en modo kiosco (<code>--kiosk-printing</code>) y déjala abierta.
+                  </p>
+                  <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                    <strong>B) Agente local (sin navegador, ESC/POS, corte automático):</strong> genera el token, descarga el agente y déjalo corriendo en la PC Windows con la impresora.
+                  </p>
+
+                  {cfg.printToken ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>
+                        <code style={{ flex: 1, minWidth: 0, fontFamily: "monospace", fontSize: "0.72rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cfg.printToken}</code>
+                        <button type="button" onClick={() => { navigator.clipboard?.writeText(cfg.printToken || "").then(() => toast.success("Token copiado")).catch(() => {}); }} style={{ padding: "5px 9px", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Copiar</button>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button type="button" onClick={downloadAgent} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: "pointer" }}>
+                          <Printer size={15} /> Descargar agente (Windows)
+                        </button>
+                        <button type="button" onClick={generatePrintToken} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Regenerar token</button>
+                      </div>
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
+                        Guarda <code>agente-impresion.ps1</code> en la PC, clic derecho → <strong>Ejecutar con PowerShell</strong> (o crea un acceso directo con <code>powershell -ExecutionPolicy Bypass -File ruta\agente-impresion.ps1</code> y ponlo en la carpeta <strong>Inicio</strong>). Déjalo corriendo. Regenera el token si crees que se filtró (invalida el anterior).
+                      </p>
+                    </>
+                  ) : (
+                    <button type="button" onClick={generatePrintToken} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                      Generar token del agente
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </section>

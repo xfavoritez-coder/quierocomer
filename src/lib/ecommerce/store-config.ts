@@ -33,6 +33,8 @@ export interface EcommerceStoreConfig {
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
   printMode: "off" | "manual" | "auto"; // impresión de comandas: off | botón manual | automática al llegar
   printPaperWidth: 58 | 80; // ancho del papel térmico en mm
+  printToken: string | null; // token del agente de impresión local (ESC/POS); null = sin agente
+  printTokenAt: string | null; // ISO: cuándo se generó el token (el agente solo imprime pedidos posteriores)
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -150,6 +152,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     survey: parseSurvey(o.survey),
     printMode: o.printMode === "auto" ? "auto" : o.printMode === "off" ? "off" : "manual",
     printPaperWidth: Number(o.printPaperWidth) === 58 ? 58 : 80,
+    printToken: typeof o.printToken === "string" && o.printToken.trim() ? o.printToken.trim() : null,
+    printTokenAt: typeof o.printTokenAt === "string" && o.printTokenAt.trim() ? o.printTokenAt.trim() : null,
   };
 }
 
