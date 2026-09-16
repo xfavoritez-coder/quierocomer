@@ -124,6 +124,7 @@ using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
@@ -163,10 +164,17 @@ namespace QuieroComerAgente {
     [DataMember(Name="createdAt")] public string createdAt;
   }
 
+  [DataContract] public class PrinterCfg {
+    [DataMember(Name="target")] public string target; // "default" | "name" | "ip"
+    [DataMember(Name="name")] public string name;     // nombre exacto de la impresora de Windows
+    [DataMember(Name="ip")] public string ip;         // IP o IP:puerto (ESC/POS directo, 9100 por defecto)
+  }
+
   [DataContract] public class QueueResp {
     [DataMember(Name="ok")] public bool ok;
     [DataMember(Name="store")] public string store;
     [DataMember(Name="paperWidth")] public double? paperWidth;
+    [DataMember(Name="printer")] public PrinterCfg printer;
     [DataMember(Name="orders")] public Order[] orders;
   }
 
@@ -202,6 +210,7 @@ namespace QuieroComerAgente {
     Control sync;
     Thread worker;
     volatile bool running = true;
+    volatile PrinterCfg lastPrinter; // ultima config de impresora vista en la cola (para la prueba local)
     Encoding enc;
     CultureInfo clCL = CultureInfo.GetCultureInfo("es-CL");
 
@@ -249,6 +258,42 @@ namespace QuieroComerAgente {
       try { return new PrinterSettings().PrinterName; } catch { return ""; }
     }
 
+    // ESC/POS directo por socket TCP (impresoras de red, tipico puerto 9100). Sin driver.
+    static bool SendTcp(string host, int port, byte[] bytes) {
+      try {
+        using (TcpClient c = new TcpClient()) {
+          IAsyncResult ar = c.BeginConnect(host, port, null, null);
+          if (!ar.AsyncWaitHandle.WaitOne(4000)) return false; // timeout de conexion
+          c.EndConnect(ar);
+          using (NetworkStream s = c.GetStream()) { s.Write(bytes, 0, bytes.Length); s.Flush(); }
+        }
+        return true;
+      } catch { return false; }
+    }
+
+    // Imprime segun la config vista en la cola: ip -> socket 9100 | name -> por nombre | default.
+    // Devuelve en 'target' a donde se envio (para los avisos).
+    bool PrintBytes(byte[] bytes, out string target) {
+      PrinterCfg pc = lastPrinter;
+      if (pc != null && pc.target == "ip" && !string.IsNullOrEmpty(pc.ip)) {
+        string host = pc.ip.Trim(); int port = 9100;
+        int idx = host.IndexOf(':');
+        if (idx > 0) {
+          string ps = host.Substring(idx + 1); host = host.Substring(0, idx);
+          int pp; if (int.TryParse(ps, out pp) && pp > 0) port = pp;
+        }
+        target = host + ":" + port;
+        return SendTcp(host, port, bytes);
+      }
+      if (pc != null && pc.target == "name" && !string.IsNullOrEmpty(pc.name)) {
+        target = pc.name;
+        return RawPrinter.Send(pc.name, bytes);
+      }
+      string dp = DefaultPrinter();
+      target = string.IsNullOrEmpty(dp) ? "(predeterminada)" : dp;
+      return RawPrinter.Send(dp, bytes);
+    }
+
     void Loop() {
       while (running) {
         try {
@@ -257,15 +302,18 @@ namespace QuieroComerAgente {
           DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(QueueResp));
           QueueResp resp;
           using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(json))) { resp = (QueueResp)ser.ReadObject(ms); }
+          if (resp != null && resp.ok) {
+            lastPrinter = resp.printer; // recordar la config para la prueba local
+          }
           if (resp != null && resp.ok && resp.orders != null) {
             int width = (resp.paperWidth.HasValue && (int)resp.paperWidth.Value == 58) ? 58 : 80;
             foreach (Order o in resp.orders) {
               try {
                 byte[] bytes = BuildTicket(o, resp.store, width);
-                string printer = DefaultPrinter();
-                bool ok = RawPrinter.Send(printer, bytes);
+                string target;
+                bool ok = PrintBytes(bytes, out target);
                 if (ok) { Ack(o.id); Balloon("Comanda impresa", "Pedido #" + NumStr(o.orderNumber)); }
-                else { Balloon("Error de impresion", "Revisa la impresora: " + printer); }
+                else { Balloon("Error de impresion", "Revisa la impresora: " + target); }
               } catch (Exception ex) { Balloon("Error con un pedido", ex.Message); }
             }
           }
@@ -299,9 +347,9 @@ namespace QuieroComerAgente {
         Item it = new Item(); it.dishName = "Ticket de prueba"; it.quantity = 1; it.unitTotal = 0;
         o.items = new Item[] { it };
         o.notes = "Si lees este ticket, la impresora funciona.";
-        string printer = DefaultPrinter();
-        bool ok = RawPrinter.Send(printer, BuildTicket(o, "QUIEROCOMER", 80));
-        Balloon(ok ? "Prueba enviada" : "Error", ok ? ("Impresora: " + printer) : ("Revisa la impresora: " + printer));
+        string target;
+        bool ok = PrintBytes(BuildTicket(o, "QUIEROCOMER", 80), out target);
+        Balloon(ok ? "Prueba enviada" : "Error", ok ? ("Impresora: " + target) : ("Revisa la impresora: " + target));
       } catch (Exception ex) { Balloon("Error", ex.Message); }
     }
 

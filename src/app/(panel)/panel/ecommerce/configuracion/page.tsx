@@ -431,6 +431,34 @@ export default function EcommerceConfiguracionPage() {
                     <strong>B) Agente local (sin navegador, ESC/POS, corte automático):</strong> genera el token, descarga el agente y déjalo corriendo en la PC Windows con la impresora.
                   </p>
 
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <label style={{ display: "block" }}>
+                      <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Impresora del agente</span>
+                      <select
+                        value={cfg.printTarget}
+                        onChange={(e) => patch({ printTarget: e.target.value as "default" | "name" | "ip" })}
+                        style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                      >
+                        <option value="default">Predeterminada de Windows</option>
+                        <option value="name">Por nombre exacto</option>
+                        <option value="ip">Por IP de red (directo, sin driver)</option>
+                      </select>
+                    </label>
+                    {cfg.printTarget === "name" && (
+                      <input type="text" value={cfg.printerName || ""} onChange={(e) => patch({ printerName: e.target.value })} placeholder="Nombre exacto, ej: POS-80"
+                        style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }} />
+                    )}
+                    {cfg.printTarget === "ip" && (
+                      <>
+                        <input type="text" value={cfg.printerIp || ""} onChange={(e) => patch({ printerIp: e.target.value })} placeholder="IP de la impresora, ej: 192.168.1.50"
+                          style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }} />
+                        <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                          La impresora debe tener <strong>IP fija</strong> y aceptar ESC/POS por el puerto <strong>9100</strong> (RAW/JetDirect, lo normal en térmicas de red). Si usa otro puerto, ponlo así: <code>192.168.1.50:9100</code>. No necesita driver.
+                        </p>
+                      </>
+                    )}
+                  </div>
+
                   {cfg.printToken ? (
                     <>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>

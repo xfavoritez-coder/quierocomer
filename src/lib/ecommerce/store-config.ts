@@ -37,6 +37,9 @@ export interface EcommerceStoreConfig {
   printTokenAt: string | null; // ISO: cuándo se generó el token (el agente solo imprime pedidos posteriores)
   printTestAt: string | null; // ISO: solicitud de impresión de prueba pendiente (el agente la imprime en su próximo sondeo)
   printTestAckAt: string | null; // ISO: cuándo el agente confirmó la última prueba (para no repetirla)
+  printTarget: "default" | "name" | "ip"; // a qué impresora imprime el agente: predeterminada de Windows | por nombre | por IP directa (:9100)
+  printerName: string | null; // nombre exacto de la impresora de Windows (cuando printTarget = "name")
+  printerIp: string | null; // IP (o IP:puerto) de la impresora de red para ESC/POS directo (cuando printTarget = "ip"); puerto por defecto 9100
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -158,6 +161,9 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     printTokenAt: typeof o.printTokenAt === "string" && o.printTokenAt.trim() ? o.printTokenAt.trim() : null,
     printTestAt: typeof o.printTestAt === "string" && o.printTestAt.trim() ? o.printTestAt.trim() : null,
     printTestAckAt: typeof o.printTestAckAt === "string" && o.printTestAckAt.trim() ? o.printTestAckAt.trim() : null,
+    printTarget: o.printTarget === "name" ? "name" : o.printTarget === "ip" ? "ip" : "default",
+    printerName: typeof o.printerName === "string" && o.printerName.trim() ? o.printerName.trim() : null,
+    printerIp: typeof o.printerIp === "string" && o.printerIp.trim() ? o.printerIp.trim() : null,
   };
 }
 

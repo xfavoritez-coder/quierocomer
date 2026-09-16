@@ -86,5 +86,9 @@ export async function GET(req: NextRequest) {
     } as unknown as (typeof mapped)[number]);
   }
 
-  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, orders: mapped });
+  // Config de impresora (el agente la aplica en caliente, sin reinstalar):
+  //  default = predeterminada de Windows | name = por nombre | ip = ESC/POS directo a IP:9100
+  const printer = { target: cfg.printTarget, name: cfg.printerName, ip: cfg.printerIp };
+
+  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, printer, orders: mapped });
 }
