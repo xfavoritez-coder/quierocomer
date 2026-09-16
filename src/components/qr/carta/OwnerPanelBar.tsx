@@ -62,7 +62,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          padding: 4px 14px;
+          padding: 6px 14px;
           background: #F4A623;
           border: none;
           border-radius: 20px;
