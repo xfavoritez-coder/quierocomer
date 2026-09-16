@@ -37,6 +37,7 @@ function LiveIcon({ size = 18 }: { size?: number }) {
 
 const LIVE_HIDDEN = ["horusvegan"];
 const CONTROL_HIDDEN = ["horusvegan"];
+const FINANCIAL_ALLOWED = ["horusvegan"];
 const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
@@ -128,7 +129,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
       ],
     }] : []),
-    {
+    ...(FINANCIAL_ALLOWED.includes(opts.slug ?? "") ? [{
       key: "administracion",
       label: "Administración",
       icon: TrendingUp,
@@ -138,7 +139,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Landmark, labelKey: "nav_conciliacion", href: `${base}/administracion/conciliacion` },
         { icon: Settings, labelKey: "nav_configuracion_financiera", href: `${base}/administracion/configuracion` },
       ],
-    },
+    }] : []),
     {
       key: "config",
       label: "Configuración",
