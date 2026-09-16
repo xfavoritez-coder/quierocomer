@@ -914,7 +914,7 @@ export default function LandingPage() {
             <div className="lp-features-grid">
               <div className="lp-feat-card">
                 <div className="lp-feat-visual">
-                  <img src="/f1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+                  <img src="/ff1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
                   <h3>Recomienda platos</h3>
@@ -923,7 +923,7 @@ export default function LandingPage() {
               </div>
               <div className="lp-feat-card">
                 <div className="lp-feat-visual">
-                  <img src="/f2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src="/ff2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
                   <h3>Habla su idioma</h3>
@@ -932,7 +932,7 @@ export default function LandingPage() {
               </div>
               <div className="lp-feat-card">
                 <div className="lp-feat-visual">
-                  <img src="/f3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src="/ff3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
                   <h3>Llama al garzón</h3>
