@@ -105,7 +105,7 @@ function ImpactHero({
   return (
     <section
       style={{
-        minHeight: "55vh", position: "relative", display: "flex",
+        minHeight: "65vh", position: "relative", display: "flex",
         alignItems: "flex-end", padding: "72px 20px 16px",
         margin: "0 14px", borderRadius: 28, overflow: "hidden",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)", cursor: "pointer",
