@@ -501,6 +501,9 @@ export default function LandingPage() {
           .lp-features { padding: 60px 0 68px; }
           .lp-feat-visual { height: 110px; }
           .lp-final-cta { padding: 72px 24px; }
+          .lp-feat-card h3 { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .lp-feat-card p { font-size: 13px; }
+          .lp-feat-body { padding: 14px 14px 18px; }
         }
 
         /* LOGOS STRIP */
@@ -918,7 +921,7 @@ export default function LandingPage() {
                 </div>
                 <div className="lp-feat-body">
                   <h3>Recomienda platos</h3>
-                  <p>La IA aprende las preferencias de cada cliente y reordena la carta para que encuentre lo que le va a encantar.</p>
+                  <p>La IA aprende las preferencias de cada cliente y reordena la carta a su gusto.</p>
                 </div>
               </div>
               <div className="lp-feat-card">
@@ -927,7 +930,7 @@ export default function LandingPage() {
                 </div>
                 <div className="lp-feat-body">
                   <h3>Habla su idioma</h3>
-                  <p>Tu carta se traduce automáticamente al idioma del cliente, sin que tengas que hacer nada.</p>
+                  <p>Tu carta se traduce sola al idioma del cliente.</p>
                 </div>
               </div>
               <div className="lp-feat-card">
@@ -936,7 +939,7 @@ export default function LandingPage() {
                 </div>
                 <div className="lp-feat-body">
                   <h3>Llama al garzón</h3>
-                  <p>Tus clientes pueden pedir asistencia desde la carta sin levantarse ni buscar a nadie.</p>
+                  <p>Piden asistencia desde la carta, sin levantarse.</p>
                 </div>
               </div>
               <div className="lp-feat-card">
@@ -945,7 +948,7 @@ export default function LandingPage() {
                 </div>
                 <div className="lp-feat-body">
                   <h3>También puedes imprimirla</h3>
-                  <p>Genera una versión imprimible lista para usar en mesas, con el mismo diseño de tu carta digital.</p>
+                  <p>Genera una versión imprimible lista para poner en mesas.</p>
                 </div>
               </div>
             </div>
