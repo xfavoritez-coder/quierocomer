@@ -84,14 +84,14 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           right: 12px;
           background: none;
           border: none;
-          color: rgba(255,255,255,0.25);
-          font-size: 18px;
+          color: rgba(255,255,255,0.5);
+          font-size: 22px;
           line-height: 1;
           cursor: pointer;
           padding: 4px;
           transition: color .15s;
         }
-        .opb-close:hover { color: rgba(255,255,255,0.6); }
+        .opb-close:hover { color: rgba(255,255,255,0.85); }
       `}</style>
 
       {/* Spacer en el flujo para empujar el contenido */}
