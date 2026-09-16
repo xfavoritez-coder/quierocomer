@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { prisma } from "@/lib/prisma";
 import VendedoresPage from "@/components/qr/vendedores/VendedoresPage";
 
