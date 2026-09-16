@@ -68,7 +68,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
           border-radius: 20px;
           color: #1A0900;
           font-family: "Space Grotesk", system-ui, sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 700;
           letter-spacing: -0.02em;
           cursor: pointer;
