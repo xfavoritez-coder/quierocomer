@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ResenaClient from "./ResenaClient";
 import PageHitTracker from "@/components/PageHitTracker";
@@ -24,11 +23,25 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
     select: { id: true, name: true, logoUrl: true, reviewMode: true, reviewReward: true, cartaColorMode: true, isDemo: true },
   });
 
-  if (!restaurant || restaurant.reviewMode !== "private") return notFound();
+  if (!restaurant || restaurant.reviewMode !== "private") {
+    return (
+      <main style={{
+        minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "#111", color: "#fff", padding: 24, textAlign: "center",
+        fontFamily: "system-ui, sans-serif",
+      }}>
+        <div>
+          <p style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 8px" }}>Página no disponible</p>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: 0 }}>Este local no tiene reseñas activadas.</p>
+          <a href={`/${slug}`} style={{ display: "inline-block", marginTop: 20, color: "#F4A623", fontSize: "0.85rem", textDecoration: "none" }}>← Volver al local</a>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <>
-      {(restaurant as any).isDemo && <OwnerPanelBar slug={slug} />}
+      {restaurant.isDemo && <OwnerPanelBar slug={slug} />}
       <PageHitTracker restaurantId={restaurant.id} page="resena" />
       <ResenaClient restaurant={{ ...restaurant, slug }} colorMode={(restaurant.cartaColorMode as string) || "DARK"} />
     </>
