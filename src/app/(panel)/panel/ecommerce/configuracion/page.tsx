@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
 import HorarioEditor from "@/components/ecommerce/HorarioEditor";
-import { buildPrintAgentInstaller } from "@/lib/ecommerce/printAgentScript";
+import { buildPrintAgentInstaller, buildPrintAgentUninstaller } from "@/lib/ecommerce/printAgentScript";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -105,6 +105,20 @@ export default function EcommerceConfiguracionPage() {
     const a = document.createElement("a");
     a.href = url;
     a.download = "instalar-agente-quierocomer.bat";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  // Descarga el desinstalador (detiene el agente, lo quita del inicio y borra la carpeta).
+  function downloadUninstaller() {
+    const script = buildPrintAgentUninstaller();
+    const blob = new Blob([script], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "desinstalar-agente-quierocomer.bat";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -433,6 +447,9 @@ export default function EcommerceConfiguracionPage() {
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
                         Guarda <code>instalar-agente-quierocomer.bat</code> en la PC Windows y <strong>haz doble clic</strong> (si aparece un aviso de Windows: <em>Más información → Ejecutar de todas formas</em>). El instalador crea el agente, lo deja corriendo <strong>junto al reloj</strong> (en la bandeja, junto a la hora) y hace que <strong>arranque solo con Windows</strong> — ya no queda ninguna ventana negra abierta. Cuando termine puedes cerrar la ventana del instalador. Para probar la impresora: clic derecho en el ícono de la bandeja → <em>Imprimir prueba local</em>. Para quitarlo o pausarlo: clic derecho → <em>Salir</em>. Regenera el token si crees que se filtró (invalida el anterior).
                       </p>
+                      <button type="button" onClick={downloadUninstaller} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
+                        Descargar desinstalador (quita el agente del equipo Windows)
+                      </button>
                     </>
                   ) : (
                     <button type="button" onClick={generatePrintToken} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>

@@ -42,6 +42,26 @@ export function buildPrintAgentInstaller(token: string, baseUrl: string): string
   return file.replace(/\r?\n/g, "\r\n");
 }
 
+// Desinstalador: detiene el agente, lo quita del arranque de Windows y borra la
+// carpeta. Solo comandos nativos de cmd (no necesita token ni compilar nada).
+export function buildPrintAgentUninstaller(): string {
+  return [
+    "@echo off",
+    "title Desinstalar agente de impresion - quierocomer",
+    "echo.",
+    "echo   Desinstalando el agente de impresion...",
+    "taskkill /IM AgenteImpresion.exe /F >nul 2>&1",
+    'reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v QuieroComerAgente /f >nul 2>&1',
+    'rmdir /s /q "%LOCALAPPDATA%\\QuieroComerAgente" >nul 2>&1',
+    "echo.",
+    "echo   Listo. El agente se detuvo, se quito del arranque de Windows y se borro.",
+    "echo   Ya puedes cerrar esta ventana.",
+    "echo.",
+    "pause",
+    "exit /b",
+  ].join("\r\n");
+}
+
 // ─── Instalador PowerShell (corre en el mismo scope del .bat: $f y $bat existen) ───
 const INSTALLER_PS = String.raw`$ErrorActionPreference = 'Stop'
 try {
