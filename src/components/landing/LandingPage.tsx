@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
@@ -189,8 +190,8 @@ export default function LandingPage() {
           height: 76px;
           display: flex;
           align-items: center;
-          border-bottom: 1px solid var(--line);
-          background: rgba(252,251,247,.94);
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+          background: rgba(13,13,13,0.92);
           backdrop-filter: blur(12px);
           position: sticky;
           top: 0;
@@ -205,87 +206,298 @@ export default function LandingPage() {
           font-weight: 850;
           letter-spacing: -.04em;
           text-decoration: none;
-          color: var(--ink);
+          color: #fff;
         }
 
         /* HERO */
         .lp-hero {
-          padding: 104px 0 72px;
-          text-align: center;
           position: relative;
           overflow: hidden;
+          height: 85vh;
+          min-height: 500px;
         }
-        .lp-hero > .lp-container { position: relative; z-index: 1; }
+        .lp-hero-bg {
+          position: absolute;
+          inset: 0;
+          background-image: url('/hero.png');
+          background-size: cover;
+        }
+        .lp-hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(10,10,10,0.58);
+        }
+        .lp-hero-vignette {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 20%, rgba(0,0,0,0.82) 100%);
+          pointer-events: none;
+        }
+        .lp-hero-content {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 40px 24px;
+        }
 
         .lp-eyebrow {
           margin-bottom: 18px;
-          color: #8A897F;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: .12em;
+          color: rgba(255,255,255,0.45);
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: .14em;
           text-transform: uppercase;
         }
 
         .lp-hero h1 {
-          max-width: 900px;
-          margin: 0 auto;
-          font-size: clamp(54px, 7vw, 96px);
-          line-height: .92;
-          letter-spacing: -.07em;
+          font-size: clamp(40px, 4.5vw, 64px);
+          line-height: 1.06;
+          letter-spacing: -.04em;
           font-weight: 850;
+          color: #fff;
+          margin: 0;
         }
 
         .lp-hero-sub {
-          max-width: 650px;
-          margin: 24px auto 0;
-          color: var(--muted);
-          font-size: 18px;
-          line-height: 1.55;
-          letter-spacing: -.01em;
+          margin: 22px auto 0;
+          color: rgba(255,255,255,0.55);
+          font-size: 19px;
+          line-height: 1.65;
+          max-width: 480px;
         }
 
         .lp-hero-cta {
-          margin-top: 34px;
+          margin-top: 36px;
           display: flex;
           justify-content: center;
         }
 
+        /* HERO DESKTOP */
+        @media (min-width: 860px) {
+          .lp-hero {
+            height: 84vh;
+            max-height: 820px;
+            background:
+              radial-gradient(ellipse 80% 70% at 50% 35%, rgba(244,166,35,0.32) 0%, rgba(244,166,35,0.08) 50%, transparent 75%),
+              radial-gradient(ellipse 50% 45% at 15% 85%, rgba(220,100,10,0.14) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 45% at 85% 85%, rgba(244,166,35,0.1) 0%, transparent 60%),
+              #080808;
+          }
+          .lp-hero-bg { display: none; }
+          .lp-hero-overlay { display: none; }
+          .lp-hero-content {
+            justify-content: flex-start;
+            padding-top: 72px;
+          }
+          .lp-hero-cta .lp-btn {
+            min-height: 76px !important;
+            padding: 0 64px !important;
+            font-size: 24px !important;
+          }
+          .lp-hero h1 {
+            font-size: clamp(48px, 5.5vw, 76px);
+            max-width: 760px;
+          }
+          .lp-hero-sub {
+            font-size: 20px;
+            max-width: 520px;
+          }
+        }
+
         .lp-btn {
           border: 0;
-          border-radius: 16px;
+          border-radius: 14px;
           background: var(--yellow);
           color: #fff;
-          width: 100%;
-          max-width: 560px;
-          min-height: 64px;
-          padding: 0 30px;
-          font-size: 18px;
+          min-height: 60px;
+          padding: 0 40px;
+          font-size: 19px;
           font-weight: 850;
           letter-spacing: -.02em;
           cursor: pointer;
-          box-shadow: 0 12px 34px rgba(245,158,27,.28);
+          box-shadow: 0 10px 30px rgba(245,158,27,.4);
           transition: .18s ease;
+          white-space: nowrap;
         }
 
         .lp-btn:hover {
           background: var(--yellow-hover);
           transform: translateY(-2px);
-          box-shadow: 0 16px 40px rgba(245,158,27,.38);
+          box-shadow: 0 16px 40px rgba(245,158,27,.5);
+        }
+
+        /* FEATURES SECTION */
+        /* FEATURES SECTION */
+        .lp-features {
+          background: #fff;
+          padding: 88px 0 96px;
+        }
+        .lp-features-head {
+          text-align: center;
+          margin-bottom: 52px;
+        }
+        .lp-features-head h2 {
+          font-family: "Space Grotesk", system-ui, sans-serif;
+          font-size: clamp(26px, 4vw, 40px);
+          font-weight: 700;
+          letter-spacing: -.03em;
+          color: #0D0D0D;
+          margin: 0 0 10px;
+        }
+        .lp-features-head p {
+          color: rgba(0,0,0,0.42);
+          font-size: 17px;
+          margin: 0;
+        }
+        .lp-features-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .lp-feat-card {
+          background: #fff;
+          border: 1px solid #EBEBEB;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+          transition: box-shadow .2s, transform .2s;
+        }
+        .lp-feat-card:hover {
+          box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+          transform: translateY(-3px);
+        }
+        .lp-feat-visual {
+          height: 148px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .lp-feat-body {
+          padding: 20px 22px 24px;
+        }
+        .lp-feat-card h3 {
+          font-family: "Space Grotesk", system-ui, sans-serif;
+          font-size: 16px;
+          font-weight: 700;
+          letter-spacing: -.02em;
+          color: #0D0D0D;
+          margin: 0 0 6px;
+        }
+        .lp-feat-card p {
+          font-size: 13.5px;
+          color: rgba(0,0,0,0.48);
+          line-height: 1.65;
+          margin: 0;
+        }
+
+        /* FINAL CTA */
+        .lp-final-cta {
+          background: #0A0A0A;
+          padding: 100px 24px 108px;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+        }
+        .lp-final-cta::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -55%);
+          width: 700px;
+          height: 480px;
+          background: radial-gradient(ellipse at center, rgba(244,166,35,0.22) 0%, rgba(244,166,35,0.06) 45%, transparent 70%);
+          pointer-events: none;
+        }
+        .lp-final-cta-icon {
+          position: relative;
+          z-index: 1;
+          width: 64px;
+          height: 64px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.13);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 28px;
+          color: #F4A623;
+        }
+        .lp-final-cta h2 {
+          position: relative;
+          z-index: 1;
+          font-family: "Space Grotesk", system-ui, sans-serif;
+          font-size: clamp(38px, 5.5vw, 50px);
+          font-weight: 800;
+          letter-spacing: -.04em;
+          color: #fff;
+          margin: 0 0 16px;
+          line-height: 1.1;
+        }
+        .lp-final-cta h2 span {
+          color: #F4A623;
+        }
+        .lp-final-cta-sub {
+          position: relative;
+          z-index: 1;
+          font-size: 16px;
+          color: rgba(255,255,255,0.42);
+          max-width: 400px;
+          margin: 0 auto 36px;
+          line-height: 1.6;
+        }
+        .lp-final-cta .lp-btn {
+          position: relative;
+          z-index: 1;
+          display: inline-flex;
+          align-items: center;
+          width: auto;
+          min-width: 220px;
+        }
+
+        @media (max-width: 580px) {
+          .lp-features { padding: 60px 0 68px; }
+          .lp-feat-visual { height: 110px; }
+          .lp-final-cta { padding: 72px 24px; }
+        }
+
+        /* LOGOS STRIP */
+        .lp-clients {
+          padding: 24px 0;
+          background: var(--paper);
+          border-bottom: 1px solid var(--line);
+        }
+        .lp-clients-label {
+          text-align: center;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: .12em;
+          text-transform: uppercase;
+          color: #B0AEA6;
+          margin-bottom: 16px;
         }
 
         .lp-nav-ingresar {
+          display: inline-flex;
+          align-items: center;
           font-size: 14px;
           font-weight: 600;
-          color: var(--ink);
+          color: rgba(255,255,255,0.8);
           text-decoration: none;
           padding: 8px 18px;
-          border: 1.5px solid var(--line);
+          border: 1.5px solid rgba(255,255,255,0.18);
           border-radius: 10px;
           background: transparent;
           transition: border-color .15s, background .15s;
           white-space: nowrap;
         }
-        .lp-nav-ingresar:hover { border-color: #bbb; background: #f5f5f5; }
+        .lp-nav-ingresar:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.07); }
 
         /* VIDEO */
         .lp-video-section {
@@ -438,7 +650,7 @@ export default function LandingPage() {
         .lp-scratch-grid { display: grid; gap: 12px; text-align: left; margin-bottom: 14px; }
 
         /* SHOWCASE */
-        .lp-showcase { padding: 96px 0 100px; }
+        .lp-showcase { padding: 80px 0 100px; }
         .lp-showcase-eyebrow {
           font-size: 14px;
           font-weight: 800;
@@ -463,7 +675,7 @@ export default function LandingPage() {
           display: flex;
           gap: 16px;
           width: max-content;
-          animation: lpScroll 36s linear infinite;
+          animation: lpScroll 30s linear infinite !important;
         }
         .lp-logos-track:hover { animation-play-state: paused; }
         @keyframes lpScroll {
@@ -471,9 +683,9 @@ export default function LandingPage() {
           to { transform: translateX(-50%); }
         }
         .lp-logo-card {
-          width: 130px;
+          width: 110px;
           flex-shrink: 0;
-          min-height: 165px;
+          min-height: 100px;
           border: 1px solid var(--line);
           border-radius: 20px;
           background: rgba(255,255,255,.6);
@@ -481,14 +693,14 @@ export default function LandingPage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 14px;
-          padding: 18px 12px;
+          gap: 12px;
+          padding: 16px 10px;
           text-decoration: none;
           transition: .18s ease;
         }
         .lp-logo-card:hover { border-color: #bbb; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
-        .lp-logo-card img { width: 66px; height: 66px; border-radius: 18px; object-fit: cover; }
-        .lp-logo-card span { font-size: 14px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; }
+        .lp-logo-card img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; }
+        .lp-logo-card span { font-size: 12px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; }
 
         .lp-campo {
           width: 100%;
@@ -550,14 +762,15 @@ export default function LandingPage() {
           .lp-container { width: min(calc(100% - 48px), var(--max)); }
           .lp-header { height: 64px; }
           .lp-logo { font-size: 20px; }
-          .lp-logo-mark { width: 30px; height: 30px; }
-          .lp-hero { padding: 72px 0 48px; }
-          .lp-hero h1 { font-size: clamp(48px, 15vw, 68px); }
-          .lp-hero-sub { font-size: 16px; }
-          .lp-btn { width: 100%; min-width: 0; min-height: 60px; }
+          .lp-hero { max-height: 85vh; }
+          .lp-hero-overlay { background: rgba(10,10,10,0.58); }
+          .lp-hero h1 { font-size: clamp(32px, 8vw, 44px); }
+          .lp-hero-sub { font-size: 17px; }
+          .lp-btn { min-height: 58px; font-size: 18px; width: 100%; }
+          .lp-hero-cta { display: block; }
           .lp-video-section { padding: 44px 0 60px; }
           .lp-video-card { border-radius: 20px; aspect-ratio: 4/3; }
-          .lp-showcase { padding: 72px 0 80px; }
+          .lp-showcase { padding: 60px 0 80px; }
           .lp-video-center { padding: 22px; }
           .lp-play { width: 62px; height: 62px; }
           .lp-modal { padding: 76px 22px 26px; }
@@ -566,8 +779,7 @@ export default function LandingPage() {
 
         @media (max-width: 420px) {
           .lp-container { width: min(calc(100% - 40px), var(--max)); }
-          .lp-hero { padding-top: 58px; }
-          .lp-hero h1 { font-size: 48px; }
+          .lp-hero h1 { font-size: 30px; }
           .lp-eyebrow { font-size: 10px; }
         }
 
@@ -586,29 +798,61 @@ export default function LandingPage() {
             <img src="/logo.png" alt="" style={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }} />
             <span>QuieroComer</span>
           </a>
-          <a href="/panel" className="lp-nav-ingresar">Ingresar</a>
+          <a href="/panel" className="lp-nav-ingresar"><User size={15} strokeWidth={2.2} style={{ marginRight: 6 }} />Ingresar</a>
         </div>
       </header>
 
-      <main style={{ textAlign: "center" }}>
+      <main>
 
         {/* HERO */}
         <section className="lp-hero">
-          <div className="lp-container">
-            <h1 style={{ maxWidth: 900, margin: "0 auto", fontSize: "clamp(54px, 7vw, 96px)", lineHeight: .92, letterSpacing: "-.07em", fontWeight: 850 }}>
-              Tu restaurante puede vender más.
-            </h1>
-
+          <div className="lp-hero-bg" style={{ backgroundPosition: "center 55%" }} />
+          <div className="lp-hero-overlay" />
+          <div className="lp-hero-vignette" />
+          <div className="lp-hero-content">
+<h1>Convierte tu carta en una herramienta que vende más.</h1>
             <p className="lp-hero-sub">
-              Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.
+              Transforma tu carta en una experiencia digital que vende más y mejora la experiencia de tus clientes.
             </p>
-
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
-                Subir mi carta
+                Subir mi carta →
               </button>
             </div>
           </div>
+        </section>
+
+        {/* CLIENTES — logos en escala de grises rotando */}
+        <section className="lp-clients">
+          <p className="lp-clients-label">Restaurantes que ya usan QuieroComer</p>
+          {(() => {
+            const items = [
+              { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
+              { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
+              { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
+              { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
+              { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
+              { name: "Guffsushi Nikkei", slug: "guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
+              { name: "La Oveja Negra", slug: "la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
+              { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
+              { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
+              { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
+            ];
+            const doubled = [...items, ...items];
+            return (
+              <div className="lp-logos-track-wrap">
+                <div className="lp-logos-track">
+                  {doubled.map((r, i) => (
+                    <a key={i} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={r.logo} alt={r.name} loading="lazy" />
+                      <span>{r.name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </section>
 
         {/* VIDEO (placeholder) */}
@@ -630,39 +874,59 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SHOWCASE */}
-        <section className="lp-showcase">
+        {/* FEATURES */}
+        <section className="lp-features">
           <div className="lp-container">
-            <p className="lp-showcase-eyebrow">Restaurantes que ya usan QuieroComer</p>
-            {(() => {
-              const items = [
-                { name: "Hand Roll", slug: "hand-roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png" },
-                { name: "Horus Vegan", slug: "horusvegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png" },
-                { name: "Juana la Brava", slug: "juana-la-brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg" },
-                { name: "Alleria Pizza", slug: "alleria-pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-                { name: "El Menú de la Esquina", slug: "el-menu-de-la-esquina", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1787507811438-ffgc0wfstb.webp" },
-                { name: "Guffsushi Nikkei", slug: "guffsushi", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781291439973-bzmbjnjzwo.webp" },
-                { name: "La Oveja Negra", slug: "la-oveja-negra-restaurante", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1781573105032-to2loqezh47.webp" },
-                { name: "Alleria Delivery", slug: "alleria-delivery", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png" },
-                { name: "Entre Pisco Y Pebre", slug: "entre-pisco-y-pebre", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1785560529971-6n72tdb1cf7.webp" },
-                { name: "Avenida Del Sabor", slug: "avenida-del-sabor", logo: "https://fudo-apps-storage.s3.sa-east-1.amazonaws.com/production/368718/images/4a39edf4-2e03-44fd-86c0-195f9762caec" },
-                { name: "Haruna", slug: "haruna", logo: "https://bjpqzmzciinnrwpofyrf.supabase.co/storage/v1/object/public/images/270e2313-2be3-4790-85a8-876e64f7bcd1/logos/1778689321363-C109DBC8-DAE3-4CF4-9C5A-E5577B6AAED5--1-.png" },
-              ];
-              const doubled = [...items, ...items];
-              return (
-                <div className="lp-logos-track-wrap">
-                  <div className="lp-logos-track">
-                    {doubled.map((r, i) => (
-                      <a key={i} href={`https://quierocomer.com/${r.slug}`} target="_blank" rel="noopener noreferrer" className="lp-logo-card">
-                        <img src={r.logo} alt={r.name} loading="lazy" />
-                        <span>{r.name}</span>
-                      </a>
-                    ))}
-                  </div>
+            <div className="lp-features-head">
+              <h2>Mucho más que una carta QR</h2>
+              <p>Una carta que realmente ayuda a tus clientes a elegir:</p>
+            </div>
+            <div className="lp-features-grid">
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/f1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
-              );
-            })()}
+                <div className="lp-feat-body">
+                  <h3>Recomienda platos</h3>
+                  <p>La IA aprende las preferencias de cada cliente y reordena la carta para que encuentre lo que le va a encantar.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/f2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Habla su idioma</h3>
+                  <p>Tu carta se traduce automáticamente al idioma del cliente, sin que tengas que hacer nada.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/f3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Llama al garzón</h3>
+                  <p>Tus clientes pueden pedir asistencia desde la carta sin levantarse ni buscar a nadie.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/f4.png" alt="También puedes imprimirla" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>También puedes imprimirla</h3>
+                  <p>Genera una versión imprimible lista para usar en mesas, con el mismo diseño de tu carta digital.</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="lp-final-cta">
+          <h2>Tu carta ya existe.<br /><span>Haz que haga más.</span></h2>
+          <p className="lp-final-cta-sub">Sube la que ya tienes y conviértela en una experiencia digital más útil, más clara y lista para vender más.</p>
+          <button className="lp-btn" onClick={openModal}>Subir mi carta →</button>
         </section>
 
       </main>

@@ -2,7 +2,7 @@
 
 export default function LandingFooter() {
   return (
-    <footer style={{ background: "#111111", color: "rgba(255,255,255,.5)", fontSize: 13, fontFamily: "Inter, ui-sans-serif, sans-serif" }}>
+    <footer style={{ background: "#161616", borderTop: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,.5)", fontSize: 13, fontFamily: "Inter, ui-sans-serif, sans-serif" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "52px clamp(16px,4vw,48px) 40px" }}>
 
         {/* Brand mark */}
@@ -20,8 +20,8 @@ export default function LandingFooter() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
           <nav style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
             {[
-              { label: "Productos", href: "/#productos" },
-              { label: "Precios", href: "/#precios" },
+              { label: "Inicio", href: "/" },
+              { label: "Precios", href: "/precios" },
               { label: "Contacto", href: "https://wa.me/56999946208?text=Hola%20tengo%20una%20consulta%20sobre%20QuieroComer", external: true },
             ].map(({ label, href, external }) => (
               <a
