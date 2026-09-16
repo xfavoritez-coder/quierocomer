@@ -53,7 +53,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
         }
         .opb-text {
           font-family: "Inter", system-ui, sans-serif;
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 400;
           color: rgba(255,255,255,0.68);
           white-space: nowrap;
