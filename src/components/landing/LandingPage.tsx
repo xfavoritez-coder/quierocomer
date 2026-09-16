@@ -263,7 +263,7 @@ export default function LandingPage() {
         }
 
         .lp-hero h1 {
-          font-size: clamp(42px, 10vw, 56px);
+          font-size: clamp(48px, 11vw, 62px);
           line-height: 1.06;
           letter-spacing: -.04em;
           font-weight: 850;
@@ -711,7 +711,7 @@ export default function LandingPage() {
           transition: .18s ease;
         }
         .lp-logo-card:hover { border-color: #bbb; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
-        .lp-logo-card img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; }
+        .lp-logo-card img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
         .lp-logo-card span { font-size: 12px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; }
 
         .lp-campo {
@@ -890,7 +890,7 @@ export default function LandingPage() {
             <div className="lp-features-grid">
               <div className="lp-feat-card">
                 <div className="lp-feat-visual">
-                  <img src="/f1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src="/f1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
                   <h3>Recomienda platos</h3>
