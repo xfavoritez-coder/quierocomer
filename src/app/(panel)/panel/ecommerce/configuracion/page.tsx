@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
 import HorarioEditor from "@/components/ecommerce/HorarioEditor";
-import { buildPrintAgentPs1 } from "@/lib/ecommerce/printAgentScript";
+import { buildPrintAgentBat } from "@/lib/ecommerce/printAgentScript";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -99,12 +99,12 @@ export default function EcommerceConfiguracionPage() {
   function downloadAgent() {
     if (!cfg.printToken) return;
     const base = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com";
-    const script = buildPrintAgentPs1(cfg.printToken, base);
-    const blob = new Blob([script], { type: "text/plain;charset=utf-8" });
+    const script = buildPrintAgentBat(cfg.printToken, base);
+    const blob = new Blob([script], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "agente-impresion.ps1";
+    a.download = "agente-impresion.bat";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -416,7 +416,7 @@ export default function EcommerceConfiguracionPage() {
                         <button type="button" onClick={generatePrintToken} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Regenerar token</button>
                       </div>
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
-                        Guarda <code>agente-impresion.ps1</code> en la PC, clic derecho → <strong>Ejecutar con PowerShell</strong> (o crea un acceso directo con <code>powershell -ExecutionPolicy Bypass -File ruta\agente-impresion.ps1</code> y ponlo en la carpeta <strong>Inicio</strong>). Déjalo corriendo. Regenera el token si crees que se filtró (invalida el anterior).
+                        Guarda <code>agente-impresion.bat</code> en la PC Windows y <strong>haz doble clic</strong> para ejecutarlo (si aparece un aviso azul de Windows: <em>Más información → Ejecutar de todas formas</em>). Se abre una ventana negra que debes <strong>dejar abierta</strong>. Para que arranque solo al prender el equipo, copia ese <code>.bat</code> a la carpeta de Inicio: <code>Win+R</code> → <code>shell:startup</code> → pega el archivo. Regenera el token si crees que se filtró (invalida el anterior).
                       </p>
                     </>
                   ) : (

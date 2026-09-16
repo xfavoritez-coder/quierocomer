@@ -4,6 +4,26 @@
 // winspool (P/Invoke). El corte del papel va incluido en el ESC/POS.
 // (El script NO contiene backticks para poder vivir dentro de String.raw`...`.)
 
+// Envuelve el script PowerShell en un .bat autoejecutable: se corre con doble clic.
+// El .bat lee su propio archivo, quita todo hasta el marcador #AGENTE y ejecuta el
+// resto (el PowerShell) con la política de ejecución en Bypass.
+export function buildPrintAgentBat(token: string, baseUrl: string): string {
+  const ps = buildPrintAgentPs1(token, baseUrl);
+  const lines = [
+    "@echo off",
+    "title Agente de impresion - quierocomer",
+    "echo Iniciando agente de impresion... (deja esta ventana abierta)",
+    `powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ([IO.File]::ReadAllText('%~f0') -replace ('(?s)^.*?' + [char]35 + 'AGENTE'), '')"`,
+    "echo.",
+    "echo El agente se detuvo. Revisa el mensaje de arriba y vuelve a ejecutarlo.",
+    "pause",
+    "exit /b",
+    "#AGENTE",
+    ps,
+  ];
+  return lines.join("\r\n");
+}
+
 export function buildPrintAgentPs1(token: string, baseUrl: string): string {
   return String.raw`# ============================================================
 #  Agente de impresion de comandas - quierocomer (ESC/POS)
