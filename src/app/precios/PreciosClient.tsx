@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { Check, User } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
+import SubirCartaModal from "@/components/landing/SubirCartaModal";
 
 const FREE_FEATURES = [
   "Carta QR digital",
@@ -28,6 +30,10 @@ const PREMIUM_FEATURES = [
 ];
 
 export default function PreciosClient() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const openModal = () => { setModalOpen(true); document.body.style.overflow = "hidden"; };
+  const closeModal = () => { setModalOpen(false); document.body.style.overflow = ""; };
+
   return (
     <>
       <style>{`
@@ -366,7 +372,7 @@ export default function PreciosClient() {
                     </li>
                   ))}
                 </ul>
-                <a href="/subircarta" className="pr-btn pr-btn-free">Comenzar gratis</a>
+                <button onClick={openModal} className="pr-btn pr-btn-free">Comenzar gratis</button>
               </div>
             </div>
 
@@ -393,7 +399,7 @@ export default function PreciosClient() {
                     </li>
                   ))}
                 </ul>
-                <a href="/subircarta" className="pr-btn pr-btn-premium">Probar gratis 7 días →</a>
+                <button onClick={openModal} className="pr-btn pr-btn-premium">Probar gratis →</button>
               </div>
             </div>
 
@@ -403,6 +409,8 @@ export default function PreciosClient() {
 
         <LandingFooter />
       </div>
+
+      <SubirCartaModal open={modalOpen} onClose={closeModal} />
     </>
   );
 }
