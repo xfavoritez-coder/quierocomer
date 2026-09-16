@@ -956,7 +956,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
                 {restaurant.logoUrl ? (
                   <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover" }} />
                 ) : (
-                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: `2px solid ${accent}`, display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: accent, flexShrink: 0 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: accent, display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: isDark ? "#0e0e0e" : "#fff", flexShrink: 0 }}>
                     {restaurant.name.charAt(0).toUpperCase()}
                   </div>
                 )}
