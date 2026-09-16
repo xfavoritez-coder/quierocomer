@@ -367,7 +367,7 @@ export default function LandingPage() {
         }
         .lp-features-head h2 {
           font-family: "Space Grotesk", system-ui, sans-serif;
-          font-size: clamp(26px, 4vw, 40px);
+          font-size: 28px;
           font-weight: 700;
           letter-spacing: -.03em;
           color: #0D0D0D;
@@ -536,7 +536,7 @@ export default function LandingPage() {
         }
         .lp-video-head h2 {
           margin: 0;
-          font-size: 25px;
+          font-size: 28px;
           font-weight: 800;
           letter-spacing: -.04em;
           line-height: 1.15;
