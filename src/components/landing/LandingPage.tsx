@@ -501,7 +501,7 @@ export default function LandingPage() {
           .lp-features { padding: 60px 0 68px; }
           .lp-feat-visual { height: 110px; }
           .lp-final-cta { padding: 72px 24px; }
-          .lp-feat-card h3 { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .lp-feat-card h3 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .lp-feat-card p { font-size: 13px; }
           .lp-feat-body { padding: 14px 14px 18px; }
         }
