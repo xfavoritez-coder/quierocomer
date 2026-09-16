@@ -746,8 +746,8 @@ export default function LandingPage() {
           })()}
         </section>
 
-        {/* VIDEO (placeholder) */}
-        <section className="lp-video-section">
+        {/* VIDEO (placeholder) — oculto hasta tener el video */}
+        <section className="lp-video-section" style={{ display: 'none' }}>
           <div className="lp-container">
             <div className="lp-video-head">
               <h2>Mira cómo funciona</h2>
