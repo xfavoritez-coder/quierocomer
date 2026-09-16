@@ -29,8 +29,8 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
     <>
       <style>{`
         .opb {
-          position: fixed;
-          top: 0; left: 0; right: 0;
+          position: sticky;
+          top: 0;
           z-index: 99999;
           background: linear-gradient(90deg, #1A0E00 0%, #0F0A04 50%, #1A0E00 100%);
           border-bottom: 1px solid rgba(244,166,35,0.25);

@@ -321,6 +321,7 @@ export default async function CartaPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {(restaurant as any).isDemo && !isShowcase && <OwnerPanelBar slug={slug} />}
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       <script dangerouslySetInnerHTML={{ __html: `
         try {
@@ -355,16 +356,11 @@ export default async function CartaPage({
           }
         `}} />
       )}
-      {(restaurant as any).isDemo && !isShowcase && (
+      {(restaurant as any).isDemo && !isShowcase && (restaurant as any).defaultView !== "impact" && (
         <>
-          <OwnerPanelBar slug={slug} />
-          {(restaurant as any).defaultView !== "impact" && (
-            <>
-              <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
-              <div style={{ height: 0 }} />
-              <DemoViewToast restaurantId={restaurant.id} restaurantSlug={slug} defaultView={(restaurant as any).defaultView} />
-            </>
-          )}
+          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} restaurantId={restaurant.id} context="carta" leadName={leadData?.ownerName || undefined} leadEmail={leadData?.email || undefined} leadWhatsapp={leadData?.whatsapp || undefined} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} enabledLangs={(restaurant as any).enabledLangs} />
+          <div style={{ height: 0 }} />
+          <DemoViewToast restaurantId={restaurant.id} restaurantSlug={slug} defaultView={(restaurant as any).defaultView} />
         </>
       )}
       {isShowcase && !isEmbed && (

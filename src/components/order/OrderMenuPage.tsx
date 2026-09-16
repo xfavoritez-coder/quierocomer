@@ -561,7 +561,7 @@ function ClosedBanner({ businessHours, inline, isDark, accent, innerRef }: { bus
         ref={innerRef}
         onClick={() => setShowModal(true)}
         style={{
-          position: inline ? "relative" : "sticky", top: inline ? 0 : "var(--opb-h, 0px)", zIndex: inline ? undefined : 100,
+          position: inline ? "relative" : "sticky", top: 0, zIndex: inline ? undefined : 100,
           background: bg, color: "#fff",
           padding: "10px 16px",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -1129,7 +1129,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       )}
 
       {/* Sticky nav: categorías (con banner activo lleva carrito + buscar, como el diseño original) */}
-      <div ref={stickyNavRef} style={{ position: "sticky", top: `calc(var(--opb-h, 0px) + ${closedBannerH}px)`, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
+      <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
         {showFeatured && searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text2)" style={{ flexShrink: 0 }} />

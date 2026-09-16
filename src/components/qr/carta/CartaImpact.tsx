@@ -1220,7 +1220,7 @@ export default function CartaImpact({
       }} />
 
       {/* Wrapper: nav + banner — fixed al tope */}
-      <div ref={impactHeaderRef} style={{ position: "fixed", top: "var(--opb-h, 0px)", left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+      <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
 
       {/* Nav: logo + botones */}
       <header style={{
