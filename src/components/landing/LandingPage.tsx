@@ -821,7 +821,7 @@ export default function LandingPage() {
           <div className="lp-hero-overlay" />
           <div className="lp-hero-vignette" />
           <div className="lp-hero-content">
-<h1>{abVariant === "B" ? "Tu restaurante puede vender más." : "Convierte tu carta en una herramienta que vende más."}</h1>
+<h1>Tu restaurante puede vender más.</h1>
             <p className="lp-hero-sub">
               Transforma tu carta en una experiencia digital que vende más y mejora la experiencia de tus clientes.
             </p>
