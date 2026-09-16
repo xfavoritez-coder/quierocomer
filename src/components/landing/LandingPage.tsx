@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 
@@ -46,20 +46,6 @@ async function compressImage(file: File): Promise<File> {
 
 export default function LandingPage() {
   // Modal state
-  // ── A/B test hero title ──────────────────────────────────────────────────────
-  const [abVariant, setAbVariant] = useState<"A" | "B" | null>(null);
-  useEffect(() => {
-    const key = "lp_hero_ab_v1";
-    let v = localStorage.getItem(key) as "A" | "B" | null;
-    if (v !== "A" && v !== "B") {
-      v = Math.random() < 0.5 ? "A" : "B";
-      localStorage.setItem(key, v);
-    }
-    setAbVariant(v);
-    (window as any).fbq?.("trackCustom", "HeroABImpression", { variant: v });
-    fetch("/api/ab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variant: v, eventType: "impression" }) }).catch(() => {});
-  }, []);
-
   const [ucOpen, setUcOpen] = useState(false);
   const [ucStep, setUcStep] = useState<"options" | "link" | "photo" | "scratch">("options");
   const [ucLink, setUcLink] = useState("");
@@ -81,8 +67,6 @@ export default function LandingPage() {
     setUcScratchName(""); setUcScratchOwner(""); setUcScratchEmail(""); setUcScratchWA("");
   };
   const openModal = () => {
-    (window as any).fbq?.("trackCustom", "HeroABClick", { variant: abVariant ?? "unknown" });
-    fetch("/api/ab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variant: abVariant ?? "unknown", eventType: "click" }) }).catch(() => {});
     setUcOpen(true); resetModal(); document.body.style.overflow = "hidden";
   };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
@@ -141,7 +125,6 @@ export default function LandingPage() {
         });
         const data = await res.json();
         if (!res.ok) { setUcError(data.error || "Error al procesar tu carta."); setUcLoading(false); return; }
-        fetch("/api/ab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variant: abVariant ?? "unknown", eventType: "lead" }) }).catch(() => {});
         window.location.href = `/subircarta/paso2?id=${data.id}`;
       } else if (ucStep === "photo") {
         if (ucFiles.length === 0) { setUcError("Selecciona al menos una foto."); setUcLoading(false); return; }
@@ -275,6 +258,7 @@ export default function LandingPage() {
           font-weight: 850;
           color: #fff;
           margin: 0;
+          max-width: 420px;
         }
 
         .lp-hero-sub {
@@ -823,7 +807,7 @@ export default function LandingPage() {
           <div className="lp-hero-content">
 <h1>Tu restaurante puede vender más.</h1>
             <p className="lp-hero-sub">
-              Transforma tu carta en una experiencia digital que vende más y mejora la experiencia de tus clientes.
+              Una carta digital que atrae, vende<br />y fideliza a tus clientes.
             </p>
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
