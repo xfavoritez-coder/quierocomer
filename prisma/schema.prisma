@@ -2746,3 +2746,15 @@ model EcommerceSurveyResponse {
 
   @@index([restaurantId, createdAt])
 }
+
+
+/// Eventos del experimento A/B del hero de la landing.
+model AbEvent {
+  id        String   @id @default(cuid())
+  variant   String   // "A" | "B"
+  eventType String   // "impression" | "click" | "lead"
+  sessionId String?  // fingerprint de sesión (opcional)
+  createdAt DateTime @default(now())
+
+  @@index([variant, eventType, createdAt])
+}
