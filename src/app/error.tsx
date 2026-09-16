@@ -7,11 +7,11 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
       alignItems: 'center', justifyContent: 'center',
       background: '#f5f4f1', padding: '24px', textAlign: 'center',
     }}>
-      <p style={{ fontSize: 18, fontWeight: 600, margin: '0 0 8px', color: '#111' }}>
-        Algo salió mal
+      <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 10px', color: '#111', letterSpacing: '-0.02em' }}>
+        Volvemos en un momento
       </p>
-      <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.5)', margin: '0 0 24px' }}>
-        No pudimos cargar el feed. Intenta de nuevo.
+      <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.45)', margin: '0 0 28px', lineHeight: 1.6, maxWidth: 280 }}>
+        Estamos con alta demanda justo ahora.<br />Recarga en unos segundos.
       </p>
       <button
         onClick={() => reset()}
@@ -20,8 +20,14 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer',
         }}
       >
-        Volver a intentar
+        Recargar
       </button>
+      <a
+        href="https://quierocomer.com"
+        style={{ marginTop: 40, fontSize: 12, color: 'rgba(0,0,0,0.25)', textDecoration: 'none', letterSpacing: '0.02em' }}
+      >
+        QuieroComer.cl
+      </a>
     </div>
   )
 }
