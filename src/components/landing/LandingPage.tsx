@@ -469,7 +469,7 @@ export default function LandingPage() {
           position: relative;
           z-index: 1;
           font-family: "Space Grotesk", system-ui, sans-serif;
-          font-size: clamp(38px, 5.5vw, 50px);
+          font-size: clamp(40px, 5.5vw, 50px);
           font-weight: 800;
           letter-spacing: -.04em;
           color: #fff;
@@ -482,7 +482,7 @@ export default function LandingPage() {
         .lp-final-cta-sub {
           position: relative;
           z-index: 1;
-          font-size: 16px;
+          font-size: 18px;
           color: rgba(255,255,255,0.42);
           max-width: 400px;
           margin: 0 auto 36px;
@@ -501,8 +501,8 @@ export default function LandingPage() {
           .lp-features { padding: 60px 0 68px; }
           .lp-feat-visual { height: 110px; }
           .lp-final-cta { padding: 72px 24px; }
-          .lp-feat-card h3 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .lp-feat-card p { font-size: 13px; }
+          .lp-feat-card h3 { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .lp-feat-card p { font-size: 15px; }
           .lp-feat-body { padding: 14px 14px 18px; }
         }
 
@@ -739,7 +739,7 @@ export default function LandingPage() {
         }
         .lp-logo-card:hover { border-color: #bbb; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
         .lp-logo-card img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
-        .lp-logo-card span { font-size: 12px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; }
+        .lp-logo-card span { font-size: 12px; font-weight: 500; color: #76736D; text-align: center; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; }
 
         .lp-campo {
           width: 100%;
