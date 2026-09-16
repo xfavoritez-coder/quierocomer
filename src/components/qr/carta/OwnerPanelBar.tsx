@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const LS_KEY = (slug: string) => `opb_entered_${slug}`;
-const BAR_H = 52;
+const BAR_H = 48;
 
 export default function OwnerPanelBar({ slug }: { slug: string }) {
   const [visible, setVisible] = useState(false);
