@@ -948,7 +948,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
         <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: isDark ? 0.5 : 0.35, background: `radial-gradient(ellipse at 50% 8%, color-mix(in srgb, ${accent} 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, ${accent} 10%, transparent), transparent 28%)`, filter: "blur(10px)" }} />
 
         {/* Fixed glass header */}
-        <div ref={impactHeaderRef} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
+        <div ref={impactHeaderRef} style={{ position: "fixed", top: "var(--opb-h, 0px)", left: 0, right: 0, zIndex: 40, background: isDark ? "rgba(3,3,3,0.32)" : "rgba(250,250,248,0.72)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
           {isClosed && <ClosedBanner businessHours={businessHours} inline isDark={isDark} accent={accent} />}
           <header style={{ padding: "calc(10px + env(safe-area-inset-top)) 16px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10 }}>
@@ -1129,7 +1129,7 @@ export default function OrderMenuPage({ restaurant, orderingConfig, popularDishI
       )}
 
       {/* Sticky nav: categorías (con banner activo lleva carrito + buscar, como el diseño original) */}
-      <div ref={stickyNavRef} style={{ position: "sticky", top: closedBannerH, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
+      <div ref={stickyNavRef} style={{ position: "sticky", top: `calc(var(--opb-h, 0px) + ${closedBannerH}px)`, zIndex: 20, background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-border)", transform: "translateZ(0)" }}>
         {showFeatured && searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
             <Search size={16} color="var(--carta-text2)" style={{ flexShrink: 0 }} />

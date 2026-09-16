@@ -35,7 +35,7 @@ function LogoOrInitial({ logo, name, accent }: { logo: string | null; name: stri
     return <img src={logo} alt="" style={{ ...sharedStyle, objectFit: "cover" }} onError={() => setFailed(true)} />;
   }
   return (
-    <div style={{ ...sharedStyle, background: `${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: accent }}>
+    <div style={{ ...sharedStyle, background: "rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: accent }}>
       {name.charAt(0).toUpperCase()}
     </div>
   );

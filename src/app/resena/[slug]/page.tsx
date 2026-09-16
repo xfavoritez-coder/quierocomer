@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ResenaClient from "./ResenaClient";
 import PageHitTracker from "@/components/PageHitTracker";
+import OwnerPanelBar from "@/components/qr/carta/OwnerPanelBar";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +21,14 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug },
-    select: { id: true, name: true, logoUrl: true, reviewMode: true, reviewReward: true, cartaColorMode: true },
+    select: { id: true, name: true, logoUrl: true, reviewMode: true, reviewReward: true, cartaColorMode: true, isDemo: true },
   });
 
   if (!restaurant || restaurant.reviewMode !== "private") return notFound();
 
   return (
     <>
+      {(restaurant as any).isDemo && <OwnerPanelBar slug={slug} />}
       <PageHitTracker restaurantId={restaurant.id} page="resena" />
       <ResenaClient restaurant={{ ...restaurant, slug }} colorMode={(restaurant.cartaColorMode as string) || "DARK"} />
     </>

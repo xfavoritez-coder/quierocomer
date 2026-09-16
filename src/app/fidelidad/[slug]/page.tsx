@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseRewards } from "@/lib/loyalty";
 import EnrollClient from "./EnrollClient";
 import PageHitTracker from "@/components/PageHitTracker";
+import OwnerPanelBar from "@/components/qr/carta/OwnerPanelBar";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -26,7 +27,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug },
-    select: { id: true, name: true, logoUrl: true, cartaAccentColor: true, cartaColorMode: true, profileType: true },
+    select: { id: true, name: true, logoUrl: true, cartaAccentColor: true, cartaColorMode: true, profileType: true, isDemo: true },
   });
 
   const program = restaurant
@@ -74,6 +75,7 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
 
   return (
     <>
+      {(restaurant as any).isDemo && <OwnerPanelBar slug={slug} />}
       <PageHitTracker restaurantId={restaurant.id} page="fidelidad" />
       <EnrollClient
         slug={slug}
