@@ -215,21 +215,32 @@ export default function LandingPage() {
         .lp-hero {
           position: relative;
           overflow: hidden;
-          background:
-            radial-gradient(ellipse 90% 65% at 50% 30%, rgba(244,166,35,0.3) 0%, rgba(244,166,35,0.07) 55%, transparent 75%),
-            radial-gradient(ellipse 55% 45% at 10% 90%, rgba(220,100,10,0.13) 0%, transparent 60%),
-            radial-gradient(ellipse 55% 45% at 90% 90%, rgba(244,166,35,0.09) 0%, transparent 60%),
-            #080808;
+          background: #080808;
           padding: 80px 24px 88px;
           display: flex;
           align-items: center;
           justify-content: center;
           min-height: unset;
-          padding: 72px 24px 80px;
+          padding: 100px 24px 108px;
         }
-        .lp-hero-bg { display: none; }
-        .lp-hero-overlay { display: none; }
-        .lp-hero-vignette { display: none; }
+        .lp-hero-bg {
+          position: absolute;
+          inset: 0;
+          background-image: url('/hero.png');
+          background-size: cover;
+          background-position: center 55%;
+        }
+        .lp-hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(8,8,8,0.72);
+        }
+        .lp-hero-vignette {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 20%, rgba(0,0,0,0.82) 100%);
+          pointer-events: none;
+        }
 
         .lp-hero-content {
           position: relative;
@@ -239,7 +250,7 @@ export default function LandingPage() {
           align-items: center;
           text-align: center;
           width: 100%;
-          max-width: 480px;
+          max-width: 560px;
         }
 
         .lp-eyebrow {
