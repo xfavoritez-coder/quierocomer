@@ -36,7 +36,7 @@ export default function LandingFooter() {
               </a>
             ))}
           </nav>
-          <span style={{ fontSize: 12 }}>© 2026 · Hecho en Chile</span>
+          <span style={{ fontSize: 12 }}>© {new Date().getFullYear()} QuieroComer</span>
         </div>
       </div>
     </footer>
