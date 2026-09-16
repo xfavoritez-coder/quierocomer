@@ -84,7 +84,7 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
       minHeight: '100svh',
       background: isLight ? '#F9F7F4' : 'linear-gradient(160deg, #111 0%, #1c1c1c 60%, #0e0e0e 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '48px 20px 60px', fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: '24px 20px 60px', fontFamily: 'system-ui, -apple-system, sans-serif',
       position: 'relative', overflow: 'hidden',
     }}>
       {/* Subtle accent glow overlays */}
