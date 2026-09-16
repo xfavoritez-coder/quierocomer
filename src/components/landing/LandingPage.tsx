@@ -437,7 +437,7 @@ export default function LandingPage() {
           transform: translate(-50%, -55%);
           width: 700px;
           height: 480px;
-          background: radial-gradient(ellipse at center, rgba(244,166,35,0.22) 0%, rgba(244,166,35,0.06) 45%, transparent 70%);
+          background: radial-gradient(ellipse at center, rgba(244,166,35,0.13) 0%, rgba(244,166,35,0.04) 45%, transparent 70%);
           pointer-events: none;
         }
         .lp-final-cta-icon {
