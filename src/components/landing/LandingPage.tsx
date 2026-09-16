@@ -241,7 +241,8 @@ export default function LandingPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 100svh;
+          min-height: unset;
+          padding: 72px 24px 80px;
         }
         .lp-hero-bg { display: none; }
         .lp-hero-overlay { display: none; }
