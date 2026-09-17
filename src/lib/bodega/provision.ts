@@ -45,17 +45,18 @@ export async function makeOwnBodega(restaurantId: string): Promise<string> {
   return bodega.id;
 }
 
-/** Comparte: apunta `restaurantId` a la bodega del local `targetRestaurantId` (mismo dueño).
- *  Provisiona la bodega del target si no la tuviera. Limpia la bodega anterior si queda huérfana. */
+/** Comparte: apunta `restaurantId` a la bodega del local `targetRestaurantId`.
+ *  La asignación la controla el superadmin, así que puede unir locales de distinto
+ *  dueño (p.ej. Hand Roll + Haruna). Provisiona la bodega del target si no la tuviera.
+ *  Limpia la bodega anterior si queda huérfana. */
 export async function shareBodegaWith(restaurantId: string, targetRestaurantId: string): Promise<string> {
   if (restaurantId === targetRestaurantId) return ensureOwnBodega(restaurantId);
   const [me, target] = await Promise.all([
-    prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { id: true, ownerId: true, bodegaId: true } }),
-    prisma.restaurant.findUnique({ where: { id: targetRestaurantId }, select: { id: true, ownerId: true, bodegaId: true } }),
+    prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { id: true, bodegaId: true } }),
+    prisma.restaurant.findUnique({ where: { id: targetRestaurantId }, select: { id: true, bodegaId: true } }),
   ]);
   if (!me) throw new Error("Local no encontrado");
   if (!target) throw new Error("Local a compartir no encontrado");
-  if (!me.ownerId || me.ownerId !== target.ownerId) throw new Error("Solo se puede compartir bodega entre locales del mismo dueño");
 
   const targetBodegaId = await ensureOwnBodega(targetRestaurantId);
   const prev = me.bodegaId;

@@ -60,6 +60,7 @@ export default function AdminLocales() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"todos" | "activos" | "inactivos" | "sin_owner">("todos");
   const [selected, setSelected] = useState<Restaurant | null>(null);
+  const [bodegaSearch, setBodegaSearch] = useState("");
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [handoffOpen, setHandoffOpen] = useState(false);
   const [handoffEmail, setHandoffEmail] = useState("");
@@ -731,43 +732,61 @@ export default function AdminLocales() {
             </button>
           </div>
           {selected.bodegaEnabled && (() => {
-            const siblings = restaurants.filter(r => r.ownerId && r.ownerId === selected.ownerId && r.id !== selected.id);
-            const sharedWith = selected.bodegaId ? siblings.find(s => s.bodegaId === selected.bodegaId) : undefined;
+            const others = restaurants.filter(r => r.id !== selected.id);
+            const sharedWith = selected.bodegaId ? others.find(s => s.bodegaId === selected.bodegaId) : undefined;
+            const q = bodegaSearch.trim().toLowerCase();
+            const matches = q
+              ? others.filter(r => r.name.toLowerCase().includes(q) || (r.owner?.email || "").toLowerCase().includes(q)).slice(0, 8)
+              : [];
+            const share = async (targetId: string | null) => {
+              const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bodegaShareWith: targetId }) });
+              const data = await res.json();
+              if (!res.ok) { alert(data?.error || "Error al asignar la bodega"); return; }
+              const newBodegaId = data.bodegaId ?? null;
+              const u = { ...selected, bodegaId: newBodegaId };
+              setSelected(u);
+              setBodegaSearch("");
+              setRestaurants(prev => prev.map(x => {
+                if (x.id === selected.id) return u;
+                if (targetId && x.id === targetId) return { ...x, bodegaId: newBodegaId };
+                return x;
+              }));
+            };
             return (
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(45,212,191,0.2)" }}>
                 <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 600, color: "#bbb", margin: "0 0 6px" }}>Inventario / bodega compartida</p>
-                <select
-                  value={sharedWith ? sharedWith.id : ""}
-                  onChange={async (e) => {
-                    const v = e.target.value;
-                    const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bodegaShareWith: v || null }) });
-                    const data = await res.json();
-                    if (!res.ok) { alert(data?.error || "Error al asignar la bodega"); return; }
-                    const newBodegaId = data.bodegaId ?? null;
-                    const u = { ...selected, bodegaId: newBodegaId };
-                    setSelected(u);
-                    setRestaurants(prev => prev.map(x => {
-                      if (x.id === selected.id) return u;
-                      if (v && x.id === v) return { ...x, bodegaId: newBodegaId }; // el local target ahora comparte esta bodega
-                      return x;
-                    }));
-                  }}
-                  style={{ width: "100%", padding: "8px 10px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.8rem", outline: "none" }}
-                >
-                  <option value="">Bodega propia (no compartida)</option>
-                  {siblings.map(s => (
-                    <option key={s.id} value={s.id}>Compartir con: {s.name}</option>
-                  ))}
-                </select>
-                {siblings.length === 0 && (
-                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "6px 0 0", lineHeight: 1.4 }}>
-                    Este dueño no tiene otros locales para compartir bodega.
-                  </p>
-                )}
-                {sharedWith && (
-                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#2dd4bf", margin: "6px 0 0", lineHeight: 1.4 }}>
-                    Stock único con {sharedWith.name}: compras, conteos y mermas afectan el mismo inventario.
-                  </p>
+                {sharedWith ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.3)", borderRadius: 8, padding: "8px 10px" }}>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#2dd4bf" }}>
+                      Comparte bodega con <strong>{sharedWith.name}</strong> — stock único (compras/conteos/mermas afectan el mismo inventario).
+                    </span>
+                    <button onClick={() => share(null)} style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 7, border: "1px solid #2A2A2A", background: "transparent", color: "#bbb", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Separar</button>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "0 0 6px", lineHeight: 1.4 }}>
+                      Bodega propia. Para compartir stock con otro local, búscalo por nombre o correo del dueño (puede ser de otro dueño):
+                    </p>
+                    <input
+                      value={bodegaSearch}
+                      onChange={(e) => setBodegaSearch(e.target.value)}
+                      placeholder="Buscar local para compartir bodega…"
+                      style={{ width: "100%", padding: "8px 10px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
+                    />
+                    {q && matches.length > 0 && (
+                      <div style={{ marginTop: 6, border: "1px solid #2A2A2A", borderRadius: 8, overflow: "hidden" }}>
+                        {matches.map(s => (
+                          <button key={s.id} onClick={() => share(s.id)} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", width: "100%", textAlign: "left", padding: "7px 10px", background: "transparent", border: "none", borderBottom: "1px solid #222", color: "white", fontFamily: F, fontSize: "0.78rem", cursor: "pointer" }}>
+                            <span style={{ fontWeight: 600 }}>{s.name}{s.bodegaId ? " · tiene bodega" : ""}</span>
+                            <span style={{ fontSize: "0.66rem", color: "#888" }}>{s.owner?.email || "sin dueño"}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {q && matches.length === 0 && (
+                      <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "6px 0 0" }}>Sin resultados para “{bodegaSearch}”.</p>
+                    )}
+                  </>
                 )}
               </div>
             );
