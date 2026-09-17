@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import PlanPageGate from "@/components/admin/PlanPageGate";
-import { Bell, Copy, Check, ChevronRight } from "lucide-react";
+import { Bell, Copy, Check, QrCode, Smartphone } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 import QRCode from "qrcode";
 
@@ -10,30 +10,194 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
+/* ── Mockup 1: Celular escaneando QR ── */
+function QrScanMockup() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 0 16px", gap: 24 }}>
+      {/* Phone */}
+      <div style={{
+        width: 72, height: 120,
+        background: "#0e0e0e",
+        borderRadius: 14,
+        border: "2px solid #333",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        position: "relative", boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+        gap: 6,
+      }}>
+        {/* Notch */}
+        <div style={{ position: "absolute", top: 6, width: 22, height: 4, background: "#222", borderRadius: 4 }} />
+        {/* Cámara apuntando */}
+        <Smartphone size={18} color="#555" />
+        <div style={{ width: 32, height: 32, border: "2px solid " + GOLD, borderRadius: 4, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, padding: 4 }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} style={{ background: GOLD + "60", borderRadius: 1 }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Línea de señal */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+        {[14, 10, 6].map((h, i) => (
+          <div key={i} style={{ width: 3, height: h, background: GOLD, borderRadius: 2, opacity: 1 - i * 0.25 }} />
+        ))}
+      </div>
+
+      {/* QR */}
+      <div style={{
+        width: 72, height: 72,
+        background: "#fff",
+        borderRadius: 10,
+        padding: 6,
+        display: "grid",
+        gridTemplateColumns: "repeat(6,1fr)",
+        gap: 2,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+      }}>
+        {/* Patrón QR simplificado */}
+        {[1,1,1,0,1,1, 1,0,1,1,0,1, 1,1,1,0,1,0, 0,1,0,1,0,1, 1,0,1,0,1,1, 0,1,0,1,1,0].map((v, i) => (
+          <div key={i} style={{ background: v ? "#111" : "#fff", borderRadius: 1 }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Mockup 2: Botón llamar garzón en la carta ── */
+function BellButtonMockup() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0" }}>
+      <div style={{
+        background: "#fff",
+        borderRadius: 20,
+        padding: "18px 24px",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+        minWidth: 180,
+      }}>
+        {/* Bell icon con anillo de alerta */}
+        <div style={{ position: "relative", display: "inline-flex" }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: "50%",
+            background: "#fff8ee",
+            border: "2px solid #f5e0b0",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Bell size={22} color={GOLD} />
+          </div>
+          {/* Pulse ring */}
+          <div style={{
+            position: "absolute", inset: -5,
+            borderRadius: "50%",
+            border: `2px solid ${GOLD}40`,
+            animation: "none",
+          }} />
+        </div>
+        <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#1a1a1a", margin: 0, textAlign: "center" }}>
+          ¿Necesitas algo más?
+        </p>
+        {/* Botón */}
+        <div style={{
+          background: GOLD,
+          borderRadius: 12,
+          padding: "9px 20px",
+          display: "flex", alignItems: "center", gap: 6,
+          boxShadow: `0 4px 14px ${GOLD}55`,
+          width: "100%", justifyContent: "center",
+        }}>
+          <Bell size={14} color="#1A0900" />
+          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#1A0900" }}>Llamar garzón</span>
+        </div>
+        {/* Confirm */}
+        <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#aaa", margin: 0 }}>Te llamamos al instante</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Mockup 3: Notificación en el teléfono del garzón ── */
+function NotifMockup() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0", gap: 16 }}>
+      {/* Phone del garzón */}
+      <div style={{
+        width: 68, height: 116,
+        background: "#111",
+        borderRadius: 14,
+        border: "2px solid #2a2a2a",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "flex-start", padding: "12px 6px 6px",
+        position: "relative", flexShrink: 0,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+        gap: 4,
+      }}>
+        <div style={{ position: "absolute", top: 5, width: 20, height: 3, background: "#333", borderRadius: 3 }} />
+        {/* Notif bubble */}
+        <div style={{
+          background: "#1e1e1e",
+          borderRadius: 8,
+          padding: "6px 7px",
+          width: "100%",
+          border: `1px solid ${GOLD}40`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+            <Bell size={8} color={GOLD} />
+            <span style={{ fontFamily: F, fontSize: "0.45rem", color: GOLD, fontWeight: 700 }}>QuieroComer</span>
+          </div>
+          <p style={{ fontFamily: FB, fontSize: "0.48rem", color: "#eee", margin: 0, lineHeight: 1.4 }}>
+            🔔 Mesa 4<br />
+            <span style={{ color: "#aaa" }}>Llamada de garzón</span>
+          </p>
+        </div>
+        {/* Pantalla bloqueada */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontFamily: FB, fontSize: "0.55rem", color: "#444", textAlign: "center" }}>
+            12:34
+          </div>
+        </div>
+      </div>
+
+      {/* Badge confirmación */}
+      <div style={{
+        background: "rgba(34,197,94,0.12)",
+        border: "1px solid rgba(34,197,94,0.3)",
+        borderRadius: 12,
+        padding: "10px 14px",
+        display: "flex", flexDirection: "column", gap: 4,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: "1rem" }}>🔔</span>
+          <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 800, color: "#22c55e" }}>Garzón solicitado</span>
+          <span style={{ fontSize: "0.75rem" }}>✓</span>
+        </div>
+        <p style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text2)", margin: 0 }}>
+          Mesa 4 · hace 2 seg
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const HOW_STEPS = [
   {
     emoji: "📱",
     step: "1",
     title: "El cliente escanea tu carta",
     desc: "Abre la carta digital desde su celular con el código QR de la mesa. Sin descargar nada.",
-    img: "/garzon-carta.png",
-    imgAlt: "Carta digital con botón llamar garzón",
+    visual: <QrScanMockup />,
   },
   {
     emoji: "🔔",
     step: "2",
     title: "Toca el botón Llamar garzón",
     desc: "El botón aparece en la carta. El cliente lo presiona desde su asiento, sin buscar a nadie.",
-    img: "/garzon-boton.png",
-    imgAlt: "Botón llamar al garzón",
+    visual: <BellButtonMockup />,
   },
   {
     emoji: "⚡",
     step: "3",
     title: "Tu garzón recibe la alerta",
     desc: "Notificación con sonido al instante con el número de mesa. Nada se pierde.",
-    img: "/garzon-alerta.png",
-    imgAlt: "Notificación garzón solicitado",
+    visual: <NotifMockup />,
   },
 ];
 
@@ -120,26 +284,24 @@ export default function GarzonPage() {
                   border: "1px solid var(--adm-card-border)",
                   borderRadius: 14, overflow: "hidden",
                 }}>
-                  {/* Imagen */}
-                  <div style={{ width: "100%", height: 160, overflow: "hidden", position: "relative" }}>
-                    <img
-                      src={s.img}
-                      alt={s.imgAlt}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
-                    />
-                    {/* Badge paso */}
+                  {/* Badge paso */}
+                  <div style={{ padding: "12px 16px 0" }}>
                     <span style={{
-                      position: "absolute", top: 10, left: 10,
                       fontFamily: F, fontSize: "0.58rem", fontWeight: 700, color: GOLD,
-                      background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)",
-                      border: `1px solid ${GOLD}40`, borderRadius: 20, padding: "2px 8px",
-                      letterSpacing: "0.05em",
+                      background: `${GOLD}15`, border: `1px solid ${GOLD}30`,
+                      borderRadius: 20, padding: "2px 8px", letterSpacing: "0.05em",
                     }}>
                       Paso {s.step}
                     </span>
                   </div>
+
+                  {/* Visual mockup */}
+                  <div style={{ background: "var(--adm-hover)", margin: "10px 12px", borderRadius: 10 }}>
+                    {s.visual}
+                  </div>
+
                   {/* Texto */}
-                  <div style={{ padding: "14px 16px" }}>
+                  <div style={{ padding: "0 16px 14px" }}>
                     <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>{s.title}</p>
                     <p style={{ fontFamily: FB, fontSize: "0.81rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
                   </div>
@@ -154,14 +316,12 @@ export default function GarzonPage() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "24px 20px", marginBottom: 20, boxShadow: "var(--adm-card-shadow, none)" }}>
         <h2 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px" }}>{t("garzon_setup_title")}</h2>
 
-        {/* One-time note */}
         <div style={{ background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
           <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
             {t("garzon_once_note")}
           </p>
         </div>
 
-        {/* Link + QR */}
         <div style={{ marginBottom: 20 }}>
           <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 4px" }}>
             {t("garzon_share_link")}
@@ -184,7 +344,6 @@ export default function GarzonPage() {
           )}
         </div>
 
-        {/* Steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {[
             { num: "1", title: t("garzon_open_link_title"), desc: t("garzon_open_link_desc").replace("{name}", restaurant.name) },
@@ -214,7 +373,7 @@ export default function GarzonPage() {
               <div style={{ flex: 1 }}>
                 <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 3px" }}>{step.title}</p>
                 <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>{step.desc}</p>
-                {step.extra}
+                {(step as any).extra}
               </div>
             </div>
           ))}
