@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Warehouse, Plus, Package, X, ImagePlus, Loader2 } from "lucide-react";
+import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, clp, fmtStock } from "@/lib/bodega/labels";
@@ -36,6 +36,7 @@ export default function BodegaHome() {
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Insumo | null>(null);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -115,7 +116,7 @@ export default function BodegaHome() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
               {g.items.map((it) => (
-                <InsumoCard key={it.id} it={it} />
+                <InsumoCard key={it.id} it={it} onOpen={() => setEditing(it)} />
               ))}
             </div>
           </section>
@@ -136,21 +137,29 @@ export default function BodegaHome() {
         <Plus size={26} strokeWidth={2.6} />
       </button>
 
-      {modalOpen && restaurantId && (
-        <CreateModal
+      {(modalOpen || editing) && restaurantId && (
+        <InsumoModal
           restaurantId={restaurantId}
           familias={familias}
-          onClose={() => setModalOpen(false)}
-          onCreated={(it) => { setInsumos((prev) => [...prev, it]); setModalOpen(false); }}
+          insumo={editing}
+          onClose={() => { setModalOpen(false); setEditing(null); }}
+          onSaved={(it) => {
+            setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it]);
+            setModalOpen(false); setEditing(null);
+          }}
+          onDeleted={(delId) => {
+            setInsumos((prev) => prev.filter((x) => x.id !== delId));
+            setModalOpen(false); setEditing(null);
+          }}
         />
       )}
     </div>
   );
 }
 
-function InsumoCard({ it }: { it: Insumo }) {
+function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 12 }}>
+    <div onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") onOpen(); }} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 12, cursor: "pointer" }}>
       <div style={{ width: 52, height: 52, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
         {it.fotoUrl
           ? <img src={it.fotoUrl} alt={it.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -168,16 +177,18 @@ function InsumoCard({ it }: { it: Insumo }) {
   );
 }
 
-function CreateModal({ restaurantId, familias, onClose, onCreated }: { restaurantId: string; familias: string[]; onClose: () => void; onCreated: (it: Insumo) => void }) {
-  const [nombre, setNombre] = useState("");
-  const [categoria, setCategoria] = useState("ABARROTE");
-  const [precio, setPrecio] = useState("");
-  const [rendimiento, setRendimiento] = useState("");
-  const [familia, setFamilia] = useState("");
+function InsumoModal({ restaurantId, familias, insumo, onClose, onSaved, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; onClose: () => void; onSaved: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+  const editing = !!insumo;
+  const [nombre, setNombre] = useState(insumo?.nombre ?? "");
+  const [categoria, setCategoria] = useState(insumo?.categoria ?? "ABARROTE");
+  const [precio, setPrecio] = useState(insumo?.ultimoPrecio != null ? String(insumo.ultimoPrecio) : "");
+  const [rendimiento, setRendimiento] = useState(insumo?.rendimiento != null ? String(insumo.rendimiento) : "");
+  const [familia, setFamilia] = useState(insumo?.familia ?? "");
   const [creandoFamilia, setCreandoFamilia] = useState(false);
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(insumo?.fotoUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const precioNum = parseFloat(precio);
@@ -204,22 +215,36 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
     if (!Number.isFinite(rendNum) || rendNum <= 0) { toast.error("El rendimiento es obligatorio"); return; }
     setSaving(true);
     try {
-      const res = await fetch("/api/panel/bodega/insumos", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, nombre, categoria, ultimoPrecio: precio, rendimiento, familia, fotoUrl }),
+      const payload = { restaurantId, nombre, categoria, ultimoPrecio: precio, rendimiento, familia, fotoUrl };
+      const res = await fetch(editing ? `/api/panel/bodega/insumos/${insumo!.id}` : "/api/panel/bodega/insumos", {
+        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) { toast.error(d.error || "No se pudo crear"); setSaving(false); return; }
-      toast.success("Insumo agregado");
-      onCreated(d.insumo);
+      if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
+      toast.success(editing ? "Insumo actualizado" : "Insumo agregado");
+      onSaved(d.insumo);
     } catch { toast.error("Error de conexión"); setSaving(false); }
+  }
+
+  async function eliminar() {
+    if (!editing) return;
+    if (!confirm(`¿Eliminar el insumo "${insumo!.nombre}"?`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/panel/bodega/insumos/${insumo!.id}?restaurantId=${restaurantId}`, { method: "DELETE" });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo eliminar"); setDeleting(false); return; }
+      toast.success("Insumo eliminado");
+      onDeleted(insumo!.id);
+    } catch { toast.error("Error de conexión"); setDeleting(false); }
   }
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", background: "var(--adm-bg, var(--adm-card))", borderRadius: 18, padding: 20, boxShadow: "0 12px 40px rgba(0,0,0,0.35)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Nuevo insumo</h3>
+          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{editing ? "Editar insumo" : "Nuevo insumo"}</h3>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text3)" }}><X size={20} /></button>
         </div>
 
@@ -287,9 +312,15 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
             )}
           </div>
 
-          <button onClick={submit} disabled={saving || uploading} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
-            {saving ? "Guardando…" : "Agregar insumo"}
+          <button onClick={submit} disabled={saving || uploading || deleting} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
+            {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar insumo"}
           </button>
+
+          {editing && (
+            <button onClick={eliminar} disabled={deleting || saving} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 16px", borderRadius: 11, border: "1px solid rgba(239,68,68,0.4)", background: "transparent", color: "#ef4444", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.7 : 1 }}>
+              <Trash2 size={15} /> {deleting ? "Eliminando…" : "Eliminar insumo"}
+            </button>
+          )}
         </div>
       </div>
     </div>
