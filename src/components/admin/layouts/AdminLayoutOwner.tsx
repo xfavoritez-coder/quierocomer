@@ -136,7 +136,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "valoraciones",
       label: "Valoraciones",
       icon: Star,
-      badge: "Nuevo",
       items: [
         { icon: Settings, labelKey: "nav_reviews_config", href: `${base}/valoraciones` },
         { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
