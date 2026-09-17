@@ -26,6 +26,17 @@ const SELECT = {
   comentarios: true, fotoUrl: true, fotoPagoUrl: true, _count: { select: { lineas: true } },
 } as const;
 
+/** GET /api/panel/bodega/compras/[id]?restaurantId=X — cabecera de la factura. */
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
+  if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
+  const compra = await prisma.compra.findUnique({ where: { id }, select: { ...SELECT, bodegaId: true } });
+  if (!compra || !rest?.bodegaId || compra.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
+  return NextResponse.json({ compra });
+}
+
 /** PATCH /api/panel/bodega/compras/[id] — edita la cabecera de la factura. */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
