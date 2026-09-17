@@ -2179,6 +2179,7 @@ model Bodega {
   id          String       @id @default(cuid())
   nombre      String
   ownerId     String?      // dueño (RestaurantOwner) al que pertenece; solo se comparte entre locales del mismo dueño
+  ingresoManualEnabled Boolean @default(true) // permitir el botón "Ingreso" en el detalle de insumo (si false, el stock solo entra por Compras)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   restaurants Restaurant[]

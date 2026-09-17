@@ -44,6 +44,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const nota = typeof body?.nota === "string" && body.nota.trim() ? body.nota.trim().slice(0, 240) : null;
 
   if (tipo === "ingreso") {
+    const bodega = await prisma.bodega.findUnique({ where: { id: insumo.bodegaId }, select: { ingresoManualEnabled: true } });
+    if (bodega && bodega.ingresoManualEnabled === false) {
+      return NextResponse.json({ error: "El ingreso manual está desactivado. Ingresa stock desde el módulo Compras." }, { status: 403 });
+    }
     // Precio del lote (con IVA). Si no viene, usa el último lote o el último precio conocido.
     let precio = Number(body?.precioConIva);
     if (!Number.isFinite(precio) || precio < 0) {

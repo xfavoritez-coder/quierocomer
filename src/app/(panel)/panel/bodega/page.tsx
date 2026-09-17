@@ -41,6 +41,7 @@ export default function BodegaHome() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Insumo | null>(null);
   const [search, setSearch] = useState("");
+  const [ingresoManual, setIngresoManual] = useState(true);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -50,6 +51,10 @@ export default function BodegaHome() {
       .then((d) => { if (d?.insumos) setInsumos(d.insumos); })
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetch(`/api/panel/bodega/config?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setIngresoManual(d.ingresoManualEnabled !== false); })
+      .catch(() => {});
   }, [restaurantId]);
 
   // Agrupar por categoría, respetando el orden definido (filtrado por búsqueda).
@@ -159,6 +164,7 @@ export default function BodegaHome() {
           restaurantId={restaurantId}
           familias={familias}
           insumo={editing}
+          ingresoManual={ingresoManual}
           onClose={() => { setModalOpen(false); setEditing(null); }}
           onChange={(it) => setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it])}
           onDeleted={(delId) => setInsumos((prev) => prev.filter((x) => x.id !== delId))}
@@ -188,7 +194,7 @@ function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
   );
 }
 
-function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; ingresoManual: boolean; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
   const editing = !!insumo;
   const router = useRouter();
   const [mode, setMode] = useState<"view" | "edit">(editing ? "view" : "edit");
@@ -449,10 +455,12 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
                 </div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
-                  <ArrowDownToLine size={17} /> Ingreso
-                </button>
+              <div style={{ display: "grid", gridTemplateColumns: ingresoManual ? "1fr 1fr" : "1fr", gap: 10 }}>
+                {ingresoManual && (
+                  <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                    <ArrowDownToLine size={17} /> Ingreso
+                  </button>
+                )}
                 <button onClick={() => { setMoveType("retiro"); setMoveQty(""); setMovePrecio(""); setMoveMotivo("consumo"); setMoveNota(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
                   <ArrowUpFromLine size={17} /> Retiro
                 </button>

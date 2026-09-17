@@ -115,6 +115,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Warehouse, labelKey: "nav_bodega_home", href: `${base}/bodega` },
         { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
         { icon: Truck, labelKey: "nav_bodega_proveedores", href: `${base}/bodega/proveedores` },
+        { icon: Settings, labelKey: "nav_bodega_config", href: `${base}/bodega/configuracion` },
       ],
     }] : []),
     {
