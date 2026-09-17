@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Plus } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { CATEGORIA_LABEL, UNIDAD_LABEL, fmtStock } from "@/lib/bodega/labels";
@@ -62,9 +62,8 @@ export default function SinFamiliaPage() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <datalist id="familias-existentes">{familias.map((f) => <option key={f} value={f} />)}</datalist>
           {insumos.map((it) => (
-            <Row key={it.id} insumo={it} restaurantId={restaurantId!} onAssigned={onAssigned} />
+            <Row key={it.id} insumo={it} restaurantId={restaurantId!} familias={familias} onAssigned={onAssigned} />
           ))}
         </div>
       )}
@@ -72,8 +71,9 @@ export default function SinFamiliaPage() {
   );
 }
 
-function Row({ insumo, restaurantId, onAssigned }: { insumo: Insumo; restaurantId: string; onAssigned: (id: string, familia: string) => void }) {
+function Row({ insumo, restaurantId, familias, onAssigned }: { insumo: Insumo; restaurantId: string; familias: string[]; onAssigned: (id: string, familia: string) => void }) {
   const [familia, setFamilia] = useState("");
+  const [creando, setCreando] = useState(familias.length === 0);
   const [saving, setSaving] = useState(false);
 
   async function guardar() {
@@ -93,15 +93,32 @@ function Row({ insumo, restaurantId, onAssigned }: { insumo: Insumo; restaurantI
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 12 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 12, flexWrap: "wrap" }}>
+      <div style={{ flex: 1, minWidth: 140 }}>
         <p style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{insumo.nombre}</p>
         <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>{CATEGORIA_LABEL[insumo.categoria] || insumo.categoria} · {fmtStock(insumo.stockActual)} {UNIDAD_LABEL[insumo.unidadBase] || ""}</p>
       </div>
-      <input list="familias-existentes" value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Familia…" style={{ ...inputStyle, width: 150, flexShrink: 0 }} onKeyDown={(e) => { if (e.key === "Enter") guardar(); }} />
-      <button onClick={guardar} disabled={saving} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "9px 12px", borderRadius: 9, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.8rem", fontWeight: 800, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
-        {saving ? "…" : <><Plus size={14} /> Asignar</>}
-      </button>
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        {creando ? (
+          <>
+            <input value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Nueva familia…" autoFocus style={{ ...inputStyle, width: 150, flexShrink: 0 }} onKeyDown={(e) => { if (e.key === "Enter") guardar(); }} />
+            {familias.length > 0 && (
+              <button onClick={() => { setCreando(false); setFamilia(""); }} title="Elegir existente" style={{ flexShrink: 0, width: 36, height: 36, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={15} /></button>
+            )}
+          </>
+        ) : (
+          <>
+            <select value={familia} onChange={(e) => setFamilia(e.target.value)} style={{ ...inputStyle, width: 150, flexShrink: 0 }}>
+              <option value="">Elegir familia…</option>
+              {familias.map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <button onClick={() => { setCreando(true); setFamilia(""); }} title="Crear familia" style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4, padding: "0 10px", height: 36, borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={14} /> Nueva</button>
+          </>
+        )}
+        <button onClick={guardar} disabled={saving} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "9px 12px", borderRadius: 9, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.8rem", fontWeight: 800, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+          {saving ? "…" : "Asignar"}
+        </button>
+      </div>
     </div>
   );
 }
