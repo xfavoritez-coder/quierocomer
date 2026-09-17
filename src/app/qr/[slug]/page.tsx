@@ -282,9 +282,10 @@ export default async function CartaPage({
   // Fetch lead data for DemoBanner inline form (only if demo)
   const leadData = (restaurant as any).isDemo ? await prisma.lead.findFirst({
     where: { generatedSlug: slug },
-    select: { ownerName: true, email: true, whatsapp: true },
+    select: { ownerName: true, email: true, whatsapp: true, panelVisitedAt: true },
     orderBy: { createdAt: "desc" },
   }) : null;
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
   // Empty carta: show "próximamente" when demo restaurant has no dishes yet
   if ((restaurant as any).isDemo && dishes.length === 0 && !isShowcase && !isEmbed) {
     return <CartaProximamente restaurantName={restaurant.name} logoUrl={restaurant.logoUrl} />;
@@ -321,7 +322,7 @@ export default async function CartaPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {(restaurant as any).isDemo && !isShowcase && <OwnerPanelBar slug={slug} />}
+      {(restaurant as any).isDemo && !isShowcase && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={slug} />}
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       <script dangerouslySetInnerHTML={{ __html: `
         try {

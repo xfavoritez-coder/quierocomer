@@ -310,8 +310,8 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
         { label: "Carta", done: true, ts: lead.createdAt },
         { label: "Paso 2", done: !!lead.step2At, ts: lead.step2At },
         { label: "Email", done: !!lead.deliveredAt, ts: lead.deliveredAt },
-        { label: "Abierto", done: !!lead.emailOpenedAt, ts: lead.emailOpenedAt },
-        { label: "Click", done: !!lead.emailClickedAt, ts: lead.emailClickedAt },
+        { label: "Abierto", done: !!(lead.emailOpenedAt || lead.whatsappClickedAt), ts: lead.emailOpenedAt || lead.whatsappClickedAt },
+        { label: "Click", done: !!(lead.emailClickedAt || lead.whatsappClickedAt), ts: lead.emailClickedAt || lead.whatsappClickedAt },
         { label: "Onboard", done: !!lead.onboardingDoneAt, ts: lead.onboardingDoneAt },
         { label: "Panel", done: !!lead.panelVisitedAt, ts: lead.panelVisitedAt },
         { label: "Activado", done: !!lead.activatedAt, ts: lead.activatedAt, highlight: true },
@@ -483,10 +483,15 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
               </>}
               <TL label="Email" time={fmtDate(lead.deliveredAt)} />
               {lead.emailBouncedAt && <TL label="Rebotó" time={fmtDate(lead.emailBouncedAt)} color="#ef4444" />}
-              <TL label="Abierto" time={fmtDate(lead.emailOpenedAt)} delta={diffStr(lead.deliveredAt, lead.emailOpenedAt)} />
-              <TL label="Click" time={fmtDate(lead.emailClickedAt)} delta={diffStr(lead.deliveredAt, lead.emailClickedAt)} />
-              {lead.whatsappSentAt && <TL label="WA" time={fmtDate(lead.whatsappSentAt)} color="#22c55e" />}
-              {lead.whatsappClickedAt && <TL label="WA Click" time={fmtDate(lead.whatsappClickedAt)} color="#22c55e" />}
+              <TL label="📧 Abierto" time={fmtDate(lead.emailOpenedAt)} delta={diffStr(lead.deliveredAt, lead.emailOpenedAt)} />
+              <TL label="📧 Click" time={fmtDate(lead.emailClickedAt)} delta={diffStr(lead.deliveredAt, lead.emailClickedAt)} />
+              {lead.whatsappSentAt && <TL label="WA Enviado" time={fmtDate(lead.whatsappSentAt)} color="#22c55e" />}
+              {lead.whatsappClickedAt && <TL label="WA Click" time={fmtDate(lead.whatsappClickedAt)} color="#22c55e" delta={diffStr(lead.whatsappSentAt, lead.whatsappClickedAt)} />}
+              {lead.openedVia && (
+                <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 5, background: lead.openedVia === "whatsapp" ? "rgba(34,197,94,0.12)" : "rgba(59,130,246,0.12)", color: lead.openedVia === "whatsapp" ? "#22c55e" : "#60a5fa", fontWeight: 700 }}>
+                  Entró vía {lead.openedVia === "whatsapp" ? "WhatsApp" : "Email"}
+                </span>
+              )}
               {!isLanding && <>
                 <TL label="Onboard" time={fmtDate(lead.onboardingDoneAt)} />
                 <TL label="Panel" time={fmtDate(lead.panelVisitedAt)} />
