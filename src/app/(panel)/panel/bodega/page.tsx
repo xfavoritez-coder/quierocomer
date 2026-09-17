@@ -209,6 +209,8 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
   const [moveType, setMoveType] = useState<"ingreso" | "retiro" | null>(null);
   const [moveQty, setMoveQty] = useState("");
   const [movePrecio, setMovePrecio] = useState("");
+  const [moveMotivo, setMoveMotivo] = useState("consumo");
+  const [moveNota, setMoveNota] = useState("");
   const [moving, setMoving] = useState(false);
 
   type Lote = { id: string; fecha: string; precioUnitario: number; cantidadInicial: number; cantidadRestante: number };
@@ -289,14 +291,15 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
     try {
       const payload: any = { restaurantId, tipo: moveType, cantidad: qty };
       if (moveType === "ingreso" && parseFloat(movePrecio) >= 0) payload.precioConIva = movePrecio;
+      if (moveType === "retiro") { payload.motivo = moveMotivo; if (moveNota.trim()) payload.nota = moveNota.trim(); }
       const res = await fetch(`/api/panel/bodega/insumos/${insumo!.id}/movimiento`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo registrar"); setMoving(false); return; }
-      toast.success(moveType === "ingreso" ? "Ingreso registrado" : "Retiro registrado");
+      toast.success(moveType === "ingreso" ? "Ingreso registrado" : (d.costoConsumido != null ? `Retiro registrado — costo ${clp(Math.round(d.costoConsumido))}` : "Retiro registrado"));
       onChange(d.insumo); setCur(d.insumo); cargarLotes();
-      setMoving(false); setMoveType(null); setMoveQty(""); setMovePrecio("");
+      setMoving(false); setMoveType(null); setMoveQty(""); setMovePrecio(""); setMoveMotivo("consumo"); setMoveNota("");
     } catch { toast.error("Error de conexión"); setMoving(false); }
   }
 
@@ -426,7 +429,16 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
                   <input value={movePrecio} onChange={(e) => setMovePrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Precio con IVA (unitario)" style={inputStyle} />
                 )}
                 {moveType === "retiro" && (
-                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Se descuenta del lote más antiguo primero.</span>
+                  <>
+                    <select value={moveMotivo} onChange={(e) => setMoveMotivo(e.target.value)} style={inputStyle}>
+                      <option value="consumo">Consumo</option>
+                      <option value="merma">Merma</option>
+                      <option value="ajuste">Ajuste</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                    <input value={moveNota} onChange={(e) => setMoveNota(e.target.value)} placeholder="Nota (opcional)" style={inputStyle} />
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Se descuenta del lote más antiguo primero (FIFO); se guarda el costo consumido.</span>
+                  </>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
                   <input value={moveQty} onChange={(e) => setMoveQty(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder={`Cantidad (${UNIDAD_LABEL[cur.unidadBase] || "un"})`} style={{ ...inputStyle, flex: 1 }} autoFocus />
@@ -441,7 +453,7 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
                 <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
                   <ArrowDownToLine size={17} /> Ingreso
                 </button>
-                <button onClick={() => { setMoveType("retiro"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                <button onClick={() => { setMoveType("retiro"); setMoveQty(""); setMovePrecio(""); setMoveMotivo("consumo"); setMoveNota(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
                   <ArrowUpFromLine size={17} /> Retiro
                 </button>
               </div>

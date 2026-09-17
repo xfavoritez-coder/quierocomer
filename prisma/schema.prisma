@@ -2240,10 +2240,31 @@ model Insumo {
   conteoLineas ConteoLinea[]
   mermaLineas  MermaLinea[]
   lotes        InsumoLote[]
+  movimientos  MovimientoInsumo[]
 
   @@unique([bodegaId, nombre])
   @@index([bodegaId])
   @@index([maestroId])
+}
+
+// Historial de movimientos de stock (ingreso manual / retiro / merma).
+// En los retiros guarda el costo FIFO realmente consumido (con IVA).
+model MovimientoInsumo {
+  id            String   @id @default(cuid())
+  insumoId      String
+  bodegaId      String
+  restaurantId  String?  // local que hizo el movimiento (auditoría)
+  tipo          String   // "ingreso" | "retiro"
+  motivo        String?  // retiro: "consumo" | "merma" | "ajuste" | "otro"
+  cantidad      Float
+  costoUnitario Float?   // con IVA
+  costoTotal    Float?   // con IVA (retiro: costo FIFO consumido; ingreso: precio del lote × cantidad)
+  nota          String?
+  fecha         DateTime @default(now())
+  insumo        Insumo   @relation(fields: [insumoId], references: [id])
+
+  @@index([insumoId, fecha])
+  @@index([bodegaId, fecha])
 }
 
 // Lote de costo (capa FIFO): cada ingreso de stock crea un lote con su precio

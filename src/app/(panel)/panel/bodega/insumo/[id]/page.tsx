@@ -1,7 +1,7 @@
 "use client";
 import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Receipt, TrendingUp } from "lucide-react";
+import { ArrowLeft, Receipt, TrendingUp, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { clp, fmtStock, UNIDAD_LABEL } from "@/lib/bodega/labels";
 
@@ -9,11 +9,16 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#2dd4bf";
 const TIPO_DOC: Record<string, string> = { factura: "Factura", boleta: "Boleta", nota_entrega: "Nota de entrega" };
+const MOTIVO_LABEL: Record<string, string> = { consumo: "Consumo", merma: "Merma", ajuste: "Ajuste", otro: "Otro" };
 
 type Item = {
   lineaId: string; compraId: string; fecha: string; proveedorNombre: string | null;
   documentoTipo: string | null; documentoFolio: string | null; cantidad: number;
   precioUnitNeto: number; precioUnitConIva: number; precioTotal: number;
+};
+type Movimiento = {
+  id: string; tipo: string; motivo: string | null; cantidad: number;
+  costoUnitario: number | null; costoTotal: number | null; nota: string | null; fecha: string;
 };
 
 const inputStyle: React.CSSProperties = {
@@ -34,15 +39,19 @@ export default function InsumoFichaPage({ params }: { params: Promise<{ id: stri
   const [nombre, setNombre] = useState("");
   const [unidad, setUnidad] = useState("UN");
   const [items, setItems] = useState<Item[]>([]);
+  const [movs, setMovs] = useState<Movimiento[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
-    fetch(`/api/panel/bodega/insumos/${id}/compras?restaurantId=${restaurantId}&from=${from}&to=${to}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) { setItems(d.items || []); setNombre(d.nombre || ""); setUnidad(d.unidadBase || "UN"); } })
-      .catch(() => {}).finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/panel/bodega/insumos/${id}/compras?restaurantId=${restaurantId}&from=${from}&to=${to}`).then((r) => r.ok ? r.json() : null),
+      fetch(`/api/panel/bodega/insumos/${id}/movimientos?restaurantId=${restaurantId}&from=${from}&to=${to}`).then((r) => r.ok ? r.json() : null),
+    ]).then(([c, m]) => {
+      if (c) { setItems(c.items || []); setNombre(c.nombre || ""); setUnidad(c.unidadBase || "UN"); }
+      if (m) setMovs(m.movimientos || []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [restaurantId, id, from, to]);
 
   return (
@@ -99,6 +108,40 @@ export default function InsumoFichaPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Movimientos (ingresos / retiros) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "20px 2px 8px" }}>
+            <ArrowLeftRight size={16} color="var(--adm-text3)" />
+            <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)" }}>Movimientos ({movs.length})</span>
+          </div>
+          {movs.length === 0 ? (
+            <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", padding: "6px 2px" }}>Sin ingresos ni retiros manuales en el rango.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {movs.map((m) => {
+                const isIng = m.tipo === "ingreso";
+                return (
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 12 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: isIng ? "rgba(45,212,191,0.14)" : "rgba(245,158,11,0.14)", color: isIng ? ACCENT : "#f59e0b" }}>
+                      {isIng ? <ArrowDownToLine size={16} /> : <ArrowUpFromLine size={16} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>
+                        {isIng ? "Ingreso" : `Retiro · ${MOTIVO_LABEL[m.motivo || ""] || "Retiro"}`}
+                      </p>
+                      <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>
+                        {new Date(m.fecha).toLocaleDateString("es-CL")} · {fmtStock(m.cantidad)} {UNIDAD_LABEL[unidad] || ""}{m.nota ? ` · ${m.nota}` : ""}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: isIng ? ACCENT : "#f59e0b", margin: 0 }}>{isIng ? "+" : "−"}{fmtStock(m.cantidad)}</p>
+                      {m.costoTotal != null && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>{clp(m.costoTotal)}</p>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </>

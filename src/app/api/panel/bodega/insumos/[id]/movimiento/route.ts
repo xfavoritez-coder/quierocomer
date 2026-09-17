@@ -41,6 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
+  const nota = typeof body?.nota === "string" && body.nota.trim() ? body.nota.trim().slice(0, 240) : null;
+
   if (tipo === "ingreso") {
     // Precio del lote (con IVA). Si no viene, usa el último lote o el último precio conocido.
     let precio = Number(body?.precioConIva);
@@ -50,23 +52,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
     const actualizado = await prisma.$transaction(async (tx) => {
       await tx.insumoLote.create({ data: { insumoId: id, fecha: new Date(), precioUnitario: precio, cantidadInicial: cantidad, cantidadRestante: cantidad } });
+      await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo: "ingreso", cantidad, costoUnitario: precio, costoTotal: precio * cantidad, nota } });
       return tx.insumo.update({ where: { id }, data: { stockActual: { increment: cantidad } }, select: INSUMO_SELECT });
     });
     return NextResponse.json({ insumo: actualizado });
   }
 
-  // Retiro: consume los lotes más antiguos primero (FIFO).
-  const actualizado = await prisma.$transaction(async (tx) => {
+  // Retiro: consume los lotes más antiguos primero (FIFO) y guarda el costo consumido.
+  const MOTIVOS = ["consumo", "merma", "ajuste", "otro"];
+  const motivo = MOTIVOS.includes((body?.motivo || "").toString()) ? (body.motivo as string) : "consumo";
+
+  const result = await prisma.$transaction(async (tx) => {
     const lotes = await tx.insumoLote.findMany({ where: { insumoId: id, cantidadRestante: { gt: 0 } }, orderBy: [{ fecha: "asc" }, { createdAt: "asc" }] });
-    let restante = cantidad;
+    let restante = cantidad, costo = 0;
     for (const lote of lotes) {
       if (restante <= 0) break;
       const take = Math.min(lote.cantidadRestante, restante);
+      costo += take * lote.precioUnitario; // costo FIFO con IVA
       await tx.insumoLote.update({ where: { id: lote.id }, data: { cantidadRestante: lote.cantidadRestante - take } });
       restante -= take;
     }
     const consumido = cantidad - restante; // lo realmente descontado (si no había suficiente)
-    return tx.insumo.update({ where: { id }, data: { stockActual: { decrement: consumido } }, select: INSUMO_SELECT });
+    const insumoUpd = await tx.insumo.update({ where: { id }, data: { stockActual: { decrement: consumido } }, select: INSUMO_SELECT });
+    await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo: "retiro", motivo, cantidad: consumido, costoUnitario: consumido > 0 ? costo / consumido : null, costoTotal: costo, nota } });
+    return { insumo: insumoUpd, costo, consumido };
   });
-  return NextResponse.json({ insumo: actualizado });
+  return NextResponse.json({ insumo: result.insumo, costoConsumido: result.costo, cantidadConsumida: result.consumido });
 }
