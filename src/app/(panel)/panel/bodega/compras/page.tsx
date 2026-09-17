@@ -20,6 +20,7 @@ type Compra = {
   fotoUrl: string | null; fotoPagoUrl: string | null; _count: { lineas: number };
 };
 type InsumoLite = { id: string; nombre: string; unidadBase: string; ultimoPrecio: number | null };
+type ProveedorLite = { id: string; nombre: string };
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))",
@@ -33,7 +34,7 @@ export default function ComprasPage() {
   const restaurantId = session?.selectedRestaurantId;
 
   const [compras, setCompras] = useState<Compra[]>([]);
-  const [proveedores, setProveedores] = useState<string[]>([]);
+  const [proveedores, setProveedores] = useState<ProveedorLite[]>([]);
   const [insumos, setInsumos] = useState<InsumoLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [flow, setFlow] = useState<null | { compra: Compra | null }>(null);
@@ -44,9 +45,11 @@ export default function ComprasPage() {
     Promise.all([
       fetch(`/api/panel/bodega/compras?restaurantId=${restaurantId}`).then((r) => r.ok ? r.json() : null),
       fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}`).then((r) => r.ok ? r.json() : null),
-    ]).then(([c, i]) => {
-      if (c) { setCompras(c.compras || []); setProveedores(c.proveedores || []); }
+      fetch(`/api/panel/bodega/proveedores?restaurantId=${restaurantId}`).then((r) => r.ok ? r.json() : null),
+    ]).then(([c, i, p]) => {
+      if (c) setCompras(c.compras || []);
       if (i?.insumos) setInsumos(i.insumos);
+      if (p?.proveedores) setProveedores(p.proveedores.map((x: any) => ({ id: x.id, nombre: x.nombre })));
     }).catch(() => {}).finally(() => setLoading(false));
   }, [restaurantId]);
 
@@ -106,7 +109,8 @@ export default function ComprasPage() {
           proveedores={proveedores}
           existing={flow.compra}
           onClose={() => setFlow(null)}
-          onCreated={(c) => { setCompras((prev) => [c, ...prev]); if (c.proveedorNombre && !proveedores.includes(c.proveedorNombre)) setProveedores((p) => [...p, c.proveedorNombre!].sort()); }}
+          onCreated={(c) => setCompras((prev) => [c, ...prev])}
+          onProveedorCreated={(p) => setProveedores((prev) => [...prev, p].sort((a, b) => a.nombre.localeCompare(b.nombre)))}
           onLineCountChange={(compraId, n) => setCompras((prev) => prev.map((x) => x.id === compraId ? { ...x, _count: { lineas: n } } : x))}
         />
       )}
@@ -114,9 +118,9 @@ export default function ComprasPage() {
   );
 }
 
-function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onCreated, onLineCountChange }: {
-  restaurantId: string; insumos: InsumoLite[]; proveedores: string[]; existing: Compra | null;
-  onClose: () => void; onCreated: (c: Compra) => void; onLineCountChange: (compraId: string, n: number) => void;
+function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onCreated, onProveedorCreated, onLineCountChange }: {
+  restaurantId: string; insumos: InsumoLite[]; proveedores: ProveedorLite[]; existing: Compra | null;
+  onClose: () => void; onCreated: (c: Compra) => void; onProveedorCreated: (p: ProveedorLite) => void; onLineCountChange: (compraId: string, n: number) => void;
 }) {
   const [step, setStep] = useState<1 | 2>(existing ? 2 : 1);
   const [compraId, setCompraId] = useState<string | null>(existing?.id ?? null);
@@ -134,7 +138,7 @@ function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onC
 
         {step === 1 ? (
           <HeaderForm
-            restaurantId={restaurantId} proveedores={proveedores}
+            restaurantId={restaurantId} proveedores={proveedores} onProveedorCreated={onProveedorCreated}
             onCreated={(c, total) => { setCompraId(c.id); setTotalDoc(total); onCreated(c); setStep(2); }}
           />
         ) : (
@@ -148,9 +152,11 @@ function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onC
   );
 }
 
-function HeaderForm({ restaurantId, proveedores, onCreated }: { restaurantId: string; proveedores: string[]; onCreated: (c: Compra, total: number) => void }) {
-  const [proveedor, setProveedor] = useState("");
+function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }: { restaurantId: string; proveedores: ProveedorLite[]; onProveedorCreated: (p: ProveedorLite) => void; onCreated: (c: Compra, total: number) => void }) {
+  const [proveedorId, setProveedorId] = useState("");
   const [creandoProv, setCreandoProv] = useState(proveedores.length === 0);
+  const [nuevoProvNombre, setNuevoProvNombre] = useState("");
+  const [creandoProvBusy, setCreandoProvBusy] = useState(false);
   const [fechaSolicitud, setFechaSolicitud] = useState("");
   const [fechaEntrega, setFechaEntrega] = useState(new Date().toISOString().slice(0, 10));
   const [total, setTotal] = useState("");
@@ -163,8 +169,27 @@ function HeaderForm({ restaurantId, proveedores, onCreated }: { restaurantId: st
   const [fotoPagoUrl, setFotoPagoUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  async function crearProveedor() {
+    const nombre = nuevoProvNombre.trim();
+    if (!nombre) { toast.error("Escribe el nombre del proveedor"); return; }
+    setCreandoProvBusy(true);
+    try {
+      const res = await fetch("/api/panel/bodega/proveedores", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, nombre }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo crear"); setCreandoProvBusy(false); return; }
+      const p = { id: d.proveedor.id, nombre: d.proveedor.nombre };
+      onProveedorCreated(p);
+      setProveedorId(p.id); setNuevoProvNombre(""); setCreandoProv(false);
+      toast.success("Proveedor creado");
+    } catch { toast.error("Error de conexión"); }
+    setCreandoProvBusy(false);
+  }
+
   async function submit() {
-    if (!proveedor.trim()) { toast.error("Indica el proveedor"); return; }
+    if (!proveedorId) { toast.error("Selecciona el proveedor"); return; }
     if (!fechaEntrega) { toast.error("Indica la fecha de entrega"); return; }
     if (!(parseFloat(total) >= 0)) { toast.error("Indica el total"); return; }
     if (!documentoFolio.trim()) { toast.error("Indica el número de documento"); return; }
@@ -173,15 +198,16 @@ function HeaderForm({ restaurantId, proveedores, onCreated }: { restaurantId: st
       const res = await fetch("/api/panel/bodega/compras", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId, proveedorNombre: proveedor, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
+          restaurantId, proveedorId, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
           totalDeclarado: total, metodoPago, estadoPago, documentoTipo, documentoFolio, comentarios, fotoUrl, fotoPagoUrl,
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
       const total0 = parseFloat(total) || 0;
+      const provNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? null;
       onCreated({
-        id: d.compra.id, fecha: fechaEntrega, fechaSolicitud: fechaSolicitud || null, proveedorNombre: proveedor,
+        id: d.compra.id, fecha: fechaEntrega, fechaSolicitud: fechaSolicitud || null, proveedorNombre: provNombre,
         documentoTipo, documentoFolio, totalDeclarado: total0, metodoPago, estadoPago, comentarios: comentarios || null,
         fotoUrl, fotoPagoUrl, _count: { lineas: 0 },
       }, total0);
@@ -195,20 +221,22 @@ function HeaderForm({ restaurantId, proveedores, onCreated }: { restaurantId: st
         <span style={labelSpan}>Proveedor</span>
         {creandoProv ? (
           <div style={{ display: "flex", gap: 8 }}>
-            <input value={proveedor} onChange={(e) => setProveedor(e.target.value)} placeholder="Nombre del proveedor" style={{ ...inputStyle, flex: 1 }} autoFocus />
+            <input value={nuevoProvNombre} onChange={(e) => setNuevoProvNombre(e.target.value)} placeholder="Nombre del nuevo proveedor" style={{ ...inputStyle, flex: 1 }} autoFocus onKeyDown={(e) => { if (e.key === "Enter") crearProveedor(); }} />
+            <button type="button" onClick={crearProveedor} disabled={creandoProvBusy} style={{ flexShrink: 0, padding: "0 14px", borderRadius: 9, border: "none", background: ACCENT, color: "#0b3b36", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 800 }}>{creandoProvBusy ? "…" : "Crear"}</button>
             {proveedores.length > 0 && (
-              <button type="button" onClick={() => { setCreandoProv(false); setProveedor(""); }} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
+              <button type="button" onClick={() => { setCreandoProv(false); setNuevoProvNombre(""); }} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
             )}
           </div>
         ) : (
           <div style={{ display: "flex", gap: 8 }}>
-            <select value={proveedor} onChange={(e) => setProveedor(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+            <select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
               <option value="">Selecciona un proveedor</option>
-              {proveedores.map((p) => <option key={p} value={p}>{p}</option>)}
+              {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select>
-            <button type="button" onClick={() => { setCreandoProv(true); setProveedor(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={15} /> Nuevo</button>
+            <button type="button" onClick={() => { setCreandoProv(true); setNuevoProvNombre(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={15} /> Nuevo</button>
           </div>
         )}
+        <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "5px 0 0" }}>Los datos completos del proveedor (RUT, teléfono, etc.) se editan en el módulo Proveedores.</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>

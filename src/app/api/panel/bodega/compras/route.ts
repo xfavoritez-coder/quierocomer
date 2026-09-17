@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaEnabled: true } });
   if (!r?.bodegaEnabled) return NextResponse.json({ error: "Bodega no habilitada" }, { status: 404 });
 
-  const proveedorNombre = (body?.proveedorNombre || "").toString().trim();
+  const proveedorId = (body?.proveedorId || "").toString();
   const fechaEntrega = body?.fechaEntrega ? new Date(body.fechaEntrega) : null;
   const documentoTipo = (body?.documentoTipo || "").toString();
   const documentoFolio = (body?.documentoFolio || "").toString().trim();
@@ -62,7 +62,11 @@ export async function POST(req: NextRequest) {
   const metodoPago = (body?.metodoPago || "").toString();
   const estadoPago = (body?.estadoPago || "").toString();
 
-  if (!proveedorNombre) return NextResponse.json({ error: "El proveedor es obligatorio" }, { status: 400 });
+  if (!proveedorId) return NextResponse.json({ error: "Selecciona un proveedor" }, { status: 400 });
+  const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
+  const prov = await prisma.proveedor.findUnique({ where: { id: proveedorId }, select: { id: true, bodegaId: true, nombre: true } });
+  if (!prov) return NextResponse.json({ error: "Proveedor no encontrado" }, { status: 404 });
+  if (!rest?.bodegaId || prov.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!fechaEntrega || isNaN(fechaEntrega.getTime())) return NextResponse.json({ error: "La fecha de entrega es obligatoria" }, { status: 400 });
   if (!Number.isFinite(total) || total < 0) return NextResponse.json({ error: "El total es obligatorio" }, { status: 400 });
   if (!TIPOS.includes(documentoTipo)) return NextResponse.json({ error: "Tipo de documento inválido" }, { status: 400 });
@@ -80,7 +84,8 @@ export async function POST(req: NextRequest) {
       confirmadaAt: new Date(),
       fecha: fechaEntrega,
       fechaSolicitud: fechaSolicitud && !isNaN(fechaSolicitud.getTime()) ? fechaSolicitud : null,
-      proveedorNombre,
+      proveedorId: prov.id,
+      proveedorNombre: prov.nombre,
       documentoTipo,
       documentoFolio,
       totalDeclarado: total,

@@ -2183,8 +2183,30 @@ model Bodega {
   updatedAt   DateTime     @updatedAt
   restaurants Restaurant[]
   insumos     Insumo[]
+  proveedores Proveedor[]
 
   @@index([ownerId])
+}
+
+// Proveedor de la bodega (compartido entre locales que comparten la bodega).
+// Las compras (facturas) se enlazan a su proveedor.
+model Proveedor {
+  id          String   @id @default(cuid())
+  bodegaId    String
+  nombre      String
+  razonSocial String?
+  telefono    String?
+  correo      String?
+  direccion   String?
+  web         String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bodega      Bodega   @relation(fields: [bodegaId], references: [id])
+  compras     Compra[]
+
+  @@unique([bodegaId, nombre])
+  @@index([bodegaId])
 }
 
 model Insumo {
@@ -2221,7 +2243,9 @@ model Compra {
   restaurantId    String
   fecha           DateTime
   origen          CompraOrigen
-  proveedorNombre String?
+  proveedorId     String?       // proveedor del módulo Proveedores
+  proveedor       Proveedor?    @relation(fields: [proveedorId], references: [id])
+  proveedorNombre String?       // nombre denormalizado (para mostrar sin join)
   documentoTipo   String?       // "factura" | "boleta" | "nota_entrega"
   documentoFolio  String?       // número de documento
   totalDeclarado  Float?        // total de la factura
@@ -2240,6 +2264,7 @@ model Compra {
 
   @@index([restaurantId])
   @@index([restaurantId, fecha])
+  @@index([proveedorId])
 }
 
 model CompraLinea {
