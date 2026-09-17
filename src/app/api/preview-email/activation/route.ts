@@ -83,7 +83,6 @@ export function activationWelcomeEmailHtml({
 <a href="${clickTrackUrl || qrLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:17px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
   Ver mi página de local →
 </a>
-<p style="font-size:12px;color:#b8a888;margin:10px 0 0">${qrLink}</p>
 </td></tr>
 </table>
 
@@ -126,6 +125,16 @@ ${credentials ? `
     <td style="padding:12px 14px">
       <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contraseña</p>
       <p style="font-size:14px;color:#111;font-weight:700;margin:0;font-family:monospace,sans-serif;letter-spacing:0.5px">${credentials.password}</p>
+    </td>
+  </tr>
+  </table>
+
+  <!-- Public page link -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu página de local</p>
+      <a href="${clickTrackUrl || qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
     </td>
   </tr>
   </table>
