@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Plus, X, ImagePlus, Loader2 } from "lucide-react";
+import { Plus, X, ImagePlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { clp, fmtStock, UNIDAD_LABEL } from "@/lib/bodega/labels";
 
@@ -197,14 +197,16 @@ export function CompraHeaderForm({ restaurantId, existing, onCreated, onSaved }:
 
 // ─── Editor de insumos de una factura (pantalla aparte) ───
 export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantId: string; compraId: string; totalDoc: number | null }) {
-  type Linea = { id: string; cantidad: number; unidad: string; precioNeto: number | null; iva: number | null; precioTotal: number; insumo: { id: string; nombre: string } };
+  type Linea = { id: string; cantidad: number; unidad: string; precioNeto: number | null; iva: number | null; precioTotal: number; precioUnitario: number; insumo: { id: string; nombre: string } };
   const [insumos, setInsumos] = useState<InsumoLite[]>([]);
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [insumoId, setInsumoId] = useState("");
   const [cantidad, setCantidad] = useState("");
-  const [neto, setNeto] = useState("");
-  const [bruto, setBruto] = useState("");
+  const [neto, setNeto] = useState("");   // precio UNITARIO sin IVA
+  const [bruto, setBruto] = useState(""); // precio UNITARIO con IVA
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -214,38 +216,68 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
 
   const onNeto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setNeto(v); const n = parseFloat(v); setBruto(Number.isFinite(n) ? String(Math.round(n * 1.19)) : ""); };
   const onBruto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setBruto(v); const b = parseFloat(v); setNeto(Number.isFinite(b) ? String(Math.round(b / 1.19)) : ""); };
-  const netoN = parseFloat(neto), brutoN = parseFloat(bruto);
-  const ivaN = Number.isFinite(netoN) && Number.isFinite(brutoN) ? Math.round(brutoN - netoN) : null;
+  const cantN = parseFloat(cantidad), netoN = parseFloat(neto), brutoN = parseFloat(bruto);
+  const totalLinea = Number.isFinite(cantN) && Number.isFinite(brutoN) ? cantN * brutoN : null;
 
   const sumLineas = lineas.reduce((s, l) => s + l.precioTotal, 0);
   const diff = totalDoc != null ? totalDoc - sumLineas : null;
 
-  async function agregar() {
-    if (!insumoId) { toast.error("Elige un insumo"); return; }
-    if (!(parseFloat(cantidad) > 0)) { toast.error("Cantidad inválida"); return; }
+  function resetForm() { setEditingId(null); setInsumoId(""); setCantidad(""); setNeto(""); setBruto(""); }
+  function startEdit(l: Linea) {
+    setEditingId(l.id); setInsumoId(l.insumo.id); setCantidad(String(l.cantidad));
+    setNeto(String(l.precioUnitario)); setBruto(String(Math.round(l.precioUnitario * 1.19)));
+  }
+
+  async function guardar() {
+    if (!editingId && !insumoId) { toast.error("Elige un insumo"); return; }
+    if (!(cantN > 0)) { toast.error("Cantidad inválida"); return; }
     if (!(netoN >= 0)) { toast.error("Ingresa el precio sin IVA"); return; }
     setAdding(true);
     try {
-      const res = await fetch(`/api/panel/bodega/compras/${compraId}/lineas`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, insumoId, cantidad, precioNeto: neto, precioTotal: bruto }) });
+      const url = editingId ? `/api/panel/bodega/compras/${compraId}/lineas/${editingId}` : `/api/panel/bodega/compras/${compraId}/lineas`;
+      const body = editingId
+        ? { restaurantId, cantidad, precioUnitNeto: neto, precioUnitConIva: bruto }
+        : { restaurantId, insumoId, cantidad, precioUnitNeto: neto, precioUnitConIva: bruto };
+      const res = await fetch(url, { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) { toast.error(d.error || "No se pudo agregar"); setAdding(false); return; }
-      setLineas((prev) => [...prev, d.linea]);
-      const st = d.insumo?.stockActual;
-      toast.success(st != null ? `Agregado — stock ahora ${fmtStock(st)}` : "Insumo agregado a la factura");
-      setInsumoId(""); setCantidad(""); setNeto(""); setBruto("");
+      if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setAdding(false); return; }
+      if (editingId) { setLineas((prev) => prev.map((x) => x.id === editingId ? d.linea : x)); toast.success("Línea actualizada"); }
+      else { setLineas((prev) => [...prev, d.linea]); const st = d.insumo?.stockActual; toast.success(st != null ? `Agregado — stock ahora ${fmtStock(st)}` : "Insumo agregado"); }
+      resetForm();
     } catch { toast.error("Error de conexión"); }
     setAdding(false);
   }
+
+  async function eliminar(l: Linea) {
+    if (!confirm(`¿Quitar "${l.insumo.nombre}" de la factura? Se revierte su stock.`)) return;
+    setDeletingId(l.id);
+    try {
+      const res = await fetch(`/api/panel/bodega/compras/${compraId}/lineas/${l.id}?restaurantId=${restaurantId}`, { method: "DELETE" });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo eliminar"); setDeletingId(null); return; }
+      setLineas((prev) => prev.filter((x) => x.id !== l.id));
+      if (editingId === l.id) resetForm();
+      toast.success("Línea eliminada");
+    } catch { toast.error("Error de conexión"); }
+    setDeletingId(null);
+  }
+
+  const editInsumoNombre = editingId ? lineas.find((l) => l.id === editingId)?.insumo.nombre : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {lineas.length > 0 && (
         <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
           {lineas.map((l) => (
-            <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
-              <span style={{ flex: 1, fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)" }}>{l.insumo.nombre}</span>
-              <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>{fmtStock(l.cantidad)} {UNIDAD_LABEL[l.unidad] || ""}</span>
-              <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", minWidth: 72, textAlign: "right" }}>{clp(l.precioTotal)}</span>
+            <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 8px 6px 12px", borderBottom: "1px solid var(--adm-card-border)", background: editingId === l.id ? "rgba(45,212,191,0.08)" : "transparent" }}>
+              <button onClick={() => startEdit(l)} style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0, background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: "4px 0" }}>
+                <span style={{ flex: 1, minWidth: 0, fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.insumo.nombre}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{fmtStock(l.cantidad)} {UNIDAD_LABEL[l.unidad] || ""}</span>
+                <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", minWidth: 66, textAlign: "right" }}>{clp(l.precioTotal)}</span>
+              </button>
+              <button onClick={() => eliminar(l)} disabled={deletingId === l.id} title="Quitar" aria-label="Quitar" style={{ flexShrink: 0, width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.7 }}>
+                {deletingId === l.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              </button>
             </div>
           ))}
           <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 12px", background: "var(--adm-hover)" }}>
@@ -260,29 +292,34 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
         </p>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 14 }}>
-        <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Agregar insumo</p>
-        <select value={insumoId} onChange={(e) => setInsumoId(e.target.value)} style={inputStyle}>
-          <option value="">Elige un insumo…</option>
-          {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-        </select>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, border: `1px solid ${editingId ? "rgba(45,212,191,0.4)" : "var(--adm-card-border)"}`, borderRadius: 12, padding: 14 }}>
+        <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{editingId ? `Editar: ${editInsumoNombre || ""}` : "Agregar insumo"}</p>
+        {!editingId && (
+          <select value={insumoId} onChange={(e) => setInsumoId(e.target.value)} style={inputStyle}>
+            <option value="">Elige un insumo…</option>
+            {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+          </select>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Cantidad</span>
             <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} /></div>
-          <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio sin IVA</span>
-            <input value={neto} onChange={(e) => onNeto(e.target.value)} inputMode="decimal" placeholder="$ neto" style={inputStyle} /></div>
+          <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio unit. sin IVA</span>
+            <input value={neto} onChange={(e) => onNeto(e.target.value)} inputMode="decimal" placeholder="$ c/u" style={inputStyle} /></div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "end" }}>
+          <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio unit. con IVA</span>
+            <input value={bruto} onChange={(e) => onBruto(e.target.value)} inputMode="decimal" placeholder="$ c/u" style={inputStyle} /></div>
           <div style={{ padding: "9px 10px", background: "var(--adm-hover)", borderRadius: 9, minWidth: 0 }}>
-            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>IVA (19%)</span>
-            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)" }}>{ivaN != null ? clp(ivaN) : "—"}</span>
+            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>Total línea (con IVA)</span>
+            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: ACCENT }}>{totalLinea != null ? clp(totalLinea) : "—"}</span>
           </div>
-          <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio con IVA</span>
-            <input value={bruto} onChange={(e) => onBruto(e.target.value)} inputMode="decimal" placeholder="$ con IVA" style={inputStyle} /></div>
         </div>
-        <button onClick={agregar} disabled={adding} style={{ padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.88rem", fontWeight: 800, cursor: adding ? "default" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          {adding ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Agregar a la factura
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={guardar} disabled={adding} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.88rem", fontWeight: 800, cursor: adding ? "default" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            {adding ? <Loader2 size={15} className="animate-spin" /> : editingId ? <Pencil size={15} /> : <Plus size={15} />} {editingId ? "Guardar cambios" : "Agregar a la factura"}
+          </button>
+          {editingId && <button onClick={resetForm} style={{ flexShrink: 0, padding: "0 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Cancelar</button>}
+        </div>
         {insumos.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>No tienes insumos. Créalos en Stock Bodega primero.</p>}
       </div>
     </div>

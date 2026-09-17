@@ -47,14 +47,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const restaurantId = (body?.restaurantId || "").toString();
   const insumoId = (body?.insumoId || "").toString();
   const cantidad = Number(body?.cantidad);
-  const precioNeto = Number(body?.precioNeto);
-  // Precio con IVA: si no viene, se calcula desde el neto (19%).
-  const precioTotal = body?.precioTotal === "" || body?.precioTotal == null ? Math.round(precioNeto * 1.19) : Number(body.precioTotal);
+  // Precios UNITARIOS: el total de la línea es cantidad × precio unitario.
+  const precioUnitNeto = Number(body?.precioUnitNeto);
+  const precioUnitConIva = body?.precioUnitConIva === "" || body?.precioUnitConIva == null ? Math.round(precioUnitNeto * 1.19) : Number(body.precioUnitConIva);
 
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!Number.isFinite(cantidad) || cantidad <= 0) return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
-  if (!Number.isFinite(precioNeto) || precioNeto < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
-  if (!Number.isFinite(precioTotal) || precioTotal < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
+  if (!Number.isFinite(precioUnitNeto) || precioUnitNeto < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
+  if (!Number.isFinite(precioUnitConIva) || precioUnitConIva < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
+  const precioNeto = precioUnitNeto * cantidad;
+  const precioTotal = precioUnitConIva * cantidad;
   const iva = precioTotal - precioNeto;
 
   const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
@@ -64,8 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const precioUnitario = precioNeto / cantidad;    // costo unitario neto
-  const precioUnitConIva = precioTotal / cantidad; // costo unitario con IVA (lote FIFO)
+  const precioUnitario = precioUnitNeto; // costo unitario neto
 
   const { linea, insumo: insumoActualizado } = await prisma.$transaction(async (tx) => {
     const linea = await tx.compraLinea.create({
