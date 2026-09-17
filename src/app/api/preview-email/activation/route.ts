@@ -139,7 +139,6 @@ ${credentials ? `
   </tr>
   </table>
 
-  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso al panel.</p>
 </td></tr>
 </table>
 ` : ""}
