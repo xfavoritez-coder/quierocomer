@@ -39,7 +39,26 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ bodegaId, insumos });
+  // Valor y precio CON IVA a partir de los lotes FIFO (promedio ponderado del stock).
+  const ids = insumos.map((i) => i.id);
+  const lotes = ids.length
+    ? await prisma.insumoLote.findMany({ where: { insumoId: { in: ids }, cantidadRestante: { gt: 0 } }, select: { insumoId: true, cantidadRestante: true, precioUnitario: true } })
+    : [];
+  const agg = new Map<string, { valor: number; qty: number }>();
+  for (const l of lotes) {
+    const a = agg.get(l.insumoId) || { valor: 0, qty: 0 };
+    a.valor += l.cantidadRestante * l.precioUnitario;
+    a.qty += l.cantidadRestante;
+    agg.set(l.insumoId, a);
+  }
+  const enriched = insumos.map((i) => {
+    const a = agg.get(i.id);
+    const valorStock = a?.valor ?? 0;
+    const precioConIva = i.stockActual > 0 && valorStock > 0 ? valorStock / i.stockActual : null;
+    return { ...i, valorStock, precioConIva };
+  });
+
+  return NextResponse.json({ bodegaId, insumos: enriched });
 }
 
 /** POST /api/panel/bodega/insumos → crea un insumo en la bodega del local. */

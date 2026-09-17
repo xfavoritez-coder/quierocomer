@@ -37,14 +37,36 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!Number.isFinite(cantidad) || cantidad <= 0) return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
 
   const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
-  const insumo = await prisma.insumo.findUnique({ where: { id }, select: { bodegaId: true, stockActual: true } });
+  const insumo = await prisma.insumo.findUnique({ where: { id }, select: { bodegaId: true, stockActual: true, ultimoPrecio: true } });
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const nuevo = tipo === "ingreso"
-    ? insumo.stockActual + cantidad
-    : Math.max(0, insumo.stockActual - cantidad);
+  if (tipo === "ingreso") {
+    // Precio del lote (con IVA). Si no viene, usa el último lote o el último precio conocido.
+    let precio = Number(body?.precioConIva);
+    if (!Number.isFinite(precio) || precio < 0) {
+      const last = await prisma.insumoLote.findFirst({ where: { insumoId: id }, orderBy: { createdAt: "desc" }, select: { precioUnitario: true } });
+      precio = last?.precioUnitario ?? (insumo.ultimoPrecio != null ? insumo.ultimoPrecio * 1.19 : 0);
+    }
+    const actualizado = await prisma.$transaction(async (tx) => {
+      await tx.insumoLote.create({ data: { insumoId: id, fecha: new Date(), precioUnitario: precio, cantidadInicial: cantidad, cantidadRestante: cantidad } });
+      return tx.insumo.update({ where: { id }, data: { stockActual: { increment: cantidad } }, select: INSUMO_SELECT });
+    });
+    return NextResponse.json({ insumo: actualizado });
+  }
 
-  const actualizado = await prisma.insumo.update({ where: { id }, data: { stockActual: nuevo }, select: INSUMO_SELECT });
+  // Retiro: consume los lotes más antiguos primero (FIFO).
+  const actualizado = await prisma.$transaction(async (tx) => {
+    const lotes = await tx.insumoLote.findMany({ where: { insumoId: id, cantidadRestante: { gt: 0 } }, orderBy: [{ fecha: "asc" }, { createdAt: "asc" }] });
+    let restante = cantidad;
+    for (const lote of lotes) {
+      if (restante <= 0) break;
+      const take = Math.min(lote.cantidadRestante, restante);
+      await tx.insumoLote.update({ where: { id: lote.id }, data: { cantidadRestante: lote.cantidadRestante - take } });
+      restante -= take;
+    }
+    const consumido = cantidad - restante; // lo realmente descontado (si no había suficiente)
+    return tx.insumo.update({ where: { id }, data: { stockActual: { decrement: consumido } }, select: INSUMO_SELECT });
+  });
   return NextResponse.json({ insumo: actualizado });
 }

@@ -2239,10 +2239,28 @@ model Insumo {
   compraLineas CompraLinea[]
   conteoLineas ConteoLinea[]
   mermaLineas  MermaLinea[]
+  lotes        InsumoLote[]
 
   @@unique([bodegaId, nombre])
   @@index([bodegaId])
   @@index([maestroId])
+}
+
+// Lote de costo (capa FIFO): cada ingreso de stock crea un lote con su precio
+// CON IVA. Los retiros consumen del lote más antiguo primero (cantidadRestante).
+model InsumoLote {
+  id               String   @id @default(cuid())
+  insumoId         String
+  compraLineaId    String?  // línea de compra que lo originó (si aplica)
+  fecha            DateTime // fecha para el orden FIFO (fecha de la compra o del ingreso)
+  precioUnitario   Float    // precio unitario CON IVA
+  cantidadInicial  Float
+  cantidadRestante Float
+  createdAt        DateTime @default(now())
+  insumo           Insumo   @relation(fields: [insumoId], references: [id])
+
+  @@index([insumoId])
+  @@index([insumoId, fecha])
 }
 
 model Compra {

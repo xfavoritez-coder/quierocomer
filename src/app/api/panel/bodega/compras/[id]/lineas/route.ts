@@ -58,28 +58,34 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const iva = precioTotal - precioNeto;
 
   const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
-  const compra = await prisma.compra.findUnique({ where: { id }, select: { bodegaId: true } });
+  const compra = await prisma.compra.findUnique({ where: { id }, select: { bodegaId: true, fecha: true } });
   if (!compra || !rest?.bodegaId || compra.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
   const insumo = await prisma.insumo.findUnique({ where: { id: insumoId }, select: { bodegaId: true, nombre: true, unidadBase: true } });
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const precioUnitario = precioNeto / cantidad; // costo unitario neto
+  const precioUnitario = precioNeto / cantidad;    // costo unitario neto
+  const precioUnitConIva = precioTotal / cantidad; // costo unitario con IVA (lote FIFO)
 
-  const [linea, insumoActualizado] = await prisma.$transaction([
-    prisma.compraLinea.create({
+  const { linea, insumo: insumoActualizado } = await prisma.$transaction(async (tx) => {
+    const linea = await tx.compraLinea.create({
       data: {
         compraId: id, insumoId, textoOriginal: insumo.nombre,
         cantidad, unidad: insumo.unidadBase, precioNeto, iva, precioTotal, precioUnitario,
       },
       select: { id: true, cantidad: true, unidad: true, precioNeto: true, iva: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } },
-    }),
-    prisma.insumo.update({
+    });
+    // Lote FIFO con el precio CON IVA
+    await tx.insumoLote.create({
+      data: { insumoId, compraLineaId: linea.id, fecha: compra.fecha, precioUnitario: precioUnitConIva, cantidadInicial: cantidad, cantidadRestante: cantidad },
+    });
+    const insumo2 = await tx.insumo.update({
       where: { id: insumoId },
       data: { stockActual: { increment: cantidad }, ultimoPrecio: precioUnitario },
       select: INSUMO_SELECT,
-    }),
-  ]);
+    });
+    return { linea, insumo: insumo2 };
+  });
 
   return NextResponse.json({ linea, insumo: insumoActualizado });
 }

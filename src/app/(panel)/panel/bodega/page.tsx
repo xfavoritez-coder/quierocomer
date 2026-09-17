@@ -19,6 +19,8 @@ type Insumo = {
   precioConRendimiento: number | null;
   familia: string | null;
   stockActual: number;
+  valorStock: number;
+  precioConIva: number | null;
   fotoUrl: string | null;
   esCritico: boolean;
 };
@@ -56,13 +58,13 @@ export default function BodegaHome() {
       .filter((c) => byCat[c]?.length)
       .map((c) => {
         const items = byCat[c];
-        const total = items.reduce((s, it) => s + it.stockActual * (it.ultimoPrecio || 0), 0);
+        const total = items.reduce((s, it) => s + (it.valorStock || 0), 0);
         return { categoria: c, items, total };
       });
   }, [insumos]);
 
   const totalGeneral = useMemo(
-    () => insumos.reduce((s, it) => s + it.stockActual * (it.ultimoPrecio || 0), 0),
+    () => insumos.reduce((s, it) => s + (it.valorStock || 0), 0),
     [insumos]
   );
 
@@ -164,7 +166,7 @@ function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
           {it.nombre}{it.esCritico ? " ★" : ""}
         </p>
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0 }}>
-          {it.ultimoPrecio ? clp(it.ultimoPrecio) : "—"} · Stock: <strong style={{ color: "var(--adm-text)" }}>{fmtStock(it.stockActual)}</strong> {UNIDAD_LABEL[it.unidadBase] || ""}
+          {it.precioConIva ? clp(it.precioConIva) : "—"} · Stock: <strong style={{ color: "var(--adm-text)" }}>{fmtStock(it.stockActual)}</strong> {UNIDAD_LABEL[it.unidadBase] || ""}
         </p>
       </div>
     </div>
@@ -190,7 +192,17 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
   // Movimiento de stock (ingreso / retiro)
   const [moveType, setMoveType] = useState<"ingreso" | "retiro" | null>(null);
   const [moveQty, setMoveQty] = useState("");
+  const [movePrecio, setMovePrecio] = useState("");
   const [moving, setMoving] = useState(false);
+
+  type Lote = { id: string; fecha: string; precioUnitario: number; cantidadInicial: number; cantidadRestante: number };
+  const [lotes, setLotes] = useState<Lote[]>([]);
+  const cargarLotes = () => {
+    if (!editing) return;
+    fetch(`/api/panel/bodega/insumos/${insumo!.id}/lotes?restaurantId=${restaurantId}`)
+      .then((r) => r.ok ? r.json() : null).then((d) => { if (d?.lotes) setLotes(d.lotes); }).catch(() => {});
+  };
+  useEffect(() => { cargarLotes(); /* eslint-disable-next-line */ }, []);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -259,15 +271,16 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
     if (!Number.isFinite(qty) || qty <= 0) { toast.error("Cantidad inválida"); return; }
     setMoving(true);
     try {
+      const payload: any = { restaurantId, tipo: moveType, cantidad: qty };
+      if (moveType === "ingreso" && parseFloat(movePrecio) >= 0) payload.precioConIva = movePrecio;
       const res = await fetch(`/api/panel/bodega/insumos/${insumo!.id}/movimiento`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, tipo: moveType, cantidad: qty }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo registrar"); setMoving(false); return; }
       toast.success(moveType === "ingreso" ? "Ingreso registrado" : "Retiro registrado");
-      onChange(d.insumo); setCur(d.insumo);
-      setMoving(false); setMoveType(null); setMoveQty("");
+      onChange(d.insumo); setCur(d.insumo); cargarLotes();
+      setMoving(false); setMoveType(null); setMoveQty(""); setMovePrecio("");
     } catch { toast.error("Error de conexión"); setMoving(false); }
   }
 
@@ -379,16 +392,22 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
 
             {/* Datos */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--adm-card-border)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
-              <DataCell label="Precio" value={cur.ultimoPrecio != null ? clp(cur.ultimoPrecio) : "—"} />
+              <DataCell label="Precio prom. con IVA" value={cur.precioConIva != null ? clp(cur.precioConIva) : "—"} />
               <DataCell label="Rendimiento" value={cur.rendimiento != null ? `${fmtStock(cur.rendimiento)}%` : "—"} />
               <DataCell label="Precio con rendimiento" value={cur.precioConRendimiento != null ? clp(cur.precioConRendimiento) : "—"} />
-              <DataCell label="Valor en stock" value={clp(cur.stockActual * (cur.ultimoPrecio || 0))} />
+              <DataCell label="Valor en stock" value={clp(cur.valorStock || 0)} />
             </div>
 
             {/* Ingreso / Retiro */}
             {moveType ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10, background: moveType === "ingreso" ? "rgba(45,212,191,0.08)" : "rgba(245,158,11,0.08)", border: `1px solid ${moveType === "ingreso" ? "rgba(45,212,191,0.3)" : "rgba(245,158,11,0.3)"}`, borderRadius: 12, padding: 12 }}>
-                <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)" }}>{moveType === "ingreso" ? "Ingreso de stock" : "Retiro de stock"}</span>
+                <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)" }}>{moveType === "ingreso" ? "Ingreso de stock" : "Retiro de stock (FIFO)"}</span>
+                {moveType === "ingreso" && (
+                  <input value={movePrecio} onChange={(e) => setMovePrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Precio con IVA (unitario)" style={inputStyle} />
+                )}
+                {moveType === "retiro" && (
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Se descuenta del lote más antiguo primero.</span>
+                )}
                 <div style={{ display: "flex", gap: 8 }}>
                   <input value={moveQty} onChange={(e) => setMoveQty(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder={`Cantidad (${UNIDAD_LABEL[cur.unidadBase] || "un"})`} style={{ ...inputStyle, flex: 1 }} autoFocus />
                   <button onClick={confirmarMovimiento} disabled={moving} style={{ flexShrink: 0, padding: "0 16px", borderRadius: 9, border: "none", background: moveType === "ingreso" ? ACCENT : "#f59e0b", color: moveType === "ingreso" ? "#0b3b36" : "#3a2a00", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: "pointer", opacity: moving ? 0.7 : 1 }}>
@@ -399,12 +418,28 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
                   <ArrowDownToLine size={17} /> Ingreso
                 </button>
-                <button onClick={() => { setMoveType("retiro"); setMoveQty(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                <button onClick={() => { setMoveType("retiro"); setMoveQty(""); setMovePrecio(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
                   <ArrowUpFromLine size={17} /> Retiro
                 </button>
+              </div>
+            )}
+
+            {/* Lotes en stock (FIFO) */}
+            {lotes.length > 0 && (
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px" }}>Lotes en stock (se consumen de arriba hacia abajo)</p>
+                <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+                  {lotes.map((l) => (
+                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>{fmtStock(l.cantidadRestante)} {UNIDAD_LABEL[cur.unidadBase] || ""}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(l.fecha).toLocaleDateString("es-CL")}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: ACCENT, marginLeft: "auto" }}>{clp(l.precioUnitario)} c/u</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
