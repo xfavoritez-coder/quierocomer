@@ -28,8 +28,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const compra = await prisma.compra.findUnique({ where: { id }, select: { restaurantId: true } });
-  if (!compra || compra.restaurantId !== restaurantId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
+  const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
+  const compra = await prisma.compra.findUnique({ where: { id }, select: { bodegaId: true } });
+  if (!compra || !rest?.bodegaId || compra.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
 
   const lineas = await prisma.compraLinea.findMany({
     where: { compraId: id },
@@ -57,8 +58,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const iva = precioTotal - precioNeto;
 
   const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
-  const compra = await prisma.compra.findUnique({ where: { id }, select: { restaurantId: true } });
-  if (!compra || compra.restaurantId !== restaurantId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
+  const compra = await prisma.compra.findUnique({ where: { id }, select: { bodegaId: true } });
+  if (!compra || !rest?.bodegaId || compra.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 });
   const insumo = await prisma.insumo.findUnique({ where: { id: insumoId }, select: { bodegaId: true, nombre: true, unidadBase: true } });
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });

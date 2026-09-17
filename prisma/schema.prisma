@@ -2184,6 +2184,7 @@ model Bodega {
   restaurants Restaurant[]
   insumos     Insumo[]
   proveedores Proveedor[]
+  compras     Compra[]
 
   @@index([ownerId])
 }
@@ -2246,7 +2247,9 @@ model Insumo {
 
 model Compra {
   id              String        @id @default(cuid())
-  restaurantId    String
+  restaurantId    String        // local que registró la compra (auditoría)
+  bodegaId        String?       // bodega dueña de la compra (compartida entre locales)
+  bodega          Bodega?       @relation(fields: [bodegaId], references: [id])
   fecha           DateTime
   origen          CompraOrigen
   proveedorId     String?       // proveedor del módulo Proveedores
@@ -2271,6 +2274,8 @@ model Compra {
   @@index([restaurantId])
   @@index([restaurantId, fecha])
   @@index([proveedorId])
+  @@index([bodegaId])
+  @@index([bodegaId, fecha])
 }
 
 model CompraLinea {

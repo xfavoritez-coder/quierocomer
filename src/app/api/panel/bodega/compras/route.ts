@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureOwnBodega } from "@/lib/bodega/provision";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +27,9 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
+  const bodegaId = await ensureOwnBodega(restaurantId);
   const compras = await prisma.compra.findMany({
-    where: { restaurantId },
+    where: { bodegaId },
     orderBy: { fecha: "desc" },
     take: 200,
     select: {
@@ -79,6 +81,7 @@ export async function POST(req: NextRequest) {
   const compra = await prisma.compra.create({
     data: {
       restaurantId,
+      bodegaId: prov.bodegaId,
       origen: "MANUAL",
       estado: "CONFIRMADA",
       confirmadaAt: new Date(),
