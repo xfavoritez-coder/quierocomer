@@ -45,6 +45,14 @@ export default function BodegaHome() {
   const [conIva, setConIva] = useState(true);
   const f = conIva ? 1 : 1 / 1.19; // factor de display: con IVA o neto
 
+  const reloadInsumos = () => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.insumos) setInsumos(d.insumos); })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
@@ -168,6 +176,7 @@ export default function BodegaHome() {
           insumo={editing}
           ingresoManual={ingresoManual}
           conIva={conIva}
+          onReload={reloadInsumos}
           onClose={() => { setModalOpen(false); setEditing(null); }}
           onChange={(it) => setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it])}
           onDeleted={(delId) => setInsumos((prev) => prev.filter((x) => x.id !== delId))}
@@ -198,7 +207,7 @@ function InsumoCard({ it, conIva, onOpen }: { it: Insumo; conIva: boolean; onOpe
   );
 }
 
-function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; ingresoManual: boolean; conIva: boolean; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, onClose, onChange, onDeleted, onReload }: { restaurantId: string; familias: string[]; insumo: Insumo | null; ingresoManual: boolean; conIva: boolean; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void; onReload: () => void }) {
   const priceF = conIva ? 1 : 1 / 1.19;
   const editing = !!insumo;
   const router = useRouter();
@@ -277,8 +286,8 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
-      onChange(d.insumo);
-      if (editing) { toast.success("Insumo actualizado"); setCur(d.insumo); setSaving(false); setMode("view"); }
+      onChange(d.insumo); onReload();
+      if (editing) { toast.success("Insumo actualizado"); setCur({ ...(cur as Insumo), ...d.insumo }); setSaving(false); setMode("view"); }
       else { toast.success("Insumo agregado"); onClose(); }
     } catch { toast.error("Error de conexión"); setSaving(false); }
   }
@@ -310,7 +319,9 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo registrar"); setMoving(false); return; }
       toast.success(moveType === "ingreso" ? "Ingreso registrado" : (d.costoConsumido != null ? `Retiro registrado — costo ${clp(Math.round(d.costoConsumido))}` : "Retiro registrado"));
-      onChange(d.insumo); setCur(d.insumo); cargarLotes();
+      onReload(); // refresca la lista de Stock (precios/valor recalculados)
+      if (moveType === "retiro") { onClose(); return; } // tras un retiro: cerrar y volver a Stock
+      setCur({ ...(cur as Insumo), ...d.insumo }); cargarLotes();
       setMoving(false); setMoveType(null); setMoveQty(""); setMovePrecio(""); setMoveMotivo("consumo"); setMoveNota("");
     } catch { toast.error("Error de conexión"); setMoving(false); }
   }

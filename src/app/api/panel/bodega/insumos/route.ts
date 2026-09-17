@@ -54,7 +54,11 @@ export async function GET(req: NextRequest) {
   const enriched = insumos.map((i) => {
     const a = agg.get(i.id);
     const valorStock = a?.valor ?? 0;
-    const precioConIva = i.stockActual > 0 && valorStock > 0 ? valorStock / i.stockActual : null;
+    // Precio con IVA: promedio ponderado de los lotes; si no hay stock/lotes,
+    // usa el último precio conocido (neto→con IVA) para no dejar el precio en blanco.
+    const precioConIva = i.stockActual > 0 && valorStock > 0
+      ? valorStock / i.stockActual
+      : (i.ultimoPrecio != null ? i.ultimoPrecio * 1.19 : null);
     return { ...i, valorStock, precioConIva };
   });
 
