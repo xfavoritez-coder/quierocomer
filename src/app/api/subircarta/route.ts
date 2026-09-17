@@ -130,6 +130,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Require a real domain (must contain a dot — "https://yyyyy" is syntactically valid but not a real URL)
+    if (!parsedUrl.hostname.includes(".")) {
+      return NextResponse.json(
+        { error: "Ingresa una URL completa con dominio válido (ej: https://tusitio.cl/carta)." },
+        { status: 400 },
+      );
+    }
+
     // Block provider homepages — user likely forgot to paste their specific menu URL
     const path = parsedUrl.pathname.replace(/\/+$/, "");
     if (!path || path === "") {

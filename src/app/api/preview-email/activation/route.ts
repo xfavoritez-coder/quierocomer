@@ -9,7 +9,7 @@ export async function GET() {
     ownerName: "Daniel",
     restaurantName: "Sushi Master",
     panelLink: "https://quierocomer.com/api/panel/demo-auth?slug=sushi-master",
-    qrLink: "https://quierocomer.com/qr/sushi-master",
+    qrLink: "https://quierocomer.com/sushi-master",
     credentials: { email: "dc_daniel_carrizo@hotmail.com", password: "sushi-master2026" },
     planLabel: "Premium (7 dias gratis)",
   });
@@ -33,7 +33,11 @@ export function activationWelcomeEmailHtml({
   planLabel?: string;
 }): string {
 
-  const qrGenerarLink = qrLink.replace("/qr/", "/qr/generar/");
+  // qrLink = "${baseUrl}/${slug}" — build QR generator path
+  const _urlParts = qrLink.split("/");
+  const _slug = _urlParts[_urlParts.length - 1].split("?")[0];
+  const _baseUrl = _urlParts.slice(0, 3).join("/");
+  const qrGenerarLink = `${_baseUrl}/qr/generar/${_slug}`;
 
   return `<html><head>
 <meta charset="UTF-8">
@@ -70,7 +74,7 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:16px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${ownerName}, tu carta de <strong style="color:#111">${restaurantName}</strong> ya esta creada.
+  ${ownerName}, tu página de <strong style="color:#111">${restaurantName}</strong> ya está creada.
 </p>
 </td></tr>
 </table>
@@ -86,6 +90,16 @@ ${credentials ? `
     <tr><td style="text-align:center;padding-bottom:16px">
       <p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:800;color:#92400e;margin:0">Tus datos de acceso</p>
     </td></tr>
+  </table>
+
+  <!-- Panel link — primero -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
+      <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.com/panel</a>
+    </td>
+  </tr>
   </table>
 
   <!-- Email -->
@@ -108,46 +122,17 @@ ${credentials ? `
   </tr>
   </table>
 
-  <!-- Public link -->
+  <!-- Public page link -->
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
   <tr>
     <td style="padding:12px 14px">
-      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta</p>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu página de local</p>
       <a href="${qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
     </td>
   </tr>
   </table>
 
-  <!-- Panel link -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
-  <tr>
-    <td style="padding:12px 14px">
-      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu panel</p>
-      <a href="${panelLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">quierocomer.com/panel</a>
-    </td>
-  </tr>
-  </table>
-
   <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso al panel.</p>
-</td></tr>
-</table>
-
-<!-- CTAs after credentials -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:12px">
-  <a href="${panelLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-    Entrar a mi panel →
-  </a>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:12px">
-  <a href="${qrLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    Ver cómo se ve mi carta
-  </a>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:22px">
-  <a href="${qrGenerarLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
-    📱 Ver mi código QR
-  </a>
 </td></tr>
 </table>
 ` : ""}
@@ -182,7 +167,10 @@ ${credentials ? `
     </td>
     <td style="vertical-align:top;padding-left:4px">
       <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Comparte tu QR cuando estés listo</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Descarga e imprime el código QR para las mesas de tu local.</p>
+      <p style="margin:0 0 10px;color:#836a47;font-size:13px;line-height:1.45">Descarga e imprime el código QR para las mesas de tu local.</p>
+      <a href="${qrGenerarLink}" style="display:inline-block;background:#fffaf1;color:#6c4d22;font-size:13px;font-weight:800;padding:10px 16px;border-radius:12px;text-decoration:none;border:1px solid #ead7b7">
+        📱 Ver mi código QR
+      </a>
     </td>
   </tr>
   </table>

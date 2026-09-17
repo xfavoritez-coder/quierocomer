@@ -936,8 +936,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
         const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
         // Use ownerViewToken from the restaurant record (works for both new and existing demo)
-        const activeToken = existingRest?.isDemo ? (existingRest as any).ownerViewToken : ownerViewToken;
-        const qrLink = activeToken ? `${baseUrl}/${restaurant.slug}?ot=${activeToken}` : `${baseUrl}/${restaurant.slug}`;
+        const qrLink = `${baseUrl}/${restaurant.slug}`;
         const password = `${restaurant.slug}2026`;
 
         await sendAdminEmail({
