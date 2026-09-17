@@ -180,8 +180,8 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
   const fileRef = useRef<HTMLInputElement>(null);
 
   const precioNum = parseFloat(precio);
-  const rendNum = parseFloat(rendimiento);
-  const precioConRend = Number.isFinite(precioNum) && Number.isFinite(rendNum) ? precioNum * rendNum : null;
+  const rendNum = parseFloat(rendimiento); // porcentaje: 90 = 90%
+  const precioConRend = Number.isFinite(precioNum) && Number.isFinite(rendNum) && rendNum > 0 ? precioNum / (rendNum / 100) : null;
 
   async function uploadFoto(file: File) {
     setUploading(true);
@@ -254,8 +254,8 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
               <input value={precio} onChange={(e) => setPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} />
             </label>
             <label style={{ display: "block" }}>
-              <span style={labelSpan}>Rendimiento</span>
-              <input value={rendimiento} onChange={(e) => setRendimiento(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Ej: 1" style={inputStyle} />
+              <span style={labelSpan}>Rendimiento (%)</span>
+              <input value={rendimiento} onChange={(e) => setRendimiento(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Ej: 90" style={inputStyle} />
             </label>
           </div>
 

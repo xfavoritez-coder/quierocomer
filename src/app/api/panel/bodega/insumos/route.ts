@@ -61,8 +61,9 @@ export async function POST(req: NextRequest) {
   const precio = body?.ultimoPrecio === null || body?.ultimoPrecio === undefined || body?.ultimoPrecio === "" ? NaN : Number(body.ultimoPrecio);
   const rendimiento = body?.rendimiento === null || body?.rendimiento === undefined || body?.rendimiento === "" ? NaN : Number(body.rendimiento);
   if (!Number.isFinite(precio) || precio < 0) return NextResponse.json({ error: "El precio es obligatorio" }, { status: 400 });
+  // Rendimiento en porcentaje (90 = 90%). Precio con rendimiento = precio / (rendimiento/100).
   if (!Number.isFinite(rendimiento) || rendimiento <= 0) return NextResponse.json({ error: "El rendimiento es obligatorio" }, { status: 400 });
-  const precioConRendimiento = precio * rendimiento;
+  const precioConRendimiento = precio / (rendimiento / 100);
 
   const familia = typeof body?.familia === "string" && body.familia.trim() ? body.familia.trim().slice(0, 80) : null;
   const stock = Number(body?.stockInicial) || 0;
