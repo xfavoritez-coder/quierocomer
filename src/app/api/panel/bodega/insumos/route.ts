@@ -42,14 +42,22 @@ export async function GET(req: NextRequest) {
   // Valor y precio CON IVA a partir de los lotes FIFO (promedio ponderado del stock).
   const ids = insumos.map((i) => i.id);
   const lotes = ids.length
-    ? await prisma.insumoLote.findMany({ where: { insumoId: { in: ids }, cantidadRestante: { gt: 0 } }, select: { insumoId: true, cantidadRestante: true, precioUnitario: true } })
+    ? await prisma.insumoLote.findMany({
+        where: { insumoId: { in: ids }, cantidadRestante: { gt: 0 } },
+        orderBy: { fecha: "asc" },
+        select: { id: true, insumoId: true, fecha: true, cantidadInicial: true, cantidadRestante: true, precioUnitario: true },
+      })
     : [];
   const agg = new Map<string, { valor: number; qty: number }>();
+  const lotesByInsumo = new Map<string, typeof lotes>();
   for (const l of lotes) {
     const a = agg.get(l.insumoId) || { valor: 0, qty: 0 };
     a.valor += l.cantidadRestante * l.precioUnitario;
     a.qty += l.cantidadRestante;
     agg.set(l.insumoId, a);
+    const arr = lotesByInsumo.get(l.insumoId) || [];
+    arr.push(l);
+    lotesByInsumo.set(l.insumoId, arr);
   }
   const enriched = insumos.map((i) => {
     const a = agg.get(i.id);
@@ -59,7 +67,9 @@ export async function GET(req: NextRequest) {
     const precioConIva = i.stockActual > 0 && valorStock > 0
       ? valorStock / i.stockActual
       : (i.ultimoPrecio != null ? i.ultimoPrecio * 1.19 : null);
-    return { ...i, valorStock, precioConIva };
+    // Lotes FIFO ya cargados (sin cambiar el insumoId → lo omitimos del payload por fila).
+    const lotesRow = (lotesByInsumo.get(i.id) || []).map(({ insumoId, ...rest }) => rest);
+    return { ...i, valorStock, precioConIva, lotes: lotesRow };
   });
 
   return NextResponse.json({ bodegaId, insumos: enriched });

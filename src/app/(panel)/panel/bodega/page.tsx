@@ -24,6 +24,7 @@ type Insumo = {
   precioConIva: number | null;
   fotoUrl: string | null;
   esCritico: boolean;
+  lotes?: { id: string; fecha: string; precioUnitario: number; cantidadInicial: number; cantidadRestante: number }[];
 };
 
 const inputStyle: React.CSSProperties = {
@@ -235,13 +236,13 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
   const [moving, setMoving] = useState(false);
 
   type Lote = { id: string; fecha: string; precioUnitario: number; cantidadInicial: number; cantidadRestante: number };
-  const [lotes, setLotes] = useState<Lote[]>([]);
+  // Los lotes ya vienen en el listado de Stock → el modal los muestra al instante (sin pop-in).
+  const [lotes, setLotes] = useState<Lote[]>(insumo?.lotes ?? []);
   const cargarLotes = () => {
     if (!editing) return;
     fetch(`/api/panel/bodega/insumos/${insumo!.id}/lotes?restaurantId=${restaurantId}`)
       .then((r) => r.ok ? r.json() : null).then((d) => { if (d?.lotes) setLotes(d.lotes); }).catch(() => {});
   };
-  useEffect(() => { cargarLotes(); /* eslint-disable-next-line */ }, []);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
