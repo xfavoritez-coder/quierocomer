@@ -18,7 +18,8 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
 }
 
 const SELECT = {
-  id: true, nombre: true, razonSocial: true, telefono: true, correo: true, direccion: true, web: true,
+  id: true, nombre: true, rut: true, razonSocial: true, telefono: true, correo: true, direccion: true, web: true,
+  ctaNombre: true, ctaRut: true, ctaBanco: true, ctaTipo: true, ctaNumero: true,
   _count: { select: { compras: true } },
 } as const;
 
@@ -58,8 +59,11 @@ export async function POST(req: NextRequest) {
     const proveedor = await prisma.proveedor.create({
       data: {
         bodegaId, nombre,
+        rut: clean(body?.rut),
         razonSocial: clean(body?.razonSocial), telefono: clean(body?.telefono),
         correo: clean(body?.correo), direccion: clean(body?.direccion), web: clean(body?.web),
+        ctaNombre: clean(body?.ctaNombre), ctaRut: clean(body?.ctaRut), ctaBanco: clean(body?.ctaBanco),
+        ctaTipo: clean(body?.ctaTipo), ctaNumero: clean(body?.ctaNumero),
       },
       select: SELECT,
     });

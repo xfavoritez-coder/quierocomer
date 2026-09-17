@@ -2194,11 +2194,17 @@ model Proveedor {
   id          String   @id @default(cuid())
   bodegaId    String
   nombre      String
+  rut         String?
   razonSocial String?
   telefono    String?
   correo      String?
   direccion   String?
   web         String?
+  ctaNombre   String?  // datos bancarios: nombre del titular
+  ctaRut      String?  // rut del titular
+  ctaBanco    String?  // banco
+  ctaTipo     String?  // tipo de cuenta (corriente, vista, ahorro, rut)
+  ctaNumero   String?  // número de cuenta
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

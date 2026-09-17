@@ -27,7 +27,8 @@ async function authProveedor(req: NextRequest, proveedorId: string, restaurantId
 }
 
 const DETAIL_SELECT = {
-  id: true, nombre: true, razonSocial: true, telefono: true, correo: true, direccion: true, web: true,
+  id: true, nombre: true, rut: true, razonSocial: true, telefono: true, correo: true, direccion: true, web: true,
+  ctaNombre: true, ctaRut: true, ctaBanco: true, ctaTipo: true, ctaNumero: true,
   _count: { select: { compras: true } },
 } as const;
 
@@ -67,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!body.nombre.trim()) return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
     data.nombre = body.nombre.trim();
   }
-  for (const f of ["razonSocial", "telefono", "correo", "direccion", "web"]) {
+  for (const f of ["rut", "razonSocial", "telefono", "correo", "direccion", "web", "ctaNombre", "ctaRut", "ctaBanco", "ctaTipo", "ctaNumero"]) {
     if (body[f] !== undefined) data[f] = clean(body[f]);
   }
 

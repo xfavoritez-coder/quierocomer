@@ -9,10 +9,13 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#2dd4bf";
 const TIPO_DOC: Record<string, string> = { factura: "Factura", boleta: "Boleta", nota_entrega: "Nota de entrega" };
+const TIPO_CTA: Record<string, string> = { corriente: "Cuenta corriente", vista: "Cuenta vista", ahorro: "Cuenta de ahorro", rut: "Cuenta RUT" };
 
 type Proveedor = {
-  id: string; nombre: string; razonSocial: string | null; telefono: string | null;
-  correo: string | null; direccion: string | null; web: string | null; _count: { compras: number };
+  id: string; nombre: string; rut: string | null; razonSocial: string | null; telefono: string | null;
+  correo: string | null; direccion: string | null; web: string | null;
+  ctaNombre: string | null; ctaRut: string | null; ctaBanco: string | null; ctaTipo: string | null; ctaNumero: string | null;
+  _count: { compras: number };
 };
 type CompraLite = { id: string; fecha: string; documentoTipo: string | null; documentoFolio: string | null; totalDeclarado: number | null; estadoPago: string | null; _count: { lineas: number } };
 
@@ -101,11 +104,17 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
   const [totalComprado, setTotalComprado] = useState(0);
 
   const [nombre, setNombre] = useState(proveedor?.nombre ?? "");
+  const [rut, setRut] = useState(proveedor?.rut ?? "");
   const [razonSocial, setRazonSocial] = useState(proveedor?.razonSocial ?? "");
   const [telefono, setTelefono] = useState(proveedor?.telefono ?? "");
   const [correo, setCorreo] = useState(proveedor?.correo ?? "");
   const [direccion, setDireccion] = useState(proveedor?.direccion ?? "");
   const [web, setWeb] = useState(proveedor?.web ?? "");
+  const [ctaNombre, setCtaNombre] = useState(proveedor?.ctaNombre ?? "");
+  const [ctaRut, setCtaRut] = useState(proveedor?.ctaRut ?? "");
+  const [ctaBanco, setCtaBanco] = useState(proveedor?.ctaBanco ?? "");
+  const [ctaTipo, setCtaTipo] = useState(proveedor?.ctaTipo ?? "");
+  const [ctaNumero, setCtaNumero] = useState(proveedor?.ctaNumero ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -117,8 +126,9 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
 
   function startEdit() {
     const p = cur;
-    setNombre(p?.nombre ?? ""); setRazonSocial(p?.razonSocial ?? ""); setTelefono(p?.telefono ?? "");
+    setNombre(p?.nombre ?? ""); setRut(p?.rut ?? ""); setRazonSocial(p?.razonSocial ?? ""); setTelefono(p?.telefono ?? "");
     setCorreo(p?.correo ?? ""); setDireccion(p?.direccion ?? ""); setWeb(p?.web ?? "");
+    setCtaNombre(p?.ctaNombre ?? ""); setCtaRut(p?.ctaRut ?? ""); setCtaBanco(p?.ctaBanco ?? ""); setCtaTipo(p?.ctaTipo ?? ""); setCtaNumero(p?.ctaNumero ?? "");
     setMode("edit");
   }
 
@@ -126,7 +136,7 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
     if (!nombre.trim()) { toast.error("El nombre es obligatorio"); return; }
     setSaving(true);
     try {
-      const payload = { restaurantId, nombre, razonSocial, telefono, correo, direccion, web };
+      const payload = { restaurantId, nombre, rut, razonSocial, telefono, correo, direccion, web, ctaNombre, ctaRut, ctaBanco, ctaTipo, ctaNumero };
       const res = await fetch(editingExisting ? `/api/panel/bodega/proveedores/${proveedor!.id}` : "/api/panel/bodega/proveedores", {
         method: editingExisting ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
@@ -164,6 +174,8 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <label style={{ display: "block" }}><span style={labelSpan}>Nombre</span>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Distribuidora Sur" style={inputStyle} autoFocus /></label>
+            <label style={{ display: "block" }}><span style={labelSpan}>RUT</span>
+              <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="Ej: 76.123.456-7" style={inputStyle} /></label>
             <label style={{ display: "block" }}><span style={labelSpan}>Razón social</span>
               <input value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} placeholder="Ej: Comercial Sur SpA" style={inputStyle} /></label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -177,6 +189,33 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
             <label style={{ display: "block" }}><span style={labelSpan}>Página web</span>
               <input value={web} onChange={(e) => setWeb(e.target.value)} placeholder="www…" style={inputStyle} /></label>
 
+            {/* Datos de cuenta bancaria */}
+            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 12, marginTop: 2 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 10px" }}>Datos de cuenta bancaria</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <label style={{ display: "block" }}><span style={labelSpan}>Nombre del titular</span>
+                    <input value={ctaNombre} onChange={(e) => setCtaNombre(e.target.value)} placeholder="Titular de la cuenta" style={inputStyle} /></label>
+                  <label style={{ display: "block" }}><span style={labelSpan}>RUT del titular</span>
+                    <input value={ctaRut} onChange={(e) => setCtaRut(e.target.value)} placeholder="Ej: 12.345.678-9" style={inputStyle} /></label>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <label style={{ display: "block" }}><span style={labelSpan}>Banco</span>
+                    <input value={ctaBanco} onChange={(e) => setCtaBanco(e.target.value)} placeholder="Ej: Banco Estado" style={inputStyle} /></label>
+                  <label style={{ display: "block" }}><span style={labelSpan}>Tipo de cuenta</span>
+                    <select value={ctaTipo} onChange={(e) => setCtaTipo(e.target.value)} style={inputStyle}>
+                      <option value="">—</option>
+                      <option value="corriente">Cuenta corriente</option>
+                      <option value="vista">Cuenta vista</option>
+                      <option value="ahorro">Cuenta de ahorro</option>
+                      <option value="rut">Cuenta RUT</option>
+                    </select></label>
+                </div>
+                <label style={{ display: "block" }}><span style={labelSpan}>Número de cuenta</span>
+                  <input value={ctaNumero} onChange={(e) => setCtaNumero(e.target.value)} placeholder="N° de cuenta" style={inputStyle} /></label>
+              </div>
+            </div>
+
             <button onClick={submit} disabled={saving} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Guardando…" : editingExisting ? "Guardar cambios" : "Crear proveedor"}
             </button>
@@ -188,6 +227,7 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 2px" }}>{cur.nombre}</p>
+              {cur.rut && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>RUT {cur.rut}</p>}
               {cur.razonSocial && <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>{cur.razonSocial}</p>}
             </div>
 
@@ -200,6 +240,20 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
                 <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos de contacto. Usa Editar para completarlos.</p>
               )}
             </div>
+
+            {/* Cuenta bancaria */}
+            {(cur.ctaNombre || cur.ctaRut || cur.ctaBanco || cur.ctaTipo || cur.ctaNumero) && (
+              <div style={{ background: "var(--adm-hover)", borderRadius: 12, padding: "12px 14px" }}>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 8px" }}>Cuenta bancaria</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 6, columnGap: 12 }}>
+                  {cur.ctaNombre && <BankItem label="Titular" value={cur.ctaNombre} />}
+                  {cur.ctaRut && <BankItem label="RUT" value={cur.ctaRut} />}
+                  {cur.ctaBanco && <BankItem label="Banco" value={cur.ctaBanco} />}
+                  {cur.ctaTipo && <BankItem label="Tipo" value={TIPO_CTA[cur.ctaTipo] || cur.ctaTipo} />}
+                  {cur.ctaNumero && <BankItem label="N° de cuenta" value={cur.ctaNumero} />}
+                </div>
+              </div>
+            )}
 
             {/* Facturas del proveedor */}
             <div>
@@ -234,6 +288,15 @@ function ProveedorModal({ restaurantId, proveedor, onClose, onSaved, onDeleted }
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function BankItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p style={{ fontFamily: FB, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 1px" }}>{label}</p>
+      <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, wordBreak: "break-word" }}>{value}</p>
     </div>
   );
 }
