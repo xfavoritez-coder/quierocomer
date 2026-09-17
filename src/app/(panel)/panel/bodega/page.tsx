@@ -434,6 +434,9 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
               <button onClick={startEdit} title="Editar insumo" aria-label="Editar insumo" style={{ flexShrink: 0, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}>
                 <Pencil size={16} />
               </button>
+              <button onClick={eliminar} disabled={deleting} title="Eliminar insumo" aria-label="Eliminar insumo" style={{ flexShrink: 0, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: deleting ? 0.5 : 1 }}>
+                <Trash2 size={16} />
+              </button>
             </div>
 
             {/* Stock destacado */}
@@ -510,13 +513,6 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
                 </button>
               </div>
             )}
-
-            {/* Eliminar discreto */}
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
-              <button onClick={eliminar} disabled={deleting} title="Eliminar insumo" aria-label="Eliminar insumo" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.74rem", cursor: "pointer", opacity: 0.65 }}>
-                <Trash2 size={13} /> Eliminar insumo
-              </button>
-            </div>
           </div>
         ) : null}
       </div>
