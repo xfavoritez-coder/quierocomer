@@ -125,20 +125,25 @@ export default function PanelDashboard() {
   useEffect(() => {
     if (sessionLoading || !selectedRestaurantId) return;
 
-    // Demo restaurants: fetch real dishes, use fake numbers
+    // Demo restaurants: show real dish names but zero stats (not fake inflated numbers)
     if (isDemo) {
       fetch(`/api/admin/locales/${selectedRestaurantId}/dishes-demo`)
         .then(r => r.json())
         .then(d => {
           if (d.dishes?.length) {
-            const fakeCounts = [42, 35, 28, 22, 18];
-            const dishes = d.dishes.slice(0, 5).map((dd: any, i: number) => ({ name: dd.name, count: fakeCounts[i], photo: dd.photo }));
-            setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: dishes[0].photo } });
+            setData({
+              visitsThisWeek: 0, visitsDelta: null, avgSessionDuration: 0, genioUsedThisWeek: 0,
+              topDishesViewed: d.dishes.slice(0, 5).map((dd: any) => ({ name: dd.name, count: 0, photo: dd.photo })),
+              topSearches: [], starDish: null,
+              todayScans: 0, todayWaiterCalls: 0, todayWaiterPending: 0,
+              lastScanAt: null, todayUniqueVisitors: 0, todayBirthdays: 0,
+              weekBirthdays: 0, genioToday: 0, todayAvgDuration: 0,
+            });
           } else {
             setNoDishes(true);
           }
         })
-        .catch(() => { setData(DEMO_DATA); })
+        .catch(() => { setNoDishes(true); })
         .finally(() => setLoading(false));
       return;
     }
@@ -570,9 +575,49 @@ export default function PanelDashboard() {
         );
       })()}
 
+      {/* ═══ Banner "primeras estadísticas" para locales demo/nuevos ═══ */}
+      {!isStore && isDemo && (
+        <div style={{
+          position: "relative", overflow: "hidden",
+          background: "linear-gradient(135deg, rgba(244,166,35,0.10) 0%, rgba(244,166,35,0.03) 100%)",
+          border: `1px solid ${GOLD}30`,
+          borderRadius: 20, padding: "20px 20px", marginBottom: 20,
+        }}>
+          <div style={{ position: "absolute", top: -30, right: -30, width: 130, height: 130, borderRadius: "50%", background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: "none" }} />
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ fontSize: "2rem", lineHeight: 1, flexShrink: 0 }}>📊</div>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px" }}>
+                Tus estadísticas aparecerán aquí
+              </p>
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+                Cuando los clientes empiecen a escanear tu carta verás cuántas visitas tienes, qué platos miran más y mucho más — todo en tiempo real.
+              </p>
+              {/* Preview stats skeleton */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {[
+                  { label: "Visitas esta semana", icon: "👥" },
+                  { label: "Plato más visto", icon: "⭐" },
+                  { label: "Tiempo en carta", icon: "⏱" },
+                ].map((s, i) => (
+                  <div key={i} style={{
+                    background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+                    borderRadius: 12, padding: "10px 12px",
+                  }}>
+                    <div style={{ fontSize: "1rem", marginBottom: 6 }}>{s.icon}</div>
+                    <div style={{ height: 18, background: "var(--adm-card-border)", borderRadius: 6, marginBottom: 5, opacity: 0.5 }} />
+                    <div style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text3)", lineHeight: 1.3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ ESTA SEMANA (solo restaurantes) ═══ */}
-      {!isStore && <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>}
-      {!isStore && (
+      {!isStore && !isDemo && <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>}
+      {!isStore && !isDemo && (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -594,7 +639,7 @@ export default function PanelDashboard() {
       )}
 
       {/* ═══ Plato estrella ═══ */}
-      {!isStore && data.starDish && (
+      {!isStore && !isDemo && data.starDish && (
         <div style={{
           display: "flex", alignItems: "center", gap: 14,
           border: "1px solid var(--adm-card-border)", borderRadius: 25, padding: 14, marginBottom: 18,
@@ -615,7 +660,7 @@ export default function PanelDashboard() {
       )}
 
       {/* ═══ Top 5 más vistos ═══ */}
-      {!isStore && topViewed.length > 0 && (
+      {!isStore && !isDemo && topViewed.length > 0 && (
         <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
           <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>{t("home_top_viewed")}</h3>
           {topViewed.slice(0, 5).map((d, i) => (
@@ -633,7 +678,7 @@ export default function PanelDashboard() {
 
 
       {/* ═══ Filtros usados ═══ */}
-      {!isStore && data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
+      {!isStore && !isDemo && data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
         const fu = data.filterUsage!;
         const total = fu.popular + fu.estrella + fu.veggie + (fu["gluten-free"] || 0);
         const filters = [
