@@ -12,6 +12,7 @@ interface AdminRestaurant {
   plan?: string | null;
   hasToteat?: boolean;
   ecommerceEnabled?: boolean;
+  bodegaEnabled?: boolean;
 }
 
 export interface AdminSession {

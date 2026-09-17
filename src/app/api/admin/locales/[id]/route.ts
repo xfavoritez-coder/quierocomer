@@ -123,6 +123,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),
         // Pilar Ecommerce (super-admin only): flag maestro + credenciales de pasarelas/couriers
         ...(body.ecommerceEnabled !== undefined && { ecommerceEnabled: body.ecommerceEnabled }),
+        // Pilar Bodega (super-admin only): flag maestro
+        ...(body.bodegaEnabled !== undefined && { bodegaEnabled: body.bodegaEnabled }),
         ...(body.ecommerceConfig !== undefined && { ecommerceConfig: body.ecommerceConfig }),
         ...(body.ecommerceDeliveryZones !== undefined && { ecommerceDeliveryZones: body.ecommerceDeliveryZones }),
         ...(body.ecommerceDeliveryConfig !== undefined && { ecommerceDeliveryConfig: body.ecommerceDeliveryConfig }),

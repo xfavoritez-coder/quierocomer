@@ -43,6 +43,7 @@ interface Restaurant {
   toteatLastSyncAt: string | null;
   isDemo: boolean;
   ecommerceEnabled?: boolean;
+  bodegaEnabled?: boolean;
   ecommerceConfig?: EcommerceConfig | null;
   ecommerceDeliveryZones?: unknown;
   ecommerceDeliveryConfig?: unknown;
@@ -687,6 +688,41 @@ export default function AdminLocales() {
               <div style={{
                 width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
                 left: selected.ecommerceEnabled ? 23 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              }} />
+            </button>
+          </div>
+        )}
+
+        {/* Toggle Bodega (pilar de inventario) — super-admin only */}
+        {isSuper && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.bodegaEnabled ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.bodegaEnabled ? "rgba(45,212,191,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.bodegaEnabled ? "#2dd4bf" : "white", margin: 0 }}>📦 Bodega <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#2dd4bf", background: "rgba(45,212,191,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+                {selected.bodegaEnabled
+                  ? "Pilar activo · el menú Bodega aparece en el panel del local"
+                  : "Gestión de inventario e insumos — solo locales de prueba"}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const val = !selected.bodegaEnabled;
+                const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bodegaEnabled: val }) });
+                if (!res.ok) { alert("Error al actualizar"); return; }
+                const u = { ...selected, bodegaEnabled: val };
+                setSelected(u);
+                setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+                background: selected.bodegaEnabled ? "#2dd4bf" : "rgba(255,255,255,0.15)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+                left: selected.bodegaEnabled ? 23 : 3, transition: "left 0.2s",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
               }} />
             </button>

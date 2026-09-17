@@ -401,6 +401,8 @@ model Restaurant {
   ecommerceAccompaniments    Json?                    // acompañamientos del checkout (por monto y por producto)
   ecommerceCoupons           Json?                    // cupones de descuento del ecommerce
   ecommerceHours             Json?                    // horario de atención del ecommerce (tienda abierta/cerrada)
+  // Pilar Bodega (gestión de inventario/insumos) — activado solo por superadmin.
+  bodegaEnabled              Boolean                  @default(false)
   insumos                    Insumo[]
   compras                    Compra[]
   conteos                    Conteo[]
