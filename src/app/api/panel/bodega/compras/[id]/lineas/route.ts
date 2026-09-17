@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, runInTx } from "@/lib/prisma";
+import { recomputeStock } from "@/lib/bodega/movimientos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,11 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await tx.insumoLote.create({
       data: { insumoId, compraLineaId: linea.id, fecha: compra.fecha, precioUnitario: precioUnitConIva, cantidadInicial: cantidad, cantidadRestante: cantidad },
     });
-    const insumo2 = await tx.insumo.update({
-      where: { id: insumoId },
-      data: { stockActual: { increment: cantidad }, ultimoPrecio: precioUnitario },
-      select: INSUMO_SELECT,
-    });
+    const insumo2 = await recomputeStock(tx, insumoId, { ultimoPrecio: precioUnitario });
     return { linea, insumo: insumo2 };
   });
 

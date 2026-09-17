@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, runInTx } from "@/lib/prisma";
+import { recomputeStock } from "@/lib/bodega/movimientos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,12 +60,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const precioNeto = precioUnitNeto * cantidad;
   const precioTotal = precioUnitConIva * cantidad;
   const iva = precioTotal - precioNeto;
-  const delta = cantidad - linea.cantidad;
 
   const insumo = await runInTx(async (tx) => {
     await tx.compraLinea.update({ where: { id: lineaId }, data: { cantidad, precioNeto, iva, precioTotal, precioUnitario: precioUnitNeto } });
     if (lote) await tx.insumoLote.update({ where: { id: lote.id }, data: { cantidadInicial: cantidad, cantidadRestante: cantidad, precioUnitario: precioUnitConIva } });
-    return tx.insumo.update({ where: { id: linea.insumoId! }, data: { stockActual: { increment: delta }, ultimoPrecio: precioUnitNeto }, select: INSUMO_SELECT });
+    return recomputeStock(tx, linea.insumoId!, { ultimoPrecio: precioUnitNeto });
   });
 
   const lineaAct = await prisma.compraLinea.findUnique({ where: { id: lineaId }, select: { id: true, cantidad: true, unidad: true, precioNeto: true, iva: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } } });
@@ -80,14 +80,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { linea, lote } = auth;
 
   const insumo = await runInTx(async (tx) => {
-    // Revierte del stock lo que aún queda del lote (lo ya consumido no vuelve).
-    const revertir = lote ? lote.cantidadRestante : 0;
+    // Borra el lote y recalcula stock = Σ lotes (lo ya consumido no vuelve).
     if (lote) await tx.insumoLote.delete({ where: { id: lote.id } });
     await tx.compraLinea.delete({ where: { id: lineaId } });
-    if (linea.insumoId && revertir > 0) {
-      return tx.insumo.update({ where: { id: linea.insumoId }, data: { stockActual: { decrement: revertir } }, select: INSUMO_SELECT });
-    }
-    return linea.insumoId ? tx.insumo.findUnique({ where: { id: linea.insumoId }, select: INSUMO_SELECT }) : null;
+    return linea.insumoId ? recomputeStock(tx, linea.insumoId) : null;
   });
 
   return NextResponse.json({ ok: true, insumo });

@@ -4,6 +4,21 @@
 
 type Tx = any;
 
+const INSUMO_SELECT = {
+  id: true, nombre: true, categoria: true, unidadBase: true,
+  ultimoPrecio: true, rendimiento: true, precioConRendimiento: true, familia: true,
+  stockActual: true, fotoUrl: true, esCritico: true,
+} as const;
+
+/** Recalcula stockActual = Σ cantidadRestante de los lotes del insumo (fuente de
+ *  verdad única, a prueba de desincronización). Acepta campos extra (ej. ultimoPrecio).
+ *  Devuelve el insumo actualizado (INSUMO_SELECT). */
+export async function recomputeStock(tx: Tx, insumoId: string, extra: Record<string, any> = {}) {
+  const agg = await tx.insumoLote.aggregate({ where: { insumoId }, _sum: { cantidadRestante: true } });
+  const stock = agg._sum.cantidadRestante ?? 0;
+  return tx.insumo.update({ where: { id: insumoId }, data: { stockActual: stock, ...extra }, select: INSUMO_SELECT });
+}
+
 export type EfectoResultado = {
   cantidadAplicada: number;
   costoUnitario: number | null;
@@ -23,7 +38,7 @@ export async function aplicarEfecto(
     const lote = await tx.insumoLote.create({
       data: { insumoId, fecha: opts.fecha ?? new Date(), precioUnitario: precio, cantidadInicial: cantidad, cantidadRestante: cantidad },
     });
-    await tx.insumo.update({ where: { id: insumoId }, data: { stockActual: { increment: cantidad } } });
+    await recomputeStock(tx, insumoId);
     return { cantidadAplicada: cantidad, costoUnitario: precio, costoTotal: precio * cantidad, detalle: { loteId: lote.id } };
   }
 
@@ -40,7 +55,7 @@ export async function aplicarEfecto(
     restante -= take;
   }
   const consumido = cantidad - restante;
-  await tx.insumo.update({ where: { id: insumoId }, data: { stockActual: { decrement: consumido } } });
+  await recomputeStock(tx, insumoId);
   return { cantidadAplicada: consumido, costoUnitario: consumido > 0 ? costo / consumido : null, costoTotal: costo, detalle: { tomas } };
 }
 
@@ -61,7 +76,7 @@ export async function revertirEfecto(
         await tx.insumoLote.delete({ where: { id: loteId } });
       }
     }
-    await tx.insumo.update({ where: { id: mov.insumoId }, data: { stockActual: { decrement: mov.cantidad } } });
+    await recomputeStock(tx, mov.insumoId);
     return;
   }
 
@@ -77,5 +92,5 @@ export async function revertirEfecto(
       await tx.insumoLote.create({ data: { insumoId: mov.insumoId, fecha: new Date(), precioUnitario: t.precioUnitario ?? mov.costoUnitario ?? 0, cantidadInicial: t.cantidad, cantidadRestante: t.cantidad } });
     }
   }
-  await tx.insumo.update({ where: { id: mov.insumoId }, data: { stockActual: { increment: mov.cantidad } } });
+  await recomputeStock(tx, mov.insumoId);
 }
