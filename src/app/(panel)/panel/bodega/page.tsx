@@ -318,7 +318,13 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
       onChange(d.insumo); onReload();
-      if (editing) { toast.success("Insumo actualizado"); setCur({ ...(cur as Insumo), ...d.insumo }); setSaving(false); setMode("view"); }
+      if (editing) {
+        // Si cambió el estado (activo↔inactivo), el insumo sale del listado actual → cerrar modal.
+        const estadoCambio = activo !== (cur?.activo ?? true);
+        toast.success(activo ? "Insumo actualizado" : "Insumo desactivado");
+        if (estadoCambio) { onClose(); return; }
+        setCur({ ...(cur as Insumo), ...d.insumo }); setSaving(false); setMode("view");
+      }
       else { toast.success("Insumo agregado"); onClose(); }
     } catch { toast.error("Error de conexión"); setSaving(false); }
   }
