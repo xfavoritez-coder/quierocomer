@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, clp, fmtStock } from "@/lib/bodega/labels";
@@ -143,14 +143,8 @@ export default function BodegaHome() {
           familias={familias}
           insumo={editing}
           onClose={() => { setModalOpen(false); setEditing(null); }}
-          onSaved={(it) => {
-            setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it]);
-            setModalOpen(false); setEditing(null);
-          }}
-          onDeleted={(delId) => {
-            setInsumos((prev) => prev.filter((x) => x.id !== delId));
-            setModalOpen(false); setEditing(null);
-          }}
+          onChange={(it) => setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it])}
+          onDeleted={(delId) => setInsumos((prev) => prev.filter((x) => x.id !== delId))}
         />
       )}
     </div>
@@ -177,8 +171,11 @@ function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
   );
 }
 
-function InsumoModal({ restaurantId, familias, insumo, onClose, onSaved, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; onClose: () => void; onSaved: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
   const editing = !!insumo;
+  const [mode, setMode] = useState<"view" | "edit">(editing ? "view" : "edit");
+  const [cur, setCur] = useState<Insumo | null>(insumo); // datos actuales (se refrescan tras editar/mover)
+
   const [nombre, setNombre] = useState(insumo?.nombre ?? "");
   const [categoria, setCategoria] = useState(insumo?.categoria ?? "ABARROTE");
   const [precio, setPrecio] = useState(insumo?.ultimoPrecio != null ? String(insumo.ultimoPrecio) : "");
@@ -189,11 +186,27 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onSaved, onDelet
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Movimiento de stock (ingreso / retiro)
+  const [moveType, setMoveType] = useState<"ingreso" | "retiro" | null>(null);
+  const [moveQty, setMoveQty] = useState("");
+  const [moving, setMoving] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   const precioNum = parseFloat(precio);
   const rendNum = parseFloat(rendimiento); // porcentaje: 90 = 90%
   const precioConRend = Number.isFinite(precioNum) && Number.isFinite(rendNum) && rendNum > 0 ? precioNum / (rendNum / 100) : null;
+
+  // Al pasar a edición, recargar los inputs desde los datos actuales.
+  function startEdit() {
+    const it = cur;
+    setNombre(it?.nombre ?? ""); setCategoria(it?.categoria ?? "ABARROTE");
+    setPrecio(it?.ultimoPrecio != null ? String(it.ultimoPrecio) : "");
+    setRendimiento(it?.rendimiento != null ? String(it.rendimiento) : "");
+    setFamilia(it?.familia ?? ""); setCreandoFamilia(false); setFotoUrl(it?.fotoUrl ?? null);
+    setMode("edit");
+  }
 
   async function uploadFoto(file: File) {
     setUploading(true);
@@ -222,107 +235,200 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onSaved, onDelet
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
-      toast.success(editing ? "Insumo actualizado" : "Insumo agregado");
-      onSaved(d.insumo);
+      onChange(d.insumo);
+      if (editing) { toast.success("Insumo actualizado"); setCur(d.insumo); setSaving(false); setMode("view"); }
+      else { toast.success("Insumo agregado"); onClose(); }
     } catch { toast.error("Error de conexión"); setSaving(false); }
   }
 
   async function eliminar() {
     if (!editing) return;
-    if (!confirm(`¿Eliminar el insumo "${insumo!.nombre}"?`)) return;
+    if (!confirm(`¿Eliminar el insumo "${cur?.nombre}"? Esta acción no se puede deshacer.`)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/panel/bodega/insumos/${insumo!.id}?restaurantId=${restaurantId}`, { method: "DELETE" });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo eliminar"); setDeleting(false); return; }
       toast.success("Insumo eliminado");
-      onDeleted(insumo!.id);
+      onDeleted(insumo!.id); onClose();
     } catch { toast.error("Error de conexión"); setDeleting(false); }
   }
+
+  async function confirmarMovimiento() {
+    const qty = parseFloat(moveQty);
+    if (!Number.isFinite(qty) || qty <= 0) { toast.error("Cantidad inválida"); return; }
+    setMoving(true);
+    try {
+      const res = await fetch(`/api/panel/bodega/insumos/${insumo!.id}/movimiento`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, tipo: moveType, cantidad: qty }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo registrar"); setMoving(false); return; }
+      toast.success(moveType === "ingreso" ? "Ingreso registrado" : "Retiro registrado");
+      onChange(d.insumo); setCur(d.insumo);
+      setMoving(false); setMoveType(null); setMoveQty("");
+    } catch { toast.error("Error de conexión"); setMoving(false); }
+  }
+
+  const showForm = !editing || mode === "edit";
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, maxHeight: "90vh", overflowY: "auto", background: "var(--adm-bg, var(--adm-card))", borderRadius: 18, padding: 20, boxShadow: "0 12px 40px rgba(0,0,0,0.35)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{editing ? "Editar insumo" : "Nuevo insumo"}</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 8 }}>
+          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>
+            {!editing ? "Nuevo insumo" : mode === "edit" ? "Editar insumo" : "Detalle del insumo"}
+          </h3>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text3)" }}><X size={20} /></button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Foto */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button type="button" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 12, background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
-              {uploading ? <Loader2 size={20} className="animate-spin" color="var(--adm-text3)" />
-                : fotoUrl ? <img src={fotoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <ImagePlus size={22} color="var(--adm-text3)" />}
-            </button>
-            <div style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", lineHeight: 1.4 }}>
-              Foto del insumo (opcional).<br />Toca para subir.
+        {showForm ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Foto */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button type="button" onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: 12, background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
+                {uploading ? <Loader2 size={20} className="animate-spin" color="var(--adm-text3)" />
+                  : fotoUrl ? <img src={fotoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <ImagePlus size={22} color="var(--adm-text3)" />}
+              </button>
+              <div style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", lineHeight: 1.4 }}>
+                Foto del insumo (opcional).<br />Toca para subir.
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFoto(f); }} />
             </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFoto(f); }} />
-          </div>
 
-          <label style={{ display: "block" }}>
-            <span style={labelSpan}>Nombre</span>
-            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Aceite 5 litros" style={inputStyle} autoFocus />
-          </label>
-
-          <label style={{ display: "block" }}>
-            <span style={labelSpan}>Categoría</span>
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
-              {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
-            </select>
-          </label>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <label style={{ display: "block" }}>
-              <span style={labelSpan}>Precio</span>
-              <input value={precio} onChange={(e) => setPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} />
+              <span style={labelSpan}>Nombre</span>
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Aceite 5 litros" style={inputStyle} autoFocus />
             </label>
+
             <label style={{ display: "block" }}>
-              <span style={labelSpan}>Rendimiento (%)</span>
-              <input value={rendimiento} onChange={(e) => setRendimiento(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Ej: 90" style={inputStyle} />
+              <span style={labelSpan}>Categoría</span>
+              <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
+                {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+              </select>
             </label>
-          </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.28)", borderRadius: 9, padding: "10px 12px" }}>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)" }}>Precio con rendimiento</span>
-            <span style={{ fontFamily: FB, fontSize: "0.95rem", fontWeight: 800, color: ACCENT }}>{precioConRend !== null ? clp(precioConRend) : "—"}</span>
-          </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <label style={{ display: "block" }}>
+                <span style={labelSpan}>Precio</span>
+                <input value={precio} onChange={(e) => setPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} />
+              </label>
+              <label style={{ display: "block" }}>
+                <span style={labelSpan}>Rendimiento (%)</span>
+                <input value={rendimiento} onChange={(e) => setRendimiento(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Ej: 90" style={inputStyle} />
+              </label>
+            </div>
 
-          <div style={{ display: "block" }}>
-            <span style={labelSpan}>Familia <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(agrupa variantes, ej: “Aceite”)</span></span>
-            {creandoFamilia ? (
-              <div style={{ display: "flex", gap: 8 }}>
-                <input value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Nombre de la nueva familia" style={{ ...inputStyle, flex: 1 }} autoFocus />
-                <button type="button" onClick={() => { setCreandoFamilia(false); setFamilia(""); }} title="Cancelar" style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", fontFamily: F, fontWeight: 700 }}>
-                  <X size={16} />
-                </button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.28)", borderRadius: 9, padding: "10px 12px" }}>
+              <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)" }}>Precio con rendimiento</span>
+              <span style={{ fontFamily: FB, fontSize: "0.95rem", fontWeight: 800, color: ACCENT }}>{precioConRend !== null ? clp(precioConRend) : "—"}</span>
+            </div>
+
+            <div style={{ display: "block" }}>
+              <span style={labelSpan}>Familia <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(agrupa variantes, ej: “Aceite”)</span></span>
+              {creandoFamilia ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Nombre de la nueva familia" style={{ ...inputStyle, flex: 1 }} autoFocus />
+                  <button type="button" onClick={() => { setCreandoFamilia(false); setFamilia(""); }} title="Cancelar" style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", fontFamily: F, fontWeight: 700 }}>
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <select value={familia} onChange={(e) => setFamilia(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+                    <option value="">Sin familia</option>
+                    {familias.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <button type="button" onClick={() => { setCreandoFamilia(true); setFamilia(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <Plus size={15} /> Nueva
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button onClick={submit} disabled={saving || uploading} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
+              {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar insumo"}
+            </button>
+            {editing && (
+              <button onClick={() => setMode("view")} disabled={saving} style={{ padding: "9px 16px", borderRadius: 11, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                Cancelar
+              </button>
+            )}
+          </div>
+        ) : cur ? (
+          // ─── Ficha (solo lectura) ───
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 68, height: 68, borderRadius: 14, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {cur.fotoUrl ? <img src={cur.fotoUrl} alt={cur.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Package size={26} color="var(--adm-text3)" />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 2px", lineHeight: 1.2 }}>{cur.nombre}</p>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>{CATEGORIA_LABEL[cur.categoria] || cur.categoria}{cur.familia ? ` · ${cur.familia}` : ""}</p>
+              </div>
+            </div>
+
+            {/* Stock destacado */}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, background: "var(--adm-hover)", borderRadius: 12, padding: "12px 14px" }}>
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Stock actual</span>
+              <span style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", marginLeft: "auto" }}>{fmtStock(cur.stockActual)}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>{UNIDAD_LABEL[cur.unidadBase] || ""}</span>
+            </div>
+
+            {/* Datos */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--adm-card-border)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+              <DataCell label="Precio" value={cur.ultimoPrecio != null ? clp(cur.ultimoPrecio) : "—"} />
+              <DataCell label="Rendimiento" value={cur.rendimiento != null ? `${fmtStock(cur.rendimiento)}%` : "—"} />
+              <DataCell label="Precio con rendimiento" value={cur.precioConRendimiento != null ? clp(cur.precioConRendimiento) : "—"} />
+              <DataCell label="Valor en stock" value={clp(cur.stockActual * (cur.ultimoPrecio || 0))} />
+            </div>
+
+            {/* Ingreso / Retiro */}
+            {moveType ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, background: moveType === "ingreso" ? "rgba(45,212,191,0.08)" : "rgba(245,158,11,0.08)", border: `1px solid ${moveType === "ingreso" ? "rgba(45,212,191,0.3)" : "rgba(245,158,11,0.3)"}`, borderRadius: 12, padding: 12 }}>
+                <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)" }}>{moveType === "ingreso" ? "Ingreso de stock" : "Retiro de stock"}</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={moveQty} onChange={(e) => setMoveQty(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder={`Cantidad (${UNIDAD_LABEL[cur.unidadBase] || "un"})`} style={{ ...inputStyle, flex: 1 }} autoFocus />
+                  <button onClick={confirmarMovimiento} disabled={moving} style={{ flexShrink: 0, padding: "0 16px", borderRadius: 9, border: "none", background: moveType === "ingreso" ? ACCENT : "#f59e0b", color: moveType === "ingreso" ? "#0b3b36" : "#3a2a00", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: "pointer", opacity: moving ? 0.7 : 1 }}>
+                    {moving ? "…" : "Confirmar"}
+                  </button>
+                  <button onClick={() => { setMoveType(null); setMoveQty(""); }} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
+                </div>
               </div>
             ) : (
-              <div style={{ display: "flex", gap: 8 }}>
-                <select value={familia} onChange={(e) => setFamilia(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
-                  <option value="">Sin familia</option>
-                  {familias.map((f) => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <button type="button" onClick={() => { setCreandoFamilia(true); setFamilia(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}>
-                  <Plus size={15} /> Nueva
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button onClick={() => { setMoveType("ingreso"); setMoveQty(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                  <ArrowDownToLine size={17} /> Ingreso
+                </button>
+                <button onClick={() => { setMoveType("retiro"); setMoveQty(""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "12px", borderRadius: 11, border: "none", background: "#f59e0b", color: "#3a2a00", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer" }}>
+                  <ArrowUpFromLine size={17} /> Retiro
                 </button>
               </div>
             )}
+
+            {/* Editar + eliminar discreto */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+              <button onClick={startEdit} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 16px", borderRadius: 11, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
+                <Pencil size={15} /> Editar
+              </button>
+              <button onClick={eliminar} disabled={deleting} title="Eliminar insumo" aria-label="Eliminar insumo" style={{ flexShrink: 0, width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 9, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.6 }}>
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
-
-          <button onClick={submit} disabled={saving || uploading || deleting} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
-            {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar insumo"}
-          </button>
-
-          {editing && (
-            <button onClick={eliminar} disabled={deleting || saving} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 16px", borderRadius: 11, border: "1px solid rgba(239,68,68,0.4)", background: "transparent", color: "#ef4444", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.7 : 1 }}>
-              <Trash2 size={15} /> {deleting ? "Eliminando…" : "Eliminar insumo"}
-            </button>
-          )}
-        </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function DataCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "var(--adm-card)", padding: "10px 12px" }}>
+      <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 2px" }}>{label}</p>
+      <p style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{value}</p>
     </div>
   );
 }
