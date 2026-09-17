@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine, LineChart } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, clp, fmtStock } from "@/lib/bodega/labels";
@@ -189,6 +190,7 @@ function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
 
 function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
   const editing = !!insumo;
+  const router = useRouter();
   const [mode, setMode] = useState<"view" | "edit">(editing ? "view" : "edit");
   const [cur, setCur] = useState<Insumo | null>(insumo); // datos actuales (se refrescan tras editar/mover)
 
@@ -411,6 +413,10 @@ function InsumoModal({ restaurantId, familias, insumo, onClose, onChange, onDele
               <DataCell label="Precio con rendimiento" value={cur.precioConRendimiento != null ? clp(cur.precioConRendimiento) : "—"} />
               <DataCell label="Valor en stock" value={clp(cur.valorStock || 0)} />
             </div>
+
+            <button onClick={() => router.push(`/panel/bodega/insumo/${cur.id}`)} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "10px 16px", borderRadius: 11, border: "1px solid rgba(45,212,191,0.4)", background: "rgba(45,212,191,0.08)", color: ACCENT, fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: "pointer" }}>
+              <LineChart size={16} /> Ver ficha completa · facturas y precios
+            </button>
 
             {/* Ingreso / Retiro */}
             {moveType ? (
