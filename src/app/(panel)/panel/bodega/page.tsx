@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine, LineChart } from "lucide-react";
+import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine, LineChart, Archive, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, UNIDADES, UNIDAD_NOMBRE, clp, fmtStock } from "@/lib/bodega/labels";
@@ -24,6 +24,7 @@ type Insumo = {
   precioConIva: number | null;
   fotoUrl: string | null;
   esCritico: boolean;
+  activo?: boolean;
   lotes?: { id: string; fecha: string; precioUnitario: number; cantidadInicial: number; cantidadRestante: number }[];
 };
 
@@ -42,13 +43,15 @@ export default function BodegaHome() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Insumo | null>(null);
   const [search, setSearch] = useState("");
+  const [verInactivos, setVerInactivos] = useState(false);
   const [ingresoManual, setIngresoManual] = useState(true);
   const [conIva, setConIva] = useState(true);
   const f = conIva ? 1 : 1 / 1.19; // factor de display: con IVA o neto
 
+  const estadoQ = verInactivos ? "&estado=inactivos" : "";
   const reloadInsumos = () => {
     if (!restaurantId) return;
-    fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}`)
+    fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}${estadoQ}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.insumos) setInsumos(d.insumos); })
       .catch(() => {});
@@ -57,11 +60,15 @@ export default function BodegaHome() {
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
-    fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}`)
+    fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}${estadoQ}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.insumos) setInsumos(d.insumos); })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, [restaurantId, verInactivos]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
     fetch(`/api/panel/bodega/config?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) { setIngresoManual(d.ingresoManualEnabled !== false); setConIva(d.mostrarPreciosConIva !== false); } })
@@ -111,17 +118,38 @@ export default function BodegaHome() {
         </div>
       </div>
 
+      {!loading && (
+        <div style={{ display: "flex", justifyContent: verInactivos ? "flex-start" : "flex-end", marginBottom: 10 }}>
+          <button
+            onClick={() => { setVerInactivos((v) => !v); setSearch(""); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 9, border: `1px solid ${verInactivos ? ACCENT : "var(--adm-card-border)"}`, background: verInactivos ? "rgba(45,212,191,0.1)" : "transparent", color: verInactivos ? ACCENT : "var(--adm-text2)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+          >
+            {verInactivos ? <><ArrowLeft size={15} /> Volver a activos</> : <><Archive size={15} /> Ver inactivos</>}
+          </button>
+        </div>
+      )}
+
       {!loading && insumos.length > 0 && (
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar insumo…"
+          placeholder={verInactivos ? "Buscar insumo inactivo…" : "Buscar insumo…"}
           style={{ width: "100%", padding: "11px 13px", marginBottom: 14, background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 10, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.9rem", outline: "none", boxSizing: "border-box" }}
         />
       )}
 
       {loading ? (
         <div style={{ padding: 50, textAlign: "center", fontFamily: FB, color: "var(--adm-text3)" }}>Cargando inventario…</div>
+      ) : insumos.length === 0 && verInactivos ? (
+        <div style={{ maxWidth: 420, margin: "40px auto", textAlign: "center" }}>
+          <div style={{ width: 60, height: 60, borderRadius: 16, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Archive size={28} color="var(--adm-text3)" />
+          </div>
+          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>No hay insumos inactivos</p>
+          <p style={{ fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Todos tus insumos están activos.
+          </p>
+        </div>
       ) : insumos.length === 0 ? (
         <div style={{ maxWidth: 420, margin: "40px auto", textAlign: "center" }}>
           <div style={{ width: 60, height: 60, borderRadius: 16, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
@@ -223,6 +251,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
   const [familia, setFamilia] = useState(insumo?.familia ?? "");
   const [creandoFamilia, setCreandoFamilia] = useState(false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(insumo?.fotoUrl ?? null);
+  const [activo, setActivo] = useState(insumo?.activo ?? true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -257,6 +286,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
     setPrecio(it?.ultimoPrecio != null ? String(it.ultimoPrecio) : "");
     setRendimiento(it?.rendimiento != null ? String(it.rendimiento) : "");
     setFamilia(it?.familia ?? ""); setCreandoFamilia(false); setFotoUrl(it?.fotoUrl ?? null);
+    setActivo(it?.activo ?? true);
     setMode("edit");
   }
 
@@ -280,7 +310,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
     if (!Number.isFinite(rendNum) || rendNum <= 0) { toast.error("El rendimiento es obligatorio"); return; }
     setSaving(true);
     try {
-      const payload = { restaurantId, nombre, categoria, unidadBase: unidad, ultimoPrecio: precio, rendimiento, familia, fotoUrl };
+      const payload = { restaurantId, nombre, categoria, unidadBase: unidad, ultimoPrecio: precio, rendimiento, familia, fotoUrl, ...(editing ? { activo } : {}) };
       const res = await fetch(editing ? `/api/panel/bodega/insumos/${insumo!.id}` : "/api/panel/bodega/insumos", {
         method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -411,6 +441,21 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
                 </div>
               )}
             </div>
+
+            {editing && (
+              <div style={{ display: "block" }}>
+                <span style={labelSpan}>Estado</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" onClick={() => setActivo(true)} style={{ flex: 1, padding: "9px 12px", borderRadius: 9, border: `1px solid ${activo ? ACCENT : "var(--adm-card-border)"}`, background: activo ? "rgba(45,212,191,0.12)" : "transparent", color: activo ? ACCENT : "var(--adm-text2)", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}>
+                    Activo
+                  </button>
+                  <button type="button" onClick={() => setActivo(false)} style={{ flex: 1, padding: "9px 12px", borderRadius: 9, border: `1px solid ${!activo ? "#ef4444" : "var(--adm-card-border)"}`, background: !activo ? "rgba(239,68,68,0.1)" : "transparent", color: !activo ? "#ef4444" : "var(--adm-text2)", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}>
+                    Desactivado
+                  </button>
+                </div>
+                {!activo && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>Un insumo desactivado no aparece en el listado de Stock (podrás verlo en “Ver inactivos”).</p>}
+              </div>
+            )}
 
             <button onClick={submit} disabled={saving || uploading} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar insumo"}

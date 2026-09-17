@@ -29,13 +29,15 @@ export async function GET(req: NextRequest) {
   if (!r?.bodegaEnabled) return NextResponse.json({ error: "Bodega no habilitada" }, { status: 404 });
 
   const bodegaId = await ensureOwnBodega(restaurantId);
+  // estado=inactivos → muestra los desactivados; por defecto solo activos.
+  const activo = req.nextUrl.searchParams.get("estado") === "inactivos" ? false : true;
   const insumos = await prisma.insumo.findMany({
-    where: { bodegaId, activo: true },
+    where: { bodegaId, activo },
     orderBy: [{ categoria: "asc" }, { nombre: "asc" }],
     select: {
       id: true, nombre: true, categoria: true, unidadBase: true,
       ultimoPrecio: true, rendimiento: true, precioConRendimiento: true, familia: true,
-      stockActual: true, fotoUrl: true, esCritico: true,
+      stockActual: true, fotoUrl: true, esCritico: true, activo: true,
     },
   });
 

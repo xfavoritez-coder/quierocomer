@@ -31,7 +31,7 @@ async function authInsumo(req: NextRequest, insumoId: string, restaurantId: stri
 const INSUMO_SELECT = {
   id: true, nombre: true, categoria: true, unidadBase: true,
   ultimoPrecio: true, rendimiento: true, precioConRendimiento: true, familia: true,
-  stockActual: true, fotoUrl: true, esCritico: true,
+  stockActual: true, fotoUrl: true, esCritico: true, activo: true,
 } as const;
 
 /** PATCH /api/panel/bodega/insumos/[id] — edita un insumo. */
@@ -58,6 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (body.familia !== undefined) data.familia = typeof body.familia === "string" && body.familia.trim() ? body.familia.trim().slice(0, 80) : null;
   if (body.fotoUrl !== undefined) data.fotoUrl = typeof body.fotoUrl === "string" && body.fotoUrl.trim() ? body.fotoUrl.trim() : null;
+  if (body.activo !== undefined) data.activo = body.activo === true || body.activo === "true";
 
   // Precio / rendimiento (y recalcular precio con rendimiento si cambia alguno).
   const precioNext = body.ultimoPrecio !== undefined ? Number(body.ultimoPrecio) : auth.insumo.ultimoPrecio;
