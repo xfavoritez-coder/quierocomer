@@ -431,6 +431,9 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
                 <p style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 2px", lineHeight: 1.2 }}>{cur.nombre}</p>
                 <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>{CATEGORIA_LABEL[cur.categoria] || cur.categoria}{cur.familia ? ` · ${cur.familia}` : ""}</p>
               </div>
+              <button onClick={startEdit} title="Editar insumo" aria-label="Editar insumo" style={{ flexShrink: 0, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}>
+                <Pencil size={16} />
+              </button>
             </div>
 
             {/* Stock destacado */}
@@ -452,7 +455,23 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
               <LineChart size={16} /> Ver ficha completa · facturas y precios
             </button>
 
-            {/* Ingreso / Retiro */}
+            {/* Lotes en stock (FIFO) */}
+            {lotes.length > 0 && (
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px" }}>Lotes en stock (se consumen de arriba hacia abajo)</p>
+                <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
+                  {lotes.map((l) => (
+                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>{fmtStock(l.cantidadRestante)} {UNIDAD_LABEL[cur.unidadBase] || ""}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(l.fecha).toLocaleDateString("es-CL")}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: ACCENT, marginLeft: "auto" }}>{clp(l.precioUnitario * priceF)} c/u</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ingreso / Retiro (parte inferior) */}
             {moveType ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10, background: moveType === "ingreso" ? "rgba(45,212,191,0.08)" : "rgba(245,158,11,0.08)", border: `1px solid ${moveType === "ingreso" ? "rgba(45,212,191,0.3)" : "rgba(245,158,11,0.3)"}`, borderRadius: 12, padding: 12 }}>
                 <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)" }}>{moveType === "ingreso" ? "Ingreso de stock" : "Retiro de stock (FIFO)"}</span>
@@ -492,29 +511,10 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, on
               </div>
             )}
 
-            {/* Lotes en stock (FIFO) */}
-            {lotes.length > 0 && (
-              <div>
-                <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px" }}>Lotes en stock (se consumen de arriba hacia abajo)</p>
-                <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
-                  {lotes.map((l) => (
-                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
-                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>{fmtStock(l.cantidadRestante)} {UNIDAD_LABEL[cur.unidadBase] || ""}</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(l.fecha).toLocaleDateString("es-CL")}</span>
-                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: ACCENT, marginLeft: "auto" }}>{clp(l.precioUnitario * priceF)} c/u</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Editar + eliminar discreto */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
-              <button onClick={startEdit} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 16px", borderRadius: 11, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
-                <Pencil size={15} /> Editar
-              </button>
-              <button onClick={eliminar} disabled={deleting} title="Eliminar insumo" aria-label="Eliminar insumo" style={{ flexShrink: 0, width: 34, height: 34, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 9, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.6 }}>
-                <Trash2 size={15} />
+            {/* Eliminar discreto */}
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
+              <button onClick={eliminar} disabled={deleting} title="Eliminar insumo" aria-label="Eliminar insumo" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.74rem", cursor: "pointer", opacity: 0.65 }}>
+                <Trash2 size={13} /> Eliminar insumo
               </button>
             </div>
           </div>
