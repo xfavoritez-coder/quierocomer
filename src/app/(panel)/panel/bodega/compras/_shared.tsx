@@ -230,6 +230,8 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo agregar"); setAdding(false); return; }
       setLineas((prev) => [...prev, d.linea]);
+      const st = d.insumo?.stockActual;
+      toast.success(st != null ? `Agregado — stock ahora ${fmtStock(st)}` : "Insumo agregado a la factura");
       setInsumoId(""); setCantidad(""); setNeto(""); setBruto("");
     } catch { toast.error("Error de conexión"); }
     setAdding(false);

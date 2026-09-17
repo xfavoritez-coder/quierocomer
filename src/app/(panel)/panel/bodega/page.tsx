@@ -39,6 +39,7 @@ export default function BodegaHome() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Insumo | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -50,10 +51,12 @@ export default function BodegaHome() {
       .finally(() => setLoading(false));
   }, [restaurantId]);
 
-  // Agrupar por categoría, respetando el orden definido.
+  // Agrupar por categoría, respetando el orden definido (filtrado por búsqueda).
   const grupos = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const vis = q ? insumos.filter((i) => i.nombre.toLowerCase().includes(q) || (i.familia || "").toLowerCase().includes(q)) : insumos;
     const byCat: Record<string, Insumo[]> = {};
-    for (const it of insumos) (byCat[it.categoria] ??= []).push(it);
+    for (const it of vis) (byCat[it.categoria] ??= []).push(it);
     return CATEGORIA_ORDER
       .filter((c) => byCat[c]?.length)
       .map((c) => {
@@ -61,7 +64,7 @@ export default function BodegaHome() {
         const total = items.reduce((s, it) => s + (it.valorStock || 0), 0);
         return { categoria: c, items, total };
       });
-  }, [insumos]);
+  }, [insumos, search]);
 
   const totalGeneral = useMemo(
     () => insumos.reduce((s, it) => s + (it.valorStock || 0), 0),
@@ -91,6 +94,15 @@ export default function BodegaHome() {
         </div>
       </div>
 
+      {!loading && insumos.length > 0 && (
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar insumo…"
+          style={{ width: "100%", padding: "11px 13px", marginBottom: 14, background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 10, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.9rem", outline: "none", boxSizing: "border-box" }}
+        />
+      )}
+
       {loading ? (
         <div style={{ padding: 50, textAlign: "center", fontFamily: FB, color: "var(--adm-text3)" }}>Cargando inventario…</div>
       ) : insumos.length === 0 ? (
@@ -106,6 +118,8 @@ export default function BodegaHome() {
             <Plus size={17} /> Agregar insumo
           </button>
         </div>
+      ) : grupos.length === 0 ? (
+        <div style={{ padding: 40, textAlign: "center", fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text3)" }}>Sin resultados para “{search}”.</div>
       ) : (
         grupos.map((g) => (
           <section key={g.categoria} style={{ marginBottom: 22 }}>
