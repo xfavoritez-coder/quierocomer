@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { aplicarEfecto } from "@/lib/bodega/movimientos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,44 +43,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const nota = typeof body?.nota === "string" && body.nota.trim() ? body.nota.trim().slice(0, 240) : null;
+  const MOTIVOS = ["consumo", "merma", "ajuste", "otro"];
+  const motivo = tipo === "retiro" ? (MOTIVOS.includes((body?.motivo || "").toString()) ? (body.motivo as string) : "consumo") : null;
 
+  let precio: number | undefined;
   if (tipo === "ingreso") {
     const bodega = await prisma.bodega.findUnique({ where: { id: insumo.bodegaId }, select: { ingresoManualEnabled: true } });
     if (bodega && bodega.ingresoManualEnabled === false) {
       return NextResponse.json({ error: "El ingreso manual está desactivado. Ingresa stock desde el módulo Compras." }, { status: 403 });
     }
-    // Precio del lote (con IVA). Si no viene, usa el último lote o el último precio conocido.
-    let precio = Number(body?.precioConIva);
-    if (!Number.isFinite(precio) || precio < 0) {
+    precio = Number(body?.precioConIva);
+    if (!Number.isFinite(precio) || (precio as number) < 0) {
       const last = await prisma.insumoLote.findFirst({ where: { insumoId: id }, orderBy: { createdAt: "desc" }, select: { precioUnitario: true } });
       precio = last?.precioUnitario ?? (insumo.ultimoPrecio != null ? insumo.ultimoPrecio * 1.19 : 0);
     }
-    const actualizado = await prisma.$transaction(async (tx) => {
-      await tx.insumoLote.create({ data: { insumoId: id, fecha: new Date(), precioUnitario: precio, cantidadInicial: cantidad, cantidadRestante: cantidad } });
-      await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo: "ingreso", cantidad, costoUnitario: precio, costoTotal: precio * cantidad, nota } });
-      return tx.insumo.update({ where: { id }, data: { stockActual: { increment: cantidad } }, select: INSUMO_SELECT });
-    });
-    return NextResponse.json({ insumo: actualizado });
   }
 
-  // Retiro: consume los lotes más antiguos primero (FIFO) y guarda el costo consumido.
-  const MOTIVOS = ["consumo", "merma", "ajuste", "otro"];
-  const motivo = MOTIVOS.includes((body?.motivo || "").toString()) ? (body.motivo as string) : "consumo";
-
-  const result = await prisma.$transaction(async (tx) => {
-    const lotes = await tx.insumoLote.findMany({ where: { insumoId: id, cantidadRestante: { gt: 0 } }, orderBy: [{ fecha: "asc" }, { createdAt: "asc" }] });
-    let restante = cantidad, costo = 0;
-    for (const lote of lotes) {
-      if (restante <= 0) break;
-      const take = Math.min(lote.cantidadRestante, restante);
-      costo += take * lote.precioUnitario; // costo FIFO con IVA
-      await tx.insumoLote.update({ where: { id: lote.id }, data: { cantidadRestante: lote.cantidadRestante - take } });
-      restante -= take;
-    }
-    const consumido = cantidad - restante; // lo realmente descontado (si no había suficiente)
-    const insumoUpd = await tx.insumo.update({ where: { id }, data: { stockActual: { decrement: consumido } }, select: INSUMO_SELECT });
-    await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo: "retiro", motivo, cantidad: consumido, costoUnitario: consumido > 0 ? costo / consumido : null, costoTotal: costo, nota } });
-    return { insumo: insumoUpd, costo, consumido };
+  const out = await prisma.$transaction(async (tx) => {
+    const eff = await aplicarEfecto(tx, { insumoId: id, tipo: tipo as "ingreso" | "retiro", cantidad, precioConIva: precio, fecha: new Date() });
+    await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo, motivo, cantidad: eff.cantidadAplicada, costoUnitario: eff.costoUnitario, costoTotal: eff.costoTotal, nota, detalle: eff.detalle } });
+    const insumoUpd = await tx.insumo.findUnique({ where: { id }, select: INSUMO_SELECT });
+    return { insumo: insumoUpd, eff };
   });
-  return NextResponse.json({ insumo: result.insumo, costoConsumido: result.costo, cantidadConsumida: result.consumido });
+  return NextResponse.json({ insumo: out.insumo, costoConsumido: tipo === "retiro" ? out.eff.costoTotal : undefined, cantidadConsumida: out.eff.cantidadAplicada });
 }

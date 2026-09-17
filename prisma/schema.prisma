@@ -2283,6 +2283,7 @@ model MovimientoInsumo {
   costoUnitario Float?   // con IVA
   costoTotal    Float?   // con IVA (retiro: costo FIFO consumido; ingreso: precio del lote × cantidad)
   nota          String?
+  detalle       Json?    // ingreso: { loteId }; retiro: { tomas: [{ loteId, cantidad, precioUnitario }] } (para revertir)
   fecha         DateTime @default(now())
   insumo        Insumo   @relation(fields: [insumoId], references: [id])
 
