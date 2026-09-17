@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const title = `${restaurant.name} · Carta QR online | QuieroComer`;
   const description = `Escanea el QR o ve la carta digital de ${restaurant.name}${locationHint}. Platos con fotos, precios actualizados y recomendaciones IA.`;
-  const image = restaurant.logoUrl || "https://quierocomer.com/og.png";
+  const ogImage = `https://quierocomer.com/qr/${slug}/opengraph-image`;
 
   return {
     title,
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title,
       description,
-      images: [{ url: image }],
+      images: [{ url: ogImage, width: 1200, height: 630 }],
       type: "website",
       url: `https://quierocomer.com/qr/${slug}`,
     },
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [ogImage],
     },
   };
 }

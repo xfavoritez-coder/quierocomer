@@ -5,13 +5,13 @@ export const runtime = 'nodejs'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-type Props = { params: Promise<{ restaurantSlug: string }> }
+type Props = { params: Promise<{ slug: string }> }
 
 export default async function Image({ params }: Props) {
-  const { restaurantSlug } = await params
+  const { slug } = await params
 
   const r = await prisma.restaurant.findFirst({
-    where: { slug: restaurantSlug, isActive: true },
+    where: { slug, isActive: true },
     select: { name: true, logoUrl: true, primaryCategory: true, commune: true },
   })
 
@@ -54,7 +54,7 @@ export default async function Image({ params }: Props) {
           display: 'flex',
         }} />
 
-        {/* Left: logo */}
+        {/* Left: logo or initials */}
         <div style={{
           width: 320,
           display: 'flex',
@@ -132,7 +132,7 @@ export default async function Image({ params }: Props) {
             color: 'rgba(0,0,0,0.35)',
             fontWeight: 500,
           }}>
-            quierocomer.com/{restaurantSlug}
+            quierocomer.com/qr/{slug}
           </div>
         </div>
 
