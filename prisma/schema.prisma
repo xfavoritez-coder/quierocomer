@@ -2186,8 +2186,29 @@ model Bodega {
   insumos     Insumo[]
   proveedores Proveedor[]
   compras     Compra[]
+  familiaConfigs FamiliaConfig[]
 
   @@index([ownerId])
+}
+
+// Configuración de reposición por familia de insumos (módulo "Por comprar").
+// Cuando la suma del stock de los insumos de la familia baja del mínimo,
+// se marca "Por comprar" con la cantidad a solicitar al proveedor indicado.
+model FamiliaConfig {
+  id                String     @id @default(cuid())
+  bodegaId          String
+  familia           String
+  stockMinimo       Float      @default(0)
+  cantidadSolicitar Float      @default(0)
+  proveedorId       String?
+  proveedor         Proveedor? @relation(fields: [proveedorId], references: [id])
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  bodega            Bodega     @relation(fields: [bodegaId], references: [id])
+
+  @@unique([bodegaId, familia])
+  @@index([bodegaId])
+  @@index([proveedorId])
 }
 
 // Proveedor de la bodega (compartido entre locales que comparten la bodega).
@@ -2212,6 +2233,7 @@ model Proveedor {
   updatedAt   DateTime @updatedAt
   bodega      Bodega   @relation(fields: [bodegaId], references: [id])
   compras     Compra[]
+  familiaConfigs FamiliaConfig[]
 
   @@unique([bodegaId, nombre])
   @@index([bodegaId])
