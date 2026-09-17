@@ -124,9 +124,10 @@ export function CompraHeaderForm({ restaurantId, existing, onCreated, onSaved }:
   const matches = (q ? proveedores.filter((p) => p.nombre.toLowerCase().includes(q)) : proveedores).slice(0, 8);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div className="qcf-grid">
+      <style>{`.qcf-grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:760px){.qcf-grid{grid-template-columns:repeat(4,1fr)}.qcf-grid>.qcf-full{grid-column:1/-1}.qcf-grid>.qcf-2{grid-column:span 2}}`}</style>
       {/* Proveedor */}
-      <div>
+      <div className="qcf-full">
         <span style={labelSpan}>Proveedor</span>
         {selected ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.3)", borderRadius: 9, padding: "11px 12px" }}>
@@ -158,37 +159,30 @@ export function CompraHeaderForm({ restaurantId, existing, onCreated, onSaved }:
         )}
       </div>
 
-      <label style={{ display: "block" }}><span style={labelSpan}>Fecha de solicitud <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(opcional)</span></span>
+      <label className="qcf-2" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Fecha de solicitud <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(opcional)</span></span>
         <input type="date" value={fechaSolicitud} onChange={(e) => setFechaSolicitud(e.target.value)} style={inputStyle} /></label>
-      <label style={{ display: "block" }}><span style={labelSpan}>Fecha de entrega</span>
+      <label className="qcf-2" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Fecha de entrega</span>
         <input type="date" value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} style={inputStyle} /></label>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Tipo de documento</span>
-          <select value={documentoTipo} onChange={(e) => setDocumentoTipo(e.target.value)} style={inputStyle}>{Object.entries(TIPO_DOC).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-        <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>N° de documento</span>
-          <input value={documentoFolio} onChange={(e) => setDocumentoFolio(e.target.value)} placeholder="Ej: 12345" style={inputStyle} /></label>
-      </div>
+      <label className="qcf-2" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Tipo de documento</span>
+        <select value={documentoTipo} onChange={(e) => setDocumentoTipo(e.target.value)} style={inputStyle}>{Object.entries(TIPO_DOC).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      <label className="qcf-2" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>N° de documento</span>
+        <input value={documentoFolio} onChange={(e) => setDocumentoFolio(e.target.value)} placeholder="Ej: 12345" style={inputStyle} /></label>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Total de la factura</span>
-          <input value={total} onChange={(e) => setTotal(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} /></label>
-        <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Método de pago</span>
-          <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={inputStyle}>{Object.entries(METODO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-      </div>
-
-      <label style={{ display: "block" }}><span style={labelSpan}>Estado</span>
+      <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Total de la factura</span>
+        <input value={total} onChange={(e) => setTotal(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} /></label>
+      <label style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Método de pago</span>
+        <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={inputStyle}>{Object.entries(METODO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      <label className="qcf-2" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Estado</span>
         <select value={estadoPago} onChange={(e) => setEstadoPago(e.target.value)} style={inputStyle}>{Object.entries(ESTADO_PAGO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
 
-      <label style={{ display: "block" }}><span style={labelSpan}>Comentarios <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(opcional)</span></span>
+      <label className="qcf-full" style={{ display: "block", minWidth: 0 }}><span style={labelSpan}>Comentarios <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(opcional)</span></span>
         <textarea value={comentarios} onChange={(e) => setComentarios(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} /></label>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <FotoField label="Foto de la factura" url={fotoUrl} onUrl={setFotoUrl} folder="compras" />
-        <FotoField label="Foto del pago" url={fotoPagoUrl} onUrl={setFotoPagoUrl} folder="compras" />
-      </div>
+      <FotoField label="Foto de la factura" url={fotoUrl} onUrl={setFotoUrl} folder="compras" />
+      <FotoField label="Foto del pago" url={fotoPagoUrl} onUrl={setFotoPagoUrl} folder="compras" />
 
-      <button onClick={submit} disabled={saving} style={{ ...btnPrimary, marginTop: 4, opacity: saving ? 0.7 : 1 }}>
+      <button onClick={submit} disabled={saving} className="qcf-full" style={{ ...btnPrimary, marginTop: 4, opacity: saving ? 0.7 : 1 }}>
         {saving ? "Guardando…" : editing ? "Guardar cambios de la factura" : "Guardar y continuar a insumos"}
       </button>
     </div>

@@ -10,7 +10,7 @@ export default function NuevaCompraPage() {
   const router = useRouter();
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "8px 4px 96px" }}>
+    <div style={{ maxWidth: 920, margin: "0 auto", padding: "8px 4px 96px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <button onClick={() => router.push("/panel/bodega/compras")} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", flexShrink: 0 }}><ArrowLeft size={18} /></button>
         <div>
