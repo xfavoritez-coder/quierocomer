@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -116,6 +116,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
         { icon: Truck, labelKey: "nav_bodega_proveedores", href: `${base}/bodega/proveedores` },
         { icon: ClipboardList, labelKey: "nav_bodega_porcomprar", href: `${base}/bodega/por-comprar` },
+        { icon: ClipboardCheck, labelKey: "nav_bodega_conteo", href: `${base}/bodega/conteo` },
         { icon: Settings, labelKey: "nav_bodega_config", href: `${base}/bodega/configuracion` },
       ],
     }] : []),
