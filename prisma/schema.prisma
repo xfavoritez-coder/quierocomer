@@ -2280,8 +2280,10 @@ model CompraLinea {
   textoOriginal  String
   cantidad       Float
   unidad         UnidadMedida
-  precioTotal    Float
-  precioUnitario Float
+  precioNeto     Float?       // total de la línea sin IVA
+  iva            Float?       // IVA de la línea (precioTotal - precioNeto)
+  precioTotal    Float        // total de la línea con IVA
+  precioUnitario Float        // precio unitario neto (precioNeto / cantidad)
   compra         Compra       @relation(fields: [compraId], references: [id], onDelete: Cascade)
   insumo         Insumo?      @relation(fields: [insumoId], references: [id])
 

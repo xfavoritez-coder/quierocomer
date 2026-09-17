@@ -304,13 +304,20 @@ function LineasForm({ restaurantId, compraId, insumos, totalDoc, onCountChange, 
   restaurantId: string; compraId: string; insumos: InsumoLite[]; totalDoc: number | null;
   onCountChange: (n: number) => void; onClose: () => void;
 }) {
-  type Linea = { id: string; cantidad: number; unidad: string; precioTotal: number; insumo: { id: string; nombre: string } };
+  type Linea = { id: string; cantidad: number; unidad: string; precioNeto: number | null; iva: number | null; precioTotal: number; insumo: { id: string; nombre: string } };
   const [lineas, setLineas] = useState<Linea[]>([]);
   const [insumoId, setInsumoId] = useState("");
   const [cantidad, setCantidad] = useState("");
-  const [precioTotal, setPrecioTotal] = useState("");
+  const [neto, setNeto] = useState("");
+  const [bruto, setBruto] = useState("");
   const [adding, setAdding] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // IVA 19%: al escribir el neto se calcula el con-IVA y viceversa.
+  const onNeto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setNeto(v); const n = parseFloat(v); setBruto(Number.isFinite(n) ? String(Math.round(n * 1.19)) : ""); };
+  const onBruto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setBruto(v); const b = parseFloat(v); setNeto(Number.isFinite(b) ? String(Math.round(b / 1.19)) : ""); };
+  const netoN = parseFloat(neto), brutoN = parseFloat(bruto);
+  const ivaN = Number.isFinite(netoN) && Number.isFinite(brutoN) ? Math.round(brutoN - netoN) : null;
 
   useEffect(() => {
     fetch(`/api/panel/bodega/compras/${compraId}/lineas?restaurantId=${restaurantId}`)
@@ -323,18 +330,18 @@ function LineasForm({ restaurantId, compraId, insumos, totalDoc, onCountChange, 
   async function agregar() {
     if (!insumoId) { toast.error("Elige un insumo"); return; }
     if (!(parseFloat(cantidad) > 0)) { toast.error("Cantidad inválida"); return; }
-    if (!(parseFloat(precioTotal) >= 0)) { toast.error("Precio inválido"); return; }
+    if (!(netoN >= 0)) { toast.error("Ingresa el precio sin IVA"); return; }
     setAdding(true);
     try {
       const res = await fetch(`/api/panel/bodega/compras/${compraId}/lineas`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, insumoId, cantidad, precioTotal }),
+        body: JSON.stringify({ restaurantId, insumoId, cantidad, precioNeto: neto, precioTotal: bruto }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo agregar"); setAdding(false); return; }
       const next = [...lineas, d.linea];
       setLineas(next); onCountChange(next.length);
-      setInsumoId(""); setCantidad(""); setPrecioTotal("");
+      setInsumoId(""); setCantidad(""); setNeto(""); setBruto("");
     } catch { toast.error("Error de conexión"); }
     setAdding(false);
   }
@@ -371,8 +378,18 @@ function LineasForm({ restaurantId, compraId, insumos, totalDoc, onCountChange, 
           {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
         </select>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Cantidad" style={inputStyle} />
-          <input value={precioTotal} onChange={(e) => setPrecioTotal(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Precio total línea $" style={inputStyle} />
+          <div><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Cantidad</span>
+            <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} /></div>
+          <div><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio sin IVA</span>
+            <input value={neto} onChange={(e) => onNeto(e.target.value)} inputMode="decimal" placeholder="$ neto" style={inputStyle} /></div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "end" }}>
+          <div style={{ padding: "8px 10px", background: "var(--adm-hover)", borderRadius: 9 }}>
+            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>IVA (19%)</span>
+            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)" }}>{ivaN != null ? clp(ivaN) : "—"}</span>
+          </div>
+          <div><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio con IVA</span>
+            <input value={bruto} onChange={(e) => onBruto(e.target.value)} inputMode="decimal" placeholder="$ con IVA" style={inputStyle} /></div>
         </div>
         <button onClick={agregar} disabled={adding} style={{ padding: "10px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: adding ? "default" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           {adding ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Agregar insumo a la compra

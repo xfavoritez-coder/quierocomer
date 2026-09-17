@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const lineas = await prisma.compraLinea.findMany({
     where: { compraId: id },
-    select: { id: true, cantidad: true, unidad: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } },
+    select: { id: true, cantidad: true, unidad: true, precioNeto: true, iva: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } },
   });
   return NextResponse.json({ lineas });
 }
@@ -46,11 +46,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const restaurantId = (body?.restaurantId || "").toString();
   const insumoId = (body?.insumoId || "").toString();
   const cantidad = Number(body?.cantidad);
-  const precioTotal = Number(body?.precioTotal);
+  const precioNeto = Number(body?.precioNeto);
+  // Precio con IVA: si no viene, se calcula desde el neto (19%).
+  const precioTotal = body?.precioTotal === "" || body?.precioTotal == null ? Math.round(precioNeto * 1.19) : Number(body.precioTotal);
 
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!Number.isFinite(cantidad) || cantidad <= 0) return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
+  if (!Number.isFinite(precioNeto) || precioNeto < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
   if (!Number.isFinite(precioTotal) || precioTotal < 0) return NextResponse.json({ error: "Precio inválido" }, { status: 400 });
+  const iva = precioTotal - precioNeto;
 
   const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { bodegaId: true } });
   const compra = await prisma.compra.findUnique({ where: { id }, select: { restaurantId: true } });
@@ -59,15 +63,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!insumo) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
   if (!rest?.bodegaId || insumo.bodegaId !== rest.bodegaId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const precioUnitario = precioTotal / cantidad;
+  const precioUnitario = precioNeto / cantidad; // costo unitario neto
 
   const [linea, insumoActualizado] = await prisma.$transaction([
     prisma.compraLinea.create({
       data: {
         compraId: id, insumoId, textoOriginal: insumo.nombre,
-        cantidad, unidad: insumo.unidadBase, precioTotal, precioUnitario,
+        cantidad, unidad: insumo.unidadBase, precioNeto, iva, precioTotal, precioUnitario,
       },
-      select: { id: true, cantidad: true, unidad: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } },
+      select: { id: true, cantidad: true, unidad: true, precioNeto: true, iva: true, precioTotal: true, precioUnitario: true, insumo: { select: { id: true, nombre: true } } },
     }),
     prisma.insumo.update({
       where: { id: insumoId },
