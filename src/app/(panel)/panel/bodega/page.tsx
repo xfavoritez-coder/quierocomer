@@ -174,6 +174,7 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
   const [precio, setPrecio] = useState("");
   const [rendimiento, setRendimiento] = useState("");
   const [familia, setFamilia] = useState("");
+  const [creandoFamilia, setCreandoFamilia] = useState(false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -264,13 +265,27 @@ function CreateModal({ restaurantId, familias, onClose, onCreated }: { restauran
             <span style={{ fontFamily: FB, fontSize: "0.95rem", fontWeight: 800, color: ACCENT }}>{precioConRend !== null ? clp(precioConRend) : "—"}</span>
           </div>
 
-          <label style={{ display: "block" }}>
+          <div style={{ display: "block" }}>
             <span style={labelSpan}>Familia <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(agrupa variantes, ej: “Aceite”)</span></span>
-            <input list="bodega-familias" value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Ej: Aceite" style={inputStyle} />
-            <datalist id="bodega-familias">
-              {familias.map((f) => <option key={f} value={f} />)}
-            </datalist>
-          </label>
+            {creandoFamilia ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Nombre de la nueva familia" style={{ ...inputStyle, flex: 1 }} autoFocus />
+                <button type="button" onClick={() => { setCreandoFamilia(false); setFamilia(""); }} title="Cancelar" style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", fontFamily: F, fontWeight: 700 }}>
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8 }}>
+                <select value={familia} onChange={(e) => setFamilia(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+                  <option value="">Sin familia</option>
+                  {familias.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <button type="button" onClick={() => { setCreandoFamilia(true); setFamilia(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                  <Plus size={15} /> Nueva
+                </button>
+              </div>
+            )}
+          </div>
 
           <button onClick={submit} disabled={saving || uploading} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>
             {saving ? "Guardando…" : "Agregar insumo"}
