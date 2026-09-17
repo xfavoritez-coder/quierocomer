@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     orderBy: { fecha: "desc" },
     take: 200,
     select: {
-      id: true, fecha: true, fechaSolicitud: true, proveedorNombre: true, documentoTipo: true, documentoFolio: true,
+      id: true, fecha: true, fechaSolicitud: true, proveedorId: true, proveedorNombre: true, documentoTipo: true, documentoFolio: true,
       totalDeclarado: true, metodoPago: true, estadoPago: true, comentarios: true, fotoUrl: true, fotoPagoUrl: true,
       _count: { select: { lineas: true } },
     },

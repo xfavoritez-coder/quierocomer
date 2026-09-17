@@ -14,7 +14,7 @@ const METODO: Record<string, string> = { transferencia: "Transferencia", efectiv
 const ESTADO_PAGO: Record<string, string> = { por_pagar: "Por pagar", pagada: "Pagada" };
 
 type Compra = {
-  id: string; fecha: string; fechaSolicitud: string | null; proveedorNombre: string | null;
+  id: string; fecha: string; fechaSolicitud: string | null; proveedorId: string | null; proveedorNombre: string | null;
   documentoTipo: string | null; documentoFolio: string | null; totalDeclarado: number | null;
   metodoPago: string | null; estadoPago: string | null; comentarios: string | null;
   fotoUrl: string | null; fotoPagoUrl: string | null; _count: { lineas: number };
@@ -110,6 +110,7 @@ export default function ComprasPage() {
           existing={flow.compra}
           onClose={() => setFlow(null)}
           onCreated={(c) => setCompras((prev) => [c, ...prev])}
+          onUpdated={(c) => setCompras((prev) => prev.map((x) => x.id === c.id ? { ...x, ...c } : x))}
           onProveedorCreated={(p) => setProveedores((prev) => [...prev, p].sort((a, b) => a.nombre.localeCompare(b.nombre)))}
           onLineCountChange={(compraId, n) => setCompras((prev) => prev.map((x) => x.id === compraId ? { ...x, _count: { lineas: n } } : x))}
         />
@@ -118,25 +119,40 @@ export default function ComprasPage() {
   );
 }
 
-function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onCreated, onProveedorCreated, onLineCountChange }: {
+function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onCreated, onUpdated, onProveedorCreated, onLineCountChange }: {
   restaurantId: string; insumos: InsumoLite[]; proveedores: ProveedorLite[]; existing: Compra | null;
-  onClose: () => void; onCreated: (c: Compra) => void; onProveedorCreated: (p: ProveedorLite) => void; onLineCountChange: (compraId: string, n: number) => void;
+  onClose: () => void; onCreated: (c: Compra) => void; onUpdated: (c: Compra) => void; onProveedorCreated: (p: ProveedorLite) => void; onLineCountChange: (compraId: string, n: number) => void;
 }) {
-  const [step, setStep] = useState<1 | 2>(existing ? 2 : 1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [compraId, setCompraId] = useState<string | null>(existing?.id ?? null);
   const [totalDoc, setTotalDoc] = useState<number | null>(existing?.totalDeclarado ?? null);
+
+  const title = existing ? "Editar factura" : (step === 1 ? "Nueva compra · documento" : "Insumos de la compra");
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 500, maxHeight: "92vh", overflowY: "auto", background: "var(--adm-bg, var(--adm-card))", borderRadius: 18, padding: 20, boxShadow: "0 12px 40px rgba(0,0,0,0.35)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>
-            {step === 1 ? "Nueva compra · documento" : "Insumos de la compra"}
-          </h3>
+          <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{title}</h3>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text3)" }}><X size={20} /></button>
         </div>
 
-        {step === 1 ? (
+        {existing ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <HeaderForm
+              restaurantId={restaurantId} proveedores={proveedores} onProveedorCreated={onProveedorCreated}
+              existing={existing}
+              onSaved={(c) => { setTotalDoc(c.totalDeclarado ?? null); onUpdated(c); }}
+            />
+            <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14 }}>
+              <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 10px" }}>Insumos de la factura</p>
+              <LineasForm
+                restaurantId={restaurantId} compraId={existing.id} insumos={insumos} totalDoc={totalDoc}
+                onCountChange={(n) => onLineCountChange(existing.id, n)} onClose={onClose}
+              />
+            </div>
+          </div>
+        ) : step === 1 ? (
           <HeaderForm
             restaurantId={restaurantId} proveedores={proveedores} onProveedorCreated={onProveedorCreated}
             onCreated={(c, total) => { setCompraId(c.id); setTotalDoc(total); onCreated(c); setStep(2); }}
@@ -152,22 +168,23 @@ function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onC
   );
 }
 
-function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }: { restaurantId: string; proveedores: ProveedorLite[]; onProveedorCreated: (p: ProveedorLite) => void; onCreated: (c: Compra, total: number) => void }) {
-  const [selected, setSelected] = useState<ProveedorLite | null>(null);
+function HeaderForm({ restaurantId, proveedores, onProveedorCreated, existing, onCreated, onSaved }: { restaurantId: string; proveedores: ProveedorLite[]; onProveedorCreated: (p: ProveedorLite) => void; existing?: Compra | null; onCreated?: (c: Compra, total: number) => void; onSaved?: (c: Compra) => void }) {
+  const editing = !!existing;
+  const [selected, setSelected] = useState<ProveedorLite | null>(existing?.proveedorId ? { id: existing.proveedorId, nombre: existing.proveedorNombre || "" } : null);
   const [search, setSearch] = useState("");
   const [creandoProv, setCreandoProv] = useState(false);
   const [nuevoProvNombre, setNuevoProvNombre] = useState("");
   const [creandoProvBusy, setCreandoProvBusy] = useState(false);
-  const [fechaSolicitud, setFechaSolicitud] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState(new Date().toISOString().slice(0, 10));
-  const [total, setTotal] = useState("");
-  const [metodoPago, setMetodoPago] = useState("transferencia");
-  const [estadoPago, setEstadoPago] = useState("por_pagar");
-  const [documentoTipo, setDocumentoTipo] = useState("factura");
-  const [documentoFolio, setDocumentoFolio] = useState("");
-  const [comentarios, setComentarios] = useState("");
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  const [fotoPagoUrl, setFotoPagoUrl] = useState<string | null>(null);
+  const [fechaSolicitud, setFechaSolicitud] = useState(existing?.fechaSolicitud ? existing.fechaSolicitud.slice(0, 10) : "");
+  const [fechaEntrega, setFechaEntrega] = useState(existing ? existing.fecha.slice(0, 10) : new Date().toISOString().slice(0, 10));
+  const [total, setTotal] = useState(existing?.totalDeclarado != null ? String(existing.totalDeclarado) : "");
+  const [metodoPago, setMetodoPago] = useState(existing?.metodoPago || "transferencia");
+  const [estadoPago, setEstadoPago] = useState(existing?.estadoPago || "por_pagar");
+  const [documentoTipo, setDocumentoTipo] = useState(existing?.documentoTipo || "factura");
+  const [documentoFolio, setDocumentoFolio] = useState(existing?.documentoFolio || "");
+  const [comentarios, setComentarios] = useState(existing?.comentarios || "");
+  const [fotoUrl, setFotoUrl] = useState<string | null>(existing?.fotoUrl ?? null);
+  const [fotoPagoUrl, setFotoPagoUrl] = useState<string | null>(existing?.fotoPagoUrl ?? null);
   const [saving, setSaving] = useState(false);
 
   async function crearProveedor() {
@@ -195,20 +212,20 @@ function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }
     if (!(parseFloat(total) >= 0)) { toast.error("Indica el total"); return; }
     if (!documentoFolio.trim()) { toast.error("Indica el número de documento"); return; }
     setSaving(true);
+    const payload = {
+      restaurantId, proveedorId: selected.id, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
+      totalDeclarado: total, metodoPago, estadoPago, documentoTipo, documentoFolio, comentarios, fotoUrl, fotoPagoUrl,
+    };
     try {
-      const res = await fetch("/api/panel/bodega/compras", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          restaurantId, proveedorId: selected.id, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
-          totalDeclarado: total, metodoPago, estadoPago, documentoTipo, documentoFolio, comentarios, fotoUrl, fotoPagoUrl,
-        }),
+      const res = await fetch(editing ? `/api/panel/bodega/compras/${existing!.id}` : "/api/panel/bodega/compras", {
+        method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
       const total0 = parseFloat(total) || 0;
-      const provNombre = selected.nombre;
-      onCreated({
-        id: d.compra.id, fecha: fechaEntrega, fechaSolicitud: fechaSolicitud || null, proveedorNombre: provNombre,
+      if (editing) { toast.success("Factura actualizada"); setSaving(false); onSaved?.(d.compra); return; }
+      onCreated?.({
+        id: d.compra.id, fecha: fechaEntrega, fechaSolicitud: fechaSolicitud || null, proveedorId: selected.id, proveedorNombre: selected.nombre,
         documentoTipo, documentoFolio, totalDeclarado: total0, metodoPago, estadoPago, comentarios: comentarios || null,
         fotoUrl, fotoPagoUrl, _count: { lineas: 0 },
       }, total0);
@@ -294,7 +311,7 @@ function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }
       </div>
 
       <button onClick={submit} disabled={saving} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
-        {saving ? "Guardando…" : "Continuar → agregar insumos"}
+        {saving ? "Guardando…" : editing ? "Guardar cambios de la factura" : "Continuar → agregar insumos"}
       </button>
     </div>
   );
