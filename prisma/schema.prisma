@@ -403,7 +403,8 @@ model Restaurant {
   ecommerceHours             Json?                    // horario de atención del ecommerce (tienda abierta/cerrada)
   // Pilar Bodega (gestión de inventario/insumos) — activado solo por superadmin.
   bodegaEnabled              Boolean                  @default(false)
-  insumos                    Insumo[]
+  bodegaId                   String?                  // bodega a la que pertenece el inventario del local (puede compartirse entre locales)
+  bodega                     Bodega?                  @relation(fields: [bodegaId], references: [id])
   compras                    Compra[]
   conteos                    Conteo[]
   mermas                     Merma[]
@@ -429,6 +430,7 @@ model Restaurant {
 
   @@index([ownerId])
   @@index([communeSlug])
+  @@index([bodegaId])
 }
 
 model OnlineOrder {
@@ -2169,9 +2171,25 @@ model InsumoMaestro {
   insumos    Insumo[]
 }
 
+// Bodega de inventario: dueña de los insumos y del stock (derivado de los
+// movimientos). Un local apunta a una bodega vía Restaurant.bodegaId; varios
+// locales pueden compartir la misma bodega = stock único compartido. Por
+// defecto cada local tiene su propia bodega (1:1). El superadmin asigna/comparte.
+model Bodega {
+  id          String       @id @default(cuid())
+  nombre      String
+  ownerId     String?      // dueño (RestaurantOwner) al que pertenece; solo se comparte entre locales del mismo dueño
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  restaurants Restaurant[]
+  insumos     Insumo[]
+
+  @@index([ownerId])
+}
+
 model Insumo {
   id           String          @id @default(cuid())
-  restaurantId String
+  bodegaId     String
   maestroId    String?
   nombre       String
   categoria    InsumoCategoria
@@ -2183,13 +2201,13 @@ model Insumo {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   maestro      InsumoMaestro?  @relation(fields: [maestroId], references: [id])
-  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id])
+  bodega       Bodega          @relation(fields: [bodegaId], references: [id])
   compraLineas CompraLinea[]
   conteoLineas ConteoLinea[]
   mermaLineas  MermaLinea[]
 
-  @@unique([restaurantId, nombre])
-  @@index([restaurantId])
+  @@unique([bodegaId, nombre])
+  @@index([bodegaId])
   @@index([maestroId])
 }
 

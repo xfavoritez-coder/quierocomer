@@ -16,14 +16,17 @@ export async function GET(req: NextRequest) {
     return authErrorResponse(e);
   }
 
-  const [restaurant, insumoCount, criticoCount] = await Promise.all([
-    prisma.restaurant.findUnique({
-      where: { id: restaurantId },
-      select: { controlEnabled: true },
-    }),
-    prisma.insumo.count({ where: { restaurantId, activo: true } }),
-    prisma.insumo.count({ where: { restaurantId, activo: true, esCritico: true } }),
-  ]);
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { controlEnabled: true, bodegaId: true },
+  });
+  const bodegaId = restaurant?.bodegaId ?? null;
+  const [insumoCount, criticoCount] = bodegaId
+    ? await Promise.all([
+        prisma.insumo.count({ where: { bodegaId, activo: true } }),
+        prisma.insumo.count({ where: { bodegaId, activo: true, esCritico: true } }),
+      ])
+    : [0, 0];
 
   return NextResponse.json({
     controlEnabled: restaurant?.controlEnabled ?? false,

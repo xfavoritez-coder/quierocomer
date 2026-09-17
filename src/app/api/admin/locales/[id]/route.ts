@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
+import { ensureOwnBodega, makeOwnBodega, shareBodegaWith } from "@/lib/bodega/provision";
 import crypto from "crypto";
 import { extractCommune } from "@/lib/communeUtils";
 
@@ -191,7 +192,26 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (qrFields.some(f => data[f] !== undefined)) {
       revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 });
     }
-    return NextResponse.json(restaurant);
+
+    // Pilar Bodega (super-admin): provisión y asignación/compartir bodega.
+    //  bodegaShareWith = id de otro local (compartir) | null (bodega propia nueva).
+    //  Al habilitar el pilar se garantiza que el local tenga su propia bodega.
+    let bodegaId: string | null = (restaurant as any).bodegaId ?? null;
+    if (isSuperAdmin(req)) {
+      try {
+        if (body.bodegaShareWith !== undefined) {
+          bodegaId = body.bodegaShareWith
+            ? await shareBodegaWith(id, String(body.bodegaShareWith))
+            : await makeOwnBodega(id);
+        } else if (body.bodegaEnabled === true) {
+          bodegaId = await ensureOwnBodega(id);
+        }
+      } catch (be: any) {
+        return NextResponse.json({ error: be?.message || "Error al asignar la bodega" }, { status: 400 });
+      }
+    }
+
+    return NextResponse.json({ ...restaurant, bodegaId });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
     console.error("[Admin restaurant PUT]", e);

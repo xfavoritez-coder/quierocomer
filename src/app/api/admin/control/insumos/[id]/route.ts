@@ -13,11 +13,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const existing = await prisma.insumo.findUnique({
       where: { id },
-      select: { restaurantId: true },
+      select: { bodega: { select: { restaurants: { select: { id: true }, take: 1 } } } },
     });
     if (!existing) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
 
-    await requireRestaurantForOwner(req, existing.restaurantId);
+    const rid = existing.bodega?.restaurants[0]?.id;
+    if (!rid) return NextResponse.json({ error: "Insumo sin local asociado" }, { status: 404 });
+    await requireRestaurantForOwner(req, rid);
 
     const data: Record<string, any> = {};
     if (body.nombre !== undefined) data.nombre = body.nombre;
@@ -47,11 +49,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const existing = await prisma.insumo.findUnique({
       where: { id },
-      select: { restaurantId: true },
+      select: { bodega: { select: { restaurants: { select: { id: true }, take: 1 } } } },
     });
     if (!existing) return NextResponse.json({ error: "Insumo no encontrado" }, { status: 404 });
 
-    await requireRestaurantForOwner(req, existing.restaurantId);
+    const rid = existing.bodega?.restaurants[0]?.id;
+    if (!rid) return NextResponse.json({ error: "Insumo sin local asociado" }, { status: 404 });
+    await requireRestaurantForOwner(req, rid);
 
     await prisma.insumo.update({ where: { id }, data: { activo: false } });
     return NextResponse.json({ success: true });

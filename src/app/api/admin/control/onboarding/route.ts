@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { ensureOwnBodega } from "@/lib/bodega/provision";
 
 interface InsumoInput {
   maestroId?: string;
@@ -38,11 +39,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Módulo Control no habilitado" }, { status: 403 });
     }
 
+    const bodegaId = await ensureOwnBodega(restaurantId);
+
     // Soft-delete los insumos existentes y crear los nuevos en transacción
     const created = await prisma.$transaction(async (tx) => {
       // Desactivar todos los insumos anteriores
       await tx.insumo.updateMany({
-        where: { restaurantId },
+        where: { bodegaId },
         data: { activo: false },
       });
 
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
       for (const insumo of insumos) {
         const record = await tx.insumo.create({
           data: {
-            restaurantId,
+            bodegaId,
             nombre: insumo.nombre,
             categoria: insumo.categoria as any,
             unidadBase: insumo.unidadBase as any,

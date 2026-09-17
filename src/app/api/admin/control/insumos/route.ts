@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { ensureOwnBodega } from "@/lib/bodega/provision";
 
 /** GET /api/admin/control/insumos?restaurantId=X */
 export async function GET(req: NextRequest) {
@@ -16,8 +17,9 @@ export async function GET(req: NextRequest) {
     return authErrorResponse(e);
   }
 
+  const bodegaId = await ensureOwnBodega(restaurantId);
   const insumos = await prisma.insumo.findMany({
-    where: { restaurantId, activo: true },
+    where: { bodegaId, activo: true },
     orderBy: [{ categoria: "asc" }, { nombre: "asc" }],
     include: { maestro: { select: { id: true, nombre: true } } },
   });
@@ -47,9 +49,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Módulo Control no habilitado" }, { status: 403 });
     }
 
+    const bodegaId = await ensureOwnBodega(restaurantId);
     const insumo = await prisma.insumo.create({
       data: {
-        restaurantId,
+        bodegaId,
         nombre,
         categoria,
         unidadBase,

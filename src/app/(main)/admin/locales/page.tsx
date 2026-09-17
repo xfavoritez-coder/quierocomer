@@ -44,6 +44,7 @@ interface Restaurant {
   isDemo: boolean;
   ecommerceEnabled?: boolean;
   bodegaEnabled?: boolean;
+  bodegaId?: string | null;
   ecommerceConfig?: EcommerceConfig | null;
   ecommerceDeliveryZones?: unknown;
   ecommerceDeliveryConfig?: unknown;
@@ -696,7 +697,8 @@ export default function AdminLocales() {
 
         {/* Toggle Bodega (pilar de inventario) — super-admin only */}
         {isSuper && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.bodegaEnabled ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.bodegaEnabled ? "rgba(45,212,191,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ padding: "14px 16px", background: selected.bodegaEnabled ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.bodegaEnabled ? "rgba(45,212,191,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.bodegaEnabled ? "#2dd4bf" : "white", margin: 0 }}>📦 Bodega <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#2dd4bf", background: "rgba(45,212,191,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
               <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
@@ -709,8 +711,9 @@ export default function AdminLocales() {
               onClick={async () => {
                 const val = !selected.bodegaEnabled;
                 const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bodegaEnabled: val }) });
+                const data = await res.json().catch(() => ({}));
                 if (!res.ok) { alert("Error al actualizar"); return; }
-                const u = { ...selected, bodegaEnabled: val };
+                const u = { ...selected, bodegaEnabled: val, bodegaId: data?.bodegaId ?? selected.bodegaId ?? null };
                 setSelected(u);
                 setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
               }}
@@ -727,6 +730,49 @@ export default function AdminLocales() {
               }} />
             </button>
           </div>
+          {selected.bodegaEnabled && (() => {
+            const siblings = restaurants.filter(r => r.ownerId && r.ownerId === selected.ownerId && r.id !== selected.id);
+            const sharedWith = selected.bodegaId ? siblings.find(s => s.bodegaId === selected.bodegaId) : undefined;
+            return (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(45,212,191,0.2)" }}>
+                <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 600, color: "#bbb", margin: "0 0 6px" }}>Inventario / bodega compartida</p>
+                <select
+                  value={sharedWith ? sharedWith.id : ""}
+                  onChange={async (e) => {
+                    const v = e.target.value;
+                    const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bodegaShareWith: v || null }) });
+                    const data = await res.json();
+                    if (!res.ok) { alert(data?.error || "Error al asignar la bodega"); return; }
+                    const newBodegaId = data.bodegaId ?? null;
+                    const u = { ...selected, bodegaId: newBodegaId };
+                    setSelected(u);
+                    setRestaurants(prev => prev.map(x => {
+                      if (x.id === selected.id) return u;
+                      if (v && x.id === v) return { ...x, bodegaId: newBodegaId }; // el local target ahora comparte esta bodega
+                      return x;
+                    }));
+                  }}
+                  style={{ width: "100%", padding: "8px 10px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.8rem", outline: "none" }}
+                >
+                  <option value="">Bodega propia (no compartida)</option>
+                  {siblings.map(s => (
+                    <option key={s.id} value={s.id}>Compartir con: {s.name}</option>
+                  ))}
+                </select>
+                {siblings.length === 0 && (
+                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "6px 0 0", lineHeight: 1.4 }}>
+                    Este dueño no tiene otros locales para compartir bodega.
+                  </p>
+                )}
+                {sharedWith && (
+                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#2dd4bf", margin: "6px 0 0", lineHeight: 1.4 }}>
+                    Stock único con {sharedWith.name}: compras, conteos y mermas afectan el mismo inventario.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
         )}
 
         {/* Credenciales Ecommerce (pasarelas + couriers) — super-admin only, cuando el pilar está activo */}
