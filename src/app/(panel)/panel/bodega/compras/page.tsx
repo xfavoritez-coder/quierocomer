@@ -153,8 +153,9 @@ function CompraFlow({ restaurantId, insumos, proveedores, existing, onClose, onC
 }
 
 function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }: { restaurantId: string; proveedores: ProveedorLite[]; onProveedorCreated: (p: ProveedorLite) => void; onCreated: (c: Compra, total: number) => void }) {
-  const [proveedorId, setProveedorId] = useState("");
-  const [creandoProv, setCreandoProv] = useState(proveedores.length === 0);
+  const [selected, setSelected] = useState<ProveedorLite | null>(null);
+  const [search, setSearch] = useState("");
+  const [creandoProv, setCreandoProv] = useState(false);
   const [nuevoProvNombre, setNuevoProvNombre] = useState("");
   const [creandoProvBusy, setCreandoProvBusy] = useState(false);
   const [fechaSolicitud, setFechaSolicitud] = useState("");
@@ -182,14 +183,14 @@ function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }
       if (!res.ok) { toast.error(d.error || "No se pudo crear"); setCreandoProvBusy(false); return; }
       const p = { id: d.proveedor.id, nombre: d.proveedor.nombre };
       onProveedorCreated(p);
-      setProveedorId(p.id); setNuevoProvNombre(""); setCreandoProv(false);
+      setSelected(p); setNuevoProvNombre(""); setCreandoProv(false);
       toast.success("Proveedor creado");
     } catch { toast.error("Error de conexión"); }
     setCreandoProvBusy(false);
   }
 
   async function submit() {
-    if (!proveedorId) { toast.error("Selecciona el proveedor"); return; }
+    if (!selected) { toast.error("Selecciona el proveedor"); return; }
     if (!fechaEntrega) { toast.error("Indica la fecha de entrega"); return; }
     if (!(parseFloat(total) >= 0)) { toast.error("Indica el total"); return; }
     if (!documentoFolio.trim()) { toast.error("Indica el número de documento"); return; }
@@ -198,14 +199,14 @@ function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }
       const res = await fetch("/api/panel/bodega/compras", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId, proveedorId, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
+          restaurantId, proveedorId: selected.id, fechaSolicitud: fechaSolicitud || null, fechaEntrega,
           totalDeclarado: total, metodoPago, estadoPago, documentoTipo, documentoFolio, comentarios, fotoUrl, fotoPagoUrl,
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
       const total0 = parseFloat(total) || 0;
-      const provNombre = proveedores.find((p) => p.id === proveedorId)?.nombre ?? null;
+      const provNombre = selected.nombre;
       onCreated({
         id: d.compra.id, fecha: fechaEntrega, fechaSolicitud: fechaSolicitud || null, proveedorNombre: provNombre,
         documentoTipo, documentoFolio, totalDeclarado: total0, metodoPago, estadoPago, comentarios: comentarios || null,
@@ -219,24 +220,39 @@ function HeaderForm({ restaurantId, proveedores, onProveedorCreated, onCreated }
       {/* Proveedor */}
       <div>
         <span style={labelSpan}>Proveedor</span>
-        {creandoProv ? (
+        {selected ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.3)", borderRadius: 9, padding: "9px 12px" }}>
+            <span style={{ flex: 1, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>{selected.nombre}</span>
+            <button type="button" onClick={() => { setSelected(null); setSearch(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4, background: "transparent", border: "none", color: "var(--adm-text2)", cursor: "pointer", fontFamily: F, fontSize: "0.76rem", fontWeight: 700 }}>Cambiar</button>
+          </div>
+        ) : creandoProv ? (
           <div style={{ display: "flex", gap: 8 }}>
             <input value={nuevoProvNombre} onChange={(e) => setNuevoProvNombre(e.target.value)} placeholder="Nombre del nuevo proveedor" style={{ ...inputStyle, flex: 1 }} autoFocus onKeyDown={(e) => { if (e.key === "Enter") crearProveedor(); }} />
             <button type="button" onClick={crearProveedor} disabled={creandoProvBusy} style={{ flexShrink: 0, padding: "0 14px", borderRadius: 9, border: "none", background: ACCENT, color: "#0b3b36", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 800 }}>{creandoProvBusy ? "…" : "Crear"}</button>
-            {proveedores.length > 0 && (
-              <button type="button" onClick={() => { setCreandoProv(false); setNuevoProvNombre(""); }} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
-            )}
+            <button type="button" onClick={() => { setCreandoProv(false); setNuevoProvNombre(""); }} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8 }}>
-            <select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
-              <option value="">Selecciona un proveedor</option>
-              {proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </select>
-            <button type="button" onClick={() => { setCreandoProv(true); setNuevoProvNombre(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={15} /> Nuevo</button>
+          <div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar proveedor…" style={{ ...inputStyle, flex: 1 }} />
+              <button type="button" onClick={() => { setCreandoProv(true); setNuevoProvNombre(search); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={15} /> Nuevo</button>
+            </div>
+            {(() => {
+              const q = search.trim().toLowerCase();
+              const matches = (q ? proveedores.filter((p) => p.nombre.toLowerCase().includes(q)) : proveedores).slice(0, 8);
+              if (proveedores.length === 0) return <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>No hay proveedores. Crea uno con “Nuevo”.</p>;
+              if (matches.length === 0) return <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>Sin resultados. Puedes crearlo con “Nuevo”.</p>;
+              return (
+                <div style={{ marginTop: 6, border: "1px solid var(--adm-card-border)", borderRadius: 9, overflow: "hidden" }}>
+                  {matches.map((p) => (
+                    <button key={p.id} type="button" onClick={() => { setSelected(p); setSearch(""); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", cursor: "pointer" }}>{p.nombre}</button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
-        <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "5px 0 0" }}>Los datos completos del proveedor (RUT, teléfono, etc.) se editan en el módulo Proveedores.</p>
+        <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "5px 0 0" }}>Los datos completos del proveedor (RUT, cuenta bancaria, etc.) se editan en el módulo Proveedores.</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
