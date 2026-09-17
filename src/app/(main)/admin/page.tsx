@@ -30,6 +30,7 @@ interface BillingRow {
   id: string; name: string; plan: string; subscriptionStatus: string;
   currentPeriodEnd: string | null; lastPaymentAt: string | null; trialEndsAt: string | null;
   billingExempt: boolean; daysLeft: number | null; netAmount: number; grossAmount: number; method: string;
+  billingRut: string | null;
 }
 
 interface BillingData {
@@ -162,7 +163,8 @@ function BillingSection({ data }: { data: BillingData }) {
                 <th style={{ textAlign: "right", padding: "0 8px 10px", fontWeight: 700 }}>Monto</th>
                 <th style={{ textAlign: "center", padding: "0 8px 10px", fontWeight: 700 }}>Días</th>
                 <th style={{ textAlign: "left", padding: "0 8px 10px", fontWeight: 700 }}>Vence</th>
-                <th style={{ textAlign: "left", padding: "0 0 10px 8px", fontWeight: 700 }}>Método</th>
+                <th style={{ textAlign: "left", padding: "0 8px 10px", fontWeight: 700 }}>Método</th>
+                <th style={{ textAlign: "left", padding: "0 0 10px 8px", fontWeight: 700 }}>RUT</th>
               </tr>
             </thead>
             <tbody>
@@ -193,12 +195,15 @@ function BillingSection({ data }: { data: BillingData }) {
                     <td style={{ padding: "10px 8px", fontSize: "0.76rem", color: daysUrgent ? "#fb923c" : "var(--adm-text2)" }}>
                       {fmtDate(r.currentPeriodEnd || r.trialEndsAt) || "—"}
                     </td>
-                    <td style={{ padding: "10px 0 10px 8px" }}>
+                    <td style={{ padding: "10px 8px" }}>
                       <span style={{
                         fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 5,
                         background: r.method === "Flow" ? "rgba(96,165,250,0.12)" : r.method === "MercadoPago" ? "rgba(0,180,80,0.12)" : r.method === "—" ? "transparent" : "rgba(251,191,36,0.1)",
                         color: r.method === "Flow" ? "#60a5fa" : r.method === "MercadoPago" ? "#4ade80" : r.method === "—" ? "#444" : "#fbbf24",
                       }}>{r.method}</span>
+                    </td>
+                    <td style={{ padding: "10px 0 10px 8px", fontSize: "0.76rem", color: r.billingRut ? "var(--adm-text2)" : "var(--adm-text3)", fontFamily: "monospace" }}>
+                      {r.billingRut || "—"}
                     </td>
                   </tr>
                 );

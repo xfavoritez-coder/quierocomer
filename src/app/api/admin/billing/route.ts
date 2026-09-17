@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       id: true, name: true, plan: true, subscriptionStatus: true,
       currentPeriodEnd: true, lastPaymentAt: true, trialEndsAt: true,
       billingExempt: true, mpPayerEmail: true, customPlanPriceNet: true,
-      flowPlanId: true, flowSubscriptionId: true,
+      flowPlanId: true, flowSubscriptionId: true, billingRut: true,
     },
     orderBy: { currentPeriodEnd: "desc" },
   });
@@ -83,6 +83,7 @@ export async function GET(req: NextRequest) {
       netAmount: net,
       grossAmount: gross,
       method,
+      billingRut: r.billingRut ?? null,
     };
   });
 
