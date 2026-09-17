@@ -20,14 +20,6 @@ export const metadata: Metadata = {
       "Carta digital con fotos, programa de sellos y pedidos online para tu restaurante. Sin app, sin contratos. Prueba gratis 7 días.",
     url: "https://quierocomer.com",
     siteName: "QuieroComer",
-    images: [
-      {
-        url: "https://quierocomer.com/og.png",
-        width: 1200,
-        height: 630,
-        alt: "QuieroComer — Carta digital y fidelización para restaurantes",
-      },
-    ],
     locale: "es_CL",
     type: "website",
   },
@@ -36,7 +28,6 @@ export const metadata: Metadata = {
     title: "QuieroComer — Carta digital QR y fidelización para restaurantes",
     description:
       "Carta digital con fotos, programa de sellos y pedidos online. Sin app, sin contratos.",
-    images: ["https://quierocomer.com/og.png"],
   },
   alternates: {
     canonical: "https://quierocomer.com",
