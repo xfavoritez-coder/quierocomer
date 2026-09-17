@@ -2222,10 +2222,15 @@ model Compra {
   fecha           DateTime
   origen          CompraOrigen
   proveedorNombre String?
-  documentoTipo   String?
-  documentoFolio  String?
-  totalDeclarado  Float?
-  fotoUrl         String?
+  documentoTipo   String?       // "factura" | "boleta" | "nota_entrega"
+  documentoFolio  String?       // número de documento
+  totalDeclarado  Float?        // total de la factura
+  fotoUrl         String?       // foto de la factura/documento
+  fechaSolicitud  DateTime?     // fecha de solicitud (opcional); `fecha` = fecha de entrega
+  metodoPago      String?       // "transferencia" | "efectivo" | "debito" | "webpay"
+  estadoPago      String?       // "por_pagar" | "pagada"
+  comentarios     String?
+  fotoPagoUrl     String?       // foto del comprobante de pago
   estado          IngestaEstado @default(PENDIENTE_REVISION)
   confirmadaAt    DateTime?
   confirmadaPor   String?

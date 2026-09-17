@@ -113,6 +113,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       badge: "Beta",
       items: [
         { icon: Warehouse, labelKey: "nav_bodega_home", href: `${base}/bodega` },
+        { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
       ],
     }] : []),
     {
