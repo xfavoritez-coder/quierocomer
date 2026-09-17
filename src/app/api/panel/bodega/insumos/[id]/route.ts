@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIAS } from "@/lib/bodega/labels";
+import { CATEGORIAS, UNIDADES } from "@/lib/bodega/labels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +51,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.categoria !== undefined) {
     if (!CATEGORIAS.includes(String(body.categoria))) return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
     data.categoria = body.categoria;
+  }
+  if (body.unidadBase !== undefined) {
+    if (!UNIDADES.includes(String(body.unidadBase))) return NextResponse.json({ error: "Unidad inválida" }, { status: 400 });
+    data.unidadBase = body.unidadBase;
   }
   if (body.familia !== undefined) data.familia = typeof body.familia === "string" && body.familia.trim() ? body.familia.trim().slice(0, 80) : null;
   if (body.fotoUrl !== undefined) data.fotoUrl = typeof body.fotoUrl === "string" && body.fotoUrl.trim() ? body.fotoUrl.trim() : null;

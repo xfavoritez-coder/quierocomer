@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, runInTx } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const iva = precioTotal - precioNeto;
   const delta = cantidad - linea.cantidad;
 
-  const insumo = await prisma.$transaction(async (tx) => {
+  const insumo = await runInTx(async (tx) => {
     await tx.compraLinea.update({ where: { id: lineaId }, data: { cantidad, precioNeto, iva, precioTotal, precioUnitario: precioUnitNeto } });
     if (lote) await tx.insumoLote.update({ where: { id: lote.id }, data: { cantidadInicial: cantidad, cantidadRestante: cantidad, precioUnitario: precioUnitConIva } });
     return tx.insumo.update({ where: { id: linea.insumoId! }, data: { stockActual: { increment: delta }, ultimoPrecio: precioUnitNeto }, select: INSUMO_SELECT });
@@ -79,7 +79,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const { linea, lote } = auth;
 
-  const insumo = await prisma.$transaction(async (tx) => {
+  const insumo = await runInTx(async (tx) => {
     // Revierte del stock lo que aún queda del lote (lo ya consumido no vuelve).
     const revertir = lote ? lote.cantidadRestante : 0;
     if (lote) await tx.insumoLote.delete({ where: { id: lote.id } });

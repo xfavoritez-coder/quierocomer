@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Warehouse, Plus, Package, X, ImagePlus, Loader2, Trash2, Pencil, ArrowDownToLine, ArrowUpFromLine, LineChart } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
-import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, clp, fmtStock } from "@/lib/bodega/labels";
+import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, UNIDADES, UNIDAD_NOMBRE, clp, fmtStock } from "@/lib/bodega/labels";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -202,6 +202,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
 
   const [nombre, setNombre] = useState(insumo?.nombre ?? "");
   const [categoria, setCategoria] = useState(insumo?.categoria ?? "ABARROTE");
+  const [unidad, setUnidad] = useState(insumo?.unidadBase ?? "UN");
   const [precio, setPrecio] = useState(insumo?.ultimoPrecio != null ? String(insumo.ultimoPrecio) : "");
   const [rendimiento, setRendimiento] = useState(insumo?.rendimiento != null ? String(insumo.rendimiento) : "");
   const [familia, setFamilia] = useState(insumo?.familia ?? "");
@@ -237,7 +238,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
   // Al pasar a edición, recargar los inputs desde los datos actuales.
   function startEdit() {
     const it = cur;
-    setNombre(it?.nombre ?? ""); setCategoria(it?.categoria ?? "ABARROTE");
+    setNombre(it?.nombre ?? ""); setCategoria(it?.categoria ?? "ABARROTE"); setUnidad(it?.unidadBase ?? "UN");
     setPrecio(it?.ultimoPrecio != null ? String(it.ultimoPrecio) : "");
     setRendimiento(it?.rendimiento != null ? String(it.rendimiento) : "");
     setFamilia(it?.familia ?? ""); setCreandoFamilia(false); setFotoUrl(it?.fotoUrl ?? null);
@@ -264,7 +265,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
     if (!Number.isFinite(rendNum) || rendNum <= 0) { toast.error("El rendimiento es obligatorio"); return; }
     setSaving(true);
     try {
-      const payload = { restaurantId, nombre, categoria, ultimoPrecio: precio, rendimiento, familia, fotoUrl };
+      const payload = { restaurantId, nombre, categoria, unidadBase: unidad, ultimoPrecio: precio, rendimiento, familia, fotoUrl };
       const res = await fetch(editing ? `/api/panel/bodega/insumos/${insumo!.id}` : "/api/panel/bodega/insumos", {
         method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -341,12 +342,20 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Aceite 5 litros" style={inputStyle} autoFocus />
             </label>
 
-            <label style={{ display: "block" }}>
-              <span style={labelSpan}>Categoría</span>
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
-                {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
-              </select>
-            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <label style={{ display: "block", minWidth: 0 }}>
+                <span style={labelSpan}>Categoría</span>
+                <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
+                  {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+                </select>
+              </label>
+              <label style={{ display: "block", minWidth: 0 }}>
+                <span style={labelSpan}>Unidad de medida</span>
+                <select value={unidad} onChange={(e) => setUnidad(e.target.value)} style={inputStyle}>
+                  {UNIDADES.map((u) => <option key={u} value={u}>{UNIDAD_NOMBRE[u]} ({UNIDAD_LABEL[u]})</option>)}
+                </select>
+              </label>
+            </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <label style={{ display: "block" }}>

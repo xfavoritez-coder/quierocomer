@@ -1,9 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof makeClient> | undefined;
-};
-
 // Build connection URL for Supabase PgBouncer (transaction mode)
 function getDbUrl(): string {
   const base = process.env.DATABASE_URL || "";
@@ -30,25 +26,25 @@ function getDbUrl(): string {
 //  P1001 = Can't reach database server   P1002 = server terminated the connection
 //  P1008 = Operations timed out          P1017 = Server has closed the connection
 const RETRYABLE_CODES = new Set(["P2024", "P1001", "P1002", "P1008", "P1017"]);
-function isRetryable(e: unknown): boolean {
-  // Prisma P-codes
+export function isRetryable(e: unknown): boolean {
   const code = (e as { code?: string } | null)?.code;
   if (typeof code === "string" && RETRYABLE_CODES.has(code)) return true;
-  // OS-level TCP reset (e.g. Supabase PgBouncer corta la conexión bajo carga):
-  // Windows 10054 / POSIX ECONNRESET — aparece en el mensaje del error
+  // OS-level TCP reset (Windows 10054 / POSIX ECONNRESET) aparece en el mensaje.
   const msg = String((e as any)?.message ?? "");
   return msg.includes("ConnectionReset") || msg.includes("ECONNRESET") || msg.includes("10054");
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Cliente con reintento automático (3 intentos: ~80ms, ~240ms) SOLO para los
-// errores transitorios de conexión de arriba. Convierte un pico puntual del pool
-// en una pequeña espera en vez de una caída (500) de la carta.
-function makeClient() {
-  const base = new PrismaClient({
-    log: ["error"],
-    datasources: { db: { url: getDbUrl() } },
-  });
+function makeBase(): PrismaClient {
+  return new PrismaClient({ log: ["error"], datasources: { db: { url: getDbUrl() } } });
+}
+
+// Cliente con reintento automático por operación (3 intentos: ~80ms, ~240ms) SOLO
+// para los errores transitorios de conexión de arriba. Convierte un pico puntual
+// del pool en una pequeña espera en vez de una caída (500).
+// OJO: este reintento por-operación NO debe usarse dentro de transacciones
+// interactivas (una tx que falla se aborta entera); para eso está runInTx().
+function withRetry(base: PrismaClient) {
   return base.$extends({
     query: {
       async $allOperations({ args, query }) {
@@ -68,7 +64,41 @@ function makeClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? makeClient();
+type ExtendedClient = ReturnType<typeof withRetry>;
 
-// Always cache the instance to reuse connections across requests (Fluid Compute)
+const globalForPrisma = globalThis as unknown as {
+  prismaBase?: PrismaClient;
+  prisma?: ExtendedClient;
+};
+
+// Cliente base (sin la extensión de reintento). Úsalo para transacciones
+// interactivas vía runInTx(); comparte el pool con `prisma`.
+export const prismaBase: PrismaClient = globalForPrisma.prismaBase ?? makeBase();
+globalForPrisma.prismaBase = prismaBase;
+
+// Cliente por defecto (con reintento por operación) para lecturas/escrituras sueltas.
+export const prisma: ExtendedClient = globalForPrisma.prisma ?? withRetry(prismaBase);
 globalForPrisma.prisma = prisma;
+
+/**
+ * Ejecuta una transacción interactiva reintentando el BLOQUE COMPLETO ante un
+ * error transitorio de conexión. Es seguro porque una transacción fallida hace
+ * rollback total y se vuelve a intentar desde cero (nunca aplica dos veces un
+ * increment/decrement). Usa el cliente base (sin reintento por operación).
+ */
+export async function runInTx<T>(
+  fn: (tx: Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0]) => Promise<T>,
+  opts?: { maxWait?: number; timeout?: number }
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await prismaBase.$transaction(fn as any, opts);
+    } catch (e) {
+      lastErr = e;
+      if (!isRetryable(e) || attempt === 2) throw e;
+      await sleep(80 * Math.pow(3, attempt));
+    }
+  }
+  throw lastErr;
+}

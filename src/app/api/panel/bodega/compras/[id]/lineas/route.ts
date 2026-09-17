@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, runInTx } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const precioUnitario = precioUnitNeto; // costo unitario neto
 
-  const { linea, insumo: insumoActualizado } = await prisma.$transaction(async (tx) => {
+  const { linea, insumo: insumoActualizado } = await runInTx(async (tx) => {
     const linea = await tx.compraLinea.create({
       data: {
         compraId: id, insumoId, textoOriginal: insumo.nombre,

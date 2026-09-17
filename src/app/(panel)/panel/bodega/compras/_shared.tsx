@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, ImagePlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { clp, fmtStock, UNIDAD_LABEL, CATEGORIA_ORDER, CATEGORIA_LABEL } from "@/lib/bodega/labels";
+import { clp, fmtStock, UNIDAD_LABEL, UNIDADES, UNIDAD_NOMBRE, CATEGORIA_ORDER, CATEGORIA_LABEL } from "@/lib/bodega/labels";
 
 export const F = "var(--font-display)";
 export const FB = "var(--font-body)";
@@ -206,6 +206,7 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
   const [creatingInsumo, setCreatingInsumo] = useState(false);
   const [newNombre, setNewNombre] = useState("");
   const [newCategoria, setNewCategoria] = useState("ABARROTE");
+  const [newUnidad, setNewUnidad] = useState("UN");
   const [newPrecio, setNewPrecio] = useState("");   // precio base SIN IVA
   const [newRend, setNewRend] = useState("100");    // rendimiento %
   const [creatingBusy, setCreatingBusy] = useState(false);
@@ -218,7 +219,7 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
     try {
       const res = await fetch("/api/panel/bodega/insumos", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, nombre: newNombre, categoria: newCategoria, ultimoPrecio: newPrecio, rendimiento: newRend }),
+        body: JSON.stringify({ restaurantId, nombre: newNombre, categoria: newCategoria, unidadBase: newUnidad, ultimoPrecio: newPrecio, rendimiento: newRend }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo crear"); setCreatingBusy(false); return; }
@@ -227,7 +228,7 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
       setInsumoId(ins.id);
       // Precargar el precio de la línea con el precio base sin IVA del insumo
       onNeto(newPrecio);
-      setCreatingInsumo(false); setNewNombre(""); setNewPrecio(""); setNewRend("100");
+      setCreatingInsumo(false); setNewNombre(""); setNewPrecio(""); setNewRend("100"); setNewUnidad("UN");
       toast.success("Insumo creado");
     } catch { toast.error("Error de conexión"); }
     setCreatingBusy(false);
@@ -324,9 +325,14 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
           <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(45,212,191,0.06)", border: "1px solid rgba(45,212,191,0.3)", borderRadius: 10, padding: 12 }}>
             <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)" }}>Nuevo insumo</span>
             <input value={newNombre} onChange={(e) => setNewNombre(e.target.value)} placeholder="Nombre (ej: Arroz sushi)" style={inputStyle} autoFocus />
-            <select value={newCategoria} onChange={(e) => setNewCategoria(e.target.value)} style={inputStyle}>
-              {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
-            </select>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <select value={newCategoria} onChange={(e) => setNewCategoria(e.target.value)} style={inputStyle}>
+                {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+              </select>
+              <select value={newUnidad} onChange={(e) => setNewUnidad(e.target.value)} style={inputStyle}>
+                {UNIDADES.map((u) => <option key={u} value={u}>{UNIDAD_NOMBRE[u]} ({UNIDAD_LABEL[u]})</option>)}
+              </select>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio sin IVA</span>
                 <input value={newPrecio} onChange={(e) => setNewPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$ neto" style={inputStyle} /></div>

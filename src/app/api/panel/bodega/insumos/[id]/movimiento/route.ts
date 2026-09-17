@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, runInTx } from "@/lib/prisma";
 import { aplicarEfecto } from "@/lib/bodega/movimientos";
 
 export const runtime = "nodejs";
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
 
-  const out = await prisma.$transaction(async (tx) => {
+  const out = await runInTx(async (tx) => {
     const eff = await aplicarEfecto(tx, { insumoId: id, tipo: tipo as "ingreso" | "retiro", cantidad, precioConIva: precio, fecha: new Date() });
     await tx.movimientoInsumo.create({ data: { insumoId: id, bodegaId: insumo.bodegaId, restaurantId, tipo, motivo, cantidad: eff.cantidadAplicada, costoUnitario: eff.costoUnitario, costoTotal: eff.costoTotal, nota, detalle: eff.detalle } });
     const insumoUpd = await tx.insumo.findUnique({ where: { id }, select: INSUMO_SELECT });

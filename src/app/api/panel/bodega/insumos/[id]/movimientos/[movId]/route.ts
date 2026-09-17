@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, runInTx } from "@/lib/prisma";
 import { aplicarEfecto, revertirEfecto } from "@/lib/bodega/movimientos";
 
 export const runtime = "nodejs";
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const precio = mov.tipo === "ingreso" ? Number(body?.precioConIva ?? mov.costoUnitario ?? 0) : undefined;
 
   try {
-    const insumo = await prisma.$transaction(async (tx) => {
+    const insumo = await runInTx(async (tx) => {
       const cur = await tx.movimientoInsumo.findUnique({ where: { id: movId }, select: { insumoId: true, tipo: true, cantidad: true, costoUnitario: true, detalle: true, fecha: true } });
       await revertirEfecto(tx, cur as any);
       const eff = await aplicarEfecto(tx, { insumoId: mov.insumoId, tipo: mov.tipo as "ingreso" | "retiro", cantidad, precioConIva: precio, fecha: cur!.fecha });
@@ -85,7 +85,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { mov } = auth;
 
   try {
-    const insumo = await prisma.$transaction(async (tx) => {
+    const insumo = await runInTx(async (tx) => {
       const cur = await tx.movimientoInsumo.findUnique({ where: { id: movId }, select: { insumoId: true, tipo: true, cantidad: true, costoUnitario: true, detalle: true } });
       await revertirEfecto(tx, cur as any);
       await tx.movimientoInsumo.delete({ where: { id: movId } });

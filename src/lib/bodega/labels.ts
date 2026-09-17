@@ -34,6 +34,11 @@ export const UNIDAD_LABEL: Record<string, string> = {
   ATADO: "atado",
 };
 
+export const UNIDAD_NOMBRE: Record<string, string> = {
+  KG: "Kilogramo", GR: "Gramo", LT: "Litro", ML: "Mililitro", UN: "Unidad",
+  DOCENA: "Docena", PAQUETE: "Paquete", CAJA: "Caja", BANDEJA: "Bandeja", ATADO: "Atado",
+};
+
 export const UNIDADES: string[] = ["KG", "GR", "LT", "ML", "UN", "DOCENA", "PAQUETE", "CAJA", "BANDEJA", "ATADO"];
 
 /** Formatea un monto en pesos chilenos sin decimales: 1030353 -> "$1.030.353". */
