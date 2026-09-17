@@ -128,13 +128,17 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
   try {
     // Try upgraded URL first, fallback to original
     const hdUrl = upgradePhotoUrl(externalUrl);
+    // Some CDNs (e.g. InfluyeApp) require a Referer to serve images
+    const extraHeaders: Record<string, string> = {};
+    if (externalUrl.includes("influye.app")) extraHeaders["Referer"] = "https://backend.influye.app/";
+    const baseHeaders = { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)", ...extraHeaders };
     let res = await fetch(hdUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+      headers: baseHeaders,
       signal: AbortSignal.timeout(8000),
     }).catch(() => null);
     if (!res || !res.ok) {
       res = await fetch(externalUrl, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+        headers: baseHeaders,
         signal: AbortSignal.timeout(8000),
       });
     }

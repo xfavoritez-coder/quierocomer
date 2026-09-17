@@ -13,6 +13,15 @@ import type { ExtractionResult, ExtractedDish } from "./types";
 const API_BASE = "https://backend.influye.app/store";
 const IMAGE_BASE = "https://static.influye.app/storage/products";
 
+function resolveInfluyeImageUrl(item: Record<string, any>): string | null {
+  // Try all known field names
+  const raw = item.image ?? item.imageUrl ?? item.img ?? item.img_url ?? item.image_url ?? item.photo ?? item.thumbnail ?? null;
+  if (!raw || typeof raw !== "string") return null;
+  if (raw.startsWith("http")) return raw;          // already full URL
+  if (raw.startsWith("/")) return `https://static.influye.app${raw}`;  // absolute path
+  return `${IMAGE_BASE}/${raw}`;                   // relative filename
+}
+
 /** Detecta si una URL pertenece a una tienda influye.app */
 export async function isInfluyeApp(url: string): Promise<boolean> {
   try {
@@ -46,6 +55,13 @@ export async function extractInfluyeApp(storeUrl: string): Promise<ExtractionRes
 
   const dishes: ExtractedDish[] = [];
 
+  // Debug: log first item keys to diagnose image field name in future
+  const firstItem = data.menu[0]?.items?.[0];
+  if (firstItem) {
+    console.log(`[InfluyeApp] First item keys: ${Object.keys(firstItem).join(", ")}`);
+    console.log(`[InfluyeApp] First item.image: ${JSON.stringify(firstItem.image)}, .imageUrl: ${JSON.stringify(firstItem.imageUrl)}`);
+  }
+
   for (const section of data.menu) {
     const categoryName: string = section.title || "General";
     if (!Array.isArray(section.items)) continue;
@@ -55,9 +71,7 @@ export async function extractInfluyeApp(storeUrl: string): Promise<ExtractionRes
       if (item.invisible || item.unavailable) continue;
       if (!item.title) continue;
 
-      const imageUrl = item.image
-        ? `${IMAGE_BASE}/${item.image}`
-        : null;
+      const imageUrl = resolveInfluyeImageUrl(item);
 
       dishes.push({
         name: item.title.trim(),

@@ -32,7 +32,15 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other", ski
   }
 
   try {
-    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html: trackedHtml, headers: { "Content-Type": "text/html; charset=UTF-8" } });
+    const unsubscribeUrl = `${BASE_URL}/api/email/unsubscribe?email=${encodeURIComponent(to)}`;
+    const { data, error } = await resend.emails.send({
+      from: FROM, to, subject, html: trackedHtml,
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    });
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);

@@ -310,8 +310,13 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
         { label: "Carta", done: true, ts: lead.createdAt },
         { label: "Paso 2", done: !!lead.step2At, ts: lead.step2At },
         { label: "Email", done: !!lead.deliveredAt, ts: lead.deliveredAt },
-        { label: "Abierto", done: !!(lead.emailOpenedAt || lead.whatsappClickedAt), ts: lead.emailOpenedAt || lead.whatsappClickedAt },
-        { label: "Click", done: !!(lead.emailClickedAt || lead.whatsappClickedAt), ts: lead.emailClickedAt || lead.whatsappClickedAt },
+        ...(lead.whatsappSentAt ? [
+          { label: "WA", done: true, ts: lead.whatsappSentAt, wa: true },
+          { label: "WA Click", done: !!lead.whatsappClickedAt, ts: lead.whatsappClickedAt, wa: true },
+        ] : [
+          { label: "Abierto", done: !!lead.emailOpenedAt, ts: lead.emailOpenedAt },
+          { label: "Click", done: !!lead.emailClickedAt, ts: lead.emailClickedAt },
+        ]),
         { label: "Onboard", done: !!lead.onboardingDoneAt, ts: lead.onboardingDoneAt },
         { label: "Panel", done: !!lead.panelVisitedAt, ts: lead.panelVisitedAt },
         { label: "Activado", done: !!lead.activatedAt, ts: lead.activatedAt, highlight: true },
@@ -398,9 +403,10 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
             const color = step.done
               ? step.green ? "#43d17b"
               : step.highlight ? "#F4A623"
+              : (step as any).wa ? "#22c55e"
               : "#60a5fa"
               : "#2a2a2a";
-            const textColor = step.done ? (step.green ? "#43d17b" : step.highlight ? "#F4A623" : "#aaa") : "#444";
+            const textColor = step.done ? (step.green ? "#43d17b" : step.highlight ? "#F4A623" : (step as any).wa ? "#22c55e" : "#aaa") : "#444";
             return (
               <div key={step.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
