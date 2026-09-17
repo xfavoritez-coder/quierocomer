@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Warehouse, Plus, Package, X, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
-import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, UNIDADES, clp, fmtStock } from "@/lib/bodega/labels";
+import { CATEGORIA_LABEL, CATEGORIA_ORDER, UNIDAD_LABEL, clp, fmtStock } from "@/lib/bodega/labels";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -15,6 +15,9 @@ type Insumo = {
   categoria: string;
   unidadBase: string;
   ultimoPrecio: number | null;
+  rendimiento: number | null;
+  precioConRendimiento: number | null;
+  familia: string | null;
   stockActual: number;
   fotoUrl: string | null;
   esCritico: boolean;
@@ -59,6 +62,11 @@ export default function BodegaHome() {
 
   const totalGeneral = useMemo(
     () => insumos.reduce((s, it) => s + it.stockActual * (it.ultimoPrecio || 0), 0),
+    [insumos]
+  );
+
+  const familias = useMemo(
+    () => Array.from(new Set(insumos.map((i) => i.familia).filter(Boolean))).sort() as string[],
     [insumos]
   );
 
@@ -131,6 +139,7 @@ export default function BodegaHome() {
       {modalOpen && restaurantId && (
         <CreateModal
           restaurantId={restaurantId}
+          familias={familias}
           onClose={() => setModalOpen(false)}
           onCreated={(it) => { setInsumos((prev) => [...prev, it]); setModalOpen(false); }}
         />
@@ -159,17 +168,20 @@ function InsumoCard({ it }: { it: Insumo }) {
   );
 }
 
-function CreateModal({ restaurantId, onClose, onCreated }: { restaurantId: string; onClose: () => void; onCreated: (it: Insumo) => void }) {
+function CreateModal({ restaurantId, familias, onClose, onCreated }: { restaurantId: string; familias: string[]; onClose: () => void; onCreated: (it: Insumo) => void }) {
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState("ABARROTE");
-  const [unidadBase, setUnidadBase] = useState("UN");
   const [precio, setPrecio] = useState("");
-  const [stock, setStock] = useState("");
-  const [esCritico, setEsCritico] = useState(false);
+  const [rendimiento, setRendimiento] = useState("");
+  const [familia, setFamilia] = useState("");
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const precioNum = parseFloat(precio);
+  const rendNum = parseFloat(rendimiento);
+  const precioConRend = Number.isFinite(precioNum) && Number.isFinite(rendNum) ? precioNum * rendNum : null;
 
   async function uploadFoto(file: File) {
     setUploading(true);
@@ -187,11 +199,13 @@ function CreateModal({ restaurantId, onClose, onCreated }: { restaurantId: strin
 
   async function submit() {
     if (!nombre.trim()) { toast.error("Escribe el nombre del insumo"); return; }
+    if (!Number.isFinite(precioNum) || precioNum < 0) { toast.error("El precio es obligatorio"); return; }
+    if (!Number.isFinite(rendNum) || rendNum <= 0) { toast.error("El rendimiento es obligatorio"); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/panel/bodega/insumos", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, nombre, categoria, unidadBase, ultimoPrecio: precio, stockInicial: stock, fotoUrl, esCritico }),
+        body: JSON.stringify({ restaurantId, nombre, categoria, ultimoPrecio: precio, rendimiento, familia, fotoUrl }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(d.error || "No se pudo crear"); setSaving(false); return; }
@@ -224,38 +238,38 @@ function CreateModal({ restaurantId, onClose, onCreated }: { restaurantId: strin
 
           <label style={{ display: "block" }}>
             <span style={labelSpan}>Nombre</span>
-            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Arroz sushi" style={inputStyle} autoFocus />
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Aceite 5 litros" style={inputStyle} autoFocus />
+          </label>
+
+          <label style={{ display: "block" }}>
+            <span style={labelSpan}>Categoría</span>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
+              {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+            </select>
           </label>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <label style={{ display: "block" }}>
-              <span style={labelSpan}>Categoría</span>
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)} style={inputStyle}>
-                {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
-              </select>
+              <span style={labelSpan}>Precio</span>
+              <input value={precio} onChange={(e) => setPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$" style={inputStyle} />
             </label>
             <label style={{ display: "block" }}>
-              <span style={labelSpan}>Unidad</span>
-              <select value={unidadBase} onChange={(e) => setUnidadBase(e.target.value)} style={inputStyle}>
-                {UNIDADES.map((u) => <option key={u} value={u}>{UNIDAD_LABEL[u]}</option>)}
-              </select>
+              <span style={labelSpan}>Rendimiento</span>
+              <input value={rendimiento} onChange={(e) => setRendimiento(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="Ej: 1" style={inputStyle} />
             </label>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <label style={{ display: "block" }}>
-              <span style={labelSpan}>Precio unitario (opcional)</span>
-              <input value={precio} onChange={(e) => setPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="numeric" placeholder="$" style={inputStyle} />
-            </label>
-            <label style={{ display: "block" }}>
-              <span style={labelSpan}>Stock inicial</span>
-              <input value={stock} onChange={(e) => setStock(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} />
-            </label>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(45,212,191,0.08)", border: "1px solid rgba(45,212,191,0.28)", borderRadius: 9, padding: "10px 12px" }}>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)" }}>Precio con rendimiento</span>
+            <span style={{ fontFamily: FB, fontSize: "0.95rem", fontWeight: 800, color: ACCENT }}>{precioConRend !== null ? clp(precioConRend) : "—"}</span>
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <input type="checkbox" checked={esCritico} onChange={(e) => setEsCritico(e.target.checked)} />
-            <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>Insumo crítico (control frecuente)</span>
+          <label style={{ display: "block" }}>
+            <span style={labelSpan}>Familia <span style={{ fontWeight: 500, color: "var(--adm-text3)" }}>(agrupa variantes, ej: “Aceite”)</span></span>
+            <input list="bodega-familias" value={familia} onChange={(e) => setFamilia(e.target.value)} placeholder="Ej: Aceite" style={inputStyle} />
+            <datalist id="bodega-familias">
+              {familias.map((f) => <option key={f} value={f} />)}
+            </datalist>
           </label>
 
           <button onClick={submit} disabled={saving || uploading} style={{ marginTop: 4, padding: "12px 16px", borderRadius: 11, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: saving ? "default" : "pointer", opacity: saving || uploading ? 0.7 : 1 }}>

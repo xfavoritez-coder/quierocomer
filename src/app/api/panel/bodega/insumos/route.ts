@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
     orderBy: [{ categoria: "asc" }, { nombre: "asc" }],
     select: {
       id: true, nombre: true, categoria: true, unidadBase: true,
-      ultimoPrecio: true, stockActual: true, fotoUrl: true, esCritico: true,
+      ultimoPrecio: true, rendimiento: true, precioConRendimiento: true, familia: true,
+      stockActual: true, fotoUrl: true, esCritico: true,
     },
   });
 
@@ -53,12 +54,17 @@ export async function POST(req: NextRequest) {
 
   const nombre = (body?.nombre || "").toString().trim();
   const categoria = (body?.categoria || "").toString();
-  const unidadBase = (body?.unidadBase || "").toString();
+  const unidadBase = UNIDADES.includes((body?.unidadBase || "").toString()) ? (body.unidadBase as string) : "UN";
   if (!nombre) return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
   if (!CATEGORIAS.includes(categoria)) return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
-  if (!UNIDADES.includes(unidadBase)) return NextResponse.json({ error: "Unidad inválida" }, { status: 400 });
 
-  const precio = body?.ultimoPrecio === null || body?.ultimoPrecio === undefined || body?.ultimoPrecio === "" ? null : Number(body.ultimoPrecio);
+  const precio = body?.ultimoPrecio === null || body?.ultimoPrecio === undefined || body?.ultimoPrecio === "" ? NaN : Number(body.ultimoPrecio);
+  const rendimiento = body?.rendimiento === null || body?.rendimiento === undefined || body?.rendimiento === "" ? NaN : Number(body.rendimiento);
+  if (!Number.isFinite(precio) || precio < 0) return NextResponse.json({ error: "El precio es obligatorio" }, { status: 400 });
+  if (!Number.isFinite(rendimiento) || rendimiento <= 0) return NextResponse.json({ error: "El rendimiento es obligatorio" }, { status: 400 });
+  const precioConRendimiento = precio * rendimiento;
+
+  const familia = typeof body?.familia === "string" && body.familia.trim() ? body.familia.trim().slice(0, 80) : null;
   const stock = Number(body?.stockInicial) || 0;
   const fotoUrl = typeof body?.fotoUrl === "string" && body.fotoUrl.trim() ? body.fotoUrl.trim() : null;
 
@@ -70,14 +76,18 @@ export async function POST(req: NextRequest) {
         nombre,
         categoria: categoria as any,
         unidadBase: unidadBase as any,
-        ultimoPrecio: precio !== null && Number.isFinite(precio) ? precio : null,
+        ultimoPrecio: precio,
+        rendimiento,
+        precioConRendimiento,
+        familia,
         stockActual: Number.isFinite(stock) && stock >= 0 ? stock : 0,
         fotoUrl,
         esCritico: body?.esCritico === true,
       },
       select: {
         id: true, nombre: true, categoria: true, unidadBase: true,
-        ultimoPrecio: true, stockActual: true, fotoUrl: true, esCritico: true,
+        ultimoPrecio: true, rendimiento: true, precioConRendimiento: true, familia: true,
+        stockActual: true, fotoUrl: true, esCritico: true,
       },
     });
     return NextResponse.json({ insumo });

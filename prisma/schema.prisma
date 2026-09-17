@@ -2196,7 +2196,10 @@ model Insumo {
   unidadBase   UnidadMedida
   esCritico    Boolean         @default(false)
   ordenConteo  Int?
-  ultimoPrecio Float?
+  ultimoPrecio Float?          // "Precio" del insumo
+  rendimiento  Float?          // factor de rendimiento del insumo
+  precioConRendimiento Float?  // = ultimoPrecio * rendimiento (se calcula al guardar)
+  familia      String?         // agrupador de variantes (ej: "Aceite" agrupa 5L, 1L, etc.)
   stockActual  Float           @default(0) // stock materializado; los movimientos (compra/retiro/ajuste) lo actualizan
   fotoUrl      String?         // foto del insumo (opcional)
   activo       Boolean         @default(true)
