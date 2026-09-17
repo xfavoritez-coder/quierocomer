@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, X, ImagePlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { clp, fmtStock, UNIDAD_LABEL } from "@/lib/bodega/labels";
+import { clp, fmtStock, UNIDAD_LABEL, CATEGORIA_ORDER, CATEGORIA_LABEL } from "@/lib/bodega/labels";
 
 export const F = "var(--font-display)";
 export const FB = "var(--font-body)";
@@ -208,6 +208,37 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Crear insumo al vuelo desde la factura
+  const [creatingInsumo, setCreatingInsumo] = useState(false);
+  const [newNombre, setNewNombre] = useState("");
+  const [newCategoria, setNewCategoria] = useState("ABARROTE");
+  const [newPrecio, setNewPrecio] = useState("");   // precio base SIN IVA
+  const [newRend, setNewRend] = useState("100");    // rendimiento %
+  const [creatingBusy, setCreatingBusy] = useState(false);
+
+  async function crearInsumo() {
+    if (!newNombre.trim()) { toast.error("Escribe el nombre del insumo"); return; }
+    if (!(parseFloat(newPrecio) >= 0)) { toast.error("Ingresa el precio (sin IVA)"); return; }
+    if (!(parseFloat(newRend) > 0)) { toast.error("Ingresa el rendimiento"); return; }
+    setCreatingBusy(true);
+    try {
+      const res = await fetch("/api/panel/bodega/insumos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, nombre: newNombre, categoria: newCategoria, ultimoPrecio: newPrecio, rendimiento: newRend }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo crear"); setCreatingBusy(false); return; }
+      const ins = { id: d.insumo.id, nombre: d.insumo.nombre, unidadBase: d.insumo.unidadBase, ultimoPrecio: d.insumo.ultimoPrecio };
+      setInsumos((prev) => [...prev, ins].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+      setInsumoId(ins.id);
+      // Precargar el precio de la línea con el precio base sin IVA del insumo
+      onNeto(newPrecio);
+      setCreatingInsumo(false); setNewNombre(""); setNewPrecio(""); setNewRend("100");
+      toast.success("Insumo creado");
+    } catch { toast.error("Error de conexión"); }
+    setCreatingBusy(false);
+  }
+
   useEffect(() => {
     if (!restaurantId) return;
     fetch(`/api/panel/bodega/insumos?restaurantId=${restaurantId}`).then((r) => r.ok ? r.json() : null).then((d) => { if (d?.insumos) setInsumos(d.insumos); }).catch(() => {});
@@ -295,12 +326,33 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, border: `1px solid ${editingId ? "rgba(45,212,191,0.4)" : "var(--adm-card-border)"}`, borderRadius: 12, padding: 14 }}>
         <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{editingId ? `Editar: ${editInsumoNombre || ""}` : "Agregar insumo"}</p>
-        {!editingId && (
-          <select value={insumoId} onChange={(e) => setInsumoId(e.target.value)} style={inputStyle}>
-            <option value="">Elige un insumo…</option>
-            {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-          </select>
-        )}
+        {!editingId && (creatingInsumo ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(45,212,191,0.06)", border: "1px solid rgba(45,212,191,0.3)", borderRadius: 10, padding: 12 }}>
+            <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text)" }}>Nuevo insumo</span>
+            <input value={newNombre} onChange={(e) => setNewNombre(e.target.value)} placeholder="Nombre (ej: Arroz sushi)" style={inputStyle} autoFocus />
+            <select value={newCategoria} onChange={(e) => setNewCategoria(e.target.value)} style={inputStyle}>
+              {CATEGORIA_ORDER.map((c) => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+            </select>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio sin IVA</span>
+                <input value={newPrecio} onChange={(e) => setNewPrecio(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="$ neto" style={inputStyle} /></div>
+              <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Rendimiento (%)</span>
+                <input value={newRend} onChange={(e) => setNewRend(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="100" style={inputStyle} /></div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={crearInsumo} disabled={creatingBusy} style={{ flex: 1, padding: "10px", borderRadius: 9, border: "none", background: ACCENT, color: "#0b3b36", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}>{creatingBusy ? "Creando…" : "Crear insumo"}</button>
+              <button onClick={() => setCreatingInsumo(false)} style={{ flexShrink: 0, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><X size={16} /></button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 8 }}>
+            <select value={insumoId} onChange={(e) => setInsumoId(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+              <option value="">Elige un insumo…</option>
+              {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+            </select>
+            <button type="button" onClick={() => { setCreatingInsumo(true); setNewNombre(""); }} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 12px", borderRadius: 9, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, whiteSpace: "nowrap" }}><Plus size={15} /> Nuevo</button>
+          </div>
+        ))}
         <div><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Cantidad</span>
           <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} /></div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "end" }}>
