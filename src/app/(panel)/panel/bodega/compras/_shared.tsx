@@ -217,7 +217,8 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
   const onNeto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setNeto(v); const n = parseFloat(v); setBruto(Number.isFinite(n) ? String(Math.round(n * 1.19)) : ""); };
   const onBruto = (v: string) => { v = v.replace(/[^\d.]/g, ""); setBruto(v); const b = parseFloat(v); setNeto(Number.isFinite(b) ? String(Math.round(b / 1.19)) : ""); };
   const cantN = parseFloat(cantidad), netoN = parseFloat(neto), brutoN = parseFloat(bruto);
-  const totalLinea = Number.isFinite(cantN) && Number.isFinite(brutoN) ? cantN * brutoN : null;
+  const totalNeto = Number.isFinite(cantN) && Number.isFinite(netoN) ? cantN * netoN : null;
+  const totalConIva = Number.isFinite(cantN) && Number.isFinite(brutoN) ? cantN * brutoN : null;
 
   const sumLineas = lineas.reduce((s, l) => s + l.precioTotal, 0);
   const diff = totalDoc != null ? totalDoc - sumLineas : null;
@@ -300,18 +301,22 @@ export function LineasEditor({ restaurantId, compraId, totalDoc }: { restaurantI
             {insumos.map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
           </select>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Cantidad</span>
-            <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} /></div>
+        <div><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Cantidad</span>
+          <input value={cantidad} onChange={(e) => setCantidad(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" style={inputStyle} /></div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "end" }}>
           <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio unit. sin IVA</span>
             <input value={neto} onChange={(e) => onNeto(e.target.value)} inputMode="decimal" placeholder="$ c/u" style={inputStyle} /></div>
+          <div style={{ padding: "9px 10px", background: "var(--adm-hover)", borderRadius: 9, minWidth: 0 }}>
+            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>Total sin IVA</span>
+            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)" }}>{totalNeto != null ? clp(totalNeto) : "—"}</span>
+          </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "end" }}>
           <div style={{ minWidth: 0 }}><span style={{ ...labelSpan, fontSize: "0.68rem", marginBottom: 3 }}>Precio unit. con IVA</span>
             <input value={bruto} onChange={(e) => onBruto(e.target.value)} inputMode="decimal" placeholder="$ c/u" style={inputStyle} /></div>
           <div style={{ padding: "9px 10px", background: "var(--adm-hover)", borderRadius: 9, minWidth: 0 }}>
-            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>Total línea (con IVA)</span>
-            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: ACCENT }}>{totalLinea != null ? clp(totalLinea) : "—"}</span>
+            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block" }}>Total con IVA</span>
+            <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: ACCENT }}>{totalConIva != null ? clp(totalConIva) : "—"}</span>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
