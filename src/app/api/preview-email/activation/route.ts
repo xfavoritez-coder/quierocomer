@@ -24,6 +24,8 @@ export function activationWelcomeEmailHtml({
   qrLink,
   credentials,
   planLabel,
+  openPixel,
+  clickTrackUrl,
 }: {
   ownerName: string;
   restaurantName: string;
@@ -31,6 +33,8 @@ export function activationWelcomeEmailHtml({
   qrLink: string;
   credentials?: { email: string; password: string };
   planLabel?: string;
+  openPixel?: string;
+  clickTrackUrl?: string;
 }): string {
 
   // qrLink = "${baseUrl}/${slug}" — build QR generator path
@@ -127,7 +131,7 @@ ${credentials ? `
   <tr>
     <td style="padding:12px 14px">
       <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu página de local</p>
-      <a href="${qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
+      <a href="${clickTrackUrl || qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
     </td>
   </tr>
   </table>
@@ -191,6 +195,7 @@ ${credentials ? `
 </td></tr>
 </table>
 
+${openPixel ? `<img src="${openPixel}" alt="" width="1" height="1" style="display:none" />` : ""}
 </td></tr>
 </table>
 </body></html>`;

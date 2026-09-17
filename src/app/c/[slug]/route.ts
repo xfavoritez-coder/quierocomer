@@ -30,19 +30,7 @@ export async function GET(
     }).catch(() => {});
   }
 
-  // Check if restaurant has an unused ownerViewToken to pass through
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { slug },
-    select: { ownerViewToken: true, ownerViewTokenUsedAt: true },
-  }).catch(() => null);
-
-  const token = restaurant?.ownerViewToken && !restaurant.ownerViewTokenUsedAt
-    ? restaurant.ownerViewToken
-    : null;
-
-  const destination = token
-    ? `${base}/${slug}?ot=${token}`
-    : `${base}/${slug}`;
+  const destination = `${base}/${slug}`;
 
   return NextResponse.redirect(destination, { status: 302 });
 }

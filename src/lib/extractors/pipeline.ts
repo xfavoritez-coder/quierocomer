@@ -935,9 +935,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
         const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
-        // Use ownerViewToken from the restaurant record (works for both new and existing demo)
         const qrLink = `${baseUrl}/${restaurant.slug}`;
         const password = `${restaurant.slug}2026`;
+        const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
+        const clickTrackUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(qrLink)}`;
 
         await sendAdminEmail({
           to: lead.email,
@@ -949,6 +950,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             qrLink,
             credentials: { email: lead.email, password },
             planLabel: "Prueba gratis 7 días",
+            openPixel,
+            clickTrackUrl,
           }),
           purpose: "funnel_carta_lista",
         });
