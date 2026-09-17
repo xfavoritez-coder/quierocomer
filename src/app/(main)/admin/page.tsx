@@ -202,7 +202,7 @@ function BillingSection({ data }: { data: BillingData }) {
                         color: r.method === "Flow" ? "#60a5fa" : r.method === "MercadoPago" ? "#4ade80" : r.method === "—" ? "#444" : "#fbbf24",
                       }}>{r.method}</span>
                     </td>
-                    <td style={{ padding: "10px 0 10px 8px", fontSize: "0.85rem", color: r.billingRut ? "var(--adm-text2)" : "var(--adm-text3)", fontFamily: "monospace" }}>
+                    <td style={{ padding: "10px 0 10px 8px", fontSize: "0.85rem", color: r.billingRut ? "var(--adm-text)" : "var(--adm-text3)", fontFamily: "monospace" }}>
                       {r.billingRut ? r.billingRut.replace(/\./g, "") : "—"}
                     </td>
                   </tr>
