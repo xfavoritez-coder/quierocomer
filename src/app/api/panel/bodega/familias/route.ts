@@ -25,10 +25,11 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const bodegaId = await ensureOwnBodega(restaurantId);
-  const [insumos, configs, proveedores] = await Promise.all([
+  const [insumos, configs, proveedores, sinFamilia] = await Promise.all([
     prisma.insumo.findMany({ where: { bodegaId, activo: true, familia: { not: null } }, select: { familia: true, stockActual: true, unidadBase: true } }),
     prisma.familiaConfig.findMany({ where: { bodegaId }, select: { familia: true, stockMinimo: true, cantidadSolicitar: true, proveedorId: true, proveedor: { select: { nombre: true } } } }),
     prisma.proveedor.findMany({ where: { bodegaId, activo: true }, orderBy: { nombre: "asc" }, select: { id: true, nombre: true } }),
+    prisma.insumo.count({ where: { bodegaId, activo: true, familia: null } }),
   ]);
 
   const agg = new Map<string, { sumStock: number; insumos: number; unidad: string }>();
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
     };
   }).sort((x, y) => x.familia.localeCompare(y.familia));
 
-  return NextResponse.json({ familias, proveedores });
+  return NextResponse.json({ familias, proveedores, sinFamilia });
 }
 
 /** PUT /api/panel/bodega/familias → crea/actualiza la config de una familia. */

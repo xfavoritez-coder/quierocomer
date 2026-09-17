@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardList, Truck, Settings, X, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ClipboardList, Truck, Settings, X, AlertTriangle, CheckCircle2, HelpCircle, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { fmtStock, UNIDAD_LABEL } from "@/lib/bodega/labels";
@@ -24,8 +25,10 @@ const labelSpan: React.CSSProperties = { display: "block", fontFamily: F, fontSi
 export default function PorComprarPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
+  const router = useRouter();
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [proveedores, setProveedores] = useState<ProveedorLite[]>([]);
+  const [sinFamilia, setSinFamilia] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Familia | null>(null);
 
@@ -34,7 +37,7 @@ export default function PorComprarPage() {
     setLoading(true);
     fetch(`/api/panel/bodega/familias?restaurantId=${restaurantId}`)
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) { setFamilias(d.familias || []); setProveedores(d.proveedores || []); } })
+      .then((d) => { if (d) { setFamilias(d.familias || []); setProveedores(d.proveedores || []); setSinFamilia(d.sinFamilia || 0); } })
       .catch(() => {}).finally(() => setLoading(false));
   }, [restaurantId]);
 
@@ -63,6 +66,17 @@ export default function PorComprarPage() {
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Familias que llegaron a su stock mínimo</p>
         </div>
       </div>
+
+      {!loading && sinFamilia > 0 && (
+        <button onClick={() => router.push("/panel/bodega/por-comprar/sin-familia")} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: 12, padding: "13px 14px", cursor: "pointer", marginBottom: 16 }}>
+          <HelpCircle size={20} color={WARN} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>{sinFamilia} insumo{sinFamilia === 1 ? "" : "s"} sin familia</p>
+            <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>No aparecen en “Por comprar”. Toca para asignarles familia.</p>
+          </div>
+          <ChevronRight size={18} color="var(--adm-text3)" style={{ flexShrink: 0 }} />
+        </button>
+      )}
 
       {loading ? (
         <div style={{ padding: 40, textAlign: "center", fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</div>
