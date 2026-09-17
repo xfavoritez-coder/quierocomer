@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const bodegaId = await ensureOwnBodega(restaurantId);
-  const bodega = await prisma.bodega.findUnique({ where: { id: bodegaId }, select: { ingresoManualEnabled: true } });
-  return NextResponse.json({ ingresoManualEnabled: bodega?.ingresoManualEnabled ?? true });
+  const bodega = await prisma.bodega.findUnique({ where: { id: bodegaId }, select: { ingresoManualEnabled: true, mostrarPreciosConIva: true } });
+  return NextResponse.json({ ingresoManualEnabled: bodega?.ingresoManualEnabled ?? true, mostrarPreciosConIva: bodega?.mostrarPreciosConIva ?? true });
 }
 
 /** PUT /api/panel/bodega/config → actualiza la configuración de la bodega. */
@@ -38,7 +38,8 @@ export async function PUT(req: NextRequest) {
   const bodegaId = await ensureOwnBodega(restaurantId);
   const data: Record<string, any> = {};
   if (typeof body?.ingresoManualEnabled === "boolean") data.ingresoManualEnabled = body.ingresoManualEnabled;
+  if (typeof body?.mostrarPreciosConIva === "boolean") data.mostrarPreciosConIva = body.mostrarPreciosConIva;
 
-  const bodega = await prisma.bodega.update({ where: { id: bodegaId }, data, select: { ingresoManualEnabled: true } });
-  return NextResponse.json({ ingresoManualEnabled: bodega.ingresoManualEnabled });
+  const bodega = await prisma.bodega.update({ where: { id: bodegaId }, data, select: { ingresoManualEnabled: true, mostrarPreciosConIva: true } });
+  return NextResponse.json({ ingresoManualEnabled: bodega.ingresoManualEnabled, mostrarPreciosConIva: bodega.mostrarPreciosConIva });
 }

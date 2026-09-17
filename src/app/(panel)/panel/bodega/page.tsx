@@ -42,6 +42,8 @@ export default function BodegaHome() {
   const [editing, setEditing] = useState<Insumo | null>(null);
   const [search, setSearch] = useState("");
   const [ingresoManual, setIngresoManual] = useState(true);
+  const [conIva, setConIva] = useState(true);
+  const f = conIva ? 1 : 1 / 1.19; // factor de display: con IVA o neto
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -53,7 +55,7 @@ export default function BodegaHome() {
       .finally(() => setLoading(false));
     fetch(`/api/panel/bodega/config?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setIngresoManual(d.ingresoManualEnabled !== false); })
+      .then((d) => { if (d) { setIngresoManual(d.ingresoManualEnabled !== false); setConIva(d.mostrarPreciosConIva !== false); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -95,7 +97,7 @@ export default function BodegaHome() {
             <span style={{ fontSize: "0.58rem", fontWeight: 800, color: ACCENT, background: "rgba(45,212,191,0.18)", padding: "2px 8px", borderRadius: 999 }}>BETA</span>
           </h1>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>
-            {insumos.length} insumo{insumos.length === 1 ? "" : "s"} · valor total {clp(totalGeneral)}
+            {insumos.length} insumo{insumos.length === 1 ? "" : "s"} · valor total {clp(totalGeneral * f)} <span style={{ color: "var(--adm-text3)" }}>({conIva ? "con IVA" : "sin IVA"})</span>
           </p>
         </div>
       </div>
@@ -133,12 +135,12 @@ export default function BodegaHome() {
               <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>
                 {CATEGORIA_LABEL[g.categoria] || g.categoria}
               </h2>
-              <span style={{ fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: ACCENT }}>{clp(g.total)}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: ACCENT }}>{clp(g.total * f)}</span>
               <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>{g.items.length} ítem{g.items.length === 1 ? "" : "s"}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
               {g.items.map((it) => (
-                <InsumoCard key={it.id} it={it} onOpen={() => setEditing(it)} />
+                <InsumoCard key={it.id} it={it} conIva={conIva} onOpen={() => setEditing(it)} />
               ))}
             </div>
           </section>
@@ -165,6 +167,7 @@ export default function BodegaHome() {
           familias={familias}
           insumo={editing}
           ingresoManual={ingresoManual}
+          conIva={conIva}
           onClose={() => { setModalOpen(false); setEditing(null); }}
           onChange={(it) => setInsumos((prev) => prev.some((x) => x.id === it.id) ? prev.map((x) => x.id === it.id ? it : x) : [...prev, it])}
           onDeleted={(delId) => setInsumos((prev) => prev.filter((x) => x.id !== delId))}
@@ -174,7 +177,8 @@ export default function BodegaHome() {
   );
 }
 
-function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
+function InsumoCard({ it, conIva, onOpen }: { it: Insumo; conIva: boolean; onOpen: () => void }) {
+  const f = conIva ? 1 : 1 / 1.19;
   return (
     <div onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") onOpen(); }} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 12, cursor: "pointer" }}>
       <div style={{ width: 52, height: 52, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
@@ -187,14 +191,15 @@ function InsumoCard({ it, onOpen }: { it: Insumo; onOpen: () => void }) {
           {it.nombre}{it.esCritico ? " ★" : ""}
         </p>
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: 0 }}>
-          {it.precioConIva ? clp(it.precioConIva) : "—"} · Stock: <strong style={{ color: "var(--adm-text)" }}>{fmtStock(it.stockActual)}</strong> {UNIDAD_LABEL[it.unidadBase] || ""}
+          {it.precioConIva ? clp(it.precioConIva * f) : "—"} · Stock: <strong style={{ color: "var(--adm-text)" }}>{fmtStock(it.stockActual)}</strong> {UNIDAD_LABEL[it.unidadBase] || ""}
         </p>
       </div>
     </div>
   );
 }
 
-function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; ingresoManual: boolean; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+function InsumoModal({ restaurantId, familias, insumo, ingresoManual, conIva, onClose, onChange, onDeleted }: { restaurantId: string; familias: string[]; insumo: Insumo | null; ingresoManual: boolean; conIva: boolean; onClose: () => void; onChange: (it: Insumo) => void; onDeleted: (id: string) => void }) {
+  const priceF = conIva ? 1 : 1 / 1.19;
   const editing = !!insumo;
   const router = useRouter();
   const [mode, setMode] = useState<"view" | "edit">(editing ? "view" : "edit");
@@ -426,10 +431,10 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
 
             {/* Datos */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--adm-card-border)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
-              <DataCell label="Precio prom. con IVA" value={cur.precioConIva != null ? clp(cur.precioConIva) : "—"} />
+              <DataCell label={conIva ? "Precio prom. con IVA" : "Precio prom. sin IVA"} value={cur.precioConIva != null ? clp(cur.precioConIva * priceF) : "—"} />
               <DataCell label="Rendimiento" value={cur.rendimiento != null ? `${fmtStock(cur.rendimiento)}%` : "—"} />
               <DataCell label="Precio con rendimiento" value={cur.precioConRendimiento != null ? clp(cur.precioConRendimiento) : "—"} />
-              <DataCell label="Valor en stock" value={clp(cur.valorStock || 0)} />
+              <DataCell label={conIva ? "Valor en stock (con IVA)" : "Valor en stock (sin IVA)"} value={clp((cur.valorStock || 0) * priceF)} />
             </div>
 
             <button onClick={() => router.push(`/panel/bodega/insumo/${cur.id}`)} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "10px 16px", borderRadius: 11, border: "1px solid rgba(45,212,191,0.4)", background: "rgba(45,212,191,0.08)", color: ACCENT, fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: "pointer" }}>
@@ -485,7 +490,7 @@ function InsumoModal({ restaurantId, familias, insumo, ingresoManual, onClose, o
                     <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
                       <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>{fmtStock(l.cantidadRestante)} {UNIDAD_LABEL[cur.unidadBase] || ""}</span>
                       <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(l.fecha).toLocaleDateString("es-CL")}</span>
-                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: ACCENT, marginLeft: "auto" }}>{clp(l.precioUnitario)} c/u</span>
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: ACCENT, marginLeft: "auto" }}>{clp(l.precioUnitario * priceF)} c/u</span>
                     </div>
                   ))}
                 </div>
