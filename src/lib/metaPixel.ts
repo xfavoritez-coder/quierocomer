@@ -32,6 +32,7 @@ function fbq(event: string, params?: FbqParams) {
 /** User creates an account */
 export function trackRegistration() {
   fbq("CompleteRegistration", { currency: "CLP", value: 49900 });
+  fbq("Purchase", { content_name: "Registro", currency: "CLP", value: 49900 });
 }
 
 /** Landing/planes: user submits local name + email to start */
@@ -63,6 +64,7 @@ export function trackCartaUpload() {
 /** Subir carta — paso 2 completado (datos del local = lead real con contacto) */
 export function trackCartaInfo() {
   fbq("CompleteRegistration", { content_name: "Subir Carta Completo", currency: "CLP", value: 49900 });
+  fbq("Purchase", { content_name: "Subir Carta Completo", currency: "CLP", value: 49900 });
 }
 
 /** Carta lista — confirmación final (refuerzo de conversión) */
