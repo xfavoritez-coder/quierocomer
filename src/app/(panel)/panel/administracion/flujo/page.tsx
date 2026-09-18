@@ -463,44 +463,54 @@ function ExplainerCard() {
       </button>
 
       {open && (
-        <div style={{ borderTop: "1px solid var(--adm-card-border,#f0f0f0)", padding: "16px" }}>
+        <div style={{ borderTop: "1px solid var(--adm-card-border,#f0f0f0)", padding: "18px 16px 16px" }}>
 
-          {/* 4 bloques visuales */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          {/* Pipeline visual horizontal */}
+          <div style={{ display: "flex", alignItems: "stretch", gap: 0, marginBottom: 18, overflowX: "auto", paddingBottom: 4 }}>
             {[
-              { icon: "➕", title: "Nuevo movimiento", desc: "Ingreso o egreso · categoría · monto · fecha" },
-              { icon: "📊", title: "P&L del mes", desc: "Ingresos vs egresos · utilidad o pérdida" },
-              { icon: "🏦", title: "Conciliación bancaria", desc: "Sube el extracto del banco y cruzamos los registros" },
-              { icon: "✅", title: "¿Qué queda conciliado?", desc: "Monto + fecha coinciden → marcado como conciliado" },
-            ].map(item => (
-              <div key={item.title} style={{ display: "flex", gap: 10, padding: "11px 12px", borderRadius: 10, background: "var(--adm-hover,#f9fafb)", border: "1px solid var(--adm-card-border,#f0f0f0)", alignItems: "flex-start" }}>
-                <span style={{ fontSize: "1.3rem", lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
-                <div>
-                  <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text,#111)", margin: "0 0 2px" }}>{item.title}</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3,#888)", margin: 0, lineHeight: 1.4 }}>{item.desc}</p>
+              { icon: "🧾", label: "Registras\nun gasto", color: "#6366f1" },
+              { icon: "🏦", label: "Subes el\nbanco", color: "#3b82f6" },
+              { icon: "🔗", label: "Concilias\nmovimientos", color: "#F4A623" },
+              { icon: "📊", label: "El P&L\nse arma solo", color: "#16a34a" },
+            ].map((s, i, arr) => (
+              <div key={s.label} style={{ display: "flex", alignItems: "center", flex: "1 1 0", minWidth: 72 }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: s.color + "15", border: `1.5px solid ${s.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                    {s.icon}
+                  </div>
+                  <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text2,#555)", margin: 0, textAlign: "center", lineHeight: 1.35, whiteSpace: "pre-line" }}>{s.label}</p>
                 </div>
+                {i < arr.length - 1 && (
+                  <div style={{ flexShrink: 0, width: 20, display: "flex", alignItems: "center", justifyContent: "center", paddingBottom: 20 }}>
+                    <span style={{ color: "var(--adm-text3,#ccc)", fontSize: 16, fontWeight: 300 }}>›</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          {/* Flujo de trabajo — visual compacto */}
-          <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.18)" }}>
-            <p style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "#b8810a", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Flujo recomendado</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {[
-                { n: 1, icon: "💰", text: "Registra ventas e ingresos del día" },
-                { n: 2, icon: "🧾", text: "Registra gastos y compras" },
-                { n: 3, icon: "🏦", text: "Sube el extracto bancario (semanal o mensual)" },
-                { n: 4, icon: "🔍", text: "Concilia y revisa diferencias" },
-                { n: 5, icon: "📤", text: "Exporta el P&L para contabilidad" },
-              ].map(s => (
-                <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#F4A623", color: "#fff", fontSize: "0.62rem", fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.n}</span>
-                  <span style={{ fontSize: "0.9rem" }}>{s.icon}</span>
-                  <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2,#555)" }}>{s.text}</span>
-                </div>
-              ))}
-            </div>
+          {/* Qué hace cada fuente */}
+          <p style={{ fontFamily: F, fontSize: "0.65rem", fontWeight: 800, color: "var(--adm-text3,#aaa)", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 8px" }}>Fuentes de datos</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {[
+              { badge: "Manual", color: "#94a3b8", icon: "✏️", text: "Ingresas ventas, cobros o gastos directamente aquí" },
+              { badge: "Banco", color: "#3b82f6", icon: "🏦", text: "Subes el extracto CSV/XLSX y concilias en la pestaña Conciliación" },
+              { badge: "/flujo", color: "#f59e0b", icon: "🛒", text: "El agente registra sus compras en efectivo desde su app" },
+            ].map(s => (
+              <div key={s.badge} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 9, background: "var(--adm-hover,#f9fafb)", border: "1px solid var(--adm-card-border,#f0f0f0)" }}>
+                <span style={{ fontSize: 16 }}>{s.icon}</span>
+                <span style={{ padding: "2px 7px", borderRadius: 5, background: s.color + "20", color: s.color, fontWeight: 800, fontSize: "0.68rem", flexShrink: 0 }}>{s.badge}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2,#555)", lineHeight: 1.4 }}>{s.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Tip */}
+          <div style={{ marginTop: 12, padding: "9px 12px", borderRadius: 9, background: "rgba(244,166,35,0.07)", border: "1px solid rgba(244,166,35,0.2)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>💡</span>
+            <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "#9a6c0a", margin: 0, lineHeight: 1.5 }}>
+              Haz click en cualquier fila del P&L para ver los movimientos individuales que la componen.
+            </p>
           </div>
         </div>
       )}
