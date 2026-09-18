@@ -246,9 +246,9 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
           width: 100%;
         }
         .lp-hero-cta .lp-btn {
-          min-height: 76px !important;
-          padding: 0 60px !important;
-          font-size: 24px !important;
+          min-height: 68px !important;
+          padding: 0 52px !important;
+          font-size: 21px !important;
           width: auto !important;
         }
 
