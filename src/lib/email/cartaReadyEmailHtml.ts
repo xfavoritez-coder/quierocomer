@@ -61,7 +61,7 @@ export function cartaReadyEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:6px">
 <h2 style="color:#1a1a1a;font-size:22px;margin:0;font-family:Georgia,serif;line-height:1.3">
-  ${ownerName}, tu carta está lista
+  ${ownerName}, tu página está lista
 </h2>
 </td></tr>
 </table>

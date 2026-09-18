@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import LandingPage from "@/components/landing/LandingPage";
 
 export const metadata: Metadata = {
@@ -34,6 +35,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
-  return <LandingPage />;
+export default async function HomePage() {
+  const jar = await cookies();
+  const initialCtaText = decodeURIComponent(jar.get("qc_ab_cta")?.value || "") || "Subir carta gratis →";
+  return <LandingPage initialCtaText={initialCtaText} />;
 }

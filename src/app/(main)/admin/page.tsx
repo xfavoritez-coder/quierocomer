@@ -354,6 +354,28 @@ export default function AdminDashboard() {
       {/* ── Billing ── */}
       {isSuper && billing && <BillingSection data={billing} />}
 
+      {/* ── A/B Tests ── */}
+      {isSuper && (
+        <div style={{ marginTop: 32 }}>
+          <a
+            href="/admin/tests-ab"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 10,
+              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+              borderRadius: 12, padding: "14px 20px", textDecoration: "none",
+              color: "var(--adm-text)", fontFamily: F, fontWeight: 600, fontSize: "0.9rem",
+              transition: "border-color .15s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = GOLD)}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
+          >
+            <span style={{ fontSize: "1.1rem" }}>🧪</span>
+            <span>Experimentos A/B</span>
+            <span style={{ color: "var(--adm-text3)", fontSize: "0.8rem", marginLeft: 4 }}>→</span>
+          </a>
+        </div>
+      )}
+
     </div>
   );
 }

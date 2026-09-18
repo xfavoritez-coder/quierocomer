@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SubirCartaModal from "@/components/landing/SubirCartaModal";
@@ -66,7 +66,7 @@ const FEATURE_DETAILS: Record<string, FeatureDetail> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function LandingPage() {
+export default function LandingPage({ initialCtaText = "Subir carta gratis →" }: { initialCtaText?: string }) {
   const [ucOpen, setUcOpen] = useState(false);
   const openModal = () => { setUcOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
@@ -74,6 +74,35 @@ export default function LandingPage() {
   const [featOpen, setFeatOpen] = useState<FeatureDetail | null>(null);
   const openFeat = (key: string) => { setFeatOpen(FEATURE_DETAILS[key] ?? null); document.body.style.overflow = "hidden"; };
   const closeFeat = () => { setFeatOpen(null); document.body.style.overflow = ""; };
+
+  // A/B test — el texto viene del servidor (cookie leída en page.tsx), sin flash
+  const [ctaText] = useState<string>(initialCtaText);
+  const [ctaId, setCtaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Solo para tracking y asignar cookie en primera visita
+    fetch("/api/landing/ab")
+      .then(r => r.json())
+      .then(d => {
+        if (d.ctaId) setCtaId(d.ctaId);
+        fetch("/api/qr/stat-events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", ctaId: d.ctaId ?? null } }),
+        }).catch(() => {});
+      })
+      .catch(() => {});
+  }, []);
+
+  const trackCtaClick = () => {
+    fetch("/api/qr/stat-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "LANDING_CTA_CLICK", metadata: { abExperiment: "landing-hero", ctaId } }),
+    }).catch(() => {});
+  };
+
+  const openModalWithTracking = () => { trackCtaClick(); openModal(); };
 
   return (
     <>
@@ -819,8 +848,8 @@ export default function LandingPage() {
               Transforma tu carta en una herramienta que atrae, vende y fideliza a tus clientes.
             </p>
             <div className="lp-hero-cta">
-              <button className="lp-btn" onClick={openModal}>
-                Subir carta gratis →
+              <button className="lp-btn" onClick={openModalWithTracking} suppressHydrationWarning>
+                {ctaText}
               </button>
             </div>
           </div>
@@ -972,7 +1001,7 @@ export default function LandingPage() {
         <section className="lp-final-cta">
           <h2>Tu carta ya existe.<br /><span>Haz que haga más.</span></h2>
           <p className="lp-final-cta-sub">Sube tu carta y activa todo un arsenal de marketing: carta QR, pedidos online, loyalty, traducción automática y más.</p>
-          <button className="lp-btn" onClick={openModal}>Subir carta gratis →</button>
+          <button className="lp-btn" onClick={openModalWithTracking} suppressHydrationWarning>{ctaText}</button>
         </section>
 
       </main>
@@ -1002,7 +1031,7 @@ export default function LandingPage() {
               <button
                 className="lp-btn"
                 style={{ width: "100%", textAlign: "center", justifyContent: "center", fontSize: 17, padding: "16px 0" }}
-                onClick={() => { closeFeat(); openModal(); }}
+                onClick={() => { closeFeat(); openModalWithTracking(); }}
               >
                 {featOpen.cta} →
               </button>

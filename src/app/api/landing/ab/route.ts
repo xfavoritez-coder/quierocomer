@@ -66,5 +66,16 @@ export async function GET(req: NextRequest) {
     result[`${slot}Text`] = picked.data.text;
   }
 
-  return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
+  const res = NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
+
+  // Persistir variante en cookie para que el cliente la lea antes del primer render (sin flash)
+  if (result.ctaText) {
+    res.cookies.set("qc_ab_cta", encodeURIComponent(result.ctaText), {
+      maxAge: 60 * 60 * 24 * 30, // 30 días
+      path: "/",
+      sameSite: "lax",
+    });
+  }
+
+  return res;
 }

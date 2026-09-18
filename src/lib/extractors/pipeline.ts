@@ -946,7 +946,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
         await sendAdminEmail({
           to: lead.email,
-          subject: `${ownerName}, tu carta de ${restaurant.name} está lista`,
+          subject: `${ownerName}, tu página de ${restaurant.name} está lista`,
           html: activationWelcomeEmailHtml({
             ownerName,
             restaurantName: restaurant.name,

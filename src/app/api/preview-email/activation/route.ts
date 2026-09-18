@@ -69,7 +69,7 @@ export function activationWelcomeEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:10px">
 <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.15;letter-spacing:-0.02em;margin:0;color:#111111">
-  ${restaurantName}<br/>Tu carta está lista
+  ${restaurantName}<br/>Tu página está lista
 </h1>
 </td></tr>
 </table>
