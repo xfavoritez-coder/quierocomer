@@ -117,7 +117,7 @@ export default function TestsAbPage() {
               <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600 }}>Variante</th>
               <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600 }}>Tráfico</th>
               <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600 }}>Visitas</th>
-              <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600 }}>Clicks</th>
+              <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600 }}>Conv.</th>
               <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: "#16a34a" }}>CVR</th>
               <th style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600 }}></th>
             </tr>
