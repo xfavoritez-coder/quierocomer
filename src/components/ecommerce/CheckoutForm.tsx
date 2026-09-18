@@ -574,7 +574,9 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
           {!isOpen && (
             <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
-              🔒 Estamos cerrados ahora{tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}
+              {tenant.openStatus.closedByClosure && tenant.openStatus.closure
+                ? `🔒 Cerrado · ${tenant.openStatus.closure.reason}`
+                : `🔒 Estamos cerrados ahora${tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}`}
             </div>
           )}
           {belowMin && (

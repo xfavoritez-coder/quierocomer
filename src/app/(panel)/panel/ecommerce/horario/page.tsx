@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import HorarioEditor from "@/components/ecommerce/HorarioEditor";
+import CierresEditor from "@/components/ecommerce/CierresEditor";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -27,6 +28,10 @@ export default function HoursPage() {
       </div>
 
       <HorarioEditor restaurantId={restaurantId} />
+
+      <div style={{ height: 1, background: "var(--adm-card-border)", margin: "26px 0" }} />
+
+      <CierresEditor restaurantId={restaurantId} />
     </div>
   );
 }

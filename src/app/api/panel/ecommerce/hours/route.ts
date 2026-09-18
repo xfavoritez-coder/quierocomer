@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { parseHours, getOpenStatus } from "@/lib/ecommerce/hours";
+import { parseHours, getOpenStatus, parseClosures } from "@/lib/ecommerce/hours";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -34,7 +34,18 @@ export async function PUT(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const hours = parseHours(body?.hours);
-  await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceHours: hours as unknown as object } });
-  return NextResponse.json({ ok: true, hours, openNow: getOpenStatus(hours).open });
+  // Merge: cada editor manda solo su parte (horario semanal o cierres) sin
+  // pisar la otra. `hours` → días/enabled; `closures` → cierres programados.
+  const current = parseHours((await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceHours: true } }))?.ecommerceHours);
+  const next = { ...current };
+  if (body?.hours !== undefined) {
+    const p = parseHours(body.hours);
+    next.enabled = p.enabled;
+    next.days = p.days;
+  }
+  if (body?.closures !== undefined) {
+    next.closures = parseClosures(body.closures);
+  }
+  await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceHours: next as unknown as object } });
+  return NextResponse.json({ ok: true, hours: next, openNow: getOpenStatus(next).open });
 }

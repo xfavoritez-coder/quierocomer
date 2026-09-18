@@ -9,7 +9,7 @@ import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
-import { parseHours, getOpenStatus, type OpenStatus } from "@/lib/ecommerce/hours";
+import { parseHours, resolveAvailability, type OpenStatus } from "@/lib/ecommerce/hours";
 
 export interface StoreTenant {
   id: string;
@@ -115,19 +115,20 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   });
   if (!r || !r.ecommerceEnabled) return null;
   const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: r.orderingMinAmount ?? null, waitTime: r.orderingWaitTime });
+  const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
     id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId,
-    deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled,
+    deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled,
     waitTime: r.orderingWaitTime, waitTimePickup: store.waitTimePickup, waitTimeDelivery: store.waitTimeDelivery, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
     deliveryZones: parseDeliveryZones(r.ecommerceDeliveryZones).filter((z) => z.active),
     deliveryConfig: parseDeliveryConfig(r.ecommerceDeliveryConfig),
     googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
     accompaniments: parseAccompConfig(r.ecommerceAccompaniments),
-    openStatus: getOpenStatus(parseHours(r.ecommerceHours)),
+    openStatus: avail.openStatus,
   };
 }
 
@@ -232,6 +233,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
 
   const fallbackMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
   const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: fallbackMethods, minOrder: restaurant.orderingMinAmount ?? null, waitTime: restaurant.orderingWaitTime });
+  const avail = resolveAvailability(parseHours(restaurant.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
 
   return {
     tenant: {
@@ -257,8 +259,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       customDomain: store.customDomain,
       faviconUrl: store.faviconUrl,
       gtmId: store.gtmId,
-      deliveryEnabled: store.deliveryEnabled,
-      pickupEnabled: store.pickupEnabled,
+      deliveryEnabled: avail.deliveryEnabled,
+      pickupEnabled: avail.pickupEnabled,
       waitTime: restaurant.orderingWaitTime,
       waitTimePickup: store.waitTimePickup,
       waitTimeDelivery: store.waitTimeDelivery,
@@ -270,7 +272,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       deliveryConfig: parseDeliveryConfig(restaurant.ecommerceDeliveryConfig),
       googleMapsKey: parseEcommerceConfig(restaurant.ecommerceConfig).googleMaps?.apiKey || null,
       accompaniments: parseAccompConfig(restaurant.ecommerceAccompaniments),
-      openStatus: getOpenStatus(parseHours(restaurant.ecommerceHours)),
+      openStatus: avail.openStatus,
     },
     categories: storeCategories,
     products,

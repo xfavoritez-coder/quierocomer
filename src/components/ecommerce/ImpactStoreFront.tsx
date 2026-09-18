@@ -250,6 +250,22 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
         </button>
       </div>
 
+      {/* ── Aviso de cierre (programado / horario) ── */}
+      {!isOpen && (
+        <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
+          <div style={{ borderRadius: 14, padding: "11px 14px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", textAlign: "center", fontSize: "0.86rem", fontWeight: 700 }}>
+            🔒 {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? `Cerrado · ${tenant.openStatus.closure.reason}` : "Estamos cerrados ahora"}
+          </div>
+        </div>
+      )}
+      {isOpen && tenant.openStatus.closure && (tenant.openStatus.closure.affectsDelivery !== tenant.openStatus.closure.affectsPickup) && (
+        <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
+          <div style={{ borderRadius: 14, padding: "10px 14px", background: "color-mix(in srgb, #f59e0b 22%, rgba(0,0,0,0.35))", border: "1px solid rgba(245,158,11,0.5)", color: "#fff", textAlign: "center", fontSize: "0.82rem", fontWeight: 700 }}>
+            {tenant.openStatus.closure.affectsDelivery ? "Delivery no disponible" : "Retiro no disponible"} · {tenant.openStatus.closure.reason}
+          </div>
+        </div>
+      )}
+
       {/* ── Banner de destacados ── */}
       {heroProducts.length > 0 && (
         <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "14px 14px 0" }}>

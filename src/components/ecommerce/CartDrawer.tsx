@@ -122,7 +122,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
             </div>
             {!tenant.openStatus.open ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">
-                🔒 Cerrado por ahora
+                🔒 {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? tenant.openStatus.closure.reason : "Cerrado por ahora"}
               </div>
             ) : !deliverySelected ? (
               <button

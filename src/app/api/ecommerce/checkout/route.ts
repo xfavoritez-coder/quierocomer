@@ -10,7 +10,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
-import { parseHours, getOpenStatus } from "@/lib/ecommerce/hours";
+import { parseHours, resolveAvailability } from "@/lib/ecommerce/hours";
 
 export const runtime = "nodejs";
 
@@ -58,8 +58,19 @@ export async function POST(req: NextRequest) {
     const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: restaurant.orderingMinAmount ?? null });
     if (!store.paymentMethods.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
 
-    // Tienda cerrada según horario.
-    if (!getOpenStatus(parseHours(restaurant.ecommerceHours)).open) return NextResponse.json({ error: "La tienda está cerrada en este momento" }, { status: 400 });
+    // Tienda cerrada según horario o cierre programado. El cierre puede afectar
+    // sólo un método de entrega → validamos contra el método del pedido.
+    const avail = resolveAvailability(parseHours(restaurant.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
+    if (!avail.openStatus.open) {
+      const motivo = avail.openStatus.closure?.reason;
+      return NextResponse.json({ error: motivo ? `Cerrado: ${motivo}` : "La tienda está cerrada en este momento" }, { status: 400 });
+    }
+    const metodoDisponible = orderType === "DELIVERY" ? avail.deliveryEnabled : avail.pickupEnabled;
+    if (!metodoDisponible) {
+      const motivo = avail.openStatus.closure?.reason;
+      const metodoTxt = orderType === "DELIVERY" ? "delivery" : "retiro";
+      return NextResponse.json({ error: motivo ? `${metodoTxt === "delivery" ? "Delivery" : "Retiro"} no disponible: ${motivo}` : `El ${metodoTxt} no está disponible en este momento` }, { status: 400 });
+    }
     if (!customerPhone?.trim()) return NextResponse.json({ error: "El teléfono es obligatorio" }, { status: 400 });
     // Email obligatorio si paga con Flow o usa cupón.
     const emailRequired = paymentMethod === "flow" || !!couponCode;

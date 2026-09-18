@@ -219,15 +219,32 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       {/* ── Banner de tienda cerrada ─────────────────────────────── */}
       {!tenant.openStatus.open && (
         <div className="bg-gray-900 text-white text-center py-3 px-4">
-          <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
-          {(() => {
-            const t = tenant.openStatus.today;
-            let msg: string;
-            if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
-            else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
-            else msg = "Hoy no atendemos";
-            return <span className="text-sm text-gray-300"> · {msg}</span>;
-          })()}
+          {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? (
+            <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
+          ) : (
+            <>
+              <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
+              {(() => {
+                const t = tenant.openStatus.today;
+                let msg: string;
+                if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
+                else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
+                else msg = "Hoy no atendemos";
+                return <span className="text-sm text-gray-300"> · {msg}</span>;
+              })()}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Aviso de cierre parcial (un método bloqueado, la tienda sigue abierta) ── */}
+      {tenant.openStatus.open && tenant.openStatus.closure && (tenant.openStatus.closure.affectsDelivery || tenant.openStatus.closure.affectsPickup) && (
+        <div className="bg-amber-50 text-amber-900 border-b border-amber-200 text-center py-2.5 px-4">
+          <span className="text-sm font-semibold">
+            {tenant.openStatus.closure.affectsDelivery && !tenant.openStatus.closure.affectsPickup && "Delivery no disponible"}
+            {tenant.openStatus.closure.affectsPickup && !tenant.openStatus.closure.affectsDelivery && "Retiro no disponible"}
+            {" · "}{tenant.openStatus.closure.reason}
+          </span>
         </div>
       )}
 
