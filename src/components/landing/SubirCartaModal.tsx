@@ -189,8 +189,8 @@ export default function SubirCartaModal({ open, onClose }: Props) {
         .scm-opcion:hover { border-color: #0D0D0D; background: #F5F2EB; transform: translateY(-1px); }
         .scm-opcion svg { flex-shrink: 0; opacity: .7; }
         .scm-opcion-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .scm-opcion-title { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
-        .scm-opcion-sub { font-size: 12px; color: #8C8982; font-weight: 400; }
+        .scm-opcion-title { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+        .scm-opcion-sub { font-size: 16px; color: #8C8982; font-weight: 400; }
         .scm-hint { font-size: 13px; color: #8C8982; margin-bottom: 14px; line-height: 1.5; }
         .scm-campo {
           width: 100%; border: 1.5px solid #EAE8E1; border-radius: 14px;
@@ -249,7 +249,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
 
           {ucStep === "options" && (
             <>
-              <h3>¿Cómo tienes tu carta?</h3>
+              <h3>¿Cómo tienes tu carta actual?</h3>
               <button className="scm-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
