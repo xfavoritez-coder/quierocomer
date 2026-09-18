@@ -147,8 +147,8 @@ function CategoryModal({ cat, entries, onClose }: { cat: Category; entries: Entr
   const rows = entries.filter(e => e.categoryId === cat.id).sort((a, b) => b.date.localeCompare(a.date));
   const total = rows.reduce((s, e) => s + e.amount, 0);
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 9999, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #fff)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "80dvh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #fff)", borderRadius: 20, width: "100%", maxWidth: 480, maxHeight: "80dvh", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.22)" }}>
         {/* Header */}
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--adm-card-border, #eee)", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 22 }}>{cat.icon || "📂"}</span>
