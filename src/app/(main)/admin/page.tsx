@@ -293,12 +293,6 @@ export default function AdminDashboard() {
               {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
             </select>
           )}
-          {isSuper && (
-            <a href="/admin/tests-ab"
-              style={{ height: 34, padding: "0 12px", borderRadius: 10, border: `1px solid var(--adm-card-border)`, background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, textDecoration: "none" }}>
-              🧪 A/B
-            </a>
-          )}
           <button onClick={fetchData} title="Actualizar"
             style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--adm-text3)", fontSize: "1rem" }}>
             ↻
@@ -360,27 +354,6 @@ export default function AdminDashboard() {
       {/* ── Billing ── */}
       {isSuper && billing && <BillingSection data={billing} />}
 
-      {/* ── A/B Tests ── */}
-      {isSuper && (
-        <div style={{ marginTop: 32 }}>
-          <a
-            href="/admin/tests-ab"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 10,
-              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
-              borderRadius: 12, padding: "14px 20px", textDecoration: "none",
-              color: "var(--adm-text)", fontFamily: F, fontWeight: 600, fontSize: "0.9rem",
-              transition: "border-color .15s",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = GOLD)}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
-          >
-            <span style={{ fontSize: "1.1rem" }}>🧪</span>
-            <span>Experimentos A/B</span>
-            <span style={{ color: "var(--adm-text3)", fontSize: "0.8rem", marginLeft: 4 }}>→</span>
-          </a>
-        </div>
-      )}
 
     </div>
   );
