@@ -809,6 +809,49 @@ export default function LandingPage() {
                   <p>Genera una versión imprimible lista para poner en mesas.</p>
                 </div>
               </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual" style={{ background: "linear-gradient(135deg, #1A0E00 0%, #2d1a00 100%)", position: "relative", overflow: "hidden" }}>
+                  {/* dots pattern */}
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} style={{
+                      position: "absolute",
+                      width: 28, height: 28, borderRadius: "50%",
+                      border: "1.5px solid rgba(244,166,35,0.25)",
+                      left: `${(i % 4) * 26 + 4}%`,
+                      top: `${Math.floor(i / 4) * 38 + 12}%`,
+                    }} />
+                  ))}
+                  <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, boxShadow: "0 4px 16px rgba(244,166,35,0.4)" }}>⭐</div>
+                    <div style={{ background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, padding: "4px 14px", fontSize: 12, color: "#F4A623", fontWeight: 700, fontFamily: "monospace", letterSpacing: "0.08em" }}>LOYALTY CARD</div>
+                  </div>
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Programa de lealtad</h3>
+                  <p>Tarjetas digitales de puntos y sellos para fidelizar clientes sin apps ni papel.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual" style={{ background: "linear-gradient(135deg, #0d1f0d 0%, #162516 100%)", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "80%", maxWidth: 200 }}>
+                    {/* mock order card */}
+                    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "10px 16px", width: "100%" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontFamily: "monospace" }}>Pedido #47</span>
+                        <span style={{ fontSize: 10, background: "rgba(74,222,128,0.15)", color: "#4ade80", borderRadius: 4, padding: "2px 6px", fontWeight: 700 }}>Nuevo</span>
+                      </div>
+                      {["Lomo a lo pobre", "Jugo de naranja"].map(item => (
+                        <div key={item} style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", paddingLeft: 8, borderLeft: "2px solid rgba(244,166,35,0.4)", marginBottom: 3 }}>{item}</div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 700, letterSpacing: "0.02em" }}>Directo a tu cocina →</div>
+                  </div>
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Pedidos online</h3>
+                  <p>Recibe pedidos desde la carta directamente, sin llamadas ni comisiones de terceros.</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
