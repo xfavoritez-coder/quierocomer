@@ -157,7 +157,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
         .scm-modal {
           background: #fff; border-radius: 24px;
           width: 100%; max-width: 480px; max-height: 90vh;
-          overflow-y: auto; padding: 80px 34px 32px;
+          overflow-y: auto; padding: 56px 34px 32px;
           position: relative; text-align: center;
           box-shadow: 0 30px 90px rgba(0,0,0,.32);
           animation: scmSlideUp .22s ease;
@@ -245,7 +245,6 @@ export default function SubirCartaModal({ open, onClose }: Props) {
               ← Volver
             </button>
           )}
-          <button className="scm-cerrar" onClick={handleClose} aria-label="Cerrar">×</button>
 
           {ucStep === "options" && (
             <>
