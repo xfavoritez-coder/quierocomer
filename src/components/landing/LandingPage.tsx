@@ -820,7 +820,7 @@ export default function LandingPage() {
             </p>
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
-                Subir mi carta →
+                Subir carta gratis →
               </button>
             </div>
           </div>
@@ -972,7 +972,7 @@ export default function LandingPage() {
         <section className="lp-final-cta">
           <h2>Tu carta ya existe.<br /><span>Haz que haga más.</span></h2>
           <p className="lp-final-cta-sub">Sube tu carta y activa todo un arsenal de marketing: carta QR, pedidos online, loyalty, traducción automática y más.</p>
-          <button className="lp-btn" onClick={openModal}>Subir mi carta →</button>
+          <button className="lp-btn" onClick={openModal}>Subir carta gratis →</button>
         </section>
 
       </main>
