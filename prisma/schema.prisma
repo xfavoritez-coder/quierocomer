@@ -203,7 +203,7 @@ model RestaurantOwner {
   mustChangePassword Boolean            @default(false)
   whatsapp           String?
   seenFeatures       String[]           @default([])
-  emailVerificado    Boolean   @default(false)
+  emailVerificado    Boolean            @default(false)
   emailVerificadoAt  DateTime?
   restaurants        Restaurant[]
   uploadedTickets    RestaurantTicket[]
@@ -234,52 +234,52 @@ model TeamMember {
 }
 
 model Restaurant {
-  id                         String                   @id @default(cuid())
-  slug                       String                   @unique
+  id                         String                    @id @default(cuid())
+  slug                       String                    @unique
   name                       String
   description                String?
   logoUrl                    String?
   bannerUrl                  String?
   phone                      String?
   address                    String?
-  cartaTheme                 CartaTheme               @default(BASIC)
-  isActive                   Boolean                  @default(true)
+  cartaTheme                 CartaTheme                @default(BASIC)
+  isActive                   Boolean                   @default(true)
   ownerId                    String?
-  createdAt                  DateTime                 @default(now())
-  updatedAt                  DateTime                 @updatedAt
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
   defaultView                String?
-  waiterPanelActive          Boolean                  @default(false)
+  waiterPanelActive          Boolean                   @default(false)
   qrActivatedAt              DateTime?
   instagram                  String?
   scheduleJson               Json?
   website                    String?
-  websiteIsOrderUrl          Boolean                  @default(false)
+  websiteIsOrderUrl          Boolean                   @default(false)
   cartaProvider              String?
   whatsapp                   String?
-  qrToken                    String?                  @unique
-  allPhotosReferential       Boolean                  @default(false)
-  dietType                   DishDietType             @default(OMNIVORE)
-  enabledLangs               String[]                 @default(["es", "en", "pt"])
-  plan                       RestaurantPlan           @default(FREE)
+  qrToken                    String?                   @unique
+  allPhotosReferential       Boolean                   @default(false)
+  dietType                   DishDietType              @default(OMNIVORE)
+  enabledLangs               String[]                  @default(["es", "en", "pt"])
+  plan                       RestaurantPlan            @default(FREE)
   toteatApiToken             String?
   toteatLastSyncAt           DateTime?
   toteatLocalId              Int?
   toteatRestaurantId         String?
   toteatUserId               Int?
   currentPeriodEnd           DateTime?
-  flowCustomerId             String?                  @unique
+  flowCustomerId             String?                   @unique
   flowPlanId                 String?
-  flowSubscriptionId         String?                  @unique
+  flowSubscriptionId         String?                   @unique
   lastPaymentAt              DateTime?
-  subscriptionStatus         SubscriptionStatus       @default(NONE)
+  subscriptionStatus         SubscriptionStatus        @default(NONE)
   trialEndsAt                DateTime?
   flowRegisterToken          String?
   pendingFlowPlanId          String?
   billingAnchorDay           Int?
-  billingExempt              Boolean                  @default(false)
-  toteatImportDone           Boolean                  @default(false)
+  billingExempt              Boolean                   @default(false)
+  toteatImportDone           Boolean                   @default(false)
   toteatLastVisibilitySyncAt DateTime?
-  toteatWebhookSecret        String?                  @unique
+  toteatWebhookSecret        String?                   @unique
   billingAddress             String?
   billingCity                String?
   billingCompanyName         String?
@@ -291,38 +291,38 @@ model Restaurant {
   birthdayPerk               String?
   trialReminderSentAt        DateTime?
   // ── Loyalty billing ──────────────────────────────────────────
-  loyaltyStatus              SubscriptionStatus       @default(NONE)
+  loyaltyStatus              SubscriptionStatus        @default(NONE)
   loyaltyPeriodEnd           DateTime?
   loyaltyTrialEndsAt         DateTime?
   loyaltyLastPaymentAt       DateTime?
   loyaltyTrialReminderSentAt DateTime?
   loyaltyFlowRegisterToken   String?
   // ─────────────────────────────────────────────────────────────
-  birthdayEmailEnabled       Boolean                  @default(false)
+  birthdayEmailEnabled       Boolean                   @default(false)
   birthdayPerkConditions     String?
-  cartaColorMode             CartaColorMode           @default(LIGHT)
+  cartaColorMode             CartaColorMode            @default(LIGHT)
   cartaAccentColor           String?
   sectionTitleMenu           String?
   sectionTitleRecomendados   String?
   sectionTitleCraving        String?
-  isDemo                     Boolean                  @default(false)
-  isShowcase                 Boolean                  @default(false)
-  needsTranslation           Boolean                  @default(false)
-  weeklyEmailEnabled         Boolean                  @default(true)
-  weeklyInsightsEnabled      Boolean                  @default(true)
-  demoOnboardingDone         Boolean                  @default(false)
-  mpCustomerId               String?                  @unique
+  isDemo                     Boolean                   @default(false)
+  isShowcase                 Boolean                   @default(false)
+  needsTranslation           Boolean                   @default(false)
+  weeklyEmailEnabled         Boolean                   @default(true)
+  weeklyInsightsEnabled      Boolean                   @default(true)
+  demoOnboardingDone         Boolean                   @default(false)
+  mpCustomerId               String?                   @unique
   mpPlanId                   String?
-  mpSubscriptionId           String?                  @unique
+  mpSubscriptionId           String?                   @unique
   pendingMpPlanId            String?
-  menuImported               Boolean                  @default(false)
-  showCategoryLobby          Boolean                  @default(false)
+  menuImported               Boolean                   @default(false)
+  showCategoryLobby          Boolean                   @default(false)
   customPlanPriceNet         Int?
   mpPayerEmail               String?
-  genioFabEnabled            Boolean                  @default(false)
-  ownerBannerEnabled         Boolean                  @default(false)
-  multiMenuEnabled           Boolean                  @default(false)
-  filterBarEnabled           Boolean                  @default(true)
+  genioFabEnabled            Boolean                   @default(false)
+  ownerBannerEnabled         Boolean                   @default(false)
+  multiMenuEnabled           Boolean                   @default(false)
+  filterBarEnabled           Boolean                   @default(true)
   lat                        Float?
   lng                        Float?
   googleMapsUrl              String?
@@ -331,24 +331,24 @@ model Restaurant {
   googleRatingCount          Int?
   primaryCategory            String?
   // Pedidos online (wa.me) — solo plan PREMIUM
-  orderingEnabled            Boolean                  @default(false)
+  orderingEnabled            Boolean                   @default(false)
   orderingPhone              String? // WA destino (override del whatsapp del local)
-  orderingDelivery           String                   @default("BOTH") // PICKUP | DELIVERY | BOTH
+  orderingDelivery           String                    @default("BOTH") // PICKUP | DELIVERY | BOTH
   orderingMinAmount          Int? // Monto mínimo en pesos CLP
   orderingWaitTime           String? // Ej: "30-45 min"
   orderingNote               String? // Mensaje custom visible en checkout
-  orderingPaymentMethods     String                   @default("efectivo,transferencia,tarjeta") // métodos disponibles
+  orderingPaymentMethods     String                    @default("efectivo,transferencia,tarjeta") // métodos disponibles
   orderingBannerUrl          String? // banner personalizado para /pedir
-  orderingTheme              String                   @default("light") // light | dark
+  orderingTheme              String                    @default("light") // light | dark
   orderingAccentColor        String? // color de acento hex
-  orderingMode               String                   @default("whatsapp") // "whatsapp" | "panel"
-  orderingBusinessHours      Json?                    // { "0": { open: bool, from: "HH:mm", to: "HH:mm" }, ..., "6": ... } (0=Dom)
-  orderingShowFeatured       Boolean                  @default(true) // mostrar el banner/hero de productos destacados en /pedir
-  orderingColumns            String                   @default("one") // grid de productos en /pedir: "one" (1 col) | "two" (2 col)
-  orderingShowIdentify       Boolean                  @default(false) // mostrar el botón "Identificarse" en /pedir (oculto por defecto)
-  orderingCategoryPhotos     Boolean                  @default(true) // categorías con foto (true) o solo chips sin foto (false)
+  orderingMode               String                    @default("whatsapp") // "whatsapp" | "panel"
+  orderingBusinessHours      Json? // { "0": { open: bool, from: "HH:mm", to: "HH:mm" }, ..., "6": ... } (0=Dom)
+  orderingShowFeatured       Boolean                   @default(true) // mostrar el banner/hero de productos destacados en /pedir
+  orderingColumns            String                    @default("one") // grid de productos en /pedir: "one" (1 col) | "two" (2 col)
+  orderingShowIdentify       Boolean                   @default(false) // mostrar el botón "Identificarse" en /pedir (oculto por defecto)
+  orderingCategoryPhotos     Boolean                   @default(true) // categorías con foto (true) o solo chips sin foto (false)
   // Valoraciones
-  reviewMode                 String                   @default("off") // "off" | "google" | "private"
+  reviewMode                 String                    @default("off") // "off" | "google" | "private"
   googleReviewUrl            String? // URL de Google Maps para dejar reseña
   reviewReward               String? // Descripción del premio (null = sin premio)
   privateReviews             PrivateReview[]
@@ -367,12 +367,12 @@ model Restaurant {
   experience                 Experience?
   genioInsights              GenioInsight[]
   happyHours                 HappyHour[]
-  createdIngredients         Ingredient[]             @relation("CreatedIngredients")
+  createdIngredients         Ingredient[]              @relation("CreatedIngredients")
   menuGroups                 MenuGroup[]
   modifierTemplates          ModifierTemplate[]
   promotionsMarketing        Promotion[]
   qrUserInteractions         QRUserInteraction[]
-  owner                      RestaurantOwner?         @relation(fields: [ownerId], references: [id])
+  owner                      RestaurantOwner?          @relation(fields: [ownerId], references: [id])
   restaurantClients          RestaurantClient[]
   promotions                 RestaurantPromotion[]
   schedules                  RestaurantScheduleRule[]
@@ -391,27 +391,27 @@ model Restaurant {
   whatsappMessages           WhatsAppMessage[]
   invoices                   Invoice[]
   // Módulo Control
-  controlEnabled             Boolean                  @default(false)
+  controlEnabled             Boolean                   @default(false)
   // Pilar Ecommerce (Servio dentro de quierocomer) — activado solo por superadmin.
-  ecommerceEnabled           Boolean                  @default(false)
-  ecommerceConfig            Json?                    // credenciales: webpay, flow, uberDirect, pedidosya (solo superadmin)
-  ecommerceDeliveryZones     Json?                    // zonas de delivery por comuna que cada local se autoadministra
-  ecommerceDeliveryConfig    Json?                    // config de delivery por polígono+distancia (origen, tarifas, polígonos)
-  ecommerceStoreConfig       Json?                    // config de la tienda: colores de marca, métodos de pago visibles, notas
-  ecommerceAccompaniments    Json?                    // acompañamientos del checkout (por monto y por producto)
-  ecommerceCoupons           Json?                    // cupones de descuento del ecommerce
-  ecommerceHours             Json?                    // horario de atención del ecommerce (tienda abierta/cerrada)
+  ecommerceEnabled           Boolean                   @default(false)
+  ecommerceConfig            Json? // credenciales: webpay, flow, uberDirect, pedidosya (solo superadmin)
+  ecommerceDeliveryZones     Json? // zonas de delivery por comuna que cada local se autoadministra
+  ecommerceDeliveryConfig    Json? // config de delivery por polígono+distancia (origen, tarifas, polígonos)
+  ecommerceStoreConfig       Json? // config de la tienda: colores de marca, métodos de pago visibles, notas
+  ecommerceAccompaniments    Json? // acompañamientos del checkout (por monto y por producto)
+  ecommerceCoupons           Json? // cupones de descuento del ecommerce
+  ecommerceHours             Json? // horario de atención del ecommerce (tienda abierta/cerrada)
   // Pilar Bodega (gestión de inventario/insumos) — activado solo por superadmin.
-  bodegaEnabled              Boolean                  @default(false)
-  bodegaId                   String?                  // bodega a la que pertenece el inventario del local (puede compartirse entre locales)
-  bodega                     Bodega?                  @relation(fields: [bodegaId], references: [id])
+  bodegaEnabled              Boolean                   @default(false)
+  bodegaId                   String? // bodega a la que pertenece el inventario del local (puede compartirse entre locales)
+  bodega                     Bodega?                   @relation(fields: [bodegaId], references: [id])
   compras                    Compra[]
   conteos                    Conteo[]
   mermas                     Merma[]
   ventasDia                  VentaDia[]
   hojasImpresas              HojaImpresa[]
   // Módulo Financiero
-  financialEnabled           Boolean                  @default(false)
+  financialEnabled           Boolean                   @default(false)
   financialCategories        FinancialCategory[]
   financialEntries           FinancialEntry[]
   bankMovements              BankMovement[]
@@ -423,7 +423,7 @@ model Restaurant {
 
   commune     String?
   communeSlug String?
-  profileType String   @default("RESTAURANT") // "RESTAURANT" | "STORE"
+  profileType String  @default("RESTAURANT") // "RESTAURANT" | "STORE"
 
   ownerViewToken       String?   @unique
   ownerViewTokenUsedAt DateTime?
@@ -438,40 +438,40 @@ model OnlineOrder {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
-  customerName    String
-  customerPhone   String
-  customerEmail   String?
-  orderType       String // "PICKUP" | "DELIVERY"
-  deliveryAddress String?
-  paymentMethod   String // "efectivo" | "transferencia" | "tarjeta" | "webpay"
-  paymentStatus   String    @default("pending") // pending | paid | failed (pago online)
-  paymentGateway  String? // "webpay" (u otro) cuando el pago es online
-  webpayToken     String? // token_ws de la transacción Webpay
-  webpayBuyOrder  String? // buy_order enviado a Webpay
-  flowToken       String? // token de la transacción Flow
-  paidAt          DateTime?
-  items           Json // CartItem[]
-  total           Int
-  notes           String?
+  customerName       String
+  customerPhone      String
+  customerEmail      String?
+  orderType          String // "PICKUP" | "DELIVERY"
+  deliveryAddress    String?
+  paymentMethod      String // "efectivo" | "transferencia" | "tarjeta" | "webpay"
+  paymentStatus      String    @default("pending") // pending | paid | failed (pago online)
+  paymentGateway     String? // "webpay" (u otro) cuando el pago es online
+  webpayToken        String? // token_ws de la transacción Webpay
+  webpayBuyOrder     String? // buy_order enviado a Webpay
+  flowToken          String? // token de la transacción Flow
+  paidAt             DateTime?
+  items              Json // CartItem[]
+  total              Int
+  notes              String?
   cancellationReason String?
-  source          String   @default("pedir-online") // "pedir-online" | "ecommerce" (pilar de origen)
-  orderNumber     Int? // correlativo por restaurante (para el POS y el cliente)
-  toteatOrderId   String? // id del pedido en Toteat tras inyectarlo al POS
-  posError        String? // último error al enviar al POS (si hubo)
-  deliveryFee     Int      @default(0) // costo de despacho de la zona (incluido en total)
-  discount        Int      @default(0) // descuento del cupón aplicado
-  couponCode      String? // código del cupón usado
-  deliveryLat     Float? // lat de la dirección de entrega (para el courier)
-  deliveryLng     Float? // lng de la dirección de entrega (para el courier)
-  uberDeliveryId  String? // id de la entrega en Uber Direct
-  courier         Json? // info en vivo del repartidor (status, nombre, tel, ubicación, eta, tracking, foto)
+  source             String    @default("pedir-online") // "pedir-online" | "ecommerce" (pilar de origen)
+  orderNumber        Int? // correlativo por restaurante (para el POS y el cliente)
+  toteatOrderId      String? // id del pedido en Toteat tras inyectarlo al POS
+  posError           String? // último error al enviar al POS (si hubo)
+  deliveryFee        Int       @default(0) // costo de despacho de la zona (incluido en total)
+  discount           Int       @default(0) // descuento del cupón aplicado
+  couponCode         String? // código del cupón usado
+  deliveryLat        Float? // lat de la dirección de entrega (para el courier)
+  deliveryLng        Float? // lng de la dirección de entrega (para el courier)
+  uberDeliveryId     String? // id de la entrega en Uber Direct
+  courier            Json? // info en vivo del repartidor (status, nombre, tel, ubicación, eta, tracking, foto)
 
   // PENDING → ACCEPTED → PREPARING → IN_DELIVERY (delivery) | READY (pickup) → DONE | CANCELLED
   status        String @default("PENDING")
   statusHistory Json   @default("[]") // Array<{ status: string; ts: string }>
 
-  surveySentAt  DateTime? // cuándo se envió la encuesta de satisfacción (null = no enviada)
-  printedAt     DateTime? // cuándo el agente de impresión imprimió la comanda (null = pendiente)
+  surveySentAt DateTime? // cuándo se envió la encuesta de satisfacción (null = no enviada)
+  printedAt    DateTime? // cuándo el agente de impresión imprimió la comanda (null = pendiente)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1270,7 +1270,7 @@ model PanelActivity {
   ownerId      String?
   action       String
   details      Json?
-  ip        String?
+  ip           String?
   createdAt    DateTime @default(now())
 
   @@index([restaurantId, createdAt])
@@ -2176,18 +2176,18 @@ model InsumoMaestro {
 // locales pueden compartir la misma bodega = stock único compartido. Por
 // defecto cada local tiene su propia bodega (1:1). El superadmin asigna/comparte.
 model Bodega {
-  id          String       @id @default(cuid())
-  nombre      String
-  ownerId     String?      // dueño (RestaurantOwner) al que pertenece; solo se comparte entre locales del mismo dueño
-  ingresoManualEnabled Boolean @default(true) // permitir el botón "Ingreso" en el detalle de insumo (si false, el stock solo entra por Compras)
-  mostrarPreciosConIva Boolean @default(true) // en Stock: mostrar precios con IVA (true) o sin IVA/neto (false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  restaurants Restaurant[]
-  insumos     Insumo[]
-  proveedores Proveedor[]
-  compras     Compra[]
-  familiaConfigs FamiliaConfig[]
+  id                   String          @id @default(cuid())
+  nombre               String
+  ownerId              String? // dueño (RestaurantOwner) al que pertenece; solo se comparte entre locales del mismo dueño
+  ingresoManualEnabled Boolean         @default(true) // permitir el botón "Ingreso" en el detalle de insumo (si false, el stock solo entra por Compras)
+  mostrarPreciosConIva Boolean         @default(true) // en Stock: mostrar precios con IVA (true) o sin IVA/neto (false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  restaurants          Restaurant[]
+  insumos              Insumo[]
+  proveedores          Proveedor[]
+  compras              Compra[]
+  familiaConfigs       FamiliaConfig[]
 
   @@index([ownerId])
 }
@@ -2215,25 +2215,25 @@ model FamiliaConfig {
 // Proveedor de la bodega (compartido entre locales que comparten la bodega).
 // Las compras (facturas) se enlazan a su proveedor.
 model Proveedor {
-  id          String   @id @default(cuid())
-  bodegaId    String
-  nombre      String
-  rut         String?
-  razonSocial String?
-  telefono    String?
-  correo      String?
-  direccion   String?
-  web         String?
-  ctaNombre   String?  // datos bancarios: nombre del titular
-  ctaRut      String?  // rut del titular
-  ctaBanco    String?  // banco
-  ctaTipo     String?  // tipo de cuenta (corriente, vista, ahorro, rut)
-  ctaNumero   String?  // número de cuenta
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  bodega      Bodega   @relation(fields: [bodegaId], references: [id])
-  compras     Compra[]
+  id             String          @id @default(cuid())
+  bodegaId       String
+  nombre         String
+  rut            String?
+  razonSocial    String?
+  telefono       String?
+  correo         String?
+  direccion      String?
+  web            String?
+  ctaNombre      String? // datos bancarios: nombre del titular
+  ctaRut         String? // rut del titular
+  ctaBanco       String? // banco
+  ctaTipo        String? // tipo de cuenta (corriente, vista, ahorro, rut)
+  ctaNumero      String? // número de cuenta
+  activo         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  bodega         Bodega          @relation(fields: [bodegaId], references: [id])
+  compras        Compra[]
   familiaConfigs FamiliaConfig[]
 
   @@unique([bodegaId, nombre])
@@ -2241,30 +2241,30 @@ model Proveedor {
 }
 
 model Insumo {
-  id           String          @id @default(cuid())
-  bodegaId     String
-  maestroId    String?
-  nombre       String
-  categoria    InsumoCategoria
-  unidadBase   UnidadMedida
-  esCritico    Boolean         @default(false)
-  ordenConteo  Int?
-  ultimoPrecio Float?          // "Precio" del insumo
-  rendimiento  Float?          // factor de rendimiento del insumo
-  precioConRendimiento Float?  // = ultimoPrecio * rendimiento (se calcula al guardar)
-  familia      String?         // agrupador de variantes (ej: "Aceite" agrupa 5L, 1L, etc.)
-  stockActual  Float           @default(0) // stock materializado; los movimientos (compra/retiro/ajuste) lo actualizan
-  fotoUrl      String?         // foto del insumo (opcional)
-  activo       Boolean         @default(true)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  maestro      InsumoMaestro?  @relation(fields: [maestroId], references: [id])
-  bodega       Bodega          @relation(fields: [bodegaId], references: [id])
-  compraLineas CompraLinea[]
-  conteoLineas ConteoLinea[]
-  mermaLineas  MermaLinea[]
-  lotes        InsumoLote[]
-  movimientos  MovimientoInsumo[]
+  id                   String             @id @default(cuid())
+  bodegaId             String
+  maestroId            String?
+  nombre               String
+  categoria            InsumoCategoria
+  unidadBase           UnidadMedida
+  esCritico            Boolean            @default(false)
+  ordenConteo          Int?
+  ultimoPrecio         Float? // "Precio" del insumo
+  rendimiento          Float? // factor de rendimiento del insumo
+  precioConRendimiento Float? // = ultimoPrecio * rendimiento (se calcula al guardar)
+  familia              String? // agrupador de variantes (ej: "Aceite" agrupa 5L, 1L, etc.)
+  stockActual          Float              @default(0) // stock materializado; los movimientos (compra/retiro/ajuste) lo actualizan
+  fotoUrl              String? // foto del insumo (opcional)
+  activo               Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  maestro              InsumoMaestro?     @relation(fields: [maestroId], references: [id])
+  bodega               Bodega             @relation(fields: [bodegaId], references: [id])
+  compraLineas         CompraLinea[]
+  conteoLineas         ConteoLinea[]
+  mermaLineas          MermaLinea[]
+  lotes                InsumoLote[]
+  movimientos          MovimientoInsumo[]
 
   @@unique([bodegaId, nombre])
   @@index([bodegaId])
@@ -2277,14 +2277,14 @@ model MovimientoInsumo {
   id            String   @id @default(cuid())
   insumoId      String
   bodegaId      String
-  restaurantId  String?  // local que hizo el movimiento (auditoría)
-  tipo          String   // "ingreso" | "retiro"
-  motivo        String?  // retiro: "consumo" | "merma" | "ajuste" | "otro"
+  restaurantId  String? // local que hizo el movimiento (auditoría)
+  tipo          String // "ingreso" | "retiro"
+  motivo        String? // retiro: "consumo" | "merma" | "ajuste" | "otro"
   cantidad      Float
-  costoUnitario Float?   // con IVA
-  costoTotal    Float?   // con IVA (retiro: costo FIFO consumido; ingreso: precio del lote × cantidad)
+  costoUnitario Float? // con IVA
+  costoTotal    Float? // con IVA (retiro: costo FIFO consumido; ingreso: precio del lote × cantidad)
   nota          String?
-  detalle       Json?    // ingreso: { loteId }; retiro: { tomas: [{ loteId, cantidad, precioUnitario }] } (para revertir)
+  detalle       Json? // ingreso: { loteId }; retiro: { tomas: [{ loteId, cantidad, precioUnitario }] } (para revertir)
   fecha         DateTime @default(now())
   insumo        Insumo   @relation(fields: [insumoId], references: [id])
 
@@ -2297,9 +2297,9 @@ model MovimientoInsumo {
 model InsumoLote {
   id               String   @id @default(cuid())
   insumoId         String
-  compraLineaId    String?  // línea de compra que lo originó (si aplica)
+  compraLineaId    String? // línea de compra que lo originó (si aplica)
   fecha            DateTime // fecha para el orden FIFO (fecha de la compra o del ingreso)
-  precioUnitario   Float    // precio unitario CON IVA
+  precioUnitario   Float // precio unitario CON IVA
   cantidadInicial  Float
   cantidadRestante Float
   createdAt        DateTime @default(now())
@@ -2311,23 +2311,23 @@ model InsumoLote {
 
 model Compra {
   id              String        @id @default(cuid())
-  restaurantId    String        // local que registró la compra (auditoría)
-  bodegaId        String?       // bodega dueña de la compra (compartida entre locales)
+  restaurantId    String // local que registró la compra (auditoría)
+  bodegaId        String? // bodega dueña de la compra (compartida entre locales)
   bodega          Bodega?       @relation(fields: [bodegaId], references: [id])
   fecha           DateTime
   origen          CompraOrigen
-  proveedorId     String?       // proveedor del módulo Proveedores
+  proveedorId     String? // proveedor del módulo Proveedores
   proveedor       Proveedor?    @relation(fields: [proveedorId], references: [id])
-  proveedorNombre String?       // nombre denormalizado (para mostrar sin join)
-  documentoTipo   String?       // "factura" | "boleta" | "nota_entrega"
-  documentoFolio  String?       // número de documento
-  totalDeclarado  Float?        // total de la factura
-  fotoUrl         String?       // foto de la factura/documento
-  fechaSolicitud  DateTime?     // fecha de solicitud (opcional); `fecha` = fecha de entrega
-  metodoPago      String?       // "transferencia" | "efectivo" | "debito" | "webpay"
-  estadoPago      String?       // "por_pagar" | "pagada"
+  proveedorNombre String? // nombre denormalizado (para mostrar sin join)
+  documentoTipo   String? // "factura" | "boleta" | "nota_entrega"
+  documentoFolio  String? // número de documento
+  totalDeclarado  Float? // total de la factura
+  fotoUrl         String? // foto de la factura/documento
+  fechaSolicitud  DateTime? // fecha de solicitud (opcional); `fecha` = fecha de entrega
+  metodoPago      String? // "transferencia" | "efectivo" | "debito" | "webpay"
+  estadoPago      String? // "por_pagar" | "pagada"
   comentarios     String?
-  fotoPagoUrl     String?       // foto del comprobante de pago
+  fotoPagoUrl     String? // foto del comprobante de pago
   estado          IngestaEstado @default(PENDIENTE_REVISION)
   confirmadaAt    DateTime?
   confirmadaPor   String?
@@ -2349,10 +2349,10 @@ model CompraLinea {
   textoOriginal  String
   cantidad       Float
   unidad         UnidadMedida
-  precioNeto     Float?       // total de la línea sin IVA
-  iva            Float?       // IVA de la línea (precioTotal - precioNeto)
-  precioTotal    Float        // total de la línea con IVA
-  precioUnitario Float        // precio unitario neto (precioNeto / cantidad)
+  precioNeto     Float? // total de la línea sin IVA
+  iva            Float? // IVA de la línea (precioTotal - precioNeto)
+  precioTotal    Float // total de la línea con IVA
+  precioUnitario Float // precio unitario neto (precioNeto / cantidad)
   compra         Compra       @relation(fields: [compraId], references: [id], onDelete: Cascade)
   insumo         Insumo?      @relation(fields: [insumoId], references: [id])
 
@@ -2574,7 +2574,7 @@ model LoyaltyProgram {
   stampIcon String @default("★") // símbolo/emoji del sello (elegido por el restaurante)
   // Niveles de recompensa: array JSON de { stamp: number, reward: string }
   // Ej: [{ "stamp": 3, "reward": "Un café gratis" }, { "stamp": 8, "reward": "Un combo gratis" }]
-  rewards Json @default("[]")
+  rewards   Json   @default("[]")
 
   // Diseño de la tarjeta en el wallet
   cardColorHex  String  @default("#111111") // color de fondo de la tarjeta
@@ -2590,9 +2590,9 @@ model LoyaltyProgram {
   cardExpiryDays Int?
 
   // Acceso al escáner (app de empleados sin login)
-  scanToken    String?  @unique // token en la URL que autentica el escáner
-  scanPinHash  String?          // PIN hasheado (bcrypt) para primer acceso
-  scanEnabled  Boolean  @default(true)
+  scanToken   String? @unique // token en la URL que autentica el escáner
+  scanPinHash String? // PIN hasheado (bcrypt) para primer acceso
+  scanEnabled Boolean @default(true)
 
   // Geo-notificaciones (aviso al cliente cuando está cerca del local)
   geoEnabled  Boolean @default(false)
@@ -2639,8 +2639,8 @@ model LoyaltyMember {
   lastStampAt         DateTime?
   lastGeoNotifAt      DateTime? // última vez que se envió notif por cercanía (rate-limit)
   lastBirthdayNotifAt DateTime? // última vez que se envió notif de cumpleaños (para no duplicar en el año)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   program      LoyaltyProgram       @relation(fields: [programId], references: [id])
   transactions LoyaltyTransaction[]
@@ -2688,7 +2688,7 @@ model PrivateReview {
   id           String     @id @default(cuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  rating       Int        // 1–5
+  rating       Int // 1–5
   comment      String?
   authorName   String?
   isRead       Boolean    @default(false)
@@ -2723,7 +2723,7 @@ model LoyaltyBroadcast {
 model PageHit {
   id           String   @id @default(cuid())
   restaurantId String
-  page         String   // "landing" | "pedir" | "fidelidad" | "resena"
+  page         String // "landing" | "pedir" | "fidelidad" | "resena"
   createdAt    DateTime @default(now())
 
   @@index([restaurantId, page, createdAt])
@@ -2737,10 +2737,10 @@ model FinancialCategory {
   restaurantId String
   restaurant   Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name         String
-  type         FinancialType    // INCOME | EXPENSE
-  group        String?          // "Proveedores", "Operaciones", "Administración", etc.
-  color        String?          // hex, ej: "#22c55e"
-  icon         String?          // emoji
+  type         FinancialType // INCOME | EXPENSE
+  group        String? // "Proveedores", "Operaciones", "Administración", etc.
+  color        String? // hex, ej: "#22c55e"
+  icon         String? // emoji
   position     Int              @default(0)
   isActive     Boolean          @default(true)
   createdAt    DateTime         @default(now())
@@ -2755,12 +2755,12 @@ model FinancialEntry {
   restaurant     Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   categoryId     String
   category       FinancialCategory @relation(fields: [categoryId], references: [id])
-  amount         Int               // CLP, siempre positivo
+  amount         Int // CLP, siempre positivo
   type           FinancialType
-  date           DateTime          // fecha del movimiento (no del ingreso al sistema)
+  date           DateTime // fecha del movimiento (no del ingreso al sistema)
   description    String?
   source         EntrySource       @default(MANUAL)
-  bankMovementId String?           // sin @unique — permite múltiples entries por movimiento (splits)
+  bankMovementId String? // sin @unique — permite múltiples entries por movimiento (splits)
   bankMovement   BankMovement?     @relation(fields: [bankMovementId], references: [id])
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -2771,55 +2771,55 @@ model FinancialEntry {
 }
 
 model BankMovement {
-  id              String          @id @default(cuid())
-  restaurantId    String
-  restaurant      Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  date            DateTime
-  description     String
-  debit           Int?            // egreso en CLP (positivo)
-  credit          Int?            // ingreso en CLP (positivo)
-  balance         Int?            // saldo después del movimiento
-  source          String          @default("BCI_XLSX") // "BCI_XLSX" | "BANK_API"
-  externalKey     String?         // hash para dedup: evita reimportar mismo movimiento
-  status          MovementStatus  @default(PENDING)
-  agentId         String?         // → CashAgent si este movimiento es retiro a un agente
-  agent           CashAgent?      @relation(fields: [agentId], references: [id])
-  suggestedCatId  String?         // categoría sugerida automáticamente (single, no split)
-  entries         FinancialEntry[]
-  createdAt       DateTime        @default(now())
+  id             String           @id @default(cuid())
+  restaurantId   String
+  restaurant     Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  date           DateTime
+  description    String
+  debit          Int? // egreso en CLP (positivo)
+  credit         Int? // ingreso en CLP (positivo)
+  balance        Int? // saldo después del movimiento
+  source         String           @default("BCI_XLSX") // "BCI_XLSX" | "BANK_API"
+  externalKey    String? // hash para dedup: evita reimportar mismo movimiento
+  status         MovementStatus   @default(PENDING)
+  agentId        String? // → CashAgent si este movimiento es retiro a un agente
+  agent          CashAgent?       @relation(fields: [agentId], references: [id])
+  suggestedCatId String? // categoría sugerida automáticamente (single, no split)
+  entries        FinancialEntry[]
+  createdAt      DateTime         @default(now())
 
+  @@unique([restaurantId, externalKey])
   @@index([restaurantId, date])
   @@index([restaurantId, status])
-  @@unique([restaurantId, externalKey])
 }
 
 // Agente de compras: persona que retira plata de la cuenta y compra cosas (universal)
 model CashAgent {
-  id           String        @id @default(cuid())
+  id           String         @id @default(cuid())
   restaurantId String
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  name         String        // "Carlos Gómez"
-  bankPatterns String[]      // ["Carlos Gómez", "Carlos Gomez"] — substrings a buscar en descripción BCI
-  flujoToken   String?       @unique // token para /flujo (si tiene cuenta)
-  isActive     Boolean       @default(true)
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String // "Carlos Gómez"
+  bankPatterns String[] // ["Carlos Gómez", "Carlos Gomez"] — substrings a buscar en descripción BCI
+  flujoToken   String?        @unique // token para /flujo (si tiene cuenta)
+  isActive     Boolean        @default(true)
   movements    BankMovement[]
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime       @default(now())
 
   @@index([restaurantId])
 }
 
 // Regla de auto-categorización aprendida por uso
 model CategorizationRule {
-  id           String                   @id @default(cuid())
+  id           String                    @id @default(cuid())
   restaurantId String
-  restaurant   Restaurant               @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  pattern      String                   // substring a buscar en la descripción del movimiento
-  isSplit      Boolean                  @default(false)
-  categoryId   String?                  // categoría para el caso simple (no split)
-  usageCount   Int                      @default(1)
-  confidence   Float                    @default(1.0) // 0-1, sube con cada confirmación
-  createdAt    DateTime                 @default(now())
-  lastUsedAt   DateTime                 @default(now())
+  restaurant   Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  pattern      String // substring a buscar en la descripción del movimiento
+  isSplit      Boolean                   @default(false)
+  categoryId   String? // categoría para el caso simple (no split)
+  usageCount   Int                       @default(1)
+  confidence   Float                     @default(1.0) // 0-1, sube con cada confirmación
+  createdAt    DateTime                  @default(now())
+  lastUsedAt   DateTime                  @default(now())
   splits       CategorizationRuleSplit[]
 
   @@unique([restaurantId, pattern])
@@ -2828,21 +2828,21 @@ model CategorizationRule {
 
 // Porciones de una regla de split: cómo distribuir el monto entre categorías
 model CategorizationRuleSplit {
-  id         String              @id @default(cuid())
+  id         String             @id @default(cuid())
   ruleId     String
-  rule       CategorizationRule  @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  rule       CategorizationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   categoryId String
-  ratio      Float               // 0.0-1.0, todos los splits de una regla deben sumar 1.0
-  label      String?             // etiqueta opcional: "Gastos operativos"
+  ratio      Float // 0.0-1.0, todos los splits de una regla deben sumar 1.0
+  label      String? // etiqueta opcional: "Gastos operativos"
 
   @@index([ruleId])
 }
 
 enum MovementStatus {
-  PENDING     // sin categoría asignada
-  SUGGESTED   // auto-detectado, esperando confirmación del usuario
-  RECONCILED  // categorizado y confirmado → tiene FinancialEntry(s)
-  IGNORED     // descartado (movimiento interno, duplicado, etc.)
+  PENDING // sin categoría asignada
+  SUGGESTED // auto-detectado, esperando confirmación del usuario
+  RECONCILED // categorizado y confirmado → tiene FinancialEntry(s)
+  IGNORED // descartado (movimiento interno, duplicado, etc.)
 }
 
 enum FinancialType {
@@ -2851,8 +2851,8 @@ enum FinancialType {
 }
 
 enum EntrySource {
-  MANUAL      // ingresado a mano desde el panel /panel flujo
-  FLUJO       // registrado por un agente desde /flujo (ej: Carlos Gómez)
+  MANUAL // ingresado a mano desde el panel /panel flujo
+  FLUJO // registrado por un agente desde /flujo (ej: Carlos Gómez)
   BANK_CSV
   BANK_API
 }
@@ -2879,4 +2879,3 @@ model EcommerceSurveyResponse {
 
   @@index([restaurantId, createdAt])
 }
-

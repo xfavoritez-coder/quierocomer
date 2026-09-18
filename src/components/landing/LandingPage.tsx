@@ -913,7 +913,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
           <div className="lp-container">
             <div className="lp-features-head">
               <h2>Tu carta puede hacer mucho más.</h2>
-              <p>Activa nuevas funcionalidades y mejora la experiencia de tus clientes sin cambiar tu forma de trabajar.</p>
+              <p>Activa nuevas funcionalidades y mejora la experiencia de tus clientes.</p>
             </div>
             <div className="lp-features-grid">
               <div className="lp-feat-card" onClick={() => openFeat("loyalty")}>
