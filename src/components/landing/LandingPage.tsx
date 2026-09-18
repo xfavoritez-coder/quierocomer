@@ -16,87 +16,51 @@ interface FeatureDetail {
 const FEATURE_DETAILS: Record<string, FeatureDetail> = {
   loyalty: {
     emoji: "⭐",
-    title: "Programa de lealtad",
-    tagline: "Fideliza sin apps, sin papel, sin complicaciones.",
-    description: "Crea tarjetas digitales de sellos o puntos que tus clientes acumulan directo desde su teléfono al escanear tu QR. Sin descargar nada.",
-    bullets: [
-      "Tarjetas de sellos o puntos 100% digitales",
-      "El cliente acumula al escanear tu carta QR",
-      "Tú defines la recompensa y las reglas",
-      "Panel para ver miembros y canjes en tiempo real",
-      "Notificaciones automáticas de cumpleaños",
-    ],
-    cta: "Activar loyalty gratis",
+    title: "Tarjeta de fidelización",
+    tagline: "Fideliza clientes sin apps ni papel.",
+    description: "Tarjetas digitales de sellos o puntos que tus clientes acumulan directo al escanear tu QR.",
+    bullets: ["Sin descargar nada", "Tú defines la recompensa", "Panel en tiempo real"],
+    cta: "Subir carta gratis",
   },
   pedidos: {
     emoji: "🛒",
     title: "Pedidos online",
-    tagline: "Recibe pedidos directo, sin intermediarios ni comisiones.",
-    description: "Tus clientes piden desde tu carta digital y el pedido llega directo a tu cocina o tu WhatsApp. Sin comisiones de terceros, sin apps externas.",
-    bullets: [
-      "Pedidos desde la carta QR sin salir de ella",
-      "Llegan a tu panel o a tu WhatsApp",
-      "Sin comisiones por pedido",
-      "Gestiona estados: recibido, en preparación, listo",
-      "Funciona para delivery, take away o en mesa",
-    ],
-    cta: "Activar pedidos gratis",
+    tagline: "Sin intermediarios. Sin comisiones.",
+    description: "Tus clientes piden desde la carta y el pedido llega directo a tu cocina o WhatsApp.",
+    bullets: ["Cero comisiones", "Delivery, take away o en mesa", "Gestión de estados"],
+    cta: "Subir carta gratis",
   },
   recomienda: {
     emoji: "🧠",
     title: "Carta inteligente",
-    tagline: "Una carta que aprende y se adapta a cada cliente.",
-    description: "El sistema detecta las preferencias de cada comensal (dieta, restricciones, gustos) y reordena la carta para mostrar primero lo que más le conviene. Más ventas, menos indecisión.",
-    bullets: [
-      "Detecta vegetarianos, celíacos, alérgicos y más",
-      "Reordena la carta según las preferencias del cliente",
-      "Muestra badges de compatibilidad en cada plato",
-      "El cliente elige más rápido y con más confianza",
-      "Sin configuración extra de tu parte",
-    ],
-    cta: "Ver cómo funciona",
+    tagline: "Una carta que se adapta a cada cliente.",
+    description: "Detecta dietas y preferencias y reordena los platos para mostrar primero lo que le conviene a cada uno.",
+    bullets: ["Detecta celíacos, veganos y más", "Menos indecisión, más ventas", "Sin configuración extra"],
+    cta: "Subir carta gratis",
   },
   idioma: {
     emoji: "🌐",
     title: "Traducción automática",
-    tagline: "Tu carta en el idioma de cada cliente, automáticamente.",
-    description: "Cuando un turista o cliente extranjero abre tu carta, se traduce sola al idioma de su teléfono. Sin versiones manuales, sin trabajo extra para ti.",
-    bullets: [
-      "Traducción automática al detectar el idioma del dispositivo",
-      "Español, inglés, portugués y más",
-      "Nombres, descripciones y categorías traducidos",
-      "El cliente puede cambiar el idioma manualmente",
-      "Sin costo adicional ni configuración",
-    ],
-    cta: "Ver carta multiidioma",
+    tagline: "Tu carta en el idioma de cada cliente.",
+    description: "Se traduce sola al idioma del teléfono. Sin versiones manuales ni trabajo extra para ti.",
+    bullets: ["Español, inglés, portugués y más", "Nombres y descripciones traducidos", "Sin costo adicional"],
+    cta: "Subir carta gratis",
   },
   garzon: {
     emoji: "🔔",
     title: "Llama al garzón",
-    tagline: "Atención más rápida, sin que el cliente levante la mano.",
-    description: "Desde la carta QR, el cliente toca un botón y tu garzón recibe la alerta al instante. Menos espera, mejor experiencia, más rotación de mesas.",
-    bullets: [
-      "Botón de llamada visible en la carta digital",
-      "Alerta instantánea al garzón en su dispositivo",
-      "Historial de llamadas por mesa",
-      "Reduce el tiempo de espera percibido",
-      "No requiere app ni hardware adicional",
-    ],
-    cta: "Ver cómo funciona",
+    tagline: "Atención más rápida, mejor experiencia.",
+    description: "El cliente toca un botón en la carta y tu garzón recibe la alerta al instante.",
+    bullets: ["Alerta instantánea", "Sin app ni hardware", "Más rotación de mesas"],
+    cta: "Subir carta gratis",
   },
   imprimir: {
     emoji: "🖨️",
     title: "Imprímela con 1 click",
-    tagline: "Una carta imprimible lista para tus mesas, en segundos.",
-    description: "Genera una versión imprimible de tu carta digital con diseño profesional. Perfecta para mesas, para eventos o como respaldo físico.",
-    bullets: [
-      "Varios templates de diseño para elegir",
-      "Se actualiza automáticamente con tu carta digital",
-      "Formato optimizado para imprimir en A4 o carta",
-      "Incluye código QR para escanear desde la mesa",
-      "Sin diseñador, sin Canva, sin trabajo extra",
-    ],
-    cta: "Ver templates",
+    tagline: "Versión física lista en segundos.",
+    description: "Genera una carta imprimible con diseño profesional. Perfecta para mesas o eventos.",
+    bullets: ["Varios templates", "Se actualiza sola", "Incluye código QR"],
+    cta: "Subir carta gratis",
   },
 };
 
@@ -370,8 +334,8 @@ export default function LandingPage() {
         /* Feature modal */
         .lp-feat-overlay {
           position: fixed; inset: 0; z-index: 9999;
-          background: rgba(0,0,0,0.55);
-          backdrop-filter: blur(4px);
+          background: rgba(0,0,0,0.6);
+          backdrop-filter: blur(6px);
           display: flex; align-items: center; justify-content: center;
           padding: 20px;
           animation: lp-fade-in .18s ease;
@@ -379,39 +343,41 @@ export default function LandingPage() {
         @keyframes lp-fade-in { from { opacity: 0 } to { opacity: 1 } }
         .lp-feat-modal {
           background: #fff;
-          border-radius: 28px;
-          max-width: 480px;
+          border-radius: 32px;
+          max-width: 420px;
           width: 100%;
           overflow: hidden;
-          box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+          box-shadow: 0 40px 100px rgba(0,0,0,0.28);
           animation: lp-slide-up .22s ease;
         }
-        @keyframes lp-slide-up { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes lp-slide-up { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
         .lp-feat-modal-header {
           background: #0A0A0A;
-          padding: 32px 28px 24px;
+          padding: 48px 32px 36px;
           position: relative;
+          text-align: center;
         }
         .lp-feat-modal-close {
           position: absolute; top: 16px; right: 16px;
-          width: 32px; height: 32px; border-radius: 50%;
-          background: rgba(255,255,255,0.1); border: none;
-          color: rgba(255,255,255,0.6); font-size: 18px; line-height: 1;
+          width: 34px; height: 34px; border-radius: 50%;
+          background: rgba(255,255,255,0.08); border: none;
+          color: rgba(255,255,255,0.5); font-size: 20px; line-height: 1;
           cursor: pointer; display: flex; align-items: center; justify-content: center;
           transition: background .15s;
         }
-        .lp-feat-modal-close:hover { background: rgba(255,255,255,0.18); }
+        .lp-feat-modal-close:hover { background: rgba(255,255,255,0.15); }
         .lp-feat-modal-body {
-          padding: 24px 28px 28px;
+          padding: 28px 32px 32px;
+          text-align: center;
         }
-        .lp-feat-modal-bullet {
-          display: flex; align-items: flex-start; gap: 10px;
-          margin-bottom: 10px; font-size: 15px; color: #444; line-height: 1.5;
+        .lp-feat-modal-chips {
+          display: flex; flex-wrap: wrap; gap: 8px;
+          justify-content: center; margin-bottom: 28px;
         }
-        .lp-feat-modal-bullet::before {
-          content: "✓";
-          color: #F4A623; font-weight: 800; font-size: 14px;
-          margin-top: 1px; flex-shrink: 0;
+        .lp-feat-modal-chip {
+          background: #F5F5F3; border-radius: 99px;
+          padding: 7px 16px; font-size: 13px;
+          font-weight: 600; color: #333;
         }
         .lp-feat-visual {
           height: 148px;
@@ -937,7 +903,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="lp-feat-body">
-                  <h3>Programa de lealtad</h3>
+                  <h3>Tarjeta de fidelización</h3>
                   <p>Tarjetas digitales de puntos y sellos para fidelizar clientes sin apps ni papel.</p>
                 </div>
               </div>
@@ -1020,22 +986,22 @@ export default function LandingPage() {
           <div className="lp-feat-modal" onClick={e => e.stopPropagation()}>
             <div className="lp-feat-modal-header">
               <button className="lp-feat-modal-close" onClick={closeFeat}>×</button>
-              <div style={{ fontSize: 40, marginBottom: 14 }}>{featOpen.emoji}</div>
-              <h3 style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif", fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", marginBottom: 8 }}>
+              <div style={{ fontSize: 56, marginBottom: 18, lineHeight: 1 }}>{featOpen.emoji}</div>
+              <h3 style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.025em", marginBottom: 10 }}>
                 {featOpen.title}
               </h3>
-              <p style={{ fontSize: 15, color: "#F4A623", fontWeight: 600 }}>{featOpen.tagline}</p>
+              <p style={{ fontSize: 14, color: "#F4A623", fontWeight: 600, letterSpacing: "0.01em" }}>{featOpen.tagline}</p>
             </div>
             <div className="lp-feat-modal-body">
-              <p style={{ fontSize: 15, color: "#555", lineHeight: 1.65, marginBottom: 20 }}>{featOpen.description}</p>
-              <div style={{ marginBottom: 24 }}>
+              <p style={{ fontSize: 16, color: "#555", lineHeight: 1.6, marginBottom: 24 }}>{featOpen.description}</p>
+              <div className="lp-feat-modal-chips">
                 {featOpen.bullets.map(b => (
-                  <div key={b} className="lp-feat-modal-bullet">{b}</div>
+                  <span key={b} className="lp-feat-modal-chip">{b}</span>
                 ))}
               </div>
               <button
                 className="lp-btn"
-                style={{ width: "100%", textAlign: "center", justifyContent: "center" }}
+                style={{ width: "100%", textAlign: "center", justifyContent: "center", fontSize: 17, padding: "16px 0" }}
                 onClick={() => { closeFeat(); openModal(); }}
               >
                 {featOpen.cta} →
