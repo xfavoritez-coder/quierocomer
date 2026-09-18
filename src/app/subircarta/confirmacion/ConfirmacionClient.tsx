@@ -111,6 +111,11 @@ export default function ConfirmacionClient() {
             trackFunnelEvent(leadId, "carta_ready");
             trackCartaReady();
             if (data.generatedSlug) setCartaSlug(data.generatedSlug);
+            // Tagear sesión en Clarity como lead para filtrar grabaciones
+            try { (window as any).clarity?.("set", "userType", "lead"); } catch {}
+            if (data.generatedSlug) {
+              try { (window as any).clarity?.("set", "cartaSlug", data.generatedSlug); } catch {}
+            }
             if (polling) { clearInterval(polling); polling = null; }
           }
         })
