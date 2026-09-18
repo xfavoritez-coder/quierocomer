@@ -143,9 +143,57 @@ function EntryModal({ categories, restaurantId, defaultDate, onClose, onSaved }:
 // ─────────────────────────────────────────────────────────────────────────────
 // P&L Statement — formato estado de resultados contable
 // ─────────────────────────────────────────────────────────────────────────────
+function CategoryModal({ cat, entries, onClose }: { cat: Category; entries: Entry[]; onClose: () => void }) {
+  const rows = entries.filter(e => e.categoryId === cat.id).sort((a, b) => b.date.localeCompare(a.date));
+  const total = rows.reduce((s, e) => s + e.amount, 0);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 9999, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #fff)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 560, maxHeight: "80dvh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}>
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--adm-card-border, #eee)", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22 }}>{cat.icon || "📂"}</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text, #111)", margin: 0 }}>{cat.name}</p>
+            <p style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text3, #999)", margin: 0 }}>{rows.length} movimiento{rows.length !== 1 ? "s" : ""} · {clp(total)}</p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3, #999)", fontSize: 20, padding: 4 }}>✕</button>
+        </div>
+        {/* Lista */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "10px 0" }}>
+          {rows.length === 0 ? (
+            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3, #999)", textAlign: "center", padding: "24px 0" }}>Sin movimientos</p>
+          ) : rows.map(e => (
+            <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 20px", borderBottom: "1px solid var(--adm-card-border, #f5f5f5)" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text, #111)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {e.description || "—"}
+                </p>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3, #999)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 6 }}>
+                  {new Date(e.date).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                  <span style={{ padding: "1px 5px", borderRadius: 4, background: SOURCE_COLOR[e.source] + "22", color: SOURCE_COLOR[e.source], fontWeight: 700, fontSize: "0.68rem" }}>{SOURCE_LABEL[e.source]}</span>
+                </p>
+              </div>
+              <span style={{ fontFamily: FM, fontSize: "0.88rem", fontWeight: 700, color: cat.type === "INCOME" ? "#16a34a" : "var(--adm-text, #111)", flexShrink: 0 }}>
+                {cat.type === "INCOME" ? "+" : "-"}{clp(e.amount)}
+              </span>
+            </div>
+          ))}
+        </div>
+        {/* Total footer */}
+        <div style={{ padding: "14px 20px", borderTop: "2px solid var(--adm-card-border, #eee)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text2, #555)" }}>Total</span>
+          <span style={{ fontFamily: FM, fontSize: "1rem", fontWeight: 800, color: cat.type === "INCOME" ? "#16a34a" : "#dc2626" }}>{clp(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PLStatement({ categories, entries, monthStr }: {
   categories: Category[]; entries: Entry[]; monthStr: string;
 }) {
+  const [modalCat, setModalCat] = useState<Category | null>(null);
+
   const catTotals = useMemo(() => {
     const t: Record<string, number> = {};
     for (const e of entries) t[e.categoryId] = (t[e.categoryId] || 0) + e.amount;
@@ -177,6 +225,7 @@ function PLStatement({ categories, entries, monthStr }: {
 
   return (
     <div>
+      {modalCat && <CategoryModal cat={modalCat} entries={entries} onClose={() => setModalCat(null)} />}
       {/* Título del estado */}
       <div style={{ textAlign: "center", marginBottom: 20, paddingBottom: 16, borderBottom: "2px solid var(--adm-card-border,#e5e7eb)" }}>
         <p style={{ fontFamily: F, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--adm-text3,#aaa)", margin: "0 0 4px" }}>Flujo de Caja</p>
@@ -191,7 +240,7 @@ function PLStatement({ categories, entries, monthStr }: {
       {incomeCats.map(c => {
         const v = catTotals[c.id] || 0;
         if (!v) return null;
-        return <DataRow key={c.id} label={c.name} icon={c.icon} value={v} base={totalIncome} isIncome indent />;
+        return <DataRow key={c.id} label={c.name} icon={c.icon} value={v} base={totalIncome} isIncome indent onClick={() => setModalCat(c)} />;
       })}
       <TotalRow label="Total ingresos" value={totalIncome} base={totalIncome} color="#16a34a" thick />
 
@@ -208,7 +257,7 @@ function PLStatement({ categories, entries, monthStr }: {
             <GroupHead label={groupName} icon={GROUP_ICONS[groupName]} value={groupTotal} base={totalIncome} />
             {cats.map(c => {
               const v = catTotals[c.id] || 0;
-              return <DataRow key={c.id} label={c.name} icon={c.icon} value={v} base={totalIncome} indent deep />;
+              return <DataRow key={c.id} label={c.name} icon={c.icon} value={v} base={totalIncome} indent deep onClick={v ? () => setModalCat(c) : undefined} />;
             })}
           </div>
         );
@@ -273,16 +322,22 @@ function GroupHead({ label, icon, value, base }: { label: string; icon?: string;
   );
 }
 
-function DataRow({ label, icon, value, base, indent, deep, isIncome }: {
+function DataRow({ label, icon, value, base, indent, deep, isIncome, onClick }: {
   label: string; icon?: string | null; value: number; base: number;
-  indent?: boolean; deep?: boolean; isIncome?: boolean;
+  indent?: boolean; deep?: boolean; isIncome?: boolean; onClick?: () => void;
 }) {
   const isEmpty = !value;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", gap: 0, padding: "5px 12px", paddingLeft: deep ? 28 : indent ? 20 : 12, opacity: isEmpty ? 0.38 : 1 }}>
+    <div
+      onClick={onClick}
+      style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", gap: 0, padding: "5px 12px", paddingLeft: deep ? 28 : indent ? 20 : 12, opacity: isEmpty ? 0.38 : 1, cursor: onClick ? "pointer" : "default", borderRadius: 6, transition: "background .12s" }}
+      onMouseEnter={e => { if (onClick) e.currentTarget.style.background = "var(--adm-input, #f5f5f5)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = ""; }}
+    >
       <span style={{ fontFamily: FB, fontSize: "0.845rem", color: "var(--adm-text2,#555)", display: "flex", alignItems: "center", gap: 5 }}>
         {icon && <span style={{ fontSize: 13, flexShrink: 0 }}>{icon}</span>}
         {label}
+        {onClick && !isEmpty && <span style={{ fontSize: 10, opacity: 0.4, marginLeft: 2 }}>›</span>}
       </span>
       <span style={{ fontFamily: FM, fontSize: "0.78rem", color: "var(--adm-text2,#666)", textAlign: "right", alignSelf: "center" }}>{isEmpty ? "—" : pct(value, base)}</span>
       <span style={{ fontFamily: FM, fontSize: "0.855rem", fontWeight: 600, color: isIncome ? "#16a34a" : "var(--adm-text,#333)", textAlign: "right", alignSelf: "center" }}>{isEmpty ? "—" : clp(value)}</span>
