@@ -703,7 +703,7 @@ export default function LandingPage() {
           <div className="lp-hero-content">
 <h1>Tu restaurante puede vender más.</h1>
             <p className="lp-hero-sub">
-              Una carta digital que atrae, vende<br />y fideliza a tus clientes.
+              Transforma tu carta en una herramienta que atrae, vende y fideliza a tus clientes.
             </p>
             <div className="lp-hero-cta">
               <button className="lp-btn" onClick={openModal}>
