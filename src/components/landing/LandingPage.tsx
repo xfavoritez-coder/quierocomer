@@ -232,7 +232,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
 
         .lp-hero-sub {
           margin: 22px auto 0;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.75);
           font-size: 20px;
           line-height: 1.65;
           max-width: 400px;
@@ -241,13 +241,14 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
         .lp-hero-cta {
           margin-top: 40px;
           display: flex;
-          justify-content: center;
+          flex-direction: column;
+          align-items: center;
           width: 100%;
         }
         .lp-hero-cta .lp-btn {
-          min-height: 68px !important;
-          padding: 0 48px !important;
-          font-size: 22px !important;
+          min-height: 76px !important;
+          padding: 0 60px !important;
+          font-size: 24px !important;
           width: auto !important;
         }
 
@@ -851,7 +852,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
               <button className="lp-btn" onClick={openModalWithTracking} suppressHydrationWarning>
                 {ctaText}
               </button>
-              <p style={{ margin: "10px 0 0", fontSize: "0.78rem", color: "rgba(255,255,255,0.52)", letterSpacing: "0.01em", fontFamily: "Inter, sans-serif" }}>
+              <p style={{ margin: "18px 0 0", fontSize: "15px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.01em", fontFamily: "Inter, sans-serif" }}>
                 ⚡ Gratis &nbsp;·&nbsp; Listo en segundos
               </p>
             </div>
