@@ -858,7 +858,7 @@ export default function LandingPage() {
         {/* FINAL CTA */}
         <section className="lp-final-cta">
           <h2>Tu carta ya existe.<br /><span>Haz que haga más.</span></h2>
-          <p className="lp-final-cta-sub">Sube la que ya tienes y conviértela en una experiencia digital más útil, más clara y lista para vender más.</p>
+          <p className="lp-final-cta-sub">Sube tu carta y activa todo un arsenal de marketing: carta QR, pedidos online, loyalty, traducción automática y más.</p>
           <button className="lp-btn" onClick={openModal}>Subir mi carta →</button>
         </section>
 
