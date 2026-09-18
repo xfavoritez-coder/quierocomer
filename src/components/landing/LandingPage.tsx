@@ -914,7 +914,8 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
         <section className="lp-features">
           <div className="lp-container">
             <div className="lp-features-head">
-              <h2>Todo el marketing de tu restaurante, desde tu carta.</h2>
+              <h2>Tu carta puede hacer mucho más.</h2>
+              <p>Activa nuevas funcionalidades y mejora la experiencia de tus clientes sin cambiar tu forma de trabajar.</p>
             </div>
             <div className="lp-features-grid">
               <div className="lp-feat-card" onClick={() => openFeat("loyalty")}>
