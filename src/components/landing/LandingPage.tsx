@@ -769,7 +769,7 @@ export default function LandingPage() {
         <section className="lp-features">
           <div className="lp-container">
             <div className="lp-features-head">
-              <h2>Convierte tu carta en una multi-herramienta de marketing gastronómico avanzado.</h2>
+              <h2>Convierte tu carta en una herramienta de marketing gastronómico.</h2>
             </div>
             <div className="lp-features-grid">
               <div className="lp-feat-card">
