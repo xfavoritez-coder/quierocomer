@@ -26,9 +26,12 @@ export const metadata: Metadata = {
   },
 };
 
+const clarityScript = `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","ykbsgbbc68");`;
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ '--font-display': '"Space Grotesk", system-ui, sans-serif', '--font-body': '"Inter", system-ui, sans-serif' } as React.CSSProperties}>
+      <script dangerouslySetInnerHTML={{ __html: clarityScript }} />
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');`}</style>
       <ErrorBoundary>
         <AuthProvider>
