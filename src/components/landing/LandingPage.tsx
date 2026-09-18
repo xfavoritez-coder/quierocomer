@@ -4,12 +4,112 @@ import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SubirCartaModal from "@/components/landing/SubirCartaModal";
 
+interface FeatureDetail {
+  emoji: string;
+  title: string;
+  tagline: string;
+  description: string;
+  bullets: string[];
+  cta: string;
+}
+
+const FEATURE_DETAILS: Record<string, FeatureDetail> = {
+  loyalty: {
+    emoji: "⭐",
+    title: "Programa de lealtad",
+    tagline: "Fideliza sin apps, sin papel, sin complicaciones.",
+    description: "Crea tarjetas digitales de sellos o puntos que tus clientes acumulan directo desde su teléfono al escanear tu QR. Sin descargar nada.",
+    bullets: [
+      "Tarjetas de sellos o puntos 100% digitales",
+      "El cliente acumula al escanear tu carta QR",
+      "Tú defines la recompensa y las reglas",
+      "Panel para ver miembros y canjes en tiempo real",
+      "Notificaciones automáticas de cumpleaños",
+    ],
+    cta: "Activar loyalty gratis",
+  },
+  pedidos: {
+    emoji: "🛒",
+    title: "Pedidos online",
+    tagline: "Recibe pedidos directo, sin intermediarios ni comisiones.",
+    description: "Tus clientes piden desde tu carta digital y el pedido llega directo a tu cocina o tu WhatsApp. Sin comisiones de terceros, sin apps externas.",
+    bullets: [
+      "Pedidos desde la carta QR sin salir de ella",
+      "Llegan a tu panel o a tu WhatsApp",
+      "Sin comisiones por pedido",
+      "Gestiona estados: recibido, en preparación, listo",
+      "Funciona para delivery, take away o en mesa",
+    ],
+    cta: "Activar pedidos gratis",
+  },
+  recomienda: {
+    emoji: "🧠",
+    title: "Recomienda platos",
+    tagline: "Una carta que aprende y se adapta a cada cliente.",
+    description: "El sistema detecta las preferencias de cada comensal (dieta, restricciones, gustos) y reordena la carta para mostrar primero lo que más le conviene. Más ventas, menos indecisión.",
+    bullets: [
+      "Detecta vegetarianos, celíacos, alérgicos y más",
+      "Reordena la carta según las preferencias del cliente",
+      "Muestra badges de compatibilidad en cada plato",
+      "El cliente elige más rápido y con más confianza",
+      "Sin configuración extra de tu parte",
+    ],
+    cta: "Ver cómo funciona",
+  },
+  idioma: {
+    emoji: "🌐",
+    title: "Habla su idioma",
+    tagline: "Tu carta en el idioma de cada cliente, automáticamente.",
+    description: "Cuando un turista o cliente extranjero abre tu carta, se traduce sola al idioma de su teléfono. Sin versiones manuales, sin trabajo extra para ti.",
+    bullets: [
+      "Traducción automática al detectar el idioma del dispositivo",
+      "Español, inglés, portugués y más",
+      "Nombres, descripciones y categorías traducidos",
+      "El cliente puede cambiar el idioma manualmente",
+      "Sin costo adicional ni configuración",
+    ],
+    cta: "Ver carta multiidioma",
+  },
+  garzon: {
+    emoji: "🔔",
+    title: "Llama al garzón",
+    tagline: "Atención más rápida, sin que el cliente levante la mano.",
+    description: "Desde la carta QR, el cliente toca un botón y tu garzón recibe la alerta al instante. Menos espera, mejor experiencia, más rotación de mesas.",
+    bullets: [
+      "Botón de llamada visible en la carta digital",
+      "Alerta instantánea al garzón en su dispositivo",
+      "Historial de llamadas por mesa",
+      "Reduce el tiempo de espera percibido",
+      "No requiere app ni hardware adicional",
+    ],
+    cta: "Ver cómo funciona",
+  },
+  imprimir: {
+    emoji: "🖨️",
+    title: "Imprímela con 1 click",
+    tagline: "Una carta imprimible lista para tus mesas, en segundos.",
+    description: "Genera una versión imprimible de tu carta digital con diseño profesional. Perfecta para mesas, para eventos o como respaldo físico.",
+    bullets: [
+      "Varios templates de diseño para elegir",
+      "Se actualiza automáticamente con tu carta digital",
+      "Formato optimizado para imprimir en A4 o carta",
+      "Incluye código QR para escanear desde la mesa",
+      "Sin diseñador, sin Canva, sin trabajo extra",
+    ],
+    cta: "Ver templates",
+  },
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [ucOpen, setUcOpen] = useState(false);
   const openModal = () => { setUcOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
+
+  const [featOpen, setFeatOpen] = useState<FeatureDetail | null>(null);
+  const openFeat = (key: string) => { setFeatOpen(FEATURE_DETAILS[key] ?? null); document.body.style.overflow = "hidden"; };
+  const closeFeat = () => { setFeatOpen(null); document.body.style.overflow = ""; };
 
   return (
     <>
@@ -261,10 +361,57 @@ export default function LandingPage() {
           overflow: hidden;
           box-shadow: 0 2px 12px rgba(0,0,0,0.06);
           transition: box-shadow .2s, transform .2s;
+          cursor: pointer;
         }
         .lp-feat-card:hover {
           box-shadow: 0 8px 32px rgba(0,0,0,0.1);
           transform: translateY(-3px);
+        }
+        /* Feature modal */
+        .lp-feat-overlay {
+          position: fixed; inset: 0; z-index: 9999;
+          background: rgba(0,0,0,0.55);
+          backdrop-filter: blur(4px);
+          display: flex; align-items: center; justify-content: center;
+          padding: 20px;
+          animation: lp-fade-in .18s ease;
+        }
+        @keyframes lp-fade-in { from { opacity: 0 } to { opacity: 1 } }
+        .lp-feat-modal {
+          background: #fff;
+          border-radius: 28px;
+          max-width: 480px;
+          width: 100%;
+          overflow: hidden;
+          box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+          animation: lp-slide-up .22s ease;
+        }
+        @keyframes lp-slide-up { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+        .lp-feat-modal-header {
+          background: #0A0A0A;
+          padding: 32px 28px 24px;
+          position: relative;
+        }
+        .lp-feat-modal-close {
+          position: absolute; top: 16px; right: 16px;
+          width: 32px; height: 32px; border-radius: 50%;
+          background: rgba(255,255,255,0.1); border: none;
+          color: rgba(255,255,255,0.6); font-size: 18px; line-height: 1;
+          cursor: pointer; display: flex; align-items: center; justify-content: center;
+          transition: background .15s;
+        }
+        .lp-feat-modal-close:hover { background: rgba(255,255,255,0.18); }
+        .lp-feat-modal-body {
+          padding: 24px 28px 28px;
+        }
+        .lp-feat-modal-bullet {
+          display: flex; align-items: flex-start; gap: 10px;
+          margin-bottom: 10px; font-size: 15px; color: #444; line-height: 1.5;
+        }
+        .lp-feat-modal-bullet::before {
+          content: "✓";
+          color: #F4A623; font-weight: 800; font-size: 14px;
+          margin-top: 1px; flex-shrink: 0;
         }
         .lp-feat-visual {
           height: 148px;
@@ -772,7 +919,7 @@ export default function LandingPage() {
               <h2>Todo el marketing de tu restaurante, desde tu carta.</h2>
             </div>
             <div className="lp-features-grid">
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("loyalty")}>
                 <div className="lp-feat-visual" style={{ background: "linear-gradient(135deg, #1A0E00 0%, #2d1a00 100%)", position: "relative", overflow: "hidden" }}>
                   {/* dots pattern */}
                   {[...Array(12)].map((_, i) => (
@@ -794,7 +941,7 @@ export default function LandingPage() {
                   <p>Tarjetas digitales de puntos y sellos para fidelizar clientes sin apps ni papel.</p>
                 </div>
               </div>
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("pedidos")}>
                 <div className="lp-feat-visual" style={{ background: "linear-gradient(135deg, #0d1f0d 0%, #162516 100%)", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "80%", maxWidth: 200 }}>
                     {/* mock order card */}
@@ -815,7 +962,7 @@ export default function LandingPage() {
                   <p>Recibe pedidos desde la carta directamente, sin llamadas ni comisiones de terceros.</p>
                 </div>
               </div>
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("recomienda")}>
                 <div className="lp-feat-visual">
                   <img src="/ff1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
                 </div>
@@ -824,7 +971,7 @@ export default function LandingPage() {
                   <p>Aprende las preferencias de cada cliente y reordena la carta a su gusto.</p>
                 </div>
               </div>
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("idioma")}>
                 <div className="lp-feat-visual">
                   <img src="/ff2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
@@ -833,7 +980,7 @@ export default function LandingPage() {
                   <p>Tu carta se traduce sola al idioma del cliente.</p>
                 </div>
               </div>
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("garzon")}>
                 <div className="lp-feat-visual">
                   <img src="/ff3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
@@ -842,7 +989,7 @@ export default function LandingPage() {
                   <p>Piden asistencia desde la carta, sin levantarse.</p>
                 </div>
               </div>
-              <div className="lp-feat-card">
+              <div className="lp-feat-card" onClick={() => openFeat("imprimir")}>
                 <div className="lp-feat-visual">
                   <img src="/f4.png" alt="También puedes imprimirla" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
@@ -867,6 +1014,36 @@ export default function LandingPage() {
       <LandingFooter />
 
       <SubirCartaModal open={ucOpen} onClose={closeModal} />
+
+      {featOpen && (
+        <div className="lp-feat-overlay" onClick={closeFeat}>
+          <div className="lp-feat-modal" onClick={e => e.stopPropagation()}>
+            <div className="lp-feat-modal-header">
+              <button className="lp-feat-modal-close" onClick={closeFeat}>×</button>
+              <div style={{ fontSize: 40, marginBottom: 14 }}>{featOpen.emoji}</div>
+              <h3 style={{ fontFamily: "'Space Grotesk', system-ui, sans-serif", fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", marginBottom: 8 }}>
+                {featOpen.title}
+              </h3>
+              <p style={{ fontSize: 15, color: "#F4A623", fontWeight: 600 }}>{featOpen.tagline}</p>
+            </div>
+            <div className="lp-feat-modal-body">
+              <p style={{ fontSize: 15, color: "#555", lineHeight: 1.65, marginBottom: 20 }}>{featOpen.description}</p>
+              <div style={{ marginBottom: 24 }}>
+                {featOpen.bullets.map(b => (
+                  <div key={b} className="lp-feat-modal-bullet">{b}</div>
+                ))}
+              </div>
+              <button
+                className="lp-btn"
+                style={{ width: "100%", textAlign: "center", justifyContent: "center" }}
+                onClick={() => { closeFeat(); openModal(); }}
+              >
+                {featOpen.cta} →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
