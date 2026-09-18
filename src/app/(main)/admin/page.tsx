@@ -293,6 +293,12 @@ export default function AdminDashboard() {
               {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
             </select>
           )}
+          {isSuper && (
+            <a href="/admin/tests-ab"
+              style={{ height: 34, padding: "0 12px", borderRadius: 10, border: `1px solid var(--adm-card-border)`, background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, textDecoration: "none" }}>
+              🧪 A/B
+            </a>
+          )}
           <button onClick={fetchData} title="Actualizar"
             style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--adm-text3)", fontSize: "1rem" }}>
             ↻
