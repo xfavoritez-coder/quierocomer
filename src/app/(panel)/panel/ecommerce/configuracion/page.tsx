@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer, Image as ImageIcon, Upload, X as XIcon } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer, Image as ImageIcon, Upload, X as XIcon, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
 import HorarioEditor from "@/components/ecommerce/HorarioEditor";
+import CierresEditor from "@/components/ecommerce/CierresEditor";
 import { buildPrintAgentInstaller, buildPrintAgentUninstaller } from "@/lib/ecommerce/printAgentScript";
 
 const F = "var(--font-display)";
@@ -28,7 +29,7 @@ export default function EcommerceConfiguracionPage() {
   const [allMethods, setAllMethods] = useState<string[]>(["webpay", "efectivo", "transferencia", "tarjeta"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"tienda" | "pagos" | "checkout" | "pos" | "mas">("tienda");
+  const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "impresion" | "web" | "mas">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
   const [uploadingFav, setUploadingFav] = useState(false);
 
@@ -188,10 +189,13 @@ export default function EcommerceConfiguracionPage() {
       {!loading && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
           <TabChip active={tab === "tienda"} onClick={() => setTab("tienda")} icon={Store} label="Tienda" />
+          <TabChip active={tab === "horario"} onClick={() => setTab("horario")} icon={Clock} label="Horario" />
           <TabChip active={tab === "pagos"} onClick={() => setTab("pagos")} icon={CreditCard} label="Pagos" />
-          <TabChip active={tab === "checkout"} onClick={() => setTab("checkout")} icon={StickyNote} label="Checkout" />
-          <TabChip active={tab === "pos"} onClick={() => setTab("pos")} icon={ConciergeBell} label="Tomar pedidos" />
-          <TabChip active={tab === "mas"} onClick={() => setTab("mas")} icon={Settings} label="Más ajustes" />
+          <TabChip active={tab === "pedidos"} onClick={() => setTab("pedidos")} icon={ConciergeBell} label="Pedidos" />
+          <TabChip active={tab === "avisos"} onClick={() => setTab("avisos")} icon={Bell} label="Avisos" />
+          <TabChip active={tab === "impresion"} onClick={() => setTab("impresion")} icon={Printer} label="Impresión" />
+          <TabChip active={tab === "web"} onClick={() => setTab("web")} icon={Globe} label="Web y marca" />
+          <TabChip active={tab === "mas"} onClick={() => setTab("mas")} icon={Settings} label="Más" />
         </div>
       )}
 
@@ -239,7 +243,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Dominio propio */}
-          {tab === "tienda" && (
+          {tab === "web" && (
           <section style={card}>
             <SectionTitle icon={Globe} title="Dominio propio" sub="Conecta tu propio dominio para que tu tienda se vea en él con URLs limpias (ej: haruna.cl/checkout)." />
             <div style={{ marginTop: 12 }}>
@@ -258,7 +262,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Google Tag Manager */}
-          {tab === "tienda" && (
+          {tab === "web" && (
           <section style={card}>
             <SectionTitle icon={BarChart3} title="Google Tag Manager" sub="Mide el tráfico de tu tienda online. Pega el ID de tu contenedor (formato GTM-XXXXXX)." />
             <div style={{ marginTop: 12 }}>
@@ -325,8 +329,8 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {/* Notificaciones de pedidos (dentro de Tienda) */}
-          {tab === "tienda" && (
+          {/* Notificaciones de pedidos */}
+          {tab === "avisos" && (
           <section style={card}>
             <SectionTitle icon={Bell} title="Notificaciones de pedidos" sub="Recibe un aviso en este dispositivo cuando llegue un pedido nuevo." />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 12 }}>
@@ -347,8 +351,8 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {/* Aviso de pedidos por correo (dentro de Tienda) */}
-          {tab === "tienda" && (
+          {/* Aviso de pedidos por correo */}
+          {tab === "avisos" && (
           <section style={card}>
             <SectionTitle icon={Mail} title="Aviso de pedidos por correo" sub="Te enviamos un correo con los datos de cada pedido nuevo (cliente, monto, medio de pago, entrega)." />
             <div style={{ marginTop: 12 }}>
@@ -365,7 +369,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Favicon */}
-          {tab === "tienda" && (
+          {tab === "web" && (
           <section style={card}>
             <SectionTitle icon={ImageIcon} title="Favicon" sub="El ícono que se ve en la pestaña del navegador, en tu tienda y en la web de seguimiento del pedido. Si no subes uno, se usa tu logo. Ideal: imagen cuadrada (PNG)." />
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12 }}>
@@ -394,7 +398,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Impresión de comandas */}
-          {tab === "tienda" && (
+          {tab === "impresion" && (
           <section style={card}>
             <SectionTitle icon={Printer} title="Impresión de comandas" sub="Imprime un ticket con cada pedido en tu impresora térmica. La automática requiere abrir Chrome con la opción de kiosco en el equipo del local." />
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
@@ -490,10 +494,17 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {/* Horario (dentro de Tienda) */}
-          {tab === "tienda" && (
+          {/* Horario de atención */}
+          {tab === "horario" && (
           <section style={card}>
             <HorarioEditor restaurantId={restaurantId} showHeader />
+          </section>
+          )}
+
+          {/* Cierres programados */}
+          {tab === "horario" && (
+          <section style={card}>
+            <CierresEditor restaurantId={restaurantId} />
           </section>
           )}
 
@@ -535,7 +546,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Notas */}
-          {tab === "checkout" && (
+          {tab === "pedidos" && (
           <section style={card}>
             <SectionTitle icon={StickyNote} title="Notas del cliente" sub="Campo opcional en el checkout para instrucciones (ej: sin cebolla)." />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
@@ -546,7 +557,7 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Tomar pedidos */}
-          {tab === "pos" && (
+          {tab === "pedidos" && (
           <section style={card}>
             <SectionTitle icon={ConciergeBell} title="Tomar pedidos" sub="Ajustes de la pantalla de mostrador (Tomar pedidos)." />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
@@ -567,7 +578,7 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {tab !== "mas" && (
+          {tab !== "mas" && tab !== "horario" && (
           <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled)} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled) ? 0.5 : 1 }}>
             <Save size={16} /> {saving ? "Guardando…" : "Guardar configuración"}
           </button>
