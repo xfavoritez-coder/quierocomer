@@ -773,42 +773,6 @@ export default function LandingPage() {
             </div>
             <div className="lp-features-grid">
               <div className="lp-feat-card">
-                <div className="lp-feat-visual">
-                  <img src="/ff1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
-                </div>
-                <div className="lp-feat-body">
-                  <h3>Recomienda platos</h3>
-                  <p>Aprende las preferencias de cada cliente y reordena la carta a su gusto.</p>
-                </div>
-              </div>
-              <div className="lp-feat-card">
-                <div className="lp-feat-visual">
-                  <img src="/ff2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-                <div className="lp-feat-body">
-                  <h3>Habla su idioma</h3>
-                  <p>Tu carta se traduce sola al idioma del cliente.</p>
-                </div>
-              </div>
-              <div className="lp-feat-card">
-                <div className="lp-feat-visual">
-                  <img src="/ff3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-                <div className="lp-feat-body">
-                  <h3>Llama al garzón</h3>
-                  <p>Piden asistencia desde la carta, sin levantarse.</p>
-                </div>
-              </div>
-              <div className="lp-feat-card">
-                <div className="lp-feat-visual">
-                  <img src="/f4.png" alt="También puedes imprimirla" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                </div>
-                <div className="lp-feat-body">
-                  <h3>Puedes imprimirla</h3>
-                  <p>Genera una versión imprimible lista para poner en mesas.</p>
-                </div>
-              </div>
-              <div className="lp-feat-card">
                 <div className="lp-feat-visual" style={{ background: "linear-gradient(135deg, #1A0E00 0%, #2d1a00 100%)", position: "relative", overflow: "hidden" }}>
                   {/* dots pattern */}
                   {[...Array(12)].map((_, i) => (
@@ -849,6 +813,42 @@ export default function LandingPage() {
                 <div className="lp-feat-body">
                   <h3>Pedidos online</h3>
                   <p>Recibe pedidos desde la carta directamente, sin llamadas ni comisiones de terceros.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/ff1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Recomienda platos</h3>
+                  <p>Aprende las preferencias de cada cliente y reordena la carta a su gusto.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/ff2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Habla su idioma</h3>
+                  <p>Tu carta se traduce sola al idioma del cliente.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/ff3.png" alt="Llama al garzón" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Llama al garzón</h3>
+                  <p>Piden asistencia desde la carta, sin levantarse.</p>
+                </div>
+              </div>
+              <div className="lp-feat-card">
+                <div className="lp-feat-visual">
+                  <img src="/f4.png" alt="También puedes imprimirla" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+                <div className="lp-feat-body">
+                  <h3>Puedes imprimirla</h3>
+                  <p>Genera una versión imprimible lista para poner en mesas.</p>
                 </div>
               </div>
             </div>
