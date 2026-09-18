@@ -852,9 +852,6 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
               <button className="lp-btn" onClick={openModalWithTracking} suppressHydrationWarning>
                 {ctaText}
               </button>
-              <p style={{ margin: "18px 0 0", fontSize: "15px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.01em", fontFamily: "Inter, sans-serif" }}>
-                ⚡ Gratis &nbsp;·&nbsp; Listo en segundos
-              </p>
             </div>
           </div>
         </section>
