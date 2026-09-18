@@ -769,8 +769,7 @@ export default function LandingPage() {
         <section className="lp-features">
           <div className="lp-container">
             <div className="lp-features-head">
-              <h2>Mucho más que una carta QR</h2>
-              <p>Una carta que realmente ayuda a tus clientes a elegir:</p>
+              <h2>Sube tu carta y obtén gratis estas herramientas de marketing.</h2>
             </div>
             <div className="lp-features-grid">
               <div className="lp-feat-card">
