@@ -847,7 +847,7 @@ export default function LandingPage() {
                   <img src="/f4.png" alt="También puedes imprimirla" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
-                  <h3>Puedes imprimirla</h3>
+                  <h3>Imprímela con 1 click</h3>
                   <p>Genera una versión imprimible lista para poner en mesas.</p>
                 </div>
               </div>
