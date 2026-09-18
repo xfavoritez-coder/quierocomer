@@ -44,7 +44,7 @@ const FEATURE_DETAILS: Record<string, FeatureDetail> = {
   },
   recomienda: {
     emoji: "🧠",
-    title: "Recomienda platos",
+    title: "Carta inteligente",
     tagline: "Una carta que aprende y se adapta a cada cliente.",
     description: "El sistema detecta las preferencias de cada comensal (dieta, restricciones, gustos) y reordena la carta para mostrar primero lo que más le conviene. Más ventas, menos indecisión.",
     bullets: [
@@ -58,7 +58,7 @@ const FEATURE_DETAILS: Record<string, FeatureDetail> = {
   },
   idioma: {
     emoji: "🌐",
-    title: "Habla su idioma",
+    title: "Traducción automática",
     tagline: "Tu carta en el idioma de cada cliente, automáticamente.",
     description: "Cuando un turista o cliente extranjero abre tu carta, se traduce sola al idioma de su teléfono. Sin versiones manuales, sin trabajo extra para ti.",
     bullets: [
@@ -967,7 +967,7 @@ export default function LandingPage() {
                   <img src="/ff1.png" alt="Recomienda platos" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
-                  <h3>Recomienda platos</h3>
+                  <h3>Carta inteligente</h3>
                   <p>Aprende las preferencias de cada cliente y reordena la carta a su gusto.</p>
                 </div>
               </div>
@@ -976,7 +976,7 @@ export default function LandingPage() {
                   <img src="/ff2.png" alt="Habla su idioma" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
                 <div className="lp-feat-body">
-                  <h3>Habla su idioma</h3>
+                  <h3>Traducción automática</h3>
                   <p>Tu carta se traduce sola al idioma del cliente.</p>
                 </div>
               </div>
