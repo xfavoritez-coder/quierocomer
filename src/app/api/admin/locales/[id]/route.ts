@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
 import { ensureOwnBodega, makeOwnBodega, shareBodegaWith } from "@/lib/bodega/provision";
@@ -191,6 +191,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const qrFields = ['showCategoryLobby','cartaColorMode','cartaAccentColor','defaultView','genioFabEnabled','multiMenuEnabled','filterBarEnabled','bannerUrl','logoUrl','name','description','orderingEnabled','orderingPhone','orderingDelivery','orderingMinAmount','orderingWaitTime','orderingNote','orderingPaymentMethods','orderingBannerUrl','orderingTheme','orderingAccentColor','sectionTitleMenu','sectionTitleRecomendados','sectionTitleCraving'];
     if (qrFields.some(f => data[f] !== undefined)) {
       revalidateTag(`qr-restaurant-${restaurant.slug}`, { expire: 0 });
+    }
+    // Invalidar landing page del restaurante si cambiaron campos visibles ahí
+    const landingFields = ['name', 'logoUrl', 'cartaAccentColor', 'cartaColorMode', 'orderingEnabled', 'primaryCategory', 'address', 'commune', 'googleReviewUrl', 'googleRating', 'googleRatingCount', 'reviewReward', 'reviewMode'];
+    if (landingFields.some(f => data[f] !== undefined)) {
+      revalidatePath(`/${restaurant.slug}`);
     }
 
     // Pilar Bodega (super-admin): provisión y asignación/compartir bodega.
