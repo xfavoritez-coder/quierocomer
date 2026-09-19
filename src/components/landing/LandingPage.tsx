@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SubirCartaModal from "@/components/landing/SubirCartaModal";
+import { initAdTracker } from "@/lib/adTracker";
 
 interface FeatureDetail {
   emoji: string;
@@ -92,6 +93,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
         }).catch(() => {});
       })
       .catch(() => {});
+    initAdTracker();
   }, []);
 
   const trackCtaClick = () => {
