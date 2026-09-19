@@ -12,7 +12,7 @@ const MODEL_FAST = "claude-haiku-4-5-20251001"; // preview (~15s)
 const MODEL_FULL = "claude-sonnet-4-6";          // full extraction (better quality)
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app", "socialreacts.com", "ola.click", "gour.media"];
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com", "sites.google.com", "influye.app", "socialreacts.com", "ola.click", "gour.media", "yamenu.online"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["thefork.com", "lafourchette.com"];
