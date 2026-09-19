@@ -338,7 +338,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `${BASE}/${restaurantSlug}`,
         type: 'website',
         siteName: 'QuieroComer',
-        // og:image viene del opengraph-image.tsx dinámico (1200×630 branded)
+        images: [{ url: `${BASE}/${restaurantSlug}/opengraph-image`, width: 1200, height: 630, alt: rest.name }],
       },
       twitter: { card: 'summary_large_image', title, description },
     }

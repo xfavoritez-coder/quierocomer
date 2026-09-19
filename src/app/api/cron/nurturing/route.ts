@@ -46,27 +46,10 @@ export async function GET(req: NextRequest) {
 
   // Nurturing desactivado — Camila solo responde mensajes entrantes, no envía proactivamente
   return NextResponse.json({ ok: true, sent: 0, skipped: 0, errors: 0, disabled: true });
+}
 
-  // ── Test mode ──
-  const rawTestPhone = req.nextUrl.searchParams.get("test");
-  const testPhone = rawTestPhone?.trim().replace(/^\s/, "+") || null;
-  if (testPhone) {
-    const scenarioMap: Record<string, string> = {
-      carta_no_revisada: TEMPLATES.cartaNoRevisada,
-      vio_no_activo: TEMPLATES.noVolvio,
-      no_volvio: TEMPLATES.noVolvio,
-    };
-    const scenarioKey = req.nextUrl.searchParams.get("scenario") || "carta_no_revisada";
-    const templateSid = scenarioMap[scenarioKey];
-    if (!templateSid) return NextResponse.json({ error: `Scenario invalido: ${scenarioKey}`, valid: Object.keys(scenarioMap) }, { status: 400 });
-    try {
-      const msgSid = await sendWhatsApp({ to: testPhone, body: "", contentSid: templateSid, contentVariables: { "1": "Test", "2": "Restaurante Demo" } });
-      return NextResponse.json({ test: true, phone: testPhone, scenario: scenarioKey, sid: msgSid });
-    } catch (e: any) {
-      return NextResponse.json({ test: true, phone: testPhone, scenario: scenarioKey, error: e.message }, { status: 500 });
-    }
-  }
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _nurturingImpl(req: NextRequest) {
   const start = Date.now();
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

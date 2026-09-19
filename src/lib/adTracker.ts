@@ -21,14 +21,15 @@ function getUtmParams() {
   const utmSource = params.get("utm_source");
   const fbclid = params.get("fbclid");
   const gclid = params.get("gclid");
+  const adsParam = params.get("ads"); // Custom ?ads=truco tracking param
 
-  // Accept: explicit utm_source OR Facebook fbclid OR Google gclid
-  if (!utmSource && !fbclid && !gclid) return null;
+  // Accept: explicit utm_source OR Facebook fbclid OR Google gclid OR custom ?ads=
+  if (!utmSource && !fbclid && !gclid && !adsParam) return null;
 
   return {
-    utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
-    utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
-    utmCampaign: params.get("utm_campaign"),
+    utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : adsParam ? "ads" : null),
+    utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : adsParam ? "social" : null),
+    utmCampaign: params.get("utm_campaign") || adsParam || null,
     utmContent: params.get("utm_content"),
     utmTerm: params.get("utm_term"),
     fbclid,
