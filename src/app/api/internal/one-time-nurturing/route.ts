@@ -19,10 +19,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Nurturing desactivado — Camila solo responde mensajes entrantes, no envía proactivamente
-  const action = req.nextUrl.searchParams.get("action") || "preview";
-  if (action !== "unsplash") {
+  const rawAction = req.nextUrl.searchParams.get("action") || "preview";
+  if (rawAction !== "unsplash") {
     return NextResponse.json({ ok: true, disabled: true, nurturing: { sent: 0 } });
   }
+  const action: string = rawAction;
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
