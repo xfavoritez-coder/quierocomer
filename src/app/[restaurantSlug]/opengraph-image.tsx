@@ -10,12 +10,15 @@ type Props = { params: Promise<{ restaurantSlug: string }> }
 export default async function Image({ params }: Props) {
   const { restaurantSlug } = await params
 
-  const r = await prisma.restaurant.findFirst({
-    where: { slug: restaurantSlug, isActive: true },
-    select: { name: true, logoUrl: true, primaryCategory: true, commune: true },
-  })
+  let r: { name: string; logoUrl: string | null; primaryCategory: string | null; commune: string | null } | null = null
+  try {
+    r = await prisma.restaurant.findFirst({
+      where: { slug: restaurantSlug, isActive: true },
+      select: { name: true, logoUrl: true, primaryCategory: true, commune: true },
+    })
+  } catch { /* DB unavailable — render branded fallback */ }
 
-  const name = r?.name ?? 'QuieroComer'
+  const name = r?.name?.trim() ?? 'QuieroComer'
   const category = r?.primaryCategory ?? ''
   const commune = r?.commune ?? ''
   const logoUrl = r?.logoUrl ?? null
