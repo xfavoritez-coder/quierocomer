@@ -18,7 +18,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Nurturing desactivado — Camila solo responde mensajes entrantes, no envía proactivamente
   const action = req.nextUrl.searchParams.get("action") || "preview";
+  if (action !== "unsplash") {
+    return NextResponse.json({ ok: true, disabled: true, nurturing: { sent: 0 } });
+  }
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

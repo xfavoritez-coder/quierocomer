@@ -44,6 +44,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Nurturing desactivado — Camila solo responde mensajes entrantes, no envía proactivamente
+  return NextResponse.json({ ok: true, sent: 0, skipped: 0, errors: 0, disabled: true });
+
   // ── Test mode ──
   const rawTestPhone = req.nextUrl.searchParams.get("test");
   const testPhone = rawTestPhone?.trim().replace(/^\s/, "+") || null;
