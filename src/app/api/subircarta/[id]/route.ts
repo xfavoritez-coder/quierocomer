@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 export const maxDuration = 30;
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { capiPaso2Completed } from "@/lib/fbCapi";
 
 export async function PATCH(
   req: Request,
@@ -49,6 +50,16 @@ export async function PATCH(
         completedAt: existing.completedAt || new Date(),
       },
     });
+
+    // CAPI server-side — fire and forget
+    capiPaso2Completed({
+      email,
+      phone: normalizedWa,
+      leadId: id,
+      cookieHeader: req.headers.get("cookie"),
+      clientIp: req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? req.headers.get("x-real-ip"),
+      userAgent: req.headers.get("user-agent"),
+    }).catch(() => {});
 
     return NextResponse.json({ id: lead.id });
   } catch (error) {

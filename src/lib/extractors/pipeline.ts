@@ -26,6 +26,7 @@ import { logClaudeUsage } from "@/lib/costTracker";
 import { classifyDishesBatched, type DishTaxonomyInput, type DishTaxonomy } from "@/lib/taxonomy-classify";
 import type { ExtractionResult, ExtractedDish } from "./types"
 import { findPlaceInfo, fetchPlacePhone } from "@/lib/google-places";
+import { capiCartaReady } from "@/lib/fbCapi";
 
 function slugify(name: string): string {
   return name
@@ -728,6 +729,16 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     });
     clearTimeout(pipelineTimeout);
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
+
+    // CAPI — carta lista server-side (fire and forget)
+    if (lead.email) {
+      capiCartaReady({
+        email: lead.email,
+        phone: lead.whatsapp ?? undefined,
+        leadId,
+        slug: restaurant.slug,
+      }).catch(() => {});
+    }
 
     // Taxonomy classification — corre DESPUÉS de READY en el mismo pipeline
     // El usuario ya ve el restaurante como importado; reporta progreso por batch
