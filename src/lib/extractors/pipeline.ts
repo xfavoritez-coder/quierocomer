@@ -1066,22 +1066,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       } catch {}
     }
 
-    // Send help email to lead on failure
-    if (lead.email) {
-      try {
-        const { sendLeadFailureEmail } = await import("@/lib/email/leadFailureEmail");
-        await sendLeadFailureEmail({
-          leadId,
-          to: lead.email,
-          ownerName: (lead.ownerName || "").split(" ")[0] || "Hola",
-          restaurantName: lead.localName || "tu restaurante",
-          errorMsg,
-          cartaUrl: lead.cartaUrl || undefined,
-        });
-      } catch (emailErr) {
-        console.error("[Pipeline] Failed to send failure email:", emailErr);
-      }
-    }
+    // Lead failure email desactivado — se maneja manualmente desde admin si es necesario
 
     // Notify admin with error details
     try {
