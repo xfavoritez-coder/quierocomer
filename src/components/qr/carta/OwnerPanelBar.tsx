@@ -7,6 +7,7 @@ const BAR_H = 48;
 
 export default function OwnerPanelBar({ slug }: { slug: string }) {
   const [visible, setVisible] = useState(false);
+  const [hiddenByModal, setHiddenByModal] = useState(false);
 
   useEffect(() => {
     try {
@@ -16,8 +17,21 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--opb-h", visible ? `${BAR_H}px` : "0px");
+    root.style.setProperty("--opb-h", visible && !hiddenByModal ? `${BAR_H}px` : "0px");
     return () => root.style.setProperty("--opb-h", "0px");
+  }, [visible, hiddenByModal]);
+
+  // Ocultar cuando un modal esté abierto (body gets overflow:hidden o position:fixed)
+  useEffect(() => {
+    if (!visible) return;
+    const check = () => {
+      const overflow = document.body.style.overflow;
+      const position = document.body.style.position;
+      setHiddenByModal(overflow === "hidden" || position === "fixed");
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "class"] });
+    return () => observer.disconnect();
   }, [visible]);
 
   const dismiss = () => {
@@ -25,7 +39,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || hiddenByModal) return null;
 
   return (
     <>
