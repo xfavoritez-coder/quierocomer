@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   };
   const missing = missingBillingFields(data);
 
-  return NextResponse.json({ ...data, isComplete: missing.length === 0, missingFields: missing });
+  return NextResponse.json({ ...data, billingExempt: r.billingExempt, isComplete: missing.length === 0, missingFields: missing });
 }
 
 export async function PUT(req: NextRequest) {

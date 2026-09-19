@@ -18,6 +18,7 @@ type BillingInfo = {
   billingEmail: string | null;
   billingContactName: string | null;
   billingPhone: string | null;
+  billingExempt: boolean;
   isComplete: boolean;
   missingFields: string[];
 };
@@ -128,6 +129,7 @@ export default function FacturacionPage() {
 
   if (loading) return null;
   if (!rid) return null;
+  if (info?.billingExempt) return null;
 
   const isComplete = info?.isComplete;
 

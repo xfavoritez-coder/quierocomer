@@ -608,6 +608,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             qrActivatedAt: new Date(),
             plan: "PREMIUM",
             subscriptionStatus: "NONE",
+            billingExempt: true,
             waiterPanelActive: true,
             menuImported: true,
             website: lead.cartaUrl,
