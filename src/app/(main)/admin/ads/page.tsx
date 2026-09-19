@@ -128,18 +128,13 @@ export default function AdsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ days: period, source: "ads" });
+      // Use tag filter: FB ads append utm_source=ig over ?ads=truco, so filter by landingPage
+      const params = new URLSearchParams({ days: period, ...(campaign ? { tag: campaign } : {}) });
       const res = await fetch(`/api/admin/facebook-ads?${params}`);
       if (!res.ok) { setLoading(false); return; }
       const json = await res.json();
 
-      // Filter by campaign if specified
-      let sessions: Session[] = json.sessions || [];
-      if (campaign) {
-        sessions = sessions.filter((s: Session) =>
-          s.utmCampaign === campaign || s.utmContent === campaign
-        );
-      }
+      const sessions: Session[] = json.sessions || [];
 
       const total = sessions.length;
       const conv = sessions.filter((s: Session) => s.converted).length;

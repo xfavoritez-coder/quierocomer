@@ -6,15 +6,17 @@ export async function GET(req: NextRequest) {
     const daysParam = req.nextUrl.searchParams.get("days");
     const sinceParam = req.nextUrl.searchParams.get("since");
     const source = req.nextUrl.searchParams.get("source") || null;
+    const tag = req.nextUrl.searchParams.get("tag") || null; // Filter by ?ads=tag in landingPage
     const untilParam = req.nextUrl.searchParams.get("until");
     const since = sinceParam ? new Date(sinceParam) : new Date(Date.now() - (parseInt(daysParam || "30", 10)) * 86400000);
     const until = untilParam ? new Date(untilParam) : undefined;
 
-    // All ad sessions
+    // All ad sessions — if tag is set, filter by landingPage containing ?ads=<tag>
+    // (Facebook ads append utm_source=ig/fb on top of custom ?ads= param, so we can't rely on utmSource)
     const sessions = await prisma.adSession.findMany({
       where: {
         createdAt: { gte: since, ...(until ? { lt: until } : {}) },
-        ...(source ? { utmSource: source } : {}),
+        ...(tag ? { landingPage: { contains: `ads=${tag}` } } : source ? { utmSource: source } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 500,
