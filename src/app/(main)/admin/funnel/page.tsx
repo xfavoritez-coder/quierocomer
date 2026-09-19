@@ -389,7 +389,16 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
                 {lead.openedVia && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 5px", borderRadius: 4, background: lead.openedVia === "whatsapp" ? "rgba(34,197,94,0.1)" : "rgba(59,130,246,0.1)", color: lead.openedVia === "whatsapp" ? "#22c55e" : "#60a5fa", fontWeight: 600 }}>vía {lead.openedVia}</span>}
               </div>
             )}
-            {lead.whatsapp && <div style={{ fontSize: 12, color: "#22c55e", marginTop: 2 }}>+{lead.whatsapp}</div>}
+            {lead.whatsapp && (
+              <a
+                href={`https://wa.me/${lead.whatsapp}?text=${encodeURIComponent(`Hola ${(lead.ownerName || "").split(" ")[0] || ""}! Te habla Jaime de QuieroComer. Vi que creaste tu página de ${lead.localName || "tu restaurante"} con nosotros. ¿Qué te pareció? ¿Tienes alguna duda?`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, color: "#22c55e", marginTop: 2, display: "block", textDecoration: "none" }}
+              >
+                +{lead.whatsapp} ↗
+              </a>
+            )}
           </div>
 
           {/* Score ring */}
