@@ -155,8 +155,6 @@ export default function SubirCartaModal({ open, onClose }: Props) {
     setUcLoading(false);
   };
 
-  if (!open) return null;
-
   return (
     <>
       <style>{`
@@ -167,6 +165,10 @@ export default function SubirCartaModal({ open, onClose }: Props) {
           display: flex; align-items: center; justify-content: center;
           z-index: 9000; padding: 24px;
           animation: scmFadeIn .2s ease;
+          transition: opacity .2s ease, visibility .2s ease;
+        }
+        .scm-velo[aria-hidden="true"] {
+          opacity: 0; visibility: hidden; pointer-events: none;
         }
         @keyframes scmFadeIn { from { opacity: 0; } to { opacity: 1; } }
         .scm-modal {
@@ -253,7 +255,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
         onChange={handleFileSelect}
       />
 
-      <div className="scm-velo" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
+      <div className="scm-velo" aria-hidden={!open ? "true" : undefined} onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
         <div className="scm-modal" role="dialog" aria-modal="true">
           {ucStep !== "options" && (
             <button className="scm-volver" onClick={() => { setUcStep("options"); setUcError(""); setUcFiles([]); setUcFileName(""); setUcLink(""); }}>
