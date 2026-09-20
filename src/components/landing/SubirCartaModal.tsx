@@ -1,5 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { trackAdEvent } from "@/lib/adTracker";
 
 function safeTimeout(ms: number): AbortSignal {
   try { return AbortSignal.timeout(ms); }
@@ -45,6 +46,10 @@ interface Props {
 
 export default function SubirCartaModal({ open, onClose }: Props) {
   const [ucStep, setUcStep] = useState<"options" | "link" | "photo" | "scratch">("options");
+
+  useEffect(() => {
+    if (open) trackAdEvent("modal_subircarta_open");
+  }, [open]);
   const [ucLink, setUcLink] = useState("");
   const [ucFiles, setUcFiles] = useState<File[]>([]);
   const [ucFileName, setUcFileName] = useState("");
@@ -63,7 +68,10 @@ export default function SubirCartaModal({ open, onClose }: Props) {
     setUcScratchName(""); setUcScratchOwner(""); setUcScratchEmail(""); setUcScratchWA("");
   };
 
-  const handleClose = () => { resetModal(); onClose(); };
+  const handleClose = () => {
+    trackAdEvent("modal_subircarta_close", { step: ucStep });
+    resetModal(); onClose();
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -83,10 +91,13 @@ export default function SubirCartaModal({ open, onClose }: Props) {
 
   const handleSubmit = async () => {
     setUcLoading(true); setUcError("");
+    trackAdEvent("modal_subircarta_submit", { step: ucStep });
     try {
       if (ucStep === "scratch") {
         if (!ucScratchName.trim() || !ucScratchEmail.trim() || !ucScratchEmail.includes("@")) {
-          setUcError("Completa el nombre del restaurante y el correo."); setUcLoading(false); return;
+          setUcError("Completa el nombre del restaurante y el correo."); setUcLoading(false);
+          trackAdEvent("modal_subircarta_error", { step: "scratch", error: "campos_incompletos" });
+          return;
         }
         const res = await fetch("/api/subircarta", {
           method: "POST",
@@ -112,10 +123,14 @@ export default function SubirCartaModal({ open, onClose }: Props) {
           body: JSON.stringify({ cartaType: "LINK", cartaUrl: url }),
         });
         const data = await res.json();
-        if (!res.ok) { setUcError(data.error || "Error al procesar tu carta."); setUcLoading(false); return; }
+        if (!res.ok) {
+          trackAdEvent("modal_subircarta_error", { step: "link", error: data.error || "server_error" });
+          setUcError(data.error || "Error al procesar tu carta."); setUcLoading(false); return;
+        }
         window.location.href = `/subircarta/paso2?id=${data.id}`;
       } else if (ucStep === "photo") {
-        if (ucFiles.length === 0) { setUcError("Selecciona al menos una foto."); setUcLoading(false); return; }
+        if (ucFiles.length === 0) { setUcError("Selecciona al menos una foto."); setUcLoading(false); trackAdEvent("modal_subircarta_error", { step: "photo", error: "sin_fotos" }); return; }
+        trackAdEvent("modal_subircarta_upload", { fotos: ucFiles.length });
         let leadId: string | null = null;
         for (let i = 0; i < ucFiles.length; i++) {
           setUcProgress(`Subiendo foto ${i + 1} de ${ucFiles.length}…`);
@@ -249,7 +264,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
           {ucStep === "options" && (
             <>
               <h3>¿Cómo tienes tu carta actual?</h3>
-              <button className="scm-opcion" onClick={() => { setUcStep("link"); setUcError(""); }}>
+              <button className="scm-opcion" onClick={() => { setUcStep("link"); setUcError(""); trackAdEvent("modal_subircarta_option", { option: "link" }); }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
                   <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
@@ -259,7 +274,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
                   <span className="scm-opcion-sub">De mi carta QR, web o menú online</span>
                 </span>
               </button>
-              <button className="scm-opcion" onClick={() => { setUcStep("photo"); setUcError(""); }}>
+              <button className="scm-opcion" onClick={() => { setUcStep("photo"); setUcError(""); trackAdEvent("modal_subircarta_option", { option: "foto" }); }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
@@ -269,7 +284,7 @@ export default function SubirCartaModal({ open, onClose }: Props) {
                   <span className="scm-opcion-sub">Fotos de la carta física, tomadas con el celular</span>
                 </span>
               </button>
-              <button className="scm-opcion" style={{ marginBottom: 0 }} onClick={() => { setUcStep("scratch"); setUcError(""); }}>
+              <button className="scm-opcion" style={{ marginBottom: 0 }} onClick={() => { setUcStep("scratch"); setUcError(""); trackAdEvent("modal_subircarta_option", { option: "scratch" }); }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
                 </svg>

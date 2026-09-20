@@ -45,6 +45,24 @@ function pushEvent(type: string, data?: any, countAsInteraction = false) {
   if (countAsInteraction) interactions++;
 }
 
+/** Track a named event from anywhere (e.g. modals not visible in Clarity recordings) */
+export function trackAdEvent(type: string, data?: any) {
+  // Push to ad session if active
+  if (sessionId) {
+    pushEvent(type, data, true);
+    flush();
+  }
+  // Also send to Clarity as a custom event (shows in timeline even if modal not recorded)
+  try { (window as any).clarity?.("event", type); } catch {}
+  // Always send to funnel stats regardless of ad session
+  fetch("/api/qr/stat-events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventType: type, metadata: data }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function flush(final = false) {
   if (flushing || !sessionId) return;
   if (events.length === 0 && !final) return;
