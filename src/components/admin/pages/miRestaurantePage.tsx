@@ -452,7 +452,7 @@ export default function MiRestaurantePage() {
                         onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM", source: "mi_restaurante_free_cta" } }))}
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: "#7c3aed", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }}
                       >
-                        {trialUsed ? "⚡ Activar Pro →" : "⚡ Probar Pro 7 días gratis"}
+                        {trialUsed ? "⚡ Activar Premium →" : "⚡ Probar Premium 7 días gratis"}
                       </button>
                     ) : null}
                   </div>

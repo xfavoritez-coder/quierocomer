@@ -358,7 +358,7 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
                 cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
-              Activar Pro
+              Activar Premium
             </button>
           </div>
         </div>
@@ -717,7 +717,7 @@ function PlanModal({ plan, restaurantId, initialTab, renewMode, context, onClose
                 boxShadow: "0 4px 16px rgba(124,58,237,0.3)",
               }}
             >
-              {(trialUsed || inTrial) ? "Activar Pro →" : "Empezar prueba gratis 7 días"}
+              {(trialUsed || inTrial) ? "Activar Premium →" : "Empezar prueba gratis 7 días"}
             </button>
           ) : isEarlyRenewal ? (
             <div style={{ marginBottom: 8 }}>

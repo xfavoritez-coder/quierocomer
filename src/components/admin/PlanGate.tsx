@@ -125,7 +125,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
             boxShadow: `0 4px 16px ${accentColor}40`,
           }}>
-            {trialUsed ? "⚡ Activar Pro →" : "⚡ Probar Pro 7 días gratis"}
+            {trialUsed ? "⚡ Activar Premium →" : "⚡ Probar Premium 7 días gratis"}
           </button>
         </div>
       </div>

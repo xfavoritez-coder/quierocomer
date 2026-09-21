@@ -421,7 +421,7 @@ export default function ExportarCarta({ restaurant, categories, categoryTranslat
                   fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
                   color: "#fff",
                 }}>
-                💎 Activar Pro y desbloquear
+                💎 Activar Premium y desbloquear
               </button>
             </div>
           )}
