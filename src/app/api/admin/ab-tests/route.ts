@@ -124,11 +124,11 @@ export async function GET(req: NextRequest) {
         });
     }
 
-    // Identify "winning combination" so far — the variant per slot with
-    // the highest traffic share (most explored + best converting).
+    // Identify "winning combination" so far — the active variant with the highest CVR.
+    // (trafficSharePct reflects Thompson Sampling uncertainty, not raw performance)
     const winning: Record<string, any> = {};
     for (const slot of slots) {
-      const sorted = [...(slotData[slot] || [])].filter((v: any) => v.isActive).sort((a: any, b: any) => b.trafficSharePct - a.trafficSharePct);
+      const sorted = [...(slotData[slot] || [])].filter((v: any) => v.isActive).sort((a: any, b: any) => b.conversionRate - a.conversionRate);
       winning[slot] = sorted[0] || null;
     }
 
