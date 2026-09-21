@@ -478,9 +478,10 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
       {expanded && (
         <div style={{ borderTop: "1px solid #1e1e1e", padding: "12px 16px", background: "rgba(0,0,0,0.2)" }}>
 
-          {/* Error log */}
-          {lead.cartaStatus === "FAILED" && lead.errorLog && (
+          {/* Error log — mostrar siempre que exista, no solo en FAILED */}
+          {lead.errorLog && (
             <div style={{ marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 12, color: "#f87171", lineHeight: 1.4 }}>
+              <span style={{ fontWeight: 700, display: "block", marginBottom: 2 }}>Error: </span>
               {lead.errorLog}
             </div>
           )}
@@ -1013,21 +1014,39 @@ function PanelActivitiesBlock({ leadId }: { leadId: string }) {
 /* ─── Reprocess Button ─── */
 function ReprocessButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
   const [state, setState] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [errMsg, setErrMsg] = useState<string | null>(null);
   const reprocess = async () => {
     setState("loading");
+    setErrMsg(null);
     try {
       const res = await fetch("/api/subircarta/process", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId }) });
-      if (res.ok) { setState("ok"); onDone(); } else { setState("error"); setTimeout(() => setState("idle"), 3000); }
-    } catch { setState("error"); setTimeout(() => setState("idle"), 3000); }
+      if (res.ok) {
+        setState("ok");
+        onDone();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setErrMsg(body.error || `HTTP ${res.status}`);
+        setState("error");
+        onDone(); // refresh lead card to show updated errorLog
+      }
+    } catch (e: any) {
+      setErrMsg(e?.message || "Error de red");
+      setState("error");
+    }
   };
   return (
-    <button onClick={reprocess} disabled={state === "loading" || state === "ok"} style={{
-      fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6, cursor: state === "loading" ? "wait" : "pointer",
-      background: state === "ok" ? "rgba(34,197,94,0.1)" : state === "error" ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.1)",
-      color: state === "ok" ? "#22c55e" : state === "error" ? "#f87171" : "#a855f7",
-      border: `1px solid ${state === "ok" ? "rgba(34,197,94,0.2)" : state === "error" ? "rgba(239,68,68,0.2)" : "rgba(168,85,247,0.2)"}`,
-    }}>
-      {state === "loading" ? "Procesando..." : state === "ok" ? "Listo" : state === "error" ? "Error" : "Reprocesar"}
-    </button>
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+      <button onClick={reprocess} disabled={state === "loading" || state === "ok"} style={{
+        fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6, cursor: state === "loading" ? "wait" : "pointer",
+        background: state === "ok" ? "rgba(34,197,94,0.1)" : state === "error" ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.1)",
+        color: state === "ok" ? "#22c55e" : state === "error" ? "#f87171" : "#a855f7",
+        border: `1px solid ${state === "ok" ? "rgba(34,197,94,0.2)" : state === "error" ? "rgba(239,68,68,0.2)" : "rgba(168,85,247,0.2)"}`,
+      }}>
+        {state === "loading" ? "Procesando..." : state === "ok" ? "Listo ✓" : state === "error" ? "Falló ✗" : "Reprocesar"}
+      </button>
+      {state === "error" && errMsg && (
+        <span style={{ fontSize: 10, color: "#f87171", maxWidth: 260, lineHeight: 1.4 }}>{errMsg}</span>
+      )}
+    </div>
   );
 }

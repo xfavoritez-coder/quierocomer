@@ -13,7 +13,8 @@ export async function extractQueresto(cartaUrl: string): Promise<ExtractionResul
   // Check /_payload.json first to detect restaurants with no menu
   try {
     const urlObj = new URL(cartaUrl);
-    const payloadUrl = `${urlObj.origin}/_payload.json?${urlObj.pathname}`;
+    // Nuxt /_payload.json lives at the same path as the page
+    const payloadUrl = `${urlObj.origin}${urlObj.pathname}/_payload.json`;
     const payloadRes = await fetch(payloadUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
       signal: AbortSignal.timeout(8000),
