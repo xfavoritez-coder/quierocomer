@@ -49,18 +49,14 @@ export async function seedLandingExperiment() {
       console.log(`[AB Seed] Added title variant(s): ${toAdd.map(t => `"${t}"`).join(", ")}`);
     }
 
-    // Deactivate any zero-impression variants that are clearly test noise
-    // (only CTA/subtitle slots — never touch title variants)
-    const zeroNoise = experiment.variants.filter(
-      (v) => v.impressions === 0 && v.slot !== "title" &&
-        ["Sube tu carta · 60 segundos →", "Transforma tu carta →", "Ver cómo queda →"].includes(v.text)
-    );
-    if (zeroNoise.length > 0) {
+    // Deactivate ALL cta variants — CTA "Subir mi carta →" is now fixed in code
+    const activeCtas = experiment.variants.filter((v) => v.slot === "cta" && (v as any).isActive !== false);
+    if (activeCtas.length > 0) {
       await prisma.abVariant.updateMany({
-        where: { id: { in: zeroNoise.map(v => v.id) } },
+        where: { id: { in: activeCtas.map(v => v.id) } },
         data: { isActive: false },
       });
-      console.log(`[AB Seed] Deactivated ${zeroNoise.length} zero-impression noise variant(s)`);
+      console.log(`[AB Seed] Deactivated ${activeCtas.length} CTA variant(s) — CTA is now fixed`);
     }
 
     return experiment;

@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 const EXPERIMENT_SLUG = "landing-hero";
 
 const DEFAULTS = {
-  titleText: "Crea una carta imprimible + QR inteligente que {vende más} por ti",
+  titleText: "Tu restaurante puede vender más.",
   subtitleText: "Aumenta tus ventas y mejora la experiencia de tus clientes.",
-  ctaText: "Crear carta gratis",
+  ctaText: "Subir mi carta →",
 };
 
 /**
@@ -66,16 +66,5 @@ export async function GET(req: NextRequest) {
     result[`${slot}Text`] = picked.data.text;
   }
 
-  const res = NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
-
-  // Persistir variante en cookie para que el cliente la lea antes del primer render (sin flash)
-  if (result.ctaText) {
-    res.cookies.set("qc_ab_cta", encodeURIComponent(result.ctaText), {
-      maxAge: 60 * 60 * 24 * 30, // 30 días
-      path: "/",
-      sameSite: "lax",
-    });
-  }
-
-  return res;
+  return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }

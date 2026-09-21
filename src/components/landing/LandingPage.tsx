@@ -67,7 +67,7 @@ const FEATURE_DETAILS: Record<string, FeatureDetail> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function LandingPage({ initialCtaText = "Subir carta gratis →" }: { initialCtaText?: string }) {
+export default function LandingPage() {
   const [ucOpen, setUcOpen] = useState(false);
   const openModal = () => { setUcOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
@@ -76,20 +76,21 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
   const openFeat = (key: string) => { setFeatOpen(FEATURE_DETAILS[key] ?? null); document.body.style.overflow = "hidden"; };
   const closeFeat = () => { setFeatOpen(null); document.body.style.overflow = ""; };
 
-  // A/B test — el texto viene del servidor (cookie leída en page.tsx), sin flash
-  const [ctaText] = useState<string>(initialCtaText);
-  const [ctaId, setCtaId] = useState<string | null>(null);
+  // A/B test — CTA fijo (ganó "Subir mi carta →"), solo se testea el título
+  const ctaText = "Subir mi carta →";
+  const [titleText, setTitleText] = useState<string>("Tu restaurante puede vender más.");
+  const [titleId, setTitleId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Solo para tracking y asignar cookie en primera visita
     fetch("/api/landing/ab")
       .then(r => r.json())
       .then(d => {
-        if (d.ctaId) setCtaId(d.ctaId);
+        if (d.titleText) setTitleText(d.titleText);
+        if (d.titleId) setTitleId(d.titleId);
         fetch("/api/qr/stat-events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", ctaId: d.ctaId ?? null } }),
+          body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", titleId: d.titleId ?? null } }),
         }).catch(() => {});
       })
       .catch(() => {});
@@ -100,7 +101,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
     fetch("/api/qr/stat-events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "LANDING_CTA_CLICK", metadata: { abExperiment: "landing-hero", ctaId } }),
+      body: JSON.stringify({ eventType: "LANDING_CTA_CLICK", metadata: { abExperiment: "landing-hero", titleId } }),
     }).catch(() => {});
   };
 
@@ -846,7 +847,7 @@ export default function LandingPage({ initialCtaText = "Subir carta gratis →" 
           <div className="lp-hero-overlay" />
           <div className="lp-hero-vignette" />
           <div className="lp-hero-content">
-<h1>Tu restaurante puede vender más.</h1>
+<h1>{titleText}</h1>
             <p className="lp-hero-sub">
               Transforma tu carta actual en una herramienta que aumenta tus ventas y fideliza a tus clientes.
             </p>
