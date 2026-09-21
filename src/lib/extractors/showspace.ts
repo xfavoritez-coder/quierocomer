@@ -177,11 +177,47 @@ export async function extractShowspace(cartaUrl: string): Promise<ExtractionResu
     restaurantName = ogTitleMatch[1].trim().split("|")[0].split("-")[0].trim();
   }
 
-  // Extract logo from og:image
+  // Extract logo — prefer actual logo over og:image (which is usually a banner)
   let logoUrl: string | null = null;
-  const ogImageMatch = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
-    || html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
-  if (ogImageMatch) logoUrl = ogImageMatch[1];
+
+  // 1. Try RSC/JSON data for logo_url field
+  for (const src of allSources) {
+    if (logoUrl) break;
+    const logoMatch = src.match(/"logo_url"\s*:\s*"([^"]+)"/)
+      || src.match(/"imagen_logo"\s*:\s*"([^"]+)"/)
+      || src.match(/"logo"\s*:\s*"(https?:\/\/[^"]+\.(png|jpg|jpeg|webp|svg)[^"]*)"/i);
+    if (logoMatch) logoUrl = logoMatch[1];
+  }
+
+  // 2. apple-touch-icon (reliable logo source used by modern sites)
+  if (!logoUrl) {
+    const appleIcon = html.match(/<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i)
+      || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']apple-touch-icon["']/i);
+    if (appleIcon) {
+      const href = appleIcon[1];
+      logoUrl = href.startsWith("http") ? href : `${new URL(cartaUrl).origin}${href.startsWith("/") ? "" : "/"}${href}`;
+    }
+  }
+
+  // 3. Large PNG icon (192px+) from <link rel="icon"> — often the logo
+  if (!logoUrl) {
+    const iconMatch = html.match(/<link[^>]+rel=["']icon["'][^>]+sizes=["'](?:192x192|256x256|512x512)["'][^>]+href=["']([^"']+)["']/i)
+      || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+sizes=["'](?:192x192|256x256|512x512)["'][^>]+rel=["']icon["']/i);
+    if (iconMatch) {
+      const href = iconMatch[1];
+      logoUrl = href.startsWith("http") ? href : `${new URL(cartaUrl).origin}${href.startsWith("/") ? "" : "/"}${href}`;
+    }
+  }
+
+  // 4. <img> with "logo" in class/id/alt
+  if (!logoUrl) {
+    const imgLogo = html.match(/<img[^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["'][^>]+src=["']([^"']+)["']/i)
+      || html.match(/<img[^>]+src=["']([^"']+)["'][^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["']/i);
+    if (imgLogo) {
+      const src = imgLogo[1];
+      logoUrl = src.startsWith("http") ? src : `${new URL(cartaUrl).origin}${src.startsWith("/") ? "" : "/"}${src}`;
+    }
+  }
 
   console.log("[Showspace] Extracted:", dishes.length, "dishes,", categories.length, "categories from", restaurantName);
 

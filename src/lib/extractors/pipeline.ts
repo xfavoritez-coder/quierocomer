@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
+import { revalidatePath } from "next/cache";
 import sharp from "sharp";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -523,6 +524,47 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       throw new Error("No dishes extracted from the menu");
     }
 
+    // Fallback logo extraction — if extractor didn't find a logo, try fetching it
+    // from the site's apple-touch-icon / large PNG icon / img[class*=logo]
+    if (!extraction.logoUrl && lead.cartaUrl && !isFileUpload && !isDirectPdf) {
+      try {
+        const cartaOrigin = new URL(lead.cartaUrl).origin;
+        // Prefer root domain for icons (they're usually at the root, not the menu page)
+        const iconRes = await fetch(cartaOrigin, {
+          headers: { "User-Agent": "QuieroComer-Bot/1.0" },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (iconRes.ok) {
+          const iconHtml = await iconRes.text();
+          const appleIcon = iconHtml.match(/<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i)
+            || iconHtml.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']apple-touch-icon["']/i);
+          if (appleIcon) {
+            const href = appleIcon[1];
+            extraction.logoUrl = href.startsWith("http") ? href : `${cartaOrigin}${href.startsWith("/") ? "" : "/"}${href}`;
+          }
+          if (!extraction.logoUrl) {
+            const largeIcon = iconHtml.match(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+sizes=["'](?:192x192|256x256|512x512)["'][^>]+href=["']([^"']+)["']/i)
+              || iconHtml.match(/<link[^>]+href=["']([^"']+)["'][^>]+sizes=["'](?:192x192|256x256|512x512)["']/i);
+            if (largeIcon) {
+              const href = largeIcon[1];
+              extraction.logoUrl = href.startsWith("http") ? href : `${cartaOrigin}${href.startsWith("/") ? "" : "/"}${href}`;
+            }
+          }
+          if (!extraction.logoUrl) {
+            const imgLogo = iconHtml.match(/<img[^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["'][^>]+src=["']([^"']+)["']/i)
+              || iconHtml.match(/<img[^>]+src=["']([^"']+)["'][^>]+(?:class|id|alt)=["'][^"']*logo[^"']*["']/i);
+            if (imgLogo) {
+              const src = imgLogo[1];
+              extraction.logoUrl = src.startsWith("http") ? src : `${cartaOrigin}${src.startsWith("/") ? "" : "/"}${src}`;
+            }
+          }
+          if (extraction.logoUrl) console.log(`[Pipeline] Fallback logo found: ${extraction.logoUrl}`);
+        }
+      } catch {
+        // Logo extraction is best-effort, never fails the pipeline
+      }
+    }
+
     // Validate extraction quality — only reject if truly empty
     const dishesWithPrice = extraction.dishes.filter(d => d.price > 0);
     if (extraction.dishes.length < 3) {
@@ -735,6 +777,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     });
     clearTimeout(pipelineTimeout);
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
+
+    // Bust ISR cache for both routes so og:image appears immediately on social shares
+    try {
+      revalidatePath(`/${restaurant.slug}`);
+      revalidatePath(`/qr/${restaurant.slug}`);
+    } catch { /* non-fatal */ }
 
     // CAPI — carta lista server-side (fire and forget)
     if (lead.email) {

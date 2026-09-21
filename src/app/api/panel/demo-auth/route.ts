@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   prisma.lead.updateMany({
     where: { generatedSlug: slug, panelVisitedAt: null },
     data: { panelVisitedAt: new Date() },
-  }).then(() => { revalidatePath(`/qr/${slug}`); }).catch(() => {});
+  }).then(() => { revalidatePath(`/qr/${slug}`); revalidatePath(`/${slug}`); }).catch(() => {});
 
   const nextPage = req.nextUrl.searchParams.get("next");
   const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";

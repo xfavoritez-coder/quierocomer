@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         prisma.lead.updateMany({
           where: { generatedSlug: { in: slugs }, panelVisitedAt: null },
           data: { panelVisitedAt: new Date() },
-        }).then(() => { slugs.forEach(s => revalidatePath(`/qr/${s}`)); }).catch(() => {});
+        }).then(() => { slugs.forEach(s => { revalidatePath(`/qr/${s}`); revalidatePath(`/${s}`); }); }).catch(() => {});
       }
 
       const token = crypto.randomUUID();
