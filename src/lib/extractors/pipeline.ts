@@ -731,7 +731,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     const cartaUrl = `https://quierocomer.com/qr/${restaurant.slug}`;
     await prisma.lead.update({
       where: { id: leadId },
-      data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date() },
+      data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date(), errorLog: null },
     });
     clearTimeout(pipelineTimeout);
     console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);

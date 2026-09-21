@@ -478,8 +478,8 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
       {expanded && (
         <div style={{ borderTop: "1px solid #1e1e1e", padding: "12px 16px", background: "rgba(0,0,0,0.2)" }}>
 
-          {/* Error log — mostrar siempre que exista, no solo en FAILED */}
-          {lead.errorLog && (
+          {/* Error log */}
+          {lead.cartaStatus === "FAILED" && lead.errorLog && (
             <div style={{ marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 12, color: "#f87171", lineHeight: 1.4 }}>
               <span style={{ fontWeight: 700, display: "block", marginBottom: 2 }}>Error: </span>
               {lead.errorLog}
