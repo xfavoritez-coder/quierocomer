@@ -46,9 +46,10 @@ async function handleReturn(req: NextRequest) {
     return redirect303(`${baseUrl}/panel/suscripcion?status=error&reason=${encodeURIComponent("No se encontró el restaurante asociado al pago")}`);
   }
 
-  // Si el webhook ya activó el plan, redirigir a éxito
-  if (restaurant.subscriptionStatus === "ACTIVE" && restaurant.lastPaymentAt && !restaurant.pendingFlowPlanId) {
-    await prisma.restaurant.update({ where: { id: restaurant.id }, data: { flowRegisterToken: null } });
+  // Si el webhook ya activó el plan (o pago reciente ≤ 2 min), redirigir a éxito sin llamar a Flow
+  const recentPayment = restaurant.lastPaymentAt && (Date.now() - new Date(restaurant.lastPaymentAt).getTime()) < 2 * 60 * 1000;
+  if (restaurant.subscriptionStatus === "ACTIVE" && (recentPayment || !restaurant.pendingFlowPlanId)) {
+    await prisma.restaurant.update({ where: { id: restaurant.id }, data: { flowRegisterToken: null, pendingFlowPlanId: null } });
     return redirect303(`${baseUrl}/panel/suscripcion/exito?plan=${restaurant.plan}`);
   }
 

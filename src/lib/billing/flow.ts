@@ -47,6 +47,7 @@ export async function flowPost<T = any>(endpoint: string, params: FlowParams = {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(8000),
   });
   const text = await res.text();
   let data: any;
