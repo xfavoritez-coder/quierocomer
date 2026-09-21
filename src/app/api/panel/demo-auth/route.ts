@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { revalidatePath } from "next/cache";
 
 const COOKIE_MAX_AGE = 60 * 60 * 4; // 4 hours for demo sessions
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -53,11 +54,11 @@ export async function GET(req: NextRequest) {
   const token = `demo_${crypto.randomUUID()}`;
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
-  // Track panel visit in Lead funnel
+  // Track panel visit in Lead funnel + invalidar cache ISR del QR
   prisma.lead.updateMany({
     where: { generatedSlug: slug, panelVisitedAt: null },
     data: { panelVisitedAt: new Date() },
-  }).catch(() => {});
+  }).then(() => { revalidatePath(`/qr/${slug}`); }).catch(() => {});
 
   const nextPage = req.nextUrl.searchParams.get("next");
   const redirectTo = nextPage ? `/panel/${nextPage}` : "/panel";

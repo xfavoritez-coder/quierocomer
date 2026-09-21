@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 import { logActivity } from "@/lib/admin/logActivity";
+import { revalidatePath } from "next/cache";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 40; // 40 days
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -71,13 +72,13 @@ export async function POST(req: NextRequest) {
 
       await prisma.restaurantOwner.update({ where: { id: owner.id }, data: { lastLoginAt: new Date() } });
 
-      // Track panel visit in Lead funnel (via owner's restaurants slugs)
+      // Track panel visit in Lead funnel + invalidar cache ISR de las cartas
       const slugs = owner.restaurants.map((r) => r.slug).filter(Boolean) as string[];
       if (slugs.length > 0) {
         prisma.lead.updateMany({
           where: { generatedSlug: { in: slugs }, panelVisitedAt: null },
           data: { panelVisitedAt: new Date() },
-        }).catch(() => {});
+        }).then(() => { slugs.forEach(s => revalidatePath(`/qr/${s}`)); }).catch(() => {});
       }
 
       const token = crypto.randomUUID();

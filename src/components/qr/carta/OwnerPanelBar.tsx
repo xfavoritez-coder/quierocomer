@@ -34,9 +34,17 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
     return () => observer.disconnect();
   }, [visible]);
 
+  /** Ocultar localmente + marcar server-side para todos los devices */
   const dismiss = () => {
     try { localStorage.setItem(LS_KEY(slug), "1"); } catch {}
     setVisible(false);
+    // Fire-and-forget: setea panelVisitedAt e invalida ISR cache
+    fetch("/api/qr/banner-dismiss", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+      keepalive: true,
+    }).catch(() => {});
   };
 
   if (!visible || hiddenByModal) return null;
