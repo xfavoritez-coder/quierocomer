@@ -93,6 +93,7 @@ async function handleReturn(req: NextRequest) {
       data: {
         plan: appPlan,
         subscriptionStatus: "ACTIVE",
+        isActive: true,
         flowPlanId: restaurant.pendingFlowPlanId,
         currentPeriodEnd: periodEnd,
         lastPaymentAt: new Date(),
