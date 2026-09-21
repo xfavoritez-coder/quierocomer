@@ -1734,7 +1734,6 @@ export default function CartaImpact({
             QuieroComer.com
           </span>
         </a>
-        <span style={{ color: "var(--carta-text3, #555)", fontSize: "0.62rem" }}>&copy; {new Date().getFullYear()}</span>
       </footer>
 
       {/* FAB: waiter button */}

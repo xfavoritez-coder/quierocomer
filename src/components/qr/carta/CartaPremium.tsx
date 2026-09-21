@@ -783,7 +783,6 @@ export default function CartaPremium({
             QuieroComer.com
           </span>
         </a>
-        <span style={{ color: "var(--carta-text3)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
       {!(restaurant as any).isDemo && showWaiter && (

@@ -589,7 +589,6 @@ export default function CartaLista({
             QuieroComer.com
           </span>
         </a>
-        <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
       {!(restaurant as any).isDemo && showWaiter && (
