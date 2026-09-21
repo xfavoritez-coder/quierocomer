@@ -20,6 +20,7 @@ import { extractCanva } from "./canva";
 import { extractAvocaty } from "./avocaty";
 import { extractWooCommerce, isWooCommerce } from "./woocommerce";
 import { extractInfluyeApp, isInfluyeApp } from "./influyeapp";
+import { extractShowspace } from "./showspace";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import { inferFlavorTags, detectCuisineTag, inferPrimaryCategory } from "@/app/a/lib/categories";
 import { logClaudeUsage } from "@/lib/costTracker";
@@ -385,6 +386,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
     else if (cartaUrl.includes('queresto.com')) providerName = 'Queresto'
     else if (cartaUrl.includes('ola.click')) providerName = 'OlaClick'
     else if (cartaUrl.includes('toteat.app')) providerName = 'Toteat'
+    else if (cartaUrl.includes('showspace.cl')) providerName = 'Showspace'
   }
   // Route to the correct extractor
   switch (providerName) {
@@ -419,6 +421,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractWooCommerce(cartaUrl);
     case "InfluyeApp":
       return extractInfluyeApp(cartaUrl);
+    case "Showspace":
+      return extractShowspace(cartaUrl);
     case "OlaClick":
       return extractOlaClick(cartaUrl);
     case "Toteat":
@@ -435,6 +439,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
     default:
       // Try auto-detection for Web propia URLs
       if (!providerName || providerName === 'Web propia') {
+        if (cartaUrl.includes('showspace.cl')) return extractShowspace(cartaUrl)
         const woo = await isWooCommerce(cartaUrl).catch(() => false)
         if (woo) return extractWooCommerce(cartaUrl)
         const influye = await isInfluyeApp(cartaUrl).catch(() => false)

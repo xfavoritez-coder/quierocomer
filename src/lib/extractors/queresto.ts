@@ -3,9 +3,36 @@ import type { ExtractionResult, ExtractedDish } from "./types";
 /**
  * Extract menu from Queresto/Bistrify using JSON-LD embedded in HTML.
  * No Jina or Claude needed — data is in the initial HTML.
+ *
+ * Note: some restaurants on Queresto have no menu uploaded yet (items: null in /_payload.json).
+ * In that case the HTML will have no JSON-LD menu sections and we throw a clear error.
  */
 export async function extractQueresto(cartaUrl: string): Promise<ExtractionResult> {
   console.log("[Queresto] Fetching HTML:", cartaUrl);
+
+  // Check /_payload.json first to detect restaurants with no menu
+  try {
+    const urlObj = new URL(cartaUrl);
+    const payloadUrl = `${urlObj.origin}/_payload.json?${urlObj.pathname}`;
+    const payloadRes = await fetch(payloadUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+      signal: AbortSignal.timeout(8000),
+    }).catch(() => null);
+    if (payloadRes?.ok) {
+      const payload = await payloadRes.json().catch(() => null);
+      // Queresto stores products under data.items or various nested paths
+      const items = payload?.data?.items ?? payload?.items ?? null;
+      if (items === null && payload !== null) {
+        throw new Error(
+          "Este restaurante no tiene menú cargado en Queresto. " +
+          "Pídele al dueño que suba su carta en queresto.com, o que nos envíe la carta directamente."
+        );
+      }
+    }
+  } catch (e) {
+    if ((e as Error).message?.includes("no tiene menú")) throw e;
+    // Payload fetch failed for other reasons — continue with HTML scraping
+  }
 
   const res = await fetch(cartaUrl, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
