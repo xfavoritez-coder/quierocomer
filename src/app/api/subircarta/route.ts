@@ -138,20 +138,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Block provider homepages — user likely forgot to paste their specific menu URL
-    const path = parsedUrl.pathname.replace(/\/+$/, "");
-    if (!path || path === "") {
-      const providers = await prisma.menuProvider.findMany({ select: { domainPatterns: true, name: true } });
-      const host = parsedUrl.hostname.toLowerCase();
-      const matched = providers.find(p => p.domainPatterns.some(d => host.includes(d.toLowerCase())));
-      if (matched) {
-        return NextResponse.json(
-          { error: `Esa es la página principal de ${matched.name}. Pega la URL de tu carta específica, no la del sitio.` },
-          { status: 400 },
-        );
-      }
-    }
-
     // Check for duplicate: reuse incomplete lead with same URL (not yet processed)
     // Only reuse if created within the last 30 minutes to avoid stale leads
     const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
