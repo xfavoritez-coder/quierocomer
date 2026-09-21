@@ -221,9 +221,6 @@ export default function PedirOnlinePage() {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(["efectivo", "transferencia", "tarjeta"]);
   const [showFeatured, setShowFeatured] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
-  const [twoColumns, setTwoColumns] = useState(false);
-  const [showIdentify, setShowIdentify] = useState(false);
-  const [categoryPhotos, setCategoryPhotos] = useState(true);
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [savingHours, setSavingHours] = useState(false);
 
@@ -253,9 +250,6 @@ export default function PedirOnlinePage() {
         setPaymentMethods((d.orderingPaymentMethods || "efectivo,transferencia,tarjeta").split(",").filter(Boolean));
         setShowFeatured(d.orderingShowFeatured ?? true);
         setShowFilters(d.filterBarEnabled ?? true);
-        setTwoColumns((d.orderingColumns || "one") === "two");
-        setShowIdentify(d.orderingShowIdentify ?? false);
-        setCategoryPhotos(d.orderingCategoryPhotos ?? true);
         // Business hours
         const bh: BusinessHours = {};
         const raw = d.orderingBusinessHours || {};
@@ -333,9 +327,6 @@ export default function PedirOnlinePage() {
           orderingPaymentMethods: paymentMethods.join(",") || "efectivo,transferencia,tarjeta",
           orderingShowFeatured: showFeatured,
           filterBarEnabled: showFilters,
-          orderingColumns: twoColumns ? "two" : "one",
-          orderingShowIdentify: showIdentify,
-          orderingCategoryPhotos: categoryPhotos,
         }),
       });
       if (res.ok) {
@@ -405,10 +396,6 @@ export default function PedirOnlinePage() {
       else { revert(); toast.error(t("ordering_error_save")); }
     } catch { revert(); toast.error(t("ordering_error_connection")); }
   };
-  const toggleColumns = () => { const v = !twoColumns; setTwoColumns(v); autoSaveField({ orderingColumns: v ? "two" : "one" }, () => setTwoColumns(!v), v ? "Vista multicolumna activada" : "Vista de 1 columna"); };
-  const toggleIdentify = () => { const v = !showIdentify; setShowIdentify(v); autoSaveField({ orderingShowIdentify: v }, () => setShowIdentify(!v), v ? "Identificación visible" : "Identificación oculta"); };
-  const toggleCategoryPhotos = () => { const v = !categoryPhotos; setCategoryPhotos(v); autoSaveField({ orderingCategoryPhotos: v }, () => setCategoryPhotos(!v), v ? "Categorías con foto" : "Categorías sin foto"); };
-
   const saveBusinessHours = async () => {
     if (!rid) return;
     setSavingHours(true);
@@ -733,36 +720,6 @@ export default function PedirOnlinePage() {
             <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>
               {showFilters ? "Visible" : "Oculto"}
             </span>
-          </div>
-        </Field>
-
-        {/* Columnas de productos */}
-        <Field label="Vista multicolumna" hint="Activada: 2 columnas en mobile y 4 en escritorio. Desactivada: 1 columna en mobile y escritorio (vista de lista).">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button type="button" onClick={toggleColumns} style={{ width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0, background: twoColumns ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s" }}>
-              <span style={{ display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: twoColumns ? 17 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-            </button>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>{twoColumns ? "Multicolumna (2/4)" : "1 columna"}</span>
-          </div>
-        </Field>
-
-        {/* Categorías con foto */}
-        <Field label="Categorías con foto" hint="Muestra las categorías como tarjetas con foto. Desactivado = solo texto (chips).">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button type="button" onClick={toggleCategoryPhotos} style={{ width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0, background: categoryPhotos ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s" }}>
-              <span style={{ display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: categoryPhotos ? 17 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-            </button>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>{categoryPhotos ? "Con foto" : "Sin foto"}</span>
-          </div>
-        </Field>
-
-        {/* Pedir identificación */}
-        <Field label="Pedir identificación" hint="Muestra el botón 'Identificarse' para que el cliente inicie sesión. Oculto por defecto.">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button type="button" onClick={toggleIdentify} style={{ width: 36, height: 22, borderRadius: 999, border: "none", cursor: "pointer", flexShrink: 0, background: showIdentify ? "#16a34a" : "var(--adm-input-border)", position: "relative", transition: "background 0.2s" }}>
-              <span style={{ display: "block", width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: showIdentify ? 17 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-            </button>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "var(--adm-text)" }}>{showIdentify ? "Visible" : "Oculto"}</span>
           </div>
         </Field>
 
