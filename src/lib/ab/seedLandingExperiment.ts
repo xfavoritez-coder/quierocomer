@@ -12,7 +12,7 @@ export async function seedLandingExperiment() {
   try {
     let experiment = await prisma.abExperiment.findUnique({
       where: { slug: EXPERIMENT_SLUG },
-      include: { variants: { select: { id: true, slot: true, text: true, impressions: true } } },
+      include: { variants: { select: { id: true, slot: true, text: true, isActive: true } } },
     });
 
     if (!experiment) {
@@ -28,7 +28,7 @@ export async function seedLandingExperiment() {
             ],
           },
         },
-        include: { variants: { select: { id: true, slot: true, text: true, impressions: true } } },
+        include: { variants: { select: { id: true, slot: true, text: true, isActive: true } } },
       });
       console.log(`[AB Seed] Created experiment "${EXPERIMENT_NAME}"`);
       return experiment;
@@ -50,7 +50,7 @@ export async function seedLandingExperiment() {
     }
 
     // Deactivate ALL cta variants — CTA "Subir mi carta →" is now fixed in code
-    const activeCtas = experiment.variants.filter((v) => v.slot === "cta" && (v as any).isActive !== false);
+    const activeCtas = experiment.variants.filter((v) => v.slot === "cta" && v.isActive !== false);
     if (activeCtas.length > 0) {
       await prisma.abVariant.updateMany({
         where: { id: { in: activeCtas.map(v => v.id) } },
