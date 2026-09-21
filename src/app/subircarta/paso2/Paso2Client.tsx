@@ -294,6 +294,9 @@ export default function Paso2Client() {
 
       // Show inline success state instead of redirecting
       setSubmitted(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     } catch (err: any) {
       trackFunnelEvent(leadId, "paso2_error", { error: err?.message || "conexión" });
       setError("Error de conexión. Intenta de nuevo.");
