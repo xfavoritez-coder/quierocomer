@@ -496,6 +496,16 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
     )
   }
 
+  // Check if this slug belongs to a paused/inactive restaurant (expired subscription)
+  // and redirect to /qr/ which renders the "corte de servicio" overlay properly
+  const pausedRest = await prisma.restaurant.findFirst({
+    where: { slug: restaurantSlug, isActive: false, isDemo: false },
+    select: { id: true },
+  })
+  if (pausedRest) {
+    redirect(`/qr/${restaurantSlug}`)
+  }
+
   const match = await getCommuneBySlug(restaurantSlug)
   if (!match) notFound()
 
