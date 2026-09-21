@@ -114,7 +114,7 @@ export default function TestsAbPage() {
         <strong style={{ color: "#16a34a" }}>Botón CTA fijo:</strong> &nbsp;"Subir mi carta →" — ganó el test, ya no rota variantes.
       </div>
 
-      {(["title", "subtitle"] as const).map(slot => (
+      {(["title"] as const).map(slot => (
         <SlotSection
           key={slot}
           slot={slot}
