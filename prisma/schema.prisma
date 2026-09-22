@@ -515,6 +515,27 @@ model PosOrder {
   @@index([restaurantId, opsStage])
 }
 
+/// Bitácora de cada intento entrante al webhook de Toteat (diagnóstico). Permite
+/// ver si Toteat está llegando, y por qué se acepta/rechaza, sin depender de los
+/// logs de Vercel. restaurantId es null cuando el token no calzó con ningún local.
+model PosWebhookLog {
+  id           String   @id @default(cuid())
+  restaurantId String? // local resuelto por token (null = token no reconocido)
+  ok           Boolean  @default(false)
+  reason       String // "ok" | "unauthorized" | "invalid_json" | "no_orders" | ...
+  processed    Int      @default(0)
+  tokenPreview String? // primeros/últimos chars del token recibido
+  tokenVia     String? // "header" | "query" | "none"
+  headerKeys   String? // nombres de headers recibidos (para detectar cómo manda el token Toteat)
+  method       String?
+  ip           String?
+  bodyPreview  String? // primeros ~600 chars del body
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+  @@index([createdAt])
+}
+
 model EcommerceCouponUse {
   id            String   @id @default(cuid())
   restaurantId  String

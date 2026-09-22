@@ -22,7 +22,21 @@ interface PosOrder {
   items: any; completedAt: string | null; createdAt: string; updatedAt: string;
 }
 
+interface WebhookLog {
+  id: string; ok: boolean; reason: string; processed: number;
+  tokenPreview: string | null; tokenVia: string | null; headerKeys: string | null;
+  ip: string | null; bodyPreview: string | null; createdAt: string; restaurantId: string | null;
+}
+
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+
+const REASON_LABEL: Record<string, string> = {
+  ok: "Recibido y guardado",
+  sin_pedidos_en_payload: "Llegó, pero el payload no traía pedidos",
+  token_no_reconocido: "Token no coincide con ningún local",
+  sin_token: "Llegó sin token",
+  json_invalido: "Body no es JSON válido",
+};
 
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
 const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
@@ -71,6 +85,7 @@ export default function CentroPedidosPage() {
   const [setupOpen, setSetupOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [logs, setLogs] = useState<WebhookLog[]>([]);
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!restaurantId) return;
@@ -85,14 +100,15 @@ export default function CentroPedidosPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  // Token del webhook (para la tarjeta de conexión).
-  useEffect(() => {
+  // Token del webhook + diagnóstico (para la tarjeta de conexión).
+  const reloadConfig = useCallback(() => {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/pos-orders/config?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setToken(d.token); if (!d.token) setSetupOpen(true); } })
+      .then((d) => { if (d) { setToken(d.token); setLogs(d.logs || []); if (!d.token) setSetupOpen(true); } })
       .catch(() => {});
   }, [restaurantId]);
+  useEffect(() => { reloadConfig(); }, [reloadConfig]);
 
   // Tiempo real (Supabase) — sin polling. Refresco por evento.
   useEffect(() => {
@@ -142,6 +158,7 @@ export default function CentroPedidosPage() {
       toast.success(created > 0 ? "¡Funciona! Pedido de prueba recibido — míralo en el tablero." : "El webhook respondió, pero no creó el pedido de prueba.");
       setView("activos");
       fetchOrders(true);
+      reloadConfig();
     } catch { toast.error("Error de conexión"); }
     setTesting(false);
   }
@@ -221,6 +238,40 @@ export default function CentroPedidosPage() {
                 <button onClick={generarToken} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
                   Regenerar token (invalida el anterior)
                 </button>
+
+                {/* Diagnóstico: últimos intentos entrantes */}
+                <div style={{ marginTop: 6, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)" }}>Últimos intentos recibidos</span>
+                    <button onClick={reloadConfig} title="Refrescar" style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={13} /></button>
+                  </div>
+                  {logs.length === 0 ? (
+                    <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                      Aún no ha llegado ninguna petición. Si Toteat ya recibió pedidos y aquí no aparece nada, la petición <strong>no está llegando</strong> a esta URL (revisa que el Post Hook esté activo y bien escrito en Toteat).
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {logs.map((l) => {
+                        const good = l.ok && l.reason === "ok";
+                        const c = good ? GREEN : l.reason === "sin_pedidos_en_payload" ? ORANGE : RED;
+                        return (
+                          <div key={l.id} style={{ background: "var(--adm-hover)", border: `1px solid ${c}33`, borderRadius: 8, padding: "8px 10px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />
+                              <span style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 700, color: "var(--adm-text)" }}>{REASON_LABEL[l.reason] || l.reason}</span>
+                              {l.reason === "ok" && <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text2)" }}>· {l.processed} pedido{l.processed === 1 ? "" : "s"}</span>}
+                              <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{new Date(l.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                            </div>
+                            <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
+                              token: {l.tokenVia === "none" ? "no enviado" : `${l.tokenPreview} (${l.tokenVia})`}
+                              {l.reason === "token_no_reconocido" && " — no coincide con el de este local"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>

@@ -24,7 +24,17 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatWebhookSecret: true } });
-  return NextResponse.json({ token: r?.toteatWebhookSecret ?? null });
+
+  // Diagnóstico: últimos intentos entrantes de este local + intentos con token
+  // no reconocido (para ver si Toteat llega pero con el token equivocado).
+  const logs = await prisma.posWebhookLog.findMany({
+    where: { OR: [{ restaurantId }, { restaurantId: null }] },
+    orderBy: { createdAt: "desc" },
+    take: 15,
+    select: { id: true, ok: true, reason: true, processed: true, tokenPreview: true, tokenVia: true, headerKeys: true, ip: true, bodyPreview: true, createdAt: true, restaurantId: true },
+  });
+
+  return NextResponse.json({ token: r?.toteatWebhookSecret ?? null, logs });
 }
 
 /** POST → genera (si falta) o rota el token del webhook. Body: { restaurantId, rotate? } */
