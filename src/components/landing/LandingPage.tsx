@@ -67,7 +67,7 @@ const FEATURE_DETAILS: Record<string, FeatureDetail> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function LandingPage() {
+export default function LandingPage({ initialTitleText, initialTitleId }: { initialTitleText?: string; initialTitleId?: string | null }) {
   const [ucOpen, setUcOpen] = useState(false);
   const openModal = () => { setUcOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setUcOpen(false); document.body.style.overflow = ""; };
@@ -77,23 +77,18 @@ export default function LandingPage() {
   const closeFeat = () => { setFeatOpen(null); document.body.style.overflow = ""; };
 
   // A/B test — CTA fijo (ganó "Subir mi carta →"), solo se testea el título
+  // El variant se resuelve server-side en page.tsx para evitar flash
   const ctaText = "Subir mi carta →";
-  const [titleText, setTitleText] = useState<string>("Tu restaurante puede vender más.");
-  const [titleId, setTitleId] = useState<string | null>(null);
+  const [titleText] = useState<string>(initialTitleText || "Tu restaurante puede vender más.");
+  const [titleId] = useState<string | null>(initialTitleId ?? null);
 
   useEffect(() => {
-    fetch("/api/landing/ab")
-      .then(r => r.json())
-      .then(d => {
-        if (d.titleText) setTitleText(d.titleText);
-        if (d.titleId) setTitleId(d.titleId);
-        fetch("/api/qr/stat-events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", titleId: d.titleId ?? null } }),
-        }).catch(() => {});
-      })
-      .catch(() => {});
+    // Solo trackear impresión — el título ya viene del servidor sin flash
+    fetch("/api/qr/stat-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", titleId: titleId ?? null } }),
+    }).catch(() => {});
     initAdTracker();
   }, []);
 
