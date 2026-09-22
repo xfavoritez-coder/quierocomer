@@ -464,9 +464,26 @@ export default function MiRestaurantePage() {
 
                 {/* Periodo */}
                 {periodoText && (
-                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : `${accent}cc`, margin: "0 0 16px", fontWeight: inGrace || cycleEndsToday ? 600 : 400 }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: inGrace ? "#dc2626" : cycleEndsToday ? "#d97706" : `${accent}cc`, margin: `0 0 ${billingStatus?.hasAutoRenewal ? "10px" : "16px"}`, fontWeight: inGrace || cycleEndsToday ? 600 : 400 }}>
                     {periodoText}
                   </p>
+                )}
+
+                {/* Auto-renovación activa */}
+                {billingStatus?.hasAutoRenewal && isActive && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <RefreshCw size={12} color="#16a34a" />
+                      <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "#16a34a" }}>Cobro automático activo</span>
+                    </div>
+                    <button
+                      onClick={handleCancelAutoRenew}
+                      disabled={cancelingAutoRenew}
+                      style={{ background: "none", border: "none", padding: 0, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: cancelingAutoRenew ? "wait" : "pointer", opacity: cancelingAutoRenew ? 0.5 : 0.7 }}
+                    >
+                      {cancelingAutoRenew ? "Cancelando…" : "Cancelar"}
+                    </button>
+                  </div>
                 )}
 
                 {/* Botones */}
@@ -585,35 +602,9 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Cobro automático ── */}
-      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
-        const hasAutoRenew = billingStatus.hasAutoRenewal;
+      {/* ── Cobro automático (CTA cuando no está activo) ── */}
+      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && !billingStatus.hasAutoRenewal && (() => {
         const planName = plan === "FREE" ? "Gratis" : "Premium";
-        if (hasAutoRenew) {
-          return (
-            <div style={{ background: "var(--adm-card)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(22,163,74,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <RefreshCw size={15} color="#16a34a" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>
-                  Cobro automático activo
-                  <span style={{ marginLeft: 8, padding: "2px 7px", background: "rgba(22,163,74,0.12)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 99, fontFamily: F, fontSize: "0.62rem", fontWeight: 700, color: "#16a34a", verticalAlign: "middle" }}>Activo</span>
-                </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px" }}>
-                  Tu plan {planName} se renueva automáticamente cada mes.
-                </p>
-                <button
-                  onClick={handleCancelAutoRenew}
-                  disabled={cancelingAutoRenew}
-                  style={{ background: "none", border: "none", padding: 0, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", cursor: cancelingAutoRenew ? "wait" : "pointer", textDecoration: "underline", opacity: cancelingAutoRenew ? 0.5 : 1 }}
-                >
-                  {cancelingAutoRenew ? "Cancelando…" : "Cancelar cobro automático"}
-                </button>
-              </div>
-            </div>
-          );
-        }
         return (
           <div style={{ background: `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`, border: `1.5px solid ${GOLD}55`, borderRadius: 16, padding: "20px 20px 18px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
