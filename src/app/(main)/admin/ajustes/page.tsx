@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
 import { TRACKING_TEXT_GROUPS, DEFAULT_TRACKING_TEXTS, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
+import { supabase } from "@/lib/supabase";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -43,6 +44,10 @@ export default function AjustesPage() {
   const [texts, setTexts] = useState<TrackingTexts>(DEFAULT_TRACKING_TEXTS);
   const [textsLoaded, setTextsLoaded] = useState(false);
   const [textsSaving, setTextsSaving] = useState(false);
+  const [da, setDa] = useState({ apkUrl: "", latestVersion: "", minVersion: "", releaseNotes: "" });
+  const [daLoaded, setDaLoaded] = useState(false);
+  const [daSaving, setDaSaving] = useState(false);
+  const [apkUploading, setApkUploading] = useState(false);
 
   const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
 
@@ -61,6 +66,38 @@ export default function AjustesPage() {
       .catch(() => {})
       .finally(() => setTextsLoaded(true));
   }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/driver-app")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setDa({ apkUrl: d.apkUrl || "", latestVersion: d.latestVersion || "", minVersion: d.minVersion || "", releaseNotes: d.releaseNotes || "" }); })
+      .catch(() => {})
+      .finally(() => setDaLoaded(true));
+  }, []);
+
+  const uploadApk = async (file: File) => {
+    if (!supabase) { toast.error("Storage no configurado"); return; }
+    setApkUploading(true);
+    try {
+      const path = `apks/quierocomer-delivery-${Date.now()}.apk`;
+      const { error } = await supabase.storage.from("fotos").upload(path, file, { contentType: "application/vnd.android.package-archive", upsert: true });
+      if (error) { toast.error("Error al subir APK: " + error.message); setApkUploading(false); return; }
+      const { data } = supabase.storage.from("fotos").getPublicUrl(path);
+      setDa((p) => ({ ...p, apkUrl: data.publicUrl }));
+      toast.success("APK subido — recuerda Guardar");
+    } catch { toast.error("Error al subir el APK"); }
+    setApkUploading(false);
+  };
+
+  const saveDriverApp = async () => {
+    setDaSaving(true);
+    try {
+      const res = await fetch("/api/admin/driver-app", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(da) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setDaSaving(false); return; }
+      toast.success("Configuración de la app guardada");
+    } catch { toast.error("Error de conexión"); }
+    setDaSaving(false);
+  };
 
   const saveTexts = async () => {
     setTextsSaving(true);
@@ -137,6 +174,42 @@ export default function AjustesPage() {
           fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: keySaving ? "wait" : "pointer", opacity: keySaving || !keyLoaded ? 0.6 : 1,
         }}>
           {keySaving ? "Guardando…" : "Guardar API keys"}
+        </button>
+      </div>
+
+      {/* App de repartidores (QuieroComer Delivery) */}
+      <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 22, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 6px" }}>App de repartidores · QuieroComer Delivery</h2>
+        <p style={{ fontSize: "0.85rem", color: "#999", lineHeight: 1.5, margin: "0 0 18px" }}>
+          Sube el APK y controla la versión. La app consulta esto y ofrece <strong style={{ color: "#ddd" }}>actualizar</strong> a los repartidores. Si su versión es menor a la <strong style={{ color: "#ddd" }}>mínima</strong>, se les exige actualizar.
+        </p>
+
+        {/* Subir APK */}
+        <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Archivo APK</label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 8, border: "1px solid #2A2A2A", background: "#0d0d0d", color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: apkUploading ? "wait" : "pointer" }}>
+            {apkUploading ? "Subiendo…" : da.apkUrl ? "Reemplazar APK" : "Subir APK"}
+            <input type="file" accept=".apk,application/vnd.android.package-archive" style={{ display: "none" }} disabled={apkUploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadApk(f); e.currentTarget.value = ""; }} />
+          </label>
+          {da.apkUrl && <a href={da.apkUrl} target="_blank" rel="noreferrer" style={{ fontFamily: FB, fontSize: "0.78rem", color: "#F4A623", textDecoration: "none", wordBreak: "break-all" }}>Ver APK actual ↗</a>}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Versión actual (latest)</label>
+            <input value={da.latestVersion} onChange={(e) => setDa((p) => ({ ...p, latestVersion: e.target.value }))} placeholder="0.2.4" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontSize: "0.82rem", outline: "none" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Versión mínima requerida</label>
+            <input value={da.minVersion} onChange={(e) => setDa((p) => ({ ...p, minVersion: e.target.value }))} placeholder="0.2.0" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontSize: "0.82rem", outline: "none" }} />
+          </div>
+        </div>
+        <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Notas de la versión</label>
+        <textarea value={da.releaseNotes} onChange={(e) => setDa((p) => ({ ...p, releaseNotes: e.target.value }))} rows={2} placeholder="Mejoras y correcciones." style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: FB, fontSize: "0.85rem", outline: "none", resize: "vertical", marginBottom: 14 }} />
+
+        <button onClick={saveDriverApp} disabled={daSaving || !daLoaded || apkUploading} style={{ padding: "10px 18px", background: GOLD, color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: daSaving ? "wait" : "pointer", opacity: daSaving || !daLoaded || apkUploading ? 0.6 : 1 }}>
+          {daSaving ? "Guardando…" : "Guardar configuración de la app"}
         </button>
       </div>
 
