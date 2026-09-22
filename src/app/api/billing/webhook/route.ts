@@ -147,6 +147,9 @@ export async function POST(req: NextRequest) {
   const baseDate = isEarlyRenewal ? existingEnd! : new Date();
   const periodEnd = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+  const now = new Date();
+  const amountNet = restaurant.customPlanPriceNet ?? FLOW_PLANS[appPlan as Exclude<PlanKey, "FREE">]?.amountNet ?? 0;
+
   await prisma.restaurant.update({
     where: { id: restaurant.id },
     data: {
@@ -155,11 +158,26 @@ export async function POST(req: NextRequest) {
       isActive: true,
       flowPlanId: restaurant.pendingFlowPlanId,
       currentPeriodEnd: periodEnd,
-      lastPaymentAt: new Date(),
+      lastPaymentAt: now,
       pendingFlowPlanId: null,
       // No borrar flowRegisterToken — el return handler lo necesita
     },
   });
+
+  // Registrar pago en historial
+  await prisma.panelActivity.create({
+    data: {
+      restaurantId: restaurant.id,
+      action: "payment_received",
+      details: {
+        plan: appPlan,
+        amountNet,
+        amountGross: grossOf(amountNet),
+        periodEnd: periodEnd.toISOString(),
+        source: flowSubscriptionId ? "subscription" : "manual",
+      } as any,
+    },
+  }).catch(() => {});
 
   // Invalidar caché QR inmediatamente — carta vuelve a mostrarse al instante tras el pago
   try {

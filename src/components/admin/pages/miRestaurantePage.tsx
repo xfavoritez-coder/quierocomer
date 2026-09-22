@@ -111,6 +111,7 @@ export default function MiRestaurantePage() {
   const [cancelingAutoRenew, setCancelingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<Array<{ date: string; plan: string; amountNet: number; amountGross: number }>>([]);
 
   // Form state
   const [name, setName] = useState("");
@@ -168,6 +169,10 @@ export default function MiRestaurantePage() {
     fetch(`/api/billing/status?restaurantId=${rid}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setBillingStatus(d))
+      .catch(() => {});
+    fetch(`/api/billing/payments?restaurantId=${rid}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.payments) setPaymentHistory(d.payments); })
       .catch(() => {});
   }, [rid]);
 
@@ -637,49 +642,54 @@ export default function MiRestaurantePage() {
       </div>
 
       {/* ── Historial de pagos ── */}
-      {billingStatus && (billingStatus.lastPaymentAt || billingStatus.currentPeriodEnd || billingStatus.hasSubscription) && (() => {
-        const net = (billingStatus as any).customPlanPriceNet ?? planNetAmount(billingStatus.plan as PlanKey ?? "FREE");
-        const gross = net + ivaOf(net);
-        return (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
-            <h3 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 14px", display: "flex", alignItems: "center", gap: 6 }}>
+      {billingStatus && plan !== "FREE" && (billingStatus.lastPaymentAt || paymentHistory.length > 0) && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
               <CreditCard size={14} color="var(--adm-text3)" /> Historial de pagos
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              {billingStatus.lastPaymentAt && (
-                <div>
-                  <p style={{ fontSize: "0.64rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Último pago</p>
-                  <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "4px 0 0", fontWeight: 600, fontFamily: FB }}>{formatDate(billingStatus.lastPaymentAt)}</p>
-                </div>
-              )}
-              {billingStatus.currentPeriodEnd && (
-                <div>
-                  <p style={{ fontSize: "0.64rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>
-                    {billingStatus.subscriptionStatus === "CANCELED" ? "Acceso hasta" : "Próximo cobro"}
-                  </p>
-                  <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "4px 0 0", fontWeight: 600, fontFamily: FB }}>{formatDate(billingStatus.currentPeriodEnd)}</p>
-                </div>
-              )}
-              {billingStatus.hasSubscription && net > 0 && (
-                <div>
-                  <p style={{ fontSize: "0.64rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Cobro mensual</p>
-                  <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "4px 0 0", fontWeight: 600, fontFamily: FB }}>{formatCLP(gross)}</p>
-                  <p style={{ fontSize: "0.64rem", color: "var(--adm-text3)", margin: "2px 0 0", fontFamily: FB }}>{formatCLP(net)} neto + {formatCLP(ivaOf(net))} IVA</p>
-                </div>
-              )}
-              {billingStatus.hasSubscription && (
-                <div>
-                  <p style={{ fontSize: "0.64rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: F }}>Pasarela</p>
-                  <p style={{ fontSize: "0.88rem", color: "var(--adm-text)", margin: "4px 0 0", fontWeight: 600, fontFamily: FB }}>Flow.cl</p>
-                  <a href="https://www.flow.cl/app/web/misDatos.php" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.72rem", color: GOLD, textDecoration: "none", fontFamily: F, marginTop: 2 }}>
-                    Gestionar <ExternalLink size={10} />
-                  </a>
-                </div>
-              )}
-            </div>
+            {billingStatus.hasAutoRenewal && (
+              <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>Flow.cl</span>
+            )}
           </div>
-        );
-      })()}
+
+          {paymentHistory.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {paymentHistory.map((p, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderBottom: i < paymentHistory.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(22,163,74,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <CheckCircle2 size={14} color="#16a34a" />
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
+                        {new Date(p.date).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Santiago" })}
+                      </p>
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Plan {p.plan === "PREMIUM" ? "Premium" : p.plan === "GOLD" ? "Gold" : p.plan}</p>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{formatCLP(p.amountGross)}</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{formatCLP(p.amountNet)} + IVA</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(22,163,74,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <CheckCircle2 size={14} color="#16a34a" />
+              </div>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
+                  {billingStatus.lastPaymentAt && new Date(billingStatus.lastPaymentAt).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Santiago" })}
+                </p>
+                <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Último pago registrado</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
 
 
