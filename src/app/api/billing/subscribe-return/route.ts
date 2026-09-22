@@ -4,20 +4,28 @@ import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS, type PlanKey } from "@/lib/billing/plans-config";
 
 /**
- * GET /api/billing/subscribe-return?restaurantId=X&plan=Y&token=Z
+ * GET|POST /api/billing/subscribe-return?restaurantId=X&plan=Y&token=Z
  *
  * Flow redirige aquí después de que el cliente registra su tarjeta.
  * 1. /customer/getByRegisterToken → obtiene customerId interno de Flow
  * 2. /subscription/subscribe      → suscribe al plan existente (qc_gold_monthly, etc.)
  * 3. Flow cobra mensualmente y envía webhook → webhook activa/renueva el plan
  */
-export async function GET(req: NextRequest) {
+async function handleSubscribeReturn(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const { searchParams } = req.nextUrl;
 
-  const token = searchParams.get("token");
+  let token = searchParams.get("token");
   const restaurantId = searchParams.get("restaurantId");
   const planKey = searchParams.get("plan") as keyof typeof FLOW_PLANS | null;
+
+  // Flow puede enviar el token via POST form-data
+  if (!token && req.method === "POST") {
+    try {
+      const form = await req.formData();
+      token = (form.get("token") as string) || null;
+    } catch {}
+  }
 
   if (!token || !restaurantId || !planKey || !FLOW_PLANS[planKey]) {
     return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Par%C3%A1metros+inv%C3%A1lidos", req.url));
@@ -99,3 +107,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=charge_pending", req.url));
 }
+
+export async function GET(req: NextRequest) { return handleSubscribeReturn(req); }
+export async function POST(req: NextRequest) { return handleSubscribeReturn(req); }
