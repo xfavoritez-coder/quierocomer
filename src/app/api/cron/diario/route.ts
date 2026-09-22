@@ -255,6 +255,7 @@ export async function GET(req: NextRequest) {
         currentPeriodEnd: { gte: twoDaysFromNowStart, lte: twoDaysFromNowEnd },
         billingExempt: false,
         mpSubscriptionId: null,
+        flowSubscriptionId: null, // con auto-renovación Flow no enviamos recordatorio
         plan: { not: "FREE" },
       },
       select: {

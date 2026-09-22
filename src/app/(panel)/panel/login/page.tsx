@@ -214,11 +214,11 @@ export default function PanelLogin() {
             width: "100%", height: 48, marginTop: 14,
             cursor: loading ? "wait" : "pointer",
           }}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Entrando..." : "Entrar al panel"}
           </button>
 
           <div style={{ textAlign: "center", marginTop: 12 }}>
-            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 600, color: "#f97316", textDecoration: "underline" }}>
+            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 400, color: night ? "rgba(255,255,255,0.4)" : "#b0a090", textDecoration: "none" }}>
               ¿Olvidaste tu contraseña?
             </a>
           </div>

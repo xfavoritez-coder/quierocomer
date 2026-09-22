@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
         currentPeriodEnd: { gte: windowStart, lte: windowEnd },
         billingExempt: false,
         mpSubscriptionId: null,
+        flowSubscriptionId: null, // con auto-renovación Flow no enviamos recordatorio
         plan: { not: "FREE" },
       },
       select: {

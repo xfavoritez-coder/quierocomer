@@ -561,6 +561,54 @@ export default function MiRestaurantePage() {
 
 
 
+      {/* ── Cobro automático ── */}
+      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
+        const hasAutoRenew = billingStatus.hasAutoRenewal;
+        const planName = plan === "FREE" ? "Gratis" : "Premium";
+        if (hasAutoRenew) {
+          return (
+            <div style={{ background: "var(--adm-card)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(22,163,74,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <RefreshCw size={15} color="#16a34a" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>
+                  Cobro automático activo
+                  <span style={{ marginLeft: 8, padding: "2px 7px", background: "rgba(22,163,74,0.12)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 99, fontFamily: F, fontSize: "0.62rem", fontWeight: 700, color: "#16a34a", verticalAlign: "middle" }}>Activo</span>
+                </p>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
+                  Tu plan {planName} se renueva automáticamente cada mes.
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div style={{ background: `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`, border: `1.5px solid ${GOLD}55`, borderRadius: 16, padding: "20px 20px 18px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: `${GOLD}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                <RefreshCw size={20} color={GOLD} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px", lineHeight: 1.2 }}>
+                  Activa el cobro automático
+                </p>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+                  Tu plan {planName} se renueva solo cada mes sin que tengas que acordarte. Registra tu tarjeta una vez y listo.
+                </p>
+                <button
+                  onClick={handleActivateAutoRenew}
+                  disabled={activatingAutoRenew}
+                  style={{ padding: "10px 22px", border: "none", borderRadius: 999, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1, boxShadow: `0 4px 14px ${GOLD}44` }}
+                >
+                  {activatingAutoRenew ? "Iniciando…" : "Activar cobro automático →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Facturación ── */}
       <div style={{ marginBottom: 16 }}>
         <FacturacionPage />
@@ -613,50 +661,6 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Cobro automático ── */}
-      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
-        const hasAutoRenew = billingStatus.hasAutoRenewal;
-        const planName = plan === "FREE" ? "Gratis" : "Premium";
-        return (
-          <div style={{ background: "var(--adm-card)", border: `1px solid ${hasAutoRenew ? "rgba(22,163,74,0.25)" : "var(--adm-card-border)"}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: hasAutoRenew ? "rgba(22,163,74,0.1)" : "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <RefreshCw size={18} color={hasAutoRenew ? "#16a34a" : "var(--adm-text3)"} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-                    Cobro automático mensual
-                  </p>
-                  {hasAutoRenew && (
-                    <span style={{ padding: "2px 8px", background: "rgba(22,163,74,0.12)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 99, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, color: "#16a34a" }}>
-                      Activo
-                    </span>
-                  )}
-                </div>
-                {hasAutoRenew ? (
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
-                    Tu plan {planName} se renueva automáticamente cada mes con la tarjeta registrada en Flow. No necesitas hacer nada.
-                  </p>
-                ) : (
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
-                    Activa el cobro automático para que tu plan {planName} se renueve cada mes sin que tengas que acordarte. Se cobra automáticamente con tu tarjeta.
-                  </p>
-                )}
-                {!hasAutoRenew && (
-                  <button
-                    onClick={handleActivateAutoRenew}
-                    disabled={activatingAutoRenew}
-                    style={{ padding: "9px 18px", border: "none", borderRadius: 999, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1 }}
-                  >
-                    {activatingAutoRenew ? "Iniciando…" : "Activar cobro automático"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* QR Modal */}
       {qrModalOpen && selectedRestaurant && (
