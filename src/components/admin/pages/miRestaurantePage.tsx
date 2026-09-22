@@ -344,6 +344,18 @@ export default function MiRestaurantePage() {
       <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color="var(--adm-text3)" /> {t("nav_restaurant")}</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>{t("mr_billing")}</p>
 
+      {/* ── Resultado registro tarjeta Flow ── */}
+      {autorenew && (
+        <div style={{ background: autorenew === "error" ? "rgba(220,38,38,0.08)" : "rgba(22,163,74,0.08)", border: `1px solid ${autorenew === "error" ? "rgba(220,38,38,0.25)" : "rgba(22,163,74,0.25)"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 16 }}>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: autorenew === "error" ? "#dc2626" : "#16a34a", margin: "0 0 4px" }}>
+            {autorenew === "ok" ? "✅ Cobro automático activado" : autorenew === "charge_pending" ? "✅ Tarjeta registrada" : "❌ Error al activar cobro automático"}
+          </p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>
+            {autorenew === "ok" ? "Tu plan se renovará automáticamente cuando venza el período actual." : autorenew === "charge_pending" ? "Tu suscripción quedó creada. Flow procesará el primer cobro en los próximos minutos." : autorenewReason || "Intenta nuevamente o contacta soporte@quierocomer.com"}
+          </p>
+        </div>
+      )}
+
       {/* ── Bloque plan activo ── */}
       {(() => {
         if (!billingStatus) return null;
@@ -600,19 +612,6 @@ export default function MiRestaurantePage() {
       })()}
 
 
-
-
-      {/* ── Resultado registro tarjeta Flow ── */}
-      {autorenew && (
-        <div style={{ background: autorenew === "error" ? "rgba(220,38,38,0.08)" : "rgba(22,163,74,0.08)", border: `1px solid ${autorenew === "error" ? "rgba(220,38,38,0.25)" : "rgba(22,163,74,0.25)"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 16 }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: autorenew === "error" ? "#dc2626" : "#16a34a", margin: "0 0 4px" }}>
-            {autorenew === "ok" ? "✅ Cobro automático activado" : autorenew === "charge_pending" ? "✅ Tarjeta registrada" : "❌ Error al activar cobro automático"}
-          </p>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>
-            {autorenew === "ok" ? "Tu plan se renovará automáticamente cuando venza el período actual." : autorenew === "charge_pending" ? "Tu suscripción quedó creada. Flow procesará el primer cobro en los próximos minutos." : autorenewReason || "Intenta nuevamente o contacta soporte@quierocomer.com"}
-          </p>
-        </div>
-      )}
 
       {/* ── Cobro automático ── */}
       {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && (() => {
