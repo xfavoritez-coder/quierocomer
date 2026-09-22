@@ -211,6 +211,17 @@ export default function AjustesPage() {
         <button onClick={saveDriverApp} disabled={daSaving || !daLoaded || apkUploading} style={{ padding: "10px 18px", background: GOLD, color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: daSaving ? "wait" : "pointer", opacity: daSaving || !daLoaded || apkUploading ? 0.6 : 1 }}>
           {daSaving ? "Guardando…" : "Guardar configuración de la app"}
         </button>
+
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid #2A2A2A" }}>
+          <p style={{ fontSize: "0.8rem", color: "#999", margin: "0 0 6px" }}>
+            <strong style={{ color: "#ddd" }}>Link de descarga para los repartidores</strong> (compártelo por WhatsApp; no necesitan el admin):
+          </p>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <a href="/descargar-app" target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>quierocomer.com/descargar-app ↗</a>
+            <button onClick={() => { navigator.clipboard?.writeText("https://quierocomer.com/descargar-app").then(() => toast.success("Link copiado")).catch(() => {}); }} style={{ padding: "5px 10px", borderRadius: 7, border: "1px solid #2A2A2A", background: "#0d0d0d", color: "#ccc", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Copiar</button>
+          </div>
+          <p style={{ fontSize: "0.72rem", color: "#666", margin: "8px 0 0" }}>Recuerda tocar <strong style={{ color: "#999" }}>Guardar</strong> arriba después de subir un APK, o el link no mostrará la descarga.</p>
+        </div>
       </div>
 
       {/* Sync Flow Plans */}
