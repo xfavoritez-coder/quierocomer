@@ -63,3 +63,18 @@ export async function PATCH(req: NextRequest) {
   });
   return NextResponse.json({ order: updated });
 }
+
+/** DELETE /api/panel/ecommerce/pos-orders?restaurantId=X&id=Y → elimina un pedido
+ *  (útil para limpiar pruebas o descartar duplicados). */
+export async function DELETE(req: NextRequest) {
+  const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
+  const id = req.nextUrl.searchParams.get("id") || "";
+  if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+  if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true } });
+  if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+  await prisma.posOrder.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

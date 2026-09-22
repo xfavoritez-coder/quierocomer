@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Copy, Link2, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Copy, Link2, ChevronDown, ChevronUp, Check, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -70,6 +70,7 @@ export default function CentroPedidosPage() {
   const [flash, setFlash] = useState<Record<string, boolean>>({});
   const [setupOpen, setSetupOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!restaurantId) return;
@@ -130,6 +131,31 @@ export default function CentroPedidosPage() {
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
 
+  async function probarConexion() {
+    if (!restaurantId) return;
+    setTesting(true);
+    try {
+      const r = await fetch("/api/panel/ecommerce/pos-orders/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) });
+      const d = await r.json();
+      if (!r.ok) { toast.error(d.error || "La prueba falló"); setTesting(false); return; }
+      const created = d.webhook?.created ?? 0;
+      toast.success(created > 0 ? "¡Funciona! Pedido de prueba recibido — míralo en el tablero." : "El webhook respondió, pero no creó el pedido de prueba.");
+      setView("activos");
+      fetchOrders(true);
+    } catch { toast.error("Error de conexión"); }
+    setTesting(false);
+  }
+
+  async function eliminar(o: PosOrder) {
+    if (!restaurantId) return;
+    if (!confirm(`¿Eliminar este pedido${o.externalId.startsWith("TEST-") ? " de prueba" : ""}?`)) return;
+    setOrders((prev) => prev.filter((x) => x.id !== o.id));
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&id=${o.id}`, { method: "DELETE" });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo eliminar"); fetchOrders(true); }
+    } catch { toast.error("Error de conexión"); fetchOrders(true); }
+  }
+
   async function generarToken() {
     if (!restaurantId) return;
     try {
@@ -186,6 +212,12 @@ export default function CentroPedidosPage() {
                 <Field label="Post Hook URL" value={webhookUrl} onCopy={() => copy(webhookUrl, "URL copiada")} />
                 <Field label="Header · x-webhook-token" value={token} onCopy={() => copy(token, "Token copiado")} />
                 <Field label="Alternativa · URL con token" value={webhookUrlToken} onCopy={() => copy(webhookUrlToken, "URL copiada")} />
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 2 }}>
+                  <button onClick={probarConexion} disabled={testing} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: 10, border: `1px solid ${ACCENT}`, background: `${ACCENT}1a`, color: ACCENT, fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: testing ? "wait" : "pointer", opacity: testing ? 0.6 : 1 }}>
+                    <Send size={15} /> {testing ? "Probando…" : "Probar conexión"}
+                  </button>
+                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Envía un pedido de prueba por el webhook (verifica token, guardado y tablero en vivo).</span>
+                </div>
                 <button onClick={generarToken} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
                   Regenerar token (invalida el anterior)
                 </button>
@@ -210,7 +242,7 @@ export default function CentroPedidosPage() {
         </div>
       ) : view === "historial" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-          {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} />)}
+          {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} />)}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14, alignItems: "start" }}>
@@ -223,7 +255,7 @@ export default function CentroPedidosPage() {
                   <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", marginLeft: "auto", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>{items.length}</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} />)}
+                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} />)}
                   {items.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", padding: "16px 0" }}>—</p>}
                 </div>
               </div>
@@ -235,10 +267,11 @@ export default function CentroPedidosPage() {
   );
 }
 
-function OrderCard({ o, flash, onAdvance }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void }) {
+function OrderCard({ o, flash, onAdvance, onDelete }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
+  const isTest = o.externalId.startsWith("TEST-");
   const items: any[] = Array.isArray(o.items) ? o.items : [];
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
@@ -248,7 +281,9 @@ function OrderCard({ o, flash, onAdvance }: { o: PosOrder; flash: boolean; onAdv
         </span>
         {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
         {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
+        {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
         <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+        <button onClick={() => onDelete(o)} title="Eliminar pedido" aria-label="Eliminar pedido" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.6 }}><Trash2 size={13} /></button>
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
