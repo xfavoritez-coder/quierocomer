@@ -486,7 +486,7 @@ export default function MiRestaurantePage() {
                       disabled={cancelingAutoRenew}
                       style={{ background: "none", border: "none", padding: 0, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: cancelingAutoRenew ? "wait" : "pointer", opacity: cancelingAutoRenew ? 0.5 : 0.7 }}
                     >
-                      {cancelingAutoRenew ? "Cancelando…" : "Cancelar"}
+                      {cancelingAutoRenew ? "Cancelando…" : "Cancelar suscripción"}
                     </button>
                   </div>
                 )}
