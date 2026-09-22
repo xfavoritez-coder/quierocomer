@@ -29,7 +29,7 @@ async function handleSubscribeReturn(req: NextRequest) {
   }
 
   if (!token || !restaurantId || !planKey || !FLOW_PLANS[planKey]) {
-    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Par%C3%A1metros+inv%C3%A1lidos", req.url));
+    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Par%C3%A1metros+inv%C3%A1lidos", req.url), 303);
   }
 
   const restaurant = await prisma.restaurant.findUnique({
@@ -37,7 +37,7 @@ async function handleSubscribeReturn(req: NextRequest) {
     include: { owner: { select: { email: true, name: true } } },
   });
   if (!restaurant) {
-    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Restaurante+no+encontrado", req.url));
+    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=error&reason=Restaurante+no+encontrado", req.url), 303);
   }
 
   const planConfig = FLOW_PLANS[planKey];
@@ -59,7 +59,7 @@ async function handleSubscribeReturn(req: NextRequest) {
       customerId = cidParam;
       console.log(`[subscribe-return] Usando cid fallback: ${customerId} para ${restaurant.name}`);
     } else {
-      return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error tarjeta: " + detail)}`, req.url));
+      return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error tarjeta: " + detail)}`, req.url), 303);
     }
   }
 
@@ -89,7 +89,7 @@ async function handleSubscribeReturn(req: NextRequest) {
       console.error(`[subscribe-return] Error subscription/subscribe (diferida): ${err?.message}`);
       // Tarjeta guardada aunque falle la suscripción — el cron puede cobrar igual
     }
-    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=ok", req.url));
+    return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=ok", req.url), 303);
   }
 
   // 3. Sin plan activo → suscribir con cobro inmediato (startDate = hoy)
@@ -110,10 +110,10 @@ async function handleSubscribeReturn(req: NextRequest) {
     console.log(`[subscribe-return] ✅ Suscripción con cobro inmediato: ${restaurant.name} → ${planKey} (sub: ${sub.subscriptionId})`);
   } catch (err: any) {
     console.error(`[subscribe-return] Error subscription/subscribe: ${err?.message}`);
-    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Tarjeta registrada, pero error al crear suscripción: " + err?.message)}`, req.url));
+    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Tarjeta registrada, pero error al crear suscripción: " + err?.message)}`, req.url), 303);
   }
 
-  return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=charge_pending", req.url));
+  return NextResponse.redirect(new URL("/panel/mi-restaurante?autorenew=charge_pending", req.url), 303);
 }
 
 export async function GET(req: NextRequest) { return handleSubscribeReturn(req); }
