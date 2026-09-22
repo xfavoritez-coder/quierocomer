@@ -40,18 +40,35 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "";
   const bodyPreview = raw.slice(0, 600);
 
-  const headerToken = (req.headers.get("x-webhook-token") || "").trim();
-  const queryToken = (req.nextUrl.searchParams.get("token") || "").trim();
-  const token = headerToken || queryToken;
-  const tokenVia = headerToken ? "header" : queryToken ? "query" : "none";
-  const base = { tokenPreview: mask(token), tokenVia, headerKeys, method: "POST", ip, bodyPreview };
+  // Toteat puede enviar el secreto de varias formas según el mecanismo:
+  //  - Webhook oficial (/v3/webhooks-configuration): `Authorization: SECRET` y `x-api-key: SECRET`.
+  //  - Post Hook con "Custom Headers": el header que definas (ej. `x-webhook-token`).
+  //  - Fallback nuestro: `?token=` en la URL.
+  // Aceptamos todas y resolvemos el local por cualquiera que calce (token es @unique).
+  const stripPrefix = (v: string) => v.replace(/^(Bearer|Basic)\s+/i, "").trim();
+  const sources: [string, string | null][] = [
+    ["x-api-key", req.headers.get("x-api-key")],
+    ["authorization", req.headers.get("authorization")],
+    ["x-webhook-token", req.headers.get("x-webhook-token")],
+    ["query", req.nextUrl.searchParams.get("token")],
+  ];
+  const candidates: { via: string; val: string }[] = [];
+  for (const [via, raw] of sources) {
+    if (!raw) continue;
+    const t = raw.trim();
+    if (t) candidates.push({ via, val: t });
+    const b = stripPrefix(t);
+    if (b && b !== t) candidates.push({ via, val: b });
+  }
+  const tokenVia = candidates[0]?.via ?? "none";
+  const base = { tokenPreview: candidates.length ? mask(candidates[0].val) : "(vacío)", tokenVia, headerKeys, method: "POST", ip, bodyPreview };
 
-  if (!token) {
+  if (!candidates.length) {
     await log({ restaurantId: null, ok: false, reason: "sin_token", ...base });
     return NextResponse.json({ error: "Missing token" }, { status: 401 });
   }
 
-  const restaurant = await prisma.restaurant.findFirst({ where: { toteatWebhookSecret: token }, select: { id: true } });
+  const restaurant = await prisma.restaurant.findFirst({ where: { toteatWebhookSecret: { in: candidates.map((c) => c.val) } }, select: { id: true } });
   if (!restaurant) {
     await log({ restaurantId: null, ok: false, reason: "token_no_reconocido", ...base });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
