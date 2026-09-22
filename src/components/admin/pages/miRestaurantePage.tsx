@@ -108,6 +108,7 @@ export default function MiRestaurantePage() {
   const plan = (activePlan || "FREE").toUpperCase();
   const [subscribing, setSubscribing] = useState(false);
   const [activatingAutoRenew, setActivatingAutoRenew] = useState(false);
+  const [cancelingAutoRenew, setCancelingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
 
@@ -334,6 +335,29 @@ export default function MiRestaurantePage() {
       toast.error("Error de conexión");
       setActivatingAutoRenew(false);
     }
+  };
+
+  const handleCancelAutoRenew = async () => {
+    if (!rid || cancelingAutoRenew) return;
+    if (!confirm("¿Seguro que quieres cancelar el cobro automático? Tu plan seguirá activo hasta que venza, pero no se renovará.")) return;
+    setCancelingAutoRenew(true);
+    try {
+      const res = await fetch("/api/billing/unsubscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: rid }),
+      });
+      if (res.ok) {
+        toast.success("Cobro automático cancelado");
+        fetchData();
+      } else {
+        const d = await res.json();
+        toast.error(d.error || "No se pudo cancelar");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    }
+    setCancelingAutoRenew(false);
   };
 
   if (loading) return <SkeletonLoading type="form" />;
@@ -576,9 +600,16 @@ export default function MiRestaurantePage() {
                   Cobro automático activo
                   <span style={{ marginLeft: 8, padding: "2px 7px", background: "rgba(22,163,74,0.12)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 99, fontFamily: F, fontSize: "0.62rem", fontWeight: 700, color: "#16a34a", verticalAlign: "middle" }}>Activo</span>
                 </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px" }}>
                   Tu plan {planName} se renueva automáticamente cada mes.
                 </p>
+                <button
+                  onClick={handleCancelAutoRenew}
+                  disabled={cancelingAutoRenew}
+                  style={{ background: "none", border: "none", padding: 0, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", cursor: cancelingAutoRenew ? "wait" : "pointer", textDecoration: "underline", opacity: cancelingAutoRenew ? 0.5 : 1 }}
+                >
+                  {cancelingAutoRenew ? "Cancelando…" : "Cancelar cobro automático"}
+                </button>
               </div>
             </div>
           );
