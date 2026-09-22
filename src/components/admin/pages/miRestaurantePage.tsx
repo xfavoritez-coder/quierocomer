@@ -344,7 +344,7 @@ export default function MiRestaurantePage() {
 
   const handleCancelAutoRenew = async () => {
     if (!rid || cancelingAutoRenew) return;
-    if (!confirm("¿Seguro que quieres cancelar el cobro automático? Tu plan seguirá activo hasta que venza, pero no se renovará.")) return;
+    if (!confirm("¿Seguro que quieres cancelar el pago automático? Tu plan seguirá activo hasta que venza, pero no se renovará.")) return;
     setCancelingAutoRenew(true);
     try {
       const res = await fetch("/api/billing/unsubscribe", {
@@ -353,7 +353,7 @@ export default function MiRestaurantePage() {
         body: JSON.stringify({ restaurantId: rid }),
       });
       if (res.ok) {
-        toast.success("Cobro automático cancelado");
+        toast.success("Pago automático cancelado");
         fetchData();
       } else {
         const d = await res.json();
@@ -377,7 +377,7 @@ export default function MiRestaurantePage() {
       {autorenew && (
         <div style={{ background: autorenew === "error" ? "rgba(220,38,38,0.08)" : "rgba(22,163,74,0.08)", border: `1px solid ${autorenew === "error" ? "rgba(220,38,38,0.25)" : "rgba(22,163,74,0.25)"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 16 }}>
           <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: autorenew === "error" ? "#dc2626" : "#16a34a", margin: "0 0 4px" }}>
-            {autorenew === "ok" ? "✅ Cobro automático activado" : autorenew === "charge_pending" ? "✅ Tarjeta registrada" : "❌ Error al activar cobro automático"}
+            {autorenew === "ok" ? "✅ Pago automático activado" : autorenew === "charge_pending" ? "✅ Tarjeta registrada" : "❌ Error al activar pago automático"}
           </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0 }}>
             {autorenew === "ok" ? "Tu plan se renovará automáticamente cuando venza el período actual." : autorenew === "charge_pending" ? "Tu suscripción quedó creada. Flow procesará el primer cobro en los próximos minutos." : autorenewReason || "Intenta nuevamente o contacta soporte@quierocomer.com"}
@@ -479,7 +479,7 @@ export default function MiRestaurantePage() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <RefreshCw size={12} color="#16a34a" />
-                      <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "#16a34a" }}>Cobro automático activo</span>
+                      <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "#16a34a" }}>Pago automático activo</span>
                     </div>
                     <button
                       onClick={handleCancelAutoRenew}
@@ -607,7 +607,7 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Cobro automático (CTA cuando no está activo) ── */}
+      {/* ── Pago automático (CTA cuando no está activo) ── */}
       {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && !billingStatus.hasAutoRenewal && (() => {
         const planName = plan === "FREE" ? "Gratis" : "Premium";
         return (
@@ -618,7 +618,7 @@ export default function MiRestaurantePage() {
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px", lineHeight: 1.2 }}>
-                  Activa el cobro automático
+                  Activa el pago automático
                 </p>
                 <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
                   Tu plan {planName} se renueva solo cada mes sin que tengas que acordarte. Registra tu tarjeta una vez y listo.
@@ -628,7 +628,7 @@ export default function MiRestaurantePage() {
                   disabled={activatingAutoRenew}
                   style={{ padding: "10px 22px", border: "none", borderRadius: 999, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1, boxShadow: `0 4px 14px ${GOLD}44` }}
                 >
-                  {activatingAutoRenew ? "Iniciando…" : "Activar cobro automático →"}
+                  {activatingAutoRenew ? "Iniciando…" : "Activar pago automático →"}
                 </button>
               </div>
             </div>
