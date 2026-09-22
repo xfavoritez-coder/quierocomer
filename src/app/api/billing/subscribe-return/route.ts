@@ -77,8 +77,8 @@ async function handleSubscribeReturn(req: NextRequest) {
     const startDate = periodEnd!.toISOString().slice(0, 10); // YYYY-MM-DD
     try {
       const sub = await flowPost<{ subscriptionId: string; status: string }>(
-        "/subscription/subscribe",
-        { planId: planConfig.planId, customerId, startDate, trialPeriodDays: 0 }
+        "/subscription/create",
+        { planId: planConfig.planId, customerId, startDate, trialDays: 0 }
       );
       await prisma.restaurant.update({
         where: { id: restaurantId },
@@ -96,8 +96,8 @@ async function handleSubscribeReturn(req: NextRequest) {
   const today = new Date().toISOString().slice(0, 10);
   try {
     const sub = await flowPost<{ subscriptionId: string; status: string }>(
-      "/subscription/subscribe",
-      { planId: planConfig.planId, customerId, startDate: today, trialPeriodDays: 0 }
+      "/subscription/create",
+      { planId: planConfig.planId, customerId, startDate: today, trialDays: 0 }
     );
     await prisma.restaurant.update({
       where: { id: restaurantId },
