@@ -18,6 +18,7 @@ async function handleSubscribeReturn(req: NextRequest) {
   let token = searchParams.get("token");
   const restaurantId = searchParams.get("restaurantId");
   const planKey = searchParams.get("plan") as keyof typeof FLOW_PLANS | null;
+  const cidParam = searchParams.get("cid"); // flowCustomerId pasado desde /subscribe como fallback
 
   // Flow puede enviar el token via POST form-data
   if (!token && req.method === "POST") {
@@ -42,6 +43,7 @@ async function handleSubscribeReturn(req: NextRequest) {
   const planConfig = FLOW_PLANS[planKey];
 
   // 1. Obtener customerId de Flow usando el token de registro
+  // Si falla (e.g. "No services available"), usamos cidParam pasado desde /subscribe
   let customerId: string;
   try {
     const customer = await flowPost<{ customerId: string; externalId: string; status: number }>(
@@ -53,7 +55,12 @@ async function handleSubscribeReturn(req: NextRequest) {
   } catch (err: any) {
     const detail = err?.message || "desconocido";
     console.error(`[subscribe-return] Error getByRegisterToken: ${detail} | token=${token}`);
-    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error tarjeta: " + detail)}`, req.url));
+    if (cidParam) {
+      customerId = cidParam;
+      console.log(`[subscribe-return] Usando cid fallback: ${customerId} para ${restaurant.name}`);
+    } else {
+      return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error tarjeta: " + detail)}`, req.url));
+    }
   }
 
   // Guardar customerId

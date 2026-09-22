@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Iniciar registro de tarjeta
-  const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}`;
+  // Iniciar registro de tarjeta (cid = flowCustomerId como fallback para subscribe-return)
+  const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}&cid=${encodeURIComponent(flowCustomerId!)}`;
   try {
     const result = await flowPost<{ url: string; token: string }>("/customer/register", {
       customerId: flowCustomerId,
