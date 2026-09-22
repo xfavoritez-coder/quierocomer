@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
-import { initAdTracker } from "@/lib/adTracker";
 
 const heroes: Record<
   string,
@@ -214,8 +213,6 @@ function FuncionesInner() {
   const searchParams = useSearchParams();
   const key = searchParams.get("feature") || "garzon";
   const data = heroes[key] || heroes.garzon;
-
-  useEffect(() => { initAdTracker(); }, []);
 
   return (
     <>

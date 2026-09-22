@@ -7,7 +7,6 @@ import { trackCartaUpload } from "@/lib/metaPixel";
 import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
-import { initAdTracker, resumeAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
 import { linkVisitorToLead } from "@/lib/visitorTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
 
@@ -224,8 +223,6 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
       }),
       keepalive: true,
     }).catch(() => {});
-    // Continue existing ad session from landing, or start new one if direct visit
-    if (!resumeAdTracker()) initAdTracker();
   }, []);
   const [mode, setMode] = useState<Mode>(null);
   const [linkUrl, setLinkUrl] = useState("");
@@ -409,7 +406,6 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
         if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
         trackCartaUpload();
-        linkAdSessionToLead(data.id);
         linkVisitorToLead(data.id);
         navigateToPaso2(data.id);
       } else {
@@ -449,7 +445,6 @@ export default function SubirCartaClient({ defaultCountry = "CL" }: { defaultCou
         }
         trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
         trackCartaUpload();
-        linkAdSessionToLead(leadId);
         linkVisitorToLead(leadId);
         setUploadProgress("");
         navigateToPaso2(leadId);

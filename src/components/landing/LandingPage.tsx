@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { User, Sparkles, Globe, Bell, Printer } from "lucide-react";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SubirCartaModal from "@/components/landing/SubirCartaModal";
-import { initAdTracker } from "@/lib/adTracker";
 
 interface FeatureDetail {
   emoji: string;
@@ -89,7 +88,6 @@ export default function LandingPage({ initialTitleText, initialTitleId }: { init
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ eventType: "LANDING_VIEWED", metadata: { abExperiment: "landing-hero", titleId: titleId ?? null } }),
     }).catch(() => {});
-    initAdTracker();
   }, []);
 
   const trackCtaClick = () => {
