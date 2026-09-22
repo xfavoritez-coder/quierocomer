@@ -77,12 +77,9 @@ export function activationWelcomeEmailHtml({
 <!-- Lead text -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:20px">
-<p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0 0 20px">
+<p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
   ${ownerName}, tu página de <strong style="color:#111">${restaurantName}</strong> ya está creada.
 </p>
-<a href="${clickTrackUrl || qrLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:17px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
-  Ver mi página de local →
-</a>
 </td></tr>
 </table>
 
@@ -142,6 +139,15 @@ ${credentials ? `
 </td></tr>
 </table>
 ` : ""}
+
+<!-- CTA button -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:22px">
+<a href="${clickTrackUrl || qrLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:17px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+  Ver mi página de local →
+</a>
+</td></tr>
+</table>
 
 <!-- Steps card -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:rgba(255,255,255,0.44);border:1px solid #ead7b7;border-radius:24px">
