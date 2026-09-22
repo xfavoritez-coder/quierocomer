@@ -397,6 +397,8 @@ model Restaurant {
   modifierTemplates          ModifierTemplate[]
   onlineOrders               OnlineOrder[]
   posOrders                  PosOrder[]
+  drivers                    Driver[]
+  deliveryResponsibles       DeliveryResponsible[]
   orderPushSubscriptions     OrderPushSubscription[]
   privateReviews             PrivateReview[]
   promotionsMarketing        Promotion[]
@@ -509,10 +511,124 @@ model PosOrder {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // ── Reparto / despacho (app de repartidor) ──
+  assignedDriverId String?
+  assignedDriver   Driver? @relation(fields: [assignedDriverId], references: [id])
+  assignedTo       String? // nombre del repartidor asignado (compat con la app)
+  isAssigned       Boolean @default(false)
+  opsReadyForDeliveryAt DateTime?
+  opsDispatchedAt       DateTime?
+
+  // Geo del cliente (para el mapa)
+  customerLat Float?
+  customerLng Float?
+
+  // Tracking en vivo (GPS del repartidor)
+  trackingToken     String?   @unique
+  trackingLastPingAt DateTime?
+  lastLat        Float?
+  lastLng        Float?
+  lastAccuracyM  Float?
+  lastSpeedMps   Float?
+  lastHeadingDeg Float?
+
+  // Courier externo (Uber Direct / PedidosYa)
+  courier        Json? // CourierInfo (nombre/tel/foto/ubicación/tracking/POD)
+  uberDeliveryId String?
+  pyaShippingId  String?
+
+  resends   PosOrderResend[]
+  locations PosDriverLocation[]
+
   @@unique([restaurantId, externalId])
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
   @@index([restaurantId, opsStage])
+  @@index([assignedDriverId])
+}
+
+/// Repartidor de un local (login de la app). Multi-tenant por restaurantId.
+model Driver {
+  id            String     @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  username      String
+  displayName   String
+  passwordHash  String
+  role          String     @default("driver") // driver | admin
+  active        Boolean    @default(true)
+  isOnShift     Boolean    @default(false)
+  shiftStartedAt DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  sessions       DriverSession[]
+  assignedOrders PosOrder[]
+
+  @@unique([restaurantId, username])
+  @@index([restaurantId])
+}
+
+/// Token de sesión de la app del repartidor (Bearer).
+model DriverSession {
+  id         String    @id @default(cuid())
+  driverId   String
+  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  token      String    @unique
+  platform   String?
+  deviceName String?
+  appVersion String?
+  lastSeenAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([driverId])
+}
+
+/// Responsables del local (roster para reasignaciones/reenvíos).
+model DeliveryResponsible {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  name         String
+  roleLabel    String?
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([restaurantId])
+}
+
+/// Reasignación/reenvío de un pedido a otro responsable (con delivery extra).
+model PosOrderResend {
+  id                  String   @id @default(cuid())
+  posOrderId          String
+  posOrder            PosOrder @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  responsibleId       String?
+  responsibleName     String
+  extraDeliveryAmount Int      @default(0)
+  createdByDriverId   String?
+  createdByDriverName String?
+  createdAt           DateTime @default(now())
+
+  @@index([posOrderId])
+}
+
+/// Historial de ubicaciones GPS del repartidor (rastro del tracking).
+model PosDriverLocation {
+  id           String   @id @default(cuid())
+  posOrderId   String
+  posOrder     PosOrder @relation(fields: [posOrderId], references: [id], onDelete: Cascade)
+  driverId     String?
+  lat          Float
+  lng          Float
+  accuracyM    Float?
+  speedMps     Float?
+  headingDeg   Float?
+  batteryLevel Float?
+  createdAt    DateTime @default(now())
+
+  @@index([posOrderId, createdAt])
 }
 
 /// Bitácora de cada intento entrante al webhook de Toteat (diagnóstico). Permite
