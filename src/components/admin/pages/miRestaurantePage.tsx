@@ -357,7 +357,7 @@ export default function MiRestaurantePage() {
         const isExempt = billingStatus.billingExempt;
         const trialUsed = !!billingStatus.trialUsed;
 
-        const inGrace = isPastDue || (!inTrial && !isCanceled && periodEnd && periodEnd < now && isActive);
+        const inGrace = isPastDue || (!inTrial && !isCanceled && periodEnd && periodEnd < now && isActive) || (isCanceled && periodEnd && periodEnd < now);
         const cycleEndsToday = !inGrace && periodEnd && periodEnd.toDateString() === now.toDateString();
         const toChileDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(d);
         const todayChile = toChileDate(now);
