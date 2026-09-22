@@ -51,8 +51,9 @@ async function handleSubscribeReturn(req: NextRequest) {
     customerId = customer.customerId;
     console.log(`[subscribe-return] Customer obtenido: customerId=${customerId} para ${restaurant.name}`);
   } catch (err: any) {
-    console.error(`[subscribe-return] Error getByRegisterToken: ${err?.message}`);
-    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error al verificar tarjeta. Intenta nuevamente.")}`, req.url));
+    const detail = err?.message || "desconocido";
+    console.error(`[subscribe-return] Error getByRegisterToken: ${detail} | token=${token}`);
+    return NextResponse.redirect(new URL(`/panel/mi-restaurante?autorenew=error&reason=${encodeURIComponent("Error tarjeta: " + detail)}`, req.url));
   }
 
   // Guardar customerId
