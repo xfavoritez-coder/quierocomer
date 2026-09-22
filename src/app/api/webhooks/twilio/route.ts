@@ -24,6 +24,25 @@ export async function POST(req: NextRequest) {
     const phone = from.replace("whatsapp:", "").trim();
     if (!phone || !body.trim()) return TWIML_OK;
 
+    // Ignorar auto-replies de WhatsApp Business (bots de clientes que responden automáticamente
+    // cuando reciben el mensaje de "carta lista" del pipeline)
+    const AUTO_REPLY_PATTERNS = [
+      /gracias por comunicarte/i,
+      /te atenderemos a la brevedad/i,
+      /en unos minutos te atenderemos/i,
+      /estamos un poquito ocupados/i,
+      /fuera de horario/i,
+      /horario de atenci[oó]n/i,
+      /mensaje autom[aá]tico/i,
+      /respuesta autom[aá]tica/i,
+      /bot[^a-z]/i,
+      /\bALL+\s+TII+\b/i,
+    ];
+    if (AUTO_REPLY_PATTERNS.some(p => p.test(body))) {
+      console.log(`[WA Webhook] Auto-reply detectado de ${phone}, ignorando`);
+      return TWIML_OK;
+    }
+
     console.log(`[WA Webhook] From ${phone} (${profileName}): ${body.slice(0, 80)}`);
 
     // 1. Find linked lead/restaurant by phone
