@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     where: { uberDeliveryId: deliveryId },
     include: { restaurant: { select: { ecommerceConfig: true } } },
   });
-  if (!order) return NextResponse.json({ ok: true }); // no es nuestro / ya borrado
+  if (!order) return handlePosOrder(req, raw, deliveryId, data); // ¿pedido del POS (Centro de pedidos)?
 
   // Verificar firma con la clave de firma de webhooks del local (fallback a clientSecret).
   const creds = uberSettingsFor(order.restaurant);
@@ -56,6 +56,35 @@ export async function POST(req: NextRequest) {
   }
 
   await prisma.onlineOrder.update({ where: { id: order.id }, data: data2 });
+  return NextResponse.json({ ok: true });
+}
+
+/** Actualiza un PosOrder (Centro de pedidos) desde el webhook de Uber. */
+async function handlePosOrder(req: NextRequest, raw: string, deliveryId: string, data: Record<string, unknown>) {
+  const pos = await prisma.posOrder.findFirst({ where: { uberDeliveryId: deliveryId }, include: { restaurant: { select: { ecommerceConfig: true } } } });
+  if (!pos) return NextResponse.json({ ok: true });
+
+  const creds = uberSettingsFor(pos.restaurant);
+  const secret = creds.signingKey || creds.clientSecret;
+  const sig = req.headers.get("x-uber-signature");
+  if (secret && sig) {
+    const expected = crypto.createHmac("sha256", secret).update(raw).digest("hex");
+    if (sig !== expected) { console.warn("[uber/webhook][pos] firma inválida", deliveryId); return NextResponse.json({ ok: true }); }
+  }
+
+  const prev = (pos.courier as unknown as Partial<CourierInfo>) || undefined;
+  const merged: CourierInfo = parseDelivery({ id: deliveryId, ...data }, prev);
+  if (merged.status === "delivered" && !merged.proofPhotoUrl) merged.proofPhotoUrl = await uberProofOfDelivery(creds, deliveryId).catch(() => null);
+
+  const upd: Record<string, unknown> = { courier: merged as unknown as object };
+  if (merged.status === "pickup_complete" || merged.status === "dropoff") {
+    if (pos.opsStage !== "delivered") { upd.opsStage = "out_for_delivery"; upd.opsDispatchedAt = pos.opsDispatchedAt ?? new Date(); }
+  } else if (merged.status === "delivered") {
+    upd.opsStage = "delivered"; upd.opsDeliveredAt = new Date();
+  } else if (merged.status === "canceled" || merged.status === "returned") {
+    upd.uberDeliveryId = null; // vuelve a estar disponible para reasignar
+  }
+  await prisma.posOrder.update({ where: { id: pos.id }, data: upd });
   return NextResponse.json({ ok: true });
 }
 
