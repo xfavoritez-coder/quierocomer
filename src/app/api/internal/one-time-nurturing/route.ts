@@ -20,9 +20,6 @@ export async function GET(req: NextRequest) {
 
   // Nurturing desactivado — Camila solo responde mensajes entrantes, no envía proactivamente
   const rawAction = req.nextUrl.searchParams.get("action") || "preview";
-  if (rawAction !== "unsplash") {
-    return NextResponse.json({ ok: true, disabled: true, nurturing: { sent: 0 } });
-  }
   const action: string = rawAction;
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -99,6 +96,10 @@ export async function GET(req: NextRequest) {
   }
 
   // ── EXECUTE ──
+  // Nurturing desactivado — no enviar mensajes proactivos
+  return NextResponse.json({ ok: true, disabled: true, nurturing: { sent: 0 }, unsplash: { total: unsplashFiltered.length } });
+
+  // eslint-disable-next-line no-unreachable
   const results: any[] = [];
 
   // Send nurturing
