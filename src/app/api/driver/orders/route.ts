@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authDriver } from "@/lib/driver/auth";
 import { chileTodayYmd, chileDayRangeUtc, serializeOrder, dashboardStats } from "@/lib/driver/serialize";
+import { geocodePosOrders } from "@/lib/ecommerce/geocode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +33,14 @@ export async function GET(req: NextRequest) {
       include: inc, orderBy: { opsDeliveredAt: "desc" }, take: 50,
     }),
   ]);
+
+  // Geocoding lazy (con presupuesto) de los pedidos visibles sin coordenadas.
+  const toGeo = [...available, ...mine];
+  if (toGeo.some((o) => o.customerLat == null && o.addressLine)) {
+    const rest = await prisma.restaurant.findUnique({ where: { id: rid }, select: { ecommerceConfig: true } });
+    const coords = await geocodePosOrders(rest, toGeo.map((o) => ({ id: o.id, addressLine: o.addressLine, customerLat: o.customerLat, customerLng: o.customerLng })), 6);
+    for (const o of toGeo) { const c = coords.get(o.id); if (c) { o.customerLat = c.lat; o.customerLng = c.lng; } }
+  }
 
   const availableJson = available.map((o) => serializeOrder(o, origin));
   const mineJson = mine.map((o) => serializeOrder(o, origin));

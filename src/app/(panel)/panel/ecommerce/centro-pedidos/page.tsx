@@ -20,6 +20,7 @@ interface PosOrder {
   totalAmount: number; paidAmount: number; tipAmount: number; changeAmount: number; deliveryFee: number; discountAmount: number;
   currency: string; vendorName: string | null; orderReference: string | null;
   items: any; completedAt: string | null; createdAt: string; updatedAt: string;
+  assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any;
 }
 
 interface WebhookLog {
@@ -173,6 +174,31 @@ export default function CentroPedidosPage() {
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
 
+  async function requestCourier(o: PosOrder, provider: "uber" | "pedidosya") {
+    if (!restaurantId) return;
+    const path = provider === "uber" ? "uber" : "pedidosya";
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id }) });
+      const d = await r.json();
+      if (!r.ok) { toast.error(d.error || "No se pudo solicitar el courier"); return; }
+      toast.success(provider === "uber" ? "Uber solicitado" : "PedidosYa solicitado");
+      fetchOrders(true);
+    } catch { toast.error("Error de conexión"); }
+  }
+
+  async function cancelCourier(o: PosOrder) {
+    if (!restaurantId) return;
+    const path = o.uberDeliveryId ? "uber" : "pedidosya";
+    if (!confirm("¿Cancelar el courier de este pedido?")) return;
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}?restaurantId=${restaurantId}&id=${o.id}`, { method: "DELETE" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { toast.error(d.error || "No se pudo cancelar"); return; }
+      toast.success("Courier cancelado");
+      fetchOrders(true);
+    } catch { toast.error("Error de conexión"); }
+  }
+
   async function generarToken() {
     if (!restaurantId) return;
     try {
@@ -293,7 +319,7 @@ export default function CentroPedidosPage() {
         </div>
       ) : view === "historial" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-          {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} />)}
+          {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14, alignItems: "start" }}>
@@ -306,7 +332,7 @@ export default function CentroPedidosPage() {
                   <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", marginLeft: "auto", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>{items.length}</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} />)}
+                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
                   {items.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", padding: "16px 0" }}>—</p>}
                 </div>
               </div>
@@ -318,12 +344,15 @@ export default function CentroPedidosPage() {
   );
 }
 
-function OrderCard({ o, flash, onAdvance, onDelete }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void }) {
+function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
   const isTest = o.externalId.startsWith("TEST-");
   const items: any[] = Array.isArray(o.items) ? o.items : [];
+  const hasCourier = !!(o.uberDeliveryId || o.pyaShippingId);
+  const courierName = o.uberDeliveryId ? "Uber Direct" : o.pyaShippingId ? "PedidosYa" : null;
+  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && (o.opsStage === "ready" || o.opsStage === "out_for_delivery");
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -377,6 +406,21 @@ function OrderCard({ o, flash, onAdvance, onDelete }: { o: PosOrder; flash: bool
           ))}
         </div>
       )}
+
+      {/* Courier externo (Uber / PedidosYa) para pedidos de delivery */}
+      {hasCourier ? (
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: "#7c3aed", background: "rgba(124,58,237,0.1)", borderRadius: 7, padding: "3px 8px" }}><Bike size={12} /> {courierName}{o.courier?.status ? ` · ${o.courier.status}` : ""}</span>
+          {o.courier?.trackingUrl && <a href={o.courier.trackingUrl} target="_blank" rel="noreferrer" style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none" }}>Seguir →</a>}
+          {o.opsStage !== "delivered" && <button onClick={() => onCancelCourier(o)} style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: RED, background: "transparent", border: "none", cursor: "pointer" }}>Cancelar courier</button>}
+        </div>
+      ) : canRequestCourier ? (
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
+          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Courier:</span>
+          <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Uber</button>
+          <button onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>PedidosYa</button>
+        </div>
+      ) : null}
     </div>
   );
 }
