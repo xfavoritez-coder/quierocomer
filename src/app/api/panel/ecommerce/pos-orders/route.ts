@@ -54,13 +54,22 @@ export async function PATCH(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const updated = await prisma.posOrder.update({
-    where: { id },
-    data: { opsStage, opsDeliveredAt: opsStage === "delivered" ? new Date() : null },
-  });
+  // Timestamps de etapa (para el orden y los tiempos en la app del repartidor).
+  const now = new Date();
+  const data: any = { opsStage };
+  if (opsStage === "ready") data.opsReadyForDeliveryAt = order.opsReadyForDeliveryAt ?? now;
+  if (opsStage === "out_for_delivery") data.opsDispatchedAt = order.opsDispatchedAt ?? now;
+  if (opsStage === "delivered") data.opsDeliveredAt = now;
+  // Si el local mueve un pedido "hacia atrás" a preparación, se libera la asignación.
+  if (opsStage === "preparing" || opsStage === "ready") {
+    data.assignedDriverId = null; data.assignedTo = null; data.isAssigned = false;
+    if (opsStage === "preparing") data.opsReadyForDeliveryAt = null;
+  }
+
+  const updated = await prisma.posOrder.update({ where: { id }, data });
   return NextResponse.json({ order: updated });
 }
 
