@@ -396,6 +396,7 @@ model Restaurant {
   mermas                     Merma[]
   modifierTemplates          ModifierTemplate[]
   onlineOrders               OnlineOrder[]
+  posOrders                  PosOrder[]
   orderPushSubscriptions     OrderPushSubscription[]
   privateReviews             PrivateReview[]
   promotionsMarketing        Promotion[]
@@ -463,6 +464,55 @@ model OnlineOrder {
 
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
+}
+
+/// Pedido del POS (Toteat) ingresado por webhook. Es el "Centro de pedidos":
+/// captura TODO lo que entra a Toteat (mesa, retiro, delivery, cualquier canal)
+/// y le agrega una etapa operativa propia gestionable por el local.
+model PosOrder {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  externalId String // orderId de Toteat (único por local)
+  provider   String @default("toteat")
+
+  // Estado que reporta Toteat (mapeado): new | preparing | ready | on_the_way | delivered | canceled | accepted
+  posStatus String @default("new")
+  // Etapa operativa gestionada por el local: preparing | ready | out_for_delivery | delivered
+  opsStage       String    @default("preparing")
+  opsDeliveredAt DateTime?
+
+  saleType   String  @default("") // dine-in | delivery | pickup | ...
+  isDelivery Boolean @default(false)
+  tableLabel String? // "Mesa 3" cuando aplica
+
+  customerName  String @default("")
+  customerPhone String @default("")
+  addressLine   String @default("")
+
+  totalAmount    Int    @default(0)
+  paidAmount     Int    @default(0)
+  tipAmount      Int    @default(0)
+  changeAmount   Int    @default(0)
+  deliveryFee    Int    @default(0)
+  discountAmount Int    @default(0)
+  currency       String @default("CLP")
+
+  vendorName     String?
+  orderReference String?
+
+  items      Json? // líneas normalizadas del pedido
+  rawPayload Json? // payload crudo de Toteat (para depurar/reprocesar)
+
+  completedAt DateTime? // cuándo Toteat lo cerró/entregó
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([restaurantId, externalId])
+  @@index([restaurantId])
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, opsStage])
 }
 
 model EcommerceCouponUse {

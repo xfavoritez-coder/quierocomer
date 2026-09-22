@@ -30,3 +30,18 @@ export async function sendOrderNotification(
   });
   await webpush.sendNotification(subscription, payload);
 }
+
+/** Push genérico del panel (título/cuerpo/URL de destino y tag propios). */
+export async function sendPanelPush(
+  subscription: webpush.PushSubscription,
+  opts: { title: string; body: string; url?: string; tag?: string }
+) {
+  ensureConfigured();
+  const payload = JSON.stringify({
+    title: opts.title,
+    body: opts.body,
+    url: opts.url,
+    tag: opts.tag,
+  });
+  await webpush.sendNotification(subscription, payload);
+}

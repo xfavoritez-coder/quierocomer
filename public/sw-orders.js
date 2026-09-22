@@ -5,9 +5,9 @@ self.addEventListener("push", (event) => {
     icon: "/icon-192.png",
     badge: "/icon-192.png",
     vibrate: [200, 100, 200, 100, 200, 100, 200],
-    tag: "new-order-" + (data.orderId || Date.now()),
+    tag: data.tag || "new-order-" + (data.orderId || Date.now()),
     renotify: true,
-    data: { url: "/panel/pedir-online/pedidos", ...data },
+    data: { url: data.url || "/panel/pedir-online/pedidos", ...data },
   };
   event.waitUntil(
     self.registration.showNotification(data.title || "¡Nuevo pedido!", options)
@@ -16,7 +16,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = "/panel/pedir-online/pedidos";
+  const url = (event.notification.data && event.notification.data.url) || "/panel/pedir-online/pedidos";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
