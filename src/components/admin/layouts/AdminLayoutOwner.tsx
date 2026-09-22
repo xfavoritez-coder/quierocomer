@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -101,6 +101,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ConciergeBell, labelKey: "nav_ecommerce_pos", href: `${base}/ecommerce/tomar-pedidos` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
         { icon: ListChecks, labelKey: "nav_ecommerce_order_center", href: `${base}/ecommerce/centro-pedidos` },
+        { icon: Bike, labelKey: "nav_ecommerce_drivers", href: `${base}/ecommerce/repartidores` },
         { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
         { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
