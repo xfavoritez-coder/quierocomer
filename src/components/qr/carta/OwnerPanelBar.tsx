@@ -6,6 +6,7 @@ const LS_KEY = (slug: string) => `opb_entered_${slug}`;
 const BAR_H = 48;
 
 export default function OwnerPanelBar({ slug }: { slug: string }) {
+  const panelUrl = `/api/panel/demo-auth?slug=${slug}`;
   const [visible, setVisible] = useState(false);
   const [hiddenByModal, setHiddenByModal] = useState(false);
 
@@ -122,7 +123,7 @@ export default function OwnerPanelBar({ slug }: { slug: string }) {
       <div className="opb">
         <div className="opb-inner">
           <span className="opb-text">¿Quieres editar algo?</span>
-          <a href="/panel" className="opb-btn" onClick={dismiss}>
+          <a href={panelUrl} className="opb-btn" onClick={dismiss}>
             Ir al panel →
           </a>
           <button className="opb-close" onClick={dismiss} aria-label="Cerrar">×</button>
