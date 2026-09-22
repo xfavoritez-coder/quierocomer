@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
   }
   if (!matched) return NextResponse.json({ ok: false, error: "Credenciales inválidas." }, { status: 401 });
 
+  const rest = await prisma.restaurant.findUnique({ where: { id: matched.restaurantId }, select: { name: true } });
   const platform = ["android", "ios", "other"].includes((body?.platform || "").toString()) ? body.platform : "other";
   const token = generateDriverToken();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     token,
-    user: { id: matched.id, username: matched.username, display_name: matched.displayName, role: matched.role, is_on_shift: matched.isOnShift },
+    user: { id: matched.id, username: matched.username, display_name: matched.displayName, role: matched.role, is_on_shift: matched.isOnShift, restaurant_name: rest?.name || "" },
     expires_at: fmtChile(expiresAt),
   });
 }
