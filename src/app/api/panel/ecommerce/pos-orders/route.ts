@@ -26,13 +26,18 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const scope = req.nextUrl.searchParams.get("scope") || "activos";
-  // Historial: entregados/cancelados. Activos: el resto (últimas 24h para no traer todo).
+  // Historial: entregados/cancelados. Activos: en curso + entregados de las últimas
+  // 24h (para que la etapa "Entregado" del tablero tenga contenido, sin traer todo).
   const where: any = { restaurantId };
   if (scope === "historial") {
     where.OR = [{ opsStage: "delivered" }, { posStatus: "canceled" }];
   } else {
-    where.opsStage = { not: "delivered" };
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     where.posStatus = { not: "canceled" };
+    where.OR = [
+      { opsStage: { not: "delivered" } },
+      { opsStage: "delivered", updatedAt: { gte: dayAgo } },
+    ];
   }
 
   const orders = await prisma.posOrder.findMany({

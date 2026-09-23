@@ -41,7 +41,9 @@ const REASON_LABEL: Record<string, string> = {
 
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
 const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
-const STAGE_COLS: Stage[] = ["preparing", "ready", "out_for_delivery"];
+// Las 4 etapas del tablero (columna izquierda estilo deliveryhandroll).
+const STAGES: Stage[] = ["preparing", "ready", "out_for_delivery", "delivered"];
+const STAGE_ACCENT: Record<Stage, string> = { preparing: ORANGE, ready: GREEN, out_for_delivery: BLUE, delivered: GRAY };
 
 function nextActions(o: PosOrder): { stage: Stage; label: string; color: string }[] {
   if (o.posStatus === "canceled" || o.opsStage === "delivered") return [];
@@ -81,6 +83,7 @@ export default function CentroPedidosPage() {
   const [orders, setOrders] = useState<PosOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"activos" | "historial">("activos");
+  const [selectedStage, setSelectedStage] = useState<Stage>("preparing");
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<Record<string, boolean>>({});
   const [setupOpen, setSetupOpen] = useState(false);
@@ -144,7 +147,7 @@ export default function CentroPedidosPage() {
     try {
       const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id, opsStage: stage }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo actualizar"); fetchOrders(true); return; }
-      if (stage === "delivered" && view === "activos") setOrders((prev) => prev.filter((x) => x.id !== o.id));
+      // El entregado NO se quita: pasa a la etapa "Entregado" del tablero.
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
 
@@ -312,34 +315,69 @@ export default function CentroPedidosPage() {
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", padding: 30, textAlign: "center" }}>Cargando pedidos…</p>
-      ) : orders.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center" }}>
-          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>{view === "activos" ? "Sin pedidos activos" : "Sin historial"}</p>
-          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>{view === "activos" ? "Cuando entre un pedido a Toteat, aparecerá aquí al instante." : "Los pedidos entregados o cancelados aparecerán aquí."}</p>
-        </div>
       ) : view === "historial" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-          {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14, alignItems: "start" }}>
-          {STAGE_COLS.map((st) => {
-            const items = orders.filter((o) => o.opsStage === st && o.posStatus !== "canceled");
-            return (
-              <div key={st}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px 10px" }}>
-                  <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>{STAGE_ICON[st]} {STAGE_LABEL[st]}</span>
-                  <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", marginLeft: "auto", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>{items.length}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
-                  {items.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", padding: "16px 0" }}>—</p>}
-                </div>
+        orders.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center" }}>
+            <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Sin historial</p>
+            <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Los pedidos entregados o cancelados aparecerán aquí.</p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
+          </div>
+        )
+      ) : (() => {
+        // Conteo por etapa (excluye cancelados).
+        const counts: Record<Stage, number> = { preparing: 0, ready: 0, out_for_delivery: 0, delivered: 0 };
+        for (const o of orders) if (o.posStatus !== "canceled") counts[o.opsStage] = (counts[o.opsStage] || 0) + 1;
+        const items = orders.filter((o) => o.opsStage === selectedStage && o.posStatus !== "canceled");
+        return (
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+            {/* Columna de etapas (estilo deliveryhandroll) */}
+            <div style={{ width: 250, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8, minWidth: 220 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--adm-text3)", margin: "0 0 2px 2px" }}>Etapas del pedido</p>
+              {STAGES.map((st) => {
+                const active = selectedStage === st;
+                const c = STAGE_ACCENT[st];
+                return (
+                  <button
+                    key={st}
+                    onClick={() => setSelectedStage(st)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+                      padding: "13px 14px", borderRadius: 12, cursor: "pointer",
+                      border: `1px solid ${active ? c : "var(--adm-card-border)"}`,
+                      background: active ? `${c}1a` : "var(--adm-card)",
+                      transition: "background .15s, border-color .15s",
+                    }}
+                  >
+                    <span style={{ fontSize: "1.05rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
+                    <span style={{ flex: 1, fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_LABEL[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, minWidth: 24, height: 24, padding: "0 7px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Pedidos de la etapa seleccionada */}
+            <div style={{ flex: 1, minWidth: 280 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 2px 12px", borderLeft: `3px solid ${STAGE_ACCENT[selectedStage]}`, paddingLeft: 10 }}>
+                <span style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)" }}>{STAGE_ICON[selectedStage]} {STAGE_LABEL[selectedStage]}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", marginLeft: "auto", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 9px" }}>{items.length}</span>
               </div>
-            );
-          })}
-        </div>
-      )}
+              {items.length === 0 ? (
+                <div style={{ padding: "36px 16px", textAlign: "center", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>No hay pedidos en «{STAGE_LABEL[selectedStage]}».</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
