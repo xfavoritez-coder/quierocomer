@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { processAutomations } from "@/lib/automations/processor";
 import { runBirthdayPushes } from "@/lib/loyalty/birthdayPush";
+import { sendAdminEmail, qrNudgeEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -409,6 +410,56 @@ export async function GET(req: NextRequest) {
       console.error("[diario] Translation sweep error:", e);
     }
 
+    // 6. QR nudge email — send 4 days after carta delivery to leads that haven't activated
+    let qrNudgeSent = 0;
+    try {
+      const nudgeWindowStart = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const nudgeWindowEnd   = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
+      const nudgeLeads = await prisma.lead.findMany({
+        where: {
+          cartaStatus: "DELIVERED",
+          deliveredAt: { gte: nudgeWindowStart, lte: nudgeWindowEnd },
+          activatedAt: null,
+          email: { not: "" },
+        },
+        select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true, events: true },
+      });
+
+      for (const lead of nudgeLeads) {
+        const events = (lead.events as any[] | null) ?? [];
+        if (events.some((e: any) => e.type === "qr_nudge_sent")) continue; // already sent
+
+        const slug = lead.generatedSlug;
+        if (!slug) continue;
+
+        const firstName = (lead.ownerName || "").split(" ")[0] || "Hola";
+        const restaurantName = lead.localName || "";
+        const openPixelUrl = `https://quierocomer.com/api/funnel/track/open?lid=${lead.id}&type=qr_nudge`;
+        const clickTrackUrl = `https://quierocomer.com/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(`https://quierocomer.com/qr/generar/${slug}`)}`;
+
+        try {
+          await sendAdminEmail({
+            to: lead.email,
+            subject: `${firstName}, estás perdiendo ventas...`,
+            purpose: "qr_nudge",
+            html: qrNudgeEmailHtml({ ownerName: firstName, restaurantName, slug, openPixel: openPixelUrl, clickTrackUrl }),
+          });
+
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: { events: [...events, { type: "qr_nudge_sent", at: new Date().toISOString() }] },
+          });
+
+          qrNudgeSent++;
+          console.log(`[diario] QR nudge sent to ${lead.email} (${restaurantName})`);
+        } catch (e) {
+          console.error(`[diario] QR nudge failed for ${lead.email}:`, e);
+        }
+      }
+    } catch (e) {
+      console.error("[diario] QR nudge error:", e);
+    }
+
     // 7. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -440,6 +491,7 @@ export async function GET(req: NextRequest) {
           loyaltyExpiredDowngraded,
           birthdayPushMembers,
           translationsBackfilled,
+          qrNudgeSent,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,

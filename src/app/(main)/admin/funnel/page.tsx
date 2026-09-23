@@ -316,6 +316,15 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
           { label: "WA", done: true, ts: lead.whatsappSentAt, wa: true },
           { label: "WA Click", done: !!lead.whatsappClickedAt, ts: lead.whatsappClickedAt, wa: true },
         ] : []),
+        ...(() => {
+          const nudgeSent = lead.events?.find((e: any) => e.type === "qr_nudge_sent");
+          const nudgeOpened = lead.events?.find((e: any) => e.type === "qr_nudge_opened");
+          if (!nudgeSent) return [];
+          return [
+            { label: "QR Email", done: true, ts: nudgeSent.at },
+            { label: "QR Abierto", done: !!nudgeOpened, ts: nudgeOpened?.at ?? null },
+          ];
+        })(),
         { label: "Onboard", done: !!lead.onboardingDoneAt, ts: lead.onboardingDoneAt },
         { label: "Panel", done: !!lead.panelVisitedAt, ts: lead.panelVisitedAt },
         { label: "Activado", done: !!lead.activatedAt, ts: lead.activatedAt, highlight: true },
@@ -408,13 +417,14 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
         {/* Journey steps */}
         <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 12 }}>
           {steps.map((step, i) => {
+            const s = step as any;
             const color = step.done
-              ? step.green ? "#43d17b"
-              : step.highlight ? "#F4A623"
-              : (step as any).wa ? "#22c55e"
+              ? s.green ? "#43d17b"
+              : s.highlight ? "#F4A623"
+              : s.wa ? "#22c55e"
               : "#60a5fa"
               : "#2a2a2a";
-            const textColor = step.done ? (step.green ? "#43d17b" : step.highlight ? "#F4A623" : (step as any).wa ? "#22c55e" : "#aaa") : "#444";
+            const textColor = step.done ? (s.green ? "#43d17b" : s.highlight ? "#F4A623" : s.wa ? "#22c55e" : "#aaa") : "#444";
             return (
               <div key={step.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
