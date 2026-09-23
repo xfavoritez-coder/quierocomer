@@ -80,52 +80,9 @@ export async function GET(req: NextRequest) {
       console.error("Automation processing error:", e);
     }
 
-    // 4.5a Recordatorio: trials con <= 2 dias restantes que aun no inscriben tarjeta.
-    // Mandamos email solo una vez (trialReminderSentAt previene duplicados).
+    // 4.5a — emails de "tu regalo termina" desactivados (se quitó la secuencia)
     const now = new Date();
-    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-    const trialsEndingSoon = await prisma.restaurant.findMany({
-      where: {
-        subscriptionStatus: "TRIALING",
-        trialEndsAt: { gt: now, lte: twoDaysFromNow },
-        flowSubscriptionId: null,
-        billingExempt: false,
-        trialReminderSentAt: null,
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        trialEndsAt: true,
-        owner: { select: { email: true, name: true } },
-      },
-    });
-
-    let trialRemindersSent = 0;
-    if (trialsEndingSoon.length > 0) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-      const { sendAdminEmail, trialEndingSoonEmailHtml } = await import("@/lib/email/sendAdminEmail");
-      for (const r of trialsEndingSoon) {
-        if (!r.owner?.email) continue;
-        const daysLeft = Math.max(1, Math.ceil(((r.trialEndsAt?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
-        const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
-        try {
-          await sendAdminEmail({
-            to: r.owner.email,
-            subject: `🎁 Tu regalo termina ${daysLeft === 1 ? "mañana" : `en ${daysLeft} días`}`,
-            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/suscripcion`, r.slug),
-            purpose: "trial_reminder",
-          });
-          await prisma.restaurant.update({
-            where: { id: r.id },
-            data: { trialReminderSentAt: now },
-          });
-          trialRemindersSent++;
-        } catch (e) {
-          console.error("[diario] trial reminder error:", e);
-        }
-      }
-    }
+    const trialRemindersSent = 0;
 
     // 4.5b Auto-downgrade trials expirados sin tarjeta inscrita.
     // Si un local entro en TRIALING (via /admin/locales/[id]/handoff) y no
@@ -157,23 +114,9 @@ export async function GET(req: NextRequest) {
       });
       trialsExpired = expiredTrials.length;
 
-      // Email notificacion al dueno (best effort, no falla el cron si falla)
+      // Email "tu regalo terminó" desactivado (se quitó la secuencia)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       for (const r of expiredTrials) {
-        if (!r.owner?.email) continue;
-        try {
-          const { sendAdminEmail, trialExpiredEmailHtml } = await import("@/lib/email/sendAdminEmail");
-          const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
-          await sendAdminEmail({
-            to: r.owner.email,
-            subject: `Tu carta QR volvió al plan gratis`,
-            html: trialExpiredEmailHtml(firstName, r.name, `${baseUrl}/panel/suscripcion`, `${baseUrl}/${r.slug}`),
-            purpose: "trial_expired",
-          });
-        } catch (e) {
-          console.error("[diario] email trial expired error:", e);
-        }
-
         // WhatsApp de Camila solo si realmente usó el trial y no recibió nurturing antes
         try {
           // Skip if already received any nurturing WA (ya lo contactó Camila por inactividad)
