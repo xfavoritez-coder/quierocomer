@@ -38,6 +38,17 @@ interface BillingData {
   totalMonthlyRevenue: number;
 }
 
+interface EngagementReview {
+  restaurantId: string; name: string; slug: string | undefined; count: number; lastAt: string | null;
+}
+interface EngagementLoyalty {
+  restaurantId: string; name: string; slug: string | undefined; members: number;
+}
+interface EngagementData {
+  reviews: EngagementReview[];
+  loyalty: EngagementLoyalty[];
+}
+
 const card: React.CSSProperties = {
   background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
   borderRadius: 16, padding: "20px 22px",
@@ -216,6 +227,56 @@ function BillingSection({ data }: { data: BillingData }) {
   );
 }
 
+function EngagementSection({ data }: { data: EngagementData }) {
+  function fmtRelative(iso: string | null) {
+    if (!iso) return null;
+    const diff = Date.now() - new Date(iso).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return "hoy";
+    if (days === 1) return "ayer";
+    if (days < 7) return `hace ${days}d`;
+    if (days < 30) return `hace ${Math.floor(days / 7)}sem`;
+    return `hace ${Math.floor(days / 30)}m`;
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 20 }}>
+      {data.reviews.length > 0 && (
+        <div style={card}>
+          <h3 style={sectionTitle}>⭐ Valoraciones por local</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {data.reviews.slice(0, 12).map((r, i) => {
+              const max = data.reviews[0].count;
+              return (
+                <div key={r.restaurantId}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <a href={`/${r.slug}`} target="_blank" rel="noreferrer" style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "72%" }}>
+                      {r.name}
+                    </a>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      {r.lastAt && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{fmtRelative(r.lastAt)}</span>}
+                      <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 700 }}>{r.count}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 2, background: "var(--adm-card-border)", overflow: "hidden" }}>
+                    <div style={{ width: `${Math.min((r.count / max) * 100, 100)}%`, height: "100%", borderRadius: 2, background: i === 0 ? GOLD : `rgba(244,166,35,${Math.max(0.2, 0.7 - i * 0.05)})` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {data.loyalty.length > 0 && (
+        <div style={card}>
+          <h3 style={sectionTitle}>🎴 Miembros loyalty por local</h3>
+          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members }))} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { restaurants, isSuper, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
   const [filterRestaurant, setFilterRestaurant] = useState("");
@@ -224,6 +285,7 @@ export default function AdminDashboard() {
   const [customTo, setCustomTo] = useState("");
   const [data, setData] = useState<DashData | null>(null);
   const [billing, setBilling] = useState<BillingData | null>(null);
+  const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(() => {
@@ -250,6 +312,10 @@ export default function AdminDashboard() {
     fetch("/api/admin/billing")
       .then(r => r.json())
       .then(d => setBilling(d))
+      .catch(() => {});
+    fetch("/api/admin/engagement")
+      .then(r => r.json())
+      .then(d => setEngagement(d))
       .catch(() => {});
   }, [isSuper]);
 
@@ -354,6 +420,10 @@ export default function AdminDashboard() {
       {/* ── Billing ── */}
       {isSuper && billing && <BillingSection data={billing} />}
 
+      {/* ── Engagement ── */}
+      {isSuper && engagement && (engagement.reviews.length > 0 || engagement.loyalty.length > 0) && (
+        <EngagementSection data={engagement} />
+      )}
 
     </div>
   );
