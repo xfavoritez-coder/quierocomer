@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title,
       description,
-      images: [{ url: ogImage }],
+      images: [{ url: ogImage, width: 200, height: 200 }],
       type: "website",
       url: `https://quierocomer.com/qr/${slug}`,
     },
