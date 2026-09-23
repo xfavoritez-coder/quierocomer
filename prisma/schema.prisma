@@ -368,6 +368,7 @@ model Restaurant {
   bodegaEnabled              Boolean                   @default(false)
   bodegaId                   String?
   centroPedidosEnabled       Boolean                   @default(false)
+  centroPedidosConfig        Json?
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]

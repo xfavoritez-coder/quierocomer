@@ -59,19 +59,29 @@ export async function PATCH(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+  // Retiro + auto-entregar activado: al marcar "Listo" salta directo a "Entregado"
+  // (los pedidos de retiro no tienen reparto; el cliente los retira al estar listos).
+  let stage = opsStage;
+  const cfg = order.restaurant?.centroPedidosConfig as { autoDeliverPickup?: boolean } | null;
+  if (stage === "ready" && !order.isDelivery && cfg?.autoDeliverPickup) stage = "delivered";
 
   // Timestamps de etapa (para el orden y los tiempos en la app del repartidor).
   const now = new Date();
-  const data: any = { opsStage };
-  if (opsStage === "ready") data.opsReadyForDeliveryAt = order.opsReadyForDeliveryAt ?? now;
-  if (opsStage === "out_for_delivery") data.opsDispatchedAt = order.opsDispatchedAt ?? now;
-  if (opsStage === "delivered") data.opsDeliveredAt = now;
+  const data: any = { opsStage: stage };
+  if (stage === "ready") data.opsReadyForDeliveryAt = order.opsReadyForDeliveryAt ?? now;
+  if (stage === "out_for_delivery") data.opsDispatchedAt = order.opsDispatchedAt ?? now;
+  if (stage === "delivered") {
+    data.opsDeliveredAt = now;
+    // Auto-entregado de retiro: deja marcado el "listo" para el registro de tiempos.
+    if (opsStage === "ready") data.opsReadyForDeliveryAt = order.opsReadyForDeliveryAt ?? now;
+  }
   // Si el local mueve un pedido "hacia atrás" a preparación, se libera la asignación.
-  if (opsStage === "preparing" || opsStage === "ready") {
+  if (stage === "preparing" || stage === "ready") {
     data.assignedDriverId = null; data.assignedTo = null; data.isAssigned = false;
-    if (opsStage === "preparing") data.opsReadyForDeliveryAt = null;
+    if (stage === "preparing") data.opsReadyForDeliveryAt = null;
   }
 
   const updated = await prisma.posOrder.update({ where: { id }, data });

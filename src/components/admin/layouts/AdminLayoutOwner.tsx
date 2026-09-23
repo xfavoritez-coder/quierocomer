@@ -114,6 +114,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       items: [
         { icon: ListChecks, labelKey: "nav_centro_home", href: `${base}/centro-pedidos` },
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
+        { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
       ],
     }] : []),
     ...(opts.hasBodega ? [{

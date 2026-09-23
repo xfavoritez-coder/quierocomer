@@ -148,6 +148,11 @@ export default function CentroPedidosPage() {
     try {
       const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id, opsStage: stage }) });
       if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo actualizar"); fetchOrders(true); return; }
+      // El servidor puede resolver una etapa distinta (ej: retiro con auto-entregar
+      // salta de "Listo" a "Entregado"). Aplicamos la etapa final que devuelve.
+      const d = await r.json().catch(() => ({}));
+      const finalStage = d?.order?.opsStage as Stage | undefined;
+      if (finalStage && finalStage !== stage) setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, opsStage: finalStage } : x)));
       // El entregado NO se quita: pasa a la etapa "Entregado" del tablero.
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
