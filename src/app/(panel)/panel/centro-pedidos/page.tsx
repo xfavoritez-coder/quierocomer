@@ -401,7 +401,9 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
   const items: any[] = Array.isArray(o.items) ? o.items : [];
   const hasCourier = !!(o.uberDeliveryId || o.pyaShippingId);
   const courierName = o.uberDeliveryId ? "Uber Direct" : o.pyaShippingId ? "PedidosYa" : null;
-  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && (o.opsStage === "ready" || o.opsStage === "out_for_delivery");
+  // Solicitar courier solo mientras el pedido está "Listo" (aún sin repartidor).
+  // Una vez en reparto lo lleva alguien, no se ofrece courier.
+  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && o.opsStage === "ready";
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -464,6 +466,14 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
         </div>
       )}
 
+      {o.assignedTo && (o.opsStage === "out_for_delivery" || o.opsStage === "delivered") && (
+        <div style={{ marginTop: 6 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: BLUE, background: `${BLUE}14`, borderRadius: 7, padding: "3px 8px" }}>
+            <Bike size={12} /> {o.assignedTo}
+          </span>
+        </div>
+      )}
+
       {items.length > 0 && (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 3 }}>
           {items.slice(0, 6).map((ln, i) => {
@@ -502,7 +512,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
         </div>
       ) : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
-          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Courier:</span>
+          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Solicitar:</span>
           <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Solicitar Uber</button>
           <button onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Solicitar PedidosYa</button>
         </div>
