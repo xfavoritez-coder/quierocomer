@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Copy, Link2, ChevronDown, ChevronUp, Check, Send, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -23,21 +23,7 @@ interface PosOrder {
   assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any;
 }
 
-interface WebhookLog {
-  id: string; ok: boolean; reason: string; processed: number;
-  tokenPreview: string | null; tokenVia: string | null; headerKeys: string | null;
-  ip: string | null; bodyPreview: string | null; createdAt: string; restaurantId: string | null;
-}
-
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
-
-const REASON_LABEL: Record<string, string> = {
-  ok: "Recibido y guardado",
-  sin_pedidos_en_payload: "Llegó, pero el payload no traía pedidos",
-  token_no_reconocido: "Token no coincide con ningún local",
-  sin_token: "Llegó sin token",
-  json_invalido: "Body no es JSON válido",
-};
 
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
 const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
@@ -87,10 +73,6 @@ export default function CentroPedidosPage() {
   const [selectedStage, setSelectedStage] = useState<Stage>("preparing");
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<Record<string, boolean>>({});
-  const [setupOpen, setSetupOpen] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [testing, setTesting] = useState(false);
-  const [logs, setLogs] = useState<WebhookLog[]>([]);
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!restaurantId) return;
@@ -104,16 +86,6 @@ export default function CentroPedidosPage() {
   }, [restaurantId, view]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
-
-  // Token del webhook + diagnóstico (para la tarjeta de conexión).
-  const reloadConfig = useCallback(() => {
-    if (!restaurantId) return;
-    fetch(`/api/panel/ecommerce/pos-orders/config?restaurantId=${restaurantId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setToken(d.token); setLogs(d.logs || []); if (!d.token) setSetupOpen(true); } })
-      .catch(() => {});
-  }, [restaurantId]);
-  useEffect(() => { reloadConfig(); }, [reloadConfig]);
 
   // Tiempo real (Supabase) — sin polling. Refresco por evento.
   useEffect(() => {
@@ -157,22 +129,6 @@ export default function CentroPedidosPage() {
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
 
-  async function probarConexion() {
-    if (!restaurantId) return;
-    setTesting(true);
-    try {
-      const r = await fetch("/api/panel/ecommerce/pos-orders/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) });
-      const d = await r.json();
-      if (!r.ok) { toast.error(d.error || "La prueba falló"); setTesting(false); return; }
-      const created = d.webhook?.created ?? 0;
-      toast.success(created > 0 ? "¡Funciona! Pedido de prueba recibido — míralo en el tablero." : "El webhook respondió, pero no creó el pedido de prueba.");
-      setView("activos");
-      fetchOrders(true);
-      reloadConfig();
-    } catch { toast.error("Error de conexión"); }
-    setTesting(false);
-  }
-
   async function eliminar(o: PosOrder) {
     if (!restaurantId) return;
     if (!confirm(`¿Eliminar este pedido${o.externalId.startsWith("TEST-") ? " de prueba" : ""}?`)) return;
@@ -208,23 +164,6 @@ export default function CentroPedidosPage() {
     } catch { toast.error("Error de conexión"); }
   }
 
-  async function generarToken() {
-    if (!restaurantId) return;
-    try {
-      const r = await fetch("/api/panel/ecommerce/pos-orders/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) });
-      const d = await r.json();
-      if (!r.ok) { toast.error(d.error || "No se pudo generar"); return; }
-      setToken(d.token);
-      toast.success("Token generado");
-    } catch { toast.error("Error de conexión"); }
-  }
-
-  const base = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com";
-  const webhookUrl = `${base}/api/ecommerce/toteat/webhook`;
-  const webhookUrlToken = token ? `${webhookUrl}?token=${token}` : webhookUrl;
-
-  const copy = (txt: string, msg: string) => { navigator.clipboard?.writeText(txt).then(() => toast.success(msg)).catch(() => {}); };
-
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 4px 60px" }}>
       <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 16 }}>
@@ -242,76 +181,6 @@ export default function CentroPedidosPage() {
         </span>
         <button onClick={() => fetchOrders()} title="Refrescar" style={{ width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={16} /></button>
       </div>
-
-      {/* Tarjeta de conexión con Toteat */}
-      <section style={{ background: "var(--adm-card)", border: `1px solid ${token ? "var(--adm-card-border)" : ACCENT}`, borderRadius: 14, marginBottom: 16, overflow: "hidden" }}>
-        <button onClick={() => setSetupOpen((v) => !v)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "13px 16px", background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text)" }}>
-          <Link2 size={17} color={ACCENT} />
-          <span style={{ flex: 1, textAlign: "left", fontFamily: F, fontSize: "0.9rem", fontWeight: 800 }}>Conexión con Toteat {token ? "" : "· pendiente"}</span>
-          {setupOpen ? <ChevronUp size={17} color="var(--adm-text3)" /> : <ChevronDown size={17} color="var(--adm-text3)" />}
-        </button>
-        {setupOpen && (
-          <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-            <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              En Toteat, configura el <strong>Post Hook URL</strong> de pedidos apuntando a esta URL y agrega el header <strong>x-webhook-token</strong> con el token del local. Si Toteat no permite headers, usa la URL con el token incluido.
-            </p>
-            {!token ? (
-              <button onClick={generarToken} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", borderRadius: 10, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: "pointer" }}>
-                Generar token del local
-              </button>
-            ) : (
-              <>
-                <Field label="Post Hook URL" value={webhookUrl} onCopy={() => copy(webhookUrl, "URL copiada")} />
-                <Field label="Header · x-webhook-token" value={token} onCopy={() => copy(token, "Token copiado")} />
-                <Field label="Alternativa · URL con token" value={webhookUrlToken} onCopy={() => copy(webhookUrlToken, "URL copiada")} />
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 2 }}>
-                  <button onClick={probarConexion} disabled={testing} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: 10, border: `1px solid ${ACCENT}`, background: `${ACCENT}1a`, color: ACCENT, fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: testing ? "wait" : "pointer", opacity: testing ? 0.6 : 1 }}>
-                    <Send size={15} /> {testing ? "Probando…" : "Probar conexión"}
-                  </button>
-                  <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Envía un pedido de prueba por el webhook (verifica token, guardado y tablero en vivo).</span>
-                </div>
-                <button onClick={generarToken} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
-                  Regenerar token (invalida el anterior)
-                </button>
-
-                {/* Diagnóstico: últimos intentos entrantes */}
-                <div style={{ marginTop: 6, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)" }}>Últimos intentos recibidos</span>
-                    <button onClick={reloadConfig} title="Refrescar" style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={13} /></button>
-                  </div>
-                  {logs.length === 0 ? (
-                    <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                      Aún no ha llegado ninguna petición. Si Toteat ya recibió pedidos y aquí no aparece nada, la petición <strong>no está llegando</strong> a esta URL (revisa que el Post Hook esté activo y bien escrito en Toteat).
-                    </p>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {logs.map((l) => {
-                        const good = l.ok && l.reason === "ok";
-                        const c = good ? GREEN : l.reason === "sin_pedidos_en_payload" ? ORANGE : RED;
-                        return (
-                          <div key={l.id} style={{ background: "var(--adm-hover)", border: `1px solid ${c}33`, borderRadius: 8, padding: "8px 10px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />
-                              <span style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 700, color: "var(--adm-text)" }}>{REASON_LABEL[l.reason] || l.reason}</span>
-                              {l.reason === "ok" && <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text2)" }}>· {l.processed} pedido{l.processed === 1 ? "" : "s"}</span>}
-                              <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{new Date(l.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                            </div>
-                            <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
-                              token: {l.tokenVia === "none" ? "no enviado" : `${l.tokenPreview} (${l.tokenVia})`}
-                              {l.reason === "token_no_reconocido" && " — no coincide con el de este local"}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </section>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
@@ -529,18 +398,6 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
 
 function Chip({ label, color }: { label: string; color?: string }) {
   return <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: 700, color: color || "var(--adm-text2)", background: color ? `${color}1a` : "var(--adm-hover)", borderRadius: 6, padding: "2px 7px" }}>{label}</span>;
-}
-
-function Field({ label, value, onCopy }: { label: string; value: string; onCopy: () => void }) {
-  return (
-    <div>
-      <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 4 }}>{label}</span>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>
-        <code style={{ flex: 1, minWidth: 0, fontFamily: "monospace", fontSize: "0.74rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</code>
-        <button onClick={onCopy} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 9px", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}><Copy size={12} /> Copiar</button>
-      </div>
-    </div>
-  );
 }
 
 function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
