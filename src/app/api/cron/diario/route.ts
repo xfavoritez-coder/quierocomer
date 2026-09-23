@@ -419,7 +419,6 @@ export async function GET(req: NextRequest) {
         where: {
           cartaStatus: "DELIVERED",
           deliveredAt: { gte: nudgeWindowStart, lte: nudgeWindowEnd },
-          activatedAt: null,
           email: { not: "" },
         },
         select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true, events: true },
