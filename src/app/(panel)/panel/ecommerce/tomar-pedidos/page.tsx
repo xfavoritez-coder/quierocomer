@@ -176,6 +176,11 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
 
   // Acciones de carrito
   const addToCart = useCallback((base: Omit<CartItem, "key" | "quantity" | "comment" | "courtesy" | "courtesyReason">, qty: number) => {
+    // Si el envío a Toteat está activo, un producto sin código no se comanda.
+    if (posAvailable && sendToPos && (!base.toteat_code || !String(base.toteat_code).trim())) {
+      showToast(`⚠ "${base.name}" no tiene código Toteat — mapéalo en la carta`);
+      return;
+    }
     const optKey = JSON.stringify(base.options.map((o) => o.value_id).sort());
     setCart((prev) => {
       const idx = prev.findIndex((c) => c.product_id === base.product_id && JSON.stringify(c.options.map((o) => o.value_id).sort()) === optKey && !c.courtesy);
@@ -184,7 +189,7 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
     });
     if (search) setSearch("");
     showToast(`✓ ${base.name}`);
-  }, [search]);
+  }, [search, posAvailable, sendToPos]);
 
   const onProductClick = (p: StoreProduct) => {
     if (p.is_sold_out) { showToast("Agotado"); return; }

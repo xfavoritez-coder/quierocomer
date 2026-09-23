@@ -52,6 +52,13 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(items) || !items.length) return NextResponse.json({ error: "El pedido no tiene productos" }, { status: 400 });
     if (!paymentMethod) return NextResponse.json({ error: "Falta el medio de pago" }, { status: 400 });
 
+    // Si se va a enviar a Toteat, TODO producto debe tener código: si falta,
+    // no se comanda (obliga a mapear el código en la carta).
+    if (sendToPos) {
+      const missing = Array.from(new Set(items.filter((it) => !it.toteat_code || !String(it.toteat_code).trim()).map((it) => it.name)));
+      if (missing.length) return NextResponse.json({ error: `No se puede comandar a Toteat: sin código de producto: ${missing.join(", ")}. Asigna el código en la carta.` }, { status: 400 });
+    }
+
     const isDelivery = orderType === "DELIVERY";
 
     // Subtotal server-side (nunca confiar en el total del cliente). El staff sí

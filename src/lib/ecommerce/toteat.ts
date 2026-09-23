@@ -117,6 +117,8 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
       productName: item.product_name,
       quantity: qty,
       amountAfterTax: basePrice * qty,
+      // Toteat EXIGE productCode en cada línea. La validación previa
+      // (dispatchOrderToPos) garantiza que todo plato tenga código.
       ...(item.toteat_code ? { productCode: item.toteat_code } : {}),
       isExtra: false,
       referenceLine: null,

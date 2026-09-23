@@ -34,6 +34,15 @@ export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean
     options: (it.options ?? []).map((o) => ({ value: o.value, price_delta: o.price_delta, toteat_modifier_code: o.toteat_modifier_code ?? null })),
   }));
 
+  // Toteat exige código de producto en cada línea: si algún plato no lo tiene,
+  // NO se comanda (hay que mapear el código en la carta). Falla con detalle.
+  const missing = Array.from(new Set(items.filter((it) => !it.toteat_code || !String(it.toteat_code).trim()).map((it) => it.product_name)));
+  if (missing.length) {
+    const msg = `Sin código Toteat: ${missing.join(", ")}`;
+    await prisma.onlineOrder.update({ where: { id: order.id }, data: { posError: msg.slice(0, 300) } });
+    return { ok: false, message: msg };
+  }
+
   const posOrder: PosOrder = {
     orderNumber: String(order.orderNumber ?? order.id.slice(-6)),
     customerName: order.customerName,
