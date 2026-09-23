@@ -98,7 +98,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       badge: "Beta",
       items: [
         { icon: Rocket, labelKey: "nav_ecommerce_home", href: `${base}/ecommerce` },
-        { icon: ConciergeBell, labelKey: "nav_ecommerce_pos", href: `${base}/ecommerce/tomar-pedidos` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
         { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
@@ -113,6 +112,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       badge: "Beta",
       items: [
         { icon: ListChecks, labelKey: "nav_centro_home", href: `${base}/centro-pedidos` },
+        { icon: ConciergeBell, labelKey: "nav_centro_pos", href: `${base}/centro-pedidos/tomar-pedidos` },
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
         { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
       ],

@@ -211,7 +211,7 @@ export default function EcommerceHomePage() {
         Gestión
       </h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-        <QuickLink href="/panel/ecommerce/tomar-pedidos" icon={ConciergeBell} label="Tomar pedidos" desc="Registra pedidos de mostrador / teléfono" />
+        <QuickLink href="/panel/centro-pedidos/tomar-pedidos" icon={ConciergeBell} label="Tomar pedidos" desc="Registra pedidos de mostrador / teléfono" />
         <QuickLink href="/panel/ecommerce/pedidos" icon={ClipboardList} label="Pedidos" desc="Recibe y gestiona pedidos online" />
         <QuickLink href="/panel/ecommerce/carta" icon={ShoppingBag} label="Catálogo" desc="Qué productos vender online" />
         <QuickLink href="/panel/ecommerce/cupones" icon={Ticket} label="Cupones" desc="Códigos de descuento" />
