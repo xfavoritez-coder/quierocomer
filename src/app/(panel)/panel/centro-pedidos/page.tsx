@@ -48,14 +48,15 @@ const STAGE_ACCENT: Record<Stage, string> = { preparing: ORANGE, ready: GREEN, o
 function nextActions(o: PosOrder): { stage: Stage; label: string; color: string }[] {
   if (o.posStatus === "canceled" || o.opsStage === "delivered") return [];
   if (o.isDelivery) {
+    // Delivery: cocina solo marca "Listo". El paso a reparto y la entrega los
+    // gestiona la app del repartidor (o el courier). Override manual: menú ⋮.
     if (o.opsStage === "preparing") return [{ stage: "ready", label: "Listo", color: GREEN }];
-    if (o.opsStage === "ready") return [{ stage: "out_for_delivery", label: "Salió a reparto", color: BLUE }];
-    if (o.opsStage === "out_for_delivery") return [{ stage: "delivered", label: "Entregado", color: GRAY }];
+    return [];
   } else {
+    // Retiro/mostrador: sin repartidor, el staff avanza el flujo.
     if (o.opsStage === "preparing") return [{ stage: "ready", label: "Listo", color: GREEN }];
     return [{ stage: "delivered", label: "Entregado", color: GRAY }];
   }
-  return [];
 }
 
 function saleBadge(o: PosOrder): { label: string; icon: any; color: string } {
@@ -502,8 +503,8 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
       ) : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Courier:</span>
-          <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Uber</button>
-          <button onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>PedidosYa</button>
+          <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Solicitar Uber</button>
+          <button onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Solicitar PedidosYa</button>
         </div>
       ) : null}
     </div>

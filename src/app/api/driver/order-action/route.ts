@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { authDriver } from "@/lib/driver/auth";
+import { readDriverBody } from "@/lib/driver/body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,8 +12,8 @@ export async function POST(req: NextRequest) {
   const driver = await authDriver(req);
   if (!driver) return NextResponse.json({ ok: false, error: "Sesión inválida." }, { status: 401 });
 
-  const body = await req.json().catch(() => ({}));
-  const id = (body?.delivery_id ?? "").toString();
+  const body = await readDriverBody(req);
+  const id = (body?.delivery_id ?? body?.order_id ?? "").toString();
   const action = (body?.action || "").toString();
   if (!id || !action) return NextResponse.json({ ok: false, error: "Faltan parámetros." }, { status: 422 });
 
