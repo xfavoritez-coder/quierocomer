@@ -406,9 +406,10 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
   const items: any[] = Array.isArray(o.items) ? o.items : [];
   const hasCourier = !!(o.uberDeliveryId || o.pyaShippingId);
   const courierName = o.uberDeliveryId ? "Uber Direct" : o.pyaShippingId ? "PedidosYa" : null;
-  // Solicitar courier solo mientras el pedido está "Listo" (aún sin repartidor).
-  // Una vez en reparto lo lleva alguien, no se ofrece courier.
-  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && o.opsStage === "ready";
+  // Se puede solicitar courier desde "En preparación" o "Listo" (a veces se pide
+  // con anticipación). Solicitarlo NO cambia la etapa: el paso a reparto lo hace
+  // el webhook de Uber/PedidosYa. En reparto ya lo lleva alguien, no se ofrece.
+  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready");
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
