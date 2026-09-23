@@ -153,14 +153,14 @@ export function mapToteatOrder(ord: AnyObj): MappedPosOrder | null {
   const orderReference = String(ord.orderReference ?? "").trim() || null;
 
   // ── Tipo de venta ──
-  let saleType = ord.type != null ? String(ord.type).toLowerCase() : "";
-  if (saleType === "" && Array.isArray(ord.tableId)) {
-    const hasPos = ord.tableId.some((n: any) => !isNaN(Number(n)) && Number(n) > 0);
-    const hasNeg = ord.tableId.some((n: any) => !isNaN(Number(n)) && Number(n) < 0);
-    if (hasPos) saleType = "dine-in";
-    else if (hasNeg) saleType = "delivery";
-  }
-  if (saleType === "" && addressLine) saleType = "delivery";
+  // OJO: Toteat suele declarar type="delivery" para TODO pedido de mesa virtual
+  // (retiro incluido). No podemos confiar solo en ese campo; clasificamos por
+  // evidencia real: mesa física (tableId > 0) → dine-in; dirección o costo de
+  // reparto → delivery; en otro caso (mesa virtual sin dirección ni envío) → retiro.
+  const declaredType = ord.type != null ? String(ord.type).toLowerCase() : "";
+  const hasPosTable = Array.isArray(ord.tableId) && ord.tableId.some((n: any) => !isNaN(Number(n)) && Number(n) > 0);
+  // saleType provisional (se ajusta abajo, ya con el deliveryFee calculado).
+  let saleType = declaredType;
 
   // ── Ítems ──
   let items = ord.items ?? ord.orderItems ?? ord.products ?? null;
@@ -207,7 +207,24 @@ export function mapToteatOrder(ord: AnyObj): MappedPosOrder | null {
   }
   const { tip, change } = tipChange(payments, saleType || (ord.type ?? null));
   const changeAmount = change > 0 ? change : sumCashOver;
-  const isDelivery = deliveryFee > 0 || saleType === "delivery";
+
+  // ── Clasificación final (delivery / retiro / mesa) por evidencia real ──
+  // Sinónimos de retiro que Toteat u otros canales pueden declarar explícitamente.
+  const PICKUP_TYPES = ["takeaway", "take-away", "pickup", "pick-up", "retiro", "toremove", "to-go", "togo", "counter", "mostrador", "delivery-pickup"];
+  const hasAddress = !!addressLine.trim();
+  let isDelivery: boolean;
+  if (hasPosTable) {
+    isDelivery = false; // mesa física → nunca delivery
+    saleType = "dine-in";
+  } else if (PICKUP_TYPES.includes(declaredType)) {
+    isDelivery = false; // Toteat lo marcó retiro explícitamente
+    saleType = "pickup";
+  } else {
+    // Mesa virtual: delivery solo si hay dirección o costo de reparto; si no, retiro
+    // (aunque Toteat lo declare "delivery").
+    isDelivery = hasAddress || deliveryFee > 0;
+    saleType = isDelivery ? "delivery" : "pickup";
+  }
 
   // ── completedAt ──
   const completedRaw = ord.completedAt ?? ord.completed_at ?? ord.deliveredAt ?? ord.closedAt ?? doc.closingDate ?? null;
