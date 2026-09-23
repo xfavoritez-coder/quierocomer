@@ -220,7 +220,7 @@ export default function CentroPedidosPage() {
   const copy = (txt: string, msg: string) => { navigator.clipboard?.writeText(txt).then(() => toast.success(msg)).catch(() => {}); };
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "8px 4px 60px" }}>
+    <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 4px 60px" }}>
       <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 16 }}>
         <ArrowLeft size={15} /> Panel
       </Link>
@@ -370,7 +370,7 @@ export default function CentroPedidosPage() {
                   <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>No hay pedidos en «{STAGE_LABEL[selectedStage]}».</p>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12, alignItems: "start" }}>
                   {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
                 </div>
               )}
