@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -23,6 +23,7 @@ export default function CentroPedidosConfigPage() {
   // Conexión con Toteat (webhook)
   const [token, setToken] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const load = useCallback(() => {
     if (!restaurantId) return;
@@ -39,7 +40,7 @@ export default function CentroPedidosConfigPage() {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/pos-orders/config?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setToken(d.token); })
+      .then((d) => { if (d) { setToken(d.token); if (!d.token) setSetupOpen(true); } })
       .catch(() => {});
   }, [restaurantId]);
   useEffect(() => { reloadConfig(); }, [reloadConfig]);
@@ -106,12 +107,14 @@ export default function CentroPedidosConfigPage() {
       </div>
 
       {/* Conexión con Toteat */}
-      <section style={{ background: "var(--adm-card)", border: `1px solid ${token ? "var(--adm-card-border)" : ACCENT}`, borderRadius: 14, marginBottom: 16, padding: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+      <section style={{ background: "var(--adm-card)", border: `1px solid ${token ? "var(--adm-card-border)" : ACCENT}`, borderRadius: 14, marginBottom: 16, overflow: "hidden" }}>
+        <button onClick={() => setSetupOpen((v) => !v)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text)" }}>
           <Link2 size={17} color={ACCENT} />
-          <span style={{ flex: 1, fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)" }}>Conexión con Toteat {token ? "" : "· pendiente"}</span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <span style={{ flex: 1, textAlign: "left", fontFamily: F, fontSize: "0.95rem", fontWeight: 800 }}>Conexión con Toteat {token ? "" : "· pendiente"}</span>
+          {setupOpen ? <ChevronUp size={17} color="var(--adm-text3)" /> : <ChevronDown size={17} color="var(--adm-text3)" />}
+        </button>
+        {setupOpen && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 16px 16px" }}>
           <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
             En Toteat, configura el <strong>Post Hook URL</strong> de pedidos apuntando a esta URL y agrega el header <strong>x-webhook-token</strong> con el token del local. Si Toteat no permite headers, usa la URL con el token incluido.
           </p>
@@ -136,6 +139,7 @@ export default function CentroPedidosConfigPage() {
             </>
           )}
         </div>
+        )}
       </section>
 
       {/* Ajustes del flujo */}
