@@ -367,6 +367,7 @@ model Restaurant {
   ownerViewTokenUsedAt       DateTime?
   bodegaEnabled              Boolean                   @default(false)
   bodegaId                   String?
+  centroPedidosEnabled       Boolean                   @default(false)
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]

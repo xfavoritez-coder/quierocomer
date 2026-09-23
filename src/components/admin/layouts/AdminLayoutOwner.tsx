@@ -43,7 +43,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -100,12 +100,20 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Rocket, labelKey: "nav_ecommerce_home", href: `${base}/ecommerce` },
         { icon: ConciergeBell, labelKey: "nav_ecommerce_pos", href: `${base}/ecommerce/tomar-pedidos` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
-        { icon: ListChecks, labelKey: "nav_ecommerce_order_center", href: `${base}/ecommerce/centro-pedidos` },
         { icon: Bike, labelKey: "nav_ecommerce_drivers", href: `${base}/ecommerce/repartidores` },
         { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
         { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
+      ],
+    }] : []),
+    ...(opts.hasCentroPedidos ? [{
+      key: "centro-pedidos",
+      label: "Centro de pedidos",
+      icon: ListChecks,
+      badge: "Beta",
+      items: [
+        { icon: ListChecks, labelKey: "nav_centro_home", href: `${base}/centro-pedidos` },
       ],
     }] : []),
     ...(opts.hasBodega ? [{
@@ -208,7 +216,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const profileType = (selected as any)?.profileType || "RESTAURANT";
   const hasEcommerce = !!(selected as any)?.ecommerceEnabled;
   const hasBodega = !!(selected as any)?.bodegaEnabled;
-  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega });
+  const hasCentroPedidos = !!(selected as any)?.centroPedidosEnabled;
+  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos });
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));
