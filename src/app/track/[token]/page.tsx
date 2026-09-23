@@ -53,7 +53,13 @@ export default function TrackPage() {
     }
     const map = mapRef.current;
     if (d.driverLat != null && d.driverLng != null) {
-      if (!markersRef.current.driver) markersRef.current.driver = L.marker([d.driverLat, d.driverLng]).addTo(map).bindPopup(d.driverName || "Repartidor");
+      const motoIcon = L.divIcon({
+        html: `<div style="font-size:30px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">🏍️</div>`,
+        className: "",
+        iconSize: [34, 34],
+        iconAnchor: [17, 30],
+      });
+      if (!markersRef.current.driver) markersRef.current.driver = L.marker([d.driverLat, d.driverLng], { icon: motoIcon }).addTo(map).bindPopup(d.driverName || "Repartidor");
       else markersRef.current.driver.setLatLng([d.driverLat, d.driverLng]);
     }
     if (d.destLat != null && d.destLng != null && !markersRef.current.dest) {
