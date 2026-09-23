@@ -30,10 +30,8 @@ export type FlowPlanConfig = {
   appPlan: Exclude<PlanKey, "FREE">;
 };
 
-export const FLOW_PLANS: Record<Exclude<PlanKey, "FREE">, FlowPlanConfig> = {
-  SILVER:  { planId: "qc_silver_monthly",  name: "QuieroComer Silver",  amountNet: PLANS.SILVER.priceMonthly,  appPlan: "SILVER" },
-  GOLD:    { planId: "qc_gold_monthly",    name: "QuieroComer Gold",    amountNet: PLANS.GOLD.priceMonthly,    appPlan: "GOLD" },
-  PREMIUM: { planId: "qc_premium_monthly", name: "QuieroComer Premium", amountNet: PLANS.PREMIUM.priceMonthly, appPlan: "PREMIUM" },
+export const FLOW_PLANS: Record<string, FlowPlanConfig> = {
+  PREMIUM: { planId: "qc_monthly", name: "QuieroComer", amountNet: 44900, appPlan: "PREMIUM" },
 };
 
 // Precio promocional para activacion desde demo (primer mes)

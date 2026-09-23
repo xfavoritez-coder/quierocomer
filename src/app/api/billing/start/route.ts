@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
   const amountNet = restaurant.customPlanPriceNet ?? planConfig.amountNet;
   const amountGross = grossOf(amountNet);
-  const planLabel = PLAN_LABELS[plan] || plan;
+  const planLabel = (PLAN_LABELS as Record<string, string>)[plan] || plan;
   const commerceOrder = `b_${restaurantId.slice(-8)}_${Date.now().toString(36)}`;
 
   try {
