@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
 
     // ── Pago offline: confirmar y enviar al POS de inmediato ──
     if (!isOnline) {
-      const pos = await dispatchOrderToPos(order.id).catch((e) => ({ ok: false, message: String(e) }));
+      const pos = await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => ({ ok: false, message: String(e) }));
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
       // Correo de confirmación al cliente (con el link de seguimiento).
       if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");

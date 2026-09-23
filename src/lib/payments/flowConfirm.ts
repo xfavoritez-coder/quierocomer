@@ -20,7 +20,7 @@ export async function confirmFlowPayment(token: string | null): Promise<boolean>
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" } });
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
-    await dispatchOrderToPos(order.id).catch((e) => console.error("[flowConfirm] POS:", e));
+    await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[flowConfirm] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return true;
   }

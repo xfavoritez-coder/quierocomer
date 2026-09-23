@@ -60,7 +60,7 @@ async function handle(req: NextRequest) {
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
-    await dispatchOrderToPos(order.id).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
+    await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return NextResponse.redirect(checkoutFor(base, `pago=exito&order=${order.id}`), 303);
   }

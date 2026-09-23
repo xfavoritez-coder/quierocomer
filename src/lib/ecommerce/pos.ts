@@ -15,7 +15,15 @@ interface StoredCartItem {
   options?: { value: string; price_delta: number; toteat_modifier_code?: string | null }[];
 }
 
-export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean; message: string; skipped?: boolean }> {
+/** Canal de origen del pedido, para distinguir el vendorName en Toteat:
+ *  - "manual": lo tomó el staff en "Tomar pedidos" → QC-<Local>
+ *  - "web":    lo hizo el cliente en el ecommerce   → QC-<Local>-Web  */
+export type PosOrderChannel = "manual" | "web";
+
+export async function dispatchOrderToPos(
+  orderId: string,
+  opts?: { channel?: PosOrderChannel },
+): Promise<{ ok: boolean; message: string; skipped?: boolean }> {
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
     include: { restaurant: { select: { ecommerceConfig: true, name: true } } },
@@ -55,8 +63,13 @@ export async function dispatchOrderToPos(orderId: string): Promise<{ ok: boolean
     discount: order.discount ?? 0,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
-    // Distintivo de origen en Toteat: "QC-<nombre del local>" (nunca vacío).
-    vendorName: `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`,
+    // Distintivo de origen en Toteat: "QC-<nombre del local>" para pedidos
+    // tomados por el staff, y "QC-<nombre del local>-Web" para los que hace el
+    // cliente en el ecommerce. Nunca vacío.
+    vendorName: (() => {
+      const base = `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`;
+      return opts?.channel === "web" ? `${base}-Web` : base;
+    })(),
   };
 
   const res = await sendOrderToToteat(posOrder, items, cfg.pos.toteat ?? {});

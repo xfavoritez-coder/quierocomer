@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     });
 
     let pos: { ok: boolean; message: string; skipped?: boolean } | null = null;
-    if (sendToPos) pos = await dispatchOrderToPos(order.id).catch((e) => ({ ok: false, message: String(e) }));
+    if (sendToPos) pos = await dispatchOrderToPos(order.id, { channel: "manual" }).catch((e) => ({ ok: false, message: String(e) }));
 
     return NextResponse.json({ ok: true, orderId: order.id, orderNumber, pos });
   } catch (e) {
