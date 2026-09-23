@@ -1326,6 +1326,13 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [pySecret, setPySecret] = useState("");
   // Google Maps
   const [gmapsKey, setGmapsKey] = useState("");
+  // Twilio WhatsApp (aviso al cliente al entrar el pedido al Centro de pedidos)
+  const [twEnabled, setTwEnabled] = useState(false);
+  const [twSid, setTwSid] = useState("");
+  const [twToken, setTwToken] = useState("");
+  const [twFrom, setTwFrom] = useState("");
+  const [twMsgSid, setTwMsgSid] = useState("");
+  const [twContentSid, setTwContentSid] = useState("");
   // Zonas de reparto (exportar/importar entre locales)
   const [zonesText, setZonesText] = useState("");
   const [zonesCopied, setZonesCopied] = useState(false);
@@ -1349,6 +1356,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setUbCustomer(c.uberDirect?.customerId || ""); setUbClient(c.uberDirect?.clientId || ""); setUbSecret(c.uberDirect?.clientSecret || ""); setUbSigning(c.uberDirect?.signingKey || "");
     setPyEnv(c.pedidosya?.env || "sandbox"); setPyClient(c.pedidosya?.clientId || ""); setPySecret(c.pedidosya?.clientSecret || "");
     setGmapsKey(c.googleMaps?.apiKey || "");
+    setTwEnabled(c.twilio?.enabled === true); setTwSid(c.twilio?.accountSid || ""); setTwToken(c.twilio?.authToken || ""); setTwFrom(c.twilio?.from || ""); setTwMsgSid(c.twilio?.messagingServiceSid || ""); setTwContentSid(c.twilio?.contentSid || "");
     setPosProvider(c.pos?.provider || "none");
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
@@ -1371,6 +1379,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       uberDirect: { customerId: ubCustomer.trim() || undefined, clientId: ubClient.trim() || undefined, clientSecret: ubSecret.trim() || undefined, signingKey: ubSigning.trim() || undefined },
       pedidosya: { env: pyEnv as "sandbox" | "production", clientId: pyClient.trim() || undefined, clientSecret: pySecret.trim() || undefined },
       googleMaps: { apiKey: gmapsKey.trim() || undefined },
+      twilio: { enabled: twEnabled, accountSid: twSid.trim() || undefined, authToken: twToken.trim() || undefined, from: twFrom.trim() || undefined, messagingServiceSid: twMsgSid.trim() || undefined, contentSid: twContentSid.trim() || undefined },
       pos: posProvider === "toteat"
         ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
         : { provider: "none" },
@@ -1410,7 +1419,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
             🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/{totalCount} configuradas</span>
           </p>
-          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · MercadoPago · Uber Direct · PedidosYa · Google Maps · POS</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · MercadoPago · Uber Direct · PedidosYa · Google Maps · Twilio · POS</p>
         </div>
         <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
       </div>
@@ -1456,6 +1465,18 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
 
           <IntegrationGroup title="Google Maps" sub="Autocompletado de direcciones y geocoding" ok={st.googleMaps}>
             <Input label="API Key" value={gmapsKey} onChange={setGmapsKey} placeholder="AIzaSy..." type="password" />
+          </IntegrationGroup>
+
+          <IntegrationGroup title="Twilio WhatsApp" sub="Avisa al cliente al entrar su pedido al Centro de pedidos" ok={st.twilio}>
+            <EnvSelect label="Estado" value={twEnabled ? "on" : "off"} onChange={(v) => setTwEnabled(v === "on")} options={[{ value: "off", label: "Desactivado" }, { value: "on", label: "Activado" }]} />
+            <Input label="Account SID" value={twSid} onChange={setTwSid} placeholder="ACxxxxxxxx..." />
+            <Input label="Auth Token" value={twToken} onChange={setTwToken} placeholder="token secreto" type="password" />
+            <Input label="Remitente WhatsApp (From)" value={twFrom} onChange={setTwFrom} placeholder="+14155238886" />
+            <Input label="Messaging Service SID (opcional)" value={twMsgSid} onChange={setTwMsgSid} placeholder="MGxxxxxxxx... (alternativa a From)" />
+            <Input label="Content SID (plantilla aprobada)" value={twContentSid} onChange={setTwContentSid} placeholder="HXxxxxxxxx..." />
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "4px 0 0", lineHeight: 1.5 }}>
+              La plantilla recibe estas variables: <code style={{ color: "#a78bfa" }}>{"{{1}}"}</code> nombre del cliente · <code style={{ color: "#a78bfa" }}>{"{{2}}"}</code> n° de pedido · <code style={{ color: "#a78bfa" }}>{"{{3}}"}</code> nombre del local. Usa el <b>From</b> o el <b>Messaging Service SID</b> (uno de los dos).
+            </p>
           </IntegrationGroup>
 
           {/* Zonas de reparto — exportar/importar entre locales */}

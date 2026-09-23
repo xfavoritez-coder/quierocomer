@@ -40,6 +40,18 @@ export interface GoogleMapsCreds {
   apiKey?: string;
 }
 
+/** Twilio WhatsApp: avisa al cliente cuando su pedido entra al Centro de pedidos.
+ *  Usa una plantilla aprobada (Content SID) por requisito de WhatsApp para
+ *  mensajes iniciados por el negocio. */
+export interface TwilioCreds {
+  enabled?: boolean;
+  accountSid?: string;   // AC...
+  authToken?: string;    // token secreto
+  from?: string;         // número WhatsApp remitente, ej "+14155238886" (se antepone whatsapp:)
+  messagingServiceSid?: string; // alternativa a "from" (MG...)
+  contentSid?: string;   // plantilla aprobada de WhatsApp (HX...)
+}
+
 /** Credenciales del POS Toteat para inyectar pedidos (estilo Servio / deliveryhandroll). */
 export interface ToteatPosCreds {
   apiUrl?: string; // default https://api.toteat.com/mw/or/1.0
@@ -73,6 +85,7 @@ export interface EcommerceConfig {
   uberDirect?: UberDirectCreds;
   pedidosya?: PedidosYaCreds;
   googleMaps?: GoogleMapsCreds;
+  twilio?: TwilioCreds;
   pos?: PosConfig;
   deliveryHandroll?: DeliveryHandrollCreds;
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
@@ -98,6 +111,8 @@ export function integrationStatus(cfg: EcommerceConfig) {
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
     googleMaps: !!cfg.googleMaps?.apiKey,
+    // Twilio WhatsApp: activo con creds + remitente + plantilla.
+    twilio: !!(cfg.twilio?.enabled && cfg.twilio?.accountSid && cfg.twilio?.authToken && (cfg.twilio?.from || cfg.twilio?.messagingServiceSid) && cfg.twilio?.contentSid),
     // POS: configurado si hay un proveedor seleccionado con sus credenciales mínimas.
     pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
   };
