@@ -208,7 +208,9 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
     orderReference: order.orderNumber,
     status: "new",
     type: isDelivery ? "delivery" : "takeaway",
-    channel: "webstore",
+    // Toteat valida el canal: "app" es el que acepta la cuenta (probado en
+    // deliveryhandroll con el mismo Toteat). "webstore" devuelve "Invalid Parameters".
+    channel: "app",
     vendorName,
     comment,
     document: { customer, line: lines },
