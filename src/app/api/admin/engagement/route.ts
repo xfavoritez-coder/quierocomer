@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (!adminId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   // Valoraciones por restaurante (agrupado)
-  const reviewsRaw = await prisma.review.groupBy({
+  const reviewsRaw = await prisma.privateReview.groupBy({
     by: ["restaurantId"],
     _count: { id: true },
     _max: { createdAt: true },
