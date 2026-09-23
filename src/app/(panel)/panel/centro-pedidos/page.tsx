@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Copy, Link2, ChevronDown, ChevronUp, Check, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Copy, Link2, ChevronDown, ChevronUp, Check, Send, Trash2, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -387,6 +387,16 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
   const isTest = o.externalId.startsWith("TEST-");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false); };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onEsc);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onEsc); };
+  }, [menuOpen]);
   const items: any[] = Array.isArray(o.items) ? o.items : [];
   const hasCourier = !!(o.uberDeliveryId || o.pyaShippingId);
   const courierName = o.uberDeliveryId ? "Uber Direct" : o.pyaShippingId ? "PedidosYa" : null;
@@ -401,7 +411,40 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
         {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
         {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
         <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
-        <button onClick={() => onDelete(o)} title="Eliminar pedido" aria-label="Eliminar pedido" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.6 }}><Trash2 size={13} /></button>
+        <div ref={menuRef} style={{ position: "relative" }}>
+          <button onClick={() => setMenuOpen((v) => !v)} title="Opciones" aria-label="Opciones" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: menuOpen ? "var(--adm-hover)" : "transparent", color: "var(--adm-text3)", cursor: "pointer" }}><MoreVertical size={15} /></button>
+          {menuOpen && (
+            <div style={{ position: "absolute", top: 30, right: 0, zIndex: 30, minWidth: 190, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.22)", padding: 6, display: "flex", flexDirection: "column", gap: 1 }}>
+              <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--adm-text3)", padding: "6px 8px 3px" }}>Mover a etapa</span>
+              {STAGES.map((st) => {
+                const current = st === o.opsStage;
+                return (
+                  <button
+                    key={st}
+                    disabled={current}
+                    onClick={() => { onAdvance(o, st); setMenuOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 8px", borderRadius: 8, border: "none", background: current ? "var(--adm-hover)" : "transparent", color: current ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", fontWeight: 600, cursor: current ? "default" : "pointer" }}
+                    onMouseEnter={(e) => { if (!current) e.currentTarget.style.background = "var(--adm-hover)"; }}
+                    onMouseLeave={(e) => { if (!current) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <span style={{ fontSize: "0.95rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
+                    <span style={{ flex: 1 }}>{STAGE_LABEL[st]}</span>
+                    {current && <span style={{ fontSize: "0.66rem", color: "var(--adm-text3)" }}>actual</span>}
+                  </button>
+                );
+              })}
+              <div style={{ height: 1, background: "var(--adm-card-border)", margin: "4px 2px" }} />
+              <button
+                onClick={() => { setMenuOpen(false); onDelete(o); }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 8px", borderRadius: 8, border: "none", background: "transparent", color: RED, fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = `${RED}14`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <Trash2 size={14} /> Eliminar pedido
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {o.vendorName && (
