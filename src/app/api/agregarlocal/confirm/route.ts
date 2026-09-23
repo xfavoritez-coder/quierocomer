@@ -147,6 +147,11 @@ export async function POST(request: Request) {
             isSoyFree: isDrinkCat ? false : detected.isSoyFree,
             isPhotoReferential: dish._unsplash || false,
             isActive: true,
+            txDishType: [],
+            txCuisine: [],
+            txMealSlot: [],
+            txIngredient: [],
+            txEstilo: [],
           },
         });
 
