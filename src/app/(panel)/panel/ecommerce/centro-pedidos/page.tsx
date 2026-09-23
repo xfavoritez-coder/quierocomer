@@ -366,6 +366,12 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
         <button onClick={() => onDelete(o)} title="Eliminar pedido" aria-label="Eliminar pedido" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: "transparent", color: "var(--adm-text3)", cursor: "pointer", opacity: 0.6 }}><Trash2 size={13} /></button>
       </div>
 
+      {o.vendorName && (
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 800, letterSpacing: "0.02em", color: "var(--adm-text3)", background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 999, padding: "2px 10px", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.vendorName}</span>
+        </div>
+      )}
+
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
         <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
         <span style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: ACCENT, flexShrink: 0 }}>{clp(o.totalAmount)}</span>
