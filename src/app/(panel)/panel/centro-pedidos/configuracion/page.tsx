@@ -1,32 +1,17 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, RefreshCw, Copy } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
-const GREEN = "#22c55e", ORANGE = "#f97316", RED = "#ef4444";
 
 interface CentroPedidosConfig {
   autoDeliverPickup?: boolean;
 }
-
-interface WebhookLog {
-  id: string; ok: boolean; reason: string; processed: number;
-  tokenPreview: string | null; tokenVia: string | null; headerKeys: string | null;
-  ip: string | null; bodyPreview: string | null; createdAt: string; restaurantId: string | null;
-}
-
-const REASON_LABEL: Record<string, string> = {
-  ok: "Recibido y guardado",
-  sin_pedidos_en_payload: "Llegó, pero el payload no traía pedidos",
-  token_no_reconocido: "Token no coincide con ningún local",
-  sin_token: "Llegó sin token",
-  json_invalido: "Body no es JSON válido",
-};
 
 export default function CentroPedidosConfigPage() {
   const session = useSessionContext();
@@ -38,7 +23,6 @@ export default function CentroPedidosConfigPage() {
   // Conexión con Toteat (webhook)
   const [token, setToken] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
-  const [logs, setLogs] = useState<WebhookLog[]>([]);
 
   const load = useCallback(() => {
     if (!restaurantId) return;
@@ -55,7 +39,7 @@ export default function CentroPedidosConfigPage() {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/pos-orders/config?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setToken(d.token); setLogs(d.logs || []); } })
+      .then((d) => { if (d) setToken(d.token); })
       .catch(() => {});
   }, [restaurantId]);
   useEffect(() => { reloadConfig(); }, [reloadConfig]);
@@ -149,40 +133,6 @@ export default function CentroPedidosConfigPage() {
               <button onClick={generarToken} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
                 Regenerar token (invalida el anterior)
               </button>
-
-              {/* Diagnóstico: últimos intentos entrantes */}
-              <div style={{ marginTop: 6, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)" }}>Últimos intentos recibidos</span>
-                  <button onClick={reloadConfig} title="Refrescar" style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={13} /></button>
-                </div>
-                {logs.length === 0 ? (
-                  <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                    Aún no ha llegado ninguna petición. Si Toteat ya recibió pedidos y aquí no aparece nada, la petición <strong>no está llegando</strong> a esta URL (revisa que el Post Hook esté activo y bien escrito en Toteat).
-                  </p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {logs.map((l) => {
-                      const good = l.ok && l.reason === "ok";
-                      const c = good ? GREEN : l.reason === "sin_pedidos_en_payload" ? ORANGE : RED;
-                      return (
-                        <div key={l.id} style={{ background: "var(--adm-hover)", border: `1px solid ${c}33`, borderRadius: 8, padding: "8px 10px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />
-                            <span style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 700, color: "var(--adm-text)" }}>{REASON_LABEL[l.reason] || l.reason}</span>
-                            {l.reason === "ok" && <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text2)" }}>· {l.processed} pedido{l.processed === 1 ? "" : "s"}</span>}
-                            <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{new Date(l.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                          <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
-                            token: {l.tokenVia === "none" ? "no enviado" : `${l.tokenPreview} (${l.tokenVia})`}
-                            {l.reason === "token_no_reconocido" && " — no coincide con el de este local"}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>
