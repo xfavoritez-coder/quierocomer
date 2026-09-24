@@ -499,12 +499,12 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
   const hasOpts = (product.option_groups?.length ?? 0) > 0;
   return (
     <button onClick={soldOut ? undefined : onClick} style={{
-      width: "100%", display: "grid", gridTemplateColumns: "132px 1fr", gap: 16, padding: 10, borderRadius: 26, minHeight: 152,
+      width: "100%", display: "grid", gridTemplateColumns: "152px 1fr", gap: 14, padding: 8, borderRadius: 26, minHeight: 164,
       background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
       border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
       position: "relative", overflow: "hidden", textAlign: "left", cursor: soldOut ? "not-allowed" : "pointer", opacity: soldOut ? 0.55 : 1, fontFamily: "inherit",
     }}>
-      <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 132, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 148, borderRadius: 20, overflow: "hidden", flexShrink: 0, background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>}

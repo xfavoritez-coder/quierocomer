@@ -452,9 +452,9 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
     if (willFav) { setHeartPop(true); setTimeout(() => setHeartPop(false), 340); }
   };
   return (
-    <div className={`relative bg-white rounded-2xl shadow-sm p-4 flex items-stretch gap-4 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
-      {/* Miniatura */}
-      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+    <div className={`relative bg-white rounded-2xl shadow-sm p-2.5 flex items-stretch gap-3 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
+      {/* Miniatura — grande, roza el borde con un poco de respiro */}
+      <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-32 sm:w-36 self-stretch min-h-[7.5rem] rounded-xl overflow-hidden shrink-0 bg-gray-100">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
