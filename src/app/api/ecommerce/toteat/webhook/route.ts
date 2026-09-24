@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { extractOrders, mapToteatOrder } from "@/lib/ecommerce/posOrders";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
-import { sendWhatsappTemplate } from "@/lib/ecommerce/twilio";
+import { sendWhatsappTemplate, localNameFromVendor } from "@/lib/ecommerce/twilio";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
   }
 
   let processed = 0;
-  const nuevos: { id: string; externalId: string; customerName: string; customerPhone: string; orderReference: string; total: number; isDelivery: boolean }[] = [];
+  const nuevos: { id: string; externalId: string; customerName: string; customerPhone: string; orderReference: string; vendorName: string; total: number; isDelivery: boolean }[] = [];
 
   for (const ord of orders) {
     const m = mapToteatOrder(ord);
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       await prisma.posOrder.update({ where: { id: existing.id }, data });
     } else {
       const created = await prisma.posOrder.create({ data: { restaurantId, externalId: m.externalId, provider: "toteat", ...data }, select: { id: true } });
-      nuevos.push({ id: created.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, total: m.totalAmount, isDelivery: m.isDelivery });
+      nuevos.push({ id: created.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, vendorName: m.vendorName || "", total: m.totalAmount, isDelivery: m.isDelivery });
     }
     processed++;
   }
@@ -130,14 +130,17 @@ export async function POST(req: NextRequest) {
         const twilio = parseEcommerceConfig(r?.ecommerceConfig).twilio;
         const enabled = !!(twilio?.enabled && twilio.accountSid && twilio.authToken && (twilio.from || twilio.messagingServiceSid) && twilio.contentSid);
         if (!enabled) return;
-        const storeName = (r?.name || "").trim() || "el local";
+        const fallbackName = (r?.name || "").trim() || "el local";
         for (const n of nuevos) {
           if (!n.customerPhone?.trim()) continue;
           if (n.externalId.startsWith("TEST-")) continue; // no avisar en pedidos de prueba
+          // El local que ve el cliente es la MARCA del pedido (una cuenta Toteat
+          // puede recibir pedidos de varias marcas). Nunca el nombre del local técnico.
+          const localName = localNameFromVendor(n.vendorName, fallbackName);
           await sendWhatsappTemplate(twilio!, n.customerPhone, {
-            "1": n.customerName || "Cliente",
-            "2": n.orderReference || "",
-            "3": storeName,
+            "1": n.orderReference || "",
+            "2": localName,
+            "3": n.customerName || "Cliente",
           }).catch(() => ({ ok: false }));
         }
       } catch { /* noop */ }

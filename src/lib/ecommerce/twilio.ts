@@ -26,6 +26,18 @@ function normalizeFrom(from: string): string {
   return `whatsapp:${f.startsWith("+") ? f : `+${f.replace(/\D/g, "")}`}`;
 }
 
+/** Nombre de la marca/local visible para el cliente, a partir del vendorName del
+ *  pedido. Un mismo Centro de pedidos (una cuenta Toteat) puede recibir pedidos de
+ *  varias marcas: el vendorName llega como "QC-<Local>" o "QC-<Local>-Web".
+ *  Limpia el prefijo "QC-" y el sufijo "-Web". Si no hay, usa el fallback. */
+export function localNameFromVendor(vendorName: string | null | undefined, fallback: string): string {
+  const v = (vendorName || "").trim();
+  if (!v) return fallback;
+  let name = v.replace(/^QC-/i, "").replace(/-Web$/i, "").trim();
+  if (!name || /^quierocomer$/i.test(name)) return fallback;
+  return name;
+}
+
 export interface TwilioSendResult {
   ok: boolean;
   sid: string | null;

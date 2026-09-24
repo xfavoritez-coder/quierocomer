@@ -1475,7 +1475,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             <Input label="Messaging Service SID (opcional)" value={twMsgSid} onChange={setTwMsgSid} placeholder="MGxxxxxxxx... (alternativa a From)" />
             <Input label="Content SID (plantilla aprobada)" value={twContentSid} onChange={setTwContentSid} placeholder="HXxxxxxxxx..." />
             <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "4px 0 0", lineHeight: 1.5 }}>
-              La plantilla recibe estas variables: <code style={{ color: "#a78bfa" }}>{"{{1}}"}</code> nombre del cliente · <code style={{ color: "#a78bfa" }}>{"{{2}}"}</code> n° de pedido · <code style={{ color: "#a78bfa" }}>{"{{3}}"}</code> nombre del local. Usa el <b>From</b> o el <b>Messaging Service SID</b> (uno de los dos).
+              La plantilla recibe: <code style={{ color: "#a78bfa" }}>{"{{1}}"}</code> n° de pedido · <code style={{ color: "#a78bfa" }}>{"{{2}}"}</code> nombre del local (marca del pedido) · <code style={{ color: "#a78bfa" }}>{"{{3}}"}</code> nombre del cliente. <b>No pongas el nombre del local fijo en el texto</b>: usa <code style={{ color: "#a78bfa" }}>{"{{2}}"}</code> para que muestre la marca correcta (ej. Haruna). Usa el <b>From</b> o el <b>Messaging Service SID</b> (uno de los dos).
             </p>
           </IntegrationGroup>
 
