@@ -454,6 +454,7 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
             <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#60a5fa", fontWeight: 600 }}>Foto {lead.cartaFileUrl!.includes(",") ? i + 1 : ""} ↗</a>
           ))}
           {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#43d17b", fontWeight: 600 }}>Ver carta ↗</a>}
+          {lead.generatedSlug && <a href={`/api/panel/demo-auth?slug=${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#a78bfa", fontWeight: 600 }}>Ir a panel ↗</a>}
           {lead.generatedSlug && lead.activatedAt && lead.convertedToOwnerId && (
             <button
               onClick={async () => {
