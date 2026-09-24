@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { extractOrders, mapToteatOrder } from "@/lib/ecommerce/posOrders";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   }
 
   let processed = 0;
-  const nuevos: { id: string; externalId: string; customerName: string; customerPhone: string; orderReference: string; vendorName: string; total: number; isDelivery: boolean }[] = [];
+  const nuevos: { id: string; externalId: string; customerName: string; customerPhone: string; orderReference: string; vendorName: string; trackingToken: string; total: number; isDelivery: boolean }[] = [];
 
   for (const ord of orders) {
     const m = mapToteatOrder(ord);
@@ -112,8 +113,10 @@ export async function POST(req: NextRequest) {
     if (existing) {
       await prisma.posOrder.update({ where: { id: existing.id }, data });
     } else {
-      const created = await prisma.posOrder.create({ data: { restaurantId, externalId: m.externalId, provider: "toteat", ...data }, select: { id: true } });
-      nuevos.push({ id: created.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, vendorName: m.vendorName || "", total: m.totalAmount, isDelivery: m.isDelivery });
+      // Token de seguimiento desde que entra el pedido (link /track/<token> ya usable).
+      const trackingToken = crypto.randomBytes(20).toString("hex");
+      const created = await prisma.posOrder.create({ data: { restaurantId, externalId: m.externalId, provider: "toteat", trackingToken, ...data }, select: { id: true } });
+      nuevos.push({ id: created.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, vendorName: m.vendorName || "", trackingToken, total: m.totalAmount, isDelivery: m.isDelivery });
     }
     processed++;
   }
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
             "1": n.orderReference || "",
             "2": localName,
             "3": n.customerName || "Cliente",
+            "4": n.trackingToken, // sufijo del botón: https://quierocomer.com/track/{{4}}
           }).catch(() => ({ ok: false }));
         }
       } catch { /* noop */ }

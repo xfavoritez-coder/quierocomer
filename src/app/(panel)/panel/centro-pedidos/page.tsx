@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -20,7 +20,7 @@ interface PosOrder {
   totalAmount: number; paidAmount: number; tipAmount: number; changeAmount: number; deliveryFee: number; discountAmount: number;
   currency: string; vendorName: string | null; orderReference: string | null;
   items: any; completedAt: string | null; createdAt: string; updatedAt: string;
-  assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any;
+  assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any; trackingToken?: string | null;
 }
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
@@ -311,6 +311,22 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
                   </button>
                 );
               })}
+              {o.trackingToken && (
+                <>
+                  <div style={{ height: 1, background: "var(--adm-card-border)", margin: "4px 2px" }} />
+                  <a
+                    href={`/track/${o.trackingToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 8px", borderRadius: 8, border: "none", background: "transparent", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--adm-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <MapPinned size={14} /> Ver seguimiento
+                  </a>
+                </>
+              )}
               <div style={{ height: 1, background: "var(--adm-card-border)", margin: "4px 2px" }} />
               <button
                 onClick={() => { setMenuOpen(false); onDelete(o); }}

@@ -2,11 +2,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
+type Line = { name: string; qty: number };
 type Track = {
   ok: boolean; store?: string; storeLogo?: string | null; statusLabel?: string; status?: string; delivered?: boolean;
+  isDelivery?: boolean; orderType?: string; orderReference?: string | null;
   customerName?: string; address?: string; destLat?: number | null; destLng?: number | null;
+  items?: Line[]; total?: number; deliveryFee?: number; tip?: number; discount?: number; createdAt?: string | null;
   driverLat?: number | null; driverLng?: number | null; driverName?: string | null; lastPingAt?: string | null; courierTrackingUrl?: string | null;
 };
+
+const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
 const STEPS = ["preparing", "ready", "out_for_delivery", "delivered"];
 const STEP_LABEL: Record<string, string> = { preparing: "Preparando", ready: "Listo", out_for_delivery: "En camino", delivered: "Entregado" };
@@ -111,9 +116,47 @@ export default function TrackPage() {
         {d.courierTrackingUrl ? (
           <a href={d.courierTrackingUrl} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", marginTop: 14, padding: 12, borderRadius: 12, background: "#111", color: "#fff", fontWeight: 700, textDecoration: "none" }}>Ver seguimiento del courier →</a>
         ) : null}
+
+        {/* Resumen del pedido */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 18, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ fontWeight: 800, fontSize: "1rem", color: "#111" }}>Tu pedido{d.orderReference ? ` · #${d.orderReference}` : ""}</div>
+            <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#7a5300", background: "#F4A62322", borderRadius: 999, padding: "3px 10px" }}>
+              {d.orderType === "delivery" ? "🛵 Delivery" : d.orderType === "dine-in" ? "🍽️ En local" : "🛍️ Retiro"}
+            </span>
+          </div>
+
+          {d.items && d.items.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 7, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #eee" }}>
+              {d.items.map((it, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, fontSize: "0.9rem", color: "#333" }}>
+                  <span style={{ fontWeight: 800, color: "#111", minWidth: 24 }}>{it.qty}×</span>
+                  <span>{it.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: "0.86rem", color: "#555" }}>
+            {(d.deliveryFee ?? 0) > 0 && <Row label="Envío" value={clp(d.deliveryFee!)} />}
+            {(d.discount ?? 0) > 0 && <Row label="Descuento" value={`- ${clp(d.discount!)}`} />}
+            {(d.tip ?? 0) > 0 && <Row label="Propina" value={clp(d.tip!)} />}
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, paddingTop: 8, borderTop: "1px solid #eee", fontSize: "1.05rem", fontWeight: 800, color: "#111" }}>
+              <span>Total</span><span>{clp(d.total ?? 0)}</span>
+            </div>
+          </div>
+
+          {d.customerName ? <div style={{ marginTop: 12, fontSize: "0.8rem", color: "#888" }}>A nombre de {d.customerName}</div> : null}
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.72rem", color: "#aaa" }}>Pedido gestionado por {d.store}</div>
       </div>
     </div>
   );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return <div style={{ display: "flex", justifyContent: "space-between" }}><span>{label}</span><span>{value}</span></div>;
 }
 
 function Center({ children }: { children: React.ReactNode }) {
