@@ -96,6 +96,7 @@ export default function EcommercePedidosPage() {
   const [mapsKey, setMapsKey] = useState<string | null>(null);
   const [showWebpayToken, setShowWebpayToken] = useState(false);
   const [printMode, setPrintMode] = useState<"off" | "manual" | "auto">("off");
+  const [agentEnabled, setAgentEnabled] = useState(false); // agente de impresión local (ESC/POS)
   const [paperWidth, setPaperWidth] = useState<58 | 80>(80);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const printModeRef = useRef<"off" | "manual" | "auto">("off");
@@ -110,7 +111,7 @@ export default function EcommercePedidosPage() {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.config) { setPrintMode(d.config.printMode ?? "off"); setPaperWidth(d.config.printPaperWidth === 58 ? 58 : 80); } })
+      .then((d) => { if (d?.config) { setPrintMode(d.config.printMode ?? "off"); setPaperWidth(d.config.printPaperWidth === 58 ? 58 : 80); setAgentEnabled(!!d.config.printToken); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -210,6 +211,20 @@ export default function EcommercePedidosPage() {
       setDetail((d) => (d && d.id === id ? { ...d, status } : d));
       toast.success(`Pedido ${STATUS_LABEL[status].toLowerCase()}`);
     } catch { toast.error("Error de conexión"); }
+  }
+
+  // Imprimir comanda: si el local tiene agente de impresión (ESC/POS), lo re-encola
+  // para que el .exe la imprima; si no, cae a la impresión por navegador.
+  async function printComanda(o: Order) {
+    if (agentEnabled) {
+      try {
+        const res = await fetch("/api/panel/ecommerce/print-reenqueue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id }) });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); toast.error(d.error || "No se pudo enviar a la impresora"); return; }
+        toast.success("Enviado a la impresora");
+      } catch { toast.error("Error de conexión"); }
+      return;
+    }
+    setPrintOrder(o); // impresión por navegador
   }
 
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
@@ -352,9 +367,9 @@ export default function EcommercePedidosPage() {
                     </td>
                     <td style={{ ...tdStyle, textAlign: "right", whiteSpace: "nowrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
-                        {printMode !== "off" && !attempt && (
+                        {(printMode !== "off" || agentEnabled) && !attempt && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); setPrintOrder(o); }}
+                            onClick={(e) => { e.stopPropagation(); printComanda(o); }}
                             title="Imprimir comanda"
                             aria-label="Imprimir comanda"
                             style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer" }}
@@ -373,7 +388,7 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(detail)} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
