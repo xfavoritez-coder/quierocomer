@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 
 export const runtime = "nodejs";
 
@@ -122,6 +123,8 @@ export async function POST(req: NextRequest) {
 
     let pos: { ok: boolean; message: string; skipped?: boolean } | null = null;
     if (sendToPos) pos = await dispatchOrderToPos(order.id, { channel: "manual" }).catch((e) => ({ ok: false, message: String(e) }));
+    // Si el local no gestiona por POS, el pedido manual se espeja al Centro de pedidos.
+    void mirrorOnlineOrderToCentro(order.id, "manual").catch(() => {});
 
     return NextResponse.json({ ok: true, orderId: order.id, orderNumber, pos });
   } catch (e) {

@@ -91,6 +91,29 @@ export interface EcommerceConfig {
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
 
+/** Ajustes del pilar Centro de pedidos (Restaurant.centroPedidosConfig, JSON). */
+export interface CentroPedidosConfig {
+  /** Pedidos de retiro: pasarlos automáticamente a "Entregado" al marcarlos "Listo". */
+  autoDeliverPickup?: boolean;
+  /** Gestionar todos los pedidos del POS (Toteat). Si está activo, el board se
+   *  alimenta SOLO de los pedidos que envía el POS y NO se espejan los de
+   *  ecommerce/tomar-pedidos (evita duplicados). Si está inactivo, los pedidos de
+   *  ecommerce y manuales sí aparecen en el Centro de pedidos.
+   *  Si no está definido, el valor efectivo es: ¿tiene POS Toteat configurado? */
+  posMode?: boolean;
+}
+
+export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as CentroPedidosConfig;
+  return {};
+}
+
+/** Modo POS efectivo: explícito si está definido; si no, depende de si hay POS Toteat. */
+export function effectivePosMode(centro: CentroPedidosConfig, ecommerce: EcommerceConfig): boolean {
+  if (typeof centro.posMode === "boolean") return centro.posMode;
+  return ecommerce.pos?.provider === "toteat";
+}
+
 export const TOTEAT_DEFAULT_API_URL = "https://api.toteat.com/mw/or/1.0";
 
 /** Normaliza el JSON crudo de la DB a un EcommerceConfig seguro. */

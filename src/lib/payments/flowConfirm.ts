@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { flowGetStatus, flowSettingsFor } from "@/lib/payments/flow";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
@@ -21,6 +22,7 @@ export async function confirmFlowPayment(token: string | null): Promise<boolean>
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
     await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[flowConfirm] POS:", e));
+    void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return true;
   }

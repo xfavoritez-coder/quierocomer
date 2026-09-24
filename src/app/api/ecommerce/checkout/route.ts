@@ -4,6 +4,7 @@ import { webpayInit, webpaySettingsFor } from "@/lib/payments/webpay";
 import { flowInit, flowSettingsFor } from "@/lib/payments/flow";
 import { mpCreatePreference, mercadopagoSettingsFor } from "@/lib/payments/mercadopago";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
@@ -223,6 +224,7 @@ export async function POST(req: NextRequest) {
     // ── Pago offline: confirmar y enviar al POS de inmediato ──
     if (!isOnline) {
       const pos = await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => ({ ok: false, message: String(e) }));
+      void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
       // Correo de confirmación al cliente (con el link de seguimiento).
       if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");

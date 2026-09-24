@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { webpayConfirm, webpaySettingsFor } from "@/lib/payments/webpay";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
+import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
@@ -61,6 +62,7 @@ async function handle(req: NextRequest) {
     void sendOrderStatusEmail(order.id, "ACCEPTED");
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
     await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
+    void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
     if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     return NextResponse.redirect(checkoutFor(base, `pago=exito&order=${order.id}`), 303);
   }

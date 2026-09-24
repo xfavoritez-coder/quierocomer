@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -11,12 +11,14 @@ const ACCENT = "#F4A623";
 
 interface CentroPedidosConfig {
   autoDeliverPickup?: boolean;
+  posMode?: boolean;
 }
 
 export default function CentroPedidosConfigPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [cfg, setCfg] = useState<CentroPedidosConfig>({});
+  const [posMode, setPosMode] = useState(false); // valor efectivo mostrado en el toggle
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -30,7 +32,7 @@ export default function CentroPedidosConfigPage() {
     setLoading(true);
     fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.config) setCfg(d.config); })
+      .then((d) => { if (d) { if (d.config) setCfg(d.config); if (typeof d.posModeEffective === "boolean") setPosMode(d.posModeEffective); } })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
@@ -147,6 +149,14 @@ export default function CentroPedidosConfigPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", padding: 30, textAlign: "center" }}>Cargando…</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <ToggleRow
+            icon={Database}
+            title="Gestionar todos los pedidos del POS"
+            desc="Activado: el Centro de pedidos se alimenta SOLO de los pedidos que envía tu POS (Toteat) y NO trae los de ecommerce ni los de Tomar pedidos (así no llegan duplicados). Desactivado: los pedidos de ecommerce y manuales sí aparecen aquí (para locales sin POS)."
+            checked={posMode}
+            disabled={saving}
+            onChange={(v) => { setPosMode(v); update({ posMode: v }); }}
+          />
           <ToggleRow
             icon={ShoppingBag}
             title="Auto-entregar pedidos de retiro"
