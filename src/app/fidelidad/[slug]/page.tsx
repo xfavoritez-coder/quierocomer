@@ -75,9 +75,12 @@ export default async function FidelidadPage({ params }: { params: Promise<{ slug
     ? program.cardColorHex!
     : (restaurant.cartaAccentColor || "#F59E1B");
 
+  const leadData = await prisma.lead.findFirst({ where: { generatedSlug: slug }, select: { panelVisitedAt: true } });
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+
   return (
     <>
-      {(restaurant as any).isDemo && <OwnerPanelBar slug={slug} />}
+      {(restaurant as any).isDemo && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={slug} />}
       <PageHitTracker restaurantId={restaurant.id} page="fidelidad" />
       <EnrollClient
         slug={slug}

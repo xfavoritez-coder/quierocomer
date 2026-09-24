@@ -178,10 +178,16 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
     }
   }
 
+  const leadData = await prisma.lead.findFirst({
+    where: { generatedSlug: slug },
+    select: { panelVisitedAt: true },
+  });
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+
   return (
     <>
       <PageHitTracker restaurantId={config.id} page="pedir" />
-      {config.isDemo && <OwnerPanelBar slug={slug} />}
+      {config.isDemo && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={slug} />}
       <OrderCartProvider>
         {isPaused && <MenuPausedPage restaurantName={config.name} logoUrl={config.logoUrl} mode="ordering" />}
         <OrderMenuPage

@@ -39,9 +39,12 @@ export default async function ResenaPage({ params }: { params: Promise<{ slug: s
     );
   }
 
+  const leadData = await prisma.lead.findFirst({ where: { generatedSlug: slug }, select: { panelVisitedAt: true } });
+  const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
+
   return (
     <>
-      {restaurant.isDemo && <OwnerPanelBar slug={slug} />}
+      {restaurant.isDemo && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={slug} />}
       <PageHitTracker restaurantId={restaurant.id} page="resena" />
       <ResenaClient restaurant={{ ...restaurant, slug }} colorMode={(restaurant.cartaColorMode as string) || "DARK"} />
     </>

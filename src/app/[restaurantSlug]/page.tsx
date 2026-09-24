@@ -487,10 +487,15 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
     if (activeFeatures === 0) {
       redirect(`/qr/${restaurantSlug}`)
     }
+    const leadData = await prisma.lead.findFirst({
+      where: { generatedSlug: restaurantSlug },
+      select: { panelVisitedAt: true },
+    });
+    const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
     // Siempre mostrar landing con carta + features activas
     return (
       <>
-        {rest.isDemo && <OwnerPanelBar slug={restaurantSlug} />}
+        {rest.isDemo && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={restaurantSlug} />}
         <RestaurantLanding r={rest} />
       </>
     )
