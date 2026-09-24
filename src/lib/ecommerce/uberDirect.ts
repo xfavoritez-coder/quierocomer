@@ -53,31 +53,78 @@ export interface CourierInfo {
   status: UberStatus;
   trackingUrl: string | null;
   fee: number | null; // CLP
-  eta: string | null; // ISO dropoff_eta
+  eta: string | null; // ISO dropoff_eta (llega a casa del cliente)
+  pickupEta: string | null; // ISO pickup_eta (llega al local)
   courierName: string | null;
   courierPhone: string | null;
   courierVehicle: string | null;
   courierImg: string | null;
   location: { lat: number; lng: number } | null;
+  dropoffPin: string | null; // código que el cliente da al repartidor (respaldo)
+  pickupPin: string | null; // código para entregar el pedido al repartidor en el local
   proofPhotoUrl: string | null; // data URI cuando entregó
   updatedAt: string;
+}
+
+/** Normaliza un teléfono a E.164 chileno (Uber lo exige). */
+export function uberPhone(phone: string): string {
+  const p = (phone || "").trim();
+  if (!p) return "";
+  if (p[0] === "+") return p;
+  const digits = p.replace(/\D+/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("56")) return "+" + digits;
+  return "+56" + digits.replace(/^0+/, "");
+}
+
+/** Dirección estructurada (string JSON) que espera Uber Direct. */
+export function uberAddress(street: string, city: string): string {
+  return JSON.stringify({
+    street_address: [street],
+    city: city || "Santiago",
+    state: "Región Metropolitana",
+    zip_code: "",
+    country: "CL",
+  });
+}
+
+function firstStr(...vals: unknown[]): string | null {
+  for (const v of vals) { if (typeof v === "string" && v.trim()) return v; }
+  return null;
 }
 
 /** Extrae la info relevante del objeto delivery de Uber. */
 export function parseDelivery(d: Record<string, unknown>, prev?: Partial<CourierInfo>): CourierInfo {
   const courier = (d.courier as Record<string, unknown>) || {};
   const loc = (courier.location as { lat?: number; lng?: number }) || {};
+  const pickup = (d.pickup as Record<string, any>) || {};
+  const dropoff = (d.dropoff as Record<string, any>) || {};
+  // El PIN del cliente (dropoff pincode) puede venir en varias rutas según el evento.
+  const dropoffPin = firstStr(
+    (d as any).verification_requirements?.pincode?.value,
+    (d as any).dropoff_verification?.pincode?.value,
+    dropoff?.verification?.pincode?.value,
+    dropoff?.verification_requirements?.pincode?.value,
+  );
+  const pickupPin = firstStr(
+    (d as any).pickup_verification?.pincode?.value,
+    pickup?.verification?.pincode?.value,
+    pickup?.verification_requirements?.pincode?.value,
+  );
   return {
     deliveryId: String(d.id ?? prev?.deliveryId ?? ""),
     status: (d.status as string) ?? prev?.status ?? "pending",
     trackingUrl: (d.tracking_url as string) ?? prev?.trackingUrl ?? null,
     fee: typeof d.fee === "number" ? Math.round((d.fee as number) / 100) : prev?.fee ?? null, // Uber envía en centavos
     eta: (d.dropoff_eta as string) ?? prev?.eta ?? null,
-    courierName: (courier.name as string) ?? prev?.courierName ?? null,
-    courierPhone: (courier.phone_number as string) ?? prev?.courierPhone ?? null,
+    pickupEta: (d.pickup_eta as string) ?? prev?.pickupEta ?? null,
+    courierName: (courier.name as string) ?? (courier.first_name as string) ?? prev?.courierName ?? null,
+    courierPhone: (courier.phone_number as string) ?? ((courier.public_phone_info as any)?.formatted_phone_number as string) ?? prev?.courierPhone ?? null,
     courierVehicle: (courier.vehicle_type as string) ?? prev?.courierVehicle ?? null,
-    courierImg: (courier.img_href as string) ?? prev?.courierImg ?? null,
+    courierImg: (courier.img_href as string) ?? (courier.image_url as string) ?? prev?.courierImg ?? null,
     location: (loc.lat != null && loc.lng != null) ? { lat: loc.lat, lng: loc.lng } : prev?.location ?? null,
+    dropoffPin: dropoffPin ?? prev?.dropoffPin ?? null,
+    pickupPin: pickupPin ?? prev?.pickupPin ?? null,
     proofPhotoUrl: prev?.proofPhotoUrl ?? null,
     updatedAt: new Date().toISOString(),
   };
@@ -99,11 +146,15 @@ export interface CreateDeliveryParams {
   pickupName: string;
   pickupAddress: string;
   pickupPhone: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  pickupCity?: string | null;
   dropoffName: string;
   dropoffAddress: string;
   dropoffPhone: string;
   dropoffLat?: number | null;
   dropoffLng?: number | null;
+  dropoffCity?: string | null;
   dropoffNotes?: string | null;
   manifestItems: { name: string; quantity: number }[];
   manifestTotalValue: number; // CLP
@@ -123,16 +174,23 @@ export async function uberCreateDelivery(creds: UberCreds, params: CreateDeliver
   const token = await uberToken(creds);
   if (!token) return { ok: false, error: "No se pudo autenticar con Uber" };
 
+  const pickupCity = params.pickupCity || "Santiago";
+  const dropoffCity = params.dropoffCity || pickupCity;
   const body: Record<string, unknown> = {
     pickup_name: params.pickupName,
-    pickup_address: params.pickupAddress,
-    pickup_phone_number: params.pickupPhone,
+    pickup_address: uberAddress(params.pickupAddress, pickupCity), // dirección estructurada (JSON)
+    pickup_phone_number: uberPhone(params.pickupPhone),
     dropoff_name: params.dropoffName,
-    dropoff_address: params.dropoffAddress,
-    dropoff_phone_number: params.dropoffPhone,
-    manifest_items: params.manifestItems.map((it) => ({ name: it.name, quantity: it.quantity, size: "small" })),
-    manifest_total_value: Math.round(params.manifestTotalValue * 100), // centavos
+    dropoff_address: uberAddress(params.dropoffAddress, dropoffCity),
+    dropoff_phone_number: uberPhone(params.dropoffPhone),
+    manifest_items: params.manifestItems.map((it) => ({ name: it.name.slice(0, 60), quantity: it.quantity, size: "small" })),
+    // CLP no tiene decimales → se envía el monto en su unidad mínima (peso), no ×100.
+    manifest_total_value: Math.max(1, Math.round(params.manifestTotalValue)),
     external_id: params.externalId,
+    pickup_ready_dt: new Date().toISOString(),
+    // Verificación en la entrega: PIN de 4 dígitos (respaldo del cliente) + foto.
+    dropoff_verification: { pincode: { enabled: true }, picture: true },
+    ...(params.pickupLat != null && params.pickupLng != null ? { pickup_latitude: params.pickupLat, pickup_longitude: params.pickupLng } : {}),
     ...(params.dropoffNotes ? { dropoff_notes: params.dropoffNotes.slice(0, 280) } : {}),
     ...(params.dropoffLat != null && params.dropoffLng != null ? { dropoff_latitude: params.dropoffLat, dropoff_longitude: params.dropoffLng } : {}),
   };

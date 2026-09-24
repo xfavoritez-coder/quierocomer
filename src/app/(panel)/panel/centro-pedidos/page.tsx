@@ -25,6 +25,29 @@ interface PosOrder {
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
+const UBER_STATUS_LABEL: Record<string, string> = {
+  pending: "Buscando repartidor…",
+  pickup: "En camino al local",
+  pickup_complete: "Retiró el pedido",
+  dropoff: "En camino al cliente",
+  delivered: "Entregado",
+  canceled: "Cancelado",
+  returned: "Devuelto",
+};
+function courierStatusLabel(provider: string | null, status?: string | null): string {
+  if (!status) return provider === "PedidosYa" ? "Solicitado" : "Solicitado";
+  return UBER_STATUS_LABEL[status] || status;
+}
+/** "14:32 · en 8 min" a partir de un ISO de ETA. */
+function etaLabel(iso?: string | null): string | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null;
+  const hhmm = new Date(t).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+  const mins = Math.round((t - Date.now()) / 60000);
+  return mins > 0 ? `${hhmm} · en ${mins} min` : hhmm;
+}
+
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
 const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
 // Las 4 etapas del tablero (columna izquierda estilo deliveryhandroll).
@@ -395,13 +418,49 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
       )}
 
       {/* Courier externo (Uber / PedidosYa) para pedidos de delivery */}
-      {hasCourier ? (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: "#7c3aed", background: "rgba(124,58,237,0.1)", borderRadius: 7, padding: "3px 8px" }}><Bike size={12} /> {courierName}{o.courier?.status ? ` · ${o.courier.status}` : ""}</span>
-          {o.courier?.trackingUrl && <a href={o.courier.trackingUrl} target="_blank" rel="noreferrer" style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none" }}>Seguir →</a>}
-          {o.opsStage !== "delivered" && <button onClick={() => onCancelCourier(o)} style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: RED, background: "transparent", border: "none", cursor: "pointer" }}>Cancelar courier</button>}
+      {hasCourier ? (() => {
+        const c = o.courier || {};
+        const pickEta = etaLabel(c.pickupEta);
+        const dropEta = etaLabel(c.eta);
+        return (
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 7 }}>
+          {/* Repartidor + estado */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {c.courierImg
+              ? <img src={c.courierImg} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+              : <span style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(124,58,237,0.12)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Bike size={15} color="#7c3aed" /></span>}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 800, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.courierName || courierName}</div>
+              <div style={{ fontFamily: FB, fontSize: "0.7rem", color: "#7c3aed", fontWeight: 700 }}>{courierName} · {courierStatusLabel(courierName, c.status)}</div>
+            </div>
+            {c.courierPhone && <a href={`tel:${c.courierPhone}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 9px", borderRadius: 8, border: "1px solid var(--adm-card-border)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, textDecoration: "none" }}><Phone size={12} /> Llamar</a>}
+          </div>
+
+          {/* ETAs */}
+          {(pickEta || dropEta) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)" }}>
+              {pickEta && <span>🏍️ Llega al local: <strong style={{ color: "var(--adm-text)" }}>{pickEta}</strong></span>}
+              {dropEta && <span>🏠 Llega al cliente: <strong style={{ color: "var(--adm-text)" }}>{dropEta}</strong></span>}
+            </div>
+          )}
+
+          {/* Códigos (PIN) */}
+          {(c.pickupPin || c.dropoffPin) && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {c.pickupPin && <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", background: "var(--adm-hover)", borderRadius: 7, padding: "4px 9px" }}>🔑 Código local: <strong style={{ fontFamily: "monospace", color: "var(--adm-text)", letterSpacing: "1px" }}>{c.pickupPin}</strong></span>}
+              {c.dropoffPin && <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", background: "var(--adm-hover)", borderRadius: 7, padding: "4px 9px" }}>🔑 Código cliente: <strong style={{ fontFamily: "monospace", color: "var(--adm-text)", letterSpacing: "1px" }}>{c.dropoffPin}</strong></span>}
+            </div>
+          )}
+          {c.dropoffPin && <span style={{ fontFamily: FB, fontSize: "0.66rem", color: "var(--adm-text3)" }}>El cliente le da el <strong>código cliente</strong> al repartidor (respaldo si no le llegó).</span>}
+
+          {/* Seguir / cancelar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {c.trackingUrl && <a href={c.trackingUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none", fontWeight: 700 }}>Ver seguimiento →</a>}
+            {o.opsStage !== "delivered" && c.status !== "canceled" && <button onClick={() => onCancelCourier(o)} style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: RED, background: "transparent", border: "none", cursor: "pointer" }}>Cancelar courier</button>}
+          </div>
         </div>
-      ) : canRequestCourier ? (
+        );
+      })() : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Solicitar:</span>
           <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Uber</button>

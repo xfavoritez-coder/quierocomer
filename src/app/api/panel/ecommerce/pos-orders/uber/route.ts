@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, name: true, address: true, phone: true, whatsapp: true, ecommerceConfig: true } } } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, name: true, address: true, phone: true, whatsapp: true, lat: true, lng: true, ecommerceConfig: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.isDelivery) return NextResponse.json({ error: "El pedido no es de delivery" }, { status: 400 });
   if (order.uberDeliveryId) return NextResponse.json({ ok: true, alreadyRequested: true, courier: order.courier });
@@ -39,12 +39,14 @@ export async function POST(req: NextRequest) {
     pickupName: order.restaurant.name,
     pickupAddress: order.restaurant.address,
     pickupPhone,
+    pickupLat: order.restaurant.lat,
+    pickupLng: order.restaurant.lng,
     dropoffName: order.customerName,
     dropoffAddress: order.addressLine,
     dropoffPhone: order.customerPhone,
     dropoffLat: order.customerLat,
     dropoffLng: order.customerLng,
-    manifestItems: items.map((it) => ({ name: (it?.productName || it?.name || "Producto").toString(), quantity: Math.max(1, Number(it?.quantity) || 1) })).slice(0, 30),
+    manifestItems: items.length ? items.map((it) => ({ name: (it?.productName || it?.name || "Producto").toString(), quantity: Math.max(1, Number(it?.quantity) || 1) })).slice(0, 30) : [{ name: `Pedido ${order.orderReference || order.id.slice(-6)}`, quantity: 1 }],
     manifestTotalValue: order.totalAmount,
     externalId: order.id,
   };
