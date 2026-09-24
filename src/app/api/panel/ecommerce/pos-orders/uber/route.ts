@@ -29,6 +29,18 @@ export async function POST(req: NextRequest) {
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.isDelivery) return NextResponse.json({ error: "El pedido no es de delivery" }, { status: 400 });
   if (order.uberDeliveryId) return NextResponse.json({ ok: true, alreadyRequested: true, courier: order.courier });
+  if (order.pyaShippingId) return NextResponse.json({ error: "Este pedido ya tiene PedidosYa" }, { status: 409 });
+
+  // ── Claim atómico: evita que varios clics rápidos creen varias entregas Uber.
+  //    Solo UN request logra pasar uberDeliveryId de null → "PENDING" y crea.
+  const claim = await prisma.posOrder.updateMany({
+    where: { id: order.id, uberDeliveryId: null, pyaShippingId: null },
+    data: { uberDeliveryId: "PENDING" },
+  });
+  if (claim.count === 0) {
+    const cur = await prisma.posOrder.findUnique({ where: { id: order.id }, select: { courier: true } });
+    return NextResponse.json({ ok: true, alreadyRequested: true, courier: cur?.courier });
+  }
 
   const pickupPhone = order.restaurant.address ? (order.restaurant.phone || order.restaurant.whatsapp || "") : "";
   if (!order.restaurant.address || !pickupPhone) return NextResponse.json({ error: "Falta la dirección o teléfono del local (configúralos en el perfil)" }, { status: 400 });
@@ -52,7 +64,11 @@ export async function POST(req: NextRequest) {
   };
 
   const res = await uberCreateDelivery(uberSettingsFor(order.restaurant), params);
-  if (!res.ok || !res.delivery) return NextResponse.json({ error: res.error || "No se pudo solicitar el repartidor" }, { status: 502 });
+  if (!res.ok || !res.delivery) {
+    // Liberar el claim para permitir reintentar.
+    await prisma.posOrder.updateMany({ where: { id: order.id, uberDeliveryId: "PENDING" }, data: { uberDeliveryId: null } });
+    return NextResponse.json({ error: res.error || "No se pudo solicitar el repartidor" }, { status: 502 });
+  }
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { uberDeliveryId: res.delivery.deliveryId, courier: res.delivery as unknown as object, assignedTo: "Uber Direct" } });
   return NextResponse.json({ ok: true, courier: res.delivery });
@@ -68,6 +84,12 @@ export async function DELETE(req: NextRequest) {
   const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { ecommerceConfig: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.uberDeliveryId) return NextResponse.json({ ok: true });
+
+  // Si la solicitud aún estaba en curso (sentinel), solo se libera el claim.
+  if (order.uberDeliveryId === "PENDING") {
+    await prisma.posOrder.update({ where: { id }, data: { uberDeliveryId: null, courier: undefined as any, assignedTo: null } });
+    return NextResponse.json({ ok: true });
+  }
 
   const res = await uberCancelDelivery(uberSettingsFor(order.restaurant), order.uberDeliveryId);
   if (!res.ok) return NextResponse.json({ error: res.error || "No se pudo cancelar" }, { status: 502 });

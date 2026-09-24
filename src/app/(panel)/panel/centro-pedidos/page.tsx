@@ -96,6 +96,8 @@ export default function CentroPedidosPage() {
   const [selectedStage, setSelectedStage] = useState<Stage>("preparing");
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<Record<string, boolean>>({});
+  const [courierBusy, setCourierBusy] = useState<Record<string, boolean>>({});
+  const courierReq = useRef<Set<string>>(new Set());
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!restaurantId) return;
@@ -164,14 +166,24 @@ export default function CentroPedidosPage() {
 
   async function requestCourier(o: PosOrder, provider: "uber" | "pedidosya") {
     if (!restaurantId) return;
+    // Guard inmediato: ignora clics repetidos mientras hay una solicitud en curso
+    // (evita crear varias entregas Uber que luego llegan al local).
+    if (courierReq.current.has(o.id) || o.uberDeliveryId || o.pyaShippingId) return;
+    if (!confirm(provider === "uber" ? "¿Solicitar un repartidor de Uber para este pedido?" : "¿Solicitar un repartidor de PedidosYa para este pedido?")) return;
+    courierReq.current.add(o.id);
+    setCourierBusy((s) => ({ ...s, [o.id]: true }));
     const path = provider === "uber" ? "uber" : "pedidosya";
     try {
       const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id }) });
       const d = await r.json();
       if (!r.ok) { toast.error(d.error || "No se pudo solicitar el courier"); return; }
-      toast.success(provider === "uber" ? "Uber solicitado" : "PedidosYa solicitado");
+      toast.success(d.alreadyRequested ? "Este pedido ya tenía courier" : (provider === "uber" ? "Uber solicitado" : "PedidosYa solicitado"));
       fetchOrders(true);
     } catch { toast.error("Error de conexión"); }
+    finally {
+      courierReq.current.delete(o.id);
+      setCourierBusy((s) => { const n = { ...s }; delete n[o.id]; return n; });
+    }
   }
 
   async function cancelCourier(o: PosOrder) {
@@ -221,7 +233,7 @@ export default function CentroPedidosPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
+            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} />)}
           </div>
         )
       ) : (() => {
@@ -269,7 +281,7 @@ export default function CentroPedidosPage() {
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12, alignItems: "start" }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} />)}
+                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} />)}
                 </div>
               )}
             </div>
@@ -280,7 +292,7 @@ export default function CentroPedidosPage() {
   );
 }
 
-function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void }) {
+function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
@@ -462,9 +474,9 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier }
         );
       })() : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
-          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Solicitar:</span>
-          <button onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>Uber</button>
-          <button onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>PedidosYa</button>
+          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
+          <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber</button>
+          <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>PedidosYa</button>
         </div>
       ) : null}
     </div>

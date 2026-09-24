@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
   if (order.pyaShippingId || order.uberDeliveryId) return NextResponse.json({ error: "El pedido ya tiene un courier asignado" }, { status: 409 });
   if (!order.addressLine || !order.customerPhone) return NextResponse.json({ error: "El pedido no tiene dirección o teléfono de entrega" }, { status: 400 });
 
+  // Claim atómico: evita que clics rápidos creen varios envíos PedidosYa.
+  const claim = await prisma.posOrder.updateMany({
+    where: { id: order.id, pyaShippingId: null, uberDeliveryId: null },
+    data: { pyaShippingId: "PENDING" },
+  });
+  if (claim.count === 0) {
+    const cur = await prisma.posOrder.findUnique({ where: { id: order.id }, select: { courier: true } });
+    return NextResponse.json({ ok: true, alreadyRequested: true, courier: cur?.courier });
+  }
+
   const creds = pyaSettingsFor(order.restaurant);
   const res = await pyaCreateShipping(creds, {
     referenceId: `pos-${order.id}`,
@@ -42,7 +52,10 @@ export async function POST(req: NextRequest) {
     dropoffLat: order.customerLat,
     dropoffLng: order.customerLng,
   });
-  if (!res.ok || !res.courier) return NextResponse.json({ error: res.error || "No se pudo solicitar PedidosYa" }, { status: 502 });
+  if (!res.ok || !res.courier) {
+    await prisma.posOrder.updateMany({ where: { id: order.id, pyaShippingId: "PENDING" }, data: { pyaShippingId: null } });
+    return NextResponse.json({ error: res.error || "No se pudo solicitar PedidosYa" }, { status: 502 });
+  }
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { pyaShippingId: res.courier.deliveryId, courier: res.courier as unknown as object, assignedTo: "PedidosYa" } });
   return NextResponse.json({ ok: true, courier: res.courier });
@@ -58,6 +71,10 @@ export async function DELETE(req: NextRequest) {
   const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { ecommerceConfig: true, name: true, address: true, phone: true, whatsapp: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.pyaShippingId) return NextResponse.json({ ok: true });
+  if (order.pyaShippingId === "PENDING") {
+    await prisma.posOrder.update({ where: { id }, data: { pyaShippingId: null, courier: undefined as any, assignedTo: null } });
+    return NextResponse.json({ ok: true });
+  }
 
   const res = await pyaCancelShipping(pyaSettingsFor(order.restaurant), order.pyaShippingId);
   if (!res.ok) return NextResponse.json({ error: res.error || "No se pudo cancelar" }, { status: 502 });
