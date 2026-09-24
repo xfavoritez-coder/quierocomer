@@ -96,30 +96,34 @@ export default function EcommerceConfiguracionPage() {
     } catch { toast.error("Error de conexión"); }
   }
 
+  // Nombre del local (para distinguir el agente cuando hay varios en un PC).
+  const storeName = session?.restaurants?.find((r) => r.id === restaurantId)?.name || "";
+  const fileSlug = storeName.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "local";
+
   // Descarga el agente PowerShell con el token y la URL ya embebidos.
   function downloadAgent() {
     if (!cfg.printToken) return;
     const base = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com";
-    const script = buildPrintAgentInstaller(cfg.printToken, base);
+    const script = buildPrintAgentInstaller(cfg.printToken, base, storeName);
     const blob = new Blob([script], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "instalar-agente-quierocomer.bat";
+    a.download = `instalar-agente-${fileSlug}.bat`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  // Descarga el desinstalador (detiene el agente, lo quita del inicio y borra la carpeta).
+  // Descarga el desinstalador (detiene el agente de ESTE local, lo quita del inicio y borra la carpeta).
   function downloadUninstaller() {
-    const script = buildPrintAgentUninstaller();
+    const script = buildPrintAgentUninstaller(cfg.printToken || undefined);
     const blob = new Blob([script], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "desinstalar-agente-quierocomer.bat";
+    a.download = `desinstalar-agente-${fileSlug}.bat`;
     document.body.appendChild(a);
     a.click();
     a.remove();
