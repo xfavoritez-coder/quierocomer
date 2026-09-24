@@ -404,7 +404,7 @@ export default function EcommerceConfiguracionPage() {
           {/* Impresión de comandas */}
           {tab === "impresion" && (
           <section style={card}>
-            <SectionTitle icon={Printer} title="Impresión de comandas" sub="Imprime un ticket con cada pedido en tu impresora térmica. La automática requiere abrir Chrome con la opción de kiosco en el equipo del local." />
+            <SectionTitle icon={Printer} title="Impresión de comandas" sub="Imprime un ticket con cada pedido en tu impresora térmica: por navegador o con el agente local (ESC/POS, sin navegador y con corte automático)." />
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
               <label style={{ display: "block" }}>
                 <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Modo de impresión</span>
@@ -430,13 +430,19 @@ export default function EcommerceConfiguracionPage() {
                 </select>
               </label>
               {cfg.printMode === "auto" && (
-                <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Impresión automática — 2 opciones</p>
+                <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Automática por navegador (sin instalar nada)</p>
                   <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                    <strong>A) Sin instalar nada:</strong> abre esta misma pantalla de <strong>Pedidos</strong> en el equipo del local con Chrome en modo kiosco (<code>--kiosk-printing</code>) y déjala abierta.
+                    Abre esta misma pantalla de <strong>Pedidos</strong> en el equipo del local con Chrome en modo kiosco (<code>--kiosk-printing</code>) y déjala abierta. Si prefieres imprimir sin navegador, usa el <strong>agente local</strong> de abajo (funciona en cualquier modo).
                   </p>
+                </div>
+              )}
+
+              {/* Agente de impresión local (ESC/POS) — independiente del modo de arriba */}
+              <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Agente de impresión local (ESC/POS)</p>
                   <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                    <strong>B) Agente local (sin navegador, ESC/POS, corte automático):</strong> genera el token, descarga el agente y déjalo corriendo en la PC Windows con la impresora.
+                    Imprime directo en la térmica <strong>sin navegador</strong>, con corte automático. Funciona aunque el modo de arriba esté en <strong>Manual</strong> o <strong>Desactivada</strong>: imprime cada pedido nuevo al instante y también al tocar <strong>Imprimir comanda</strong> en Pedidos.
                   </p>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -481,7 +487,7 @@ export default function EcommerceConfiguracionPage() {
                         <button type="button" onClick={generatePrintToken} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Regenerar token</button>
                       </div>
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
-                        Guarda <code>instalar-agente-quierocomer.bat</code> en la PC Windows y <strong>haz doble clic</strong> (si aparece un aviso de Windows: <em>Más información → Ejecutar de todas formas</em>). El instalador crea el agente, lo deja corriendo <strong>junto al reloj</strong> (en la bandeja, junto a la hora) y hace que <strong>arranque solo con Windows</strong> — ya no queda ninguna ventana negra abierta. Cuando termine puedes cerrar la ventana del instalador. Para probar la impresora: clic derecho en el ícono de la bandeja → <em>Imprimir prueba local</em>. Para quitarlo o pausarlo: clic derecho → <em>Salir</em>. Regenera el token si crees que se filtró (invalida el anterior).
+                        Guarda el archivo <code>instalar-agente-{fileSlug}.bat</code> en la PC Windows y <strong>haz doble clic</strong> (si aparece un aviso de Windows: <em>Más información → Ejecutar de todas formas</em>). El instalador crea el agente, lo deja corriendo <strong>junto al reloj</strong> (en la bandeja, junto a la hora) y hace que <strong>arranque solo con Windows</strong> — ya no queda ninguna ventana negra abierta. Cuando termine puedes cerrar la ventana del instalador. Para probar la impresora: clic derecho en el ícono de la bandeja → <em>Imprimir prueba local</em>. Para quitarlo o pausarlo: clic derecho → <em>Salir</em>. Regenera el token si crees que se filtró (invalida el anterior).
                       </p>
                       <button type="button" onClick={downloadUninstaller} style={{ alignSelf: "flex-start", padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
                         Descargar desinstalador (quita el agente del equipo Windows)
@@ -492,8 +498,7 @@ export default function EcommerceConfiguracionPage() {
                       Generar token del agente
                     </button>
                   )}
-                </div>
-              )}
+              </div>
             </div>
           </section>
           )}
