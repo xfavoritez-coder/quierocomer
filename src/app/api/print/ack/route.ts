@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   // Solo marca si el pedido pertenece a ese local (evita marcar pedidos ajenos).
   const res = await prisma.onlineOrder.updateMany({
     where: { id: orderId, restaurantId: restaurant.id },
-    data: { printedAt: new Date() },
+    data: { printedAt: new Date(), printRequestedAt: null },
   });
   return NextResponse.json({ ok: res.count > 0 });
 }

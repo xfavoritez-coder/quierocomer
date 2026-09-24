@@ -29,7 +29,13 @@ export async function GET(req: NextRequest) {
       source: "ecommerce",
       printedAt: null,
       status: { not: "CANCELLED" },
-      createdAt: { gte: since },
+      // Auto-impresión: solo pedidos creados después de instalar el agente (no
+      // floodea el histórico). Reimpresión manual (printRequestedAt): sin importar
+      // la fecha, para poder reimprimir cualquier pedido a demanda.
+      OR: [
+        { createdAt: { gte: since } },
+        { printRequestedAt: { not: null } },
+      ],
     },
     orderBy: { createdAt: "asc" },
     take: 20,

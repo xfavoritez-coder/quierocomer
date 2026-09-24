@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const res = await prisma.onlineOrder.updateMany({
     where: { id, restaurantId },
-    data: { printedAt: null },
+    data: { printedAt: null, printRequestedAt: new Date() },
   });
   if (res.count === 0) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   return NextResponse.json({ ok: true });
