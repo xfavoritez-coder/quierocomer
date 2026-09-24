@@ -87,7 +87,7 @@ export default function TrackPage() {
     <div style={{ minHeight: "100dvh", background: "#f5f5f7", fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <div style={{ maxWidth: 520, margin: "0 auto", padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          {d.storeLogo ? <img src={d.storeLogo} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover" }} /> : null}
+          <img src="/logo.png" alt="QuieroComer" style={{ height: 34, width: "auto", objectFit: "contain" }} />
           <div>
             <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#111" }}>{d.store}</div>
             <div style={{ fontSize: "0.82rem", color: "#666" }}>Seguimiento de tu pedido</div>
