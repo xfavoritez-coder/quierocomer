@@ -425,9 +425,21 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
             {order.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {order.orderType === "DELIVERY" ? "Delivery" : "Retiro"} · {relativeTime(order.createdAt)}
           </p>
         </button>
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>{fmt(order.total)}</p>
-          <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, margin: "2px 0 0", color: pay.color }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</p>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, flexShrink: 0 }}>
+          {printEnabled && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onPrint?.(); }}
+              title="Imprimir comanda"
+              aria-label="Imprimir comanda"
+              style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}
+            >
+              <Printer size={14} />
+            </button>
+          )}
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>{fmt(order.total)}</p>
+            <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, margin: "2px 0 0", color: pay.color }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</p>
+          </div>
         </div>
       </div>
 
@@ -443,27 +455,6 @@ function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, 
         </button>
       )}
       {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
-
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
-        <a
-          href={`/pedido/${order.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
-        >
-          <ExternalLink size={14} /> Ver seguimiento
-        </a>
-        {printEnabled && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPrint?.(); }}
-            style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          >
-            <Printer size={14} /> Imprimir comanda
-          </button>
-        )}
-      </div>
 
       {/* Token de la transacción (certificación Transbank) — solo si el local lo tiene activado */}
       {showToken && (order.webpayToken || order.flowToken) && (
@@ -543,16 +534,6 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
             </button>
           )}
           {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} />}
-
-          {/* Link de seguimiento (el mismo que recibe el cliente por correo) */}
-          <a
-            href={`/pedido/${order.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.84rem", fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}
-          >
-            <ExternalLink size={16} /> Ver seguimiento del cliente
-          </a>
 
           {printEnabled && (
             <button
