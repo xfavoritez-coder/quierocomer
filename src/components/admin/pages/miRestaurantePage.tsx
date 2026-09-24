@@ -636,11 +636,6 @@ export default function MiRestaurantePage() {
         );
       })()}
 
-      {/* ── Facturación ── */}
-      <div style={{ marginBottom: 16 }}>
-        <FacturacionPage />
-      </div>
-
       {/* ── Historial de pagos ── */}
       {billingStatus && plan !== "FREE" && (billingStatus.lastPaymentAt || paymentHistory.length > 0) && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
@@ -693,6 +688,11 @@ export default function MiRestaurantePage() {
 
 
 
+
+      {/* ── Facturación ── */}
+      <div style={{ marginBottom: 16 }}>
+        <FacturacionPage />
+      </div>
 
       {/* QR Modal */}
       {qrModalOpen && selectedRestaurant && (
