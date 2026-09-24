@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -47,7 +47,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = { PENDING: ORANGE, ACCEPTED: B
 const STATUS_ORDER: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY", "DONE", "CANCELLED"];
 // Activos: solo estados en curso/terminados OK. Cancelado (y los intentos de
 // pago) van únicamente a Historial.
-const ACTIVE_STATUSES: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY", "DONE"];
+const ACTIVE_STATUSES: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY"];
 const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; color: string }[]> = {
   PENDING: [{ status: "ACCEPTED", label: "Aceptar", color: BLUE }, { status: "CANCELLED", label: "Rechazar", color: RED }],
   ACCEPTED: [{ status: "PREPARING", label: "Preparando", color: GOLD }, { status: "CANCELLED", label: "Cancelar", color: RED }],
@@ -213,8 +213,9 @@ export default function EcommercePedidosPage() {
   }
 
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
-  // Activos excluye intentos de pago y cancelados; Historial muestra todo.
-  const base = view === "activos" ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED") : orders;
+  // Activos: pedidos realmente en curso (no entregados, no cancelados, no intentos
+  // de pago). El "entregado" se alimenta según se mueva en Centro de pedidos.
+  const base = view === "activos" ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED" && o.status !== "DONE") : orders;
   const chipStatuses = view === "activos" ? ACTIVE_STATUSES : STATUS_ORDER;
   // Historial: backlog completo, sin filtros. Activos: filtra por chip.
   const shown = view === "historial" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
@@ -305,8 +306,70 @@ export default function EcommercePedidosPage() {
           {hasFilter ? <>No hay pedidos que coincidan con la búsqueda{view === "activos" ? <> · prueba en <b>Historial</b></> : ""}.</> : "No hay pedidos aquí."}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map((o) => <OrderRow key={o.id} order={o} isNew={newIds.has(o.id)} onOpen={() => setDetail(o)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off"} onPrint={() => setPrintOrder(o)} showToken={showWebpayToken} />)}
+        <div style={{ overflowX: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: FB, fontSize: "0.82rem", minWidth: 620 }}>
+            <thead>
+              <tr style={{ background: "var(--adm-hover)", textAlign: "left" }}>
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Cliente</th>
+                <th style={thStyle}>Tipo</th>
+                <th style={thStyle}>Estado</th>
+                <th style={thStyle}>Fecha</th>
+                <th style={thStyle}>Pago</th>
+                <th style={{ ...thStyle, textAlign: "right" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((o) => {
+                const pay = payInfo(o);
+                const attempt = isAttempt(o);
+                const isNew = newIds.has(o.id);
+                return (
+                  <tr
+                    key={o.id}
+                    onClick={() => setDetail(o)}
+                    style={{ cursor: "pointer", borderTop: "1px solid var(--adm-card-border)", background: isNew ? `${ORANGE}0f` : "transparent" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--adm-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isNew ? `${ORANGE}0f` : "transparent"; }}
+                  >
+                    <td style={tdStyle}>
+                      <span style={{ fontFamily: F, fontWeight: 800, color: "var(--adm-text)" }}>#{o.orderNumber ?? o.id.slice(-5)}</span>
+                      {isNew && <span style={{ marginLeft: 6, fontFamily: FB, fontSize: "0.58rem", fontWeight: 800, color: ORANGE }}>● NUEVO</span>}
+                    </td>
+                    <td style={{ ...tdStyle, color: "var(--adm-text)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || "—"}</td>
+                    <td style={tdStyle}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--adm-text2)" }}>
+                        {o.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                      </span>
+                    </td>
+                    <td style={tdStyle}>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "#fff", background: STATUS_COLOR[o.status], padding: "3px 9px", borderRadius: 999, whiteSpace: "nowrap" }}>{STATUS_LABEL[o.status]}</span>
+                    </td>
+                    <td style={{ ...tdStyle, color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{relativeTime(o.createdAt)}</td>
+                    <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
+                      <span style={{ color: "var(--adm-text2)" }}>{PAY_LABEL[o.paymentMethod] || o.paymentMethod}</span>
+                      <span style={{ color: pay.color, fontWeight: 700 }}> · {pay.label}</span>
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: "right", whiteSpace: "nowrap" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
+                        {printMode !== "off" && !attempt && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPrintOrder(o); }}
+                            title="Imprimir comanda"
+                            aria-label="Imprimir comanda"
+                            style={{ width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer" }}
+                          >
+                            <Printer size={13} />
+                          </button>
+                        )}
+                        <ChevronRight size={16} color="var(--adm-text3)" />
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -391,92 +454,6 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
               <img src={c.proofPhotoUrl} alt="Prueba de entrega" style={{ width: "100%", borderRadius: 8, display: "block" }} />
             </div>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function OrderRow({ order, isNew, onOpen, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint, showToken }: { order: Order; isNew: boolean; onOpen: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void; showToken?: boolean }) {
-  const [busy, setBusy] = useState(false);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [courierBusy, setCourierBusy] = useState(false);
-  const actions = NEXT_ACTIONS[order.status] ?? [];
-  const pay = payInfo(order);
-  const attempt = isAttempt(order);
-  const canRequestCourier = uberEnabled && order.orderType === "DELIVERY" && order.status === "PREPARING" && !order.uberDeliveryId;
-
-  const act = async (s: OrderStatus) => { if (s === "CANCELLED") { setCancelOpen(true); return; } setBusy(true); await onStatusChange(order.id, s); setBusy(false); };
-  const reqCourier = async () => { setCourierBusy(true); await onRequestCourier(order.id); setCourierBusy(false); };
-
-  return (
-    <div style={{ background: "var(--adm-card)", border: `1px solid ${isNew ? ORANGE : "var(--adm-card-border)"}`, borderRadius: 14, padding: 14, opacity: attempt ? 0.75 : 1 }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-        <button onClick={onOpen} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0, flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>#{order.orderNumber ?? order.id.slice(-5)}</span>
-            <span style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, color: "#fff", background: STATUS_COLOR[order.status], padding: "2px 8px", borderRadius: 999 }}>{STATUS_LABEL[order.status]}</span>
-            {isNew && <span style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: ORANGE }}>● NUEVO</span>}
-            {attempt && <span style={{ fontFamily: FB, fontSize: "0.6rem", fontWeight: 800, color: pay.color }}>⚠ {pay.label.toUpperCase()}</span>}
-          </div>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", margin: "6px 0 0", fontWeight: 600, textDecoration: "underline", textDecorationColor: "var(--adm-card-border)", textUnderlineOffset: 3 }}>{order.customerName}</p>
-          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0", display: "inline-flex", alignItems: "center", gap: 5 }}>
-            {order.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {order.orderType === "DELIVERY" ? "Delivery" : "Retiro"} · {relativeTime(order.createdAt)}
-          </p>
-        </button>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, flexShrink: 0 }}>
-          {printEnabled && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onPrint?.(); }}
-              title="Imprimir comanda"
-              aria-label="Imprimir comanda"
-              style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}
-            >
-              <Printer size={14} />
-            </button>
-          )}
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>{fmt(order.total)}</p>
-            <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, margin: "2px 0 0", color: pay.color }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</p>
-          </div>
-        </div>
-      </div>
-
-      {actions.length > 0 && !attempt && (
-        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-          {actions.map((a) => <button key={a.status} onClick={() => act(a.status)} disabled={busy} style={{ flex: a.status === "CANCELLED" ? "0 0 auto" : 1, minWidth: 90, padding: "9px 12px", borderRadius: 10, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>{a.label}</button>)}
-        </div>
-      )}
-
-      {canRequestCourier && (
-        <button onClick={reqCourier} disabled={courierBusy} style={{ marginTop: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: `1px solid ${GREEN}`, background: `${GREEN}14`, color: GREEN, fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <Bike size={15} /> {courierBusy ? "Solicitando…" : "Solicitar repartidor externo (Uber)"}
-        </button>
-      )}
-      {hasRealCourier(order.courier) && <CourierCard courier={order.courier!} mapsKey={mapsKey} dropoff={order.deliveryLat != null && order.deliveryLng != null ? { lat: order.deliveryLat, lng: order.deliveryLng } : null} compact />}
-
-      {/* Token de la transacción (certificación Transbank) — solo si el local lo tiene activado */}
-      {showToken && (order.webpayToken || order.flowToken) && (
-        <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 10, border: "1px dashed var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.03em", flexShrink: 0 }}>{order.webpayToken ? "Token Webpay" : "Token Flow"}</span>
-          <code style={{ fontFamily: "monospace", fontSize: "0.72rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{order.webpayToken || order.flowToken}</code>
-          <button
-            onClick={(e) => { e.stopPropagation(); const t = order.webpayToken || order.flowToken || ""; navigator.clipboard?.writeText(t).then(() => toast.success("Token copiado")).catch(() => toast.error("No se pudo copiar")); }}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
-          >
-            <Copy size={13} /> Copiar
-          </button>
-        </div>
-      )}
-
-      {cancelOpen && (
-        <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)" }}>
-          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo de cancelación (requerido)" style={inp} />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button onClick={async () => { setBusy(true); await onStatusChange(order.id, "CANCELLED", reason.trim()); setBusy(false); setCancelOpen(false); }} disabled={busy || !reason.trim()} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy || !reason.trim() ? "not-allowed" : "pointer", opacity: !reason.trim() ? 0.5 : 1 }}>Confirmar cancelación</button>
-            <button onClick={() => setCancelOpen(false)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer" }}>Volver</button>
-          </div>
         </div>
       )}
     </div>
@@ -610,6 +587,8 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
   );
 }
 
+const thStyle: React.CSSProperties = { padding: "10px 12px", fontFamily: F, fontSize: "0.68rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em", color: "var(--adm-text3)", whiteSpace: "nowrap" };
+const tdStyle: React.CSSProperties = { padding: "11px 12px", verticalAlign: "middle" };
 const iconBtn: React.CSSProperties = { width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
 const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" };
 function viewBtn(on: boolean): React.CSSProperties {

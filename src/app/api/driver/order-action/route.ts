@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { authDriver } from "@/lib/driver/auth";
 import { readDriverBody } from "@/lib/driver/body";
+import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   const action = (body?.action || "").toString();
   if (!id || !action) return NextResponse.json({ ok: false, error: "Faltan parámetros." }, { status: 422 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, select: { id: true, restaurantId: true, opsStage: true, assignedDriverId: true, assignedTo: true, trackingToken: true } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { id: true, restaurantId: true, externalId: true, opsStage: true, assignedDriverId: true, assignedTo: true, trackingToken: true } });
   if (!order || order.restaurantId !== driver.restaurantId) return NextResponse.json({ ok: false, error: "Pedido no encontrado." }, { status: 404 });
 
   const origin = req.nextUrl.origin;
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       token = crypto.randomBytes(20).toString("hex");
       await prisma.posOrder.update({ where: { id }, data: { trackingToken: token } }).catch(() => {});
     }
+    void syncOnlineOrderFromPos({ restaurantId: order.restaurantId, externalId: order.externalId, opsStage: "out_for_delivery" }).catch(() => {});
     return NextResponse.json({ ok: true, action, delivery_id: id, order_id: id, tracking_url: token ? `${origin}/track/${token}` : null });
   }
 
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
       data: { opsStage: "delivered", opsDeliveredAt: new Date() },
     });
     if (res.count === 0) return NextResponse.json({ ok: false, error: "Este pedido no está en reparto." }, { status: 409 });
+    void syncOnlineOrderFromPos({ restaurantId: order.restaurantId, externalId: order.externalId, opsStage: "delivered" }).catch(() => {});
     const token = order.trackingToken;
     return NextResponse.json({ ok: true, action, delivery_id: id, order_id: id, tracking_url: token ? `${origin}/track/${token}` : null });
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,6 +86,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const updated = await prisma.posOrder.update({ where: { id }, data });
+  void syncOnlineOrderFromPos(updated).catch(() => {});
   return NextResponse.json({ order: updated });
 }
 
