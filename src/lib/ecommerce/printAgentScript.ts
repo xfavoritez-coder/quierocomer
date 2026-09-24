@@ -261,6 +261,9 @@ namespace QuieroComerAgente {
         ni.BalloonTipTitle = title; ni.BalloonTipText = text; ni.ShowBalloonTip(3000);
       }); } catch {}
     }
+    // Prefijo con el nombre del local para que SIEMPRE se vea en el tooltip.
+    string TipPrefix() { return LABEL.Length > 0 ? LABEL + " - " : ""; }
+
     void SetTip(string t) {
       try { sync.BeginInvoke((MethodInvoker)delegate {
         ni.Text = t.Length > 63 ? t.Substring(0, 63) : t;
@@ -356,9 +359,9 @@ namespace QuieroComerAgente {
               } catch (Exception ex) { Balloon("Error con un pedido", ex.Message); }
             }
           }
-          SetTip("Agente activo - " + DateTime.Now.ToString("HH:mm"));
+          SetTip(TipPrefix() + "Agente activo - " + DateTime.Now.ToString("HH:mm"));
         } catch (Exception) {
-          SetTip("Sin conexion - reintentando");
+          SetTip(TipPrefix() + "Sin conexion - reintentando");
         }
         for (int i = 0; i < PollSec * 2 && running; i++) Thread.Sleep(500);
       }
