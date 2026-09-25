@@ -322,25 +322,54 @@ export default async function CartaPage({
     })
     .filter(Boolean);
 
-  const jsonLd = {
+  // priceRange from average dish price
+  const dishPrices = allDishes.map((d: any) => d.price).filter((p: any) => typeof p === 'number' && p > 0);
+  const avgPrice = dishPrices.length > 0 ? dishPrices.reduce((a: number, b: number) => a + b, 0) / dishPrices.length : 0;
+  const priceRange = avgPrice === 0 ? undefined : avgPrice < 5000 ? '$' : avgPrice < 10000 ? '$$' : avgPrice < 20000 ? '$$$' : '$$$$';
+
+  // image array: logo first, then first dish photos (up to 5 total)
+  const dishPhotos = allDishes.flatMap((d: any) => d.photos ?? []).filter(Boolean).slice(0, 4);
+  const imageArray = [...(restaurant.logoUrl ? [restaurant.logoUrl] : []), ...dishPhotos];
+
+  // sameAs: social / maps links
+  const sameAsLinks = [
+    (restaurant as any).instagram ? `https://www.instagram.com/${(restaurant as any).instagram.replace(/^@/, '')}` : null,
+    (restaurant as any).googleMapsUrl || null,
+    (restaurant as any).website || null,
+  ].filter(Boolean);
+
+  // openingHoursSpecification from orderingBusinessHours
+  const BH_DAY_NAMES: Record<string, string> = {
+    '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+    '4': 'Thursday', '5': 'Friday', '6': 'Saturday',
+  };
+  const rawBH = (restaurant as any).orderingBusinessHours;
+  const openingHoursSpecification = rawBH
+    ? Object.entries(rawBH as Record<string, { open: boolean; from: string; to: string }>)
+        .filter(([, v]) => v.open)
+        .map(([k, v]) => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: BH_DAY_NAMES[k],
+          opens: v.from,
+          closes: v.to,
+        }))
+    : undefined;
+
+  const jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: restaurant.name,
     url: `https://quierocomer.com/qr/${slug}`,
-    hasMenu: menuSections.length > 0 ? {
-      '@type': 'Menu',
-      name: 'Menú',
-      url: `https://quierocomer.com/qr/${slug}`,
-      hasMenuSection: menuSections,
-    } : `https://quierocomer.com/qr/${slug}`,
+    ...(imageArray.length > 0 ? { image: imageArray } : {}),
     ...((restaurant as any).address ? {
       address: {
         '@type': 'PostalAddress',
         streetAddress: (restaurant as any).address,
+        ...((restaurant as any).commune ? { addressLocality: (restaurant as any).commune } : {}),
+        addressCountry: 'CL',
       },
     } : {}),
     ...((restaurant as any).phone ? { telephone: (restaurant as any).phone } : {}),
-    ...(restaurant.logoUrl ? { image: restaurant.logoUrl } : {}),
     ...((restaurant as any).googleRating ? {
       aggregateRating: {
         '@type': 'AggregateRating',
@@ -348,11 +377,39 @@ export default async function CartaPage({
         reviewCount: (restaurant as any).googleRatingCount ?? 1,
       },
     } : {}),
-  }
+    ...(priceRange ? { priceRange } : {}),
+    ...((restaurant as any).primaryCategory ? { servesCuisine: (restaurant as any).primaryCategory } : {}),
+    ...((restaurant as any).lat && (restaurant as any).lng ? {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: (restaurant as any).lat,
+        longitude: (restaurant as any).lng,
+      },
+    } : {}),
+    ...(openingHoursSpecification?.length ? { openingHoursSpecification } : {}),
+    ...(sameAsLinks.length > 0 ? { sameAs: sameAsLinks } : {}),
+    hasMenu: menuSections.length > 0 ? {
+      '@type': 'Menu',
+      name: 'Menú',
+      url: `https://quierocomer.com/qr/${slug}`,
+      ...((restaurant as any).updatedAt ? { dateModified: new Date((restaurant as any).updatedAt).toISOString() } : {}),
+      hasMenuSection: menuSections,
+    } : `https://quierocomer.com/qr/${slug}`,
+  };
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://quierocomer.com' },
+      { '@type': 'ListItem', position: 2, name: restaurant.name, item: `https://quierocomer.com/qr/${slug}` },
+    ],
+  };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {(restaurant as any).isDemo && !isShowcase && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={slug} />}
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       <script dangerouslySetInnerHTML={{ __html: `
