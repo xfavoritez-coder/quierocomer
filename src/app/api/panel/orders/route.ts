@@ -34,13 +34,19 @@ export async function GET(req: NextRequest) {
   // Separación de pilares: por defecto solo pedir-online (legacy). El panel del
   // ecommerce pide ?source=ecommerce; ?source=all trae ambos.
   const source = req.nextUrl.searchParams.get("source") || "pedir-online";
-  const orders = await prisma.onlineOrder.findMany({
-    where: { restaurantId, ...(source === "all" ? {} : { source }) },
-    orderBy: { createdAt: "desc" },
-    take: 500,
-  });
+  const [orders, restaurantConfig] = await Promise.all([
+    prisma.onlineOrder.findMany({
+      where: { restaurantId, ...(source === "all" ? {} : { source }) },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    }),
+    prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { orderingMode: true },
+    }),
+  ]);
 
-  return NextResponse.json({ orders });
+  return NextResponse.json({ orders, orderingMode: restaurantConfig?.orderingMode ?? "whatsapp" });
 }
 
 export async function PATCH(req: NextRequest) {

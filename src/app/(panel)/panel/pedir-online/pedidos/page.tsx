@@ -111,17 +111,19 @@ function OrderCard({
   order,
   isNew,
   onStatusChange,
+  isWhatsAppMode,
 }: {
   order: Order;
   isNew: boolean;
   onStatusChange: (id: string, status: OrderStatus, reason?: string) => Promise<void>;
+  isWhatsAppMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelForm, setShowCancelForm] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
-  const actions = NEXT_ACTIONS[order.status] ?? [];
+  const actions = isWhatsAppMode ? [] : (NEXT_ACTIONS[order.status] ?? []);
   const statusColor = STATUS_COLOR[order.status];
 
   const handleAction = async (status: OrderStatus) => {
@@ -382,6 +384,8 @@ function OrderCard({
 export default function PedidosPage() {
   const { selectedRestaurantId } = useAdminSession();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderingMode, setOrderingMode] = useState<"whatsapp" | "panel" | null>(null);
+  const isWhatsAppMode = orderingMode === "whatsapp";
   const [tab, setTab] = useState<TabId>("active");
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const prevPendingCountRef = useRef<number | null>(null);
@@ -511,6 +515,7 @@ export default function PedidosPage() {
       const res = await fetch(`/api/panel/orders?restaurantId=${selectedRestaurantId}`);
       const data = await res.json();
       const fetched: Order[] = data.orders || [];
+      if (data.orderingMode && !isPolling) setOrderingMode(data.orderingMode);
 
       if (isPolling) {
         // Detect new PENDING orders that weren't there before
@@ -530,6 +535,11 @@ export default function PedidosPage() {
       }
     } catch {}
   }, [selectedRestaurantId, playNotification, markOrderAsNew]);
+
+  // Switch to history tab when WA mode is detected
+  useEffect(() => {
+    if (isWhatsAppMode) setTab("history");
+  }, [isWhatsAppMode]);
 
   // Initial fetch + polling fallback every 10s
   useEffect(() => {
@@ -587,9 +597,12 @@ export default function PedidosPage() {
   };
 
   const currentTab = TABS.find(t => t.id === tab)!;
-  const tabOrders = orders.filter(o => (currentTab.statuses as readonly string[]).includes(o.status));
+  // En modo WhatsApp todos los pedidos van al historial (no hay gestión de estado)
+  const tabOrders = isWhatsAppMode
+    ? (tab === "history" ? orders : [])
+    : orders.filter(o => (currentTab.statuses as readonly string[]).includes(o.status));
 
-  const pendingCount = orders.filter(o => o.status === "PENDING").length;
+  const pendingCount = isWhatsAppMode ? 0 : orders.filter(o => o.status === "PENDING").length;
   const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString());
   const todayRevenue = todayOrders.filter(o => o.status !== "CANCELLED").reduce((s, o) => s + o.total, 0);
 
@@ -600,7 +613,7 @@ export default function PedidosPage() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
         <ClipboardList size={20} color={GOLD} />
         <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-          Pedidos en vivo
+          {isWhatsAppMode ? "Registro de pedidos" : "Pedidos en vivo"}
         </h2>
         {pendingCount > 0 && (
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: ORANGE, color: "#fff", fontFamily: F, fontSize: "0.72rem", fontWeight: 800 }}>
@@ -608,7 +621,7 @@ export default function PedidosPage() {
           </span>
         )}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-          {!isStandalone && (
+          {!isWhatsAppMode && !isStandalone && (
             <button
               type="button"
               onClick={() => setShowInstallModal(true)}
@@ -624,7 +637,7 @@ export default function PedidosPage() {
               📲 Instalar app
             </button>
           )}
-          {pushState !== "unsupported" && (
+          {!isWhatsAppMode && pushState !== "unsupported" && (
             <button
               type="button"
               onClick={pushState === "active" ? unsubscribeFromPush : subscribeToPush}
@@ -643,6 +656,15 @@ export default function PedidosPage() {
           )}
         </div>
       </div>
+
+      {/* Aviso modo WhatsApp */}
+      {isWhatsAppMode && (
+        <div style={{ padding: "10px 14px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, marginBottom: 16 }}>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Tus pedidos se gestionan por <strong>WhatsApp</strong> — aquí solo se guarda el registro. Para gestionar pedidos en tiempo real, cambia a modalidad <strong>Panel online</strong> en la configuración.
+          </p>
+        </div>
+      )}
 
       {/* Stats hoy */}
       {todayOrders.length > 0 && (
@@ -665,7 +687,9 @@ export default function PedidosPage() {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid var(--adm-card-border)", paddingBottom: 0 }}>
         {TABS.map(t => {
-          const count = orders.filter(o => (t.statuses as readonly string[]).includes(o.status)).length;
+          const count = isWhatsAppMode
+            ? (t.id === "history" ? orders.length : 0)
+            : orders.filter(o => (t.statuses as readonly string[]).includes(o.status)).length;
           const active = tab === t.id;
           return (
             <button
@@ -712,6 +736,7 @@ export default function PedidosPage() {
               order={order}
               isNew={newOrderIds.has(order.id)}
               onStatusChange={handleStatusChange}
+              isWhatsAppMode={isWhatsAppMode}
             />
           ))}
         </div>
