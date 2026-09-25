@@ -123,6 +123,7 @@ type BillingStatus = {
   trialUsed?: boolean;
   lastPaymentAt?: string | null;
   sessions30d?: number;
+  hasAutoRenewal?: boolean;
 };
 
 function FreeTrialBanner({ restaurantId }: { restaurantId: string | null }) {
@@ -300,7 +301,8 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
   const in2Days = periodEndChile === toChileDate(new Date(now.getTime() + 2 * 86400000));
 
   // Activo y a punto de vencer (hoy, mañana o pasado mañana)
-  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow || in2Days);
+  // Si tiene pago automático activo (Flow), el cobro se hace solo — no mostrar aviso
+  const isExpiringSoon = status.subscriptionStatus === "ACTIVE" && (isToday || isTomorrow || in2Days) && !status.hasAutoRenewal;
   // Activo pero el período ya pasó en un día anterior (pendiente de corte, cron aún no corrió)
   // Comparamos por fecha calendario, no por hora — hoy aún está vigente hasta las 23:59
   const isExpiredActive = status.subscriptionStatus === "ACTIVE" && periodEndChile !== null && periodEndChile < todayChile;
