@@ -498,7 +498,7 @@ export default function MiRestaurantePage() {
                       <button onClick={() => setShowRenewModal(true)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: inGrace ? "#dc2626" : "#d97706", color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
                         <RefreshCw size={14} /> Renovar plan
                       </button>
-                    ) : isExpiringSoon ? (
+                    ) : isExpiringSoon && !billingStatus?.hasAutoRenewal ? (
                       <button
                         onClick={() => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { renew: true, initialTab: plan, source: "mi_restaurante_plan_box" } }))}
                         style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: planAccent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}
