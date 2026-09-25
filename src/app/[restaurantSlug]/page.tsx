@@ -36,6 +36,21 @@ async function getRestaurantLanding(slug: string) {
       cartaColorMode: true,
       profileType: true,
       isDemo: true,
+      // For JSON-LD rich results
+      lat: true,
+      lng: true,
+      instagram: true,
+      googleMapsUrl: true,
+      website: true,
+      phone: true,
+      orderingBusinessHours: true,
+      updatedAt: true,
+      categories: { select: { id: true, name: true }, orderBy: { position: 'asc' } },
+      dishes: {
+        where: { deletedAt: null, isActive: true },
+        select: { id: true, name: true, description: true, photos: true, price: true, categoryId: true },
+        orderBy: { position: 'asc' },
+      },
     },
   })
   if (!r) return null
@@ -79,21 +94,95 @@ function RestaurantLanding({ r }: { r: NonNullable<Awaited<ReturnType<typeof get
     color: accent,
   }
 
+  // Build full Menu JSON-LD so Google can show dish photos from the canonical URL
+  const allCategories = (r as any).categories ?? [];
+  const allDishes = (r as any).dishes ?? [];
+
+  const menuSections = allCategories
+    .map((cat: any) => {
+      const catDishes = allDishes.filter((d: any) => d.categoryId === cat.id);
+      if (catDishes.length === 0) return null;
+      return {
+        '@type': 'MenuSection',
+        name: cat.name,
+        hasMenuItem: catDishes.map((d: any) => ({
+          '@type': 'MenuItem',
+          name: d.name,
+          ...(d.description ? { description: d.description } : {}),
+          ...(d.photos?.length > 0 ? { image: d.photos[0] } : {}),
+          offers: { '@type': 'Offer', price: String(Math.round(d.price)), priceCurrency: 'CLP' },
+        })),
+      };
+    })
+    .filter(Boolean);
+
+  const dishPrices = allDishes.map((d: any) => d.price).filter((p: any) => typeof p === 'number' && p > 0);
+  const avgPrice = dishPrices.length > 0 ? dishPrices.reduce((a: number, b: number) => a + b, 0) / dishPrices.length : 0;
+  const priceRange = avgPrice === 0 ? undefined : avgPrice < 5000 ? '$' : avgPrice < 10000 ? '$$' : avgPrice < 20000 ? '$$$' : '$$$$';
+
+  const dishPhotos = allDishes.flatMap((d: any) => d.photos ?? []).filter(Boolean).slice(0, 4);
+  const imageArray = [...(r.logoUrl ? [r.logoUrl] : []), ...dishPhotos];
+
+  const sameAsLinks = [
+    (r as any).instagram ? `https://www.instagram.com/${(r as any).instagram.replace(/^@/, '')}` : null,
+    (r as any).googleMapsUrl || null,
+    (r as any).website || null,
+  ].filter(Boolean);
+
+  const BH_DAY_NAMES: Record<string, string> = {
+    '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+    '4': 'Thursday', '5': 'Friday', '6': 'Saturday',
+  };
+  const rawBH = (r as any).orderingBusinessHours;
+  const openingHoursSpecification = rawBH
+    ? Object.entries(rawBH as Record<string, { open: boolean; from: string; to: string }>)
+        .filter(([, v]) => v.open)
+        .map(([k, v]) => ({ '@type': 'OpeningHoursSpecification', dayOfWeek: BH_DAY_NAMES[k], opens: v.from, closes: v.to }))
+    : undefined;
+
   const jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: r.name,
     url: `${BASE}/${r.slug}`,
-    ...(r.logoUrl ? { image: r.logoUrl } : {}),
-    ...(r.address ? { address: { '@type': 'PostalAddress', streetAddress: r.address, addressLocality: r.commune ?? '', addressCountry: 'CL' } } : {}),
+    ...(imageArray.length > 0 ? { image: imageArray } : {}),
+    ...(r.address ? {
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: r.address,
+        ...(r.commune ? { addressLocality: r.commune } : {}),
+        addressCountry: 'CL',
+      },
+    } : {}),
+    ...((r as any).phone ? { telephone: (r as any).phone } : {}),
+    ...(r.googleRating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: r.googleRating, reviewCount: r.googleRatingCount || 1 } } : {}),
+    ...(priceRange ? { priceRange } : {}),
     ...(r.primaryCategory ? { servesCuisine: r.primaryCategory } : {}),
-    hasMenu: `${BASE}/qr/${r.slug}`,
-    ...((r as any).googleRating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (r as any).googleRating, reviewCount: (r as any).googleRatingCount || 1 } } : {}),
-  }
+    ...((r as any).lat && (r as any).lng ? { geo: { '@type': 'GeoCoordinates', latitude: (r as any).lat, longitude: (r as any).lng } } : {}),
+    ...(openingHoursSpecification?.length ? { openingHoursSpecification } : {}),
+    ...(sameAsLinks.length > 0 ? { sameAs: sameAsLinks } : {}),
+    hasMenu: menuSections.length > 0 ? {
+      '@type': 'Menu',
+      name: 'Menú',
+      url: `${BASE}/qr/${r.slug}`,
+      ...((r as any).updatedAt ? { dateModified: new Date((r as any).updatedAt).toISOString() } : {}),
+      hasMenuSection: menuSections,
+    } : `${BASE}/qr/${r.slug}`,
+  };
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: BASE },
+      { '@type': 'ListItem', position: 2, name: r.name, item: `${BASE}/${r.slug}` },
+    ],
+  };
 
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
     <PageHitTracker restaurantId={r.id} page="landing" />
     <main style={{
       minHeight: '100svh',
