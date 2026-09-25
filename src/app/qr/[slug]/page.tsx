@@ -297,12 +297,42 @@ export default async function CartaPage({
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
   const accentColor = hasDesignFeatures ? ((restaurant as any).cartaAccentColor || null) : null;
 
+  // Build Menu structured data for Google rich results (dish photos + prices)
+  const allCategories: any[] = (restaurant as any).categories ?? [];
+  const allDishes: any[] = (restaurant as any).dishes ?? [];
+  const menuSections = allCategories
+    .map((cat: any) => {
+      const catDishes = allDishes.filter((d: any) => d.categoryId === cat.id);
+      if (catDishes.length === 0) return null;
+      return {
+        '@type': 'MenuSection',
+        name: cat.name,
+        hasMenuItem: catDishes.map((d: any) => ({
+          '@type': 'MenuItem',
+          name: d.name,
+          ...(d.description ? { description: d.description } : {}),
+          ...(d.photos?.length > 0 ? { image: d.photos[0] } : {}),
+          offers: {
+            '@type': 'Offer',
+            price: String(Math.round(d.price)),
+            priceCurrency: 'CLP',
+          },
+        })),
+      };
+    })
+    .filter(Boolean);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     name: restaurant.name,
     url: `https://quierocomer.com/qr/${slug}`,
-    hasMenu: `https://quierocomer.com/qr/${slug}`,
+    hasMenu: menuSections.length > 0 ? {
+      '@type': 'Menu',
+      name: 'Menú',
+      url: `https://quierocomer.com/qr/${slug}`,
+      hasMenuSection: menuSections,
+    } : `https://quierocomer.com/qr/${slug}`,
     ...((restaurant as any).address ? {
       address: {
         '@type': 'PostalAddress',
