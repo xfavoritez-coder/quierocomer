@@ -45,7 +45,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
   const html = `
     <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#222;font-size:15px;line-height:1.6;max-width:520px;margin:0 auto;padding:24px 20px">
       <p style="margin:0 0 14px">${greeting}</p>
-      <p style="margin:0 0 20px">Gracias por tu pedido en <strong>${esc(args.storeName)}</strong>. ${esc(intro)}</p>
+      <p style="margin:0 0 16px">Gracias por tu pedido en <strong>${esc(args.storeName)}</strong>. ${esc(intro)}</p>
       <p style="margin:0 0 18px"><a href="${esc(args.link)}" style="display:inline-block;padding:12px 28px;background:#16a34a;color:#fff;font-size:15px;font-weight:700;text-decoration:none;border-radius:8px">Dejar mi opinión</a></p>
       <p style="margin:0 0 4px;color:#888;font-size:13px">Si el enlace no funciona, cópialo en tu navegador:</p>
       <p style="margin:0 0 20px;color:#888;font-size:13px;word-break:break-all">${esc(args.link)}</p>
