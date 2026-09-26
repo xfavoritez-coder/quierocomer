@@ -42,17 +42,23 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
 
   const greeting = firstName ? `Hola ${esc(firstName)},` : "Hola,";
 
-  // Correo TRANSACCIONAL a propósito (sobrio y personal, no promocional): alineado a
-  // la izquierda, sin imágenes ni botón tipo banner, con enlace de texto + versión en
-  // texto plano. Eso reduce que Gmail lo clasifique en la pestaña "Promociones".
+  const logoHtml = args.logoUrl
+    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" width="52" height="52" style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 12px;border:2px solid #eee">`
+    : "";
+
   const html = `
-    <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#222;font-size:15px;line-height:1.6;max-width:520px;margin:0 auto;padding:24px 20px">
-      <p style="margin:0 0 14px">${greeting}</p>
-      <p style="margin:0 0 16px">Gracias por tu pedido en <strong>${esc(args.storeName)}</strong>. ${esc(intro)}</p>
-      <p style="margin:0 0 18px"><a href="${esc(args.link)}" style="color:${accent};font-weight:700;text-decoration:underline">Dejar mi opinión</a></p>
-      <p style="margin:0 0 4px;color:#888;font-size:13px">Si el enlace no funciona, cópialo en tu navegador:</p>
-      <p style="margin:0 0 20px;color:#888;font-size:13px;word-break:break-all">${esc(args.link)}</p>
-      <p style="margin:22px 0 0;color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:14px">${esc(args.storeName)} · vía QuieroComer</p>
+    <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#222;font-size:15px;line-height:1.6;max-width:480px;margin:0 auto;padding:32px 20px">
+      ${logoHtml}
+      <p style="margin:0 0 6px;font-size:13px;color:#888;text-align:center;letter-spacing:0.03em;text-transform:uppercase">${esc(args.storeName)}</p>
+      <p style="margin:0 0 20px;font-size:22px;text-align:center">⭐</p>
+      <p style="margin:0 0 8px;font-size:15px">${greeting}</p>
+      <p style="margin:0 0 28px;font-size:15px;color:#333">${esc(intro)}</p>
+      <div style="text-align:center;margin-bottom:28px">
+        <a href="${esc(args.link)}" style="display:inline-block;padding:13px 32px;background:#fff;color:${accent};font-size:15px;font-weight:700;text-decoration:none;border-radius:999px;border:2px solid ${accent};letter-spacing:0.01em">Dejar mi opinión →</a>
+      </div>
+      <p style="margin:0 0 3px;color:#aaa;font-size:12px;text-align:center">Si el botón no funciona, copia este enlace:</p>
+      <p style="margin:0 0 0;color:#bbb;font-size:11px;text-align:center;word-break:break-all">${esc(args.link)}</p>
+      <p style="margin:28px 0 0;color:#ccc;font-size:11px;text-align:center;border-top:1px solid #f0f0f0;padding-top:16px">${esc(args.storeName)} · vía QuieroComer</p>
     </div>`;
   const text = `${firstName ? `Hola ${firstName},` : "Hola,"}\n\nGracias por tu pedido en ${args.storeName}. ${intro}\n\nDeja tu opinión aquí:\n${args.link}\n\n${args.storeName} · vía QuieroComer`;
 
