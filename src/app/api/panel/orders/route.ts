@@ -99,6 +99,7 @@ export async function PATCH(req: NextRequest) {
 
   // Al completarse el pedido, enviar encuesta de satisfacción si tiene email.
   if (body.status === "DONE" && order.customerEmail) {
+    const toEmail = order.customerEmail;
     void (async () => {
       try {
         const rest = await prisma.restaurant.findUnique({
@@ -108,8 +109,8 @@ export async function PATCH(req: NextRequest) {
         if (!rest) return;
         const cfg = parseStoreConfig(rest.ecommerceStoreConfig as any, { accent: rest.cartaAccentColor });
         const link = `${storeAbsBase({ customDomain: (cfg as any).customDomain })}/encuesta/${order.id}`;
-        await sendSurveyEmail({
-          to: order.customerEmail,
+        const ok = await sendSurveyEmail({
+          to: toEmail,
           link,
           storeName: rest.name,
           logoUrl: rest.logoUrl,
@@ -117,6 +118,7 @@ export async function PATCH(req: NextRequest) {
           customerName: order.customerName,
           survey: (cfg as any).survey,
         });
+        if (ok) await prisma.onlineOrder.update({ where: { id: order.id }, data: { surveySentAt: new Date() } }).catch(() => {});
       } catch {}
     })();
   }

@@ -87,6 +87,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       items: [
         { icon: ClipboardList, labelKey: "nav_orders", href: `${base}/pedir-online/pedidos` },
         { icon: Users, labelKey: "nav_clients_orders", href: `${base}/pedir-online/clientes` },
+        { icon: Star, labelKey: "nav_ordering_reviews", href: `${base}/pedir-online/valoraciones` },
         { icon: ShoppingCart, labelKey: "nav_ordering", href: `${base}/pedir-online` },
         ...(showLive ? [{ icon: LiveIcon, labelKey: "nav_live", href: `${base}/live` }] : []),
       ],

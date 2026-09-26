@@ -31,7 +31,43 @@ export async function GET(req: NextRequest) {
     },
   });
 
+  // Pedidos WhatsApp: nunca llegan a DONE, se encuestan 2h después de crearse
+  const waHoursAfter = 2;
+  const waCutoff = new Date(now - waHoursAfter * 60 * 60 * 1000);
+  const waWindow = new Date(now - (waHoursAfter + 24) * 60 * 60 * 1000);
+  const waCandidates = await prisma.onlineOrder.findMany({
+    where: {
+      surveySentAt: null,
+      customerEmail: { not: null },
+      status: { notIn: ["CANCELLED"] },
+      createdAt: { gte: waWindow, lte: waCutoff },
+      restaurant: { orderingMode: "whatsapp" },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 60,
+    select: {
+      id: true, customerName: true, customerEmail: true, createdAt: true,
+      restaurant: { select: { name: true, logoUrl: true, cartaAccentColor: true, ecommerceStoreConfig: true } },
+    },
+  });
+
   let sent = 0, skipped = 0;
+
+  // Encuestas WhatsApp
+  for (const o of waCandidates) {
+    const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
+    const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
+    const ok = await sendSurveyEmail({
+      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: o.restaurant.logoUrl,
+      accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
+    });
+    if (ok) {
+      await prisma.onlineOrder.update({ where: { id: o.id }, data: { surveySentAt: new Date() } }).catch(() => {});
+      sent++;
+    } else skipped++;
+  }
+
+  // Encuestas ecommerce/panel-online (pedidos marcados DONE)
   for (const o of candidates) {
     const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
     const s = cfg.survey;
@@ -46,8 +82,6 @@ export async function GET(req: NextRequest) {
     } catch {}
 
     // Ventana de envío: solo entre hoursAfter y hoursAfter+24h desde que quedó DONE.
-    // Así, al ACTIVAR la encuesta no se dispara a pedidos entregados hace días
-    // (evita spam a clientes viejos); solo a los que recién cruzaron el umbral.
     const ageMs = now - doneTs;
     const minMs = s.hoursAfter * 60 * 60 * 1000;
     if (ageMs < minMs || ageMs > minMs + 24 * 60 * 60 * 1000) { skipped++; continue; }
@@ -63,5 +97,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, scanned: candidates.length, sent, skipped });
+  return NextResponse.json({ ok: true, scanned: candidates.length + waCandidates.length, sent, skipped });
 }
