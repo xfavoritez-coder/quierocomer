@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
+import { sendSurveyEmail, storeAbsBase } from "@/lib/ecommerce/surveyEmail";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -89,10 +91,34 @@ export async function PATCH(req: NextRequest) {
     },
   });
 
-  // Aviso al cliente por correo en cambios de estado (incluye nombre del
-  // restaurante en asunto y cuerpo + link de seguimiento).
-  if ((body.status === "ACCEPTED" || body.status === "IN_DELIVERY" || body.status === "READY") && order.customerEmail) {
+  // Correo al cliente: solo al aceptar el pedido (con link de seguimiento en vivo).
+  // IN_DELIVERY y READY ya no disparan correo — el cliente lo ve en el tracking.
+  if (body.status === "ACCEPTED" && order.customerEmail) {
     void sendOrderStatusEmail(order.id, body.status);
+  }
+
+  // Al completarse el pedido, enviar encuesta de satisfacción si tiene email.
+  if (body.status === "DONE" && order.customerEmail) {
+    void (async () => {
+      try {
+        const rest = await prisma.restaurant.findUnique({
+          where: { id: order.restaurantId },
+          select: { name: true, logoUrl: true, cartaAccentColor: true, ecommerceStoreConfig: true },
+        });
+        if (!rest) return;
+        const cfg = parseStoreConfig(rest.ecommerceStoreConfig as any, { accent: rest.cartaAccentColor });
+        const link = `${storeAbsBase({ customDomain: (cfg as any).customDomain })}/encuesta/${order.id}`;
+        await sendSurveyEmail({
+          to: order.customerEmail,
+          link,
+          storeName: rest.name,
+          logoUrl: rest.logoUrl,
+          accent: (cfg as any).primaryColor,
+          customerName: order.customerName,
+          survey: (cfg as any).survey,
+        });
+      } catch {}
+    })();
   }
 
   return NextResponse.json({ order: updated });
