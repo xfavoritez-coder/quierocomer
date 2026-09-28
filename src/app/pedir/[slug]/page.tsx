@@ -80,10 +80,13 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   const todayChile = chileDate(new Date());
   const periodEnd = config.currentPeriodEnd ? new Date(config.currentPeriodEnd) : null;
   const trialEnd = config.trialEndsAt ? new Date(config.trialEndsAt) : null;
+  // 3 días de gracia para cubrir retrasos de webhook Flow y pagos manuales tardíos
+  const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+  const gracedEnd = periodEnd ? new Date(periodEnd.getTime() + GRACE_MS) : null;
   const isMenuLive =
     config.billingExempt ||
     config.isDemo ||
-    (config.subscriptionStatus === "ACTIVE" && periodEnd && chileDate(periodEnd) >= todayChile) ||
+    (config.subscriptionStatus === "ACTIVE" && gracedEnd && chileDate(gracedEnd) >= todayChile) ||
     (config.subscriptionStatus === "TRIALING" && trialEnd && chileDate(trialEnd) >= todayChile) ||
     (config.subscriptionStatus === "CANCELED" && periodEnd && chileDate(periodEnd) >= todayChile);
   const isPaused = !isMenuLive;

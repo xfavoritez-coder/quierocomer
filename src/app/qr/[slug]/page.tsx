@@ -122,10 +122,13 @@ export default async function CartaPage({
   const _todayChile = _chileDate(_now);
   const _periodEnd = _r.currentPeriodEnd ? new Date(_r.currentPeriodEnd) : null;
   const _trialEnd = _r.trialEndsAt ? new Date(_r.trialEndsAt) : null;
+  // 3 días de gracia para cubrir retrasos de webhook Flow y pagos manuales tardíos
+  const _GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+  const _gracedEnd = _periodEnd ? new Date(_periodEnd.getTime() + _GRACE_MS) : null;
   const isMenuLive =
     _r.billingExempt ||
     _r.isDemo ||
-    (_r.subscriptionStatus === "ACTIVE" && _periodEnd && _chileDate(_periodEnd) >= _todayChile) ||
+    (_r.subscriptionStatus === "ACTIVE" && _gracedEnd && _chileDate(_gracedEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "TRIALING" && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "CANCELED" && _periodEnd && _chileDate(_periodEnd) >= _todayChile);
   // Restaurants that never paid (lastPaymentAt === null) get free-tier access instead of the paused screen
