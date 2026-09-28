@@ -34,6 +34,8 @@ export const FLOW_PLANS: Record<string, FlowPlanConfig> = {
   PREMIUM: { planId: "qc_monthly", name: "QuieroComer", amountNet: 44900, appPlan: "PREMIUM" },
   // Legacy plan ID from before simplification — keep for existing subscribers
   PREMIUM_LEGACY: { planId: "qc_premium_monthly", name: "QuieroComer", amountNet: 44900, appPlan: "PREMIUM" },
+  // Plan temporal de prueba — eliminar después del test
+  PREMIUM_TEST: { planId: "qc_test_1000", name: "QuieroComer Test", amountNet: 1000, appPlan: "PREMIUM" },
 };
 
 // Precio promocional para activacion desde demo (primer mes)
