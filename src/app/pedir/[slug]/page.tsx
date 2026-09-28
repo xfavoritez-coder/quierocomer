@@ -53,6 +53,7 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
         defaultView: true, cartaColorMode: true, cartaAccentColor: true, filterBarEnabled: true,
         billingExempt: true, isDemo: true,
         subscriptionStatus: true, currentPeriodEnd: true, trialEndsAt: true,
+        flowSubscriptionId: true,
         orderingBusinessHours: true,
       },
     }),
@@ -80,8 +81,10 @@ export default async function PedirPage({ params }: { params: Promise<{ slug: st
   const todayChile = chileDate(new Date());
   const periodEnd = config.currentPeriodEnd ? new Date(config.currentPeriodEnd) : null;
   const trialEnd = config.trialEndsAt ? new Date(config.trialEndsAt) : null;
-  // 3 días de gracia para cubrir retrasos de webhook Flow y pagos manuales tardíos
-  const GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+  // Para suscriptores con autocobro Flow activo: 5 días de gracia post-vencimiento
+  // para cubrir retrasos de webhook. Pagos manuales: sin gracia, se corta en fecha.
+  const hasAutoRenewal = !!(config as any).flowSubscriptionId;
+  const GRACE_MS = hasAutoRenewal ? 5 * 24 * 60 * 60 * 1000 : 0;
   const gracedEnd = periodEnd ? new Date(periodEnd.getTime() + GRACE_MS) : null;
   const isMenuLive =
     config.billingExempt ||

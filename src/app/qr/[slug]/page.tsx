@@ -122,8 +122,10 @@ export default async function CartaPage({
   const _todayChile = _chileDate(_now);
   const _periodEnd = _r.currentPeriodEnd ? new Date(_r.currentPeriodEnd) : null;
   const _trialEnd = _r.trialEndsAt ? new Date(_r.trialEndsAt) : null;
-  // 3 días de gracia para cubrir retrasos de webhook Flow y pagos manuales tardíos
-  const _GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+  // Para suscriptores con autocobro Flow activo: 5 días de gracia post-vencimiento
+  // para cubrir retrasos de webhook. Pagos manuales: sin gracia, se corta en fecha.
+  const _hasAutoRenewal = !!_r.flowSubscriptionId;
+  const _GRACE_MS = _hasAutoRenewal ? 5 * 24 * 60 * 60 * 1000 : 0;
   const _gracedEnd = _periodEnd ? new Date(_periodEnd.getTime() + _GRACE_MS) : null;
   const isMenuLive =
     _r.billingExempt ||
