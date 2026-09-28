@@ -661,7 +661,7 @@ export default function PedidosPage() {
       {isWhatsAppMode && (
         <div style={{ padding: "10px 14px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, marginBottom: 16 }}>
           <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-            Tus pedidos se gestionan por <strong>WhatsApp</strong> — aquí solo se guarda el registro. Para gestionar pedidos en tiempo real, cambia a modalidad <strong>Panel online</strong> en la configuración.
+            Tus pedidos se gestionan por <strong>WhatsApp</strong> — aquí solo se guarda el registro.
           </p>
         </div>
       )}
