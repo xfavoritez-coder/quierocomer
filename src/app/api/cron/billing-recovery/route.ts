@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowGet } from "@/lib/billing/flow";
-import { planFromFlowId, grossOf, FLOW_PLANS } from "@/lib/billing/plans-config";
+import { planFromFlowId } from "@/lib/billing/plans-config";
 
 /**
- * Cron — billing-recovery
+ * Cron — billing-recovery  (09:00 y 21:00 UTC)
  *
- * Detecta locales con suscripción Flow cuyo período ha vencido o está por vencer
- * en las próximas 24h, consulta Flow para verificar si la suscripción sigue activa,
- * y extiende el período automáticamente si Flow confirma que está vigente.
+ * Para cada local con suscripción Flow cuyo período esté vencido o a punto de vencer:
+ *  1. Consulta Flow — si la suscripción sigue ACTIVA (status=1), el cobro ocurrió
+ *     pero el webhook no llegó (o llegó y falló). Extendemos el período en nuestra DB
+ *     para que la carta no se interrumpa.
+ *  2. Si la suscripción está SUSPENDIDA o CANCELADA en Flow, no extendemos y alertamos.
  *
- * Esto cubre el caso de planes legacy (qc_premium_monthly) que Flow puede seguir
- * cobrando aunque el plan ya no exista con ese ID en nuestra configuración.
- *
- * Corre 2 veces al día: 09:00 y 21:00 UTC.
+ * IMPORTANTE: este cron solo mantiene el período en la DB sincronizado con Flow.
+ * NO simula pagos: no actualiza lastPaymentAt (eso solo lo hace el webhook cuando
+ * llega el cobro real de Flow). No registra payment_received.
  */
 export const maxDuration = 60;
 
@@ -26,20 +27,20 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
-  // Ventana: período vencido hasta 24h en el futuro (próximos a vencer)
-  const cutoffFuture = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  // No recuperar períodos que vencieron hace más de 7 días (evitar casos extremos)
-  const cutoffPast = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Buscar locales cuyo período vence en las próximas 12h o ya venció (hasta 10 días atrás)
+  // 12h adelante: suficiente para detectar antes de que expire con la siguiente ejecución
+  // 10 días atrás: cubre casos donde el webhook falló repetidamente
+  const windowFuture = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  const windowPast = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
 
   const results: { name: string; action: string; detail?: string }[] = [];
 
   try {
-    // Locales con suscripción Flow activa cuyo período está por vencer o ya venció
     const candidates = await prisma.restaurant.findMany({
       where: {
         flowSubscriptionId: { not: null },
         subscriptionStatus: "ACTIVE",
-        currentPeriodEnd: { gte: cutoffPast, lte: cutoffFuture },
+        currentPeriodEnd: { gte: windowPast, lte: windowFuture },
         plan: { not: "FREE" },
         billingExempt: false,
       },
@@ -54,34 +55,41 @@ export async function GET(req: NextRequest) {
       if (!r.flowSubscriptionId) continue;
 
       try {
-        // Consultar estado de la suscripción en Flow
         const sub = await flowGet<any>("/subscription/get", {
           subscriptionId: r.flowSubscriptionId,
         });
 
         // sub.status: 1=active, 2=suspended, 3=cancelled
         if (sub.status !== 1) {
-          results.push({ name: r.name, action: "skipped", detail: `Flow status=${sub.status}` });
+          // Suscripción caída en Flow — alertar pero no extender
+          results.push({ name: r.name, action: "flow_inactive", detail: `Flow status=${sub.status}` });
+          console.warn(`[billing-recovery] ⚠️ Suscripción inactiva en Flow: ${r.name} (status=${sub.status})`);
           continue;
         }
 
-        // Suscripción activa en Flow — verificar si necesita extensión
+        // morose=1 significa que Flow tiene una invoice impaga y está reintentando cobrar.
+        // En ese caso NO extendemos — Flow se encarga de reintentar y cuando pase el cobro
+        // llegará el webhook. Extender aquí sería dar servicio sin pago.
+        if (sub.morose === 1) {
+          results.push({ name: r.name, action: "morose_skip", detail: `Flow reintentando cobro, invoices pendientes` });
+          console.log(`[billing-recovery] ⏳ ${r.name}: morose=1, Flow reintentando — no extender`);
+          continue;
+        }
+
         const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
         const hoursUntilExpiry = periodEnd ? (periodEnd.getTime() - now.getTime()) / 3600000 : -1;
 
-        // Solo extender si el período vence en menos de 4h o ya venció
-        if (hoursUntilExpiry > 4) {
+        // Solo actuar si el período ya venció o vence en menos de 6h
+        if (hoursUntilExpiry > 6) {
           results.push({ name: r.name, action: "ok", detail: `expires in ${Math.round(hoursUntilExpiry)}h` });
           continue;
         }
 
-        // Determinar plan desde flowPlanId
-        const appPlan = planFromFlowId(r.flowPlanId || "") || r.plan;
-        const amountNet = FLOW_PLANS[appPlan]?.amountNet ?? FLOW_PLANS.PREMIUM.amountNet;
-
-        // Extender desde el vencimiento actual (o desde ahora si ya venció)
+        // Flow confirma suscripción activa pero el webhook no actualizó nuestro período.
+        // Extender el período sin tocar lastPaymentAt (el webhook real lo actualizará cuando llegue).
         const baseDate = periodEnd && periodEnd > now ? periodEnd : now;
         const newEnd = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const appPlan = planFromFlowId(r.flowPlanId || "") || r.plan;
 
         await prisma.restaurant.update({
           where: { id: r.id },
@@ -89,25 +97,27 @@ export async function GET(req: NextRequest) {
             subscriptionStatus: "ACTIVE",
             isActive: true,
             currentPeriodEnd: newEnd,
-            lastPaymentAt: now,
+            // NO actualizamos lastPaymentAt — eso solo lo hace el webhook con el cobro real
           },
         });
 
+        // Registrar como evento de recuperación, no como pago
         await prisma.panelActivity.create({
           data: {
             restaurantId: r.id,
-            action: "payment_received",
+            action: "period_extended_recovery",
             details: {
               plan: appPlan,
-              amountNet,
-              amountGross: grossOf(amountNet),
-              periodEnd: newEnd.toISOString(),
-              source: "billing_recovery_cron",
+              newPeriodEnd: newEnd.toISOString(),
+              reason: "flow_webhook_missing",
+              flowStatus: sub.status,
+              previousEnd: periodEnd?.toISOString(),
             } as any,
           },
         }).catch(() => {});
 
         results.push({ name: r.name, action: "extended", detail: `until ${newEnd.toLocaleDateString("es-CL")}` });
+        console.log(`[billing-recovery] ✅ Período extendido: ${r.name} → ${newEnd.toLocaleDateString("es-CL")}`);
       } catch (err: any) {
         const msg = err?.message || "unknown";
         results.push({ name: r.name, action: "error", detail: msg });
