@@ -156,7 +156,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
     select: {
       id: true, name: true, position: true,
       dishes: {
-        where: { isActive: true, deletedAt: null },
+        // hideFromOrdering: platos ocultos de "Pedidos online" no se muestran en la tienda.
+        where: { isActive: true, deletedAt: null, hideFromOrdering: false },
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
