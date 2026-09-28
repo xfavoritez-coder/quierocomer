@@ -68,6 +68,8 @@ export async function ensurePromoDish(promoId: string): Promise<string | null> {
     data: {
       restaurantId: promo.restaurantId, categoryId, name: promo.name, description: promo.description,
       price, discountPrice, photos, isActive: true, position: (last?.position ?? 0) + 1,
+      // Campos de lista sin default en el schema → deben enviarse explícitos.
+      flavorTags: [], txDishType: [], txCuisine: [], txMealSlot: [], txIngredient: [], txEstilo: [],
     },
     select: { id: true },
   });
