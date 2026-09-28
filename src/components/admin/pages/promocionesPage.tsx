@@ -27,7 +27,7 @@ interface Promo {
   originalPrice: number | null; promoPrice: number | null; discountPct: number | null;
   validFrom: string | null; validUntil: string | null; status: string;
   generatedBy: string; aiJustification: string | null; metrics: any;
-  promoType?: string; imageUrl?: string | null; thumbUrl?: string | null;
+  promoType?: string; imageUrl?: string | null; thumbUrl?: string | null; linkedDishId?: string | null;
   createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
   restaurant?: { name: string; logoUrl?: string | null } | null;
   daysOfWeek?: number[];
@@ -86,6 +86,7 @@ export default function AdminPromociones() {
   const [cPromoPrice, setCPromoPrice] = useState("");
   const [cOriginalPrice, setCOriginalPrice] = useState("");
   const [cDiscountPct, setCDiscountPct] = useState("");
+  const [cSellInStore, setCSellInStore] = useState(false);
   const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
   const [cDaysOfWeek, setCDaysOfWeek] = useState<number[]>([]);
   const [cValidFrom, setCValidFrom] = useState("");
@@ -179,6 +180,7 @@ export default function AdminPromociones() {
       body.thumbUrl = cThumbUrl || null;
       body.originalPrice = parseCLP(cOriginalPrice);
       body.promoPrice = parseCLP(cPromoPrice);
+      body.sellInStore = cSellInStore;
     } else {
       body.dishIds = cSelectedDishes;
       body.originalPrice = selectedDishesTotal;
@@ -200,7 +202,7 @@ export default function AdminPromociones() {
 
   const resetCreate = () => {
     setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]); setCValidFrom(""); setCValidUntil("");
+    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSellInStore(false); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]); setCValidFrom(""); setCValidUntil("");
   };
 
   useEffect(() => {
@@ -240,6 +242,23 @@ export default function AdminPromociones() {
       body: JSON.stringify({ id, status: "DELETED" }),
     });
     setPromos(prev => prev.filter(p => p.id !== id));
+  };
+
+  // Vender / dejar de vender en la tienda una promo gráfica existente (crea/quita el producto).
+  const [storeBusy, setStoreBusy] = useState<string | null>(null);
+  const toggleSellInStore = async (p: Promo) => {
+    const enable = !p.linkedDishId;
+    if (!enable && !confirm("¿Quitar el producto de la tienda? La promo seguirá en la carta.")) return;
+    setStoreBusy(p.id);
+    try {
+      const res = await fetch("/api/admin/promotions", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: p.id, sellInStore: enable }),
+      });
+      const data = await res.json();
+      if (data.promotion) setPromos(prev => prev.map(x => x.id === p.id ? { ...x, ...data.promotion } : x));
+    } catch { /* noop */ }
+    setStoreBusy(null);
   };
 
   const startEdit = (p: Promo) => {
@@ -714,6 +733,15 @@ export default function AdminPromociones() {
             <input type="text" inputMode="numeric" placeholder={t("promo_promo_price_hint")} value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
           </div>
 
+          {/* Vender también en la tienda ecommerce (crea un producto en el catálogo) */}
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14, padding: "10px 12px", background: cSellInStore ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: `1px solid ${cSellInStore ? "#F4A623" : "var(--adm-card-border)"}`, borderRadius: 10, cursor: "pointer" }}>
+            <input type="checkbox" checked={cSellInStore} onChange={e => setCSellInStore(e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer" }} />
+            <span style={{ flex: 1 }}>
+              <span style={{ display: "block", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>Vender también en la tienda</span>
+              <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2, lineHeight: 1.4 }}>Crea un producto en el catálogo (categoría “Promociones”) con esta imagen y precio. Aparecerá en la tienda ecommerce y podrás asignarle su código de POS.</span>
+            </span>
+          </label>
+
           {/* Modifier templates */}
           {availableTemplates.length > 0 && (
             <div style={{ marginBottom: 12 }}>
@@ -1074,6 +1102,11 @@ export default function AdminPromociones() {
                           <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>{t("promo_action_edit")}</button>
                           <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_delete")}</button>
                         </>
+                      )}
+                      {p.promoType === "graphic" && p.status !== "SUGGESTED" && (
+                        <button onClick={() => toggleSellInStore(p)} disabled={storeBusy === p.id} style={btnStyle(p.linkedDishId ? "#4ade80" : "#F4A623")}>
+                          {storeBusy === p.id ? "…" : p.linkedDishId ? "✓ En la tienda" : "🛒 Vender en tienda"}
+                        </button>
                       )}
                     </div>
                   </div>

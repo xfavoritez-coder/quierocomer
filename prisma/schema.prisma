@@ -1560,6 +1560,7 @@ model Promotion {
   daysOfWeek        Int[]              @default([])
   position          Int                @default(0)
   featured          Boolean            @default(false)
+  linkedDishId      String?            // Dish creado en el catálogo para vender la promo en la tienda
   restaurant        Restaurant         @relation(fields: [restaurantId], references: [id])
   modifierTemplates ModifierTemplate[] @relation("ModifierTemplateToPromotion")
 

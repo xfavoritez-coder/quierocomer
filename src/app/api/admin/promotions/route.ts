@@ -11,6 +11,7 @@ import {
 } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
 import { syncRestaurantDishDiscounts } from "@/lib/promos/syncDishDiscounts";
+import { ensurePromoDish, removePromoDish } from "@/lib/promos/promoStoreProduct";
 
 async function revalidateRestaurant(restaurantId: string) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
@@ -118,6 +119,9 @@ export async function POST(req: NextRequest) {
     // Sincroniza Dish.discountPrice respetando el día/rango de la promo.
     await syncRestaurantDishDiscounts(restaurantId, promo.dishIds);
 
+    // "Vender también en la tienda": crea el producto (Dish) vinculado.
+    if (body.sellInStore) { try { await ensurePromoDish(promo.id); } catch (e) { console.error("[promo store product]", e); } }
+
     await revalidateRestaurant(restaurantId);
     logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
     return NextResponse.json({ promotion: promo });
@@ -182,9 +186,26 @@ export async function PUT(req: NextRequest) {
     // Sincroniza Dish.discountPrice respetando el día/rango y demás promos activas.
     await syncRestaurantDishDiscounts(existing.restaurantId, promo.dishIds);
 
+    // Producto de tienda vinculado (Dish): crear/actualizar/quitar.
+    try {
+      const linked = await prisma.promotion.findUnique({ where: { id }, select: { linkedDishId: true } });
+      if (status === "DELETED") {
+        await removePromoDish(id); // al eliminar la promo, se quita su producto
+      } else if (data.sellInStore === true) {
+        await ensurePromoDish(id);
+      } else if (data.sellInStore === false) {
+        await removePromoDish(id);
+      } else if (linked?.linkedDishId) {
+        // Pausada → desactiva el producto; activa → lo mantiene sincronizado.
+        if (status && status !== "ACTIVE") await removePromoDish(id);
+        else await ensurePromoDish(id);
+      }
+    } catch (e) { console.error("[promo store product]", e); }
+
     await revalidateRestaurant(existing.restaurantId);
     logActivity(existing.restaurantId, "promo_edit", { promoId: id, name: promo.name, status: promo.status });
-    return NextResponse.json({ promotion: promo });
+    const fresh = await prisma.promotion.findUnique({ where: { id }, select: { linkedDishId: true } });
+    return NextResponse.json({ promotion: { ...promo, linkedDishId: fresh?.linkedDishId ?? null } });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
     console.error("Promotion update error:", e);
