@@ -436,10 +436,27 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         {/* Header — no borderBottom, first section provides the separator */}
         <div style={{ padding: "14px 16px 12px", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-              <RestLogo size={28} />
-              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
-            </Link>
+            {restaurants.length > 1 ? (
+              <select
+                value={selectedRestaurantId || ""}
+                onChange={e => setSelectedRestaurant(e.target.value)}
+                style={{
+                  flex: 1, minWidth: 0, fontFamily: F, fontSize: "14px", fontWeight: 700,
+                  color: "var(--adm-text)", background: "var(--adm-card)",
+                  border: "1px solid var(--adm-card-border)", borderRadius: 8,
+                  padding: "5px 8px", cursor: "pointer", outline: "none",
+                }}
+              >
+                {restaurants.map((r: any) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            ) : (
+              <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                <RestLogo size={28} />
+                <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
+              </Link>
+            )}
             {activeRest?.slug && (
               <a
                 href={`https://quierocomer.com/${activeRest.slug}`}
@@ -462,12 +479,29 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <button onClick={openSidebar} style={{ width: 40, height: 40, borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <MenuIcon size={18} color="var(--adm-text2)" />
         </button>
-        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 12px" }}>
-          <RestLogo size={26} />
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-          </div>
-        </Link>
+        {restaurants.length > 1 ? (
+          <select
+            value={selectedRestaurantId || ""}
+            onChange={e => setSelectedRestaurant(e.target.value)}
+            style={{
+              flex: 1, minWidth: 0, margin: "0 12px", fontFamily: F, fontSize: "14px", fontWeight: 700,
+              color: "var(--adm-text)", background: "var(--adm-card)",
+              border: "1px solid var(--adm-card-border)", borderRadius: 8,
+              padding: "5px 8px", cursor: "pointer", outline: "none",
+            }}
+          >
+            {restaurants.map((r: any) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        ) : (
+          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 12px" }}>
+            <RestLogo size={26} />
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+            </div>
+          </Link>
+        )}
         {activeRest?.slug && (
           <a
             href={`https://quierocomer.com/${activeRest.slug}`}
