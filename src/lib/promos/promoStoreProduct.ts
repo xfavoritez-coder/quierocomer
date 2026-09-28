@@ -77,6 +77,42 @@ export async function ensurePromoDish(promoId: string): Promise<string | null> {
   return created.id;
 }
 
+/**
+ * Enciende/apaga el Dish vinculado de cada promo según si la promo está activa
+ * HOY (status ACTIVE + daysOfWeek + rango validFrom/validUntil), hora de Chile.
+ * Así el producto de la tienda solo se muestra los días marcados y dentro del
+ * rango. Se llama al crear/editar la promo y en el cron diario.
+ */
+export async function syncPromoStoreProductsActive(restaurantId: string): Promise<void> {
+  const promos = await prisma.promotion.findMany({
+    where: { restaurantId, linkedDishId: { not: null } },
+    select: { linkedDishId: true, status: true, daysOfWeek: true, validFrom: true, validUntil: true },
+  });
+  if (!promos.length) return;
+
+  const cl = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+  const today = cl.getDay(); // 0=Dom .. 6=Sáb
+  const nowMs = Date.now();
+
+  const activate: string[] = [];
+  const deactivate: string[] = [];
+  for (const p of promos) {
+    if (!p.linkedDishId) continue;
+    let on = p.status === "ACTIVE";
+    if (on && p.daysOfWeek?.length && !p.daysOfWeek.includes(today)) on = false;
+    if (on && p.validFrom && p.validFrom.getTime() > nowMs) on = false;
+    if (on && p.validUntil && p.validUntil.getTime() < nowMs) on = false;
+    (on ? activate : deactivate).push(p.linkedDishId);
+  }
+
+  const ops = [];
+  // Al reactivar no tocamos deletedAt (si estaba soft-deleted por "quitar de tienda",
+  // su promo ya no tiene linkedDishId, así que no entra aquí).
+  if (activate.length) ops.push(prisma.dish.updateMany({ where: { id: { in: activate }, deletedAt: null }, data: { isActive: true } }));
+  if (deactivate.length) ops.push(prisma.dish.updateMany({ where: { id: { in: deactivate } }, data: { isActive: false } }));
+  if (ops.length) await prisma.$transaction(ops);
+}
+
 /** Desactiva (soft-delete) el Dish vinculado y limpia el vínculo. */
 export async function removePromoDish(promoId: string): Promise<void> {
   const promo = await prisma.promotion.findUnique({ where: { id: promoId }, select: { linkedDishId: true } });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncRestaurantDishDiscounts } from "@/lib/promos/syncDishDiscounts";
+import { syncPromoStoreProductsActive } from "@/lib/promos/promoStoreProduct";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,7 +26,11 @@ export async function GET(req: NextRequest) {
 
   let synced = 0;
   for (const r of rows) {
-    try { await syncRestaurantDishDiscounts(r.restaurantId); synced++; } catch { /* best-effort */ }
+    try {
+      await syncRestaurantDishDiscounts(r.restaurantId);
+      await syncPromoStoreProductsActive(r.restaurantId); // enciende/apaga productos de promo por día/rango
+      synced++;
+    } catch { /* best-effort */ }
   }
 
   return NextResponse.json({ ok: true, restaurants: synced });

@@ -11,7 +11,7 @@ import {
 } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
 import { syncRestaurantDishDiscounts } from "@/lib/promos/syncDishDiscounts";
-import { ensurePromoDish, removePromoDish } from "@/lib/promos/promoStoreProduct";
+import { ensurePromoDish, removePromoDish, syncPromoStoreProductsActive } from "@/lib/promos/promoStoreProduct";
 
 async function revalidateRestaurant(restaurantId: string) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     await syncRestaurantDishDiscounts(restaurantId, promo.dishIds);
 
     // "Vender también en la tienda": crea el producto (Dish) vinculado.
-    if (body.sellInStore) { try { await ensurePromoDish(promo.id); } catch (e) { console.error("[promo store product]", e); } }
+    if (body.sellInStore) { try { await ensurePromoDish(promo.id); await syncPromoStoreProductsActive(restaurantId); } catch (e) { console.error("[promo store product]", e); } }
 
     await revalidateRestaurant(restaurantId);
     logActivity(restaurantId, "promo_create", { promoId: promo.id, name, promoPrice, originalPrice });
@@ -200,6 +200,8 @@ export async function PUT(req: NextRequest) {
         if (status && status !== "ACTIVE") await removePromoDish(id);
         else await ensurePromoDish(id);
       }
+      // Aplica día/rango de inmediato (mostrar solo días marcados y dentro del rango).
+      await syncPromoStoreProductsActive(existing.restaurantId);
     } catch (e) { console.error("[promo store product]", e); }
 
     await revalidateRestaurant(existing.restaurantId);
