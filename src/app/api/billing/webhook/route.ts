@@ -156,7 +156,9 @@ export async function POST(req: NextRequest) {
       plan: appPlan,
       subscriptionStatus: "ACTIVE",
       isActive: true,
-      flowPlanId: restaurant.pendingFlowPlanId,
+      // Solo actualizar flowPlanId si hay un cambio de plan pendiente; en renovaciones automáticas
+      // (pendingFlowPlanId === null) preservar el valor existente para no perder el historial.
+      ...(restaurant.pendingFlowPlanId ? { flowPlanId: restaurant.pendingFlowPlanId } : {}),
       currentPeriodEnd: periodEnd,
       lastPaymentAt: now,
       pendingFlowPlanId: null,
