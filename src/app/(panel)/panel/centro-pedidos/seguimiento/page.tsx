@@ -266,7 +266,7 @@ export default function SeguimientoPage() {
         <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><Navigation size={20} color={ACCENT} /></div>
         <div style={{ flex: 1, minWidth: 160 }}>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Seguimiento en vivo</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>El local 🏪, la casa 🏠 de cada pedido activo y los repartidores en tiempo real.</p>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>El local, la ubicación de cada pedido activo y los repartidores en tiempo real.</p>
         </div>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 999, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)" }}>
           <Radio size={13} /> {live ? "En vivo" : "Conectando…"}
@@ -288,8 +288,7 @@ export default function SeguimientoPage() {
           ) : enReparto.length === 0 ? (
             <div style={{ padding: "30px 16px", textAlign: "center", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
               <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Sin repartos activos</p>
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Cuando un repartidor tome un pedido, aparecerá aquí con su ubicación en vivo.</p>
-              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Mientras tanto, en el mapa ves el local 🏪 y la casa 🏠 de cada pedido activo.</p>
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Cuando un repartidor tome un pedido, aparecerá aquí con su ubicación en vivo.</p>
             </div>
           ) : (
             enReparto.map((o) => {
