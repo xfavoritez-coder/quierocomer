@@ -404,6 +404,9 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready") && (uberEnabled || pedidosyaEnabled);
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
+      {o.vendorName && (
+        <p style={{ textAlign: "center", marginBottom: 8, fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.vendorName}</p>
+      )}
       <div style={{ marginBottom: 8 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
@@ -476,10 +479,6 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         {o.opsStage !== "delivered" && !canceled && <ElapsedTimer since={o.createdAt} />}
       </div>
       </div>
-
-      {o.vendorName && (
-        <p style={{ textAlign: "center", marginBottom: 6, fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.vendorName}</p>
-      )}
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
         <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
