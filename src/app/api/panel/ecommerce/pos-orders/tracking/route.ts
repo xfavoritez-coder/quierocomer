@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { geocodePosOrders } from "@/lib/ecommerce/geocode";
+import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +29,15 @@ export async function GET(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { name: true, address: true, lat: true, lng: true, ecommerceConfig: true },
+    select: { name: true, address: true, lat: true, lng: true, ecommerceConfig: true, ecommerceDeliveryConfig: true },
   });
+
+  // Ubicación del local: la configurada en Ecommerce → Delivery (origin);
+  // como respaldo, el lat/lng del restaurante.
+  const deliveryCfg = parseDeliveryConfig(restaurant?.ecommerceDeliveryConfig);
+  const localLat = deliveryCfg.origin?.lat ?? restaurant?.lat ?? null;
+  const localLng = deliveryCfg.origin?.lng ?? restaurant?.lng ?? null;
+  const localAddress = deliveryCfg.originAddress ?? restaurant?.address ?? null;
 
   // Todos los pedidos activos (no entregados ni cancelados) para posicionarlos
   // en el mapa: en preparación, listos y en reparto.
@@ -39,9 +47,13 @@ export async function GET(req: NextRequest) {
     include: { assignedDriver: { select: { displayName: true } } },
   });
 
+  // Un pedido con dirección pero sin monto de delivery se toma como retiro
+  // (no lleva casa del cliente en el mapa).
+  const isDeliveryOrder = (o: { isDelivery: boolean; deliveryFee: number }) => o.isDelivery && o.deliveryFee > 0;
+
   // Geocodifica (y persiste) las direcciones delivery que aún no tengan coords,
   // para que la casa del cliente aparezca en el mapa.
-  const toGeo = orders.filter((o) => o.isDelivery && o.addressLine && (o.customerLat == null || o.customerLng == null));
+  const toGeo = orders.filter((o) => isDeliveryOrder(o) && o.addressLine && (o.customerLat == null || o.customerLng == null));
   const geo = toGeo.length
     ? await geocodePosOrders(restaurant, toGeo.map((o) => ({ id: o.id, addressLine: o.addressLine || "", customerLat: o.customerLat, customerLng: o.customerLng })), 8)
     : new Map<string, { lat: number; lng: number }>();
@@ -57,7 +69,7 @@ export async function GET(req: NextRequest) {
       addressLine: o.addressLine,
       totalAmount: o.totalAmount,
       opsStage: o.opsStage,
-      isDelivery: o.isDelivery,
+      isDelivery: isDeliveryOrder(o),
       createdAt: o.createdAt ? o.createdAt.toISOString() : null,
       destLat: o.customerLat ?? geo.get(o.id)?.lat ?? null,
       destLng: o.customerLng ?? geo.get(o.id)?.lng ?? null,
@@ -73,8 +85,8 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  const local = restaurant && restaurant.lat != null && restaurant.lng != null
-    ? { name: restaurant.name, address: restaurant.address, lat: restaurant.lat, lng: restaurant.lng }
+  const local = restaurant && localLat != null && localLng != null
+    ? { name: restaurant.name, address: localAddress, lat: localLat, lng: localLng }
     : null;
 
   return NextResponse.json({ orders: items, local });

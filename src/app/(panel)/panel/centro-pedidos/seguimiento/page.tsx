@@ -195,7 +195,8 @@ export default function SeguimientoPage() {
         pts.push([o.destLat, o.destLng]);
         const stageColor = STAGE_HOME[o.opsStage]?.color || RED;
         const stageLabel = STAGE_HOME[o.opsStage]?.label || "";
-        const tip = homePillHtml(num, stageColor, o.customerName || "Cliente", o.addressLine || "", ageMin(o.createdAt), stageLabel);
+        const shortAddr = (o.addressLine || "").split(",")[0].trim();
+        const tip = homePillHtml(num, stageColor, o.customerName || "Cliente", shortAddr, ageMin(o.createdAt), stageLabel);
         const homeIcon = L.divIcon({ html: homeIconHtml(stageColor, num), className: "", iconSize: [22, 22], iconAnchor: [11, 11] });
         if (!m.dest) {
           m.dest = L.marker([o.destLat, o.destLng], { icon: homeIcon }).addTo(map)
