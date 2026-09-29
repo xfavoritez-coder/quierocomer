@@ -104,6 +104,7 @@ export default function ReportePage() {
               color={GREEN}
               big
             />
+            <BigStat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Venta de productos por pedido" icon={<Receipt size={18} color="#0ea5e9" />} color="#0ea5e9" />
             <BigStat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado por envíos" icon={<Bike size={18} color={BLUE} />} color={BLUE} />
             <BigStat label="Propinas" value={clp(data.tipsTotal)} hint="Total de propinas" icon={<Receipt size={18} color={PURPLE} />} color={PURPLE} />
             <BigStat label="Pedidos" value={data.ordersCount.toLocaleString("es-CL")} hint="Cantidad de pedidos" icon={<ShoppingBag size={18} color={ACCENT} />} color={ACCENT} />
@@ -156,7 +157,10 @@ function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: num
                     {c.name}
                     <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>· {c.orders} pedido{c.orders === 1 ? "" : "s"}</span>
                   </span>
-                  <span style={{ flexShrink: 0, fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(c.sales)} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>({pct}%)</span></span>
+                  <span style={{ flexShrink: 0, textAlign: "right", lineHeight: 1.25 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(c.sales)} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>({pct}%)</span></span>
+                    <span style={{ display: "block", fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, color: "var(--adm-text3)" }}>Ticket prom. {clp(c.orders > 0 ? c.sales / c.orders : 0)}</span>
+                  </span>
                 </div>
                 <div style={{ height: 8, borderRadius: 999, background: "var(--adm-hover)", overflow: "hidden" }}>
                   <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 999, transition: "width .3s" }} />
