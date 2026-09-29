@@ -161,7 +161,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
-          price: true, discountPrice: true, photos: true, stockCountdown: true,
+          price: true, discountPrice: true, photos: true, stockCountdown: true, soldOut: true,
           toteatProductId: true, isHero: true,
           modifierTemplates: {
             select: {
@@ -224,7 +224,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
         price: hasOffer ? d.discountPrice! : d.price,
         original_price: hasOffer ? d.price : null,
         image_url: d.photos?.[0] ?? null,
-        is_sold_out: d.stockCountdown != null && d.stockCountdown <= 0,
+        is_sold_out: d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0),
         is_hero: d.isHero === true,
         toteat_code: d.toteatProductId ?? null,
         option_groups: optionGroups,

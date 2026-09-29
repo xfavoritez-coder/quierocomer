@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package, Star } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package, Star, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import type { StorefrontData } from "@/lib/ecommerce/storefront-data";
@@ -70,6 +70,16 @@ export default function EcommerceCatalogoPage() {
 
   const products = data?.products ?? [];
   const categories = data?.categories ?? [];
+
+  // Agotar / reactivar un producto (se refleja en el storefront con opacidad + badge).
+  const toggleSoldOut = useCallback(async (id: string, next: boolean) => {
+    setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, is_sold_out: next } : p) } : d);
+    try {
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ soldOut: next }) });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); toast.error(e.error || "No se pudo actualizar"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, is_sold_out: !next } : p) } : d); return; }
+      toast.success(next ? "Producto agotado" : "Producto disponible");
+    } catch { toast.error("Error de conexión"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, is_sold_out: !next } : p) } : d); }
+  }, []);
 
   // Modificadores deduplicados (un template compartido aparece en varios productos).
   const dedupGroups = useMemo<DedupGroup[]>(() => {
@@ -147,6 +157,7 @@ export default function EcommerceCatalogoPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {catProducts.map((p) => (
                         <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap} qcPrice={p.price}
+                          soldOut={p.is_sold_out} onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)}
                           star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
@@ -189,7 +200,7 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
-function Row({ name, initial, endpoint, star, toteatMap, qcPrice }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number }) {
+function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onToggleSoldOut }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number; soldOut?: boolean; onToggleSoldOut?: () => void }) {
   const [code, setCode] = useState(initial ?? "");
   const norm = code.trim().toUpperCase();
   const tInfo = toteatMap && norm ? toteatMap[norm] : undefined;
@@ -207,7 +218,16 @@ function Row({ name, initial, endpoint, star, toteatMap, qcPrice }: { name: stri
             <Star size={18} color={star.on ? ACCENT : "var(--adm-text3)"} fill={star.on ? ACCENT : "none"} />
           </button>
         )}
-        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: soldOut ? "var(--adm-text3)" : "var(--adm-text)", textDecoration: soldOut ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+        {onToggleSoldOut && (
+          <button
+            onClick={onToggleSoldOut}
+            title={soldOut ? "Marcar disponible" : "Marcar agotado"}
+            style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${soldOut ? "#ef4444" : "var(--adm-card-border)"}`, background: soldOut ? "rgba(239,68,68,0.12)" : "transparent", color: soldOut ? "#ef4444" : "var(--adm-text2)" }}
+          >
+            <Ban size={13} /> {soldOut ? "Agotado" : "Agotar"}
+          </button>
+        )}
         <CodeInput initial={initial} endpoint={endpoint} onValue={setCode} />
       </div>
 

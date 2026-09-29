@@ -854,6 +854,7 @@ model Dish {
   isHero                Boolean                @default(false)
   isActive              Boolean                @default(true)
   stockCountdown        Int?
+  soldOut               Boolean                @default(false)
   ingredients           String?
   allergens             String?
   position              Int
