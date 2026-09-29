@@ -117,6 +117,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ConciergeBell, labelKey: "nav_centro_pos", href: `${base}/centro-pedidos/tomar-pedidos` },
         { icon: Navigation, labelKey: "nav_centro_tracking", href: `${base}/centro-pedidos/seguimiento` },
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
+        { icon: BarChart3, labelKey: "nav_centro_report", href: `${base}/centro-pedidos/reporte` },
         { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
       ],
     }] : []),
