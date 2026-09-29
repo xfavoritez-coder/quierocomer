@@ -401,10 +401,11 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
       )}
 
+      {/* Repartidor propio (el de Uber/PedidosYa se muestra en el bloque de courier). */}
       {o.assignedTo && (o.opsStage === "out_for_delivery" || o.opsStage === "delivered") && (
         <div style={{ marginTop: 6 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: BLUE, background: `${BLUE}14`, borderRadius: 7, padding: "3px 8px" }}>
-            <Bike size={12} /> {o.assignedTo}
+            <Bike size={12} /> Repartidor: {o.assignedTo}
           </span>
         </div>
       )}
