@@ -54,9 +54,14 @@ const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️
 const STAGES: Stage[] = ["preparing", "ready", "out_for_delivery", "delivered"];
 const STAGE_ACCENT: Record<Stage, string> = { preparing: ORANGE, ready: GREEN, out_for_delivery: BLUE, delivered: GRAY };
 
+// Un pedido con dirección pero sin monto de delivery se toma como retiro.
+function isDeliveryOrder(o: PosOrder): boolean {
+  return o.isDelivery && (o.deliveryFee ?? 0) > 0;
+}
+
 function nextActions(o: PosOrder): { stage: Stage; label: string; color: string }[] {
   if (o.posStatus === "canceled" || o.opsStage === "delivered") return [];
-  if (o.isDelivery) {
+  if (isDeliveryOrder(o)) {
     // Delivery: cocina solo marca "Listo". El paso a reparto y la entrega los
     // gestiona la app del repartidor (o el courier). Override manual: menú ⋮.
     if (o.opsStage === "preparing") return [{ stage: "ready", label: "Listo", color: GREEN }];
@@ -69,7 +74,7 @@ function nextActions(o: PosOrder): { stage: Stage; label: string; color: string 
 }
 
 function saleBadge(o: PosOrder): { label: string; icon: any; color: string } {
-  if (o.isDelivery) return { label: "Delivery", icon: Bike, color: GREEN };
+  if (isDeliveryOrder(o)) return { label: "Delivery", icon: Bike, color: GREEN };
   if (o.tableLabel || o.saleType === "dine-in") return { label: o.tableLabel || "Mesa", icon: Utensils, color: BLUE };
   return { label: "Retiro", icon: ShoppingBag, color: ORANGE };
 }
@@ -313,7 +318,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   // Se puede solicitar courier desde "En preparación" o "Listo" (a veces se pide
   // con anticipación). Solicitarlo NO cambia la etapa: el paso a reparto lo hace
   // el webhook de Uber/PedidosYa. En reparto ya lo lleva alguien, no se ofrece.
-  const canRequestCourier = o.isDelivery && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready");
+  const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready");
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>

@@ -60,14 +60,17 @@ export async function PATCH(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, deliveryFee: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+
+  // Un pedido con dirección pero sin monto de delivery se toma como retiro.
+  const effectiveDelivery = order.isDelivery && (order.deliveryFee ?? 0) > 0;
 
   // Retiro + auto-entregar activado: al marcar "Listo" salta directo a "Entregado"
   // (los pedidos de retiro no tienen reparto; el cliente los retira al estar listos).
   let stage = opsStage;
   const cfg = order.restaurant?.centroPedidosConfig as { autoDeliverPickup?: boolean } | null;
-  if (stage === "ready" && !order.isDelivery && cfg?.autoDeliverPickup) stage = "delivered";
+  if (stage === "ready" && !effectiveDelivery && cfg?.autoDeliverPickup) stage = "delivered";
 
   // Timestamps de etapa (para el orden y los tiempos en la app del repartidor).
   const now = new Date();
