@@ -12,7 +12,7 @@ const ACCENT = "#F4A623";
 const GREEN = "#22c55e";
 
 type Product = StorefrontData["products"][number];
-interface DedupOption { id: string; name: string; code: string | null }
+interface DedupOption { id: string; name: string; code: string | null; price: number }
 interface DedupGroup { id: string; name: string; options: DedupOption[] }
 
 export default function EcommerceCatalogoPage() {
@@ -79,7 +79,7 @@ export default function EcommerceCatalogoPage() {
         let grp = map.get(g.id);
         if (!grp) { grp = { id: g.id, name: g.name, options: [] }; map.set(g.id, grp); }
         for (const v of g.values) {
-          if (!grp.options.some((o) => o.id === v.id)) grp.options.push({ id: v.id, name: v.name, code: v.toteat_modifier_code });
+          if (!grp.options.some((o) => o.id === v.id)) grp.options.push({ id: v.id, name: v.name, code: v.toteat_modifier_code, price: v.price_delta });
         }
       }
     }
@@ -163,7 +163,7 @@ export default function EcommerceCatalogoPage() {
                   <h2 style={sectionTitle}>{g.name}</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {g.options.map((o) => (
-                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} />
+                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} qcPrice={o.price} />
                     ))}
                   </div>
                 </div>
