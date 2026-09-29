@@ -22,6 +22,7 @@ function addDaysYmd(ymd: string, days: number): string {
 
 interface HourBucket { hour: number; sales: number; orders: number }
 interface Channel { name: string; sales: number; orders: number }
+interface ProductRank { name: string; qty: number; revenue: number }
 interface Report {
   ordersCount: number;
   productSales: number;
@@ -30,6 +31,7 @@ interface Report {
   grossTotal: number;
   hourly: HourBucket[];
   channels: Channel[];
+  products: ProductRank[];
 }
 
 export default function ReportePage() {
@@ -115,6 +117,9 @@ export default function ReportePage() {
 
           {/* Gráfico venta por hora */}
           <HourlyChart hourly={data.hourly} />
+
+          {/* Ranking de productos vendidos */}
+          <ProductRanking products={data.products} />
         </>
       )}
     </div>
@@ -130,6 +135,41 @@ function BigStat({ label, value, hint, icon, color, big }: { label: string; valu
       </div>
       <div style={{ fontFamily: F, fontSize: big ? "1.9rem" : "1.5rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1.1 }}>{value}</div>
       {hint && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 4 }}>{hint}</div>}
+    </div>
+  );
+}
+
+function ProductRanking({ products }: { products: ProductRank[] }) {
+  const maxQty = Math.max(1, ...products.map((p) => p.qty));
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", marginTop: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Productos más vendidos</h2>
+        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Por cantidad</span>
+      </div>
+      {products.length === 0 ? (
+        <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "20px 0" }}>Sin productos vendidos en el período seleccionado.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {products.map((p, i) => {
+            const pct = Math.max(4, Math.round((p.qty / maxQty) * 100));
+            return (
+              <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, background: i < 3 ? `${ACCENT}22` : "var(--adm-hover)", color: i < 3 ? ACCENT : "var(--adm-text3)", fontFamily: F, fontSize: "0.72rem", fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 3 }}>
+                    <span style={{ minWidth: 0, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <span style={{ flexShrink: 0, fontFamily: F, fontSize: "0.84rem", fontWeight: 800, color: "var(--adm-text)" }}>{p.qty}<span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, color: "var(--adm-text3)" }}> u.{p.revenue > 0 ? ` · ${clp(p.revenue)}` : ""}</span></span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 999, background: "var(--adm-hover)", overflow: "hidden" }}>
+                    <div style={{ width: `${pct}%`, height: "100%", background: ACCENT, borderRadius: 999, transition: "width .3s" }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
