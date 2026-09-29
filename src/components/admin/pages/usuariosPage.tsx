@@ -72,7 +72,7 @@ function StatusDot({ status, statusConfig }: { status: string; statusConfig: Rec
 
 export default function UsuariosPage() {
   const { t } = usePanelLang();
-  const { selectedRestaurantId } = useAdminSession();
+  const { selectedRestaurantId, role: sessionRole } = useAdminSession();
 
   const ROLE_CONFIG: Record<string, RoleCfg> = {
     OWNER: { label: t("users_owner"), color: GOLD, bg: `rgba(244,166,35,0.12)`, icon: Crown, desc: t("users_role_owner_desc") },
@@ -413,6 +413,10 @@ export default function UsuariosPage() {
         )}
       </div>
 
+      {(sessionRole === "OWNER" || sessionRole === "SUPERADMIN") && rid && (
+        <ViewerSidebarPermissions restaurantId={rid} />
+      )}
+
 
       {/* Edit Drawer */}
       {editingUser && (() => {
@@ -564,6 +568,106 @@ export default function UsuariosPage() {
       <style>{`
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
+    </div>
+  );
+}
+
+// ── Permisos del perfil visor: qué secciones del sidebar puede ver ──
+const VIEWER_SECTION_OPTIONS: { key: string; label: string }[] = [
+  { key: "mi-carta", label: "Mi Carta" },
+  { key: "carta", label: "Carta QR" },
+  { key: "ordering", label: "Pedidos Online" },
+  { key: "ecommerce", label: "Ecommerce" },
+  { key: "centro-pedidos", label: "Centro de pedidos" },
+  { key: "bodega", label: "Bodega" },
+  { key: "loyalty", label: "Loyalty" },
+  { key: "valoraciones", label: "Valoraciones" },
+  { key: "config", label: "Configuración" },
+];
+const VIEWER_ALL_KEYS = VIEWER_SECTION_OPTIONS.map((o) => o.key);
+
+function ViewerSidebarPermissions({ restaurantId }: { restaurantId: string }) {
+  const { t } = usePanelLang();
+  // null = ve todas (por defecto). Array = solo esas.
+  const [allowed, setAllowed] = useState<string[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/panel/viewer-permissions?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setAllowed(Array.isArray(d.sections) ? d.sections : null); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  const isOn = (key: string) => allowed === null || allowed.includes(key);
+
+  const toggle = (key: string) => {
+    // Al primer cambio desde "todas", partimos del set completo y quitamos/agregamos.
+    const base = allowed === null ? [...VIEWER_ALL_KEYS] : [...allowed];
+    const next = base.includes(key) ? base.filter((k) => k !== key) : [...base, key];
+    setAllowed(next);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/panel/viewer-permissions", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, sections: allowed }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); toast.error(d.error || "No se pudo guardar"); setSaving(false); return; }
+      toast.success("Permisos del visor guardados");
+    } catch { toast.error("Error de conexión"); }
+    setSaving(false);
+  };
+
+  const resetAll = () => setAllowed(null);
+
+  return (
+    <div style={{ marginTop: 22, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <Eye size={18} color="#60a5fa" />
+        <h2 style={{ fontFamily: F, fontSize: "0.98rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Qué ve el perfil visor en el menú</h2>
+      </div>
+      <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>
+        Elige qué secciones del menú lateral puede ver un usuario con rol <b>Visor</b>. Dashboard, Soporte y Mi Suscripción siempre están visibles.
+        {allowed === null && " Actualmente ve todas."}
+      </p>
+
+      {loading ? (
+        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)" }}>Cargando…</p>
+      ) : (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+            {VIEWER_SECTION_OPTIONS.map((o) => {
+              const on = isOn(o.key);
+              return (
+                <button key={o.key} onClick={() => toggle(o.key)} style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", borderRadius: 10, cursor: "pointer", textAlign: "left",
+                  border: `1px solid ${on ? "#60a5fa" : "var(--adm-card-border)"}`, background: on ? "rgba(96,165,250,0.10)" : "var(--adm-hover)",
+                }}>
+                  <span style={{ width: 34, height: 20, borderRadius: 10, background: on ? "#60a5fa" : "var(--adm-toggle-off, #ccc)", position: "relative", flexShrink: 0, transition: "background .15s" }}>
+                    <span style={{ position: "absolute", top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left .15s", boxShadow: "0 1px 2px rgba(0,0,0,.3)" }} />
+                  </span>
+                  <span style={{ fontFamily: FB, fontSize: "0.84rem", fontWeight: 600, color: "var(--adm-text)" }}>{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+            <button onClick={save} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "#F4A623", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>
+              {saving ? "Guardando…" : "Guardar permisos del visor"}
+            </button>
+            {allowed !== null && (
+              <button onClick={resetAll} style={{ padding: 0, border: "none", background: "transparent", color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.76rem", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>Mostrar todas</button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

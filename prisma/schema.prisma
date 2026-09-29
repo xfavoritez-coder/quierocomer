@@ -369,6 +369,7 @@ model Restaurant {
   bodegaId                   String?
   centroPedidosEnabled       Boolean                   @default(false)
   centroPedidosConfig        Json?
+  viewerSections             Json?                     // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]

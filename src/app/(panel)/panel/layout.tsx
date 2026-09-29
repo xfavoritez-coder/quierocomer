@@ -1058,6 +1058,7 @@ function PanelLayoutInner({ children }: { children: React.ReactNode }) {
         hasLoyalty={hasLoyalty}
         seenFeatures={seenFeatures}
         markFeatureSeen={markFeatureSeen}
+        role={role}
       >
         {!isDemo && (
           <ExpiryBanner restaurantId={selectedRestaurantId || null} />

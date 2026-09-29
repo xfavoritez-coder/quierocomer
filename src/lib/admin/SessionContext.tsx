@@ -5,7 +5,7 @@ import { createContext, useContext } from "react";
 export interface SessionData {
   role: "SUPERADMIN" | "OWNER" | string;
   name: string;
-  restaurants: { id: string; name: string; slug: string; qrToken?: string | null; ecommerceEnabled?: boolean; bodegaEnabled?: boolean; centroPedidosEnabled?: boolean }[];
+  restaurants: { id: string; name: string; slug: string; qrToken?: string | null; ecommerceEnabled?: boolean; bodegaEnabled?: boolean; centroPedidosEnabled?: boolean; viewerSections?: string[] | null }[];
   selectedRestaurantId: string | null;
   isSuper: boolean;
   loading: boolean;

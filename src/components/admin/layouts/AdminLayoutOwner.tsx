@@ -23,8 +23,12 @@ interface Props {
   hasLoyalty?: boolean;
   seenFeatures?: string[];
   markFeatureSeen?: (feature: string) => void;
+  role?: string; // "OWNER" | "ADMIN" | "VIEWER" | "SUPERADMIN"
   children: React.ReactNode;
 }
+
+// Secciones que un VIEWER SIEMPRE ve (para que no quede sin navegación).
+const VIEWER_ALWAYS = new Set(["dashboard", "support", "subscription"]);
 
 function LiveIcon({ size = 18 }: { size?: number }) {
   return (
@@ -207,7 +211,7 @@ function getActiveSectionKeys(pathname: string, sections: NavSection[], base: st
   return keys;
 }
 
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, seenFeatures = [], markFeatureSeen, children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, seenFeatures = [], markFeatureSeen, role, children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = usePanelLang();
@@ -220,7 +224,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasEcommerce = !!(selected as any)?.ecommerceEnabled;
   const hasBodega = !!(selected as any)?.bodegaEnabled;
   const hasCentroPedidos = !!(selected as any)?.centroPedidosEnabled;
-  const { SECTIONS } = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos });
+  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos });
+
+  // Perfil VIEWER: el owner controla qué secciones del sidebar puede ver.
+  // viewerSections null/undefined = ve todas (comportamiento por defecto).
+  const viewerSections = (selected as any)?.viewerSections as string[] | null | undefined;
+  const SECTIONS = (role === "VIEWER" && Array.isArray(viewerSections))
+    ? nav.SECTIONS.filter((s) => VIEWER_ALWAYS.has(s.key) || viewerSections.includes(s.key))
+    : nav.SECTIONS;
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Set<string>>(() => getActiveSectionKeys(pathname, SECTIONS, basePath));
