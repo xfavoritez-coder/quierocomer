@@ -35,11 +35,6 @@ function addDaysYmd(ymd: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-// Etiqueta corta DD/MM para el selector.
-function shortYmd(ymd: string): string {
-  const [, m, d] = ymd.split("-");
-  return `${d}/${m}`;
-}
 
 const UBER_STATUS_LABEL: Record<string, string> = {
   pending: "Buscando repartidor…",
@@ -267,11 +262,6 @@ export default function CentroPedidosPage() {
             )}
             {(fromDate !== today || toDate !== today) && (
               <button onClick={() => { setFromDate(today); setToDate(today); }} style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: ORANGE, background: `${ORANGE}14`, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Hoy</button>
-            )}
-            {view === "activos" && (
-              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: 2 }}>
-                {singleDay ? shortYmd(fromDate) : `${shortYmd(fromDate)}–${shortYmd(toDate)}`} · los pedidos en curso se muestran siempre
-              </span>
             )}
           </div>
         );
