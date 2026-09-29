@@ -576,7 +576,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       })() : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
-          {uberEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber</button>}
+          {uberEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber Direct</button>}
           {pedidosyaEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>PedidosYa</button>}
         </div>
       ) : null}
