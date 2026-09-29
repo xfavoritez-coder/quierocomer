@@ -13,7 +13,7 @@ const GREEN = "#22c55e";
 
 type Product = StorefrontData["products"][number];
 interface DedupOption { id: string; name: string; code: string | null; price: number; soldOut: boolean }
-interface DedupGroup { id: string; name: string; options: DedupOption[] }
+interface DedupGroup { id: string; name: string; options: DedupOption[]; products: string[] }
 
 export default function EcommerceCatalogoPage() {
   const session = useSessionContext();
@@ -106,7 +106,8 @@ export default function EcommerceCatalogoPage() {
     for (const p of products) {
       for (const g of p.option_groups ?? []) {
         let grp = map.get(g.id);
-        if (!grp) { grp = { id: g.id, name: g.name, options: [] }; map.set(g.id, grp); }
+        if (!grp) { grp = { id: g.id, name: g.name, options: [], products: [] }; map.set(g.id, grp); }
+        if (p.name && !grp.products.includes(p.name)) grp.products.push(p.name);
         for (const v of g.values) {
           if (!grp.options.some((o) => o.id === v.id)) grp.options.push({ id: v.id, name: v.name, code: v.toteat_modifier_code, price: v.price_delta, soldOut: v.is_sold_out === true });
         }
@@ -191,6 +192,13 @@ export default function EcommerceCatalogoPage() {
               {filteredGroups.map((g) => (
                 <div key={g.id}>
                   <h2 style={sectionTitle}>{g.name}</h2>
+                  {g.products.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "0 2px 10px" }}>
+                      {g.products.map((pn) => (
+                        <span key={pn} style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text2)", background: "var(--adm-card2, rgba(0,0,0,0.04))", border: "1px solid var(--adm-card-border)", borderRadius: 999, padding: "3px 9px" }}>{pn}</span>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {g.options.map((o) => (
                       <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} qcPrice={o.price}
