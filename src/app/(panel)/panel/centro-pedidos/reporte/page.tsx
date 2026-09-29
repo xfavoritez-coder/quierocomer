@@ -21,6 +21,7 @@ function addDaysYmd(ymd: string, days: number): string {
 }
 
 interface HourBucket { hour: number; sales: number; orders: number }
+interface Channel { name: string; sales: number; orders: number }
 interface Report {
   ordersCount: number;
   productSales: number;
@@ -28,6 +29,7 @@ interface Report {
   tipsTotal: number;
   grossTotal: number;
   hourly: HourBucket[];
+  channels: Channel[];
 }
 
 export default function ReportePage() {
@@ -107,6 +109,9 @@ export default function ReportePage() {
             <BigStat label="Pedidos" value={data.ordersCount.toLocaleString("es-CL")} hint="Cantidad de pedidos" icon={<ShoppingBag size={18} color={ACCENT} />} color={ACCENT} />
           </div>
 
+          {/* Venta por canal */}
+          <ChannelBreakdown channels={data.channels} total={data.productSales} />
+
           {/* Gráfico venta por hora */}
           <HourlyChart hourly={data.hourly} />
         </>
@@ -124,6 +129,43 @@ function BigStat({ label, value, hint, icon, color, big }: { label: string; valu
       </div>
       <div style={{ fontFamily: F, fontSize: big ? "1.9rem" : "1.5rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1.1 }}>{value}</div>
       {hint && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 4 }}>{hint}</div>}
+    </div>
+  );
+}
+
+function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: number }) {
+  const palette = [ACCENT, GREEN, BLUE, PURPLE, "#ef4444", "#0ea5e9", "#ec4899", "#14b8a6"];
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Venta por canal</h2>
+        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Productos con IVA</span>
+      </div>
+      {channels.length === 0 ? (
+        <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "20px 0" }}>Sin ventas en el período seleccionado.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {channels.map((c, i) => {
+            const pct = total > 0 ? Math.round((c.sales / total) * 100) : 0;
+            const color = palette[i % palette.length];
+            return (
+              <div key={c.name}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 7, minWidth: 0, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: color, flexShrink: 0 }} />
+                    {c.name}
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>· {c.orders} pedido{c.orders === 1 ? "" : "s"}</span>
+                  </span>
+                  <span style={{ flexShrink: 0, fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(c.sales)} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>({pct}%)</span></span>
+                </div>
+                <div style={{ height: 8, borderRadius: 999, background: "var(--adm-hover)", overflow: "hidden" }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 999, transition: "width .3s" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -150,15 +192,15 @@ function HourlyChart({ hourly }: { hourly: HourBucket[] }) {
       {!hasData ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "26px 0" }}>Sin ventas en el período seleccionado.</p>
       ) : (
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 220, overflowX: "auto", paddingBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 240, overflowX: "auto", overflowY: "hidden", paddingTop: 22 }}>
           {range.map((h) => {
             const pct = h.sales > 0 ? Math.max(3, Math.round((h.sales / max) * 100)) : 0;
             return (
-              <div key={h.hour} style={{ flex: "1 0 26px", minWidth: 26, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }} title={`${fmtHour(h.hour)} · ${clp(h.sales)} · ${h.orders} pedido${h.orders === 1 ? "" : "s"}`}>
+              <div key={h.hour} style={{ flex: "1 0 40px", minWidth: 40, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }} title={`${fmtHour(h.hour)} · ${clp(h.sales)} · ${h.orders} pedido${h.orders === 1 ? "" : "s"}`}>
                 <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  <div style={{ position: "relative", width: "70%", maxWidth: 34, height: `${pct}%`, background: `linear-gradient(180deg, ${ACCENT}, ${ACCENT}bb)`, borderRadius: "6px 6px 0 0", minHeight: h.sales > 0 ? 4 : 0, transition: "height .3s" }}>
+                  <div style={{ position: "relative", width: "78%", maxWidth: 42, height: `${pct}%`, background: `linear-gradient(180deg, ${ACCENT}, ${ACCENT}bb)`, borderRadius: "6px 6px 0 0", minHeight: h.sales > 0 ? 4 : 0, transition: "height .3s" }}>
                     {h.sales > 0 && (
-                      <span style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", fontFamily: FB, fontSize: "0.6rem", fontWeight: 700, color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{Math.round(h.sales / 1000)}k</span>
+                      <span style={{ position: "absolute", bottom: "100%", marginBottom: 3, left: "50%", transform: "translateX(-50%)", fontFamily: FB, fontSize: "0.62rem", fontWeight: 700, color: "var(--adm-text2)", whiteSpace: "nowrap" }}>{clp(h.sales)}</span>
                     )}
                   </div>
                 </div>

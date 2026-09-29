@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true },
+    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true },
   });
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
   let tipsTotal = 0;
   let grossTotal = 0; // lo que pagó el cliente (referencia)
   const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: h, sales: 0, orders: 0 }));
+  const channelMap = new Map<string, { name: string; sales: number; orders: number }>();
 
   for (const o of orders) {
     const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
@@ -58,7 +59,16 @@ export async function GET(req: NextRequest) {
     const h = chileHour(o.createdAt);
     hourly[h].sales += net;
     hourly[h].orders += 1;
+
+    // Venta por canal según vendorName.
+    const name = (o.vendorName || "").trim() || "Sin canal";
+    const ch = channelMap.get(name) || { name, sales: 0, orders: 0 };
+    ch.sales += net;
+    ch.orders += 1;
+    channelMap.set(name, ch);
   }
+
+  const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
 
   return NextResponse.json({
     from: fromYmd,
@@ -70,5 +80,6 @@ export async function GET(req: NextRequest) {
     tipsTotal,
     grossTotal,
     hourly,
+    channels,
   });
 }
