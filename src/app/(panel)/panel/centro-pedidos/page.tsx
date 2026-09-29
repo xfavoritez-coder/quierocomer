@@ -323,7 +323,11 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
         {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
         {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
-        <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+        <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "right", lineHeight: 1.2 }}>
+          {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+          {" · "}
+          {new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+        </span>
         <div ref={menuRef} style={{ position: "relative" }}>
           <button onClick={() => setMenuOpen((v) => !v)} title="Opciones" aria-label="Opciones" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: menuOpen ? "var(--adm-hover)" : "transparent", color: "var(--adm-text3)", cursor: "pointer" }}><MoreVertical size={15} /></button>
           {menuOpen && (
