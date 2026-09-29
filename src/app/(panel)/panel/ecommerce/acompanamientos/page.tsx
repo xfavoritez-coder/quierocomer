@@ -43,11 +43,17 @@ export default function AccompanimentsPage() {
   const delGroup = (i: number) => { const g = cfg.groups[i]; patch({ groups: cfg.groups.filter((_, j) => j !== i), rules: cfg.rules.filter((r) => r.groupId !== g.id) }); };
   const toggleOpt = (gi: number, name: string) => { const g = cfg.groups[gi]; updGroup(gi, { options: g.options.includes(name) ? g.options.filter((o) => o !== name) : [...g.options, name] }); };
 
-  // Rules (producto -> grupo)
-  const addRuleFor = (productId: string) => patch({ rules: [...cfg.rules, { productId, groupId: cfg.groups[0]?.id ?? "", quantity: 1 }] });
-  const updRule = (i: number, p: Partial<AccompConfig["rules"][0]>) => patch({ rules: cfg.rules.map((x, j) => (j === i ? { ...x, ...p } : x)) });
-  const dishName = (id: string) => dishes.find((d) => d.id === id)?.name || "(producto no encontrado)";
-  const delRule = (i: number) => patch({ rules: cfg.rules.filter((_, j) => j !== i) });
+  // Rules (producto -> grupo). Mosaico: asignar grupo/cantidad por producto.
+  const [ruleFilter, setRuleFilter] = useState("");
+  const setProductGroup = (productId: string, groupId: string) => setCfg((c) => {
+    const rules = c.rules.filter((r) => r.productId !== productId);
+    if (groupId) {
+      const prev = c.rules.find((r) => r.productId === productId);
+      rules.push({ productId, groupId, quantity: prev?.quantity ?? 1 });
+    }
+    return { ...c, rules };
+  });
+  const setProductQty = (productId: string, quantity: number) => setCfg((c) => ({ ...c, rules: c.rules.map((r) => r.productId === productId ? { ...r, quantity } : r) }));
 
   async function save() {
     if (!restaurantId) return;
@@ -72,7 +78,7 @@ export default function AccompanimentsPage() {
   const groupsOf = (name: string) => cfg.groups.filter((g) => g.options.includes(name)).map((g) => g.name || "(sin nombre)").join(", ");
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
+    <div style={{ maxWidth: 920, margin: "0 auto", padding: "8px 4px 40px" }}>
       <Link href="/panel/ecommerce/configuracion" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 18 }}>
         <ArrowLeft size={15} /> Configuración
       </Link>
@@ -189,31 +195,64 @@ export default function AccompanimentsPage() {
                   </div>
                 </div>
 
-                {/* Reglas */}
+                {/* Mosaico: todos los productos visibles; asigna grupo y cantidad a cada uno */}
                 <div>
-                  <p style={{ ...lbl, marginBottom: 8 }}>Reglas por producto</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {cfg.rules.map((rule, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 10 }}>
-                        <span style={{ flex: "1 1 150px", minWidth: 120, fontFamily: FB, fontSize: "0.84rem", fontWeight: 600, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dishName(rule.productId)}</span>
-                        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>otorga</span>
-                        <input value={rule.quantity || ""} onChange={(e) => updRule(i, { quantity: Number(e.target.value.replace(/\D/g, "")) || 1 })} inputMode="numeric" style={{ ...inp, marginTop: 0, width: 60, flex: "0 0 60px" }} />
-                        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>a</span>
-                        <select value={rule.groupId} onChange={(e) => updRule(i, { groupId: e.target.value })} style={{ ...inp, marginTop: 0, flex: "1 1 130px", minWidth: 110 }}>
-                          {cfg.groups.map((g) => <option key={g.id} value={g.id}>{g.name || "(sin nombre)"}</option>)}
-                        </select>
-                        <button onClick={() => delRule(i)} style={delBtn} title="Quitar"><Trash2 size={15} /></button>
-                      </div>
-                    ))}
-                    {cfg.rules.length === 0 && <p style={empty}>No hay reglas. Busca un producto abajo para agregarlo.</p>}
-                    {cfg.groups.length > 0 && dishes.length > 0 && (
-                      <ProductPicker
-                        dishes={dishes.filter((d) => !cfg.rules.some((r) => r.productId === d.id))}
-                        onPick={addRuleFor}
-                      />
-                    )}
-                    {!cfg.groups.length && <p style={hint}>Crea al menos un grupo para poder agregar reglas.</p>}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                    <p style={{ ...lbl, marginBottom: 0 }}>Asigna acompañamientos por producto</p>
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{cfg.rules.length} con acompañamiento</span>
                   </div>
+
+                  {!cfg.groups.length ? (
+                    <p style={hint}>Crea al menos un grupo arriba para poder asignar acompañamientos a los productos.</p>
+                  ) : dishes.length === 0 ? (
+                    <p style={empty}>No hay productos.</p>
+                  ) : (
+                    <>
+                      <input value={ruleFilter} onChange={(e) => setRuleFilter(e.target.value)} placeholder="Filtrar productos…" style={{ ...inp, marginTop: 0, marginBottom: 12 }} />
+                      {(() => {
+                        const q = ruleFilter.trim().toLowerCase();
+                        const list = q ? dishes.filter((d) => d.name.toLowerCase().includes(q) || (d.category || "").toLowerCase().includes(q)) : dishes;
+                        // Agrupar por categoría preservando el orden.
+                        const cats: { category: string; items: Dish[] }[] = [];
+                        for (const d of list) {
+                          const cat = d.category || "Sin categoría";
+                          const last = cats[cats.length - 1];
+                          if (last && last.category === cat) last.items.push(d);
+                          else cats.push({ category: cat, items: [d] });
+                        }
+                        if (!list.length) return <p style={empty}>Sin resultados.</p>;
+                        return (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                            {cats.map((c) => (
+                              <div key={c.category}>
+                                <p style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: "0 0 8px" }}>{c.category}</p>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+                                  {c.items.map((d) => {
+                                    const rule = cfg.rules.find((r) => r.productId === d.id);
+                                    const on = !!rule;
+                                    return (
+                                      <div key={d.id} style={{ background: on ? `${ACCENT}12` : "var(--adm-hover)", border: `1px solid ${on ? ACCENT : "var(--adm-card-border)"}`, borderRadius: 12, padding: "10px 11px", display: "flex", flexDirection: "column", gap: 8 }}>
+                                        <span style={{ fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{d.name}</span>
+                                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                          <select value={rule?.groupId ?? ""} onChange={(e) => setProductGroup(d.id, e.target.value)} style={{ ...inp, marginTop: 0, flex: 1, minWidth: 0, padding: "7px 8px", fontSize: "0.78rem" }}>
+                                            <option value="">— No incluir —</option>
+                                            {cfg.groups.map((g) => <option key={g.id} value={g.id}>{g.name || "(sin nombre)"}</option>)}
+                                          </select>
+                                          {on && (
+                                            <input value={rule!.quantity || ""} onChange={(e) => setProductQty(d.id, Number(e.target.value.replace(/\D/g, "")) || 1)} inputMode="numeric" title="Cantidad" style={{ ...inp, marginTop: 0, width: 48, flex: "0 0 48px", padding: "7px 6px", textAlign: "center", fontSize: "0.82rem" }} />
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -238,58 +277,6 @@ const hint: React.CSSProperties = { fontFamily: FB, fontSize: "0.72rem", color: 
 const empty: React.CSSProperties = { fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", padding: "8px 2px", margin: 0 };
 const addBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", alignSelf: "flex-start" };
 const delBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", cursor: "pointer", flexShrink: 0 };
-
-// Buscador dinámico para agregar un producto a una regla. `dishes` ya viene
-// filtrado (sin los productos que ya tienen regla).
-function ProductPicker({ dishes, onPick }: { dishes: Dish[]; onPick: (id: string) => void }) {
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  if (dishes.length === 0) return <p style={hint}>Todos los productos ya tienen una regla.</p>;
-  const query = q.trim().toLowerCase();
-  const matches = query ? dishes.filter((d) => d.name.toLowerCase().includes(query) || (d.category || "").toLowerCase().includes(query)) : dishes;
-  // Agrupar por categoría preservando el orden (dishes ya viene ordenado).
-  const groups: { category: string; items: Dish[] }[] = [];
-  for (const d of matches) {
-    const cat = d.category || "Sin categoría";
-    const last = groups[groups.length - 1];
-    if (last && last.category === cat) last.items.push(d);
-    else groups.push({ category: cat, items: [d] });
-  }
-  return (
-    <div style={{ position: "relative" }}>
-      <input
-        value={q}
-        onChange={(e) => { setQ(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onClick={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder="Buscar producto para agregar una regla…"
-        style={{ ...inp, marginTop: 0 }}
-      />
-      {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 10px 28px rgba(0,0,0,0.18)", maxHeight: 300, overflowY: "auto", padding: 4 }}>
-          {matches.length === 0 ? (
-            <p style={{ ...empty, padding: "8px 10px" }}>Sin resultados</p>
-          ) : (
-            groups.map((g) => (
-              <div key={g.category}>
-                <p style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: 0, padding: "8px 10px 4px" }}>{g.category}</p>
-                {g.items.map((d) => (
-                  <button key={d.id} onMouseDown={(e) => { e.preventDefault(); onPick(d.id); setQ(""); setOpen(true); }}
-                    style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px 7px 16px", borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--adm-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    {d.name}
-                  </button>
-                ))}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
