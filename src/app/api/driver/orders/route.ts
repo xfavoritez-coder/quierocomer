@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { authDriver } from "@/lib/driver/auth";
 import { chileTodayYmd, chileDayRangeUtc, serializeOrder, dashboardStats } from "@/lib/driver/serialize";
 import { geocodePosOrders } from "@/lib/ecommerce/geocode";
+import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,10 +47,23 @@ export async function GET(req: NextRequest) {
   const mineJson = mine.map((o) => serializeOrder(o, origin));
   const doneJson = done.map((o) => serializeOrder(o, origin));
 
+  // Datos del local para el header y el mini-mapa (logo, nombre y ubicación).
+  const restInfo = await prisma.restaurant.findUnique({
+    where: { id: rid },
+    select: { name: true, logoUrl: true, lat: true, lng: true, ecommerceDeliveryConfig: true },
+  });
+  const deliveryCfg = parseDeliveryConfig(restInfo?.ecommerceDeliveryConfig);
+  const localLat = deliveryCfg.origin?.lat ?? restInfo?.lat ?? null;
+  const localLng = deliveryCfg.origin?.lng ?? restInfo?.lng ?? null;
+
   return NextResponse.json({
     ok: true,
     date,
     driver: driver.displayName,
+    restaurant_name: restInfo?.name || "",
+    restaurant_logo: restInfo?.logoUrl || "",
+    restaurant_lat: localLat,
+    restaurant_lng: localLng,
     dashboard: dashboardStats(mineJson, doneJson),
     available: availableJson,
     mine: mineJson,

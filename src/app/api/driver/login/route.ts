@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { generateDriverToken } from "@/lib/driver/auth";
 import { fmtChile } from "@/lib/driver/serialize";
+import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,15 @@ export async function POST(req: NextRequest) {
   }
   if (!matched) return NextResponse.json({ ok: false, error: "Credenciales inválidas." }, { status: 401 });
 
-  const rest = await prisma.restaurant.findUnique({ where: { id: matched.restaurantId }, select: { name: true } });
+  const rest = await prisma.restaurant.findUnique({
+    where: { id: matched.restaurantId },
+    select: { name: true, logoUrl: true, lat: true, lng: true, ecommerceDeliveryConfig: true },
+  });
+  // Ubicación del local para el mini-mapa: origen configurado en Ecommerce →
+  // Delivery, con respaldo en el lat/lng del restaurante.
+  const deliveryCfg = parseDeliveryConfig(rest?.ecommerceDeliveryConfig);
+  const localLat = deliveryCfg.origin?.lat ?? rest?.lat ?? null;
+  const localLng = deliveryCfg.origin?.lng ?? rest?.lng ?? null;
   const platform = ["android", "ios", "other"].includes((body?.platform || "").toString()) ? body.platform : "other";
   const token = generateDriverToken();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -34,7 +43,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     token,
-    user: { id: matched.id, username: matched.username, display_name: matched.displayName, role: matched.role, is_on_shift: matched.isOnShift, restaurant_name: rest?.name || "" },
+    user: {
+      id: matched.id, username: matched.username, display_name: matched.displayName, role: matched.role,
+      is_on_shift: matched.isOnShift, restaurant_name: rest?.name || "",
+      restaurant_logo: rest?.logoUrl || "", restaurant_lat: localLat, restaurant_lng: localLng,
+    },
     expires_at: fmtChile(expiresAt),
   });
 }
