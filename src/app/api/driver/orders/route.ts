@@ -22,7 +22,9 @@ export async function GET(req: NextRequest) {
 
   const [available, mine, done] = await Promise.all([
     prisma.posOrder.findMany({
-      where: { restaurantId: rid, isDelivery: true, opsStage: "ready", assignedDriverId: null, uberDeliveryId: null, pyaShippingId: null, createdAt: range },
+      // Un pedido con dirección pero sin monto de delivery se toma como retiro:
+      // no debe ofrecerse a los repartidores.
+      where: { restaurantId: rid, isDelivery: true, deliveryFee: { gt: 0 }, opsStage: "ready", assignedDriverId: null, uberDeliveryId: null, pyaShippingId: null, createdAt: range },
       include: inc, orderBy: [{ opsReadyForDeliveryAt: "asc" }, { createdAt: "asc" }],
     }),
     prisma.posOrder.findMany({
