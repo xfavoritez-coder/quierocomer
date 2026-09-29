@@ -43,10 +43,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: typeof res.msg === "string" ? res.msg : (res.msg?.texto || "No se pudo leer el catálogo de Toteat"), map: {} });
   }
 
-  // Mapa código→nombre (clave normalizada en mayúsculas para el lookup).
-  const map: Record<string, string> = {};
+  // Mapa código→{nombre, precio} (clave normalizada en mayúsculas para el lookup).
+  const map: Record<string, { name: string; price: number }> = {};
   for (const p of res.data) {
-    if (p?.id) map[String(p.id).trim().toUpperCase()] = p.name || "";
+    if (p?.id) map[String(p.id).trim().toUpperCase()] = { name: p.name || "", price: Number(p.price) || 0 };
   }
   return NextResponse.json({ ok: true, count: Object.keys(map).length, map });
 }

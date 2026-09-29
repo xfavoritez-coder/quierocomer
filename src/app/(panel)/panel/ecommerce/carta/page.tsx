@@ -24,7 +24,7 @@ export default function EcommerceCatalogoPage() {
   const [search, setSearch] = useState("");
 
   // Catálogo del POS Toteat (código→nombre) para mostrar el nombre Toteat al asignar código.
-  const [toteatMap, setToteatMap] = useState<Record<string, string> | null>(null);
+  const [toteatMap, setToteatMap] = useState<Record<string, { name: string; price: number }> | null>(null);
   useEffect(() => {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/toteat-catalog?restaurantId=${restaurantId}`)
@@ -146,7 +146,7 @@ export default function EcommerceCatalogoPage() {
                     {!q && <h2 style={sectionTitle}>{cat.name}</h2>}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {catProducts.map((p) => (
-                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap}
+                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap} qcPrice={p.price}
                           star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
@@ -187,11 +187,14 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
   );
 }
 
-function Row({ name, initial, endpoint, star, toteatMap }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, string> | null }) {
+const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+
+function Row({ name, initial, endpoint, star, toteatMap, qcPrice }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number }) {
   const [code, setCode] = useState(initial ?? "");
   const norm = code.trim().toUpperCase();
-  const tName = toteatMap && norm ? toteatMap[norm] : undefined;
+  const tInfo = toteatMap && norm ? toteatMap[norm] : undefined;
   const showToteat = !!toteatMap && norm.length > 0;
+  const priceMismatch = tInfo != null && qcPrice != null && Math.round(tInfo.price) !== Math.round(qcPrice);
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 5 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -207,10 +210,20 @@ function Row({ name, initial, endpoint, star, toteatMap }: { name: string; initi
         <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
         <CodeInput initial={initial} endpoint={endpoint} onValue={setCode} />
       </div>
+
+      <div style={{ paddingLeft: star ? 40 : 0, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontFamily: FB, fontSize: "0.72rem", lineHeight: 1.3 }}>
+        {qcPrice != null && (
+          <span style={{ color: "var(--adm-text2)" }}>QuieroComer: <strong style={{ color: "var(--adm-text)" }}>{clp(qcPrice)}</strong></span>
+        )}
+        {showToteat && tInfo != null && (
+          <span style={{ color: priceMismatch ? "#f97316" : "var(--adm-text2)" }}>POS (Toteat): <strong style={{ color: priceMismatch ? "#f97316" : "var(--adm-text)" }}>{clp(tInfo.price)}</strong>{priceMismatch ? " ⚠ distinto" : ""}</span>
+        )}
+      </div>
+
       {showToteat && (
         <div style={{ paddingLeft: star ? 40 : 0, fontFamily: FB, fontSize: "0.72rem", lineHeight: 1.3 }}>
-          {tName != null
-            ? <span style={{ color: GREEN }}>Toteat: <strong style={{ color: "var(--adm-text)" }}>{tName || "(sin nombre)"}</strong></span>
+          {tInfo != null
+            ? <span style={{ color: GREEN }}>Toteat: <strong style={{ color: "var(--adm-text)" }}>{tInfo.name || "(sin nombre)"}</strong></span>
             : <span style={{ color: "#f97316" }}>⚠ Ese código no existe en el catálogo de Toteat</span>}
         </div>
       )}
