@@ -144,8 +144,8 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", marginTop: 18 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
-        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Productos más vendidos</h2>
-        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Por cantidad</span>
+        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Productos vendidos</h2>
+        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{products.length} · por cantidad</span>
       </div>
       {products.length === 0 ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "20px 0" }}>Sin productos vendidos en el período seleccionado.</p>

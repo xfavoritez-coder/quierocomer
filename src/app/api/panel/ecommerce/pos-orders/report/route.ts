@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
   }
 
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
-  const products = [...productMap.values()].sort((a, b) => b.qty - a.qty).slice(0, 30);
+  const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
 
   return NextResponse.json({
     from: fromYmd,
