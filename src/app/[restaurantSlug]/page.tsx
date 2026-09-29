@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import PageHitTracker from '@/components/PageHitTracker'
 import OwnerPanelBar from '@/components/qr/carta/OwnerPanelBar'
+import MenuPausedPage from '@/components/qr/MenuPausedPage'
 const BASE = 'https://quierocomer.com'
 
 export const revalidate = 3600
@@ -36,6 +37,13 @@ async function getRestaurantLanding(slug: string) {
       cartaColorMode: true,
       profileType: true,
       isDemo: true,
+      // Billing
+      billingExempt: true,
+      subscriptionStatus: true,
+      currentPeriodEnd: true,
+      trialEndsAt: true,
+      flowSubscriptionId: true,
+      lastPaymentAt: true,
       // For JSON-LD rich results
       lat: true,
       lng: true,
@@ -568,6 +576,25 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
       redirect(`/fidelidad/${restaurantSlug}`)
     }
 
+    // Billing: check if menu is paused
+    const _now = new Date()
+    const _todayChile = new Date(_now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
+    _todayChile.setHours(0, 0, 0, 0)
+    const _chileDate = (d: Date) => { const c = new Date(d.toLocaleString('en-US', { timeZone: 'America/Santiago' })); c.setHours(0, 0, 0, 0); return c; }
+    const _periodEnd = rest.currentPeriodEnd ? new Date(rest.currentPeriodEnd as unknown as string) : null
+    const _trialEnd = rest.trialEndsAt ? new Date(rest.trialEndsAt as unknown as string) : null
+    const _hasAutoRenewal = !!(rest as any).flowSubscriptionId
+    const _GRACE_MS = _hasAutoRenewal ? 5 * 24 * 60 * 60 * 1000 : 0
+    const _gracedEnd = _periodEnd ? new Date(_periodEnd.getTime() + _GRACE_MS) : null
+    const isMenuLive =
+      (rest as any).billingExempt ||
+      rest.isDemo ||
+      ((rest as any).subscriptionStatus === 'ACTIVE' && _gracedEnd && _chileDate(_gracedEnd) >= _todayChile) ||
+      ((rest as any).subscriptionStatus === 'TRIALING' && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
+      ((rest as any).subscriptionStatus === 'CANCELED' && _periodEnd && _chileDate(_periodEnd) >= _todayChile)
+    const neverPaid = !(rest as any).lastPaymentAt
+    const isPaused = !isMenuLive && !neverPaid
+
     const hasOrdering = rest.orderingEnabled
     const hasLoyalty = !!rest.loyaltyProgram?.active
     const hasReview = rest.reviewMode !== 'off' && (rest.reviewMode === 'private' || !!rest.googleReviewUrl)
@@ -586,6 +613,7 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
       <>
         {rest.isDemo && !ownerAlreadyVisitedPanel && <OwnerPanelBar slug={restaurantSlug} />}
         <RestaurantLanding r={rest} />
+        {isPaused && <MenuPausedPage restaurantName={rest.name} logoUrl={rest.logoUrl} />}
       </>
     )
   }
