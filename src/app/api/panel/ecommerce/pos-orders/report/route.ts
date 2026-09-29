@@ -78,6 +78,9 @@ export async function GET(req: NextRequest) {
     for (const raw of items) {
       if (!raw || typeof raw !== "object") continue;
       const ln = raw as Record<string, any>;
+      // Excluir modificadores/extras: en Toteat vienen como líneas con
+      // isExtra=true y referenceLine apuntando al producto padre.
+      if (ln.isExtra === true || ln.referenceLine != null) continue;
       const pname = String(ln.productName ?? ln.name ?? ln.dishName ?? ln.title ?? "").trim();
       if (!pname) continue;
       const code = String(ln.productCode ?? "");
