@@ -19,7 +19,7 @@ interface PosOrder {
   customerName: string; customerPhone: string; addressLine: string;
   totalAmount: number; paidAmount: number; tipAmount: number; changeAmount: number; deliveryFee: number; discountAmount: number;
   currency: string; vendorName: string | null; orderReference: string | null;
-  items: any; completedAt: string | null; createdAt: string; updatedAt: string;
+  items: any; completedAt: string | null; createdAt: string; updatedAt: string; opsDeliveredAt?: string | null;
   assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any; trackingToken?: string | null;
 }
 
@@ -285,6 +285,14 @@ export default function CentroPedidosPage() {
         const counts: Record<Stage, number> = { preparing: 0, ready: 0, out_for_delivery: 0, delivered: 0 };
         for (const o of orders) if (o.posStatus !== "canceled") counts[o.opsStage] = (counts[o.opsStage] || 0) + 1;
         const items = orders.filter((o) => o.opsStage === selectedStage && o.posStatus !== "canceled");
+        // Orden: activos (preparación/listo/reparto) por antigüedad (más antiguo
+        // primero); entregados por hora de entrega (más reciente primero).
+        const ts = (v: string | null | undefined) => (v ? new Date(v).getTime() : 0);
+        if (selectedStage === "delivered") {
+          items.sort((a, b) => ts(b.opsDeliveredAt || b.completedAt || b.updatedAt) - ts(a.opsDeliveredAt || a.completedAt || a.updatedAt));
+        } else {
+          items.sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
+        }
         return (
           <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
             {/* Columna de etapas (estilo deliveryhandroll) */}
@@ -336,6 +344,31 @@ export default function CentroPedidosPage() {
   );
 }
 
+// Contador en vivo HH:MM:SS del tiempo transcurrido desde que se creó el pedido.
+function ElapsedTimer({ since }: { since: string }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const start = new Date(since).getTime();
+  const secs = Math.max(0, Math.floor((Date.now() - start) / 1000));
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const label = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  // Color según urgencia: <30m gris, 30–60m ámbar, >60m rojo.
+  const mins = secs / 60;
+  const color = mins > 60 ? RED : mins >= 30 ? ORANGE : "var(--adm-text2)";
+  const bg = mins > 60 ? "rgba(239,68,68,0.12)" : mins >= 30 ? "rgba(249,115,22,0.12)" : "var(--adm-hover)";
+  return (
+    <span title="Tiempo desde que se creó el pedido" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 7px", borderRadius: 7, fontFamily: "monospace", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.3px", background: bg, color }}>
+      ⏱ {label}
+    </span>
+  );
+}
+
 function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
@@ -364,6 +397,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 7, fontFamily: F, fontSize: "0.7rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
           <badge.icon size={12} /> {badge.label}
         </span>
+        {o.opsStage !== "delivered" && !canceled && <ElapsedTimer since={o.createdAt} />}
         {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
         {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
         {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
