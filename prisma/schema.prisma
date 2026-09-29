@@ -985,6 +985,7 @@ model ModifierTemplateOption {
   description     String?
   imageUrl        String?
   isHidden        Boolean                     @default(false)
+  soldOut         Boolean                     @default(false)
   toteatProductId String?
   toteatMappedAt  DateTime?
   toteatMappedBy  String?

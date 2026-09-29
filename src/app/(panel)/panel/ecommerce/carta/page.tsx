@@ -12,7 +12,7 @@ const ACCENT = "#F4A623";
 const GREEN = "#22c55e";
 
 type Product = StorefrontData["products"][number];
-interface DedupOption { id: string; name: string; code: string | null; price: number }
+interface DedupOption { id: string; name: string; code: string | null; price: number; soldOut: boolean }
 interface DedupGroup { id: string; name: string; options: DedupOption[] }
 
 export default function EcommerceCatalogoPage() {
@@ -81,6 +81,25 @@ export default function EcommerceCatalogoPage() {
     } catch { toast.error("Error de conexión"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, is_sold_out: !next } : p) } : d); }
   }, []);
 
+  const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
+    const apply = (val: boolean) => setData((d) => d ? {
+      ...d,
+      products: d.products.map((p) => ({
+        ...p,
+        option_groups: (p.option_groups ?? []).map((g) => ({
+          ...g,
+          values: g.values.map((v) => v.id === id ? { ...v, is_sold_out: val } : v),
+        })),
+      })),
+    } : d);
+    apply(next);
+    try {
+      const res = await fetch(`/api/admin/modifiers/${id}/sold-out`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ soldOut: next }) });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); toast.error(e.error || "No se pudo actualizar"); apply(!next); return; }
+      toast.success(next ? "Modificador agotado" : "Modificador disponible");
+    } catch { toast.error("Error de conexión"); apply(!next); }
+  }, []);
+
   // Modificadores deduplicados (un template compartido aparece en varios productos).
   const dedupGroups = useMemo<DedupGroup[]>(() => {
     const map = new Map<string, DedupGroup>();
@@ -89,7 +108,7 @@ export default function EcommerceCatalogoPage() {
         let grp = map.get(g.id);
         if (!grp) { grp = { id: g.id, name: g.name, options: [] }; map.set(g.id, grp); }
         for (const v of g.values) {
-          if (!grp.options.some((o) => o.id === v.id)) grp.options.push({ id: v.id, name: v.name, code: v.toteat_modifier_code, price: v.price_delta });
+          if (!grp.options.some((o) => o.id === v.id)) grp.options.push({ id: v.id, name: v.name, code: v.toteat_modifier_code, price: v.price_delta, soldOut: v.is_sold_out === true });
         }
       }
     }
@@ -174,7 +193,8 @@ export default function EcommerceCatalogoPage() {
                   <h2 style={sectionTitle}>{g.name}</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {g.options.map((o) => (
-                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} qcPrice={o.price} />
+                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} qcPrice={o.price}
+                        soldOut={o.soldOut} onToggleSoldOut={() => toggleModSoldOut(o.id, !o.soldOut)} />
                     ))}
                   </div>
                 </div>

@@ -61,6 +61,7 @@ export interface StoreOptionValue {
   name: string;
   price_delta: number;
   toteat_modifier_code: string | null;
+  is_sold_out: boolean;
 }
 
 export interface StoreOptionGroup {
@@ -172,7 +173,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
                   options: {
                     where: { isHidden: false },
                     orderBy: { position: "asc" },
-                    select: { id: true, name: true, priceAdjustment: true, toteatProductId: true },
+                    select: { id: true, name: true, priceAdjustment: true, toteatProductId: true, soldOut: true },
                   },
                 },
               },
@@ -210,6 +211,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
               name: o.name,
               price_delta: o.priceAdjustment,
               toteat_modifier_code: o.toteatProductId ?? null,
+              is_sold_out: o.soldOut === true,
             })),
           });
         }

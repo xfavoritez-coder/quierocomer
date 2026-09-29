@@ -162,20 +162,27 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
           <div className="flex flex-col gap-1.5">
             {group.values.map((v) => {
               const sel = isSelected(group.id, v.id);
+              const soldOut = v.is_sold_out === true;
               return (
-                <label key={v.id} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 cursor-pointer transition ${sel ? "border-2" : "border-gray-200 hover:border-gray-300"}`} style={sel ? { borderColor: primaryColor, background: `${primaryColor}10` } : {}}>
-                  <span className="text-sm font-medium text-gray-700">{v.name}</span>
+                <label key={v.id} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${soldOut ? "border-gray-200 opacity-50 cursor-not-allowed" : `cursor-pointer ${sel ? "border-2" : "border-gray-200 hover:border-gray-300"}`}`} style={sel && !soldOut ? { borderColor: primaryColor, background: `${primaryColor}10` } : {}}>
+                  <span className={`text-sm font-medium ${soldOut ? "text-gray-400 line-through" : "text-gray-700"}`}>{v.name}</span>
                   <div className="flex items-center gap-2">
-                    {v.price_delta !== 0 && (
-                      <span className="text-xs text-gray-500">{v.price_delta > 0 ? "+" : ""}{clp(v.price_delta)}</span>
+                    {soldOut ? (
+                      <span className="text-[10px] font-black bg-gray-100 text-gray-500 border border-gray-200 rounded-full px-2 py-0.5">Agotado</span>
+                    ) : (
+                      <>
+                        {v.price_delta !== 0 && (
+                          <span className="text-xs text-gray-500">{v.price_delta > 0 ? "+" : ""}{clp(v.price_delta)}</span>
+                        )}
+                        <input
+                          type={group.max_select === 1 ? "radio" : "checkbox"}
+                          name={`group-${group.id}`}
+                          checked={sel}
+                          onChange={() => toggleOption(group.id, v.id, group.max_select)}
+                          style={{ accentColor: primaryColor }}
+                        />
+                      </>
                     )}
-                    <input
-                      type={group.max_select === 1 ? "radio" : "checkbox"}
-                      name={`group-${group.id}`}
-                      checked={sel}
-                      onChange={() => toggleOption(group.id, v.id, group.max_select)}
-                      style={{ accentColor: primaryColor }}
-                    />
                   </div>
                 </label>
               );
