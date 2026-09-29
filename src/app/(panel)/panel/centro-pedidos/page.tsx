@@ -364,7 +364,7 @@ function ElapsedTimer({ since }: { since: string }) {
   const bg = mins > 60 ? "rgba(239,68,68,0.12)" : mins >= 30 ? "rgba(249,115,22,0.12)" : "var(--adm-hover)";
   return (
     <span title="Tiempo desde que se creó el pedido" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 7px", borderRadius: 7, fontFamily: "monospace", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.3px", background: bg, color }}>
-      ⏱ {label}
+      {label}
     </span>
   );
 }
@@ -393,19 +393,18 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready");
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 7, fontFamily: F, fontSize: "0.7rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
-          <badge.icon size={12} /> {badge.label}
-        </span>
+      <div style={{ marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 7, fontFamily: F, fontSize: "0.7rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
+            <badge.icon size={12} /> {badge.label}
+          </span>
+          {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
+          {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
+          {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
         {o.opsStage !== "delivered" && !canceled && <ElapsedTimer since={o.createdAt} />}
-        {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
-        {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
-        {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
-        <span style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "right", lineHeight: 1.2 }}>
-          {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-          {" · "}
-          {new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-        </span>
         <div ref={menuRef} style={{ position: "relative" }}>
           <button onClick={() => setMenuOpen((v) => !v)} title="Opciones" aria-label="Opciones" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: menuOpen ? "var(--adm-hover)" : "transparent", color: "var(--adm-text3)", cursor: "pointer" }}><MoreVertical size={15} /></button>
           {menuOpen && (
@@ -456,6 +455,15 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
             </div>
           )}
         </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", textAlign: "right", lineHeight: 1.2 }}>
+          {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+          {" · "}
+          {new Date(o.createdAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      </div>
       </div>
 
       {o.vendorName && (
