@@ -12,7 +12,7 @@ const GREEN = "#22c55e", BLUE = "#3b82f6", RED = "#ef4444", GRAY = "#9ca3af", PU
 
 interface Delivery {
   id: string; orderReference: string | null; customerName: string; customerPhone: string; addressLine: string;
-  totalAmount: number; opsStage: string; isDelivery: boolean;
+  totalAmount: number; opsStage: string; isDelivery: boolean; createdAt: string | null;
   destLat: number | null; destLng: number | null;
   driverName: string | null; driverLat: number | null; driverLng: number | null;
   lastPingAt: string | null; dispatchedAt: string | null; trackingUrl: string | null;
@@ -45,24 +45,44 @@ function driverIconHtml(name: string | null, color: string) {
   return `<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;border:2px solid #fff"><span style="transform:rotate(45deg);color:#fff;font-weight:800;font-family:sans-serif;font-size:14px">${initial}</span></div>`;
 }
 
-// Marcador de la casa del cliente: emoji de casa sobre un círculo blanco.
-// El color del borde indica la etapa del pedido.
-function homeIconHtml(color: string) {
-  return `<div style="width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;border:2px solid ${color};font-size:17px;line-height:1">🏠</div>`;
+// Punto de la casa del cliente: círculo pequeño de color según etapa,
+// con el número del pedido (como en deliveryhandroll).
+function homeIconHtml(color: string, num: number) {
+  return `<div style="width:22px;height:22px;border-radius:50%;background:${color};box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;border:2px solid #fff;color:#fff;font-weight:800;font-family:sans-serif;font-size:11px;line-height:1">${num}</div>`;
 }
 
-// Marcador del local (restaurante).
+// Marcador del local (restaurante): edificio.
 function localIconHtml() {
-  return `<div style="width:38px;height:38px;border-radius:12px;background:#111827;box-shadow:0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:19px;line-height:1">🏪</div>`;
+  return `<div style="width:30px;height:30px;border-radius:8px;background:#111827;box-shadow:0 2px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:16px;line-height:1">🏢</div>`;
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
-// Etiqueta tipo deliveryhandroll: nombre + dirección del cliente.
-function homeTooltipHtml(name: string, address: string) {
+function ageMin(iso: string | null): string {
+  if (!iso) return "";
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+}
+
+// Etiqueta-pill tipo deliveryhandroll: número + nombre + dirección + meta.
+function homePillHtml(num: number, color: string, name: string, address: string, age: string, stageLabel: string) {
   const n = escapeHtml(name || "Cliente");
   const a = escapeHtml(address || "");
-  return `<div style="font-family:sans-serif;line-height:1.25"><div style="font-weight:800;font-size:12px;color:#111">🏠 ${n}</div>${a ? `<div style="font-size:11px;color:#555;margin-top:1px">${a}</div>` : ""}</div>`;
+  const metaParts = [age, stageLabel].filter(Boolean).map(escapeHtml);
+  return `<div class="qc-pill">
+    <span class="qc-pill-num" style="background:${color}">${num}</span>
+    <div class="qc-pill-body">
+      <div class="qc-pill-name">${n}</div>
+      ${a ? `<div class="qc-pill-addr">${a}</div>` : ""}
+      ${metaParts.length ? `<div class="qc-pill-meta"><span class="qc-pill-dot" style="background:${color}"></span>${metaParts.join(" · ")}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function localPillHtml(name: string) {
+  return `<div class="qc-pill qc-pill-local"><span class="qc-pill-num" style="background:#111827">🏢</span><div class="qc-pill-body"><div class="qc-pill-name">${escapeHtml(name || "Local")}</div><div class="qc-pill-addr">Local</div></div></div>`;
 }
 
 export default function SeguimientoPage() {
@@ -140,23 +160,25 @@ export default function SeguimientoPage() {
     if (!leafletReady || !L) return;
     if (!mapRef.current) {
       mapRef.current = L.map("track-map", { zoomControl: true, attributionControl: false }).setView([-33.45, -70.66], 12);
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(mapRef.current);
+      // Mapa en escala de grises (CartoDB Positron), como deliveryhandroll.
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 20, subdomains: "abcd" }).addTo(mapRef.current);
     }
     const map = mapRef.current;
     const seen = new Set<string>();
     const pts: [number, number][] = [];
 
-    // Marcador del local (restaurante).
+    // Marcador del local (restaurante): edificio + pill con el nombre.
     if (local) {
       pts.push([local.lat, local.lng]);
-      const localTip = `<div style="font-family:sans-serif;line-height:1.25"><div style="font-weight:800;font-size:12px;color:#111">🏪 ${escapeHtml(local.name)}</div>${local.address ? `<div style="font-size:11px;color:#555;margin-top:1px">${escapeHtml(local.address)}</div>` : ""}</div>`;
+      const localTip = localPillHtml(local.name);
       if (!localMarkerRef.current) {
-        const icon = L.divIcon({ html: localIconHtml(), className: "", iconSize: [38, 38], iconAnchor: [19, 19] });
+        const icon = L.divIcon({ html: localIconHtml(), className: "", iconSize: [30, 30], iconAnchor: [15, 15] });
         localMarkerRef.current = L.marker([local.lat, local.lng], { icon, zIndexOffset: 1000 }).addTo(map)
-          .bindTooltip(localTip, { direction: "top", offset: [0, -19], opacity: 0.95, className: "qc-home-tip" });
+          .bindTooltip(localTip, { direction: "right", offset: [14, 0], permanent: true, opacity: 1, className: "qc-pill-tip" });
       } else { localMarkerRef.current.setLatLng([local.lat, local.lng]); localMarkerRef.current.setTooltipContent(localTip); }
     }
 
+    let num = 0;
     for (const o of orders) {
       seen.add(o.id);
       const m = markersRef.current[o.id] || (markersRef.current[o.id] = {});
@@ -169,14 +191,15 @@ export default function SeguimientoPage() {
       }
       // La casa del cliente solo para pedidos delivery con coordenadas.
       if (o.isDelivery && o.destLat != null && o.destLng != null) {
+        num++;
         pts.push([o.destLat, o.destLng]);
         const stageColor = STAGE_HOME[o.opsStage]?.color || RED;
         const stageLabel = STAGE_HOME[o.opsStage]?.label || "";
-        const tip = homeTooltipHtml(o.customerName || "Cliente", `${o.addressLine || ""}${stageLabel ? ` · ${stageLabel}` : ""}`);
-        const homeIcon = L.divIcon({ html: homeIconHtml(stageColor), className: "", iconSize: [32, 32], iconAnchor: [16, 16] });
+        const tip = homePillHtml(num, stageColor, o.customerName || "Cliente", o.addressLine || "", ageMin(o.createdAt), stageLabel);
+        const homeIcon = L.divIcon({ html: homeIconHtml(stageColor, num), className: "", iconSize: [22, 22], iconAnchor: [11, 11] });
         if (!m.dest) {
           m.dest = L.marker([o.destLat, o.destLng], { icon: homeIcon }).addTo(map)
-            .bindTooltip(tip, { direction: "top", offset: [0, -16], permanent: true, opacity: 0.95, className: "qc-home-tip" });
+            .bindTooltip(tip, { direction: "right", offset: [12, 0], permanent: true, opacity: 1, className: "qc-pill-tip" });
         } else { m.dest.setLatLng([o.destLat, o.destLng]); m.dest.setIcon(homeIcon); m.dest.setTooltipContent(tip); }
       }
     }
@@ -206,6 +229,18 @@ export default function SeguimientoPage() {
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 4px 60px" }}>
+      <style>{`
+        .leaflet-tooltip.qc-pill-tip { background: transparent; border: none; box-shadow: none; padding: 0; white-space: nowrap; }
+        .leaflet-tooltip.qc-pill-tip::before { display: none; }
+        .qc-pill { display: inline-flex; align-items: stretch; gap: 0; background: #fff; border-radius: 9px; box-shadow: 0 2px 8px rgba(0,0,0,.18); overflow: hidden; font-family: sans-serif; max-width: 230px; }
+        .qc-pill-num { flex-shrink: 0; width: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12px; }
+        .qc-pill-body { padding: 4px 8px 4px 7px; min-width: 0; }
+        .qc-pill-name { font-weight: 800; font-size: 11.5px; color: #111827; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .qc-pill-addr { font-size: 10.5px; color: #6b7280; line-height: 1.25; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+        .qc-pill-meta { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #374151; margin-top: 2px; }
+        .qc-pill-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .qc-pill-local .qc-pill-addr { color: #9ca3af; }
+      `}</style>
       <Link href="/panel/centro-pedidos" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 16 }}>
         <ArrowLeft size={15} /> Centro de pedidos
       </Link>

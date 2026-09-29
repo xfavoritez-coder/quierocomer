@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
       totalAmount: o.totalAmount,
       opsStage: o.opsStage,
       isDelivery: o.isDelivery,
+      createdAt: o.createdAt ? o.createdAt.toISOString() : null,
       destLat: o.customerLat ?? geo.get(o.id)?.lat ?? null,
       destLng: o.customerLng ?? geo.get(o.id)?.lng ?? null,
       driverName: o.assignedDriver?.displayName || o.assignedTo || null,
