@@ -115,7 +115,18 @@ export default function CentroPedidosPage() {
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<Record<string, boolean>>({});
   const [courierBusy, setCourierBusy] = useState<Record<string, boolean>>({});
+  const [uberEnabled, setUberEnabled] = useState(true);
+  const [pedidosyaEnabled, setPedidosyaEnabled] = useState(true);
   const courierReq = useRef<Set<string>>(new Set());
+
+  // Flags de couriers externos (para mostrar/ocultar los botones de solicitar).
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.config) { setUberEnabled(d.config.uberEnabled !== false); setPedidosyaEnabled(d.config.pedidosyaEnabled !== false); } })
+      .catch(() => {});
+  }, [restaurantId]);
 
   const fetchOrders = useCallback(async (silent = false) => {
     if (!restaurantId) return;
@@ -277,7 +288,7 @@ export default function CentroPedidosPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} />)}
+            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
           </div>
         )
       ) : (() => {
@@ -333,7 +344,7 @@ export default function CentroPedidosPage() {
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12, alignItems: "start" }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} />)}
+                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
                 </div>
               )}
             </div>
@@ -369,7 +380,7 @@ function ElapsedTimer({ since }: { since: string }) {
   );
 }
 
-function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean }) {
+function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy, uberEnabled = true, pedidosyaEnabled = true }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean; uberEnabled?: boolean; pedidosyaEnabled?: boolean }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
@@ -390,7 +401,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   // Se puede solicitar courier desde "En preparación" o "Listo" (a veces se pide
   // con anticipación). Solicitarlo NO cambia la etapa: el paso a reparto lo hace
   // el webhook de Uber/PedidosYa. En reparto ya lo lleva alguien, no se ofrece.
-  const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready");
+  const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready") && (uberEnabled || pedidosyaEnabled);
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
       <div style={{ marginBottom: 8 }}>
@@ -566,8 +577,8 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       })() : canRequestCourier ? (
         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
-          <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber</button>
-          <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>PedidosYa</button>
+          {uberEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber</button>}
+          {pedidosyaEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>PedidosYa</button>}
         </div>
       ) : null}
     </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -12,6 +12,8 @@ const ACCENT = "#F4A623";
 interface CentroPedidosConfig {
   autoDeliverPickup?: boolean;
   posMode?: boolean;
+  uberEnabled?: boolean;
+  pedidosyaEnabled?: boolean;
 }
 
 export default function CentroPedidosConfigPage() {
@@ -164,6 +166,22 @@ export default function CentroPedidosConfigPage() {
             checked={!!cfg.autoDeliverPickup}
             disabled={saving}
             onChange={(v) => update({ autoDeliverPickup: v })}
+          />
+          <ToggleRow
+            icon={Bike}
+            title="Solicitar Uber Direct"
+            desc="Muestra el botón «Uber» en las tarjetas para solicitar un repartidor de Uber Direct. Desactívalo si no usas Uber."
+            checked={cfg.uberEnabled !== false}
+            disabled={saving}
+            onChange={(v) => update({ uberEnabled: v })}
+          />
+          <ToggleRow
+            icon={Bike}
+            title="Solicitar PedidosYa"
+            desc="Muestra el botón «PedidosYa» en las tarjetas para solicitar un repartidor de PedidosYa. Desactívalo si no usas PedidosYa."
+            checked={cfg.pedidosyaEnabled !== false}
+            disabled={saving}
+            onChange={(v) => update({ pedidosyaEnabled: v })}
           />
         </div>
       )}

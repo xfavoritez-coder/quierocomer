@@ -101,6 +101,10 @@ export interface CentroPedidosConfig {
    *  ecommerce y manuales sí aparecen en el Centro de pedidos.
    *  Si no está definido, el valor efectivo es: ¿tiene POS Toteat configurado? */
   posMode?: boolean;
+  /** Mostrar el botón para solicitar Uber Direct en las tarjetas (default: sí). */
+  uberEnabled?: boolean;
+  /** Mostrar el botón para solicitar PedidosYa en las tarjetas (default: sí). */
+  pedidosyaEnabled?: boolean;
 }
 
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {

@@ -43,6 +43,8 @@ export async function PUT(req: NextRequest) {
   const incoming = parseCentroPedidosConfig(body?.config);
   if (typeof incoming.autoDeliverPickup === "boolean") merged.autoDeliverPickup = incoming.autoDeliverPickup;
   if (typeof incoming.posMode === "boolean") merged.posMode = incoming.posMode;
+  if (typeof incoming.uberEnabled === "boolean") merged.uberEnabled = incoming.uberEnabled;
+  if (typeof incoming.pedidosyaEnabled === "boolean") merged.pedidosyaEnabled = incoming.pedidosyaEnabled;
 
   await prisma.restaurant.update({ where: { id: restaurantId }, data: { centroPedidosConfig: merged as unknown as object } });
   return NextResponse.json({ ok: true, config: merged });
