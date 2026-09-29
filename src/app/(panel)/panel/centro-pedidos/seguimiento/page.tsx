@@ -160,8 +160,8 @@ export default function SeguimientoPage() {
     if (!leafletReady || !L) return;
     if (!mapRef.current) {
       mapRef.current = L.map("track-map", { zoomControl: true, attributionControl: false }).setView([-33.45, -70.66], 12);
-      // Mapa en escala de grises (CartoDB Positron), como deliveryhandroll.
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 20, subdomains: "abcd" }).addTo(mapRef.current);
+      // Mapa en escala de grises (Esri Light Gray), sin API key.
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, maxNativeZoom: 16 }).addTo(mapRef.current);
     }
     const map = mapRef.current;
     const seen = new Set<string>();
