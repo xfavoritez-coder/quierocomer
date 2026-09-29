@@ -23,6 +23,16 @@ export default function EcommerceCatalogoPage() {
   const [tab, setTab] = useState<"productos" | "modificadores">("productos");
   const [search, setSearch] = useState("");
 
+  // Catálogo del POS Toteat (código→nombre) para mostrar el nombre Toteat al asignar código.
+  const [toteatMap, setToteatMap] = useState<Record<string, string> | null>(null);
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/toteat-catalog?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.map && Object.keys(d.map).length) setToteatMap(d.map); else setToteatMap(null); })
+      .catch(() => setToteatMap(null));
+  }, [restaurantId]);
+
   // Banner destacado (tema impact): hasta 5 productos, guardado en ecommerceStoreConfig.
   const BANNER_MAX = 5;
   const [bannerIds, setBannerIds] = useState<string[]>([]);
@@ -136,7 +146,7 @@ export default function EcommerceCatalogoPage() {
                     {!q && <h2 style={sectionTitle}>{cat.name}</h2>}
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {catProducts.map((p) => (
-                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`}
+                        <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap}
                           star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
@@ -153,7 +163,7 @@ export default function EcommerceCatalogoPage() {
                   <h2 style={sectionTitle}>{g.name}</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {g.options.map((o) => (
-                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} />
+                      <Row key={o.id} name={o.name} initial={o.code} endpoint={`/api/admin/modifiers/${o.id}/map-toteat`} toteatMap={toteatMap} />
                     ))}
                   </div>
                 </div>
@@ -177,26 +187,39 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
   );
 }
 
-function Row({ name, initial, endpoint, star }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void } }) {
+function Row({ name, initial, endpoint, star, toteatMap }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, string> | null }) {
+  const [code, setCode] = useState(initial ?? "");
+  const norm = code.trim().toUpperCase();
+  const tName = toteatMap && norm ? toteatMap[norm] : undefined;
+  const showToteat = !!toteatMap && norm.length > 0;
   return (
-    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-      {star && (
-        <button
-          onClick={star.disabled ? undefined : star.onClick}
-          title={star.on ? "Quitar del banner" : star.disabled ? "Máximo 5 en el banner" : "Destacar en el banner"}
-          style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", cursor: star.disabled ? "not-allowed" : "pointer", display: "grid", placeItems: "center", opacity: star.disabled ? 0.35 : 1 }}
-        >
-          <Star size={18} color={star.on ? ACCENT : "var(--adm-text3)"} fill={star.on ? ACCENT : "none"} />
-        </button>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 5 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {star && (
+          <button
+            onClick={star.disabled ? undefined : star.onClick}
+            title={star.on ? "Quitar del banner" : star.disabled ? "Máximo 5 en el banner" : "Destacar en el banner"}
+            style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", cursor: star.disabled ? "not-allowed" : "pointer", display: "grid", placeItems: "center", opacity: star.disabled ? 0.35 : 1 }}
+          >
+            <Star size={18} color={star.on ? ACCENT : "var(--adm-text3)"} fill={star.on ? ACCENT : "none"} />
+          </button>
+        )}
+        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+        <CodeInput initial={initial} endpoint={endpoint} onValue={setCode} />
+      </div>
+      {showToteat && (
+        <div style={{ paddingLeft: star ? 40 : 0, fontFamily: FB, fontSize: "0.72rem", lineHeight: 1.3 }}>
+          {tName != null
+            ? <span style={{ color: GREEN }}>Toteat: <strong style={{ color: "var(--adm-text)" }}>{tName || "(sin nombre)"}</strong></span>
+            : <span style={{ color: "#f97316" }}>⚠ Ese código no existe en el catálogo de Toteat</span>}
+        </div>
       )}
-      <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-      <CodeInput initial={initial} endpoint={endpoint} />
     </div>
   );
 }
 
 // Input de código POS con guardado on-blur (usa los endpoints map-toteat).
-function CodeInput({ initial, endpoint }: { initial: string | null; endpoint: string }) {
+function CodeInput({ initial, endpoint, onValue }: { initial: string | null; endpoint: string; onValue?: (v: string) => void }) {
   const [value, setValue] = useState(initial ?? "");
   const [saved, setSaved] = useState<string>(initial ?? "");
   const [busy, setBusy] = useState(false);
@@ -219,7 +242,7 @@ function CodeInput({ initial, endpoint }: { initial: string | null; endpoint: st
     <div style={{ position: "relative", flexShrink: 0, width: 150 }}>
       <input
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => { setValue(e.target.value); onValue?.(e.target.value); }}
         onBlur={save}
         onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
         placeholder="Código POS"
