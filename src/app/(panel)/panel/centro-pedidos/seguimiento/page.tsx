@@ -12,12 +12,20 @@ const GREEN = "#22c55e", BLUE = "#3b82f6", RED = "#ef4444", GRAY = "#9ca3af", PU
 
 interface Delivery {
   id: string; orderReference: string | null; customerName: string; customerPhone: string; addressLine: string;
-  totalAmount: number; opsStage: string;
+  totalAmount: number; opsStage: string; isDelivery: boolean;
   destLat: number | null; destLng: number | null;
   driverName: string | null; driverLat: number | null; driverLng: number | null;
   lastPingAt: string | null; dispatchedAt: string | null; trackingUrl: string | null;
   courierName: string | null; courierStatus: string | null; courierTrackingUrl: string | null;
 }
+
+interface Local { name: string; address: string | null; lat: number; lng: number }
+
+const STAGE_HOME: Record<string, { color: string; label: string }> = {
+  preparing: { color: "#f59e0b", label: "En preparación" },
+  ready: { color: "#22c55e", label: "Listo" },
+  out_for_delivery: { color: "#3b82f6", label: "En reparto" },
+};
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
@@ -38,8 +46,14 @@ function driverIconHtml(name: string | null, color: string) {
 }
 
 // Marcador de la casa del cliente: emoji de casa sobre un círculo blanco.
-function homeIconHtml() {
-  return `<div style="width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;border:2px solid #ef4444;font-size:17px;line-height:1">🏠</div>`;
+// El color del borde indica la etapa del pedido.
+function homeIconHtml(color: string) {
+  return `<div style="width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;border:2px solid ${color};font-size:17px;line-height:1">🏠</div>`;
+}
+
+// Marcador del local (restaurante).
+function localIconHtml() {
+  return `<div style="width:38px;height:38px;border-radius:12px;background:#111827;box-shadow:0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:19px;line-height:1">🏪</div>`;
 }
 
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
@@ -55,12 +69,14 @@ export default function SeguimientoPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [orders, setOrders] = useState<Delivery[]>([]);
+  const [local, setLocal] = useState<Local | null>(null);
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(false);
   const [, force] = useState(0); // re-render para refrescar los "hace Xs"
 
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, { driver?: any; dest?: any }>>({});
+  const localMarkerRef = useRef<any>(null);
   const [leafletReady, setLeafletReady] = useState(false);
   const prevIdsRef = useRef<string>("");
   const refetchTimer = useRef<any>(null);
@@ -72,6 +88,7 @@ export default function SeguimientoPage() {
       const r = await fetch(`/api/panel/ecommerce/pos-orders/tracking?restaurantId=${restaurantId}`);
       const d = await r.json();
       if (r.ok && d.orders) setOrders(d.orders);
+      if (r.ok && "local" in d) setLocal(d.local);
     } catch { /* noop */ }
     setLoading(false);
   }, [restaurantId]);
@@ -129,6 +146,17 @@ export default function SeguimientoPage() {
     const seen = new Set<string>();
     const pts: [number, number][] = [];
 
+    // Marcador del local (restaurante).
+    if (local) {
+      pts.push([local.lat, local.lng]);
+      const localTip = `<div style="font-family:sans-serif;line-height:1.25"><div style="font-weight:800;font-size:12px;color:#111">🏪 ${escapeHtml(local.name)}</div>${local.address ? `<div style="font-size:11px;color:#555;margin-top:1px">${escapeHtml(local.address)}</div>` : ""}</div>`;
+      if (!localMarkerRef.current) {
+        const icon = L.divIcon({ html: localIconHtml(), className: "", iconSize: [38, 38], iconAnchor: [19, 19] });
+        localMarkerRef.current = L.marker([local.lat, local.lng], { icon, zIndexOffset: 1000 }).addTo(map)
+          .bindTooltip(localTip, { direction: "top", offset: [0, -19], opacity: 0.95, className: "qc-home-tip" });
+      } else { localMarkerRef.current.setLatLng([local.lat, local.lng]); localMarkerRef.current.setTooltipContent(localTip); }
+    }
+
     for (const o of orders) {
       seen.add(o.id);
       const m = markersRef.current[o.id] || (markersRef.current[o.id] = {});
@@ -139,14 +167,17 @@ export default function SeguimientoPage() {
         if (!m.driver) m.driver = L.marker([o.driverLat, o.driverLng], { icon }).addTo(map).bindTooltip(o.driverName || "Repartidor", { direction: "top", offset: [0, -34] });
         else { m.driver.setLatLng([o.driverLat, o.driverLng]); m.driver.setIcon(icon); }
       }
-      if (o.destLat != null && o.destLng != null) {
+      // La casa del cliente solo para pedidos delivery con coordenadas.
+      if (o.isDelivery && o.destLat != null && o.destLng != null) {
         pts.push([o.destLat, o.destLng]);
-        const tip = homeTooltipHtml(o.customerName || "Cliente", o.addressLine || "");
+        const stageColor = STAGE_HOME[o.opsStage]?.color || RED;
+        const stageLabel = STAGE_HOME[o.opsStage]?.label || "";
+        const tip = homeTooltipHtml(o.customerName || "Cliente", `${o.addressLine || ""}${stageLabel ? ` · ${stageLabel}` : ""}`);
+        const homeIcon = L.divIcon({ html: homeIconHtml(stageColor), className: "", iconSize: [32, 32], iconAnchor: [16, 16] });
         if (!m.dest) {
-          const homeIcon = L.divIcon({ html: homeIconHtml(), className: "", iconSize: [32, 32], iconAnchor: [16, 16] });
           m.dest = L.marker([o.destLat, o.destLng], { icon: homeIcon }).addTo(map)
             .bindTooltip(tip, { direction: "top", offset: [0, -16], permanent: true, opacity: 0.95, className: "qc-home-tip" });
-        } else { m.dest.setLatLng([o.destLat, o.destLng]); m.dest.setTooltipContent(tip); }
+        } else { m.dest.setLatLng([o.destLat, o.destLng]); m.dest.setIcon(homeIcon); m.dest.setTooltipContent(tip); }
       }
     }
     // Limpia marcadores de pedidos que ya no están.
@@ -154,9 +185,9 @@ export default function SeguimientoPage() {
       if (!seen.has(id)) { const m = markersRef.current[id]; if (m.driver) map.removeLayer(m.driver); if (m.dest) map.removeLayer(m.dest); delete markersRef.current[id]; }
     }
     // Ajusta el encuadre solo cuando cambia el conjunto de pedidos (no en cada ping).
-    const ids = orders.map((o) => o.id).sort().join(",");
-    if (ids !== prevIdsRef.current && pts.length) { map.fitBounds(pts, { padding: [50, 50], maxZoom: 16 }); prevIdsRef.current = ids; }
-  }, [orders, leafletReady]);
+    const ids = (local ? "L," : "") + orders.map((o) => o.id).sort().join(",");
+    if (ids !== prevIdsRef.current && pts.length) { map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 }); prevIdsRef.current = ids; }
+  }, [orders, local, leafletReady]);
 
   const focusOrder = (o: Delivery) => {
     const map = mapRef.current;
@@ -166,9 +197,12 @@ export default function SeguimientoPage() {
   const fitAll = () => {
     const map = mapRef.current;
     const pts: [number, number][] = [];
-    for (const o of orders) { if (o.driverLat != null && o.driverLng != null) pts.push([o.driverLat, o.driverLng]); if (o.destLat != null && o.destLng != null) pts.push([o.destLat, o.destLng]); }
-    if (map && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 16 });
+    if (local) pts.push([local.lat, local.lng]);
+    for (const o of orders) { if (o.driverLat != null && o.driverLng != null) pts.push([o.driverLat, o.driverLng]); if (o.isDelivery && o.destLat != null && o.destLng != null) pts.push([o.destLat, o.destLng]); }
+    if (map && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
   };
+
+  const enReparto = orders.filter((o) => o.opsStage === "out_for_delivery");
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 4px 60px" }}>
@@ -180,7 +214,7 @@ export default function SeguimientoPage() {
         <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><Navigation size={20} color={ACCENT} /></div>
         <div style={{ flex: 1, minWidth: 160 }}>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Seguimiento en vivo</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Repartos en curso y la ubicación de cada repartidor en tiempo real.</p>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>El local 🏪, la casa 🏠 de cada pedido activo y los repartidores en tiempo real.</p>
         </div>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 999, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)" }}>
           <Radio size={13} /> {live ? "En vivo" : "Conectando…"}
@@ -193,19 +227,20 @@ export default function SeguimientoPage() {
         <div style={{ width: 340, flexShrink: 0, minWidth: 280, flex: "1 1 300px", maxWidth: 380, display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 2px" }}>
             <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>🛵 En reparto</span>
-            <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>{orders.length}</span>
-            <button onClick={fitAll} title="Ver todos en el mapa" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}><Crosshair size={13} /> Ver todos</button>
+            <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>{enReparto.length}</span>
+            <button onClick={fitAll} title="Ver todo en el mapa" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}><Crosshair size={13} /> Ver todo</button>
           </div>
 
           {loading ? (
             <p style={{ fontFamily: FB, color: "var(--adm-text3)", padding: 24, textAlign: "center" }}>Cargando…</p>
-          ) : orders.length === 0 ? (
+          ) : enReparto.length === 0 ? (
             <div style={{ padding: "30px 16px", textAlign: "center", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
               <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Sin repartos activos</p>
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Cuando un repartidor tome un pedido, aparecerá aquí con su ubicación en vivo.</p>
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Cuando un repartidor tome un pedido, aparecerá aquí con su ubicación en vivo.</p>
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Mientras tanto, en el mapa ves el local 🏪 y la casa 🏠 de cada pedido activo.</p>
             </div>
           ) : (
-            orders.map((o) => {
+            enReparto.map((o) => {
               const ago = agoLabel(o.lastPingAt);
               const dotColor = o.courierName ? PURPLE : ago.none ? GRAY : ago.stale ? RED : GREEN;
               return (

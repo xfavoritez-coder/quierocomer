@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { geocodePosOrders } from "@/lib/ecommerce/geocode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,11 +26,25 @@ export async function GET(req: NextRequest) {
 
   const origin = req.nextUrl.origin;
 
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { name: true, address: true, lat: true, lng: true, ecommerceConfig: true },
+  });
+
+  // Todos los pedidos activos (no entregados ni cancelados) para posicionarlos
+  // en el mapa: en preparación, listos y en reparto.
   const orders = await prisma.posOrder.findMany({
-    where: { restaurantId, opsStage: "out_for_delivery", posStatus: { not: "canceled" } },
+    where: { restaurantId, opsStage: { not: "delivered" }, posStatus: { not: "canceled" } },
     orderBy: [{ opsDispatchedAt: "desc" }, { updatedAt: "desc" }],
     include: { assignedDriver: { select: { displayName: true } } },
   });
+
+  // Geocodifica (y persiste) las direcciones delivery que aún no tengan coords,
+  // para que la casa del cliente aparezca en el mapa.
+  const toGeo = orders.filter((o) => o.isDelivery && o.addressLine && (o.customerLat == null || o.customerLng == null));
+  const geo = toGeo.length
+    ? await geocodePosOrders(restaurant, toGeo.map((o) => ({ id: o.id, addressLine: o.addressLine || "", customerLat: o.customerLat, customerLng: o.customerLng })), 8)
+    : new Map<string, { lat: number; lng: number }>();
 
   const items = orders.map((o) => {
     const courier = o.courier as { status?: string; trackingUrl?: string } | null;
@@ -42,8 +57,9 @@ export async function GET(req: NextRequest) {
       addressLine: o.addressLine,
       totalAmount: o.totalAmount,
       opsStage: o.opsStage,
-      destLat: o.customerLat,
-      destLng: o.customerLng,
+      isDelivery: o.isDelivery,
+      destLat: o.customerLat ?? geo.get(o.id)?.lat ?? null,
+      destLng: o.customerLng ?? geo.get(o.id)?.lng ?? null,
       driverName: o.assignedDriver?.displayName || o.assignedTo || null,
       driverLat: o.lastLat,
       driverLng: o.lastLng,
@@ -56,5 +72,9 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({ orders: items });
+  const local = restaurant && restaurant.lat != null && restaurant.lng != null
+    ? { name: restaurant.name, address: restaurant.address, lat: restaurant.lat, lng: restaurant.lng }
+    : null;
+
+  return NextResponse.json({ orders: items, local });
 }
