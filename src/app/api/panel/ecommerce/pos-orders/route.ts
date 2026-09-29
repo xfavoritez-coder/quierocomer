@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
+import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,26 +28,36 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const scope = req.nextUrl.searchParams.get("scope") || "activos";
-  // Historial: entregados/cancelados. Activos: en curso + entregados de las últimas
-  // 24h (para que la etapa "Entregado" del tablero tenga contenido, sin traer todo).
+
+  // Rango de fechas (YYYY-MM-DD en hora de Chile). Por defecto: hoy.
+  const today = chileTodayYmd();
+  const fromYmd = req.nextUrl.searchParams.get("from") || today;
+  const toYmd = req.nextUrl.searchParams.get("to") || fromYmd;
+  const start = chileDayRangeUtc(fromYmd).start;
+  const end = chileDayRangeUtc(toYmd).end;
+  const dateRange = { gte: start, lte: end };
+
   const where: any = { restaurantId };
   if (scope === "historial") {
+    // Historial: entregados/cancelados creados dentro del rango.
+    where.createdAt = dateRange;
     where.OR = [{ opsStage: "delivered" }, { posStatus: "canceled" }];
   } else {
-    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Activos: los pedidos en curso (preparación/listo/reparto) se muestran SIEMPRE,
+    // sin importar el día; los entregados solo dentro del rango seleccionado.
     where.posStatus = { not: "canceled" };
     where.OR = [
       { opsStage: { not: "delivered" } },
-      { opsStage: "delivered", updatedAt: { gte: dayAgo } },
+      { opsStage: "delivered", createdAt: dateRange },
     ];
   }
 
   const orders = await prisma.posOrder.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: scope === "historial" ? 200 : 300,
+    take: scope === "historial" ? 300 : 400,
   });
-  return NextResponse.json({ orders });
+  return NextResponse.json({ orders, from: fromYmd, to: toYmd, today });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

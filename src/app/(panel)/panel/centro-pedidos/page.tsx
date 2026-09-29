@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -24,6 +24,22 @@ interface PosOrder {
 }
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+
+// Fecha de hoy (YYYY-MM-DD) en hora de Chile.
+function chileTodayLocal(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+// Suma días a un YYYY-MM-DD (seguro por zona horaria: mediodía UTC).
+function addDaysYmd(ymd: string, days: number): string {
+  const d = new Date(`${ymd}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+// Etiqueta corta DD/MM para el selector.
+function shortYmd(ymd: string): string {
+  const [, m, d] = ymd.split("-");
+  return `${d}/${m}`;
+}
 
 const UBER_STATUS_LABEL: Record<string, string> = {
   pending: "Buscando repartidor…",
@@ -98,6 +114,8 @@ export default function CentroPedidosPage() {
   const [orders, setOrders] = useState<PosOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"activos" | "historial">("activos");
+  const [fromDate, setFromDate] = useState<string>(() => chileTodayLocal());
+  const [toDate, setToDate] = useState<string>(() => chileTodayLocal());
   const [selectedStage, setSelectedStage] = useState<Stage>("preparing");
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<Record<string, boolean>>({});
@@ -108,12 +126,12 @@ export default function CentroPedidosPage() {
     if (!restaurantId) return;
     if (!silent) setLoading(true);
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${view}`);
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${view}&from=${fromDate}&to=${toDate}`);
       const d = await r.json();
       if (r.ok && d.orders) setOrders(d.orders);
     } catch { /* noop */ }
     setLoading(false);
-  }, [restaurantId, view]);
+  }, [restaurantId, view, fromDate, toDate]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
@@ -223,10 +241,41 @@ export default function CentroPedidosPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         <TabChip active={view === "activos"} onClick={() => setView("activos")} icon={ListChecks} label="Activos" />
         <TabChip active={view === "historial"} onClick={() => setView("historial")} icon={History} label="Historial" />
       </div>
+
+      {/* Barra de fechas */}
+      {(() => {
+        const today = chileTodayLocal();
+        const singleDay = fromDate === toDate;
+        const shiftBoth = (days: number) => { setFromDate((f) => addDaysYmd(f, days)); setToDate((t) => addDaysYmd(t, days)); };
+        const dateInput: React.CSSProperties = { fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 8px", cursor: "pointer" };
+        const navBtn: React.CSSProperties = { width: 32, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer" };
+        return (
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
+            <Calendar size={15} style={{ color: "var(--adm-text3)" }} />
+            {singleDay && (
+              <button onClick={() => shiftBoth(-1)} title="Día anterior" style={navBtn}><ChevronLeft size={16} /></button>
+            )}
+            <input type="date" value={fromDate} max={toDate} onChange={(e) => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v); }} style={dateInput} />
+            <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>→</span>
+            <input type="date" value={toDate} min={fromDate} onChange={(e) => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v); }} style={dateInput} />
+            {singleDay && (
+              <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} title="Día siguiente" style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? "default" : "pointer" }}><ChevronRight size={16} /></button>
+            )}
+            {(fromDate !== today || toDate !== today) && (
+              <button onClick={() => { setFromDate(today); setToDate(today); }} style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: ORANGE, background: `${ORANGE}14`, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Hoy</button>
+            )}
+            {view === "activos" && (
+              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: 2 }}>
+                {singleDay ? shortYmd(fromDate) : `${shortYmd(fromDate)}–${shortYmd(toDate)}`} · los pedidos en curso se muestran siempre
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {loading ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", padding: 30, textAlign: "center" }}>Cargando pedidos…</p>
