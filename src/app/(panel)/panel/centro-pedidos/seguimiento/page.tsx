@@ -37,6 +37,20 @@ function driverIconHtml(name: string | null, color: string) {
   return `<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;border:2px solid #fff"><span style="transform:rotate(45deg);color:#fff;font-weight:800;font-family:sans-serif;font-size:14px">${initial}</span></div>`;
 }
 
+// Marcador de la casa del cliente: emoji de casa sobre un círculo blanco.
+function homeIconHtml() {
+  return `<div style="width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;border:2px solid #ef4444;font-size:17px;line-height:1">🏠</div>`;
+}
+
+const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+
+// Etiqueta tipo deliveryhandroll: nombre + dirección del cliente.
+function homeTooltipHtml(name: string, address: string) {
+  const n = escapeHtml(name || "Cliente");
+  const a = escapeHtml(address || "");
+  return `<div style="font-family:sans-serif;line-height:1.25"><div style="font-weight:800;font-size:12px;color:#111">🏠 ${n}</div>${a ? `<div style="font-size:11px;color:#555;margin-top:1px">${a}</div>` : ""}</div>`;
+}
+
 export default function SeguimientoPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
@@ -127,8 +141,12 @@ export default function SeguimientoPage() {
       }
       if (o.destLat != null && o.destLng != null) {
         pts.push([o.destLat, o.destLng]);
-        if (!m.dest) m.dest = L.circleMarker([o.destLat, o.destLng], { radius: 7, color: RED, fillColor: RED, fillOpacity: 0.9, weight: 2 }).addTo(map).bindTooltip(o.customerName || "Destino", { direction: "top" });
-        else m.dest.setLatLng([o.destLat, o.destLng]);
+        const tip = homeTooltipHtml(o.customerName || "Cliente", o.addressLine || "");
+        if (!m.dest) {
+          const homeIcon = L.divIcon({ html: homeIconHtml(), className: "", iconSize: [32, 32], iconAnchor: [16, 16] });
+          m.dest = L.marker([o.destLat, o.destLng], { icon: homeIcon }).addTo(map)
+            .bindTooltip(tip, { direction: "top", offset: [0, -16], permanent: true, opacity: 0.95, className: "qc-home-tip" });
+        } else { m.dest.setLatLng([o.destLat, o.destLng]); m.dest.setTooltipContent(tip); }
       }
     }
     // Limpia marcadores de pedidos que ya no están.
