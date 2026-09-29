@@ -574,6 +574,7 @@ export default function UsuariosPage() {
 
 // ── Permisos del perfil visor: qué secciones del sidebar puede ver ──
 const VIEWER_SECTION_OPTIONS: { key: string; label: string }[] = [
+  { key: "dashboard", label: "Dashboard" },
   { key: "mi-carta", label: "Mi Carta" },
   { key: "carta", label: "Carta QR" },
   { key: "ordering", label: "Pedidos Online" },
@@ -583,6 +584,8 @@ const VIEWER_SECTION_OPTIONS: { key: string; label: string }[] = [
   { key: "loyalty", label: "Loyalty" },
   { key: "valoraciones", label: "Valoraciones" },
   { key: "config", label: "Configuración" },
+  { key: "subscription", label: "Mi Suscripción" },
+  { key: "support", label: "Soporte" },
 ];
 const VIEWER_ALL_KEYS = VIEWER_SECTION_OPTIONS.map((o) => o.key);
 
@@ -633,7 +636,7 @@ function ViewerSidebarPermissions({ restaurantId }: { restaurantId: string }) {
         <h2 style={{ fontFamily: F, fontSize: "0.98rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Qué ve el perfil visor en el menú</h2>
       </div>
       <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>
-        Elige qué secciones del menú lateral puede ver un usuario con rol <b>Visor</b>. Dashboard, Soporte y Mi Suscripción siempre están visibles.
+        Elige qué secciones del menú lateral puede ver un usuario con rol <b>Visor</b>. Deja al menos una activa para que tenga dónde entrar.
         {allowed === null && " Actualmente ve todas."}
       </p>
 

@@ -27,9 +27,6 @@ interface Props {
   children: React.ReactNode;
 }
 
-// Secciones que un VIEWER SIEMPRE ve (para que no quede sin navegación).
-const VIEWER_ALWAYS = new Set(["dashboard", "support", "subscription"]);
-
 function LiveIcon({ size = 18 }: { size?: number }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, position: "relative" }}>
@@ -230,7 +227,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   // viewerSections null/undefined = ve todas (comportamiento por defecto).
   const viewerSections = (selected as any)?.viewerSections as string[] | null | undefined;
   const SECTIONS = (role === "VIEWER" && Array.isArray(viewerSections))
-    ? nav.SECTIONS.filter((s) => VIEWER_ALWAYS.has(s.key) || viewerSections.includes(s.key))
+    ? nav.SECTIONS.filter((s) => viewerSections.includes(s.key))
     : nav.SECTIONS;
 
   // Accordion state
