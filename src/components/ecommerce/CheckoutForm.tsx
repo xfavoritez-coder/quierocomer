@@ -568,7 +568,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                       ))}
                     </div>
                     <p className="text-xs text-gray-500">
-                      {scheduledIso ? "✓ Programado. Prepararemos tu pedido para esa hora." : "Elige la hora en que quieres recibir/retirar tu pedido."}
+                      {scheduledIso ? "✓ Programación de pedido. Entregaremos tu pedido a esa hora." : "Elige la hora en que quieres recibir/retirar tu pedido."}
                     </p>
                   </div>
                 )
