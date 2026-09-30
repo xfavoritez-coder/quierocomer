@@ -607,8 +607,8 @@ export default function MiRestaurantePage() {
 
 
 
-      {/* ── Pago automático (CTA cuando no está activo) ── */}
-      {billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && !billingStatus.hasAutoRenewal && (() => {
+      {/* ── Pago automático (CTA cuando no está activo) ── TEMPORALMENTE OCULTO hasta activar PAT en Flow */}
+      {false && billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && !billingStatus.hasAutoRenewal && (() => {
         const planName = plan === "FREE" ? "Gratis" : "Premium";
         return (
           <div style={{ background: `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`, border: `1.5px solid ${GOLD}55`, borderRadius: 16, padding: "20px 20px 18px", marginBottom: 16 }}>
