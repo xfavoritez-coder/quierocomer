@@ -23,6 +23,15 @@ export async function GET(req: NextRequest) {
   const since = cfg.printTokenAt ? new Date(cfg.printTokenAt) : new Date(Date.now() - 24 * 60 * 60 * 1000);
   const paperWidth = cfg.printPaperWidth === 58 ? 58 : 80;
 
+  // El agente respeta el "Modo de impresión":
+  //  - auto: imprime automáticamente cada pedido nuevo (createdAt >= since).
+  //  - manual / off (Desactivada): NO auto-imprime; solo reimprime a demanda
+  //    cuando el staff toca "Imprimir comanda" (printRequestedAt).
+  const autoPrint = cfg.printMode === "auto";
+  const availability = autoPrint
+    ? [{ createdAt: { gte: since } }, { printRequestedAt: { not: null } }]
+    : [{ printRequestedAt: { not: null } }];
+
   const orders = await prisma.onlineOrder.findMany({
     where: {
       restaurantId: restaurant.id,
@@ -32,15 +41,7 @@ export async function GET(req: NextRequest) {
       // Pedidos programados aún no liberados: NO se imprimen hasta que el cron los
       // libere (marca scheduledReleasedAt). Un pedido normal no tiene scheduledFor.
       AND: [
-        {
-          // Auto-impresión: solo pedidos creados después de instalar el agente (no
-          // floodea el histórico). Reimpresión manual (printRequestedAt): sin importar
-          // la fecha, para poder reimprimir cualquier pedido a demanda.
-          OR: [
-            { createdAt: { gte: since } },
-            { printRequestedAt: { not: null } },
-          ],
-        },
+        { OR: availability },
         { OR: [{ scheduledFor: null }, { scheduledReleasedAt: { not: null } }] },
       ],
     },

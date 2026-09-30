@@ -433,7 +433,7 @@ export default function EcommerceConfiguracionPage() {
                 <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
                   <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Automática por navegador (sin instalar nada)</p>
                   <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                    Abre esta misma pantalla de <strong>Pedidos</strong> en el equipo del local con Chrome en modo kiosco (<code>--kiosk-printing</code>) y déjala abierta. Si prefieres imprimir sin navegador, usa el <strong>agente local</strong> de abajo (funciona en cualquier modo).
+                    Abre esta misma pantalla de <strong>Pedidos</strong> en el equipo del local con Chrome en modo kiosco (<code>--kiosk-printing</code>) y déjala abierta. Si prefieres imprimir sin navegador, usa el <strong>agente local</strong> de abajo.
                   </p>
                 </div>
               )}
@@ -442,7 +442,7 @@ export default function EcommerceConfiguracionPage() {
               <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                   <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Agente de impresión local (ESC/POS)</p>
                   <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                    Imprime directo en la térmica <strong>sin navegador</strong>, con corte automático. Funciona aunque el modo de arriba esté en <strong>Manual</strong> o <strong>Desactivada</strong>: imprime cada pedido nuevo al instante y también al tocar <strong>Imprimir comanda</strong> en Pedidos.
+                    Imprime directo en la térmica <strong>sin navegador</strong>, con corte automático. Respeta el <strong>Modo de impresión</strong> de arriba: en <strong>Automática</strong> imprime cada pedido nuevo al instante; en <strong>Manual</strong> o <strong>Desactivada</strong> NO auto-imprime y solo imprime cuando tocas <strong>Imprimir comanda</strong> en Pedidos.
                   </p>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
