@@ -608,33 +608,6 @@ export default function MiRestaurantePage() {
 
 
       {/* ── Pago automático (CTA cuando no está activo) ── TEMPORALMENTE OCULTO hasta activar PAT en Flow */}
-      {false && billingStatus && !billingStatus.billingExempt && plan !== "FREE" && billingStatus.subscriptionStatus === "ACTIVE" && !billingStatus.hasAutoRenewal && (() => {
-        const planName = plan === "FREE" ? "Gratis" : "Premium";
-        return (
-          <div style={{ background: `linear-gradient(135deg, ${GOLD}18 0%, ${GOLD}08 100%)`, border: `1.5px solid ${GOLD}55`, borderRadius: 16, padding: "20px 20px 18px", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: `${GOLD}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                <RefreshCw size={20} color={GOLD} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px", lineHeight: 1.2 }}>
-                  Activa el pago automático
-                </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  Tu plan {planName} se renueva solo cada mes sin que tengas que acordarte. Registra tu tarjeta una vez y listo.
-                </p>
-                <button
-                  onClick={handleActivateAutoRenew}
-                  disabled={activatingAutoRenew}
-                  style={{ padding: "10px 22px", border: "none", borderRadius: 999, background: GOLD, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1, boxShadow: `0 4px 14px ${GOLD}44` }}
-                >
-                  {activatingAutoRenew ? "Iniciando…" : "Activar pago automático →"}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Historial de pagos ── */}
       {billingStatus && plan !== "FREE" && (billingStatus.lastPaymentAt || paymentHistory.length > 0) && (
