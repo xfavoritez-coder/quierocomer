@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Users, UserPlus, Shield, Eye, Crown, Mail, Trash2, X, ChevronRight } from "lucide-react";
+import { Users, UserPlus, Shield, Eye, Crown, Mail, Trash2, X, ChevronRight, Clock } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -393,6 +393,14 @@ export default function UsuariosPage() {
                     <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>
                       {user.name}
                     </span>
+                    {user.role === "VIEWER" && (
+                      <span title="Último ingreso al panel" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: FB, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text2)", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 8px" }}>
+                        <Clock size={11} />
+                        {user.lastLoginAt
+                          ? new Date(user.lastLoginAt).toLocaleString("es-CL", { timeZone: "America/Santiago", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                          : "Sin ingresos"}
+                      </span>
+                    )}
                     <RoleBadge role={user.role} roleConfig={ROLE_CONFIG} />
                     {user.status !== "ACTIVE" && <StatusDot status={user.status} statusConfig={STATUS_CONFIG} />}
                   </div>
