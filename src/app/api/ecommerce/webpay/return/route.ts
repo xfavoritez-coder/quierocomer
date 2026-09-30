@@ -61,9 +61,12 @@ async function handle(req: NextRequest) {
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.
-    await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
-    void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
-    if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
+    // Programado: queda pagado pero NO se despacha; el cron lo libera a su hora.
+    if (!order.scheduledFor || order.scheduledReleasedAt) {
+      await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[ecommerce/webpay/return] POS:", e));
+      void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
+      if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
+    }
     return NextResponse.redirect(checkoutFor(base, `pago=exito&order=${order.id}`), 303);
   }
 

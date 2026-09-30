@@ -22,6 +22,7 @@ interface Order {
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
   source?: string | null;
+  scheduledFor?: string | null; scheduledReleasedAt?: string | null;
   webpayToken?: string | null; webpayBuyOrder?: string | null; flowToken?: string | null;
   deliveryLat?: number | null; deliveryLng?: number | null;
   uberDeliveryId?: string | null;
@@ -350,6 +351,11 @@ export default function EcommercePedidosPage() {
                     <td style={tdStyle}>
                       <span style={{ fontFamily: F, fontWeight: 800, color: "var(--adm-text)" }}>#{o.orderNumber ?? o.id.slice(-5)}</span>
                       {isNew && <span style={{ marginLeft: 6, fontFamily: FB, fontSize: "0.58rem", fontWeight: 800, color: ORANGE }}>● NUEVO</span>}
+                      {o.scheduledFor && !o.scheduledReleasedAt && (
+                        <span style={{ display: "block", marginTop: 3, fontFamily: F, fontSize: "0.6rem", fontWeight: 800, color: "#7c3aed", background: "#7c3aed1a", borderRadius: 999, padding: "2px 7px", width: "fit-content" }}>
+                          📅 Programado · {new Date(o.scheduledFor).toLocaleString("es-CL", { timeZone: "America/Santiago", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
                     </td>
                     <td style={{ ...tdStyle, color: "var(--adm-text)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || "—"}</td>
                     <td style={tdStyle}>

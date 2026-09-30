@@ -25,9 +25,12 @@ export async function confirmMercadoPagoPayment(orderId: string | null, paymentI
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" } });
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
-    await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[mpConfirm] POS:", e));
-    void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
-    if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
+    // Programado: queda pagado pero NO se despacha; el cron lo libera a su hora.
+    if (!order.scheduledFor || order.scheduledReleasedAt) {
+      await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[mpConfirm] POS:", e));
+      void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
+      if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
+    }
     return true;
   }
   return false;

@@ -29,12 +29,19 @@ export async function GET(req: NextRequest) {
       source: "ecommerce",
       printedAt: null,
       status: { not: "CANCELLED" },
-      // Auto-impresión: solo pedidos creados después de instalar el agente (no
-      // floodea el histórico). Reimpresión manual (printRequestedAt): sin importar
-      // la fecha, para poder reimprimir cualquier pedido a demanda.
-      OR: [
-        { createdAt: { gte: since } },
-        { printRequestedAt: { not: null } },
+      // Pedidos programados aún no liberados: NO se imprimen hasta que el cron los
+      // libere (marca scheduledReleasedAt). Un pedido normal no tiene scheduledFor.
+      AND: [
+        {
+          // Auto-impresión: solo pedidos creados después de instalar el agente (no
+          // floodea el histórico). Reimpresión manual (printRequestedAt): sin importar
+          // la fecha, para poder reimprimir cualquier pedido a demanda.
+          OR: [
+            { createdAt: { gte: since } },
+            { printRequestedAt: { not: null } },
+          ],
+        },
+        { OR: [{ scheduledFor: null }, { scheduledReleasedAt: { not: null } }] },
       ],
     },
     orderBy: { createdAt: "asc" },

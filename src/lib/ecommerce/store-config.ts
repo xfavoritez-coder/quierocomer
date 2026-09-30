@@ -23,6 +23,8 @@ export interface EcommerceStoreConfig {
   minOrderDelivery: number; // monto mínimo de compra para delivery (0 = sin mínimo)
   waitTimePickup: string; // tiempo estimado de retiro (ej: "20-30")
   waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
+  scheduledOrdersEnabled: boolean; // permitir que el cliente programe pedidos para más tarde
+  scheduleMaxDaysAhead: number; // hasta cuántos días hacia adelante se puede programar (0 = solo hoy, 1 = hasta mañana, N = N días)
   favoritesEnabled: boolean; // permitir que el cliente marque favoritos
   theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
@@ -145,6 +147,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     minOrderDelivery: nonNegInt(o.minOrderDelivery, fbMin),
     waitTimePickup: typeof o.waitTimePickup === "string" ? o.waitTimePickup : (fb.waitTime ?? ""),
     waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
+    scheduledOrdersEnabled: o.scheduledOrdersEnabled === true,
+    scheduleMaxDaysAhead: nonNegInt(o.scheduleMaxDaysAhead, 0),
     favoritesEnabled: o.favoritesEnabled === true,
     theme: o.theme === "impact" ? "impact" : "base",
     bannerProductIds: Array.isArray(o.bannerProductIds)

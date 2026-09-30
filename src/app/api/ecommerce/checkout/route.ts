@@ -12,6 +12,7 @@ import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/c
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { parseHours, resolveAvailability } from "@/lib/ecommerce/hours";
+import { validateScheduledFor, parseWaitMinutes } from "@/lib/ecommerce/scheduling";
 
 export const runtime = "nodejs";
 
@@ -39,9 +40,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string;
+      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -59,18 +60,35 @@ export async function POST(req: NextRequest) {
     const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: restaurant.orderingMinAmount ?? null });
     if (!store.paymentMethods.includes(paymentMethod)) return NextResponse.json({ error: "Método de pago no disponible" }, { status: 400 });
 
-    // Tienda cerrada según horario o cierre programado. El cierre puede afectar
-    // sólo un método de entrega → validamos contra el método del pedido.
-    const avail = resolveAvailability(parseHours(restaurant.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
-    if (!avail.openStatus.open) {
-      const motivo = avail.openStatus.closure?.reason;
-      return NextResponse.json({ error: motivo ? `Cerrado: ${motivo}` : "La tienda está cerrada en este momento" }, { status: 400 });
-    }
-    const metodoDisponible = orderType === "DELIVERY" ? avail.deliveryEnabled : avail.pickupEnabled;
-    if (!metodoDisponible) {
-      const motivo = avail.openStatus.closure?.reason;
-      const metodoTxt = orderType === "DELIVERY" ? "delivery" : "retiro";
-      return NextResponse.json({ error: motivo ? `${metodoTxt === "delivery" ? "Delivery" : "Retiro"} no disponible: ${motivo}` : `El ${metodoTxt} no está disponible en este momento` }, { status: 400 });
+    const ecHours = parseHours(restaurant.ecommerceHours);
+    const estimatedMinutes = parseWaitMinutes(orderType === "DELIVERY" ? store.waitTimeDelivery : store.waitTimePickup);
+
+    // Pedido programado: el cliente elige una hora futura y puede comprar aunque
+    // el local esté cerrado ahora. Validamos la fecha/hora contra el horario y la
+    // ventana permitida, en vez del estado abierto/cerrado actual.
+    const wantsSchedule = typeof scheduledFor === "string" && scheduledFor.trim().length > 0;
+    let scheduledDate: Date | null = null;
+    if (wantsSchedule) {
+      if (!store.scheduledOrdersEnabled) return NextResponse.json({ error: "El local no acepta pedidos programados" }, { status: 400 });
+      const metodoConfig = orderType === "DELIVERY" ? store.deliveryEnabled : store.pickupEnabled;
+      if (!metodoConfig) return NextResponse.json({ error: `El ${orderType === "DELIVERY" ? "delivery" : "retiro"} no está disponible` }, { status: 400 });
+      const v = validateScheduledFor({ iso: scheduledFor!, hours: ecHours, maxDaysAhead: store.scheduleMaxDaysAhead, estimatedMinutes });
+      if (!v.ok) return NextResponse.json({ error: v.error || "Hora programada inválida" }, { status: 400 });
+      scheduledDate = v.date!;
+    } else {
+      // Tienda cerrada según horario o cierre programado. El cierre puede afectar
+      // sólo un método de entrega → validamos contra el método del pedido.
+      const avail = resolveAvailability(ecHours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
+      if (!avail.openStatus.open) {
+        const motivo = avail.openStatus.closure?.reason;
+        return NextResponse.json({ error: motivo ? `Cerrado: ${motivo}` : "La tienda está cerrada en este momento" }, { status: 400 });
+      }
+      const metodoDisponible = orderType === "DELIVERY" ? avail.deliveryEnabled : avail.pickupEnabled;
+      if (!metodoDisponible) {
+        const motivo = avail.openStatus.closure?.reason;
+        const metodoTxt = orderType === "DELIVERY" ? "delivery" : "retiro";
+        return NextResponse.json({ error: motivo ? `${metodoTxt === "delivery" ? "Delivery" : "Retiro"} no disponible: ${motivo}` : `El ${metodoTxt} no está disponible en este momento` }, { status: 400 });
+      }
     }
     if (!customerPhone?.trim()) return NextResponse.json({ error: "El teléfono es obligatorio" }, { status: 400 });
     // Email obligatorio si paga con Flow o usa cupón.
@@ -195,6 +213,7 @@ export async function POST(req: NextRequest) {
         orderNumber,
         status: isOnline ? "PENDING" : "ACCEPTED",
         statusHistory: [{ status: isOnline ? "PENDING" : "ACCEPTED", ts: new Date().toISOString() }],
+        scheduledFor: scheduledDate,
       },
     });
 
@@ -221,8 +240,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Pago offline: confirmar y enviar al POS de inmediato ──
+    // ── Pago offline ──
     if (!isOnline) {
+      if (scheduledDate) {
+        // Pedido programado: NO se envía al POS ni se imprime todavía. El cron
+        // de liberación lo despacha (POS + impresión + aviso) `estimado` minutos
+        // antes de la hora objetivo. Solo confirmamos al cliente.
+        if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");
+        return NextResponse.json({ ok: true, orderId: order.id, paid: false, scheduled: true });
+      }
       const pos = await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => ({ ok: false, message: String(e) }));
       void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});

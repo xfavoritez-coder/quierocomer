@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink, Clock, Save, Package, Star } from "lucide-react";
+import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink, Clock, Save, Package, Star, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -112,6 +112,78 @@ function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
   );
 }
 
+// Pedidos programados: permite que el cliente elija una hora futura y define
+// hasta cuántos días hacia adelante puede programar.
+function ScheduledOrdersCard({ restaurantId }: { restaurantId: string }) {
+  const [cfg, setCfg] = useState<Record<string, unknown> | null>(null);
+  const [enabled, setEnabled] = useState(false);
+  const [maxDays, setMaxDays] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.config) { setCfg(d.config); setEnabled(d.config.scheduledOrdersEnabled === true); setMaxDays(Number(d.config.scheduleMaxDaysAhead) || 0); } })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  async function save(nextEnabled: boolean, nextDays: number) {
+    if (!cfg) return;
+    setSaving(true);
+    try {
+      const next = { ...cfg, scheduledOrdersEnabled: nextEnabled, scheduleMaxDaysAhead: nextDays };
+      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setSaving(false); return; }
+      setCfg(next);
+      toast.success("Pedidos programados guardado");
+    } catch { toast.error("Error de conexión"); }
+    setSaving(false);
+  }
+
+  const DAY_OPTS = [
+    { v: 0, label: "Solo el mismo día" },
+    { v: 1, label: "Hasta el día siguiente" },
+    { v: 2, label: "Hasta 2 días antes" },
+    { v: 3, label: "Hasta 3 días antes" },
+    { v: 7, label: "Hasta 7 días antes" },
+    { v: 14, label: "Hasta 14 días antes" },
+    { v: 30, label: "Hasta 30 días antes" },
+  ];
+
+  return (
+    <div style={{ ...CARD, marginTop: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <CalendarClock size={18} color={ACCENT} style={{ marginTop: 2, flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Pedidos programados</h2>
+          <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Permite que el cliente pida con anticipación (incluso con el local cerrado). El pedido se envía a la cocina automáticamente a la hora justa, según tu tiempo de entrega estimado.</p>
+        </div>
+        <button
+          onClick={() => { const v = !enabled; setEnabled(v); save(v, maxDays); }}
+          disabled={saving || !cfg}
+          aria-label="Activar pedidos programados"
+          style={{ flexShrink: 0, width: 46, height: 26, borderRadius: 999, border: "none", cursor: saving || !cfg ? "wait" : "pointer", background: enabled ? ACCENT : "var(--adm-card-border)", position: "relative", transition: "background .2s" }}
+        >
+          <span style={{ position: "absolute", top: 3, left: enabled ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,.3)" }} />
+        </button>
+      </div>
+      {enabled && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 6 }}>¿Con cuánta anticipación pueden programar?</div>
+          <select
+            value={maxDays}
+            onChange={(e) => { const v = Number(e.target.value); setMaxDays(v); save(true, v); }}
+            disabled={saving || !cfg}
+            style={{ width: "100%", maxWidth: 320, padding: "9px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none", cursor: "pointer" }}
+          >
+            {DAY_OPTS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+          </select>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function QuickLink({ href, icon: Icon, label, desc }: { href: string; icon: any; label: string; desc: string }) {
   return (
     <Link href={href} style={{ ...CARD, display: "flex", alignItems: "center", gap: 14, textDecoration: "none" }}>
@@ -178,6 +250,7 @@ export default function EcommerceHomePage() {
 
       {/* Tiempo de entrega estimado */}
       {restaurantId && <WaitTimeCard restaurantId={restaurantId} />}
+      {restaurantId && <ScheduledOrdersCard restaurantId={restaurantId} />}
 
       {/* Integraciones */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "26px 0 12px" }}>

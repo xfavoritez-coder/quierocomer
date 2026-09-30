@@ -29,6 +29,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/ecommerce-scheduled-release",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/promos-daily-sync",
       "schedule": "0 3 * * *"
     },

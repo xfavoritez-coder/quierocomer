@@ -65,6 +65,14 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
 
+  // ── Pedidos programados ──
+  type SlotDay = { ymd: string; label: string; slots: { iso: string; label: string }[] };
+  const canSchedule = tenant.scheduledOrdersEnabled === true;
+  const [scheduleMode, setScheduleMode] = useState<"asap" | "scheduled">("asap");
+  const [scheduledIso, setScheduledIso] = useState<string | null>(null);
+  const [scheduleDayYmd, setScheduleDayYmd] = useState<string | null>(null);
+  const [slotDays, setSlotDays] = useState<SlotDay[]>([]);
+
   useEffect(() => { setMounted(true); }, []);
 
   // Persistir los datos del cliente (nombre/teléfono/correo) en el navegador para
@@ -213,7 +221,35 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const discount = coupon ? computeDiscount(coupon, subtotal, deliveryFee) : 0;
   const finalTotal = Math.max(0, total - discount);
   const isOpen = tenant.openStatus.open;
-  const isValid = isOpen && deliverySelected && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+  // Momento del pedido: "asap" requiere estar abierto; "scheduled" requiere una hora elegida.
+  const timingOk = scheduleMode === "scheduled" ? !!scheduledIso : isOpen;
+  const isValid = timingOk && deliverySelected && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+
+  // Traer las franjas disponibles para programar (según tipo de entrega).
+  useEffect(() => {
+    if (!canSchedule || !deliverySelected) { setSlotDays([]); return; }
+    const type = isDelivery ? "DELIVERY" : "PICKUP";
+    let cancelled = false;
+    fetch(`/api/ecommerce/schedule-slots?slug=${encodeURIComponent(tenant.slug)}&type=${type}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (cancelled) return; setSlotDays(d?.enabled ? (d.days || []) : []); })
+      .catch(() => { if (!cancelled) setSlotDays([]); });
+    return () => { cancelled = true; };
+  }, [canSchedule, deliverySelected, isDelivery, tenant.slug]);
+
+  // Si el local está cerrado y acepta programados, arrancamos en modo "programar".
+  useEffect(() => {
+    if (canSchedule && !isOpen) setScheduleMode("scheduled");
+  }, [canSchedule, isOpen]);
+
+  // Al cambiar de día o de franjas, mantener una selección coherente.
+  useEffect(() => {
+    if (scheduleMode !== "scheduled") return;
+    if (!slotDays.length) { setScheduleDayYmd(null); setScheduledIso(null); return; }
+    const day = slotDays.find((d) => d.ymd === scheduleDayYmd) || slotDays[0];
+    setScheduleDayYmd(day.ymd);
+    if (!day.slots.some((s) => s.iso === scheduledIso)) setScheduledIso(null);
+  }, [slotDays, scheduleMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function onEmailChange(v: string) {
     setEmail(v);
@@ -303,6 +339,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           notes: [notes.trim(), accom.notesPart].filter(Boolean).join(" · ") || null,
           paymentMethod: payment,
           couponCode: coupon?.code || null,
+          scheduledFor: scheduleMode === "scheduled" && scheduledIso ? scheduledIso : null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -474,6 +511,71 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
           {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />}
 
+          {/* Programación del pedido */}
+          {canSchedule && deliverySelected && (
+            <Block title="¿Cuándo?">
+              <div className="flex gap-2 mb-1">
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode("asap")}
+                  disabled={!isOpen}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border transition disabled:opacity-40"
+                  style={scheduleMode === "asap" ? { background: primaryColor, color: "#fff", borderColor: primaryColor } : { borderColor: "#e5e7eb", color: "#374151" }}
+                >
+                  Lo antes posible
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode("scheduled")}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border transition"
+                  style={scheduleMode === "scheduled" ? { background: primaryColor, color: "#fff", borderColor: primaryColor } : { borderColor: "#e5e7eb", color: "#374151" }}
+                >
+                  Programar
+                </button>
+              </div>
+              {!isOpen && scheduleMode === "asap" && (
+                <p className="text-xs text-gray-400 mt-1">El local está cerrado ahora. Programa tu pedido para más tarde.</p>
+              )}
+              {scheduleMode === "scheduled" && (
+                slotDays.length === 0 ? (
+                  <p className="text-sm text-gray-400 mt-2">No hay horarios disponibles para programar en este momento.</p>
+                ) : (
+                  <div className="mt-2 flex flex-col gap-2">
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                      {slotDays.map((d) => (
+                        <button
+                          key={d.ymd}
+                          type="button"
+                          onClick={() => { setScheduleDayYmd(d.ymd); setScheduledIso(null); }}
+                          className="shrink-0 px-3 py-2 rounded-xl text-sm font-bold border transition capitalize"
+                          style={scheduleDayYmd === d.ymd ? { background: primaryColor, color: "#fff", borderColor: primaryColor } : { borderColor: "#e5e7eb", color: "#374151" }}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                      {(slotDays.find((d) => d.ymd === scheduleDayYmd)?.slots || []).map((s) => (
+                        <button
+                          key={s.iso}
+                          type="button"
+                          onClick={() => setScheduledIso(s.iso)}
+                          className="py-2 rounded-lg text-sm font-semibold border transition"
+                          style={scheduledIso === s.iso ? { background: primaryColor, color: "#fff", borderColor: primaryColor } : { borderColor: "#e5e7eb", color: "#374151" }}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {scheduledIso ? "✓ Programado. Prepararemos tu pedido para esa hora." : "Elige la hora en que quieres recibir/retirar tu pedido."}
+                    </p>
+                  </div>
+                )
+              )}
+            </Block>
+          )}
+
           {/* Pago */}
           <Block title="¿Cómo quieres pagar?">
             <div className="flex flex-col gap-2">
@@ -572,11 +674,16 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             )}
           </Block>
 
-          {!isOpen && (
+          {!isOpen && !canSchedule && (
             <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
               {tenant.openStatus.closedByClosure && tenant.openStatus.closure
                 ? `🔒 Cerrado · ${tenant.openStatus.closure.reason}`
                 : `🔒 Estamos cerrados ahora${tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}`}
+            </div>
+          )}
+          {!isOpen && canSchedule && scheduleMode !== "scheduled" && (
+            <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
+              🔒 Cerrado ahora · puedes <button type="button" onClick={() => setScheduleMode("scheduled")} className="underline">programar tu pedido</button>
             </div>
           )}
           {belowMin && (

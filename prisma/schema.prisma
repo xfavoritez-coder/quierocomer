@@ -466,10 +466,13 @@ model OnlineOrder {
   surveySentAt       DateTime?
   printedAt          DateTime?
   printRequestedAt   DateTime?
+  scheduledFor       DateTime?
+  scheduledReleasedAt DateTime?
   restaurant         Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
+  @@index([scheduledFor, scheduledReleasedAt])
 }
 
 /// Pedido del POS (Toteat) ingresado por webhook. Es el "Centro de pedidos":

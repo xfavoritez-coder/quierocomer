@@ -48,6 +48,8 @@ export interface StoreTenant {
   googleMapsKey: string | null; // key de navegador para autocompletar direcciones
   accompaniments: AccompConfig; // acompañamientos del checkout
   openStatus: OpenStatus; // estado abierto/cerrado según horario
+  scheduledOrdersEnabled: boolean; // el local acepta pedidos programados
+  scheduleMaxDaysAhead: number; // días hacia adelante que se puede programar
 }
 
 export interface StoreCategory {
@@ -130,6 +132,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
     accompaniments: parseAccompConfig(r.ecommerceAccompaniments),
     openStatus: avail.openStatus,
+    scheduledOrdersEnabled: store.scheduledOrdersEnabled,
+    scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
   };
 }
 
@@ -276,6 +280,8 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       googleMapsKey: parseEcommerceConfig(restaurant.ecommerceConfig).googleMaps?.apiKey || null,
       accompaniments: parseAccompConfig(restaurant.ecommerceAccompaniments),
       openStatus: avail.openStatus,
+    scheduledOrdersEnabled: store.scheduledOrdersEnabled,
+    scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     },
     categories: storeCategories,
     products,
