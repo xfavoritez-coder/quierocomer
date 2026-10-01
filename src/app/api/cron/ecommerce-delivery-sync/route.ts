@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
 
   const since = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const orders = await prisma.onlineOrder.findMany({
-    where: { orderType: "DELIVERY", status: { in: ["ACCEPTED", "PREPARING", "READY", "IN_DELIVERY"] }, updatedAt: { gte: since } },
+    // Incluye retiro (PICKUP): deliveryhandroll también gestiona esos pedidos
+    // (se marcan "listo" → pasan a entregado). Los locales que no los gestionan
+    // en DH simplemente no devuelven match y no se actualizan.
+    where: { orderType: { in: ["DELIVERY", "PICKUP"] }, status: { in: ["ACCEPTED", "PREPARING", "READY", "IN_DELIVERY"] }, updatedAt: { gte: since } },
     orderBy: { updatedAt: "desc" },
     take: 150,
     select: {
