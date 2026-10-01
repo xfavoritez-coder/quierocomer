@@ -525,6 +525,11 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
             <p style={{ color: "var(--adm-text2)", margin: "6px 0 0" }}>{order.orderType === "DELIVERY" ? `🛵 Delivery${order.deliveryAddress ? ` · ${order.deliveryAddress}` : ""}` : "🏠 Retiro en tienda"}</p>
           </div>
 
+          {/* Link de seguimiento del pedido (vista del cliente) */}
+          <a href={`/pedido/${order.id}`} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "10px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textDecoration: "none" }}>
+            <ExternalLink size={15} /> Abrir seguimiento del pedido
+          </a>
+
           {/* Repartidor externo (Uber Direct) */}
           {canRequestCourier && (
             <button onClick={reqCourier} disabled={courierBusy} style={{ width: "100%", padding: "11px", borderRadius: 10, border: `1px solid ${GREEN}`, background: `${GREEN}14`, color: GREEN, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
