@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, Share2, MapPin, LogOut, Camera, Globe, Mail, RotateCcw } from "lucide-react";
+import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, Share2, MapPin, LogOut, Camera, Globe, Mail, RotateCcw, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreTenant, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -107,6 +107,13 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
                 {tenant.favoritesEnabled && <MenuRow icon={<Heart className="w-5 h-5" />} label="Mis favoritos" onClick={() => go("favorites")} color={primaryColor} />}
                 <MenuRow icon={<MessageCircle className="w-5 h-5" />} label="Contáctanos" onClick={() => setView("contact")} color={primaryColor} />
                 <MenuRow icon={<Share2 className="w-5 h-5" />} label="Redes sociales" onClick={() => setView("social")} color={primaryColor} />
+                {tenant.showTableMenu && (
+                  <a href={`https://quierocomer.com/qr/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition text-left">
+                    <span style={{ color: primaryColor }}><QrCode className="w-5 h-5" /></span>
+                    <span className="flex-1 text-sm font-bold text-gray-800">Carta mesa</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  </a>
+                )}
               </div>
             </>
           )}

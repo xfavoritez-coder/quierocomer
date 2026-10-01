@@ -543,6 +543,13 @@ export default function EcommerceConfiguracionPage() {
               </div>
               <Toggle on={cfg.favoritesEnabled} onClick={() => patch({ favoritesEnabled: !cfg.favoritesEnabled })} />
             </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Mostrar carta mesa</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Agrega “Carta mesa” en el menú de la tienda, con el link de tu carta QR del local.</p>
+              </div>
+              <Toggle on={cfg.showTableMenu} onClick={() => patch({ showTableMenu: !cfg.showTableMenu })} />
+            </div>
           </section>
           )}
 

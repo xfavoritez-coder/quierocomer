@@ -50,6 +50,7 @@ export interface StoreTenant {
   openStatus: OpenStatus; // estado abierto/cerrado según horario
   scheduledOrdersEnabled: boolean; // el local acepta pedidos programados
   scheduleMaxDaysAhead: number; // días hacia adelante que se puede programar
+  showTableMenu: boolean; // mostrar "Carta mesa" en el menú (link a /qr/<slug>)
 }
 
 export interface StoreCategory {
@@ -134,6 +135,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     openStatus: avail.openStatus,
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
+    showTableMenu: store.showTableMenu,
   };
 }
 
@@ -282,6 +284,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
       openStatus: avail.openStatus,
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
+    showTableMenu: store.showTableMenu,
     },
     categories: storeCategories,
     products,
