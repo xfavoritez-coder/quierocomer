@@ -81,6 +81,21 @@ export default function EcommerceConfiguracionPage() {
 
   const patch = (p: Partial<EcommerceStoreConfig>) => setCfg((c) => ({ ...c, ...p }));
 
+  // Aplica un cambio y lo guarda de inmediato (para toggles operativos como el
+  // modo de impresión, donde esperar al botón "Guardar" abajo es un foot-gun).
+  async function patchAndSave(p: Partial<EcommerceStoreConfig>) {
+    if (!restaurantId) { patch(p); return; }
+    const next = { ...cfg, ...p };
+    setCfg(next);
+    try {
+      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "No se pudo guardar"); return; }
+      setCfg(data.config);
+      toast.success("Guardado");
+    } catch { toast.error("Error de conexión"); }
+  }
+
   // Genera (o regenera) el token del agente de impresión y lo persiste de inmediato.
   async function generatePrintToken() {
     if (!restaurantId) return;
@@ -410,7 +425,7 @@ export default function EcommerceConfiguracionPage() {
                 <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Modo de impresión</span>
                 <select
                   value={cfg.printMode}
-                  onChange={(e) => patch({ printMode: e.target.value as "off" | "manual" | "auto" })}
+                  onChange={(e) => patchAndSave({ printMode: e.target.value as "off" | "manual" | "auto" })}
                   style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
                 >
                   <option value="off">Desactivada</option>
