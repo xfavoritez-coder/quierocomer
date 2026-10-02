@@ -68,12 +68,21 @@ export async function PATCH(req: NextRequest) {
   const allowed = await verifyAccess(req, order.restaurantId);
   if (!allowed) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const validNext = TRANSITIONS[order.status] ?? [];
-  if (!validNext.includes(body.status)) {
-    return NextResponse.json({ error: `No se puede pasar de ${order.status} a ${body.status}` }, { status: 422 });
+  // `force` (herramienta de pruebas): permite fijar cualquier estado, incluso
+  // retroceder, para re-probar notificaciones sin crear pedidos nuevos.
+  const KNOWN_STATUSES = ["PENDING", "ACCEPTED", "PREPARING", "READY", "IN_DELIVERY", "DONE", "CANCELLED"];
+  if (body.force === true) {
+    if (!KNOWN_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: `Estado inválido: ${body.status}` }, { status: 422 });
+    }
+  } else {
+    const validNext = TRANSITIONS[order.status] ?? [];
+    if (!validNext.includes(body.status)) {
+      return NextResponse.json({ error: `No se puede pasar de ${order.status} a ${body.status}` }, { status: 422 });
+    }
   }
 
-  if (body.status === "CANCELLED" && (!cancellationReason || typeof cancellationReason !== "string" || !cancellationReason.trim())) {
+  if (body.status === "CANCELLED" && body.force !== true && (!cancellationReason || typeof cancellationReason !== "string" || !cancellationReason.trim())) {
     return NextResponse.json({ error: "Se requiere el motivo de cancelación" }, { status: 422 });
   }
 

@@ -214,6 +214,18 @@ export default function EcommercePedidosPage() {
     } catch { toast.error("Error de conexión"); }
   }
 
+  // Pruebas: fija cualquier estado (incluso retroceder) para re-probar
+  // notificaciones/isla sin crear pedidos nuevos.
+  async function forceStatus(id: string, status: OrderStatus) {
+    try {
+      const res = await fetch("/api/panel/orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: id, status, force: true }) });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); toast.error(d.error || "No se pudo actualizar"); return; }
+      setOrders((os) => os.map((o) => (o.id === id ? { ...o, status } : o)));
+      setDetail((d) => (d && d.id === id ? { ...d, status } : d));
+      toast.success(`Estado → ${STATUS_LABEL[status]}`);
+    } catch { toast.error("Error de conexión"); }
+  }
+
   // Imprimir comanda: si el local tiene agente de impresión (ESC/POS), lo re-encola
   // para que el .exe la imprima; si no, cae a la impresión por navegador.
   async function printComanda(o: Order) {
@@ -394,7 +406,7 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
@@ -481,11 +493,13 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
+function DetailModal({ order, onClose, onStatusChange, onForceStatus, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [courierBusy, setCourierBusy] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
+  const [forceBusy, setForceBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const pay = payInfo(order);
@@ -529,6 +543,27 @@ function DetailModal({ order, onClose, onStatusChange, uberEnabled, mapsKey, onR
           <a href={`/pedido/${order.id}`} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "10px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, textDecoration: "none" }}>
             <ExternalLink size={15} /> Abrir seguimiento del pedido
           </a>
+
+          {/* Pruebas: forzar cualquier estado (re-dispara avisos/isla) */}
+          <div style={{ border: "1px dashed var(--adm-card-border)", borderRadius: 10, padding: "10px 12px" }}>
+            <button onClick={() => setTestOpen((v) => !v)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 800, color: "var(--adm-text2)", display: "flex", alignItems: "center", gap: 6 }}>
+              🧪 Pruebas · forzar estado {testOpen ? "▲" : "▼"}
+            </button>
+            {testOpen && (
+              <>
+                <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "8px 0" }}>Fija cualquier estado (incluso retroceder) para re-probar notificaciones sin crear pedidos nuevos.</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(["PENDING", "ACCEPTED", "PREPARING", "READY", "IN_DELIVERY", "DONE", "CANCELLED"] as OrderStatus[]).map((s) => (
+                    <button key={s} disabled={forceBusy || s === order.status}
+                      onClick={async () => { setForceBusy(true); await onForceStatus(order.id, s); setForceBusy(false); }}
+                      style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${STATUS_COLOR[s]}`, background: s === order.status ? STATUS_COLOR[s] : "transparent", color: s === order.status ? "#fff" : STATUS_COLOR[s], fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: s === order.status ? "default" : "pointer", opacity: forceBusy ? 0.5 : 1 }}>
+                      {STATUS_LABEL[s]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Repartidor externo (Uber Direct) */}
           {canRequestCourier && (
