@@ -252,7 +252,7 @@ function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: Store
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    fetch(`/api/ecommerce/my-orders?restaurantId=${tenant.id}&limit=3`).then((r) => (r.ok ? r.json() : null)).then((d) => setOrders(d?.orders ?? [])).catch(() => setOrders([]));
+    fetch(`/api/ecommerce/my-orders?restaurantId=${tenant.id}&limit=50`).then((r) => (r.ok ? r.json() : null)).then((d) => setOrders(d?.orders ?? [])).catch(() => setOrders([]));
   }, [tenant.id]);
 
   function reorder(o: MyOrder) {
@@ -287,7 +287,14 @@ function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: Store
   return (
     <div className="flex flex-col gap-3">
       {orders.map((o) => (
-        <div key={o.id} className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div
+          key={o.id}
+          role="button"
+          tabIndex={0}
+          onClick={() => { window.location.href = `/pedido/${o.id}`; }}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); window.location.href = `/pedido/${o.id}`; } }}
+          className="bg-white rounded-2xl border border-gray-100 p-4 text-left w-full cursor-pointer hover:border-gray-200 hover:shadow-sm transition active:scale-[0.99]"
+        >
           <div className="flex items-center justify-between gap-2">
             <span className="font-black text-gray-900 text-sm">#{o.orderNumber ?? o.id.slice(-5)}</span>
             <span className="text-[11px] font-bold text-white px-2 py-0.5 rounded-full" style={{ background: o.status === "CANCELLED" ? "#ef4444" : primaryColor }}>{STATUS_LABEL[o.status] || o.status}</span>
@@ -298,7 +305,10 @@ function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: Store
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
             <span className="font-black text-gray-900">{clp(o.total)}</span>
-            <button onClick={() => reorder(o)} className="inline-flex items-center gap-1.5 text-sm font-black px-3 py-1.5 rounded-xl text-white" style={{ background: primaryColor }}><RotateCcw className="w-4 h-4" /> Volver a pedir</button>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-0.5 text-xs font-bold" style={{ color: primaryColor }}>Ver seguimiento <ChevronRight className="w-3.5 h-3.5" /></span>
+              <button onClick={(e) => { e.stopPropagation(); reorder(o); }} className="inline-flex items-center gap-1.5 text-sm font-black px-3 py-1.5 rounded-xl text-white" style={{ background: primaryColor }}><RotateCcw className="w-4 h-4" /> Volver a pedir</button>
+            </div>
           </div>
         </div>
       ))}

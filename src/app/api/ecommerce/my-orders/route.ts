@@ -11,7 +11,7 @@ export const runtime = "nodejs";
  */
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
-  const limit = Math.min(20, Math.max(1, Number(req.nextUrl.searchParams.get("limit")) || 3));
+  const limit = Math.min(50, Math.max(1, Number(req.nextUrl.searchParams.get("limit")) || 3));
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
   const cookieStore = await cookies();
