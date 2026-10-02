@@ -69,6 +69,24 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
 
+  // Si se llega con ?menu=<vista> (p.ej. desde la página de seguimiento del
+  // pedido), abrir el menú en esa vista y limpiar la URL para que no reabra al
+  // navegar hacia atrás.
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const m = sp.get("menu");
+      if (!m) return;
+      const tab = m === "favorites" ? "favorites" : m === "contact" ? "contact" : "profile";
+      const view: CustomerMenuView = m === "favorites" ? "favorites" : m === "contact" ? "contact" : "root";
+      setActiveTab(tab);
+      openMenu(view);
+      sp.delete("menu");
+      const qs = sp.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
+    } catch { /* noop */ }
+  }, [openMenu]);
+
   // Favorito que el usuario intentó marcar sin sesión: se aplica automáticamente
   // en cuanto inicia sesión.
   const pendingFavRef = useRef<string | null>(null);
