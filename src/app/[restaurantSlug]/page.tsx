@@ -435,7 +435,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `${BASE}/${restaurantSlug}`,
         type: 'website',
         siteName: 'QuieroComer',
-        images: [{ url: `${BASE}/${restaurantSlug}/opengraph-image`, width: 1200, height: 630, alt: rest.name }],
+        images: rest.logoUrl
+          ? [{ url: rest.logoUrl, width: 800, height: 800, alt: rest.name }]
+          : [{ url: `${BASE}/opengraph-image`, width: 1200, height: 630 }],
       },
       twitter: { card: 'summary_large_image', title, description },
     }

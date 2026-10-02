@@ -22,26 +22,45 @@ export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
 
-  const owner = await prisma.restaurantOwner.findUnique({
-    where: { id: panelId },
-    include: {
-      restaurants: {
-        where: { id: restaurantId },
-        select: {
-          id: true, name: true, plan: true,
-          mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
-          subscriptionStatus: true, trialEndsAt: true, trialReminderSentAt: true, currentPeriodEnd: true, lastPaymentAt: true,
-          billingExempt: true, customPlanPriceNet: true, mpPayerEmail: true,
-          flowCustomerId: true, flowSubscriptionId: true,
-          billingCompanyName: true, billingRut: true, billingGiro: true,
-          billingAddress: true, billingCity: true, billingEmail: true,
-          loyaltyStatus: true, loyaltyPeriodEnd: true, loyaltyTrialEndsAt: true, loyaltyLastPaymentAt: true,
+  const RESTAURANT_BILLING_SELECT = {
+    id: true, name: true, plan: true,
+    mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
+    subscriptionStatus: true, trialEndsAt: true, trialReminderSentAt: true, currentPeriodEnd: true, lastPaymentAt: true,
+    billingExempt: true, customPlanPriceNet: true, mpPayerEmail: true,
+    flowCustomerId: true, flowSubscriptionId: true,
+    billingCompanyName: true, billingRut: true, billingGiro: true,
+    billingAddress: true, billingCity: true, billingEmail: true,
+    loyaltyStatus: true, loyaltyPeriodEnd: true, loyaltyTrialEndsAt: true, loyaltyLastPaymentAt: true,
+  } as const;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let restaurant: any = null;
+
+  if (panelId.startsWith("tm_")) {
+    // Team member (viewer): verify they belong to this restaurant, then read billing directly
+    const memberId = panelId.slice(3);
+    const member = await prisma.teamMember.findUnique({
+      where: { id: memberId },
+      select: { restaurantId: true, status: true },
+    });
+    if (!member || member.status !== "ACTIVE" || member.restaurantId !== restaurantId) {
+      return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    }
+    restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: RESTAURANT_BILLING_SELECT });
+  } else {
+    const owner = await prisma.restaurantOwner.findUnique({
+      where: { id: panelId },
+      include: {
+        restaurants: {
+          where: { id: restaurantId },
+          select: RESTAURANT_BILLING_SELECT,
+          take: 1,
         },
-        take: 1,
       },
-    },
-  });
-  const restaurant = owner?.restaurants[0];
+    });
+    restaurant = owner?.restaurants[0] ?? null;
+  }
+
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const activePlan = restaurant.mpPlanId ? planFromFlowId(restaurant.mpPlanId) : null;
