@@ -13,6 +13,19 @@ const MSG: Record<string, { title: string; body: string }> = {
   CANCELLED: { title: "Pedido cancelado", body: "Tu pedido fue cancelado." },
 };
 
+// Etiqueta corta para la Live Activity (debe calzar con la app iOS).
+function liveActivityLabel(status: string, orderType: string): string {
+  switch (status) {
+    case "ACCEPTED": return "Pedido recibido";
+    case "PREPARING": return "En preparación";
+    case "READY": return orderType === "DELIVERY" ? "Listo, esperando repartidor" : "Listo para retirar";
+    case "IN_DELIVERY": return "En camino";
+    case "DONE": return "Entregado";
+    case "CANCELLED": return "Pedido cancelado";
+    default: return "";
+  }
+}
+
 type Sub = { endpoint: string; keys?: { p256dh?: string; auth?: string } };
 
 function isSub(v: unknown): v is Sub {
@@ -26,7 +39,7 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { pushSubscription: true, nativePush: true, orderNumber: true, source: true },
+    select: { pushSubscription: true, nativePush: true, liveActivityToken: true, orderType: true, orderNumber: true, source: true },
   });
   if (!order || order.source !== "ecommerce") return;
 
@@ -64,6 +77,27 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
       const r = native.platform === "ios" ? await sendApns(native.token, payload) : await sendFcm(native.token, payload);
       if (r.invalid) {
         await prisma.onlineOrder.update({ where: { id: orderId }, data: { nativePush: undefined } }).catch(() => {});
+      }
+    } catch { /* best-effort */ }
+  }
+
+  // ── Live Activity / Isla Dinámica (iOS): actualiza aunque la app esté cerrada ──
+  if (order.liveActivityToken) {
+    try {
+      const { sendApnsLiveActivity } = await import("@/lib/ecommerce/nativePush");
+      const isFinal = status === "DONE" || status === "CANCELLED";
+      const contentState = {
+        status,
+        statusLabel: liveActivityLabel(status, order.orderType),
+        updatedAt: Math.floor(Date.now() / 1000),
+      };
+      const r = await sendApnsLiveActivity(order.liveActivityToken, {
+        event: isFinal ? "end" : "update",
+        contentState,
+      });
+      if (r.invalid || isFinal) {
+        // token inválido, o la actividad terminó → ya no sirve guardarlo
+        await prisma.onlineOrder.update({ where: { id: orderId }, data: { liveActivityToken: null } }).catch(() => {});
       }
     } catch { /* best-effort */ }
   }

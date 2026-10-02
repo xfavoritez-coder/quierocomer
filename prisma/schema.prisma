@@ -470,6 +470,7 @@ model OnlineOrder {
   scheduledReleasedAt DateTime?
   pushSubscription   Json?
   nativePush         Json?
+  liveActivityToken  String?
   restaurant         Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])

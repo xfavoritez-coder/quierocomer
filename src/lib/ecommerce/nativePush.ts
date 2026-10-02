@@ -84,6 +84,66 @@ export async function sendApns(token: string, payload: NativePushPayload): Promi
   return r;
 }
 
+// ──────────────────── APNs Live Activity (iOS) ────────────────────
+// Actualiza/termina la Isla Dinámica aunque la app esté cerrada.
+export interface LiveActivityUpdate {
+  event: "update" | "end";
+  contentState: Record<string, unknown>; // debe calzar con ContentState (Swift)
+  alert?: { title: string; body: string };
+  dismissalDate?: number; // epoch (s), solo para "end"
+}
+
+function apnsLaPostOnce(host: string, token: string, jwt: string, bundleId: string, upd: LiveActivityUpdate): Promise<NativePushResult> {
+  return new Promise((resolve) => {
+    const client = http2.connect(`https://${host}`);
+    client.on("error", () => resolve({ ok: false }));
+    const aps: Record<string, unknown> = {
+      timestamp: Math.floor(Date.now() / 1000),
+      event: upd.event,
+      "content-state": upd.contentState,
+    };
+    if (upd.alert) aps.alert = upd.alert;
+    if (upd.event === "end" && upd.dismissalDate) aps["dismissal-date"] = upd.dismissalDate;
+    const body = JSON.stringify({ aps });
+    const req = client.request({
+      ":method": "POST",
+      ":path": `/3/device/${token}`,
+      authorization: `bearer ${jwt}`,
+      "apns-topic": `${bundleId}.push-type.liveactivity`,
+      "apns-push-type": "liveactivity",
+      "apns-priority": "10",
+      "content-type": "application/json",
+    });
+    let status = 0;
+    let data = "";
+    req.on("response", (h) => { status = Number(h[":status"]) || 0; });
+    req.on("data", (c) => { data += c; });
+    req.on("end", () => {
+      client.close();
+      if (status === 200) return resolve({ ok: true, status });
+      let reason = "";
+      try { reason = JSON.parse(data || "{}").reason || ""; } catch { /* noop */ }
+      const invalid = status === 410 || reason === "BadDeviceToken" || reason === "Unregistered";
+      resolve({ ok: false, status, reason, invalid });
+    });
+    req.on("error", () => { client.close(); resolve({ ok: false }); });
+    req.end(body);
+  });
+}
+
+export async function sendApnsLiveActivity(token: string, upd: LiveActivityUpdate): Promise<NativePushResult> {
+  const jwt = apnsJwt();
+  const bundleId = process.env.APNS_BUNDLE_ID;
+  if (!jwt || !bundleId) return { ok: false, reason: "apns_not_configured" };
+  const PROD = "api.push.apple.com";
+  const SANDBOX = "api.sandbox.push.apple.com";
+  const primary = process.env.APNS_ENV === "sandbox" ? SANDBOX : PROD;
+  const secondary = primary === PROD ? SANDBOX : PROD;
+  let r = await apnsLaPostOnce(primary, token, jwt, bundleId, upd);
+  if (!r.ok && r.reason === "BadDeviceToken") r = await apnsLaPostOnce(secondary, token, jwt, bundleId, upd);
+  return r;
+}
+
 // ─────────────────────────── FCM (Android) ───────────────────────────
 
 let fcmTokenCache: { token: string; exp: number } | null = null;
