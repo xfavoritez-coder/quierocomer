@@ -569,10 +569,15 @@ function NotifyButton({ orderId, accent, textColor }: { orderId: string; accent:
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isNative()) return; // en la app nativa el botón siempre está disponible
+    if (isNative()) {
+      // En la app: suscribir automáticamente (pide permiso una vez y listo).
+      activateNative();
+      return;
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { setState("unsupported"); return; }
     if (Notification.permission === "denied") { setState("denied"); return; }
     navigator.serviceWorker.getRegistration().then((reg) => reg?.pushManager.getSubscription()).then((sub) => { if (sub) setState("on"); }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function activateNative() {
@@ -617,7 +622,14 @@ function NotifyButton({ orderId, accent, textColor }: { orderId: string; accent:
     return <p style={{ textAlign: "center", fontSize: 13, color: textColor, margin: "0 0 16px" }}>🔔 Te avisaremos cuando tu pedido cambie de estado.</p>;
   }
   if (state === "denied") {
-    return <p style={{ textAlign: "center", fontSize: 12, color: textColor, margin: "0 0 16px" }}>Activa las notificaciones del navegador para recibir avisos de tu pedido.</p>;
+    const msg = isNative()
+      ? "Activá las notificaciones de la app en Ajustes del teléfono para recibir avisos de tu pedido."
+      : "Activa las notificaciones del navegador para recibir avisos de tu pedido.";
+    return <p style={{ textAlign: "center", fontSize: 12, color: textColor, margin: "0 0 16px" }}>{msg}</p>;
+  }
+  // En la app el botón no se muestra: se activa solo (idle/busy mientras registra).
+  if (isNative()) {
+    return state === "busy" ? <p style={{ textAlign: "center", fontSize: 12, color: textColor, margin: "0 0 16px" }}>Configurando avisos…</p> : null;
   }
   return (
     <div style={{ textAlign: "center", marginBottom: 16 }}>
