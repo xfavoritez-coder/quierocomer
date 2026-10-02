@@ -109,6 +109,40 @@ function liveEta(status: string, estimatedTime: string | null): string | undefin
   return undefined;
 }
 
+// Acceso al plugin nativo OrderActivity desde la página remota (handroll.cl).
+// La web no bundlea @capacitor/core, así que `Capacitor.Plugins` no está poblado
+// para plugins propios; usamos el bridge de bajo nivel (siempre inyectado), que
+// enruta por nombre de plugin. Deja un fallback a Plugins por si estuviera.
+function getOrderActivity(cap: any): null | {
+  start: (o: any) => Promise<any>;
+  update: (o: any) => Promise<any>;
+  end: (o: any) => Promise<any>;
+  isSupported: () => Promise<any>;
+  onPushToken: (cb: (t: string) => void) => void;
+} {
+  if (!cap) return null;
+  const p = cap.Plugins?.OrderActivity;
+  if (p?.start) {
+    return {
+      start: (o) => p.start(o),
+      update: (o) => p.update(o),
+      end: (o) => p.end(o),
+      isSupported: () => (p.isSupported ? p.isSupported() : Promise.resolve({ supported: true })),
+      onPushToken: (cb) => p.addListener?.("pushToken", (ev: any) => cb(ev?.token)),
+    };
+  }
+  if (typeof cap.nativePromise === "function") {
+    return {
+      start: (o) => cap.nativePromise("OrderActivity", "start", o),
+      update: (o) => cap.nativePromise("OrderActivity", "update", o),
+      end: (o) => cap.nativePromise("OrderActivity", "end", o),
+      isSupported: () => cap.nativePromise("OrderActivity", "isSupported", {}),
+      onPushToken: (cb) => cap.addListener?.("OrderActivity", "pushToken", (ev: any) => cb(ev?.token)),
+    };
+  }
+  return null;
+}
+
 const PAY_LABELS: Record<string, string> = {
   efectivo: "Efectivo",
   transferencia: "Transferencia",
@@ -324,8 +358,8 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     const native = !!cap?.isNativePlatform?.();
     const platform = cap?.getPlatform?.();
     if (!native || platform !== "ios") { return; }
-    const LA = cap.Plugins?.OrderActivity;
-    if (!LA) { setLaInfo("isla: plugin OrderActivity no encontrado"); return; }
+    const LA = getOrderActivity(cap);
+    if (!LA) { setLaInfo("isla: bridge nativo no disponible"); return; }
     if (liveStartedRef.current && liveStatusRef.current === order.status) return; // sin cambios
     liveStatusRef.current = order.status;
 
@@ -341,16 +375,16 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       liveStartedRef.current = true;
       if (isFinal) { setLaInfo("isla: pedido ya finalizado, no se inicia"); return; }
       // ¿Soporta Live Activities / están habilitadas?
-      LA.isSupported?.().then((s: any) => {
+      LA.isSupported().then((s: any) => {
         if (s && s.supported === false) setLaInfo("isla: Live Activities deshabilitadas en Ajustes");
       }).catch(() => {});
       // Push token de la actividad → backend (para actualizar con la app cerrada)
-      LA.addListener?.("pushToken", (ev: { orderId?: string; token?: string }) => {
-        if (!ev?.token) return;
+      LA.onPushToken((token) => {
+        if (!token) return;
         setLaInfo("isla: token recibido ✓ (push ok)");
         fetch("/api/ecommerce/order-push/subscribe", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, liveActivity: { token: ev.token } }),
+          body: JSON.stringify({ orderId, liveActivity: { token } }),
         }).catch(() => {});
       });
       LA.start({
