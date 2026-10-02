@@ -305,10 +305,7 @@ function OrdersView({ tenant, primaryColor, onClose, products }: { tenant: Store
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
             <span className="font-black text-gray-900">{clp(o.total)}</span>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-0.5 text-xs font-bold" style={{ color: primaryColor }}>Ver seguimiento <ChevronRight className="w-3.5 h-3.5" /></span>
-              <button onClick={(e) => { e.stopPropagation(); reorder(o); }} className="inline-flex items-center gap-1.5 text-sm font-black px-3 py-1.5 rounded-xl text-white" style={{ background: primaryColor }}><RotateCcw className="w-4 h-4" /> Volver a pedir</button>
-            </div>
+            <button onClick={(e) => { e.stopPropagation(); reorder(o); }} className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg text-white whitespace-nowrap" style={{ background: primaryColor }}><RotateCcw className="w-3.5 h-3.5" /> Volver a pedir</button>
           </div>
         </div>
       ))}
