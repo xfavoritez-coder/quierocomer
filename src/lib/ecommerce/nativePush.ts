@@ -182,6 +182,48 @@ async function fcmAccessToken(): Promise<string | null> {
   } catch { return null; }
 }
 
+// Mensaje FCM data-only para la notificación PERSISTENTE de estado (Android).
+// Lo procesa OrderMessagingService en la app (no se muestra como push normal).
+export interface FcmOrderStatus {
+  orderId: string; status: string; statusLabel: string;
+  orderNumber: string; storeName: string; step: number; totalSteps: number; url?: string;
+}
+
+export async function sendFcmOrderStatus(token: string, p: FcmOrderStatus): Promise<NativePushResult> {
+  const projectId = process.env.FCM_PROJECT_ID || fcmServiceAccount()?.project_id;
+  const access = await fcmAccessToken();
+  if (!projectId || !access) return { ok: false, reason: "fcm_not_configured" };
+  const message = {
+    message: {
+      token,
+      android: { priority: "HIGH" },
+      data: {
+        type: "order_status",
+        orderId: p.orderId,
+        status: p.status,
+        statusLabel: p.statusLabel,
+        orderNumber: p.orderNumber,
+        storeName: p.storeName,
+        step: String(p.step),
+        totalSteps: String(p.totalSteps),
+        url: p.url || "/",
+      },
+    },
+  };
+  try {
+    const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+      body: JSON.stringify(message),
+    });
+    if (res.ok) return { ok: true, status: 200 };
+    let reason = "";
+    try { const j = await res.json(); reason = j?.error?.status || j?.error?.message || ""; } catch { /* noop */ }
+    const invalid = res.status === 404 || /UNREGISTERED|INVALID_ARGUMENT/i.test(reason);
+    return { ok: false, status: res.status, reason, invalid };
+  } catch { return { ok: false }; }
+}
+
 export async function sendFcm(token: string, payload: NativePushPayload): Promise<NativePushResult> {
   const projectId = process.env.FCM_PROJECT_ID || fcmServiceAccount()?.project_id;
   const access = await fcmAccessToken();

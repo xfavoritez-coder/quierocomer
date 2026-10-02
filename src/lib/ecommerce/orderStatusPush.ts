@@ -39,12 +39,22 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { pushSubscription: true, nativePush: true, liveActivityToken: true, orderType: true, orderNumber: true, source: true },
+    select: {
+      pushSubscription: true, nativePush: true, liveActivityToken: true,
+      orderType: true, orderNumber: true, source: true,
+      restaurant: { select: { name: true } },
+    },
   });
   if (!order || order.source !== "ecommerce") return;
 
   const url = `/pedido/${orderId}`;
   const body = order.orderNumber ? `${msg.body} (Pedido #${order.orderNumber})` : msg.body;
+
+  // Pasos del progreso (para la notificación persistente de Android).
+  const stepsList = order.orderType === "DELIVERY"
+    ? ["ACCEPTED", "PREPARING", "READY", "IN_DELIVERY", "DONE"]
+    : ["ACCEPTED", "PREPARING", "READY", "DONE"];
+  const step = Math.max(0, stepsList.indexOf(status));
 
   // ── Push web (PWA) ──
   if (isSub(order.pushSubscription)) {
@@ -68,13 +78,29 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
     }
   }
 
-  // ── Push nativo (app Capacitor): APNs (iOS) / FCM (Android) ──
+  // ── Push nativo (app Capacitor) ──
+  //  iOS: push de alerta normal (APNs).
+  //  Android: mensaje data-only que arma la notificación PERSISTENTE de estado
+  //  (equivalente de la Live Activity) en OrderMessagingService.
   const native = order.nativePush as { platform?: string; token?: string } | null;
   if (native?.token && (native.platform === "ios" || native.platform === "android")) {
     try {
-      const { sendApns, sendFcm } = await import("@/lib/ecommerce/nativePush");
-      const payload = { title: msg.title, body, url, tag: `order-${orderId}` };
-      const r = native.platform === "ios" ? await sendApns(native.token, payload) : await sendFcm(native.token, payload);
+      const nativePush = await import("@/lib/ecommerce/nativePush");
+      let r;
+      if (native.platform === "ios") {
+        r = await nativePush.sendApns(native.token, { title: msg.title, body, url, tag: `order-${orderId}` });
+      } else {
+        r = await nativePush.sendFcmOrderStatus(native.token, {
+          orderId,
+          status,
+          statusLabel: liveActivityLabel(status, order.orderType),
+          orderNumber: order.orderNumber != null ? String(order.orderNumber) : "",
+          storeName: order.restaurant?.name ?? "",
+          step,
+          totalSteps: stepsList.length,
+          url,
+        });
+      }
       if (r.invalid) {
         await prisma.onlineOrder.update({ where: { id: orderId }, data: { nativePush: undefined } }).catch(() => {});
       }
