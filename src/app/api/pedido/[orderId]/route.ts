@@ -15,6 +15,7 @@ export async function GET(
     where: { id: orderId },
     select: {
       id: true,
+      orderNumber: true,
       customerName: true,
       orderType: true,
       deliveryAddress: true,
@@ -59,6 +60,7 @@ export async function GET(
   return NextResponse.json({
     trackingTexts,
     id: order.id,
+    orderNumber: order.orderNumber ?? null,
     restaurantName: order.restaurant.name,
     restaurantLogoUrl: order.restaurant.logoUrl ?? null,
     restaurantFaviconUrl: parseStoreConfig(order.restaurant.ecommerceStoreConfig).faviconUrl,

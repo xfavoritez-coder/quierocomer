@@ -32,6 +32,7 @@ interface StatusEntry {
 
 interface OrderData {
   id: string;
+  orderNumber?: number | null;
   restaurantName: string;
   restaurantLogoUrl: string | null;
   restaurantFaviconUrl?: string | null;
@@ -88,6 +89,24 @@ const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 function fmt(n: number) {
   return `$${Math.round(n).toLocaleString("es-CL")}`;
+}
+
+// Etiqueta corta para la Live Activity / Isla Dinámica (app iOS).
+function liveLabel(status: string, orderType: string): string {
+  switch (status) {
+    case "ACCEPTED": return "Pedido recibido";
+    case "PREPARING": return "En preparación";
+    case "READY": return orderType === "DELIVERY" ? "Listo, esperando repartidor" : "Listo para retirar";
+    case "IN_DELIVERY": return "En camino";
+    case "DONE": return "Entregado";
+    case "CANCELLED": return "Pedido cancelado";
+    default: return "";
+  }
+}
+function liveEta(status: string, estimatedTime: string | null): string | undefined {
+  if (!estimatedTime) return undefined;
+  if (status === "ACCEPTED" || status === "PREPARING") return `Listo en ~${estimatedTime} min`;
+  return undefined;
 }
 
 const PAY_LABELS: Record<string, string> = {
@@ -293,6 +312,51 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
     return () => { supabase.removeChannel(channel); };
   }, [orderId]);
+
+  // ── Live Activity / Isla Dinámica (solo app iOS/Capacitor) ──
+  // Inicia la actividad al ver el pedido y la actualiza/termina según el estado.
+  const liveStartedRef = useRef(false);
+  const liveStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!order || typeof window === "undefined") return;
+    const cap: any = (window as any).Capacitor;
+    if (!cap?.isNativePlatform?.() || cap.getPlatform?.() !== "ios") return;
+    const LA = cap.Plugins?.OrderActivity;
+    if (!LA) return;
+    if (liveStartedRef.current && liveStatusRef.current === order.status) return; // sin cambios
+    liveStatusRef.current = order.status;
+
+    const base = {
+      orderId,
+      status: order.status,
+      statusLabel: liveLabel(order.status, order.orderType),
+      etaText: liveEta(order.status, order.estimatedTime),
+    };
+    const isFinal = order.status === "DONE" || order.status === "CANCELLED";
+
+    if (!liveStartedRef.current) {
+      liveStartedRef.current = true;
+      if (isFinal) return; // no arrancamos una isla para un pedido ya terminado
+      // Push token de la actividad → backend (para actualizar con la app cerrada)
+      LA.addListener?.("pushToken", (ev: { orderId?: string; token?: string }) => {
+        if (!ev?.token) return;
+        fetch("/api/ecommerce/order-push/subscribe", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, liveActivity: { token: ev.token } }),
+        }).catch(() => {});
+      });
+      LA.start({
+        ...base,
+        orderNumber: order.orderNumber != null ? String(order.orderNumber) : "",
+        storeName: order.restaurantName,
+        orderType: order.orderType,
+      }).catch(() => {});
+    } else if (isFinal) {
+      LA.end(base).catch(() => {});
+    } else {
+      LA.update(base).catch(() => {});
+    }
+  }, [order, orderId]);
 
   // Theme derivado del pedido (usa LIGHT como fallback mientras carga)
   const theme = buildTheme(order?.colorMode ?? "LIGHT", order?.accentColor ?? null);
