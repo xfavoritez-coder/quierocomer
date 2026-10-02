@@ -433,6 +433,9 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
 
+        {/* Avisos push del estado del pedido */}
+        {order.status !== "DONE" && <NotifyButton orderId={orderId} accent={theme.accent} textColor={theme.text2} />}
+
         {/* Mapa en vivo del repartidor (deliveryhandroll) — solo cuando el pedido
             ya salió a reparto (IN_DELIVERY) y tenemos ubicación del repartidor. */}
         {order.orderType === "DELIVERY" && order.status === "IN_DELIVERY" && tracking?.enabled && tracking.courier?.lat != null && (
@@ -543,6 +546,58 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Botón para activar notificaciones push del estado del pedido (PWA).
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+function NotifyButton({ orderId, accent, textColor }: { orderId: string; accent: string; textColor: string }) {
+  const [state, setState] = useState<"idle" | "busy" | "on" | "denied" | "unsupported">("idle");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { setState("unsupported"); return; }
+    if (Notification.permission === "denied") { setState("denied"); return; }
+    navigator.serviceWorker.getRegistration().then((reg) => reg?.pushManager.getSubscription()).then((sub) => { if (sub) setState("on"); }).catch(() => {});
+  }, []);
+
+  async function activate() {
+    const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapid) { setState("unsupported"); return; }
+    setState("busy");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setState(perm === "denied" ? "denied" : "idle"); return; }
+      const reg = await navigator.serviceWorker.register("/sw-store.js");
+      await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapid) });
+      const res = await fetch("/api/ecommerce/order-push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId, subscription: sub.toJSON() }) });
+      setState(res.ok ? "on" : "idle");
+    } catch { setState("idle"); }
+  }
+
+  if (state === "unsupported") return null;
+  if (state === "on") {
+    return <p style={{ textAlign: "center", fontSize: 13, color: textColor, margin: "0 0 16px" }}>🔔 Te avisaremos cuando tu pedido cambie de estado.</p>;
+  }
+  if (state === "denied") {
+    return <p style={{ textAlign: "center", fontSize: 12, color: textColor, margin: "0 0 16px" }}>Activa las notificaciones del navegador para recibir avisos de tu pedido.</p>;
+  }
+  return (
+    <div style={{ textAlign: "center", marginBottom: 16 }}>
+      <button onClick={activate} disabled={state === "busy"} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 20px", borderRadius: 12, border: "none", background: accent, color: "#1a1a1a", fontWeight: 800, fontSize: 14, cursor: state === "busy" ? "wait" : "pointer", opacity: state === "busy" ? 0.6 : 1 }}>
+        🔔 {state === "busy" ? "Activando…" : "Avisarme del estado"}
+      </button>
     </div>
   );
 }

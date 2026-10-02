@@ -42,5 +42,7 @@ export async function syncOnlineOrderFromPos(posOrder: { restaurantId: string; e
       where: { id: onlineId },
       data: { status, statusHistory: [...history, { status, ts: new Date().toISOString() }] as unknown as object },
     });
+    // Push al cliente (PWA) con el cambio de estado.
+    void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(onlineId, status)).catch(() => {});
   } catch { /* best-effort */ }
 }

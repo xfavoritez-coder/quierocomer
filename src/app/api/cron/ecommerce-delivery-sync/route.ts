@@ -54,7 +54,13 @@ export async function GET(req: NextRequest) {
     }
     if (Object.keys(data).length) {
       const { error } = await prisma.onlineOrder.update({ where: { id: o.id }, data }).then(() => ({ error: null })).catch((e) => ({ error: e }));
-      if (!error) updated++;
+      if (!error) {
+        updated++;
+        // Push al cliente si el estado cambió.
+        if (typeof data.status === "string") {
+          void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(o.id, data.status as string)).catch(() => {});
+        }
+      }
     }
   }));
 
