@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { normalizeNativeTokens, type NativeToken } from "@/lib/ecommerce/nativeTokens";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,12 +23,17 @@ export async function POST(req: NextRequest) {
   if (!orderId || (!hasWeb && !hasNative && !hasLive)) {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
   }
-  const order = await prisma.onlineOrder.findUnique({ where: { id: orderId }, select: { id: true, source: true } });
+  const order = await prisma.onlineOrder.findUnique({ where: { id: orderId }, select: { id: true, source: true, nativePush: true } });
   if (!order || order.source !== "ecommerce") return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const data: Record<string, unknown> = {};
   if (hasWeb) data.pushSubscription = { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } };
-  if (hasNative) data.nativePush = { platform, token: native.token };
+  if (hasNative) {
+    // Acumula el dispositivo (sin pisar otros: iPhone + Android pueden convivir).
+    const list = normalizeNativeTokens(order.nativePush).filter((t) => t.token !== native.token);
+    list.push({ platform: platform as NativeToken["platform"], token: native.token });
+    data.nativePush = list.slice(-10);
+  }
   if (hasLive) data.liveActivityToken = live.token;
 
   await prisma.onlineOrder.update({ where: { id: orderId }, data: data as object });

@@ -78,31 +78,36 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
     }
   }
 
-  // ── Push nativo (app Capacitor) ──
+  // ── Push nativo (app Capacitor) — a TODOS los dispositivos registrados ──
   //  iOS: push de alerta normal (APNs).
   //  Android: mensaje data-only que arma la notificación PERSISTENTE de estado
   //  (equivalente de la Live Activity) en OrderMessagingService.
-  const native = order.nativePush as { platform?: string; token?: string } | null;
-  if (native?.token && (native.platform === "ios" || native.platform === "android")) {
+  const { normalizeNativeTokens } = await import("@/lib/ecommerce/nativeTokens");
+  const devices = normalizeNativeTokens(order.nativePush);
+  if (devices.length) {
     try {
       const nativePush = await import("@/lib/ecommerce/nativePush");
-      let r;
-      if (native.platform === "ios") {
-        r = await nativePush.sendApns(native.token, { title: msg.title, body, url, tag: `order-${orderId}` });
-      } else {
-        r = await nativePush.sendFcmOrderStatus(native.token, {
-          orderId,
-          status,
-          statusLabel: liveActivityLabel(status, order.orderType),
-          orderNumber: order.orderNumber != null ? String(order.orderNumber) : "",
-          storeName: order.restaurant?.name ?? "",
-          step,
-          totalSteps: stepsList.length,
-          url,
-        });
+      const valid: typeof devices = [];
+      for (const dev of devices) {
+        let r;
+        if (dev.platform === "ios") {
+          r = await nativePush.sendApns(dev.token, { title: msg.title, body, url, tag: `order-${orderId}` });
+        } else {
+          r = await nativePush.sendFcmOrderStatus(dev.token, {
+            orderId,
+            status,
+            statusLabel: liveActivityLabel(status, order.orderType),
+            orderNumber: order.orderNumber != null ? String(order.orderNumber) : "",
+            storeName: order.restaurant?.name ?? "",
+            step,
+            totalSteps: stepsList.length,
+            url,
+          });
+        }
+        if (!r.invalid) valid.push(dev); // descarta solo los tokens inválidos
       }
-      if (r.invalid) {
-        await prisma.onlineOrder.update({ where: { id: orderId }, data: { nativePush: undefined } }).catch(() => {});
+      if (valid.length !== devices.length) {
+        await prisma.onlineOrder.update({ where: { id: orderId }, data: { nativePush: valid.length ? valid : undefined } }).catch(() => {});
       }
     } catch { /* best-effort */ }
   }
