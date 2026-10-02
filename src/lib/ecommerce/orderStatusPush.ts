@@ -26,31 +26,45 @@ export async function sendOrderStatusPush(orderId: string, status: string): Prom
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { pushSubscription: true, orderNumber: true, source: true },
+    select: { pushSubscription: true, nativePush: true, orderNumber: true, source: true },
   });
-  if (!order || order.source !== "ecommerce" || !isSub(order.pushSubscription)) return;
+  if (!order || order.source !== "ecommerce") return;
 
   const url = `/pedido/${orderId}`;
+  const body = order.orderNumber ? `${msg.body} (Pedido #${order.orderNumber})` : msg.body;
 
-  try {
-    const { webpush } = await import("@/lib/qr/utils/webpush");
-    const subject = process.env.VAPID_SUBJECT;
-    const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    const priv = process.env.VAPID_PRIVATE_KEY;
-    if (!subject || !pub || !priv) return;
-    webpush.setVapidDetails(subject, pub, priv);
-    const payload = JSON.stringify({
-      title: msg.title,
-      body: order.orderNumber ? `${msg.body} (Pedido #${order.orderNumber})` : msg.body,
-      tag: `order-${orderId}`,
-      url,
-    });
-    await webpush.sendNotification(order.pushSubscription as unknown as { endpoint: string; keys: { p256dh: string; auth: string } }, payload);
-  } catch (e: unknown) {
-    // Suscripción expirada/invalida → la limpiamos para no reintentar.
-    const code = (e as { statusCode?: number })?.statusCode;
-    if (code === 404 || code === 410) {
-      await prisma.onlineOrder.update({ where: { id: orderId }, data: { pushSubscription: undefined } }).catch(() => {});
+  // ── Push web (PWA) ──
+  if (isSub(order.pushSubscription)) {
+    try {
+      const { webpush } = await import("@/lib/qr/utils/webpush");
+      const subject = process.env.VAPID_SUBJECT;
+      const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const priv = process.env.VAPID_PRIVATE_KEY;
+      if (subject && pub && priv) {
+        webpush.setVapidDetails(subject, pub, priv);
+        await webpush.sendNotification(
+          order.pushSubscription as unknown as { endpoint: string; keys: { p256dh: string; auth: string } },
+          JSON.stringify({ title: msg.title, body, tag: `order-${orderId}`, url }),
+        );
+      }
+    } catch (e: unknown) {
+      const code = (e as { statusCode?: number })?.statusCode;
+      if (code === 404 || code === 410) {
+        await prisma.onlineOrder.update({ where: { id: orderId }, data: { pushSubscription: undefined } }).catch(() => {});
+      }
     }
+  }
+
+  // ── Push nativo (app Capacitor): APNs (iOS) / FCM (Android) ──
+  const native = order.nativePush as { platform?: string; token?: string } | null;
+  if (native?.token && (native.platform === "ios" || native.platform === "android")) {
+    try {
+      const { sendApns, sendFcm } = await import("@/lib/ecommerce/nativePush");
+      const payload = { title: msg.title, body, url, tag: `order-${orderId}` };
+      const r = native.platform === "ios" ? await sendApns(native.token, payload) : await sendFcm(native.token, payload);
+      if (r.invalid) {
+        await prisma.onlineOrder.update({ where: { id: orderId }, data: { nativePush: undefined } }).catch(() => {});
+      }
+    } catch { /* best-effort */ }
   }
 }

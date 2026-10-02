@@ -563,14 +563,40 @@ function urlBase64ToUint8Array(base64String: string) {
 function NotifyButton({ orderId, accent, textColor }: { orderId: string; accent: string; textColor: string }) {
   const [state, setState] = useState<"idle" | "busy" | "on" | "denied" | "unsupported">("idle");
 
+  // ¿Corre dentro de la app nativa (Capacitor)? Entonces usamos push nativo.
+  function cap(): any { return typeof window !== "undefined" ? (window as any).Capacitor : null; }
+  function isNative(): boolean { const c = cap(); return !!(c?.isNativePlatform?.()); }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (isNative()) return; // en la app nativa el botón siempre está disponible
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { setState("unsupported"); return; }
     if (Notification.permission === "denied") { setState("denied"); return; }
     navigator.serviceWorker.getRegistration().then((reg) => reg?.pushManager.getSubscription()).then((sub) => { if (sub) setState("on"); }).catch(() => {});
   }, []);
 
+  async function activateNative() {
+    const c = cap();
+    const Push = c?.Plugins?.PushNotifications;
+    const platform = c?.getPlatform?.();
+    if (!Push) { setState("unsupported"); return; }
+    setState("busy");
+    try {
+      const perm = await Push.requestPermissions();
+      if (perm?.receive !== "granted") { setState("denied"); return; }
+      await Push.addListener("registration", async (t: { value: string }) => {
+        try {
+          await fetch("/api/ecommerce/order-push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId, native: { platform, token: t.value } }) });
+          setState("on");
+        } catch { setState("idle"); }
+      });
+      await Push.addListener("registrationError", () => setState("idle"));
+      await Push.register();
+    } catch { setState("idle"); }
+  }
+
   async function activate() {
+    if (isNative()) return activateNative();
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!vapid) { setState("unsupported"); return; }
     setState("busy");
