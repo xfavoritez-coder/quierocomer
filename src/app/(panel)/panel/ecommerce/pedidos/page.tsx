@@ -240,6 +240,19 @@ export default function EcommercePedidosPage() {
     setPrintOrder(o); // impresión por navegador
   }
 
+  // Reenviar manualmente al POS (Toteat) — cuando el envío automático falló
+  // (p. ej. la caja estaba cerrada en ese momento).
+  async function resendPos(id: string) {
+    try {
+      const res = await fetch("/api/panel/ecommerce/resend-pos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo reenviar al POS"); return; }
+      setOrders((os) => os.map((o) => (o.id === id ? { ...o, toteatOrderId: d.toteatOrderId ?? o.toteatOrderId, posError: d.posError ?? null } : o)));
+      setDetail((dt) => (dt && dt.id === id ? { ...dt, toteatOrderId: d.toteatOrderId ?? dt.toteatOrderId, posError: d.posError ?? null } : dt));
+      toast.success(d.toteatOrderId ? `Enviado al POS (Toteat #${d.toteatOrderId})` : "Enviado al POS");
+    } catch { toast.error("Error de conexión"); }
+  }
+
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
   // Activos: pedidos realmente en curso (no entregados, no cancelados, no intentos
   // de pago). El "entregado" se alimenta según se mueva en Centro de pedidos.
@@ -406,7 +419,7 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} onResendPos={resendPos} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
@@ -493,13 +506,14 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange, onForceStatus, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
+function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPos, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; onResendPos: (id: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [courierBusy, setCourierBusy] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [forceBusy, setForceBusy] = useState(false);
+  const [posBusy, setPosBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const pay = payInfo(order);
@@ -609,6 +623,14 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, uberEnable
           {order.cancellationReason && <div style={{ fontFamily: FB, fontSize: "0.8rem", color: RED }}>Motivo de cancelación: {order.cancellationReason}</div>}
           {order.toteatOrderId && <div style={{ fontFamily: FB, fontSize: "0.76rem", color: GREEN }}>🖨️ Enviado al POS (Toteat #{order.toteatOrderId})</div>}
           {order.posError && <div style={{ fontFamily: FB, fontSize: "0.76rem", color: RED }}>⚠️ Error POS: {order.posError}</div>}
+          {!order.toteatOrderId && (
+            <button
+              onClick={async () => { setPosBusy(true); await onResendPos(order.id); setPosBusy(false); }}
+              disabled={posBusy}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "10px 14px", borderRadius: 10, border: "none", background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: posBusy ? "wait" : "pointer", opacity: posBusy ? 0.6 : 1 }}>
+              🖨️ {posBusy ? "Enviando…" : "Reenviar a Toteat"}
+            </button>
+          )}
 
           {/* Timeline */}
           {Array.isArray(order.statusHistory) && order.statusHistory.length > 0 && (
