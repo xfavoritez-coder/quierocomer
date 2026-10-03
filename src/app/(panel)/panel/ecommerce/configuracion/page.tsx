@@ -598,6 +598,20 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Envío al POS (Toteat) — reintento automático */}
+          {tab === "pedidos" && (
+          <section style={card}>
+            <SectionTitle icon={Package} title="Envío al POS (Toteat)" sub="Qué hacer cuando un pedido del ecommerce no logra enviarse a Toteat (p. ej. la caja está cerrada en ese momento)." />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
+              <div style={{ maxWidth: 380 }}>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Reintentar envío automáticamente</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Si un pedido falla al enviarse a Toteat, el sistema lo reintenta solo cada minuto hasta que entre (hasta ~1 h). Igual puedes reenviarlo manualmente desde el pedido.</p>
+              </div>
+              <Toggle on={cfg.posRetryEnabled} onClick={() => patch({ posRetryEnabled: !cfg.posRetryEnabled })} />
+            </div>
+          </section>
+          )}
+
           {/* Más ajustes de la tienda (páginas propias) */}
           {tab === "mas" && (
           <section style={card}>

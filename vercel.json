@@ -33,6 +33,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/ecommerce-pos-retry",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/promos-daily-sync",
       "schedule": "0 3 * * *"
     },

@@ -454,6 +454,7 @@ model OnlineOrder {
   orderNumber        Int?
   toteatOrderId      String?
   posError           String?
+  posRetryCount      Int        @default(0)
   deliveryFee        Int        @default(0)
   flowToken          String?
   discount           Int        @default(0)
