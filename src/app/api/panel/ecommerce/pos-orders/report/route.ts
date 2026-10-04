@@ -132,13 +132,19 @@ export async function GET(req: NextRequest) {
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: monthStart, lte: monthEnd } },
     select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true },
   });
-  const dayMap = new Map<number, number>();
+  const dayMap = new Map<number, { sales: number; orders: number }>();
   for (const o of monthOrders) {
     const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
     const day = parseInt(chileYmd(o.createdAt).slice(8, 10), 10);
-    dayMap.set(day, (dayMap.get(day) || 0) + net);
+    const e = dayMap.get(day) || { sales: 0, orders: 0 };
+    e.sales += net;
+    e.orders += 1;
+    dayMap.set(day, e);
   }
-  const monthlyDays = Array.from({ length: todayDay }, (_, i) => ({ day: i + 1, sales: dayMap.get(i + 1) || 0 }));
+  const monthlyDays = Array.from({ length: todayDay }, (_, i) => {
+    const e = dayMap.get(i + 1);
+    return { day: i + 1, sales: e?.sales || 0, orders: e?.orders || 0 };
+  });
 
   return NextResponse.json({
     from: fromYmd,

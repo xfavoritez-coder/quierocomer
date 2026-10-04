@@ -24,7 +24,7 @@ interface HourBucket { hour: number; sales: number; orders: number }
 interface Channel { name: string; sales: number; orders: number }
 interface ProductRank { name: string; qty: number; revenue: number }
 interface TypeBucket { type: string; label: string; sales: number; orders: number }
-interface MonthlyDay { day: number; sales: number }
+interface MonthlyDay { day: number; sales: number; orders: number }
 interface Report {
   ordersCount: number;
   productSales: number;
@@ -277,29 +277,50 @@ function OrderTypePie({ byType }: { byType: TypeBucket[] }) {
   );
 }
 
+function clpShort(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1000) return `$${Math.round(n / 1000)}k`;
+  return `$${Math.round(n)}`;
+}
+
 function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[] } }) {
   const days = monthly?.days ?? [];
   const hasData = days.some((d) => d.sales > 0);
   const max = Math.max(1, ...days.map((d) => d.sales));
+  const totalSales = days.reduce((s, d) => s + d.sales, 0);
+  const totalOrders = days.reduce((s, d) => s + d.orders, 0);
+  const avgTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
   const monthName = (() => {
     try { return new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", timeZone: "America/Santiago" }).format(new Date(`${monthly?.month}-15T12:00:00Z`)); } catch { return monthly?.month ?? ""; }
   })();
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 10px", marginBottom: 18 }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14, gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6, gap: 8, flexWrap: "wrap" }}>
         <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, textTransform: "capitalize" }}>Venta por día · {monthName}</h2>
         <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Mes en curso · Productos con IVA</span>
+      </div>
+      {/* Resumen del mes */}
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 14 }}>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Total: <strong style={{ fontFamily: F, color: "var(--adm-text)" }}>{clp(totalSales)}</strong></span>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Pedidos: <strong style={{ fontFamily: F, color: "var(--adm-text)" }}>{totalOrders.toLocaleString("es-CL")}</strong></span>
+        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Ticket prom.: <strong style={{ fontFamily: F, color: "var(--adm-text)" }}>{clp(avgTicket)}</strong></span>
       </div>
       {!hasData ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "26px 0" }}>Aún no hay ventas este mes.</p>
       ) : (
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 200, overflowX: "auto", overflowY: "hidden", paddingTop: 10 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 210, overflowX: "auto", overflowY: "hidden", paddingTop: 20 }}>
           {days.map((d) => {
             const pct = d.sales > 0 ? Math.max(3, Math.round((d.sales / max) * 100)) : 0;
+            const ticket = d.orders > 0 ? d.sales / d.orders : 0;
             return (
-              <div key={d.day} style={{ flex: "1 0 22px", minWidth: 22, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }} title={`Día ${d.day} · ${clp(d.sales)}`}>
+              <div key={d.day} style={{ flex: "1 0 26px", minWidth: 26, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}
+                title={d.sales > 0 ? `Día ${d.day} · ${clp(d.sales)} · ${d.orders} pedido${d.orders === 1 ? "" : "s"} · ticket ${clp(ticket)}` : `Día ${d.day} · sin ventas`}>
                 <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  <div style={{ width: "74%", maxWidth: 26, height: `${pct}%`, background: `linear-gradient(180deg, ${GREEN}, ${GREEN}bb)`, borderRadius: "5px 5px 0 0", minHeight: d.sales > 0 ? 3 : 0, transition: "height .3s" }} />
+                  <div style={{ position: "relative", width: "74%", maxWidth: 28, height: `${pct}%`, background: `linear-gradient(180deg, ${GREEN}, ${GREEN}bb)`, borderRadius: "5px 5px 0 0", minHeight: d.sales > 0 ? 3 : 0, transition: "height .3s" }}>
+                    {d.sales > 0 && (
+                      <span style={{ position: "absolute", bottom: "100%", marginBottom: 3, left: "50%", transform: "translateX(-50%)", fontFamily: FB, fontSize: "0.58rem", fontWeight: 700, color: "var(--adm-text2)", whiteSpace: "nowrap" }}>{clpShort(d.sales)}</span>
+                    )}
+                  </div>
                 </div>
                 <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)", marginTop: 4 }}>{d.day}</span>
               </div>
