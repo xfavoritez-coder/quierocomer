@@ -471,6 +471,16 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
   };
   return (
     <div className={`relative bg-white rounded-2xl shadow-sm p-2.5 flex items-center gap-3 transition-shadow ${soldOut ? "opacity-60" : "hover:shadow-md"}`}>
+      {/* Favorito — esquina superior derecha de la tarjeta */}
+      {showFav && (
+        <button
+          onClick={handleFav}
+          aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          className="absolute top-1.5 right-1.5 z-10 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
+        >
+          <Heart className={`w-5 h-5 ${heartPop ? "qc-heart-pop" : ""}`} fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
+        </button>
+      )}
       {/* Miniatura — SIEMPRE cuadrada (se recorta con object-cover, sin importar la imagen). */}
       <button onClick={soldOut ? undefined : onClick} disabled={soldOut} aria-label={product.name} className="relative w-28 sm:w-32 aspect-square rounded-xl overflow-hidden shrink-0 self-center bg-gray-100">
         {product.image_url ? (
@@ -499,28 +509,22 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
         </div>
       </button>
 
-      {/* Columna derecha: favorito (arriba) + agregar (abajo) */}
-      <div className="flex flex-col items-end justify-between shrink-0">
-        {showFav ? (
-          <button
-            onClick={handleFav}
-            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-50 transition"
-          >
-            <Heart className={`w-5 h-5 ${heartPop ? "qc-heart-pop" : ""}`} fill={isFav ? primaryColor : "none"} color={isFav ? primaryColor : "#cbd5e1"} />
-          </button>
-        ) : <span className="w-10 h-10" />}
-        {!soldOut && (
-          <button
-            onClick={onClick}
-            aria-label={`Agregar ${product.name}`}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
-            style={{ background: primaryColor }}
-          >
-            <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-          </button>
-        )}
-      </div>
+      {/* Columna derecha: reserva el espacio del corazón (arriba) y el botón
+          agregar abajo. Se muestra si hay favorito o botón agregar. */}
+      {(showFav || !soldOut) && (
+        <div className="self-stretch flex flex-col items-end justify-end shrink-0 w-9">
+          {!soldOut && (
+            <button
+              onClick={onClick}
+              aria-label={`Agregar ${product.name}`}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90"
+              style={{ background: primaryColor }}
+            >
+              <Plus className="w-4 h-4" strokeWidth={3} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
