@@ -10,7 +10,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
 
-type Dish = { id: string; name: string; category?: string };
+type Dish = { id: string; name: string; category?: string; hidden?: boolean };
 
 export default function AccompanimentsPage() {
   const session = useSessionContext();
@@ -45,6 +45,7 @@ export default function AccompanimentsPage() {
 
   // Rules (producto -> grupo). Mosaico: asignar grupo/cantidad por producto.
   const [ruleFilter, setRuleFilter] = useState("");
+  const [ruleOnly, setRuleOnly] = useState<"all" | "hidden">("all");
   const setProductGroup = (productId: string, groupId: string) => setCfg((c) => {
     const rules = c.rules.filter((r) => r.productId !== productId);
     if (groupId) {
@@ -208,10 +209,15 @@ export default function AccompanimentsPage() {
                     <p style={empty}>No hay productos.</p>
                   ) : (
                     <>
-                      <input value={ruleFilter} onChange={(e) => setRuleFilter(e.target.value)} placeholder="Filtrar productos…" style={{ ...inp, marginTop: 0, marginBottom: 12 }} />
+                      <input value={ruleFilter} onChange={(e) => setRuleFilter(e.target.value)} placeholder="Filtrar productos…" style={{ ...inp, marginTop: 0, marginBottom: 10 }} />
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                        <AccompChip label="Todos" active={ruleOnly === "all"} onClick={() => setRuleOnly("all")} />
+                        {(() => { const n = dishes.filter((d) => d.hidden).length; return <AccompChip label={`Ocultos${n ? ` (${n})` : ""}`} active={ruleOnly === "hidden"} onClick={() => setRuleOnly(ruleOnly === "hidden" ? "all" : "hidden")} hidden />; })()}
+                      </div>
                       {(() => {
                         const q = ruleFilter.trim().toLowerCase();
-                        const list = q ? dishes.filter((d) => d.name.toLowerCase().includes(q) || (d.category || "").toLowerCase().includes(q)) : dishes;
+                        let list = q ? dishes.filter((d) => d.name.toLowerCase().includes(q) || (d.category || "").toLowerCase().includes(q)) : dishes;
+                        if (ruleOnly === "hidden") list = list.filter((d) => d.hidden);
                         // Agrupar por categoría preservando el orden.
                         const cats: { category: string; items: Dish[] }[] = [];
                         for (const d of list) {
@@ -220,7 +226,7 @@ export default function AccompanimentsPage() {
                           if (last && last.category === cat) last.items.push(d);
                           else cats.push({ category: cat, items: [d] });
                         }
-                        if (!list.length) return <p style={empty}>Sin resultados.</p>;
+                        if (!list.length) return <p style={empty}>{ruleOnly === "hidden" ? "No hay productos ocultos." : "Sin resultados."}</p>;
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                             {cats.map((c) => (
@@ -232,7 +238,10 @@ export default function AccompanimentsPage() {
                                     const on = !!rule;
                                     return (
                                       <div key={d.id} style={{ background: on ? `${ACCENT}12` : "var(--adm-hover)", border: `1px solid ${on ? ACCENT : "var(--adm-card-border)"}`, borderRadius: 12, padding: "10px 11px", display: "flex", flexDirection: "column", gap: 8 }}>
-                                        <span style={{ fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{d.name}</span>
+                                        <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                                          <span style={{ flex: 1, minWidth: 0, fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{d.name}</span>
+                                          {d.hidden && <span title="No está visible para el cliente (categoría o producto inactivo/oculto)" style={{ flexShrink: 0, fontFamily: F, fontSize: "0.58rem", fontWeight: 800, letterSpacing: 0.3, textTransform: "uppercase", color: "#b45309", background: "rgba(245,158,11,0.16)", border: "1px solid rgba(245,158,11,0.35)", padding: "1px 6px", borderRadius: 999 }}>Oculto</span>}
+                                        </div>
                                         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                                           <select value={rule?.groupId ?? ""} onChange={(e) => setProductGroup(d.id, e.target.value)} style={{ ...inp, marginTop: 0, flex: 1, minWidth: 0, padding: "7px 8px", fontSize: "0.78rem" }}>
                                             <option value="">— No incluir —</option>
@@ -277,6 +286,14 @@ const hint: React.CSSProperties = { fontFamily: FB, fontSize: "0.72rem", color: 
 const empty: React.CSSProperties = { fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", padding: "8px 2px", margin: 0 };
 const addBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", alignSelf: "flex-start" };
 const delBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", cursor: "pointer", flexShrink: 0 };
+
+function AccompChip({ label, active, onClick, hidden }: { label: string; active: boolean; onClick: () => void; hidden?: boolean }) {
+  const accent = hidden ? "#b45309" : ACCENT;
+  const bg = active ? (hidden ? "rgba(245,158,11,0.16)" : `${ACCENT}22`) : "var(--adm-hover)";
+  return (
+    <button onClick={onClick} style={{ padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, border: `1px solid ${active ? accent : "var(--adm-card-border)"}`, background: bg, color: active ? accent : "var(--adm-text2)" }}>{label}</button>
+  );
+}
 
 function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (

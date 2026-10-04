@@ -23,12 +23,20 @@ export async function GET(req: NextRequest) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceAccompaniments: true } });
   if (!r) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
+  // Incluye productos inactivos/ocultos (nunca borrados) para poder configurar
+  // sus acompañamientos con anticipación (p. ej. ofertas de otro día). `hidden`
+  // marca los que no están visibles para el cliente.
   const rows = await prisma.dish.findMany({
-    where: { restaurantId, isActive: true, deletedAt: null },
+    where: { restaurantId, deletedAt: null },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
-    select: { id: true, name: true, category: { select: { name: true } } },
+    select: { id: true, name: true, isActive: true, hideFromOrdering: true, category: { select: { name: true, isActive: true } } },
   });
-  const dishes = rows.map((d) => ({ id: d.id, name: d.name, category: d.category?.name || "Sin categoría" }));
+  const dishes = rows.map((d) => ({
+    id: d.id,
+    name: d.name,
+    category: d.category?.name || "Sin categoría",
+    hidden: d.isActive === false || d.hideFromOrdering === true || d.category?.isActive === false,
+  }));
 
   return NextResponse.json({ config: parseAccompConfig(r.ecommerceAccompaniments), dishes });
 }
