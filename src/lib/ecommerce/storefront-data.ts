@@ -143,7 +143,12 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
  * Carga los datos del storefront para un restaurante con Ecommerce activado.
  * Devuelve null si el local no existe o no tiene el pilar habilitado.
  */
-export async function loadEcommerceStorefront(slug: string): Promise<StorefrontData | null> {
+export async function loadEcommerceStorefront(slug: string, opts?: { includeHidden?: boolean }): Promise<StorefrontData | null> {
+  // includeHidden: incluye categorías/productos/modificadores inactivos u ocultos
+  // (para la gestión de carta en el panel: p. ej. asignar códigos Toteat a
+  // productos que aún no están activos o son ofertas de otro día). El storefront
+  // público llama sin esto → sigue mostrando solo lo activo.
+  const includeHidden = opts?.includeHidden === true;
   const restaurant = await prisma.restaurant.findFirst({
     where: restaurantByKey(slug),
     select: {
@@ -158,13 +163,14 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
   if (!restaurant || !restaurant.ecommerceEnabled) return null;
 
   const categories = await prisma.category.findMany({
-    where: { restaurantId: restaurant.id, isActive: true },
+    where: { restaurantId: restaurant.id, ...(includeHidden ? {} : { isActive: true }) },
     orderBy: { position: "asc" },
     select: {
       id: true, name: true, position: true,
       dishes: {
         // hideFromOrdering: platos ocultos de "Pedidos online" no se muestran en la tienda.
-        where: { isActive: true, deletedAt: null, hideFromOrdering: false },
+        // includeHidden (gestión de carta) sí los trae, pero nunca los borrados.
+        where: includeHidden ? { deletedAt: null } : { isActive: true, deletedAt: null, hideFromOrdering: false },
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
@@ -177,7 +183,7 @@ export async function loadEcommerceStorefront(slug: string): Promise<StorefrontD
                 select: {
                   id: true, name: true, required: true, minSelect: true, maxSelect: true, position: true,
                   options: {
-                    where: { isHidden: false },
+                    where: includeHidden ? {} : { isHidden: false },
                     orderBy: { position: "asc" },
                     select: { id: true, name: true, priceAdjustment: true, toteatProductId: true, soldOut: true },
                   },

@@ -61,7 +61,7 @@ export default function EcommerceCatalogoPage() {
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
-    fetch(`/api/panel/ecommerce/menu?restaurantId=${restaurantId}`)
+    fetch(`/api/panel/ecommerce/menu?restaurantId=${restaurantId}&includeHidden=1`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .catch(() => {})

@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true, ecommerceEnabled: true } });
   if (!r || !r.ecommerceEnabled) return NextResponse.json({ error: "Ecommerce no habilitado" }, { status: 404 });
 
-  const data = await loadEcommerceStorefront(r.slug);
+  // includeHidden: la gestión de carta (asignar códigos Toteat) necesita ver
+  // también productos inactivos/ocultos (p. ej. ofertas de otro día). Tomar
+  // pedidos no lo pide → sigue viendo solo lo activo.
+  const includeHidden = req.nextUrl.searchParams.get("includeHidden") === "1";
+  const data = await loadEcommerceStorefront(r.slug, { includeHidden });
   if (!data) return NextResponse.json({ error: "No se pudo cargar el catálogo" }, { status: 404 });
 
   return NextResponse.json(data);
