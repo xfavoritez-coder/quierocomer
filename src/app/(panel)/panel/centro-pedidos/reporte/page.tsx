@@ -317,46 +317,34 @@ function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[
       {!hasData ? (
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "26px 0" }}>Aún no hay ventas este mes.</p>
       ) : (
-        <>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 210, overflowX: "auto", overflowY: "hidden", paddingTop: 20 }}>
-            {days.map((d) => {
-              const pct = d.sales > 0 ? Math.max(3, Math.round((d.sales / max) * 100)) : 0;
-              return (
-                <div key={d.day} style={{ flex: "1 0 26px", minWidth: 26, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
-                  <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                    <div style={{ position: "relative", width: "74%", maxWidth: 28, height: `${pct}%`, background: `linear-gradient(180deg, ${GREEN}, ${GREEN}bb)`, borderRadius: "5px 5px 0 0", minHeight: d.sales > 0 ? 3 : 0, transition: "height .3s" }}>
-                      {d.sales > 0 && (
-                        <span style={{ position: "absolute", bottom: "100%", marginBottom: 3, left: "50%", transform: "translateX(-50%)", fontFamily: FB, fontSize: "0.58rem", fontWeight: 700, color: "var(--adm-text2)", whiteSpace: "nowrap" }}>{clpShort(d.sales)}</span>
-                      )}
-                    </div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 6, overflowX: "auto", overflowY: "hidden", paddingTop: 20 }}>
+          {days.map((d) => {
+            const pct = d.sales > 0 ? Math.max(3, Math.round((d.sales / max) * 100)) : 0;
+            const ticket = d.orders > 0 ? d.sales / d.orders : 0;
+            return (
+              <div key={d.day} style={{ flex: "1 0 46px", minWidth: 46, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                {/* Barra */}
+                <div style={{ width: "100%", height: 180, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                  <div style={{ position: "relative", width: "72%", maxWidth: 30, height: `${pct}%`, background: `linear-gradient(180deg, ${GREEN}, ${GREEN}bb)`, borderRadius: "5px 5px 0 0", minHeight: d.sales > 0 ? 3 : 0, transition: "height .3s" }}>
+                    {d.sales > 0 && (
+                      <span style={{ position: "absolute", bottom: "100%", marginBottom: 3, left: "50%", transform: "translateX(-50%)", fontFamily: F, fontSize: "0.6rem", fontWeight: 800, color: "var(--adm-text)", whiteSpace: "nowrap" }}>{clpShort(d.sales)}</span>
+                    )}
                   </div>
-                  <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)", marginTop: 4 }}>{d.day}</span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Detalle por día (filas) */}
-          <div style={{ marginTop: 16, borderTop: "1px solid var(--adm-card-border)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(78px, 1.1fr) 1fr 0.9fr 1fr", gap: 8, padding: "10px 4px 6px", fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.3 }}>
-              <span>Día</span>
-              <span style={{ textAlign: "right" }}>Venta</span>
-              <span style={{ textAlign: "right" }}>Pedidos</span>
-              <span style={{ textAlign: "right" }}>Ticket prom.</span>
-            </div>
-            {days.filter((d) => d.sales > 0 || d.orders > 0).map((d) => {
-              const ticket = d.orders > 0 ? d.sales / d.orders : 0;
-              return (
-                <div key={d.day} style={{ display: "grid", gridTemplateColumns: "minmax(78px, 1.1fr) 1fr 0.9fr 1fr", gap: 8, padding: "8px 4px", borderTop: "1px solid var(--adm-card-border)", alignItems: "center" }}>
-                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>{weekdayShort(monthly.month, d.day)} {d.day}</span>
-                  <span style={{ textAlign: "right", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(d.sales)}</span>
-                  <span style={{ textAlign: "right", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>{d.orders}</span>
-                  <span style={{ textAlign: "right", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>{clp(ticket)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </>
+                {/* Info compacta debajo de cada barra */}
+                <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 700, color: "var(--adm-text2)", marginTop: 6, whiteSpace: "nowrap" }}>{weekdayShort(monthly.month, d.day)} {d.day}</span>
+                {d.sales > 0 ? (
+                  <>
+                    <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{d.orders} ped.</span>
+                    <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)", whiteSpace: "nowrap" }} title="Ticket promedio">⌀ {clpShort(ticket)}</span>
+                  </>
+                ) : (
+                  <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)" }}>—</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
