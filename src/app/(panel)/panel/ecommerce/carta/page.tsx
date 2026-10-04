@@ -22,6 +22,7 @@ export default function EcommerceCatalogoPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"productos" | "modificadores">("productos");
   const [search, setSearch] = useState("");
+  const [only, setOnly] = useState<"all" | "hidden" | "nocode">("all");
 
   // Catálogo del POS Toteat (código→nombre) para mostrar el nombre Toteat al asignar código.
   const [toteatMap, setToteatMap] = useState<Record<string, { name: string; price: number }> | null>(null);
@@ -123,10 +124,17 @@ export default function EcommerceCatalogoPage() {
   const modWithCode = modOptions.filter((o) => o.code).length;
 
   const q = search.trim().toLowerCase();
-  const filteredProducts = q ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.toteat_code ?? "").toLowerCase().includes(q)) : products;
-  const filteredGroups = q
+  const hiddenCount = products.filter((p) => p.hidden).length;
+  const noCodeCount = tab === "productos" ? prodTotal - prodWithCode : modTotal - modWithCode;
+
+  let filteredProducts = q ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.toteat_code ?? "").toLowerCase().includes(q)) : products;
+  if (only === "hidden") filteredProducts = filteredProducts.filter((p) => p.hidden);
+  else if (only === "nocode") filteredProducts = filteredProducts.filter((p) => !p.toteat_code);
+
+  let filteredGroups = q
     ? dedupGroups.map((g) => ({ ...g, options: g.options.filter((o) => o.name.toLowerCase().includes(q) || (o.code ?? "").toLowerCase().includes(q)) })).filter((g) => g.options.length)
     : dedupGroups;
+  if (only === "nocode") filteredGroups = filteredGroups.map((g) => ({ ...g, options: g.options.filter((o) => !o.code) })).filter((g) => g.options.length);
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "8px 4px 40px" }}>
@@ -145,8 +153,8 @@ export default function EcommerceCatalogoPage() {
       {/* Tabs */}
       {!loading && prodTotal > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <TabBtn active={tab === "productos"} onClick={() => { setTab("productos"); setSearch(""); }} icon={<Package size={15} />} label="Productos" count={`${prodWithCode}/${prodTotal}`} done={prodWithCode === prodTotal} />
-          <TabBtn active={tab === "modificadores"} onClick={() => { setTab("modificadores"); setSearch(""); }} icon={<UtensilsCrossed size={15} />} label="Modificadores" count={`${modWithCode}/${modTotal}`} done={modTotal > 0 && modWithCode === modTotal} />
+          <TabBtn active={tab === "productos"} onClick={() => { setTab("productos"); setSearch(""); setOnly("all"); }} icon={<Package size={15} />} label="Productos" count={`${prodWithCode}/${prodTotal}`} done={prodWithCode === prodTotal} />
+          <TabBtn active={tab === "modificadores"} onClick={() => { setTab("modificadores"); setSearch(""); setOnly("all"); }} icon={<UtensilsCrossed size={15} />} label="Modificadores" count={`${modWithCode}/${modTotal}`} done={modTotal > 0 && modWithCode === modTotal} />
         </div>
       )}
 
@@ -161,6 +169,13 @@ export default function EcommerceCatalogoPage() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar producto o código…" style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px 9px 34px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
           </div>
 
+          {/* Filtros rápidos */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            <FilterChip label="Todos" active={only === "all"} onClick={() => setOnly("all")} />
+            <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ""}`} active={only === "nocode"} onClick={() => setOnly(only === "nocode" ? "all" : "nocode")} tone="warn" />
+            {tab === "productos" && <FilterChip label={`Ocultos${hiddenCount ? ` (${hiddenCount})` : ""}`} active={only === "hidden"} onClick={() => setOnly(only === "hidden" ? "all" : "hidden")} tone="hidden" />}
+          </div>
+
           {tab === "productos" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 12px" }}>
@@ -168,6 +183,11 @@ export default function EcommerceCatalogoPage() {
                 <span style={{ flex: 1, fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>Toca la ⭐ para destacar productos en el <b>banner</b> de la tienda (tema Impact).</span>
                 <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 800, color: bannerIds.length ? ACCENT : "var(--adm-text3)" }}>{bannerIds.length}/{BANNER_MAX}</span>
               </div>
+              {filteredProducts.length === 0 && (
+                <div style={{ textAlign: "center", padding: "32px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>
+                  {only === "hidden" ? "No hay productos ocultos." : only === "nocode" ? "Todos los productos tienen código. 🎉" : "No hay productos que coincidan."}
+                </div>
+              )}
               {(q ? [{ id: "_all", name: "", position: 0 }] : categories).map((cat) => {
                 const catProducts = q ? filteredProducts : filteredProducts.filter((p) => p.category_id === cat.id);
                 if (!catProducts.length) return null;
@@ -189,6 +209,11 @@ export default function EcommerceCatalogoPage() {
             <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>Tus productos no tienen modificadores.</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {filteredGroups.length === 0 && (
+                <div style={{ textAlign: "center", padding: "32px 20px", border: "1px dashed var(--adm-card-border)", borderRadius: 14, fontFamily: FB, color: "var(--adm-text3)" }}>
+                  {only === "nocode" ? "Todos los modificadores tienen código. 🎉" : "No hay modificadores que coincidan."}
+                </div>
+              )}
               {filteredGroups.map((g) => (
                 <div key={g.id}>
                   <h2 style={sectionTitle}>{g.name}</h2>
@@ -216,6 +241,14 @@ export default function EcommerceCatalogoPage() {
 }
 
 const sectionTitle: React.CSSProperties = { fontFamily: F, fontSize: "0.8rem", fontWeight: 800, color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: 0.4, margin: "0 2px 8px" };
+
+function FilterChip({ label, active, onClick, tone }: { label: string; active: boolean; onClick: () => void; tone?: "warn" | "hidden" }) {
+  const accent = tone === "hidden" ? "#b45309" : tone === "warn" ? "#f97316" : ACCENT;
+  const bg = active ? (tone === "hidden" ? "rgba(245,158,11,0.16)" : tone === "warn" ? "rgba(249,115,22,0.14)" : `${ACCENT}22`) : "var(--adm-hover)";
+  return (
+    <button onClick={onClick} style={{ padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, border: `1px solid ${active ? accent : "var(--adm-card-border)"}`, background: bg, color: active ? accent : "var(--adm-text2)" }}>{label}</button>
+  );
+}
 
 function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; count: string; done: boolean }) {
   return (
