@@ -23,6 +23,8 @@ function addDaysYmd(ymd: string, days: number): string {
 interface HourBucket { hour: number; sales: number; orders: number }
 interface Channel { name: string; sales: number; orders: number }
 interface ProductRank { name: string; qty: number; revenue: number }
+interface TypeBucket { type: string; label: string; sales: number; orders: number }
+interface MonthlyDay { day: number; sales: number }
 interface Report {
   ordersCount: number;
   productSales: number;
@@ -32,6 +34,8 @@ interface Report {
   hourly: HourBucket[];
   channels: Channel[];
   products: ProductRank[];
+  byType: TypeBucket[];
+  monthly: { month: string; days: MonthlyDay[] };
 }
 
 export default function ReportePage() {
@@ -96,6 +100,9 @@ export default function ReportePage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", padding: 40, textAlign: "center" }}>No se pudo cargar el reporte.</p>
       ) : (
         <>
+          {/* Venta por día del mes en curso */}
+          <MonthlyChart monthly={data.monthly} />
+
           {/* KPIs */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14, marginBottom: 18 }}>
             <BigStat
@@ -112,8 +119,15 @@ export default function ReportePage() {
             <BigStat label="Pedidos" value={data.ordersCount.toLocaleString("es-CL")} hint="Cantidad de pedidos" icon={<ShoppingBag size={18} color={ACCENT} />} color={ACCENT} />
           </div>
 
-          {/* Venta por canal */}
-          <ChannelBreakdown channels={data.channels} total={data.productSales} />
+          {/* Venta por canal + Por tipo de pedido (misma fila) */}
+          <div style={{ display: "flex", gap: 14, marginBottom: 18, flexWrap: "wrap", alignItems: "stretch" }}>
+            <div style={{ flex: "2 1 340px", minWidth: 0 }}>
+              <ChannelBreakdown channels={data.channels} total={data.productSales} />
+            </div>
+            <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+              <OrderTypePie byType={data.byType} />
+            </div>
+          </div>
 
           {/* Gráfico venta por hora */}
           <HourlyChart hourly={data.hourly} />
@@ -177,7 +191,7 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
 function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: number }) {
   const palette = [ACCENT, GREEN, BLUE, PURPLE, "#ef4444", "#0ea5e9", "#ec4899", "#14b8a6"];
   return (
-    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", marginBottom: 18 }}>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", height: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
         <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Venta por canal</h2>
         <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Productos con IVA</span>
@@ -205,6 +219,89 @@ function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: num
                 <div style={{ height: 8, borderRadius: 999, background: "var(--adm-hover)", overflow: "hidden" }}>
                   <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 999, transition: "width .3s" }} />
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderTypePie({ byType }: { byType: TypeBucket[] }) {
+  const slices = (byType ?? []).filter((t) => t.sales > 0);
+  const total = slices.reduce((s, t) => s + t.sales, 0);
+  const colors: Record<string, string> = { delivery: BLUE, pickup: GREEN, "dine-in": PURPLE };
+  const r = 42, cx = 50, cy = 50, C = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 14px", height: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Por tipo de pedido</h2>
+        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Productos con IVA</span>
+      </div>
+      {total === 0 ? (
+        <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "20px 0" }}>Sin ventas en el período seleccionado.</p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <svg viewBox="0 0 100 100" width={116} height={116} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--adm-hover)" strokeWidth={15} />
+            {slices.map((t) => {
+              const frac = t.sales / total;
+              const dash = frac * C;
+              const el = <circle key={t.type} cx={cx} cy={cy} r={r} fill="none" stroke={colors[t.type] || ACCENT} strokeWidth={15} strokeLinecap="butt" strokeDasharray={`${dash} ${C - dash}`} strokeDashoffset={-acc * C} />;
+              acc += frac;
+              return el;
+            })}
+          </svg>
+          <div style={{ flex: 1, minWidth: 150, display: "flex", flexDirection: "column", gap: 11 }}>
+            {slices.map((t) => {
+              const pct = Math.round((t.sales / total) * 100);
+              return (
+                <div key={t.type} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)" }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 3, background: colors[t.type] || ACCENT, flexShrink: 0 }} />
+                    {t.label}
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)" }}>· {t.orders}</span>
+                  </span>
+                  <span style={{ flexShrink: 0, textAlign: "right" }}>
+                    <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(t.sales)} <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, color: "var(--adm-text3)" }}>({pct}%)</span></span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[] } }) {
+  const days = monthly?.days ?? [];
+  const hasData = days.some((d) => d.sales > 0);
+  const max = Math.max(1, ...days.map((d) => d.sales));
+  const monthName = (() => {
+    try { return new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", timeZone: "America/Santiago" }).format(new Date(`${monthly?.month}-15T12:00:00Z`)); } catch { return monthly?.month ?? ""; }
+  })();
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 16px 10px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14, gap: 8, flexWrap: "wrap" }}>
+        <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, textTransform: "capitalize" }}>Venta por día · {monthName}</h2>
+        <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Mes en curso · Productos con IVA</span>
+      </div>
+      {!hasData ? (
+        <p style={{ fontFamily: FB, color: "var(--adm-text3)", textAlign: "center", padding: "26px 0" }}>Aún no hay ventas este mes.</p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 200, overflowX: "auto", overflowY: "hidden", paddingTop: 10 }}>
+          {days.map((d) => {
+            const pct = d.sales > 0 ? Math.max(3, Math.round((d.sales / max) * 100)) : 0;
+            return (
+              <div key={d.day} style={{ flex: "1 0 22px", minWidth: 22, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }} title={`Día ${d.day} · ${clp(d.sales)}`}>
+                <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                  <div style={{ width: "74%", maxWidth: 26, height: `${pct}%`, background: `linear-gradient(180deg, ${GREEN}, ${GREEN}bb)`, borderRadius: "5px 5px 0 0", minHeight: d.sales > 0 ? 3 : 0, transition: "height .3s" }} />
+                </div>
+                <span style={{ fontFamily: FB, fontSize: "0.6rem", color: "var(--adm-text3)", marginTop: 4 }}>{d.day}</span>
               </div>
             );
           })}

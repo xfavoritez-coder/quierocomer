@@ -24,6 +24,11 @@ function chileHour(d: Date): number {
   return n === 24 ? 0 : n;
 }
 
+/** Fecha local de Chile en formato YYYY-MM-DD. */
+function chileYmd(d: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+
 /** GET /api/panel/ecommerce/pos-orders/report?restaurantId=X&from=YYYY-MM-DD&to=YYYY-MM-DD
  *  Reporte de ventas: venta de productos (con IVA, sin delivery ni propinas),
  *  monto de delivery y venta por hora. Excluye cancelados. */
@@ -40,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true },
+    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true },
   });
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
@@ -50,6 +55,9 @@ export async function GET(req: NextRequest) {
   const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: h, sales: 0, orders: 0 }));
   const channelMap = new Map<string, { name: string; sales: number; orders: number }>();
   const productMap = new Map<string, { name: string; qty: number; revenue: number }>();
+  const typeMap: Record<"delivery" | "pickup" | "dine-in", { sales: number; orders: number }> = {
+    delivery: { sales: 0, orders: 0 }, pickup: { sales: 0, orders: 0 }, "dine-in": { sales: 0, orders: 0 },
+  };
 
   const isDeliveryLine = (name: string, code: string) => {
     const n = name.toLowerCase();
@@ -72,6 +80,13 @@ export async function GET(req: NextRequest) {
     ch.sales += net;
     ch.orders += 1;
     channelMap.set(name, ch);
+
+    // Tipo de pedido: delivery / mesa (dine-in) / retiro (pickup).
+    const type: "delivery" | "pickup" | "dine-in" = o.isDelivery
+      ? "delivery"
+      : ((o.tableLabel && o.tableLabel.trim()) || o.saleType === "dine-in") ? "dine-in" : "pickup";
+    typeMap[type].sales += net;
+    typeMap[type].orders += 1;
 
     // Ranking de productos vendidos.
     const items = Array.isArray(o.items) ? (o.items as unknown[]) : [];
@@ -102,6 +117,29 @@ export async function GET(req: NextRequest) {
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
   const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
 
+  const byType = [
+    { type: "delivery", label: "Delivery", sales: typeMap.delivery.sales, orders: typeMap.delivery.orders },
+    { type: "pickup", label: "Retiro", sales: typeMap.pickup.sales, orders: typeMap.pickup.orders },
+    { type: "dine-in", label: "Mesa", sales: typeMap["dine-in"].sales, orders: typeMap["dine-in"].orders },
+  ];
+
+  // Venta por día del MES en curso (independiente del rango from/to del reporte).
+  const monthYm = today.slice(0, 7); // YYYY-MM
+  const todayDay = parseInt(today.slice(8, 10), 10);
+  const monthStart = chileDayRangeUtc(`${monthYm}-01`).start;
+  const monthEnd = chileDayRangeUtc(today).end;
+  const monthOrders = await prisma.posOrder.findMany({
+    where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: monthStart, lte: monthEnd } },
+    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true },
+  });
+  const dayMap = new Map<number, number>();
+  for (const o of monthOrders) {
+    const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const day = parseInt(chileYmd(o.createdAt).slice(8, 10), 10);
+    dayMap.set(day, (dayMap.get(day) || 0) + net);
+  }
+  const monthlyDays = Array.from({ length: todayDay }, (_, i) => ({ day: i + 1, sales: dayMap.get(i + 1) || 0 }));
+
   return NextResponse.json({
     from: fromYmd,
     to: toYmd,
@@ -114,5 +152,7 @@ export async function GET(req: NextRequest) {
     hourly,
     channels,
     products,
+    byType,
+    monthly: { month: monthYm, days: monthlyDays },
   });
 }
