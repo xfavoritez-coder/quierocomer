@@ -88,6 +88,7 @@ export interface StoreProduct {
   is_sold_out: boolean;
   is_hero: boolean; // destacado (para el banner del tema impact)
   toteat_code: string | null;
+  hidden?: boolean; // inactivo/oculto para el cliente (solo en gestión de carta)
   option_groups: StoreOptionGroup[];
 }
 
@@ -166,7 +167,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     where: { restaurantId: restaurant.id, ...(includeHidden ? {} : { isActive: true }) },
     orderBy: { position: "asc" },
     select: {
-      id: true, name: true, position: true,
+      id: true, name: true, position: true, isActive: true,
       dishes: {
         // hideFromOrdering: platos ocultos de "Pedidos online" no se muestran en la tienda.
         // includeHidden (gestión de carta) sí los trae, pero nunca los borrados.
@@ -175,7 +176,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true, soldOut: true,
-          toteatProductId: true, isHero: true,
+          toteatProductId: true, isHero: true, isActive: true, hideFromOrdering: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -241,6 +242,9 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         is_sold_out: d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0),
         is_hero: d.isHero === true,
         toteat_code: d.toteatProductId ?? null,
+        // Oculto para el cliente: categoría inactiva, plato inactivo u oculto de
+        // "Pedidos online". Solo se puebla con includeHidden (gestión de carta).
+        hidden: !cat.isActive || d.isActive === false || d.hideFromOrdering === true,
         option_groups: optionGroups,
       });
     }

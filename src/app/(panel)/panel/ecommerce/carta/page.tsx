@@ -177,7 +177,7 @@ export default function EcommerceCatalogoPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {catProducts.map((p) => (
                         <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap} qcPrice={p.price}
-                          soldOut={p.is_sold_out} onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)}
+                          soldOut={p.is_sold_out} onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)} hidden={p.hidden}
                           star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
@@ -228,7 +228,7 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
-function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onToggleSoldOut }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number; soldOut?: boolean; onToggleSoldOut?: () => void }) {
+function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onToggleSoldOut, hidden }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number; soldOut?: boolean; onToggleSoldOut?: () => void; hidden?: boolean }) {
   const [code, setCode] = useState(initial ?? "");
   const norm = code.trim().toUpperCase();
   const tInfo = toteatMap && norm ? toteatMap[norm] : undefined;
@@ -246,7 +246,12 @@ function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onTog
             <Star size={18} color={star.on ? ACCENT : "var(--adm-text3)"} fill={star.on ? ACCENT : "none"} />
           </button>
         )}
-        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: soldOut ? "var(--adm-text3)" : "var(--adm-text)", textDecoration: soldOut ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+        <span style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", gap: 7, overflow: "hidden" }}>
+          <span style={{ minWidth: 0, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: soldOut ? "var(--adm-text3)" : "var(--adm-text)", textDecoration: soldOut ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+          {hidden && (
+            <span title="No está visible para el cliente (categoría o producto inactivo/oculto)" style={{ flexShrink: 0, fontFamily: F, fontSize: "0.62rem", fontWeight: 800, letterSpacing: 0.3, textTransform: "uppercase", color: "#b45309", background: "rgba(245,158,11,0.16)", border: "1px solid rgba(245,158,11,0.35)", padding: "2px 7px", borderRadius: 999 }}>Oculto</span>
+          )}
+        </span>
         {onToggleSoldOut && (
           <button
             onClick={onToggleSoldOut}
