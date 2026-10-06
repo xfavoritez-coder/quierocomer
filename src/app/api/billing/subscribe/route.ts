@@ -40,17 +40,41 @@ export async function POST(req: NextRequest) {
   });
   let flowCustomerId = currentRestaurant?.flowCustomerId || null;
 
-  // Paso 1: buscar en Flow por externalId=panelId (el cliente ya pudo haber sido creado antes)
+  const debug: string[] = [];
+
+  // Paso 1a: buscar en Flow por externalId=panelId (GET)
   if (!flowCustomerId) {
     try {
       const existing = await flowGet<{ customerId: string }>("/customer/getByExternalId", { externalId: panelId });
       if (existing?.customerId) {
         flowCustomerId = existing.customerId;
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[subscribe] Cliente encontrado por externalId=panelId: ${flowCustomerId}`);
+        console.log(`[subscribe] Cliente encontrado por externalId GET: ${flowCustomerId}`);
+        debug.push(`getByExternalId(GET) ok: ${flowCustomerId}`);
+      } else {
+        debug.push(`getByExternalId(GET) sin customerId: ${JSON.stringify(existing)}`);
       }
     } catch (e: any) {
-      console.log(`[subscribe] getByExternalId sin resultado: ${e?.message}`);
+      debug.push(`getByExternalId(GET) err: ${e?.message}`);
+      console.log(`[subscribe] getByExternalId GET falló: ${e?.message}`);
+    }
+  }
+
+  // Paso 1b: intentar con POST si GET falló
+  if (!flowCustomerId) {
+    try {
+      const existing = await flowPost<{ customerId: string }>("/customer/getByExternalId", { externalId: panelId });
+      if (existing?.customerId) {
+        flowCustomerId = existing.customerId;
+        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+        console.log(`[subscribe] Cliente encontrado por externalId POST: ${flowCustomerId}`);
+        debug.push(`getByExternalId(POST) ok: ${flowCustomerId}`);
+      } else {
+        debug.push(`getByExternalId(POST) sin customerId: ${JSON.stringify(existing)}`);
+      }
+    } catch (e: any) {
+      debug.push(`getByExternalId(POST) err: ${e?.message}`);
+      console.log(`[subscribe] getByExternalId POST falló: ${e?.message}`);
     }
   }
 
@@ -67,9 +91,13 @@ export async function POST(req: NextRequest) {
         flowCustomerId = match.customerId;
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
         console.log(`[subscribe] Cliente encontrado por email: ${flowCustomerId}`);
+        debug.push(`getList ok: ${flowCustomerId}`);
+      } else {
+        debug.push(`getList sin match (total: ${list?.data?.length ?? 0})`);
       }
     } catch (e: any) {
-      console.log(`[subscribe] getList sin resultado: ${e?.message}`);
+      debug.push(`getList err: ${e?.message}`);
+      console.log(`[subscribe] getList falló: ${e?.message}`);
     }
   }
 
@@ -84,16 +112,19 @@ export async function POST(req: NextRequest) {
       flowCustomerId = created.customerId;
       await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
       console.log(`[subscribe] Cliente creado (externalId=panelId): ${flowCustomerId}`);
+      debug.push(`create ok: ${flowCustomerId}`);
     } catch (createErr: any) {
       const errData = (createErr as any).data;
+      debug.push(`create err: ${createErr?.message} | data: ${JSON.stringify(errData)}`);
       console.error(`[subscribe] Error create: ${createErr?.message} | data: ${JSON.stringify(errData)}`);
       if (errData?.customerId) {
         flowCustomerId = errData.customerId;
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+        debug.push(`create errData.customerId: ${flowCustomerId}`);
         console.log(`[subscribe] customerId del error body: ${flowCustomerId}`);
       }
       if (!flowCustomerId) {
-        return NextResponse.json({ error: `No se pudo crear cliente en Flow: ${createErr?.message}` }, { status: 500 });
+        return NextResponse.json({ error: `No se pudo obtener cliente Flow`, debug }, { status: 500 });
       }
     }
   }
