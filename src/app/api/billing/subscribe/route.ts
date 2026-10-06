@@ -80,6 +80,19 @@ export async function POST(req: NextRequest) {
         await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
         console.log(`[subscribe] customerId del error body: ${flowCustomerId}`);
       }
+      // Si el error dice "externalId already exists", buscar el cliente por ese externalId
+      if (!flowCustomerId && createErr?.message?.includes("externalId")) {
+        try {
+          const existing = await flowGet<{ customerId: string }>("/customer/getByExternalId", { externalId: panelId });
+          if (existing?.customerId) {
+            flowCustomerId = existing.customerId;
+            await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+            console.log(`[subscribe] customerId recuperado por externalId: ${flowCustomerId}`);
+          }
+        } catch (e2: any) {
+          console.log(`[subscribe] getByExternalId falló: ${e2?.message}`);
+        }
+      }
       if (!flowCustomerId) {
         return NextResponse.json({ error: `No se pudo crear cliente en Flow: ${createErr?.message}` }, { status: 500 });
       }
