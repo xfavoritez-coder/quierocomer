@@ -512,6 +512,14 @@ export default function MiRestaurantePage() {
                       >
                         {trialUsed ? "⚡ Activar Premium →" : "⚡ Probar Premium 7 días gratis"}
                       </button>
+                    ) : isActive && !billingStatus?.hasAutoRenewal ? (
+                      <button
+                        onClick={handleActivateAutoRenew}
+                        disabled={activatingAutoRenew}
+                        style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 0", border: "none", borderRadius: 999, background: planAccent, color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: activatingAutoRenew ? "wait" : "pointer", opacity: activatingAutoRenew ? 0.7 : 1 }}
+                      >
+                        <RefreshCw size={14} /> {activatingAutoRenew ? "Redirigiendo…" : "Activar cobro automático"}
+                      </button>
                     ) : null}
                   </div>
                 )}

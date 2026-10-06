@@ -410,15 +410,14 @@ export async function GET(req: NextRequest) {
       console.error("[diario] Translation sweep error:", e);
     }
 
-    // 6. QR nudge email — send 4 days after carta delivery to leads that haven't activated
+    // 6. QR nudge email — send min 3 days after carta delivery to leads that haven't activated (no upper bound, catches past leads too)
     let qrNudgeSent = 0;
     try {
-      const nudgeWindowStart = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
-      const nudgeWindowEnd   = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
+      const nudgeWindowStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // at least 3 days ago
       const nudgeLeads = await prisma.lead.findMany({
         where: {
           cartaStatus: "DELIVERED",
-          deliveredAt: { gte: nudgeWindowStart, lte: nudgeWindowEnd },
+          deliveredAt: { lte: nudgeWindowStart },
           email: { not: "" },
         },
         select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true, events: true },
