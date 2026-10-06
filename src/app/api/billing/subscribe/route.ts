@@ -33,29 +33,37 @@ export async function POST(req: NextRequest) {
   const planConfig = FLOW_PLANS[plan];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 
-  // Paso 1: asegurar que el cliente existe en Flow (externalId = panelId).
-  // Si ya existe, ignorar el error — el cliente ya está ahí.
-  try {
-    const created = await flowPost<{ customerId: string }>("/customer/create", {
-      externalId: panelId,
-      name: owner.name || owner.email.split("@")[0],
-      email: owner.email,
-    });
-    // Guardar el customerId interno de Flow si aún no lo tenemos
-    if (created.customerId) {
-      await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId: created.customerId } });
-      console.log(`[subscribe] Cliente creado: ${created.customerId}`);
+  // Obtener flowCustomerId guardado en DB
+  const currentRestaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { flowCustomerId: true },
+  });
+  let flowCustomerId = currentRestaurant?.flowCustomerId ?? null;
+
+  // Paso 1: si no hay customerId en DB, crear cliente en Flow.
+  // externalId = restaurantId (un Flow customer por restaurante, evita conflictos entre
+  // restaurantes del mismo dueño y permite recuperar el customerId si se borra del DB).
+  if (!flowCustomerId) {
+    try {
+      const created = await flowPost<{ customerId: string }>("/customer/create", {
+        externalId: restaurantId,
+        name: owner.name || owner.email.split("@")[0],
+        email: owner.email,
+      });
+      flowCustomerId = created.customerId;
+      await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+      console.log(`[subscribe] Cliente Flow creado: ${flowCustomerId}`);
+    } catch (createErr: any) {
+      console.error(`[subscribe] Error creando cliente Flow: ${createErr?.message}`);
+      return NextResponse.json({ error: `Error al crear cliente en Flow: ${createErr?.message}` }, { status: 500 });
     }
-  } catch (createErr: any) {
-    console.log(`[subscribe] Cliente ya existe en Flow: ${createErr?.message}`);
   }
 
-  // Paso 2: iniciar registro de tarjeta usando externalId=panelId.
-  // /customer/register acepta externalId directamente — no requiere el customerId interno.
-  const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}&cid=${encodeURIComponent(panelId)}`;
+  // Paso 2: iniciar registro de tarjeta con el customerId interno de Flow.
+  const urlReturn = `${baseUrl}/api/billing/subscribe-return?restaurantId=${restaurantId}&plan=${plan}&cid=${encodeURIComponent(flowCustomerId!)}`;
   try {
     const result = await flowPost<{ url: string; token: string }>("/customer/register", {
-      externalId: panelId,
+      customerId: flowCustomerId,
       url_return: urlReturn,
     });
     console.log(`[subscribe] Card registration iniciado: token=${result.token} para ${restaurant.name}`);
