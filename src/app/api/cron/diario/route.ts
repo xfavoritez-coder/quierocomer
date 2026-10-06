@@ -196,18 +196,24 @@ export async function GET(req: NextRequest) {
       const { FLOW_PLANS, grossOf, PLAN_LABELS } = await import("@/lib/billing/plans-config");
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
       for (const r of toAutoCharge) {
-        // Saltar si ya tiene un cobro en curso (flowRegisterToken activo)
-        const current = await prisma.restaurant.findUnique({ where: { id: r.id }, select: { flowRegisterToken: true } });
-        if (current?.flowRegisterToken) {
-          console.log(`[diario] Skip auto-charge ${r.name} — ya tiene token pendiente`);
-          continue;
-        }
         const planKey = (r.plan as keyof typeof FLOW_PLANS);
         const planConfig = FLOW_PLANS[planKey];
         if (!planConfig) continue;
         const amountNet = r.customPlanPriceNet ?? planConfig.amountNet;
         const amountGross = grossOf(amountNet);
         const commerceOrder = `auto_${r.id.slice(-8)}_${Date.now().toString(36)}`;
+
+        // Reserva atómica: solo procede si flowRegisterToken sigue NULL en este instante.
+        // Protege contra ejecuciones paralelas del cron (Vercel puede disparar duplicados).
+        const reserved = await prisma.restaurant.updateMany({
+          where: { id: r.id, flowRegisterToken: null },
+          data: { flowRegisterToken: `pending_${commerceOrder}` },
+        });
+        if (reserved.count === 0) {
+          console.log(`[diario] Skip auto-charge ${r.name} — ya reservado por otra ejecución`);
+          continue;
+        }
+
         try {
           const charge = await flowPost<{ token: string; flowOrder: number }>(
             "/payment/createByCustomer",
@@ -220,7 +226,6 @@ export async function GET(req: NextRequest) {
               urlReturn: `${baseUrl}/panel/mi-restaurante`,
             }
           );
-          // Guardar token para que el webhook pueda identificar este restaurant
           const savedToken = charge.flowOrder ? `${charge.token}|${charge.flowOrder}` : charge.token;
           await prisma.restaurant.update({
             where: { id: r.id },
@@ -232,6 +237,11 @@ export async function GET(req: NextRequest) {
           autoChargesInitiated++;
           console.log(`[diario] Auto-charge iniciado: ${r.name} → ${amountGross} CLP (order=${commerceOrder})`);
         } catch (chargeErr: any) {
+          // Si Flow falla, limpiar la reserva para que el próximo cron pueda reintentar
+          await prisma.restaurant.updateMany({
+            where: { id: r.id, flowRegisterToken: { startsWith: "pending_" } },
+            data: { flowRegisterToken: null },
+          });
           console.error(`[diario] Auto-charge falló para ${r.name}: ${chargeErr?.message}`);
         }
       }
