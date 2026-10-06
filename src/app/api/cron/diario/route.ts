@@ -183,6 +183,7 @@ export async function GET(req: NextRequest) {
         subscriptionStatus: "ACTIVE",
         currentPeriodEnd: { gte: startOfToday, lte: endOfToday },
         flowCustomerId: { not: null },
+        flowSubscriptionId: null,   // Con suscripción activa Flow cobra solo — no duplicar
         billingExempt: false,
         plan: { not: "FREE" },
       },

@@ -79,8 +79,9 @@ export async function GET(req: NextRequest) {
         const periodEnd = r.currentPeriodEnd ? new Date(r.currentPeriodEnd) : null;
         const hoursUntilExpiry = periodEnd ? (periodEnd.getTime() - now.getTime()) / 3600000 : -1;
 
-        // Solo actuar si el período ya venció o vence en menos de 6h
-        if (hoursUntilExpiry > 6) {
+        // Solo actuar si el período ya venció o vence en menos de 24h
+        // (24h para cubrir el día completo del vencimiento y garantizar la extensión el mismo día)
+        if (hoursUntilExpiry > 24) {
           results.push({ name: r.name, action: "ok", detail: `expires in ${Math.round(hoursUntilExpiry)}h` });
           continue;
         }
