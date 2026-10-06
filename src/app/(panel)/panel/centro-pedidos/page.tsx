@@ -60,6 +60,7 @@ function etaLabel(iso?: string | null): string | null {
 }
 
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
+const STAGE_SHORT: Record<Stage, string> = { preparing: "Preparación", ready: "Listo", out_for_delivery: "Reparto", delivered: "Entregado" };
 const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
 // Las 4 etapas del tablero (columna izquierda estilo deliveryhandroll).
 const STAGES: Stage[] = ["preparing", "ready", "out_for_delivery", "delivered"];
@@ -305,10 +306,9 @@ export default function CentroPedidosPage() {
           items.sort((a, b) => ts(a.createdAt) - ts(b.createdAt));
         }
         return (
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-            {/* Columna de etapas (estilo deliveryhandroll) */}
-            <div style={{ width: 250, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8, minWidth: 220 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--adm-text3)", margin: "0 0 2px 2px" }}>Etapas del pedido</p>
+          <>
+            {/* Chips de etapas (horizontales) */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
               {STAGES.map((st) => {
                 const active = selectedStage === st;
                 const c = STAGE_ACCENT[st];
@@ -317,38 +317,32 @@ export default function CentroPedidosPage() {
                     key={st}
                     onClick={() => setSelectedStage(st)}
                     style={{
-                      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-                      padding: "13px 14px", borderRadius: 12, cursor: "pointer",
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "9px 14px", borderRadius: 12, cursor: "pointer",
                       border: `1px solid ${active ? c : "var(--adm-card-border)"}`,
                       background: active ? `${c}1a` : "var(--adm-card)",
                       transition: "background .15s, border-color .15s",
                     }}
                   >
-                    <span style={{ fontSize: "1.05rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
-                    <span style={{ flex: 1, fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_LABEL[st]}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, minWidth: 24, height: 24, padding: "0 7px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
+                    <span style={{ fontSize: "1rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_SHORT[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 800, minWidth: 22, height: 22, padding: "0 6px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Pedidos de la etapa seleccionada */}
-            <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 2px 12px", borderLeft: `3px solid ${STAGE_ACCENT[selectedStage]}`, paddingLeft: 10 }}>
-                <span style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)" }}>{STAGE_ICON[selectedStage]} {STAGE_LABEL[selectedStage]}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", marginLeft: "auto", background: "var(--adm-hover)", borderRadius: 999, padding: "2px 9px" }}>{items.length}</span>
+            {/* Pedidos de la etapa seleccionada (ancho completo) */}
+            {items.length === 0 ? (
+              <div style={{ padding: "36px 16px", textAlign: "center", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>No hay pedidos en «{STAGE_SHORT[selectedStage]}».</p>
               </div>
-              {items.length === 0 ? (
-                <div style={{ padding: "36px 16px", textAlign: "center", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
-                  <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>No hay pedidos en «{STAGE_LABEL[selectedStage]}».</p>
-                </div>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12, alignItems: "start" }}>
-                  {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
-                </div>
-              )}
-            </div>
-          </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12, alignItems: "start" }}>
+                {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
+              </div>
+            )}
+          </>
         );
       })()}
     </div>
