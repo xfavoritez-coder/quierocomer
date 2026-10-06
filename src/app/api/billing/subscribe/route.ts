@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost, flowGet } from "@/lib/billing/flow";
+import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
@@ -40,23 +40,24 @@ export async function POST(req: NextRequest) {
   });
   let flowCustomerId = currentRestaurant?.flowCustomerId || null;
 
-  // Paso 1: crear cliente usando restaurantId como customerId (igual que la versión original
-  // que funcionaba). Si ya existe, ignorar el error y continuar con restaurantId igual.
+  // Paso 1: crear cliente usando panelId como externalId.
+  // Si ya existe (conflict por externalId), el cliente vive en Flow con externalId=panelId;
+  // en ese caso usamos panelId directamente en /customer/register (Flow lo acepta como referencia).
   if (!flowCustomerId) {
     try {
       const created = await flowPost<{ customerId: string }>("/customer/create", {
-        customerId: restaurantId,
+        externalId: panelId,
         name: owner.name || owner.email.split("@")[0],
         email: owner.email,
       });
-      flowCustomerId = created.customerId || restaurantId;
+      flowCustomerId = created.customerId;
       await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
       console.log(`[subscribe] Cliente creado: ${flowCustomerId}`);
     } catch (createErr: any) {
-      // Si ya existe (cualquier error de create), usar restaurantId directamente como en
-      // la versión original — Flow acepta el mismo customerId que se usó al crear.
-      console.log(`[subscribe] create falló, usando restaurantId como customerId: ${createErr?.message}`);
-      flowCustomerId = restaurantId;
+      // Ya existe → Flow tiene al cliente con externalId=panelId.
+      // /customer/register acepta el externalId como customerId cuando no hay customerId numérico conocido.
+      console.log(`[subscribe] create falló (ya existe), usando panelId: ${createErr?.message}`);
+      flowCustomerId = panelId;
     }
   }
 
