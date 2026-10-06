@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1600],
     imageSizes: [128, 256, 384, 640],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 2592000, // 30 días — imágenes de platos/logos no cambian frecuentemente
     // Next.js 16 requiere declarar las calidades usadas en next/image
     qualities: [75, 80, 95],
   },
