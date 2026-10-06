@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
         console.log(`[subscribe] customerId del error body: ${flowCustomerId}`);
       }
       if (!flowCustomerId) {
-        return NextResponse.json({ error: `No se pudo obtener cliente Flow`, debug }, { status: 500 });
+        return NextResponse.json({ error: `Flow debug: ${debug.join(" | ")}`, debug }, { status: 500 });
       }
     }
   }
