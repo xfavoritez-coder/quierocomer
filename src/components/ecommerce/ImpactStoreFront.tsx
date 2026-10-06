@@ -8,7 +8,7 @@
 //  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight } from "lucide-react";
+import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight, ChevronLeft } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -131,6 +131,27 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
     const el = cont.querySelector(`[data-cat="${activeCat}"]`) as HTMLElement | null;
     if (el) cont.scrollTo({ left: el.offsetLeft - 16, behavior: "smooth" });
   }, [activeCat]);
+
+  // Flechas < > para desplazar los chips de categoría cuando no caben.
+  const [chipScroll, setChipScroll] = useState({ left: false, right: false });
+  const updateChipScroll = useCallback(() => {
+    const el = chipsRef.current;
+    if (!el) { setChipScroll({ left: false, right: false }); return; }
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setChipScroll({ left: el.scrollLeft > 4, right: el.scrollLeft < maxScroll - 4 });
+  }, []);
+  const scrollChips = (dir: 1 | -1) => {
+    const el = chipsRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: "smooth" });
+  };
+  useEffect(() => {
+    updateChipScroll();
+    const el = chipsRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateChipScroll, { passive: true });
+    window.addEventListener("resize", updateChipScroll);
+    return () => { el.removeEventListener("scroll", updateChipScroll); window.removeEventListener("resize", updateChipScroll); };
+  }, [updateChipScroll, grouped.length, searchOpen]);
 
   // Si el cliente aún no ha definido entrega/retiro, cualquier intento de abrir o
   // agregar un producto abre PRIMERO el modal de entrega; el producto queda "pendiente"
@@ -295,7 +316,14 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
 
       {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ position: "sticky", top: headerH - 1, zIndex: 38, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
+        <div style={{ position: "sticky", top: headerH - 1, zIndex: 38, background: "transparent" }}>
+        <div style={{ position: "relative" }}>
+          {chipScroll.left && (
+            <button onClick={() => scrollChips(-1)} aria-label="Anterior" style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 2, display: "flex", alignItems: "center", padding: "0 8px 0 10px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(90deg, rgba(11,11,11,0.92) 55%, transparent)" }}>
+              <ChevronLeft size={22} />
+            </button>
+          )}
+          <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
@@ -318,6 +346,13 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
               }}>{cat.name}</button>
             );
           })}
+          </div>
+          {chipScroll.right && (
+            <button onClick={() => scrollChips(1)} aria-label="Siguiente" style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 2, display: "flex", alignItems: "center", padding: "0 10px 0 8px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(270deg, rgba(11,11,11,0.92) 55%, transparent)" }}>
+              <ChevronRight size={22} />
+            </button>
+          )}
+        </div>
         </div>
       )}
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "sonner";
-import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
+import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -62,6 +62,27 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const catNavRef = useRef<HTMLDivElement>(null);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const lockSpyRef = useRef(false);
+
+  // Flechas < > para desplazar las categorías cuando no caben.
+  const [catScroll, setCatScroll] = useState({ left: false, right: false });
+  const updateCatScroll = useCallback(() => {
+    const el = catScrollRef.current;
+    if (!el) { setCatScroll({ left: false, right: false }); return; }
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCatScroll({ left: el.scrollLeft > 4, right: el.scrollLeft < maxScroll - 4 });
+  }, []);
+  const scrollCats = (dir: 1 | -1) => {
+    const el = catScrollRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: "smooth" });
+  };
+  useEffect(() => {
+    updateCatScroll();
+    const el = catScrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateCatScroll, { passive: true });
+    window.addEventListener("resize", updateCatScroll);
+    return () => { el.removeEventListener("scroll", updateCatScroll); window.removeEventListener("resize", updateCatScroll); };
+  }, [updateCatScroll, categories.length, searchOpen]);
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
   const itemCount = useCartStore((s) => s.itemCount());
@@ -290,18 +311,30 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               onChange={(e) => setSearch(e.target.value)}
             />
           ) : (
-            <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  data-cat={cat.id}
-                  onClick={() => scrollToCategory(cat.id)}
-                  className={`shrink-0 px-4 py-3 text-xs font-black uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeCat === cat.id ? "border-current" : "border-transparent text-gray-400 hover:text-gray-800"}`}
-                  style={activeCat === cat.id ? { color: categoryColor, borderColor: categoryColor } : {}}
-                >
-                  {cat.name}
+            <div className="relative flex-1 flex items-center min-w-0">
+              {catScroll.left && (
+                <button onClick={() => scrollCats(-1)} aria-label="Anterior" className="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-white via-white to-transparent text-gray-500 hover:text-gray-900">
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
-              ))}
+              )}
+              <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    data-cat={cat.id}
+                    onClick={() => scrollToCategory(cat.id)}
+                    className={`shrink-0 px-4 py-3 text-xs font-black uppercase tracking-wider transition border-b-2 whitespace-nowrap ${activeCat === cat.id ? "border-current" : "border-transparent text-gray-400 hover:text-gray-800"}`}
+                    style={activeCat === cat.id ? { color: categoryColor, borderColor: categoryColor } : {}}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+              {catScroll.right && (
+                <button onClick={() => scrollCats(1)} aria-label="Siguiente" className="absolute right-0 z-10 h-full px-1 flex items-center bg-gradient-to-l from-white via-white to-transparent text-gray-500 hover:text-gray-900">
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
             </div>
           )}
         </div>
