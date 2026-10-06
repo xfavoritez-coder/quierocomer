@@ -427,7 +427,7 @@ export async function GET(req: NextRequest) {
         const events = (lead.events as any[] | null) ?? [];
         if (events.some((e: any) => e.type === "qr_nudge_sent")) continue; // already sent
 
-        const slug = lead.generatedSlug;
+        const slug = lead.generatedSlug!;
         if (!slug) continue;
 
         const firstName = (lead.ownerName || "").split(" ")[0] || "Hola";
