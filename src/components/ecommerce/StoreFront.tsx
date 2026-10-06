@@ -183,8 +183,10 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
     if (!cont) return;
     const chip = cont.querySelector<HTMLElement>(`[data-cat="${catId}"]`);
     if (!chip) return;
-    const target = chip.offsetLeft - (cont.clientWidth - chip.clientWidth) / 2;
-    cont.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+    // Si el chip es más ancho que la barra (p. ej. la 1ª categoría en móvil),
+    // centrarlo cortaría su inicio. En ese caso lo alineamos a la izquierda.
+    const slack = Math.max(0, (cont.clientWidth - chip.clientWidth) / 2);
+    cont.scrollTo({ left: Math.max(0, chip.offsetLeft - slack), behavior: "smooth" });
   }, []);
 
   const scrollToCategory = useCallback((catId: string) => {
