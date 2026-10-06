@@ -1,23 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // ═══════════════════════════════════════════════════════════
-//  Enrutado por dominio propio (custom domain) del Ecommerce.
-//  Un local puede tener su propio dominio (ej: haruna.cl). Cuando el request
-//  llega por ese dominio, reescribimos internamente a la ruta del storefront
-//  correspondiente SIN cambiar la URL que ve el usuario → URLs limpias:
-//    haruna.cl/           →  (interno) /ecommerce/haruna.cl
-//    haruna.cl/checkout   →  (interno) /ecommerce/haruna.cl/checkout
-//  El resto de rutas (/pedido/…, etc.) pasan como rutas reales. El loader
-//  resuelve la tienda por slug o por customDomain (ecommerceStoreConfig).
+//  Enrutado por dominio propio.
+//
+//  Hay dos tipos de dominio propio:
+//
+//  1. CARTA (solo menú digital):
+//     El restaurante tiene su propio dominio que muestra su carta/menú.
+//     Configurado via env var CARTA_DOMAINS="pollocampo.cl:pollocampo,otro.cl:otro-slug"
+//     pollocampo.cl/       →  (interno) /pollocampo
+//     pollocampo.cl/plato  →  (interno) /pollocampo/plato
+//
+//  2. ECOMMERCE (tienda online con pedidos):
+//     Un local tiene dominio propio para su tienda de pedidos online.
+//     haruna.cl/           →  (interno) /ecommerce/haruna.cl
+//     haruna.cl/checkout   →  (interno) /ecommerce/haruna.cl/checkout
+//     El loader resuelve la tienda por customDomain en ecommerceStoreConfig.
 // ═══════════════════════════════════════════════════════════
 
 const MAIN_DOMAIN = (process.env.NEXT_PUBLIC_APP_DOMAIN || "quierocomer.com").toLowerCase();
 
-// Hosts que pertenecen a la app (no son dominios de tienda) → sin reescritura.
+// CARTA_DOMAINS="pollocampo.cl:pollocampo,otro.cl:otro-slug"
+function buildCartaMap(): Record<string, string> {
+  const raw = process.env.CARTA_DOMAINS || "";
+  const map: Record<string, string> = {};
+  for (const pair of raw.split(",")) {
+    const [domain, slug] = pair.trim().split(":");
+    if (domain && slug) map[domain.trim()] = slug.trim();
+  }
+  return map;
+}
+const CARTA_MAP = buildCartaMap();
+
+// Hosts que pertenecen a la app → sin reescritura.
 function isAppHost(host: string): boolean {
   if (!host) return true;
   if (host === "localhost" || host === "127.0.0.1") return true;
-  if (host.endsWith(".vercel.app")) return true; // previews y dominio por defecto
+  if (host.endsWith(".vercel.app")) return true;
   if (host === MAIN_DOMAIN || host === `www.${MAIN_DOMAIN}`) return true;
   return false;
 }
@@ -26,17 +45,23 @@ export function middleware(req: NextRequest) {
   const rawHost = (req.headers.get("host") || "").split(":")[0].toLowerCase();
   if (isAppHost(rawHost)) return NextResponse.next();
 
-  // Dominio de tienda → normalizamos (sin www) y usamos el host como clave.
   const host = rawHost.replace(/^www\./, "");
   const { pathname, search } = req.nextUrl;
 
-  // El panel y el admin no se sirven desde dominios de tienda → al dominio principal.
+  // Panel y admin siempre van al dominio principal.
   if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL(pathname + search, `https://${MAIN_DOMAIN}`));
   }
 
-  // Solo reescribimos las páginas propias de la tienda (menú y checkout).
-  // Lo demás (/pedido/…, etc.) se sirve como ruta real de la app.
+  // ── Dominio de CARTA ──────────────────────────────────────
+  const cartaSlug = CARTA_MAP[host];
+  if (cartaSlug) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${cartaSlug}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // ── Dominio de ECOMMERCE ──────────────────────────────────
   const isStorePage = pathname === "/" || pathname === "/checkout" || pathname.startsWith("/checkout/");
   if (!isStorePage) return NextResponse.next();
 
