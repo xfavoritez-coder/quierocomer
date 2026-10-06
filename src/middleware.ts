@@ -56,9 +56,14 @@ export function middleware(req: NextRequest) {
   // ── Dominio de CARTA ──────────────────────────────────────
   const cartaSlug = CARTA_MAP[host];
   if (cartaSlug) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/${cartaSlug}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(url);
+    // Solo reescribir la raíz. El resto de rutas (/qr/…, /pedir/…, /fidelidad/…)
+    // son paths absolutos de QC — pasan directo sin modificar.
+    if (pathname === "/") {
+      const url = req.nextUrl.clone();
+      url.pathname = `/${cartaSlug}`;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
   }
 
   // ── Dominio de ECOMMERCE ──────────────────────────────────
