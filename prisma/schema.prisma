@@ -3005,3 +3005,346 @@ enum EntrySource {
   BANK_API
   FLUJO
 }
+
+// ============================================================
+// FRANQUICIAS MODULE
+// ============================================================
+
+// ---- ENUMS ----
+
+enum FranEstadoProyecto {
+  PLANIFICACION
+  EN_DESARROLLO
+  PAUSADO
+  ABIERTO
+  CANCELADO
+}
+
+enum FranEstadoLocal {
+  EN_PROYECTO
+  ABIERTO
+  CERRADO
+  PAUSADO
+}
+
+enum FranEstadoTarea {
+  PENDIENTE
+  EN_PROGRESO
+  BLOQUEADA
+  COMPLETADA
+}
+
+enum FranPrioridad {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum FranEstadoSOP {
+  BORRADOR
+  ACTIVO
+  ARCHIVADO
+}
+
+enum FranEstadoHito {
+  PENDIENTE
+  COMPLETADO
+  ATRASADO
+}
+
+enum FranAplicacionTipo {
+  SOP
+  TAREA_TEMPLATE
+  CHECKLIST
+  REQUISITO
+  REGLA
+  OTRO
+}
+
+// ---- SISTEMA (marca level) ----
+
+model FranMarca {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  nombre      String
+  logoUrl     String?
+  descripcion String?
+  version     String?
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  locales        FranLocal[]
+  proyectos      FranProyecto[]
+  etapaTemplates FranEtapaTemplate[]
+  tareaTemplates FranTareaTemplate[]
+  procedimientos FranProcedimiento[]
+  documentos     FranDocumento[]
+}
+
+model FranEtapaTemplate {
+  id          String    @id @default(cuid())
+  marcaId     String
+  marca       FranMarca @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  numero      Int
+  nombre      String
+  descripcion String?
+  orden       Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tareaTemplates FranTareaTemplate[]
+  etapas         FranEtapa[]
+
+  @@unique([marcaId, numero])
+}
+
+model FranTareaTemplate {
+  id               String             @id @default(cuid())
+  marcaId          String
+  marca            FranMarca          @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  etapaTemplateId  String?
+  etapaTemplate    FranEtapaTemplate? @relation(fields: [etapaTemplateId], references: [id])
+  titulo           String
+  descripcion      String?
+  categoria        String?
+  prioridadDefecto FranPrioridad      @default(MEDIA)
+  peso             Int                @default(1)
+  responsableRol   String?
+  costoEstimadoRef Float?
+  obligatoria      Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  checklist    FranTareaTemplateChecklist[]
+  tareas       FranTarea[]
+  aplicaciones FranAprendizajeAplicacion[]
+}
+
+model FranTareaTemplateChecklist {
+  id              String            @id @default(cuid())
+  tareaTemplateId String
+  tareaTemplate   FranTareaTemplate @relation(fields: [tareaTemplateId], references: [id], onDelete: Cascade)
+  texto           String
+  orden           Int               @default(0)
+}
+
+model FranProcedimiento {
+  id             String        @id @default(cuid())
+  marcaId        String
+  marca          FranMarca     @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  titulo         String
+  categoria      String?
+  objetivo       String?
+  responsable    String?
+  frecuencia     String?
+  tiempoEstimado String?
+  contenido      String        @db.Text
+  version        String        @default("1.0")
+  status         FranEstadoSOP @default(BORRADOR)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  checklist    FranProcChecklist[]
+  aplicaciones FranAprendizajeAplicacion[]
+}
+
+model FranProcChecklist {
+  id            String            @id @default(cuid())
+  procedId      String
+  procedimiento FranProcedimiento @relation(fields: [procedId], references: [id], onDelete: Cascade)
+  texto         String
+  orden         Int               @default(0)
+}
+
+// ---- PROYECTO (local/apertura level) ----
+
+model FranLocal {
+  id            String          @id @default(cuid())
+  marcaId       String
+  marca         FranMarca       @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  slug          String          @unique
+  nombre        String
+  direccion     String?
+  estado        FranEstadoLocal @default(EN_PROYECTO)
+  fechaApertura DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  proyectos FranProyecto[]
+}
+
+model FranProyecto {
+  id               String             @id @default(cuid())
+  slug             String             @unique
+  nombre           String
+  marcaId          String
+  marca            FranMarca          @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+  localId          String?
+  local            FranLocal?         @relation(fields: [localId], references: [id])
+  estado           FranEstadoProyecto @default(EN_DESARROLLO)
+  fechaAperturaObj DateTime?
+  responsable      String?
+  notas            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  etapas       FranEtapa[]
+  hitos        FranHito[]
+  bitacora     FranBitacora[]
+  aprendizajes FranAprendizaje[]
+  documentos   FranDocumento[]
+}
+
+model FranHito {
+  id            String         @id @default(cuid())
+  proyectoId    String
+  proyecto      FranProyecto   @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  titulo        String
+  fechaObjetivo DateTime?
+  fechaReal     DateTime?
+  estado        FranEstadoHito @default(PENDIENTE)
+  orden         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model FranEtapa {
+  id              String             @id @default(cuid())
+  proyectoId      String
+  proyecto        FranProyecto       @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  etapaTemplateId String?
+  etapaTemplate   FranEtapaTemplate? @relation(fields: [etapaTemplateId], references: [id])
+  numero          Int
+  nombre          String
+  descripcion     String?
+  orden           Int
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  tareas   FranTarea[]
+  bitacora FranBitacora[]
+
+  @@unique([proyectoId, numero])
+  @@index([proyectoId, orden])
+}
+
+model FranTarea {
+  id              String             @id @default(cuid())
+  etapaId         String
+  etapa           FranEtapa          @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+  tareaTemplateId String?
+  tareaTemplate   FranTareaTemplate? @relation(fields: [tareaTemplateId], references: [id])
+  titulo          String
+  descripcion     String?
+  estado          FranEstadoTarea    @default(PENDIENTE)
+  prioridad       FranPrioridad      @default(MEDIA)
+  peso            Int                @default(1)
+  motivoBloqueo   String?
+  responsable     String?
+  fechaLimite     DateTime?
+  fechaCompletada DateTime?
+  costoEstimado   Float?
+  costoReal       Float?
+  proveedor       String?
+  notas           String?
+  orden           Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  checklist FranChecklistItem[]
+  bitacora  FranBitacora[]
+  depende   FranTareaDependencia[] @relation("TareaActual")
+  bloquea   FranTareaDependencia[] @relation("TareaPrerequisito")
+}
+
+model FranChecklistItem {
+  id         String    @id @default(cuid())
+  tareaId    String
+  tarea      FranTarea @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  texto      String
+  completado Boolean   @default(false)
+  orden      Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model FranTareaDependencia {
+  id               String    @id @default(cuid())
+  tareaId          String
+  tarea            FranTarea @relation("TareaActual", fields: [tareaId], references: [id], onDelete: Cascade)
+  dependeDeTareaId String
+  dependeDe        FranTarea @relation("TareaPrerequisito", fields: [dependeDeTareaId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+
+  @@unique([tareaId, dependeDeTareaId])
+}
+
+model FranBitacora {
+  id           String       @id @default(cuid())
+  proyectoId   String
+  proyecto     FranProyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  etapaId      String?
+  etapa        FranEtapa?   @relation(fields: [etapaId], references: [id])
+  tareaId      String?
+  tarea        FranTarea?   @relation(fields: [tareaId], references: [id])
+  fecha        DateTime     @default(now())
+  titulo       String?
+  situacion    String
+  problema     String?
+  consecuencia String?
+  accion       String?
+  etiquetas    String[]     @default([])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  aprendizaje FranAprendizaje?
+}
+
+model FranAprendizaje {
+  id               String        @id @default(cuid())
+  proyectoId       String
+  proyecto         FranProyecto  @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  bitacoraId       String?       @unique
+  bitacora         FranBitacora? @relation(fields: [bitacoraId], references: [id])
+  titulo           String
+  problema         String?
+  causa            String?
+  decision         String?
+  resultado        String?
+  aprendizaje      String
+  aplicacionFutura String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  aplicaciones FranAprendizajeAplicacion[]
+}
+
+model FranAprendizajeAplicacion {
+  id              String             @id @default(cuid())
+  aprendizajeId   String
+  aprendizaje     FranAprendizaje    @relation(fields: [aprendizajeId], references: [id], onDelete: Cascade)
+  tipo            FranAplicacionTipo
+  sopId           String?
+  sop             FranProcedimiento? @relation(fields: [sopId], references: [id])
+  tareaTemplateId String?
+  tareaTemplate   FranTareaTemplate? @relation(fields: [tareaTemplateId], references: [id])
+  descripcion     String?
+  createdAt       DateTime           @default(now())
+}
+
+model FranDocumento {
+  id          String        @id @default(cuid())
+  marcaId     String?
+  marca       FranMarca?    @relation(fields: [marcaId], references: [id])
+  proyectoId  String?
+  proyecto    FranProyecto? @relation(fields: [proyectoId], references: [id])
+  nombre      String
+  categoria   String?
+  descripcion String?
+  url         String?
+  tipo        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
