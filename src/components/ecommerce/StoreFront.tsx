@@ -311,13 +311,13 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               onChange={(e) => setSearch(e.target.value)}
             />
           ) : (
-            <div className="relative flex-1 flex items-center min-w-0">
+            <div className="flex-1 flex items-center min-w-0">
               {catScroll.left && (
-                <button onClick={() => scrollCats(-1)} aria-label="Anterior" className="absolute left-0 z-10 h-full px-1 flex items-center bg-gradient-to-r from-white via-white to-transparent text-gray-500 hover:text-gray-900">
+                <button onClick={() => scrollCats(-1)} aria-label="Anterior" className="shrink-0 p-1.5 text-gray-400 hover:text-gray-800 transition">
                   <ChevronLeft className="w-5 h-5" />
                 </button>
               )}
-              <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
+              <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -331,7 +331,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
                 ))}
               </div>
               {catScroll.right && (
-                <button onClick={() => scrollCats(1)} aria-label="Siguiente" className="absolute right-0 z-10 h-full px-1 flex items-center bg-gradient-to-l from-white via-white to-transparent text-gray-500 hover:text-gray-900">
+                <button onClick={() => scrollCats(1)} aria-label="Siguiente" className="shrink-0 p-1.5 text-gray-400 hover:text-gray-800 transition">
                   <ChevronRight className="w-5 h-5" />
                 </button>
               )}

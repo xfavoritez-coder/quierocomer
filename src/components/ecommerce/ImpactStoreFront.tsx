@@ -316,14 +316,13 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
 
       {/* ── Chips de categorías — flotando (glass), sticky al hacer scroll ── */}
       {!searchOpen && grouped.length > 0 && (
-        <div style={{ position: "sticky", top: headerH - 1, zIndex: 38, background: "transparent" }}>
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "sticky", top: headerH - 1, zIndex: 38, background: "transparent", display: "flex", alignItems: "center" }}>
           {chipScroll.left && (
-            <button onClick={() => scrollChips(-1)} aria-label="Anterior" style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 2, display: "flex", alignItems: "center", padding: "0 8px 0 10px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(90deg, rgba(11,11,11,0.92) 55%, transparent)" }}>
+            <button onClick={() => scrollChips(-1)} aria-label="Anterior" style={{ flexShrink: 0, display: "flex", alignItems: "center", padding: "0 4px 0 10px", border: "none", background: "transparent", cursor: "pointer", color: "#fff" }}>
               <ChevronLeft size={22} />
             </button>
           )}
-          <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
+          <div ref={chipsRef} className="imp-scroll imp-menu-grid" style={{ flex: 1, minWidth: 0, display: "flex", gap: 8, overflowX: "auto", padding: "10px 14px 10px", scrollbarWidth: "none", background: "transparent" }}>
           {grouped.map(({ cat }) => {
             const on = cat.id === activeCat;
             return (
@@ -348,11 +347,10 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
           })}
           </div>
           {chipScroll.right && (
-            <button onClick={() => scrollChips(1)} aria-label="Siguiente" style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 2, display: "flex", alignItems: "center", padding: "0 10px 0 8px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(270deg, rgba(11,11,11,0.92) 55%, transparent)" }}>
+            <button onClick={() => scrollChips(1)} aria-label="Siguiente" style={{ flexShrink: 0, display: "flex", alignItems: "center", padding: "0 10px 0 4px", border: "none", background: "transparent", cursor: "pointer", color: "#fff" }}>
               <ChevronRight size={22} />
             </button>
           )}
-        </div>
         </div>
       )}
 
