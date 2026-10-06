@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -86,10 +86,11 @@ function nextActions(o: PosOrder): { stage: Stage; label: string; color: string 
   }
 }
 
-function saleBadge(o: PosOrder): { label: string; icon: any; color: string } {
-  if (isDeliveryOrder(o)) return { label: "Delivery", icon: Bike, color: GREEN };
-  if (o.tableLabel || o.saleType === "dine-in") return { label: o.tableLabel || "Mesa", icon: Utensils, color: BLUE };
-  return { label: "Retiro", icon: ShoppingBag, color: ORANGE };
+// `color` = tono base (para el fondo tenue); `deep` = tono profundo para texto/ícono.
+function saleBadge(o: PosOrder): { label: string; icon: any; color: string; deep: string } {
+  if (isDeliveryOrder(o)) return { label: "Delivery", icon: Bike, color: GREEN, deep: "#15803d" };
+  if (o.tableLabel || o.saleType === "dine-in") return { label: o.tableLabel || "Mesa", icon: Utensils, color: BLUE, deep: "#1d4ed8" };
+  return { label: "Retiro", icon: ShoppingBag, color: ORANGE, deep: "#c2410c" };
 }
 
 function beep() {
@@ -249,25 +250,31 @@ export default function CentroPedidosPage() {
 
       {/* Segmented control Activos / Historial */}
       <div style={{ display: "flex", gap: 3, marginBottom: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: 3 }}>
-        <SegTab active={view === "activos"} onClick={() => setView("activos")} icon={ListChecks} label="Activos" />
+        <SegTab active={view === "activos"} onClick={() => setView("activos")} icon={ClipboardCheck} label="Activos" />
         <SegTab active={view === "historial"} onClick={() => setView("historial")} icon={History} label="Historial" />
       </div>
 
-      {/* Selector de fecha (un solo día) */}
+      {/* Selector de fecha — un solo control, admite día único o rango */}
       {(() => {
         const today = chileTodayLocal();
-        const shiftDay = (days: number) => { setFromDate((f) => addDaysYmd(f, days)); setToDate((f) => addDaysYmd(f, days)); };
+        // Avanza/retrocede la "ventana" completa (manteniendo su largo en días).
+        const spanDays = Math.max(1, Math.round((Date.parse(fromDate) - Date.parse(toDate)) / 86400000 * -1) + 1);
+        const shiftWindow = (dir: number) => {
+          setFromDate((f) => addDaysYmd(f, dir * spanDays));
+          setToDate((t) => addDaysYmd(t, dir * spanDays));
+        };
         const navBtn: React.CSSProperties = { width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 };
-        const ddmmyyyy = fromDate.split("-").reverse().join("-");
+        const dateInput: React.CSSProperties = { fontFamily: FB, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text)", background: "transparent", border: "none", outline: "none", padding: 0, margin: 0, cursor: "pointer", colorScheme: "light dark" as any };
         return (
-          <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", justifyContent: "center" }}>
-            <button onClick={() => shiftDay(-1)} title="Día anterior" style={navBtn}><ChevronLeft size={16} /></button>
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FB, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", position: "relative" }}>
-              {ddmmyyyy}
-              <Calendar size={15} style={{ color: "var(--adm-text3)" }} />
-              <input type="date" value={fromDate} max={today} onChange={(e) => { const v = e.target.value || today; setFromDate(v); setToDate(v); }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none" }} />
-            </label>
-            <button onClick={() => shiftDay(1)} disabled={fromDate >= today} title="Día siguiente" style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? "default" : "pointer" }}><ChevronRight size={16} /></button>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={() => shiftWindow(-1)} title="Anterior" style={navBtn}><ChevronLeft size={16} /></button>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 11px" }}>
+              <Calendar size={15} style={{ color: "var(--adm-text3)", flexShrink: 0 }} />
+              <input type="date" aria-label="Desde" value={fromDate} max={toDate} onChange={(e) => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v); }} style={dateInput} />
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>→</span>
+              <input type="date" aria-label="Hasta" value={toDate} min={fromDate} max={today} onChange={(e) => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v); }} style={dateInput} />
+            </div>
+            <button onClick={() => shiftWindow(1)} disabled={toDate >= today} title="Siguiente" style={{ ...navBtn, opacity: toDate >= today ? 0.4 : 1, cursor: toDate >= today ? "default" : "pointer" }}><ChevronRight size={16} /></button>
           </div>
         );
       })()}
@@ -396,8 +403,8 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 6, fontFamily: F, fontSize: "0.66rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
-            <badge.icon size={11} /> {badge.label}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 900, letterSpacing: "-0.01em", background: `${badge.color}2e`, color: badge.deep }}>
+            <badge.icon size={12} strokeWidth={2.6} /> {badge.label}
           </span>
           {flash && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "1px 6px" }}>NUEVO</span>}
           {canceled && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "1px 6px" }}>CANCELADO</span>}
@@ -494,8 +501,8 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       {(o.tipAmount > 0 || o.changeAmount > 0 || o.deliveryFee > 0) && (
         <div style={{ marginTop: 6, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           {o.deliveryFee > 0 && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.74rem", fontWeight: 600, color: "var(--adm-text2)" }}>
-              <Truck size={13} style={{ color: "var(--adm-text3)", flexShrink: 0 }} /> Envío <strong style={{ color: "var(--adm-text)" }}>{clp(o.deliveryFee)}</strong>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)" }}>
+              <Truck size={13} style={{ color: "var(--adm-text3)", flexShrink: 0 }} /> <span style={{ fontFamily: FB, fontWeight: 700 }}>Envío</span> <span style={{ fontFamily: FB, fontWeight: 700, color: "var(--adm-text)" }}>{clp(o.deliveryFee)}</span>
             </span>
           )}
           {o.tipAmount > 0 && <Chip label={`Propina ${clp(o.tipAmount)}`} color={GREEN} />}
@@ -557,16 +564,16 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
         );
       })() : canRequestCourier ? (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text3)", flexShrink: 0 }}>{courierBusy ? "Solicitando…" : "Solicitar repartidor:"}</span>
+        <div style={{ marginTop: 8, padding: "8px 9px", borderRadius: 10, background: "var(--adm-hover)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", flexShrink: 0 }}>{courierBusy ? "Solicitando…" : "Solicitar repartidor:"}</span>
           {uberEnabled && (
-            <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>
+            <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
               <span style={{ width: 16, height: 16, borderRadius: 4, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>U</span>
               Uber Direct
             </button>
           )}
           {pedidosyaEnabled && (
-            <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>
+            <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
               <span style={{ width: 16, height: 16, borderRadius: 4, background: "#E4002B", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>P</span>
               PedidosYa
             </button>
