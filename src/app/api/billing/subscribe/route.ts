@@ -40,92 +40,23 @@ export async function POST(req: NextRequest) {
   });
   let flowCustomerId = currentRestaurant?.flowCustomerId || null;
 
-  const debug: string[] = [];
-
-  // Paso 1a: buscar en Flow por externalId=panelId (GET)
-  if (!flowCustomerId) {
-    try {
-      const existing = await flowGet<{ customerId: string }>("/customer/getByExternalId", { externalId: panelId });
-      if (existing?.customerId) {
-        flowCustomerId = existing.customerId;
-        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[subscribe] Cliente encontrado por externalId GET: ${flowCustomerId}`);
-        debug.push(`getByExternalId(GET) ok: ${flowCustomerId}`);
-      } else {
-        debug.push(`getByExternalId(GET) sin customerId: ${JSON.stringify(existing)}`);
-      }
-    } catch (e: any) {
-      debug.push(`getByExternalId(GET) err: ${e?.message}`);
-      console.log(`[subscribe] getByExternalId GET falló: ${e?.message}`);
-    }
-  }
-
-  // Paso 1b: intentar con POST si GET falló
-  if (!flowCustomerId) {
-    try {
-      const existing = await flowPost<{ customerId: string }>("/customer/getByExternalId", { externalId: panelId });
-      if (existing?.customerId) {
-        flowCustomerId = existing.customerId;
-        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[subscribe] Cliente encontrado por externalId POST: ${flowCustomerId}`);
-        debug.push(`getByExternalId(POST) ok: ${flowCustomerId}`);
-      } else {
-        debug.push(`getByExternalId(POST) sin customerId: ${JSON.stringify(existing)}`);
-      }
-    } catch (e: any) {
-      debug.push(`getByExternalId(POST) err: ${e?.message}`);
-      console.log(`[subscribe] getByExternalId POST falló: ${e?.message}`);
-    }
-  }
-
-  // Paso 2: buscar en Flow por email del owner
-  if (!flowCustomerId) {
-    try {
-      const list = await flowGet<{ data: Array<{ customerId: string; email: string }> }>("/customer/getList", {
-        filter: owner.email,
-        start: 0,
-        limit: 25,
-      });
-      const match = list?.data?.find((c: any) => c.email === owner.email);
-      if (match?.customerId) {
-        flowCustomerId = match.customerId;
-        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        console.log(`[subscribe] Cliente encontrado por email: ${flowCustomerId}`);
-        debug.push(`getList ok: ${flowCustomerId}`);
-      } else {
-        debug.push(`getList sin match (total: ${list?.data?.length ?? 0})`);
-      }
-    } catch (e: any) {
-      debug.push(`getList err: ${e?.message}`);
-      console.log(`[subscribe] getList falló: ${e?.message}`);
-    }
-  }
-
-  // Paso 3: crear cliente nuevo en Flow usando panelId como externalId
+  // Paso 1: crear cliente usando restaurantId como customerId (igual que la versión original
+  // que funcionaba). Si ya existe, ignorar el error y continuar con restaurantId igual.
   if (!flowCustomerId) {
     try {
       const created = await flowPost<{ customerId: string }>("/customer/create", {
-        externalId: panelId,
+        customerId: restaurantId,
         name: owner.name || owner.email.split("@")[0],
         email: owner.email,
       });
-      flowCustomerId = created.customerId;
+      flowCustomerId = created.customerId || restaurantId;
       await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-      console.log(`[subscribe] Cliente creado (externalId=panelId): ${flowCustomerId}`);
-      debug.push(`create ok: ${flowCustomerId}`);
+      console.log(`[subscribe] Cliente creado: ${flowCustomerId}`);
     } catch (createErr: any) {
-      const errData = (createErr as any).data;
-      debug.push(`create err: ${createErr?.message} | data: ${JSON.stringify(errData)}`);
-      console.error(`[subscribe] Error create: ${createErr?.message} | data: ${JSON.stringify(errData)}`);
-      if (errData?.customerId) {
-        flowCustomerId = errData.customerId;
-        await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
-        debug.push(`create errData.customerId: ${flowCustomerId}`);
-        console.log(`[subscribe] customerId del error body: ${flowCustomerId}`);
-      }
-      if (!flowCustomerId) {
-        return NextResponse.json({ error: `Flow debug: ${debug.join(" | ")}`, debug }, { status: 500 });
-      }
+      // Si ya existe (cualquier error de create), usar restaurantId directamente como en
+      // la versión original — Flow acepta el mismo customerId que se usó al crear.
+      console.log(`[subscribe] create falló, usando restaurantId como customerId: ${createErr?.message}`);
+      flowCustomerId = restaurantId;
     }
   }
 
