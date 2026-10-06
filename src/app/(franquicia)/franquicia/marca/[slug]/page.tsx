@@ -302,7 +302,6 @@ export default async function MarcaPage({
           </div>
         )}
       </div>
-    </div>
 
       <MarcaIdentidadClient
         marcaSlug={slug}
