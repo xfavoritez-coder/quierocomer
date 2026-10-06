@@ -29,6 +29,8 @@ export async function PATCH(
       notas,
       orden,
       validacion,
+      entregableEsperado,
+      resultado,
     } = body;
 
     const data: Record<string, unknown> = {};
@@ -49,6 +51,8 @@ export async function PATCH(
     if (notas !== undefined) data.notas = notas;
     if (orden !== undefined) data.orden = orden;
     if (validacion !== undefined) data.validacion = validacion;
+    if (entregableEsperado !== undefined) data.entregableEsperado = entregableEsperado;
+    if (resultado !== undefined) data.resultado = resultado;
 
     const tarea = await prisma.franTarea.update({
       where: { id },

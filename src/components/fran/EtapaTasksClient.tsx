@@ -43,6 +43,8 @@ interface Tarea {
   costoReal: number | null;
   proveedor: string | null;
   notas: string | null;
+  entregableEsperado: string | null;
+  resultado: string | null;
   orden: number;
   checklist: ChecklistItem[];
 }
@@ -369,22 +371,40 @@ export default function EtapaTasksClient({
                 <option value="COMPLETADA">Completada</option>
               </select>
 
-              {/* Title */}
-              <span
-                style={{
-                  fontFamily: FB,
-                  fontSize: "0.85rem",
-                  flex: 1,
-                  color:
-                    tarea.estado === "COMPLETADA"
-                      ? "var(--adm-text3)"
-                      : "var(--adm-text)",
-                  textDecoration:
-                    tarea.estado === "COMPLETADA" ? "line-through" : "none",
-                }}
-              >
-                {tarea.titulo}
-              </span>
+              {/* Title + resultado preview */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span
+                  style={{
+                    fontFamily: FB,
+                    fontSize: "0.85rem",
+                    color:
+                      tarea.estado === "COMPLETADA"
+                        ? "var(--adm-text3)"
+                        : "var(--adm-text)",
+                    textDecoration:
+                      tarea.estado === "COMPLETADA" ? "line-through" : "none",
+                  }}
+                >
+                  {tarea.titulo}
+                </span>
+                {tarea.estado === "COMPLETADA" && tarea.resultado && (
+                  <div
+                    style={{
+                      fontFamily: FB,
+                      fontSize: "0.74rem",
+                      color: "#10b981",
+                      marginTop: 2,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    ✓ {tarea.resultado.length > 90
+                      ? tarea.resultado.slice(0, 90) + "…"
+                      : tarea.resultado}
+                  </div>
+                )}
+              </div>
 
               {/* Prioridad badge */}
               {tarea.prioridad !== "MEDIA" && (
@@ -739,6 +759,63 @@ export default function EtapaTasksClient({
                         resize: "vertical",
                       }}
                     />
+                    <div>
+                      <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: GOLD, letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
+                        ENTREGABLE ESPERADO
+                      </label>
+                      <input
+                        value={
+                          (editFields.entregableEsperado !== undefined
+                            ? editFields.entregableEsperado
+                            : tarea.entregableEsperado) ?? ""
+                        }
+                        onChange={(e) =>
+                          setEditFields((f) => ({ ...f, entregableEsperado: e.target.value }))
+                        }
+                        placeholder="¿Qué debe existir para considerar esta tarea completada?"
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 7,
+                          border: "1px solid var(--adm-input-border)",
+                          background: "var(--adm-input)",
+                          color: "var(--adm-text)",
+                          fontFamily: FB,
+                          fontSize: "0.82rem",
+                          width: "100%",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#10b981", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
+                        RESULTADO — ESTE PROYECTO
+                      </label>
+                      <textarea
+                        value={
+                          (editFields.resultado !== undefined
+                            ? editFields.resultado
+                            : tarea.resultado) ?? ""
+                        }
+                        onChange={(e) =>
+                          setEditFields((f) => ({ ...f, resultado: e.target.value }))
+                        }
+                        placeholder="¿Cuál fue el resultado real? Decisión tomada, número, proveedor, conclusión..."
+                        rows={3}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 7,
+                          border: "1px solid rgba(16,185,129,0.3)",
+                          background: "var(--adm-input)",
+                          color: "var(--adm-text)",
+                          fontFamily: FB,
+                          fontSize: "0.82rem",
+                          resize: "vertical",
+                          width: "100%",
+                        }}
+                      />
+                      <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", display: "block", marginTop: 3 }}>
+                        Los estándares de marca se construirán a partir de estos resultados en una etapa posterior.
+                      </span>
+                    </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => saveTareaEdit(tarea.id)}
@@ -787,6 +864,26 @@ export default function EtapaTasksClient({
                       >
                         {tarea.descripcion}
                       </p>
+                    )}
+                    {tarea.entregableEsperado && (
+                      <div style={{ marginBottom: 10, padding: "8px 12px", background: `${GOLD}0d`, borderLeft: `3px solid ${GOLD}`, borderRadius: "0 6px 6px 0" }}>
+                        <div style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: GOLD, letterSpacing: "0.06em", marginBottom: 3 }}>
+                          ENTREGABLE ESPERADO
+                        </div>
+                        <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+                          {tarea.entregableEsperado}
+                        </p>
+                      </div>
+                    )}
+                    {tarea.resultado && (
+                      <div style={{ marginBottom: 10, padding: "8px 12px", background: "rgba(16,185,129,0.06)", borderLeft: "3px solid #10b981", borderRadius: "0 6px 6px 0" }}>
+                        <div style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "#10b981", letterSpacing: "0.06em", marginBottom: 3 }}>
+                          RESULTADO — ESTE PROYECTO
+                        </div>
+                        <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                          {tarea.resultado}
+                        </p>
+                      </div>
                     )}
                     {tarea.notas && (
                       <p

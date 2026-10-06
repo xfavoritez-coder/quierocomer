@@ -3087,6 +3087,42 @@ model FranMarca {
   tareaTemplates FranTareaTemplate[]
   procedimientos FranProcedimiento[]
   documentos     FranDocumento[]
+  identidad      FranIdentidadMarca?
+}
+
+model FranIdentidadMarca {
+  id      String    @id @default(cuid())
+  marcaId String    @unique
+  marca   FranMarca @relation(fields: [marcaId], references: [id], onDelete: Cascade)
+
+  // Propósito y dirección
+  proposito String? @db.Text
+  mision    String? @db.Text
+  vision    String? @db.Text
+
+  // Posicionamiento
+  promesaMarca    String? @db.Text
+  clienteObjetivo String? @db.Text
+  posicionamiento String? @db.Text
+  personalidad    String? @db.Text
+
+  // Identidad
+  queSomos  String? @db.Text
+  queNoSomos String? @db.Text
+
+  // Principios
+  principiosProducto    String? @db.Text
+  principiosExperiencia String? @db.Text
+  principiosServicio    String? @db.Text
+
+  // Sistema de franquicia
+  elementosCore         String? @db.Text
+  elementosFlexibles    String? @db.Text
+  reglasNoNegociables   String? @db.Text
+  libertadesFranquiciado String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model FranEtapaTemplate {
@@ -3255,10 +3291,12 @@ model FranTarea {
   costoEstimado   Float?
   costoReal       Float?
   proveedor       String?
-  notas           String?
-  orden           Int                @default(0)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  notas               String?
+  entregableEsperado  String?
+  resultado           String?  @db.Text
+  orden               Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   checklist FranChecklistItem[]
   bitacora  FranBitacora[]

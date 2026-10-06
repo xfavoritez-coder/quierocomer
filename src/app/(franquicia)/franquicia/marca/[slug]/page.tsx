@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { FolderOpen, MapPin, Building2 } from "lucide-react";
+import MarcaIdentidadClient from "@/components/fran/MarcaIdentidadClient";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function MarcaPage({
   const marca = await prisma.franMarca.findUnique({
     where: { slug },
     include: {
+      identidad: true,
       locales: { orderBy: { createdAt: "asc" } },
       proyectos: {
         where: { estado: { not: "CANCELADO" } },
@@ -300,6 +302,13 @@ export default async function MarcaPage({
           </div>
         )}
       </div>
+    </div>
+
+      <MarcaIdentidadClient
+        marcaSlug={slug}
+        marcaNombre={marca.nombre}
+        identidadInicial={marca.identidad ?? null}
+      />
     </div>
   );
 }
