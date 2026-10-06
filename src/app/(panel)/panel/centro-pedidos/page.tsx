@@ -238,7 +238,7 @@ export default function CentroPedidosPage() {
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1.15 }}>Centro de pedidos</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, letterSpacing: "-0.02em", color: "var(--adm-text)", margin: 0, lineHeight: 1.1 }}>Centro de pedidos</h1>
           <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Gestiona tus pedidos en tiempo real</p>
         </div>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontFamily: F, fontSize: "0.66rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
@@ -460,7 +460,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-        <p style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
+        <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 900, letterSpacing: "-0.01em", color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
         <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: ACCENT, flexShrink: 0 }}>{clp(o.totalAmount)}</span>
       </div>
 
