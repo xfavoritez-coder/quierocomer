@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ListChecks, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -61,7 +61,8 @@ function etaLabel(iso?: string | null): string | null {
 
 const STAGE_LABEL: Record<Stage, string> = { preparing: "En preparación", ready: "Listo", out_for_delivery: "En reparto", delivered: "Entregado" };
 const STAGE_SHORT: Record<Stage, string> = { preparing: "Preparación", ready: "Listo", out_for_delivery: "Reparto", delivered: "Entregado" };
-const STAGE_ICON: Record<Stage, string> = { preparing: "♨️", ready: "🛎️", out_for_delivery: "🛵", delivered: "✅" };
+// Iconos SVG (lucide) consistentes con el resto de la interfaz — sin emojis.
+const STAGE_LUCIDE: Record<Stage, any> = { preparing: Flame, ready: Bell, out_for_delivery: Bike, delivered: CheckSquare };
 // Las 4 etapas del tablero (columna izquierda estilo deliveryhandroll).
 const STAGES: Stage[] = ["preparing", "ready", "out_for_delivery", "delivered"];
 const STAGE_ACCENT: Record<Stage, string> = { preparing: ORANGE, ready: GREEN, out_for_delivery: BLUE, delivered: GRAY };
@@ -230,51 +231,43 @@ export default function CentroPedidosPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1240, margin: "0 auto", padding: "8px 4px 60px" }}>
-      <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 16 }}>
-        <ArrowLeft size={15} /> Panel
+    <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 0 48px" }}>
+      <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 4 }}>
+        <ArrowLeft size={14} /> Panel
       </Link>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ width: 42, height: 42, borderRadius: 12, background: `${ACCENT}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}><ListChecks size={20} color={ACCENT} /></div>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Centro de pedidos</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Gestiona tus pedidos en tiempo real</p>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1.15 }}>Centro de pedidos</h1>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Gestiona tus pedidos en tiempo real</p>
         </div>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 999, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)" }}>
-          <Radio size={13} /> {live ? "En vivo" : "Conectando…"}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontFamily: F, fontSize: "0.66rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
+          <Radio size={11} /> {live ? "En vivo" : "Conectando…"}
         </span>
-        <button onClick={() => fetchOrders()} title="Refrescar" style={{ width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={16} /></button>
+        <button onClick={() => fetchOrders()} title="Refrescar" style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}><RefreshCw size={14} /></button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center" }}>
-        <TabChip active={view === "activos"} onClick={() => setView("activos")} icon={ListChecks} label="Activos" />
-        <TabChip active={view === "historial"} onClick={() => setView("historial")} icon={History} label="Historial" />
+      {/* Segmented control Activos / Historial */}
+      <div style={{ display: "flex", gap: 3, marginBottom: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: 3 }}>
+        <SegTab active={view === "activos"} onClick={() => setView("activos")} icon={ListChecks} label="Activos" />
+        <SegTab active={view === "historial"} onClick={() => setView("historial")} icon={History} label="Historial" />
       </div>
 
-      {/* Barra de fechas */}
+      {/* Selector de fecha (un solo día) */}
       {(() => {
         const today = chileTodayLocal();
-        const singleDay = fromDate === toDate;
-        const shiftBoth = (days: number) => { setFromDate((f) => addDaysYmd(f, days)); setToDate((t) => addDaysYmd(t, days)); };
-        const dateInput: React.CSSProperties = { fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text)", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 8px", cursor: "pointer" };
-        const navBtn: React.CSSProperties = { width: 32, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer" };
+        const shiftDay = (days: number) => { setFromDate((f) => addDaysYmd(f, days)); setToDate((f) => addDaysYmd(f, days)); };
+        const navBtn: React.CSSProperties = { width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 };
+        const ddmmyyyy = fromDate.split("-").reverse().join("-");
         return (
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
-            <Calendar size={15} style={{ color: "var(--adm-text3)" }} />
-            {singleDay && (
-              <button onClick={() => shiftBoth(-1)} title="Día anterior" style={navBtn}><ChevronLeft size={16} /></button>
-            )}
-            <input type="date" value={fromDate} max={toDate} onChange={(e) => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v); }} style={dateInput} />
-            <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>→</span>
-            <input type="date" value={toDate} min={fromDate} onChange={(e) => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v); }} style={dateInput} />
-            {singleDay && (
-              <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} title="Día siguiente" style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? "default" : "pointer" }}><ChevronRight size={16} /></button>
-            )}
-            {(fromDate !== today || toDate !== today) && (
-              <button onClick={() => { setFromDate(today); setToDate(today); }} style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: ORANGE, background: `${ORANGE}14`, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Hoy</button>
-            )}
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", justifyContent: "center" }}>
+            <button onClick={() => shiftDay(-1)} title="Día anterior" style={navBtn}><ChevronLeft size={16} /></button>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FB, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 12px", cursor: "pointer", position: "relative" }}>
+              {ddmmyyyy}
+              <Calendar size={15} style={{ color: "var(--adm-text3)" }} />
+              <input type="date" value={fromDate} max={today} onChange={(e) => { const v = e.target.value || today; setFromDate(v); setToDate(v); }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none" }} />
+            </label>
+            <button onClick={() => shiftDay(1)} disabled={fromDate >= today} title="Día siguiente" style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? "default" : "pointer" }}><ChevronRight size={16} /></button>
           </div>
         );
       })()}
@@ -288,7 +281,7 @@ export default function CentroPedidosPage() {
             <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Los pedidos entregados o cancelados aparecerán aquí.</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10 }}>
             {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
           </div>
         )
@@ -307,26 +300,27 @@ export default function CentroPedidosPage() {
         }
         return (
           <>
-            {/* Chips de etapas (una sola fila, con scroll si no caben) */}
-            <div className="no-scrollbar" style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 2 }}>
+            {/* Chips de etapas — las 4 en una sola fila */}
+            <div className="no-scrollbar" style={{ display: "flex", gap: 5, marginBottom: 12, overflowX: "auto", scrollbarWidth: "none" }}>
               {STAGES.map((st) => {
                 const active = selectedStage === st;
                 const c = STAGE_ACCENT[st];
+                const Ic = STAGE_LUCIDE[st];
                 return (
                   <button
                     key={st}
                     onClick={() => setSelectedStage(st)}
                     style={{
-                      flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 7,
-                      padding: "9px 13px", borderRadius: 12, cursor: "pointer",
+                      flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "6px 8px", borderRadius: 9, cursor: "pointer",
                       border: `1px solid ${active ? c : "var(--adm-card-border)"}`,
-                      background: active ? `${c}1a` : "var(--adm-card)",
+                      background: active ? `${c}14` : "var(--adm-card)",
                       transition: "background .15s, border-color .15s",
                     }}
                   >
-                    <span style={{ fontSize: "1rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 800, whiteSpace: "nowrap", color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_SHORT[st]}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 800, minWidth: 20, height: 20, padding: "0 5px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
+                    <Ic size={13} color={active ? c : "var(--adm-text3)"} style={{ flexShrink: 0 }} />
+                    <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 800, whiteSpace: "nowrap", color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_SHORT[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 800, minWidth: 15, height: 15, padding: "0 4px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
                   </button>
                 );
               })}
@@ -338,7 +332,7 @@ export default function CentroPedidosPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text3)", margin: 0 }}>No hay pedidos en «{STAGE_SHORT[selectedStage]}».</p>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12, alignItems: "start" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10, alignItems: "start" }}>
                 {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
               </div>
             )}
@@ -366,8 +360,8 @@ function ElapsedTimer({ since }: { since: string }) {
   const color = mins >= 60 ? RED : mins >= 30 ? ORANGE : "var(--adm-text2)";
   const bg = mins >= 60 ? "rgba(239,68,68,0.12)" : mins >= 30 ? "rgba(249,115,22,0.12)" : "var(--adm-hover)";
   return (
-    <span title="Tiempo desde que se creó el pedido" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 9px", borderRadius: 999, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, background: bg, color }}>
-      <Clock size={13} /> {label}
+    <span title="Tiempo desde que se creó el pedido" style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 999, fontFamily: F, fontSize: "0.68rem", fontWeight: 800, background: bg, color }}>
+      <Clock size={11} /> {label}
     </span>
   );
 }
@@ -395,26 +389,26 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   // el webhook de Uber/PedidosYa. En reparto ya lo lleva alguien, no se ofrece.
   const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready") && (uberEnabled || pedidosyaEnabled);
   return (
-    <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 14, padding: 13, transition: "box-shadow .3s, border-color .3s" }}>
-      <div style={{ marginBottom: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 7, fontFamily: F, fontSize: "0.7rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
-            <badge.icon size={12} /> {badge.label}
+    <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 12, padding: 11, transition: "box-shadow .3s, border-color .3s" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, flexWrap: "wrap" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 6, fontFamily: F, fontSize: "0.66rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
+            <badge.icon size={11} /> {badge.label}
           </span>
-          {flash && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "2px 8px" }}>NUEVO</span>}
-          {canceled && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "2px 8px" }}>CANCELADO</span>}
-          {isTest && <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "2px 8px" }}>PRUEBA</span>}
+          {flash && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 900, color: "#fff", background: GREEN, borderRadius: 999, padding: "1px 6px" }}>NUEVO</span>}
+          {canceled && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 900, color: "#fff", background: RED, borderRadius: 999, padding: "1px 6px" }}>CANCELADO</span>}
+          {isTest && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 900, color: "#fff", background: BLUE, borderRadius: 999, padding: "1px 6px" }}>PRUEBA</span>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
         {o.opsStage !== "delivered" && !canceled && <ElapsedTimer since={o.createdAt} />}
         <div ref={menuRef} style={{ position: "relative" }}>
-          <button onClick={() => setMenuOpen((v) => !v)} title="Opciones" aria-label="Opciones" style={{ width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: menuOpen ? "var(--adm-hover)" : "transparent", color: "var(--adm-text3)", cursor: "pointer" }}><MoreVertical size={15} /></button>
+          <button onClick={() => setMenuOpen((v) => !v)} title="Opciones" aria-label="Opciones" style={{ width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 7, border: "none", background: menuOpen ? "var(--adm-hover)" : "transparent", color: "var(--adm-text3)", cursor: "pointer" }}><MoreVertical size={15} /></button>
           {menuOpen && (
             <div style={{ position: "absolute", top: 30, right: 0, zIndex: 30, minWidth: 190, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 11, boxShadow: "0 10px 30px rgba(0,0,0,0.22)", padding: 6, display: "flex", flexDirection: "column", gap: 1 }}>
               <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--adm-text3)", padding: "6px 8px 3px" }}>Mover a etapa</span>
               {STAGES.map((st) => {
                 const current = st === o.opsStage;
+                const Ic = STAGE_LUCIDE[st];
                 return (
                   <button
                     key={st}
@@ -424,7 +418,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
                     onMouseEnter={(e) => { if (!current) e.currentTarget.style.background = "var(--adm-hover)"; }}
                     onMouseLeave={(e) => { if (!current) e.currentTarget.style.background = "transparent"; }}
                   >
-                    <span style={{ fontSize: "0.95rem", lineHeight: 1 }}>{STAGE_ICON[st]}</span>
+                    <Ic size={15} color={current ? "var(--adm-text3)" : STAGE_ACCENT[st]} style={{ flexShrink: 0 }} />
                     <span style={{ flex: 1 }}>{STAGE_LABEL[st]}</span>
                     {current && <span style={{ fontSize: "0.66rem", color: "var(--adm-text3)" }}>actual</span>}
                   </button>
@@ -460,17 +454,16 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
         </div>
       </div>
-      </div>
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-        <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
-        <span style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: ACCENT, flexShrink: 0 }}>{clp(o.totalAmount)}</span>
+        <p style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || (o.orderReference ? `#${o.orderReference}` : "Pedido")}</p>
+        <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: ACCENT, flexShrink: 0 }}>{clp(o.totalAmount)}</span>
       </div>
 
       {(o.customerPhone || o.addressLine) && (
-        <div style={{ marginTop: 5, display: "flex", flexDirection: "column", gap: 2 }}>
-          {o.customerPhone && <a href={`tel:${o.customerPhone}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", textDecoration: "none" }}><Phone size={12} /> {o.customerPhone}</a>}
-          {o.addressLine && <span style={{ display: "inline-flex", alignItems: "flex-start", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)" }}><MapPin size={12} style={{ marginTop: 2, flexShrink: 0 }} /> {o.addressLine}</span>}
+        <div style={{ marginTop: 3, display: "flex", flexDirection: "column", gap: 1 }}>
+          {o.customerPhone && <a href={`tel:${o.customerPhone}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textDecoration: "none" }}><Phone size={11} style={{ flexShrink: 0 }} /> {o.customerPhone}</a>}
+          {o.addressLine && <span style={{ display: "inline-flex", alignItems: "flex-start", gap: 5, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)" }}><MapPin size={11} style={{ marginTop: 2, flexShrink: 0 }} /> {o.addressLine}</span>}
         </div>
       )}
 
@@ -484,29 +477,33 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
       )}
 
       {items.length > 0 && (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 2 }}>
           {items.slice(0, 6).map((ln, i) => {
             const qty = Number(ln?.quantity ?? ln?.qty ?? 1) || 1;
             const name = String(ln?.productName ?? ln?.name ?? ln?.dishName ?? "Ítem");
-            return <div key={i} style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}><strong style={{ color: "var(--adm-text)" }}>{qty}×</strong> {name}</div>;
+            return <div key={i} style={{ fontFamily: FB, fontSize: "0.73rem", lineHeight: 1.35, color: "var(--adm-text2)" }}><strong style={{ color: "var(--adm-text)" }}>{qty}×</strong> {name}</div>;
           })}
-          {items.length > 6 && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>+{items.length - 6} más…</div>}
+          {items.length > 6 && <div style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>+{items.length - 6} más…</div>}
         </div>
       )}
 
       {(o.tipAmount > 0 || o.changeAmount > 0 || o.deliveryFee > 0) && (
-        <div style={{ marginTop: 7, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {o.deliveryFee > 0 && <Chip label={`Envío ${clp(o.deliveryFee)}`} />}
+        <div style={{ marginTop: 6, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          {o.deliveryFee > 0 && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.74rem", fontWeight: 600, color: "var(--adm-text2)" }}>
+              <Truck size={13} style={{ color: "var(--adm-text3)", flexShrink: 0 }} /> Envío <strong style={{ color: "var(--adm-text)" }}>{clp(o.deliveryFee)}</strong>
+            </span>
+          )}
           {o.tipAmount > 0 && <Chip label={`Propina ${clp(o.tipAmount)}`} color={GREEN} />}
           {o.changeAmount > 0 && <Chip label={`Vuelto ${clp(o.changeAmount)}`} color={ORANGE} />}
         </div>
       )}
 
       {acts.length > 0 && (
-        <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+        <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
           {acts.map((a) => (
-            <button key={a.stage} onClick={() => onAdvance(o, a.stage)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "9px 10px", borderRadius: 9, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.8rem", fontWeight: 800, cursor: "pointer" }}>
-              <Check size={14} /> {a.label}
+            <button key={a.stage} onClick={() => onAdvance(o, a.stage)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "8px 10px", borderRadius: 8, border: "none", background: a.color, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}>
+              <Check size={13} /> {a.label}
             </button>
           ))}
         </div>
@@ -556,10 +553,20 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
         );
       })() : canRequestCourier ? (
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center" }}>
-          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
-          {uberEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>Uber Direct</button>}
-          {pedidosyaEnabled && <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>PedidosYa</button>}
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text3)", flexShrink: 0 }}>{courierBusy ? "Solicitando…" : "Solicitar repartidor:"}</span>
+          {uberEnabled && (
+            <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>
+              <span style={{ width: 16, height: 16, borderRadius: 4, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>U</span>
+              Uber Direct
+            </button>
+          )}
+          {pedidosyaEnabled && (
+            <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1 }}>
+              <span style={{ width: 16, height: 16, borderRadius: 4, background: "#E4002B", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>P</span>
+              PedidosYa
+            </button>
+          )}
         </div>
       ) : null}
     </div>
@@ -570,10 +577,10 @@ function Chip({ label, color }: { label: string; color?: string }) {
   return <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: 700, color: color || "var(--adm-text2)", background: color ? `${color}1a` : "var(--adm-hover)", borderRadius: 6, padding: "2px 7px" }}>{label}</span>;
 }
 
-function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
+function SegTab({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
   return (
-    <button onClick={onClick} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 16px", borderRadius: 12, cursor: "pointer", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, border: `1px solid ${active ? ACCENT : "var(--adm-card-border)"}`, background: active ? ACCENT : "var(--adm-card)", color: active ? "#fff" : "var(--adm-text2)", transition: "background .15s" }}>
-      <Icon size={17} /> {label}
+    <button onClick={onClick} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.8rem", fontWeight: 800, border: "none", background: active ? ACCENT : "transparent", color: active ? "#fff" : "var(--adm-text2)", boxShadow: active ? "0 1px 3px rgba(0,0,0,0.12)" : "none", transition: "background .15s" }}>
+      <Icon size={15} /> {label}
     </button>
   );
 }
