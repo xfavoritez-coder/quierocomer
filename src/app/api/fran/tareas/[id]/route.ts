@@ -28,6 +28,7 @@ export async function PATCH(
       proveedor,
       notas,
       orden,
+      validacion,
     } = body;
 
     const data: Record<string, unknown> = {};
@@ -47,6 +48,7 @@ export async function PATCH(
     if (proveedor !== undefined) data.proveedor = proveedor;
     if (notas !== undefined) data.notas = notas;
     if (orden !== undefined) data.orden = orden;
+    if (validacion !== undefined) data.validacion = validacion;
 
     const tarea = await prisma.franTarea.update({
       where: { id },

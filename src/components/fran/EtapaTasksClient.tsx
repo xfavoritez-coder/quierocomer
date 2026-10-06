@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -18,6 +18,7 @@ const FB = "var(--font-body)";
 
 type EstadoTarea = "PENDIENTE" | "EN_PROGRESO" | "BLOQUEADA" | "COMPLETADA";
 type Prioridad = "BAJA" | "MEDIA" | "ALTA" | "CRITICA";
+type ValidacionStatus = "PROPUESTA" | "VALIDADA" | "DESCARTADA";
 
 interface ChecklistItem {
   id: string;
@@ -31,6 +32,7 @@ interface Tarea {
   titulo: string;
   descripcion: string | null;
   estado: EstadoTarea;
+  validacion: ValidacionStatus;
   prioridad: Prioridad;
   peso: number;
   motivoBloqueo: string | null;
@@ -52,11 +54,16 @@ interface Etapa {
   tareas: Tarea[];
 }
 
-const ESTADO_NEXT: Record<EstadoTarea, EstadoTarea> = {
-  PENDIENTE: "EN_PROGRESO",
-  EN_PROGRESO: "COMPLETADA",
-  COMPLETADA: "PENDIENTE",
-  BLOQUEADA: "PENDIENTE",
+const VALIDACION_COLOR: Record<ValidacionStatus, string> = {
+  PROPUESTA: "var(--adm-text3)",
+  VALIDADA: "#10b981",
+  DESCARTADA: "#ef4444",
+};
+
+const VALIDACION_LABEL: Record<ValidacionStatus, string> = {
+  PROPUESTA: "Propuesta",
+  VALIDADA: "Validada",
+  DESCARTADA: "Descartada",
 };
 
 const ESTADO_COLOR: Record<EstadoTarea, string> = {
@@ -64,13 +71,6 @@ const ESTADO_COLOR: Record<EstadoTarea, string> = {
   EN_PROGRESO: GOLD,
   COMPLETADA: "#10b981",
   BLOQUEADA: "#ef4444",
-};
-
-const ESTADO_LABEL: Record<EstadoTarea, string> = {
-  PENDIENTE: "Pendiente",
-  EN_PROGRESO: "En progreso",
-  COMPLETADA: "Completada",
-  BLOQUEADA: "Bloqueada",
 };
 
 const PRIORIDAD_COLOR: Record<Prioridad, string> = {
@@ -95,7 +95,6 @@ export default function EtapaTasksClient({
   const [addingTarea, setAddingTarea] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editFields, setEditFields] = useState<Partial<Tarea>>({});
-  const [, startTransition] = useTransition();
 
   const updateEstado = async (
     id: string,
@@ -138,6 +137,22 @@ export default function EtapaTasksClient({
     }
   };
 
+  const updateValidacion = async (id: string, validacion: ValidacionStatus) => {
+    const prev = tareas;
+    setTareas((ts) => ts.map((t) => (t.id === id ? { ...t, validacion } : t)));
+    try {
+      const res = await fetch(`/api/fran/tareas/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ validacion }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTareas(prev);
+      toast.error("Error al actualizar validación");
+    }
+  };
+
   const saveTareaEdit = async (id: string) => {
     const prev = tareas;
     setTareas((ts) => ts.map((t) => (t.id === id ? { ...t, ...editFields } : t)));
@@ -171,7 +186,7 @@ export default function EtapaTasksClient({
       });
       if (!res.ok) throw new Error();
       const { tarea } = await res.json();
-      setTareas((ts) => [...ts, { ...tarea, checklist: [] }]);
+      setTareas((ts) => [...ts, { ...tarea, validacion: tarea.validacion ?? "PROPUESTA", checklist: [] }]);
       setNuevaTarea("");
       toast.success("Tarea agregada");
     } catch {
@@ -302,21 +317,9 @@ export default function EtapaTasksClient({
                 padding: "12px 16px",
               }}
             >
-              {/* Status button */}
-              <button
-                onClick={() => {
-                  if (tarea.estado === "EN_PROGRESO") {
-                    setBloqueandoId(tarea.id);
-                  } else {
-                    updateEstado(tarea.id, ESTADO_NEXT[tarea.estado]);
-                  }
-                }}
-                title={`Cambiar a: ${ESTADO_LABEL[ESTADO_NEXT[tarea.estado]]}`}
+              {/* Status icon (decorative) */}
+              <span
                 style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
                   flexShrink: 0,
                   color: ESTADO_COLOR[tarea.estado],
                   display: "flex",
@@ -324,15 +327,47 @@ export default function EtapaTasksClient({
                 }}
               >
                 {tarea.estado === "COMPLETADA" ? (
-                  <CheckCircle2 size={18} fill="currentColor" />
+                  <CheckCircle2 size={16} fill="currentColor" />
                 ) : tarea.estado === "BLOQUEADA" ? (
-                  <AlertTriangle size={18} />
+                  <AlertTriangle size={16} />
                 ) : tarea.estado === "EN_PROGRESO" ? (
-                  <Clock size={18} />
+                  <Clock size={16} />
                 ) : (
-                  <Circle size={18} />
+                  <Circle size={16} />
                 )}
-              </button>
+              </span>
+
+              {/* Estado select */}
+              <select
+                value={tarea.estado}
+                onChange={(e) => {
+                  const nuevo = e.target.value as EstadoTarea;
+                  if (nuevo === "BLOQUEADA") {
+                    setBloqueandoId(tarea.id);
+                    setMotivoInput("");
+                  } else {
+                    setBloqueandoId(null);
+                    updateEstado(tarea.id, nuevo);
+                  }
+                }}
+                style={{
+                  background: "var(--adm-input)",
+                  border: "1px solid var(--adm-input-border)",
+                  borderRadius: 7,
+                  color: ESTADO_COLOR[tarea.estado],
+                  fontFamily: F,
+                  fontSize: "0.76rem",
+                  fontWeight: 600,
+                  padding: "3px 6px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="EN_PROGRESO">En progreso</option>
+                <option value="BLOQUEADA">Bloqueada</option>
+                <option value="COMPLETADA">Completada</option>
+              </select>
 
               {/* Title */}
               <span
@@ -367,20 +402,22 @@ export default function EtapaTasksClient({
                 </span>
               )}
 
-              {/* Estado badge */}
-              {tarea.estado !== "PENDIENTE" && (
+              {/* Validacion badge (only show non-default states) */}
+              {tarea.validacion !== "PROPUESTA" && (
                 <span
                   style={{
                     fontFamily: F,
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    padding: "2px 8px",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    padding: "2px 7px",
                     borderRadius: 99,
-                    background: `${ESTADO_COLOR[tarea.estado]}18`,
-                    color: ESTADO_COLOR[tarea.estado],
+                    background: `${VALIDACION_COLOR[tarea.validacion]}18`,
+                    color: VALIDACION_COLOR[tarea.validacion],
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
                   }}
                 >
-                  {ESTADO_LABEL[tarea.estado]}
+                  {VALIDACION_LABEL[tarea.validacion]}
                 </span>
               )}
 
@@ -860,24 +897,48 @@ export default function EtapaTasksClient({
                         ))}
                       </div>
                     )}
-                    <button
-                      onClick={() => {
-                        setEditingId(tarea.id);
-                        setEditFields({});
-                      }}
-                      style={{
-                        padding: "5px 12px",
-                        background: "var(--adm-card-border)",
-                        color: "var(--adm-text2)",
-                        border: "none",
-                        borderRadius: 7,
-                        fontFamily: F,
-                        fontSize: "0.75rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Editar
-                    </button>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => {
+                          setEditingId(tarea.id);
+                          setEditFields({});
+                        }}
+                        style={{
+                          padding: "5px 12px",
+                          background: "var(--adm-card-border)",
+                          color: "var(--adm-text2)",
+                          border: "none",
+                          borderRadius: 7,
+                          fontFamily: F,
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>
+                        Validación:
+                      </span>
+                      <select
+                        value={tarea.validacion ?? "PROPUESTA"}
+                        onChange={(e) => updateValidacion(tarea.id, e.target.value as ValidacionStatus)}
+                        style={{
+                          background: "var(--adm-input)",
+                          border: "1px solid var(--adm-input-border)",
+                          borderRadius: 7,
+                          color: VALIDACION_COLOR[tarea.validacion ?? "PROPUESTA"],
+                          fontFamily: F,
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          padding: "3px 8px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="PROPUESTA">Propuesta</option>
+                        <option value="VALIDADA">Validada</option>
+                        <option value="DESCARTADA">Descartada</option>
+                      </select>
+                    </div>
                   </div>
                 )}
               </div>

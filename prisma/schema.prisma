@@ -3034,6 +3034,12 @@ enum FranEstadoTarea {
   COMPLETADA
 }
 
+enum FranValidacionStatus {
+  PROPUESTA
+  VALIDADA
+  DESCARTADA
+}
+
 enum FranPrioridad {
   BAJA
   MEDIA
@@ -3238,8 +3244,9 @@ model FranTarea {
   tareaTemplate   FranTareaTemplate? @relation(fields: [tareaTemplateId], references: [id])
   titulo          String
   descripcion     String?
-  estado          FranEstadoTarea    @default(PENDIENTE)
-  prioridad       FranPrioridad      @default(MEDIA)
+  estado          FranEstadoTarea       @default(PENDIENTE)
+  validacion      FranValidacionStatus  @default(PROPUESTA)
+  prioridad       FranPrioridad         @default(MEDIA)
   peso            Int                @default(1)
   motivoBloqueo   String?
   responsable     String?
