@@ -300,8 +300,8 @@ export default function CentroPedidosPage() {
         }
         return (
           <>
-            {/* Chips de etapas — las 4 en una sola fila */}
-            <div className="no-scrollbar" style={{ display: "flex", gap: 5, marginBottom: 12, overflowX: "auto", scrollbarWidth: "none" }}>
+            {/* Chips de etapas — las 4 en una sola fila, ancho igual, sin scroll */}
+            <div style={{ display: "flex", gap: 5, marginBottom: 12, width: "100%" }}>
               {STAGES.map((st) => {
                 const active = selectedStage === st;
                 const c = STAGE_ACCENT[st];
@@ -310,17 +310,18 @@ export default function CentroPedidosPage() {
                   <button
                     key={st}
                     onClick={() => setSelectedStage(st)}
+                    title={STAGE_SHORT[st]}
                     style={{
-                      flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "6px 8px", borderRadius: 9, cursor: "pointer",
+                      flex: "1 1 0", minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
+                      padding: "6px 4px", borderRadius: 9, cursor: "pointer",
                       border: `1px solid ${active ? c : "var(--adm-card-border)"}`,
                       background: active ? `${c}14` : "var(--adm-card)",
                       transition: "background .15s, border-color .15s",
                     }}
                   >
                     <Ic size={13} color={active ? c : "var(--adm-text3)"} style={{ flexShrink: 0 }} />
-                    <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 800, whiteSpace: "nowrap", color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_SHORT[st]}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 800, minWidth: 15, height: 15, padding: "0 4px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)" }}>{counts[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: active ? "var(--adm-text)" : "var(--adm-text2)" }}>{STAGE_SHORT[st]}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 800, minWidth: 15, height: 15, padding: "0 4px", borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: active ? c : "var(--adm-hover)", color: active ? "#fff" : "var(--adm-text3)", flexShrink: 0 }}>{counts[st]}</span>
                   </button>
                 );
               })}
@@ -390,6 +391,9 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
   const canRequestCourier = isDeliveryOrder(o) && !hasCourier && !canceled && (o.opsStage === "preparing" || o.opsStage === "ready") && (uberEnabled || pedidosyaEnabled);
   return (
     <div style={{ background: "var(--adm-card)", border: `1px solid ${flash ? GREEN : "var(--adm-card-border)"}`, boxShadow: flash ? `0 0 0 3px rgba(34,197,94,0.2)` : "none", borderRadius: 12, padding: 11, transition: "box-shadow .3s, border-color .3s" }}>
+      {o.vendorName && (
+        <p style={{ textAlign: "center", margin: "0 0 6px", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.vendorName}</p>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, flexWrap: "wrap" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 6, fontFamily: F, fontSize: "0.66rem", fontWeight: 800, background: `${badge.color}1a`, color: badge.color }}>
