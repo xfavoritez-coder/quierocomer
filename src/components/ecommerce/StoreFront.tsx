@@ -178,15 +178,15 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
     return map;
   }, [filtered, categories]);
 
-  const centerCatChip = useCallback((catId: string) => {
+  // Siempre alinea el chip activo a la IZQUIERDA de la barra (su inicio queda a
+  // la vista), nunca centrado: así la 1ª categoría no se corta y la activa se
+  // lee desde el principio.
+  const alignCatChip = useCallback((catId: string) => {
     const cont = catScrollRef.current;
     if (!cont) return;
     const chip = cont.querySelector<HTMLElement>(`[data-cat="${catId}"]`);
     if (!chip) return;
-    // Si el chip es más ancho que la barra (p. ej. la 1ª categoría en móvil),
-    // centrarlo cortaría su inicio. En ese caso lo alineamos a la izquierda.
-    const slack = Math.max(0, (cont.clientWidth - chip.clientWidth) / 2);
-    cont.scrollTo({ left: Math.max(0, chip.offsetLeft - slack), behavior: "smooth" });
+    cont.scrollTo({ left: Math.max(0, chip.offsetLeft - 8), behavior: "smooth" });
   }, []);
 
   const scrollToCategory = useCallback((catId: string) => {
@@ -195,11 +195,11 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
     const offset = (catNavRef.current?.offsetHeight ?? 56) + 8;
     const y = el.getBoundingClientRect().top + window.scrollY - offset;
     setActiveCat(catId);
-    centerCatChip(catId);
+    alignCatChip(catId);
     lockSpyRef.current = true;
     setTimeout(() => { lockSpyRef.current = false; }, 700);
     window.scrollTo({ top: y, behavior: "smooth" });
-  }, [centerCatChip]);
+  }, [alignCatChip]);
 
   useEffect(() => {
     function onScroll() {
@@ -215,7 +215,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       if (!current && categories.length) current = categories[0].id;
       if (current) {
         setActiveCat((prev) => {
-          if (prev !== current) centerCatChip(current!);
+          if (prev !== current) alignCatChip(current!);
           return current;
         });
       }
@@ -223,7 +223,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, [categories, centerCatChip]);
+  }, [categories, alignCatChip]);
 
   const badge = mounted ? itemCount : 0;
 
