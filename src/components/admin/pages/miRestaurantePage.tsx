@@ -318,7 +318,8 @@ export default function MiRestaurantePage() {
   const handleActivateAutoRenew = async () => {
     if (!rid || activatingAutoRenew) return;
     const planKey = plan as "GOLD" | "PREMIUM" | "SILVER";
-    if (plan === "FREE" || billingStatus?.subscriptionStatus !== "ACTIVE") {
+    const ss = billingStatus?.subscriptionStatus;
+    if (plan === "FREE" || (ss !== "ACTIVE" && ss !== "CANCELED")) {
       toast.error("Primero necesitas tener un plan activo");
       return;
     }
@@ -512,7 +513,7 @@ export default function MiRestaurantePage() {
                       >
                         {trialUsed ? "⚡ Activar Premium →" : "⚡ Probar Premium 7 días gratis"}
                       </button>
-                    ) : isActive && !billingStatus?.hasAutoRenewal ? (
+                    ) : (isActive || isCanceled) && !isFree && !billingStatus?.hasAutoRenewal ? (
                       <button
                         onClick={handleActivateAutoRenew}
                         disabled={activatingAutoRenew}
