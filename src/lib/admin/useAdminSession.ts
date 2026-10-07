@@ -13,6 +13,8 @@ interface AdminRestaurant {
   hasToteat?: boolean;
   ecommerceEnabled?: boolean;
   bodegaEnabled?: boolean;
+  centroPedidosEnabled?: boolean;
+  posEnabled?: boolean;
 }
 
 export interface AdminSession {

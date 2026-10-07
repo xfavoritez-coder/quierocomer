@@ -128,6 +128,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.bodegaEnabled !== undefined && { bodegaEnabled: body.bodegaEnabled }),
         // Pilar Centro de pedidos (super-admin only): flag maestro
         ...(body.centroPedidosEnabled !== undefined && { centroPedidosEnabled: body.centroPedidosEnabled }),
+        // Pilar POS / Punto de venta (super-admin only): flag maestro
+        ...(body.posEnabled !== undefined && { posEnabled: body.posEnabled }),
         ...(body.ecommerceConfig !== undefined && { ecommerceConfig: body.ecommerceConfig }),
         ...(body.ecommerceDeliveryZones !== undefined && { ecommerceDeliveryZones: body.ecommerceDeliveryZones }),
         ...(body.ecommerceDeliveryConfig !== undefined && { ecommerceDeliveryConfig: body.ecommerceDeliveryConfig }),

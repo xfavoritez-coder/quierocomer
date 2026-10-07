@@ -16,11 +16,13 @@ interface State {
   restaurantId: string
   restaurant: PosRestaurant | null
   loading: boolean
+  // null = desconocido (sin sesión de panel); true/false = habilitado por el local.
+  posEnabled: boolean | null
 }
 
 // Global singleton — fetched once for the lifetime of the SPA session
 let _restaurantId = FALLBACK_ID
-let _state: State = { restaurantId: FALLBACK_ID, restaurant: null, loading: true }
+let _state: State = { restaurantId: FALLBACK_ID, restaurant: null, loading: true, posEnabled: null }
 let _listeners = new Set<() => void>()
 let _fetched = false
 
@@ -50,7 +52,7 @@ function init() {
           const id = _restaurantId
           const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
           if (r?.id) {
-            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null }, loading: false }
+            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null }, loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
             notify()
             return
           }
@@ -63,12 +65,13 @@ function init() {
       const id = data.restaurants.some((r: PosRestaurant) => r.id === savedId)
         ? savedId!
         : data.selectedRestaurantId || data.restaurants[0]?.id || FALLBACK_ID
-      const rest = data.restaurants.find((r: PosRestaurant) => r.id === id) ?? null
+      const rest = data.restaurants.find((r: any) => r.id === id) ?? null
       _restaurantId = id
       _state = {
         restaurantId: id,
         restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null } : null,
         loading: false,
+        posEnabled: rest && typeof rest.posEnabled === "boolean" ? rest.posEnabled : null,
       }
       notify()
     })

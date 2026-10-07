@@ -45,6 +45,7 @@ interface Restaurant {
   ecommerceEnabled?: boolean;
   bodegaEnabled?: boolean;
   centroPedidosEnabled?: boolean;
+  posEnabled?: boolean;
   bodegaId?: string | null;
   ecommerceConfig?: EcommerceConfig | null;
   ecommerceDeliveryZones?: unknown;
@@ -727,6 +728,43 @@ export default function AdminLocales() {
               <div style={{
                 width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
                 left: selected.centroPedidosEnabled ? 23 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              }} />
+            </button>
+          </div>
+          </div>
+        )}
+
+        {/* Toggle POS / Punto de venta (pilar de caja) — super-admin only */}
+        {isSuper && (
+          <div style={{ padding: "14px 16px", background: selected.posEnabled ? "rgba(59,130,246,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.posEnabled ? "rgba(59,130,246,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.posEnabled ? "#3b82f6" : "white", margin: 0 }}>🧾 Punto de venta (POS) <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#3b82f6", background: "rgba(59,130,246,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+                {selected.posEnabled
+                  ? "Pilar activo · el acceso al POS aparece en el panel del local"
+                  : "Caja en mostrador: mesas, retiros, delivery y cobro"}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const val = !selected.posEnabled;
+                const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ posEnabled: val }) });
+                if (!res.ok) { alert("Error al actualizar"); return; }
+                const u = { ...selected, posEnabled: val };
+                setSelected(u);
+                setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+                background: selected.posEnabled ? "#3b82f6" : "rgba(255,255,255,0.15)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+                left: selected.posEnabled ? 23 : 3, transition: "left 0.2s",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
               }} />
             </button>

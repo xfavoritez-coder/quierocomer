@@ -364,7 +364,7 @@ type DesktopPanel =
 export default function PosHomePage() {
   const navigate = usePosNav()
   const isDesktop = useIsDesktop()
-  const { restaurantId, restaurant } = usePosRestaurant()
+  const { restaurantId, restaurant, posEnabled } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const accounts = useOpenAccounts()
   const cashSession = useOpenCashSession()
@@ -512,6 +512,26 @@ export default function PosHomePage() {
   const activePanelTableId = activePanelAccountId
     ? accounts.find(a => a.id === activePanelAccountId)?.table_id ?? null
     : null
+
+  // Guard de acceso: si el local tiene el POS deshabilitado (posEnabled === false
+  // vía sesión de panel) no se muestra. null = desconocido (sin sesión) → se permite.
+  if (posEnabled === false) {
+    return (
+      <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "var(--bg)" }}>
+        <div style={{ maxWidth: 420, textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: "var(--sunk)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+            <span style={{ fontSize: 30 }}>🧾</span>
+          </div>
+          <h1 style={{ fontFamily: "var(--sans)", fontSize: "1.25rem", fontWeight: 700, color: "var(--ink)", margin: "0 0 10px" }}>
+            Punto de venta no disponible
+          </h1>
+          <p style={{ fontFamily: "var(--sans)", fontSize: "0.9rem", color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
+            Este módulo está en beta y aún no está habilitado para tu local. Contáctanos si quieres activarlo.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="pos-shell">

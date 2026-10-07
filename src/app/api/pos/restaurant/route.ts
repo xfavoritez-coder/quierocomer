@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
 
   const r = await prisma.restaurant.findUnique({
     where: { id },
-    select: { id: true, name: true, slug: true, logoUrl: true },
+    select: { id: true, name: true, slug: true, logoUrl: true, posEnabled: true },
   });
   if (!r) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json(r);

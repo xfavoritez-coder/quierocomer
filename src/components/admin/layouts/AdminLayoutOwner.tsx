@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -44,7 +44,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean; hasPos?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -119,6 +119,15 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
         { icon: BarChart3, labelKey: "nav_centro_report", href: `${base}/centro-pedidos/reporte` },
         { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
+      ],
+    }] : []),
+    ...(opts.hasPos ? [{
+      key: "pos",
+      label: "Punto de venta",
+      icon: Receipt,
+      badge: "Beta",
+      items: [
+        { icon: Receipt, labelKey: "nav_pos_open", href: "/pos" },
       ],
     }] : []),
     ...(opts.hasBodega ? [{
@@ -222,7 +231,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasEcommerce = !!(selected as any)?.ecommerceEnabled;
   const hasBodega = !!(selected as any)?.bodegaEnabled;
   const hasCentroPedidos = !!(selected as any)?.centroPedidosEnabled;
-  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos });
+  const hasPos = !!(selected as any)?.posEnabled;
+  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos, hasPos });
 
   // Perfil VIEWER: el owner controla qué secciones del sidebar puede ver.
   // viewerSections null/undefined = ve todas (comportamiento por defecto).
