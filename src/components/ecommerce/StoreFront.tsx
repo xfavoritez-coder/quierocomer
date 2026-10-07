@@ -186,7 +186,11 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
     if (!cont) return;
     const chip = cont.querySelector<HTMLElement>(`[data-cat="${catId}"]`);
     if (!chip) return;
-    cont.scrollTo({ left: Math.max(0, chip.offsetLeft - 8), behavior: "smooth" });
+    // Posición del chip relativa al borde visible del contenedor (robusto sin
+    // importar cuál sea el offsetParent — offsetLeft daba valores erróneos al
+    // agregar los chevrons y hacía scroll de más, cortando la 1ª categoría).
+    const delta = chip.getBoundingClientRect().left - cont.getBoundingClientRect().left;
+    cont.scrollTo({ left: Math.max(0, cont.scrollLeft + delta - 8), behavior: "smooth" });
   }, []);
 
   const scrollToCategory = useCallback((catId: string) => {

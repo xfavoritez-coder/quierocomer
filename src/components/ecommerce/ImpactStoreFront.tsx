@@ -129,7 +129,12 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
     const cont = chipsRef.current;
     if (!cont || !activeCat) return;
     const el = cont.querySelector(`[data-cat="${activeCat}"]`) as HTMLElement | null;
-    if (el) cont.scrollTo({ left: el.offsetLeft - 16, behavior: "smooth" });
+    if (el) {
+      // Relativo al borde visible del contenedor (offsetLeft daba valores
+      // erróneos al agregar los chevrons y cortaba la 1ª categoría).
+      const delta = el.getBoundingClientRect().left - cont.getBoundingClientRect().left;
+      cont.scrollTo({ left: Math.max(0, cont.scrollLeft + delta - 16), behavior: "smooth" });
+    }
   }, [activeCat]);
 
   // Flechas < > para desplazar los chips de categoría cuando no caben.
