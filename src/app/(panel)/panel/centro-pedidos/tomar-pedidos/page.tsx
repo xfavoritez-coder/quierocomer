@@ -449,7 +449,7 @@ function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: 
       </div>
 
       {isWide ? (
-        <div style={{ display: "flex", gap: 14, height: "calc(100vh - 150px)", minHeight: 520 }}>
+        <div style={{ display: "flex", gap: 14, height: "calc(100dvh - 96px)", minHeight: 520 }}>
           <div style={{ width: 380, flexShrink: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>{cartPanel}</div>
           <div style={{ flex: 1, minWidth: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>{menuPanel}</div>
         </div>
