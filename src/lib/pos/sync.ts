@@ -96,6 +96,31 @@ async function initialSync(restaurantId: string): Promise<void> {
     markOnline()
   }
 
+  // 2.5 Reparación: si hay eventos locales pero NINGUNO proviene del servidor
+  //     (ninguno tiene server_seq), el servidor no tiene nuestros datos — p. ej.
+  //     la tabla pos_events se creó después y los eventos quedaron marcados
+  //     synced=1 sin haber subido nunca. Re-subimos TODO (upsert idempotente).
+  if (supabase) {
+    const localAll = (await posDb.events.toArray()).filter(e => e.restaurant_id === restaurantId)
+    const fromServer = localAll.filter(e => (e.server_seq ?? 0) > 0).length
+    if (localAll.length > 0 && fromServer === 0) {
+      const queued = new Set((await posDb.syncQueue.toArray()).map(q => q.event_id))
+      await posDb.transaction('rw', [posDb.events, posDb.syncQueue], async () => {
+        for (const e of localAll) await posDb.events.update(e.event_id, { synced: 0 })
+        const toAdd = localAll.filter(e => !queued.has(e.event_id))
+        if (toAdd.length) await posDb.syncQueue.bulkAdd(
+          toAdd.map(e => ({ event_id: e.event_id, created_at: e.created_at_local, retries: 0 }))
+        )
+      })
+      console.warn(`[POS Sync] Reparación: re-subiendo ${localAll.length} eventos locales (el servidor no tenía ninguno)`)
+      // Drenar la cola (BATCH_SIZE=50 por pasada)
+      await pushEvents()
+      await pushEvents()
+      await pushEvents()
+      markOnline()
+    }
+  }
+
   // 3. Rebuild projected state from ALL local events (clean replay)
   await rebuildFromEvents(restaurantId)
   notifyDbChange()
