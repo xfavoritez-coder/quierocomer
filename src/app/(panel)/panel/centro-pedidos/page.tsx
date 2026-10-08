@@ -564,20 +564,22 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
         );
       })() : canRequestCourier ? (
-        <div style={{ marginTop: 8, padding: "8px 9px", borderRadius: 10, background: "var(--adm-hover)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", flexShrink: 0 }}>{courierBusy ? "Solicitando…" : "Solicitar repartidor:"}</span>
-          {uberEnabled && (
-            <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
-              <span style={{ width: 16, height: 16, borderRadius: 4, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>U</span>
-              Uber Direct
-            </button>
-          )}
-          {pedidosyaEnabled && (
-            <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: "1 1 auto", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
-              <span style={{ width: 16, height: 16, borderRadius: 4, background: "#E4002B", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>P</span>
-              PedidosYa
-            </button>
-          )}
+        <div style={{ marginTop: 8, padding: "8px 9px", borderRadius: 10, background: "var(--adm-hover)" }}>
+          <span style={{ display: "block", fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {uberEnabled && (
+              <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap", cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
+                <span style={{ width: 16, height: 16, borderRadius: 4, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>U</span>
+                Uber Direct
+              </button>
+            )}
+            {pedidosyaEnabled && (
+              <button disabled={courierBusy} onClick={() => onCourier(o, "pedidosya")} style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap", cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
+                <span style={{ width: 16, height: 16, borderRadius: 4, background: "#E4002B", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>P</span>
+                PedidosYa
+              </button>
+            )}
+          </div>
         </div>
       ) : null}
     </div>
