@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck, MonitorPlay } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -245,6 +245,9 @@ export default function CentroPedidosPage() {
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontFamily: F, fontSize: "0.66rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
           <Radio size={11} /> {live ? "En vivo" : "Conectando…"}
         </span>
+        <Link href="/panel/centro-pedidos/kds" title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
+          <MonitorPlay size={15} /> KDS
+        </Link>
         <button onClick={() => fetchOrders()} title="Refrescar" style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}><RefreshCw size={14} /></button>
       </div>
 
