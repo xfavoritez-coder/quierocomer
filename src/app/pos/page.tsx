@@ -28,7 +28,7 @@ import ComanderoPanel from './components/ComanderoPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery'
+type Tab = 'mesas'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -47,77 +47,9 @@ const statusLabel: Record<TableStatus, string> = {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
-  { id: 'retiro', label: 'Retiros' },
-  { id: 'delivery', label: 'Delivery' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
-
-function RetiroModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (name: string, time: string) => void }) {
-  const [name, setName] = useState('')
-  const [time, setTime] = useState('')
-  return (
-    <div className="pos-modal-overlay" onClick={onClose}>
-      <div className="pos-modal" onClick={e => e.stopPropagation()}>
-        <div className="pos-modal-title">Nuevo retiro</div>
-        <label className="pos-modal-label">Nombre del cliente <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(opcional)</span></label>
-        <input
-          autoFocus
-          className="pos-modal-input"
-          placeholder="Ej: Juan"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && onConfirm(name.trim(), time)}
-        />
-        <label className="pos-modal-label">Hora de retiro <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(opcional)</span></label>
-        <input
-          className="pos-modal-input"
-          type="time"
-          value={time}
-          onChange={e => setTime(e.target.value)}
-        />
-        <div className="pos-modal-actions">
-          <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
-          <button
-            className="pos-modal-ok"
-            onClick={() => onConfirm(name.trim(), time)}
-          >
-            Crear pedido
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function DeliveryModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (data: { name: string; phone: string; address: string; notes: string }) => void }) {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
-  const [notes, setNotes] = useState('')
-  const valid = name.trim() && phone.trim() && address.trim()
-  return (
-    <div className="pos-modal-overlay" onClick={onClose}>
-      <div className="pos-modal" onClick={e => e.stopPropagation()}>
-        <div className="pos-modal-title">Nuevo delivery</div>
-        <label className="pos-modal-label">Nombre del cliente</label>
-        <input autoFocus className="pos-modal-input" placeholder="Ej: María González" value={name} onChange={e => setName(e.target.value)} />
-        <label className="pos-modal-label">Teléfono</label>
-        <input className="pos-modal-input" placeholder="+56 9 1234 5678" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
-        <label className="pos-modal-label">Dirección de entrega</label>
-        <input className="pos-modal-input" placeholder="Calle y número, barrio..." value={address} onChange={e => setAddress(e.target.value)} />
-        <label className="pos-modal-label">Notas (opcional)</label>
-        <input className="pos-modal-input" placeholder="Depto, referencias, sin gluten..." value={notes} onChange={e => setNotes(e.target.value)} />
-        <div className="pos-modal-actions">
-          <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
-          <button className="pos-modal-ok" disabled={!valid} onClick={() => onConfirm({ name: name.trim(), phone: phone.trim(), address: address.trim(), notes: notes.trim() })}>
-            Crear delivery
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function PendingModal({ count, onClose }: { count: number; onClose: () => void }) {
   return (
@@ -310,51 +242,6 @@ function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashS
   )
 }
 
-// ── Account cards (Mostrador / Retiro / Delivery) ─────────────────
-
-function AccountCard({ account, onSelect }: { account: Account; onSelect: (accountId: string) => void }) {
-  const isActive = account.total > 0
-  const isDelivery = account.type === 'delivery'
-  const typeLabel = isDelivery ? 'Delivery' : 'Retiro'
-  const chipClass = isActive ? 'on' : isDelivery ? 'de' : 're'
-
-  return (
-    <button
-      className={`pos-ticket ${isActive ? 'active' : 'idle'}`}
-      onClick={() => onSelect(account.id)}
-    >
-      <div className="pos-rail" />
-      <div className="pos-ticket-body">
-        <div className="pos-t-left">
-          <div className={`pos-chip ${chipClass}`}>{typeLabel}</div>
-          <div>
-            <div className="pos-t-name">
-              {account.type === 'delivery'
-                ? `Delivery · ${account.customer_name}`
-                : account.customer_name
-                  ? `Retiro · ${account.customer_name}`
-                  : 'Retiro'}
-            </div>
-            {account.delivery_address && (
-              <div className="pos-t-address">{account.delivery_address}</div>
-            )}
-            <div className="pos-t-meta">
-              <span>{account.items.filter(i => !i.voided).length} ítems</span>
-              <span className="sep">·</span>
-              <span>{account.rounds.length} ronda{account.rounds.length !== 1 ? 's' : ''}</span>
-              <span className="sep">·</span>
-              <span>{timeSince(account.opened_at)}</span>
-            </div>
-          </div>
-        </div>
-        <div className={`pos-t-total ${account.total === 0 ? 'zero' : 'big'}`}>
-          ${account.total.toLocaleString('es-CL')}
-        </div>
-      </div>
-    </button>
-  )
-}
-
 // ── Main page ─────────────────────────────────────────────────────
 
 type DesktopPanel =
@@ -393,17 +280,9 @@ export default function PosHomePage() {
     if (!isDesktop) setDesktopPanel(null)
   }, [isDesktop])
 
-  const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
-      if (p && ['mesas', 'retiro', 'delivery'].includes(p)) return p
-    }
-    return 'mesas'
-  })
+  const [tab, setTab] = useState<Tab>('mesas')
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [retiroModal, setRetiroModal] = useState(false)
-  const [deliveryModal, setDeliveryModal] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
   const [mesaOpenModal, setMesaOpenModal] = useState<{ tableId: string; tableNumber: number; tableLabel: string } | null>(null)
 
@@ -416,9 +295,6 @@ export default function PosHomePage() {
   })
 
   // Tab counts for badges
-  const openAccounts = accounts.filter(a => !['cerrada', 'anulada'].includes(a.status))
-  const retiroAccounts = openAccounts.filter(a => a.type === 'retiro' || a.type === 'mostrador')
-  const deliveryAccounts = openAccounts.filter(a => a.type === 'delivery')
   const ocupadas = tables.filter(t => {
     const { status } = getTableStatus(t.id, accounts)
     return status !== 'libre'
@@ -426,8 +302,6 @@ export default function PosHomePage() {
 
   const tabCounts: Partial<Record<Tab, number>> = {
     ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
-    ...(retiroAccounts.length > 0 ? { retiro: retiroAccounts.length } : {}),
-    ...(deliveryAccounts.length > 0 ? { delivery: deliveryAccounts.length } : {}),
   }
 
   // Handlers
@@ -461,46 +335,6 @@ export default function PosHomePage() {
       setDesktopPanel({ type: 'comandero', accountId: id, tab: 'mesas' })
     } else {
       navigate(`/pos/comandero?cuenta=${id}`)
-    }
-  }
-
-  const handleSelectAccount = (accountId: string) => {
-    if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId, tab })
-    } else {
-      navigate(`/pos/cuenta?id=${accountId}&from=${tab}`)
-    }
-  }
-
-  const handleNewRetiro = (name: string, time: string) => {
-    setRetiroModal(false)
-    const id = uuidv4()
-    if (name) {
-      openAccount({ account_id: id, account_type: 'retiro', customer_name: name, pickup_time: time || undefined })
-    } else {
-      openAccount({ account_id: id, account_type: 'mostrador' })
-    }
-    if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId: id, tab: 'retiro' })
-    } else {
-      navigate(`/pos/cuenta?id=${id}&from=retiro`)
-    }
-  }
-
-  const handleNewDelivery = (data: { name: string; phone: string; address: string; notes: string }) => {
-    setDeliveryModal(false)
-    const id = uuidv4()
-    openAccount({
-      account_id: id,
-      account_type: 'delivery',
-      customer_name: data.name,
-      customer_phone: data.phone,
-      delivery_address: data.address,
-    })
-    if (isDesktop) {
-      setDesktopPanel({ type: 'cuenta', accountId: id, tab: 'delivery' })
-    } else {
-      navigate(`/pos/cuenta?id=${id}&from=delivery`)
     }
   }
 
@@ -553,6 +387,14 @@ export default function PosHomePage() {
                 {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
               </button>
             ))}
+            <button
+              className="pos-tab pos-tab-order"
+              onClick={() => navigate('/pos/tomar-pedido')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--amber)', color: '#fff', fontWeight: 700 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Tomar Pedido
+            </button>
           </div>
         }
       />
@@ -665,58 +507,6 @@ export default function PosHomePage() {
             )
           })()}
 
-          {/* RETIRO */}
-          {tab === 'retiro' && (
-            <>
-              <div className="pos-tab-header">
-                <div className="pos-tab-stat">
-                  <span className="pos-tab-stat-n">{retiroAccounts.length}</span>
-                  <span className="pos-tab-stat-l">retiro{retiroAccounts.length !== 1 ? 's' : ''} activo{retiroAccounts.length !== 1 ? 's' : ''}</span>
-                </div>
-                <button className="pos-new-btn-sm" onClick={() => setRetiroModal(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                  Nuevo retiro
-                </button>
-              </div>
-              {retiroAccounts.length > 0 ? (
-                <div className="pos-tickets">
-                  {[...retiroAccounts.filter(a => a.total > 0), ...retiroAccounts.filter(a => a.total === 0)]
-                    .map(a => <div key={a.id} onClick={e => e.stopPropagation()}><AccountCard account={a} onSelect={handleSelectAccount} /></div>)}
-                </div>
-              ) : (
-                <div className="pos-empty" style={{ minHeight: 160 }}>
-                  <p>Sin pedidos pendientes</p>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* DELIVERY */}
-          {tab === 'delivery' && (
-            <>
-              <div className="pos-tab-header">
-                <div className="pos-tab-stat">
-                  <span className="pos-tab-stat-n">{deliveryAccounts.length}</span>
-                  <span className="pos-tab-stat-l">delivery{deliveryAccounts.length !== 1 ? 's' : ''} activo{deliveryAccounts.length !== 1 ? 's' : ''}</span>
-                </div>
-                <button className="pos-new-btn-sm" onClick={() => setDeliveryModal(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                  Nuevo delivery
-                </button>
-              </div>
-              {deliveryAccounts.length > 0 ? (
-                <div className="pos-tickets">
-                  {[...deliveryAccounts.filter(a => a.total > 0), ...deliveryAccounts.filter(a => a.total === 0)]
-                    .map(a => <div key={a.id} onClick={e => e.stopPropagation()}><AccountCard account={a} onSelect={handleSelectAccount} /></div>)}
-                </div>
-              ) : (
-                <div className="pos-empty" style={{ minHeight: 160 }}>
-                  <p>Sin deliveries pendientes</p>
-                </div>
-              )}
-            </>
-          )}
-
         </div>
       </div>
 
@@ -746,13 +536,9 @@ export default function PosHomePage() {
           {!activePanel && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-                {tab === 'mesas' && <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>}
-                {tab === 'retiro' && <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}
-                {tab === 'delivery' && <><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><circle cx="20" cy="16" r="1"/></>}
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
               </svg>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>
-                {tab === 'mesas' ? 'Selecciona una mesa' : tab === 'retiro' ? 'Selecciona un retiro' : 'Selecciona un delivery'}
-              </span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona una mesa</span>
             </div>
           )}
         </div>
@@ -761,8 +547,6 @@ export default function PosHomePage() {
       </div>{/* /pos-split-wrapper */}
 
       {/* ── Modals ──────────────────────────────────────────── */}
-      {retiroModal && <RetiroModal onClose={() => setRetiroModal(false)} onConfirm={handleNewRetiro} />}
-      {deliveryModal && <DeliveryModal onClose={() => setDeliveryModal(false)} onConfirm={handleNewDelivery} />}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
       {mesaOpenModal && (
         <MesaOpenModal

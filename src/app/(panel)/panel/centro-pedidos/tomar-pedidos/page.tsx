@@ -37,9 +37,10 @@ const C = {
   text: "#0f172a", text2: "#64748b", text3: "#94a3b8", green: "#16a34a", red: "#ef4444", amber: "#f59e0b",
 };
 
-export default function TomarPedidosPage() {
-  const session = useSessionContext();
-  const restaurantId = session?.selectedRestaurantId;
+// Componente reutilizable: recibe el restaurantId por prop (el panel lo toma de
+// la sesión; el POS lo toma de usePosRestaurant). `backHref`/`backLabel` definen
+// el enlace "atrás" según dónde se embeba.
+export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos" }: { restaurantId?: string | null; backHref?: string; backLabel?: string }) {
   const [data, setData] = useState<StorefrontData | null>(null);
   const [posAvailable, setPosAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,7 +65,7 @@ export default function TomarPedidosPage() {
       <CollapseSidebar />
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} backHref={backHref} backLabel={backLabel} />}
     </>
   );
 }
@@ -84,7 +85,7 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; restaurantId: string; posAvailable: boolean }) {
+function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; backHref: string; backLabel: string }) {
   const { tenant, categories, products } = data;
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
@@ -437,8 +438,8 @@ function POS({ data, restaurantId, posAvailable }: { data: StorefrontData; resta
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <Link href="/panel/centro-pedidos" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
-          <ArrowLeft size={15} /> Centro de pedidos
+        <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
+          <ArrowLeft size={15} /> {backLabel}
         </Link>
         <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{tenant.name}</span>
         <button onClick={() => window.open("/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
@@ -700,4 +701,10 @@ function ConfirmModal({ cart, customerName, customerPhone, deliveryType, address
       </div>
     </Overlay>
   );
+}
+
+// Ruta del panel (/panel/centro-pedidos/tomar-pedidos): toma el local de la sesión.
+export default function TomarPedidosPage() {
+  const session = useSessionContext();
+  return <TomarPedidos restaurantId={session?.selectedRestaurantId} />;
 }
