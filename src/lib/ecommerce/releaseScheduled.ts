@@ -8,16 +8,18 @@ import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 export async function releaseScheduledOrder(orderId: string): Promise<{ ok: boolean; skipped?: boolean; pos?: unknown }> {
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, restaurantId: true, customerName: true, total: true, orderType: true, source: true, printRequestedAt: true, scheduledReleasedAt: true, status: true },
+    select: { id: true, restaurantId: true, customerName: true, total: true, orderType: true, source: true, scheduledReleasedAt: true, status: true },
   });
   if (!order) return { ok: false, skipped: true };
   if (order.scheduledReleasedAt || order.status === "CANCELLED") return { ok: false, skipped: true };
 
-  // Marca liberado primero (evita doble liberación si el cron se solapa) y deja
-  // el pedido imprimible (printRequestedAt) sin importar la ventana de auto-print.
+  // Marca liberado primero (evita doble liberación si el cron se solapa). NO se
+  // fuerza la impresión: al liberarse, el pedido sigue la MISMA lógica de impresión
+  // que los demás (auto imprime en su ventana; manual/off no imprimen solos, solo
+  // cuando el staff toca "Imprimir comanda"). El despacho al POS/Toteat sí ocurre.
   await prisma.onlineOrder.update({
     where: { id: order.id },
-    data: { scheduledReleasedAt: new Date(), printRequestedAt: order.printRequestedAt ?? new Date() },
+    data: { scheduledReleasedAt: new Date() },
   });
 
   const pos = await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => ({ ok: false, message: String(e) }));
