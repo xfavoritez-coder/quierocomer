@@ -47,6 +47,12 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
 // ── Initial sync: push pending + pull ALL + rebuild ───────────────
 
 async function initialSync(restaurantId: string): Promise<void> {
+  // 0. Auto-reparación: re-encolar eventos locales que nunca se sincronizaron.
+  //    Pudieron quedar fuera de la cola por un error "tabla inexistente" (42P01)
+  //    antes de que pos_events existiera. Siguen en el store `events` con
+  //    synced=0, así que los volvemos a poner en la cola para que suban.
+  await requeueUnsyncedEvents(restaurantId)
+
   // 1. Push any locally pending events first
   await pushEvents()
 
@@ -92,6 +98,27 @@ async function initialSync(restaurantId: string): Promise<void> {
 
   // 3. Rebuild projected state from ALL local events (clean replay)
   await rebuildFromEvents(restaurantId)
+  notifyDbChange()
+}
+
+// Re-encola los eventos locales con synced=0 que ya no están en la cola de sync.
+// Red de seguridad: ningún evento local queda varado aunque un error lo haya
+// sacado de la cola en el pasado. Idempotente (no duplica entradas en la cola).
+async function requeueUnsyncedEvents(restaurantId: string): Promise<void> {
+  const unsynced = await posDb.events
+    .where('[restaurant_id+synced]')
+    .equals([restaurantId, 0])
+    .toArray()
+  if (unsynced.length === 0) return
+
+  const queued = new Set((await posDb.syncQueue.toArray()).map(q => q.event_id))
+  const toAdd = unsynced.filter(e => !queued.has(e.event_id))
+  if (toAdd.length === 0) return
+
+  await posDb.syncQueue.bulkAdd(
+    toAdd.map(e => ({ event_id: e.event_id, created_at: e.created_at_local, retries: 0 }))
+  )
+  console.warn(`[POS Sync] Re-encolados ${toAdd.length} evento(s) local(es) sin sincronizar`)
   notifyDbChange()
 }
 
@@ -192,8 +219,10 @@ async function pushEvents() {
   if (error) {
     console.error('[POS Sync] Push error:', error.code, error.message, error.details)
 
-    // FK violation or any unrecoverable error — drop immediately
-    const unrecoverable = ['23503', '42P01', '42703']
+    // Errores realmente irrecuperables (dato inválido) — descartar de inmediato.
+    // OJO: 42P01 (tabla inexistente) NO va aquí: es transitorio (p. ej. la tabla
+    // pos_events aún no creada) y descartar por eso borraría pedidos. Se reintenta.
+    const unrecoverable = ['23503', '42703']
     if (unrecoverable.includes(error.code)) {
       console.warn('[POS Sync] Unrecoverable error — dropping events:', error.code, error.message)
       await posDb.syncQueue.where('id').anyOf(pending.map(p => p.id!)).delete()
