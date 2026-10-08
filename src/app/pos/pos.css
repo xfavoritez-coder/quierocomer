@@ -358,7 +358,7 @@
 /* ---------- desktop split layout ---------- */
 /* El grid se aplica inline via JS (useIsDesktop), estos son los estilos de cada columna */
 .pos-split-left{overflow-y:auto;overflow-x:hidden}
-.pos-split-right{border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pos-split-right{border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;position:relative}
 .pos-split-right.empty{background:var(--sunk)}
 /* Mesa seleccionada actualmente en el panel */
 .pos-mesa.panel-active{outline:2px solid var(--amber);outline-offset:2px}

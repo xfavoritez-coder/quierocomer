@@ -558,10 +558,10 @@ export default function PosHomePage() {
       />
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
-      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '420px 1fr', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-      {/* ── Content (columna izquierda en desktop) ──────────── */}
-      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setDesktopPanel(null) : undefined}>
+      {/* ── Content (mesas: columna DERECHA en desktop; el panel va a la izquierda) ──────────── */}
+      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} style={isDesktop ? { order: 2 } : undefined} onClick={isDesktop ? () => setDesktopPanel(null) : undefined}>
         <div className="pos-pad">
 
             {/* MESAS */}
@@ -722,7 +722,7 @@ export default function PosHomePage() {
 
       {/* ── Panel derecho (solo desktop) ────────────────────── */}
       {isDesktop && (
-        <div className={`pos-split-right${activePanel ? '' : ' empty'}`}>
+        <div className={`pos-split-right${activePanel ? '' : ' empty'}`} style={{ order: 1 }}>
           {activePanel?.type === 'cuenta' && (
             <CuentaPanel
               accountId={activePanel.accountId}
