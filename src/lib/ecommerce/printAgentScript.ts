@@ -194,6 +194,12 @@ namespace QuieroComerAgente {
     [DataMember(Name="orders")] public Order[] orders;
   }
 
+  // Comanda que manda el POS al puente local: bytes ESC/POS ya renderizados (base64).
+  [DataContract] public class PrintReq {
+    [DataMember(Name="jobId")] public string jobId;
+    [DataMember(Name="escpos")] public string escpos;
+  }
+
   // Impresion RAW por winspool (bypassa el driver: manda ESC/POS crudo).
   public class RawPrinter {
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
@@ -229,6 +235,8 @@ namespace QuieroComerAgente {
     Thread worker;
     volatile bool running = true;
     volatile PrinterCfg lastPrinter; // ultima config de impresora vista en la cola (para la prueba local)
+    volatile PrinterCfg localPrinter; // impresora elegida localmente (via /setup/printer); tiene prioridad
+    Thread httpWorker;               // servidor local 127.0.0.1:7777 para el POS (impresion instantanea/offline)
     Encoding enc;
     CultureInfo clCL = CultureInfo.GetCultureInfo("es-CL");
 
@@ -253,6 +261,11 @@ namespace QuieroComerAgente {
       ni.ContextMenuStrip = menu;
 
       worker = new Thread(new ThreadStart(Loop)); worker.IsBackground = true; worker.Start();
+
+      // Puente local para el POS: impresion instantanea y sin internet (mismo equipo).
+      LoadLocalPrinter();
+      httpWorker = new Thread(new ThreadStart(HttpServe)); httpWorker.IsBackground = true; httpWorker.Start();
+
       Balloon("Agente activo${suffix}", "Esperando pedidos de quierocomer.");
     }
 
@@ -316,7 +329,7 @@ namespace QuieroComerAgente {
     // Imprime segun la config vista en la cola: ip -> socket 9100 | name -> por nombre | default.
     // Devuelve en 'target' a donde se envio (para los avisos).
     bool PrintBytes(byte[] bytes, out string target) {
-      PrinterCfg pc = lastPrinter;
+      PrinterCfg pc = localPrinter != null ? localPrinter : lastPrinter;
       if (pc != null && pc.target == "ip" && !string.IsNullOrEmpty(pc.ip)) {
         string host = pc.ip.Trim(); int port = 9100;
         int idx = host.IndexOf(':');
@@ -460,6 +473,164 @@ namespace QuieroComerAgente {
       B(new byte[] { 27, 100, 4 });        // feed 4 lineas
       B(new byte[] { 29, 86, 66, 0 });     // GS V B 0  -> corte
       return bt.ToArray();
+    }
+
+    // ─── Puente local para el POS (servidor HTTP minimo) ─────────────
+    // TcpListener en 127.0.0.1:7777 (loopback): NO necesita permisos de admin
+    // ni reservas de URL. El navegador del POS (aunque sea https) puede llamar a
+    // http://localhost:7777 por la excepcion de "contexto seguro" del loopback,
+    // y funciona sin internet. Recibe la comanda ya en ESC/POS y la imprime.
+    void HttpServe() {
+      // "localhost" puede resolver a ::1 (IPv6) o a 127.0.0.1 (IPv4) segun el
+      // equipo/navegador. Escuchamos en ambos loopbacks para que siempre conecte.
+      try { Thread t6 = new Thread(delegate() { ServeOn(IPAddress.IPv6Loopback, false); }); t6.IsBackground = true; t6.Start(); } catch {}
+      ServeOn(IPAddress.Loopback, true);
+    }
+
+    void ServeOn(IPAddress addr, bool notify) {
+      TcpListener srv = null;
+      try { srv = new TcpListener(addr, 7777); srv.Start(); }
+      catch (Exception ex) { if (notify) Balloon("Puente local no disponible", "El puerto 7777 esta ocupado. " + ex.Message); return; }
+      while (running) {
+        TcpClient cli = null;
+        try { cli = srv.AcceptTcpClient(); } catch { break; }
+        try { HandleConn(cli); } catch {}
+        try { cli.Close(); } catch {}
+      }
+      try { srv.Stop(); } catch {}
+    }
+
+    static int IndexOfDoubleCrlf(List<byte> b) {
+      for (int i = 0; i + 3 < b.Count; i++) if (b[i] == 13 && b[i + 1] == 10 && b[i + 2] == 13 && b[i + 3] == 10) return i;
+      return -1;
+    }
+
+    void HandleConn(TcpClient cli) {
+      cli.ReceiveTimeout = 5000;
+      NetworkStream st = cli.GetStream();
+      List<byte> buf = new List<byte>();
+      byte[] tmp = new byte[4096];
+      int headerEnd = -1;
+      while (headerEnd < 0) {
+        int n = st.Read(tmp, 0, tmp.Length);
+        if (n <= 0) return;
+        for (int i = 0; i < n; i++) buf.Add(tmp[i]);
+        headerEnd = IndexOfDoubleCrlf(buf);
+        if (buf.Count > 2000000) return;
+      }
+      string head = Encoding.ASCII.GetString(buf.ToArray(), 0, headerEnd);
+      string[] lines = head.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+      string[] rl = lines[0].Split(' ');
+      string method = rl.Length > 0 ? rl[0] : "";
+      string path = rl.Length > 1 ? rl[1] : "";
+      int qi = path.IndexOf('?'); if (qi >= 0) path = path.Substring(0, qi);
+      int contentLength = 0;
+      for (int i = 1; i < lines.Length; i++) {
+        int c = lines[i].IndexOf(':');
+        if (c > 0 && lines[i].Substring(0, c).Trim().ToLower() == "content-length") int.TryParse(lines[i].Substring(c + 1).Trim(), out contentLength);
+      }
+      if (contentLength < 0) contentLength = 0;
+      int bodyStart = headerEnd + 4;
+      int already = buf.Count - bodyStart; if (already < 0) already = 0;
+      byte[] body = new byte[contentLength];
+      int copied = 0;
+      for (int i = 0; i < already && i < body.Length; i++) { body[i] = buf[bodyStart + i]; copied++; }
+      while (copied < body.Length) { int n = st.Read(body, copied, body.Length - copied); if (n <= 0) break; copied += n; }
+      string bodyStr = Encoding.UTF8.GetString(body, 0, copied);
+      int code; string json = Route(method, path, bodyStr, out code);
+      WriteResp(st, code, json);
+    }
+
+    string Route(string method, string path, string body, out int code) {
+      code = 200;
+      if (method == "OPTIONS") { code = 204; return ""; }
+      if (path == "/status" && method == "GET") {
+        string pname = EffectivePrinterName();
+        bool pok = pname.Length > 0;
+        return "{\"ok\":true,\"bridge\":{\"version\":\"agente\",\"port\":7777},\"printer\":{\"ok\":" + (pok ? "true" : "false") + ",\"mode\":\"" + PrinterMode() + "\",\"name\":\"" + JsonEsc(pname) + "\"}}";
+      }
+      if (path == "/printers" && method == "GET") {
+        StringBuilder sb = new StringBuilder(); sb.Append("{\"ok\":true,\"printers\":[");
+        bool first = true;
+        try { foreach (string p in PrinterSettings.InstalledPrinters) { if (!first) sb.Append(","); sb.Append("\"" + JsonEsc(p) + "\""); first = false; } } catch {}
+        sb.Append("]}"); return sb.ToString();
+      }
+      if (path == "/setup/printer" && method == "POST") {
+        PrinterCfg cfg = ParseJson<PrinterCfg>(body);
+        if (cfg == null || string.IsNullOrEmpty(cfg.target)) { code = 400; return "{\"ok\":false,\"error\":\"config invalida\"}"; }
+        localPrinter = cfg; SaveLocalPrinter(cfg);
+        return "{\"ok\":true}";
+      }
+      if (path == "/print" && method == "POST") {
+        PrintReq pr = ParseJson<PrintReq>(body);
+        if (pr == null || string.IsNullOrEmpty(pr.escpos)) { code = 400; return "{\"ok\":false,\"error\":\"sin datos\"}"; }
+        try {
+          byte[] bytes = Convert.FromBase64String(pr.escpos);
+          string target; bool ok = PrintBytes(bytes, out target);
+          if (ok) { Balloon("Comanda impresa", "POS - " + target); return "{\"ok\":true,\"jobId\":\"" + JsonEsc(pr.jobId) + "\"}"; }
+          code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc("No se pudo imprimir: " + target) + "\"}";
+        } catch (Exception ex) { code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc(ex.Message) + "\"}"; }
+      }
+      if (path == "/test" && method == "POST") {
+        try { string target; bool ok = PrintBytes(TestBytes(), out target); if (ok) return "{\"ok\":true}"; code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc("Revisa la impresora: " + target) + "\"}"; }
+        catch (Exception ex) { code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc(ex.Message) + "\"}"; }
+      }
+      code = 404; return "{\"ok\":false,\"error\":\"no encontrado\"}";
+    }
+
+    void WriteResp(NetworkStream st, int code, string json) {
+      try {
+        byte[] bodyB = Encoding.UTF8.GetBytes(json == null ? "" : json);
+        string status = code == 204 ? "204 No Content" : code == 400 ? "400 Bad Request" : code == 404 ? "404 Not Found" : code == 500 ? "500 Internal Server Error" : "200 OK";
+        StringBuilder h = new StringBuilder();
+        h.Append("HTTP/1.1 " + status + "\r\n");
+        h.Append("Access-Control-Allow-Origin: *\r\n");
+        h.Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
+        h.Append("Access-Control-Allow-Headers: Content-Type\r\n");
+        h.Append("Content-Type: application/json; charset=utf-8\r\n");
+        h.Append("Content-Length: " + bodyB.Length + "\r\n");
+        h.Append("Connection: close\r\n\r\n");
+        byte[] headB = Encoding.ASCII.GetBytes(h.ToString());
+        st.Write(headB, 0, headB.Length);
+        if (bodyB.Length > 0) st.Write(bodyB, 0, bodyB.Length);
+        st.Flush();
+      } catch {}
+    }
+
+    string EffectivePrinterName() {
+      PrinterCfg pc = localPrinter != null ? localPrinter : lastPrinter;
+      if (pc != null && pc.target == "ip" && !string.IsNullOrEmpty(pc.ip)) return pc.ip;
+      if (pc != null && pc.target == "name" && !string.IsNullOrEmpty(pc.name)) return pc.name;
+      return DefaultPrinter();
+    }
+    string PrinterMode() {
+      PrinterCfg pc = localPrinter != null ? localPrinter : lastPrinter;
+      return (pc != null && pc.target == "ip") ? "tcp" : "usb";
+    }
+
+    byte[] TestBytes() {
+      Order o = new Order();
+      o.orderNumber = 0; o.customerName = "*** PRUEBA POS ***"; o.orderType = "PICKUP";
+      o.paymentMethod = "efectivo"; o.paymentStatus = "paid"; o.createdAt = DateTime.Now.ToString("o");
+      o.total = 0; o.deliveryFee = 0; o.discount = 0;
+      Item it = new Item(); it.dishName = "Ticket de prueba"; it.quantity = 1; it.unitTotal = 0;
+      o.items = new Item[] { it }; o.notes = "Si lees esto, la impresora del POS funciona.";
+      return BuildTicket(o, "QUIEROCOMER POS", 80);
+    }
+
+    T ParseJson<T>(string s) {
+      try { using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(s == null ? "" : s))) { return (T)(new DataContractJsonSerializer(typeof(T))).ReadObject(ms); } }
+      catch { return default(T); }
+    }
+
+    string LocalCfgPath() {
+      try { return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "printer-local" + SLUG + ".json"); } catch { return null; }
+    }
+    void LoadLocalPrinter() {
+      try { string p = LocalCfgPath(); if (p != null && File.Exists(p)) localPrinter = ParseJson<PrinterCfg>(File.ReadAllText(p)); } catch {}
+    }
+    void SaveLocalPrinter(PrinterCfg cfg) {
+      try { string p = LocalCfgPath(); if (p == null) return; using (MemoryStream ms = new MemoryStream()) { new DataContractJsonSerializer(typeof(PrinterCfg)).WriteObject(ms, cfg); File.WriteAllBytes(p, ms.ToArray()); } } catch {}
     }
 
     [STAThread]
