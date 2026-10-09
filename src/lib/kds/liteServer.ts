@@ -47,7 +47,7 @@ export function kitchenLines(items: any): string[] {
       if (!Number.isNaN(ref) && nm) { if (!extrasByRef.has(ref)) extrasByRef.set(ref, []); extrasByRef.get(ref)!.push(nm); }
     }
   }
-  const items: { qty: number; name: string; mods: string }[] = [];
+  const rows: { qty: number; name: string; mods: string }[] = [];
   for (const it of arr) {
     if (!it || typeof it !== "object" || it.isExtra) continue;
     const name = nameOf(it);
@@ -63,12 +63,12 @@ export function kitchenLines(items: any): string[] {
         if (mn) mods.push(mn);
       }
     }
-    items.push({ qty, name, mods: mods.length ? ` (${mods.join(", ")})` : "" });
+    rows.push({ qty, name, mods: mods.length ? ` (${mods.join(", ")})` : "" });
   }
   // Agrupa productos idénticos (nombre + modificadores) sumando cantidades.
   const grouped = new Map<string, { qty: number; name: string; mods: string }>();
   const order: string[] = [];
-  for (const li of items) {
+  for (const li of rows) {
     const key = li.name + "||" + li.mods;
     const g = grouped.get(key);
     if (g) g.qty += li.qty;
