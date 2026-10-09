@@ -161,7 +161,20 @@ export default function KdsPage() {
   const [groupHour, setGroupHour] = useState(false);
   const [completeMode, setCompleteMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pairCode, setPairCode] = useState<string | null>(null);
+  const [pairBusy, setPairBusy] = useState(false);
   const rightRef = useRef<HTMLDivElement>(null);
+
+  const genPair = useCallback(async () => {
+    if (!restaurantId) return;
+    setMenuOpen(false); setPairBusy(true); setPairCode("…");
+    try {
+      const r = await fetch("/api/panel/ecommerce/kds-pair", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) });
+      const d = await r.json();
+      setPairCode(r.ok && d.code ? d.code : null);
+    } catch { setPairCode(null); }
+    setPairBusy(false);
+  }, [restaurantId]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -259,6 +272,7 @@ export default function KdsPage() {
             <Link href="/panel/centro-pedidos" className="ghost" onClick={() => setMenuOpen(false)}>↩️ Volver</Link>
             <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Permite marcar pedidos como Listo desde esta pantalla">✓ Completar desde KDS</button>
             <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
+            <button type="button" className="ghost" onClick={genPair}>📺 Vincular tablet</button>
             <button type="button" className="ghost" onClick={() => { fetchOrders(); setMenuOpen(false); }}>🔄 Refrescar</button>
           </div>
         </div>
@@ -302,6 +316,27 @@ export default function KdsPage() {
           )}
         </section>
       </div>
+
+      {pairCode !== null && (
+        <div onClick={() => setPairCode(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", color: "#000", borderRadius: 16, padding: "26px 24px", maxWidth: 400, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: 6 }}>📺 Vincular una tablet</div>
+            <p style={{ fontSize: "0.88rem", color: "#334155", margin: "0 0 14px", lineHeight: 1.5 }}>
+              En la tablet/TV de cocina abre <b>quierocomer.com/kds</b> y escribe este código (válido 15 min):
+            </p>
+            <div style={{ fontSize: "2.2rem", fontWeight: 900, letterSpacing: "6px", fontFamily: "monospace", background: "#f1f5f9", border: "2px solid #8a97ad", borderRadius: 12, padding: "14px 10px", userSelect: "all" }}>
+              {pairBusy ? "…" : pairCode}
+            </div>
+            <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "12px 0 16px", lineHeight: 1.5 }}>
+              Solo se escribe una vez: la tablet queda vinculada. Sirve para pantallas antiguas (Android 4/5) por su versión liviana.
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={genPair} disabled={pairBusy} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1px solid #8a97ad", background: "#eceff5", color: "#000", fontWeight: 700, cursor: "pointer" }}>Generar otro</button>
+              <button onClick={() => setPairCode(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "none", background: "#16a34a", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Listo</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
