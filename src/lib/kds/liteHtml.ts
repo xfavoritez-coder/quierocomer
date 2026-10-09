@@ -135,9 +135,10 @@ const JS = `
     x.send();
   }
   var tg = document.getElementById('tgComplete');
+  function setTg(on){ if(!tg)return; tg.innerHTML = on ? 'Boton Listo: ON' : 'Boton Listo: OFF'; tg.className = on ? 'btn on' : 'btn'; }
   if(tg){
-    if(completeOn()) tg.className = 'btn on';
-    tg.onclick = function(){ var on=!completeOn(); try{ localStorage.setItem('kdsComplete', on?'1':'0'); }catch(e){} tg.className = on?'btn on':'btn'; render(); };
+    setTg(completeOn());
+    tg.onclick = function(){ var on=!completeOn(); try{ localStorage.setItem('kdsComplete', on?'1':'0'); }catch(e){} setTg(on); render(); };
   }
   var rf = document.getElementById('btnRefresh'); if(rf){ rf.onclick = function(){ poll(); }; }
 
@@ -157,7 +158,7 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
   <div class="topbar cf">
     <span class="t">KDS Cocina</span>
     <span class="r">
-      <span class="btn" id="tgComplete">✓ Completar</span>
+      <span class="btn" id="tgComplete">Boton Listo: OFF</span>
       <span class="btn" id="btnRefresh">↻ Actualizar</span>
     </span>
   </div>
