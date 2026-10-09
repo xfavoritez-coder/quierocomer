@@ -94,7 +94,17 @@ function kitchenLines(items: any): { qty: number; name: string; mods: string }[]
     }
     out.push({ qty, name, mods: mods.length ? ` (${mods.join(", ")})` : "" });
   }
-  return out;
+  // Agrupa productos idénticos (mismo nombre + mismos modificadores) sumando
+  // cantidades: 6 líneas "1 × Jengibre" → "6 × Jengibre". Conserva el orden.
+  const grouped = new Map<string, { qty: number; name: string; mods: string }>();
+  const order: string[] = [];
+  for (const li of out) {
+    const key = li.name + "||" + li.mods;
+    const g = grouped.get(key);
+    if (g) g.qty += li.qty;
+    else { grouped.set(key, { ...li }); order.push(key); }
+  }
+  return order.map((k) => grouped.get(k)!);
 }
 
 const SEC = (iso?: string | null) => (iso ? Math.floor(new Date(iso).getTime() / 1000) : 0);
