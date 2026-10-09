@@ -5,6 +5,22 @@ import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 
 export interface KdsRestaurant { id: string; name: string; posEnabled: boolean }
 
+// Devuelve el token del KDS si el código de emparejamiento es válido y no expiró.
+export async function tokenForPairCode(code: string): Promise<string | null> {
+  const c = (code || "").trim().toUpperCase();
+  if (!c || c.length < 4) return null;
+  const rest = await prisma.restaurant.findFirst({
+    where: { ecommerceStoreConfig: { path: ["kdsPairCode"], equals: c } },
+    select: { ecommerceStoreConfig: true },
+  });
+  if (!rest) return null;
+  const cfg = (rest.ecommerceStoreConfig as Record<string, unknown>) || {};
+  const exp = typeof cfg.kdsPairExp === "string" ? Date.parse(cfg.kdsPairExp) : 0;
+  const token = typeof cfg.kdsToken === "string" ? (cfg.kdsToken as string) : "";
+  if (!token || !exp || exp < Date.now()) return null;
+  return token;
+}
+
 // Busca el local cuyo ecommerceStoreConfig.kdsToken coincide con el token.
 export async function resolveKdsRestaurant(token: string): Promise<KdsRestaurant | null> {
   const t = (token || "").trim();

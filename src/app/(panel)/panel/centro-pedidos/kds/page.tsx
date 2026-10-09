@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
 
@@ -322,13 +323,19 @@ export default function KdsPage() {
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", color: "#000", borderRadius: 16, padding: "26px 24px", maxWidth: 400, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
             <div style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: 6 }}>📺 Vincular una tablet</div>
             <p style={{ fontSize: "0.88rem", color: "#334155", margin: "0 0 14px", lineHeight: 1.5 }}>
-              En la tablet/TV de cocina abre <b>quierocomer.com/kds</b> y escribe este código (válido 15 min):
+              En la tablet/TV de cocina <b>escanea este QR</b>, o abre <b>quierocomer.com/kds</b> y escribe el código. Válido 15 min.
             </p>
-            <div style={{ fontSize: "2.2rem", fontWeight: 900, letterSpacing: "6px", fontFamily: "monospace", background: "#f1f5f9", border: "2px solid #8a97ad", borderRadius: 12, padding: "14px 10px", userSelect: "all" }}>
+            {!pairBusy && pairCode && (
+              <div style={{ display: "inline-block", padding: 12, background: "#fff", border: "2px solid #8a97ad", borderRadius: 12, marginBottom: 14 }}>
+                <QRCodeSVG value={`${typeof window !== "undefined" ? window.location.origin : "https://quierocomer.com"}/kds?c=${pairCode}`} size={168} level="M" />
+              </div>
+            )}
+            <div style={{ fontSize: "0.72rem", color: "#64748b", margin: "0 0 6px", letterSpacing: "0.04em" }}>O ESCRIBE EL CÓDIGO</div>
+            <div style={{ fontSize: "1.9rem", fontWeight: 900, letterSpacing: "6px", fontFamily: "monospace", background: "#f1f5f9", border: "2px solid #8a97ad", borderRadius: 12, padding: "12px 10px", userSelect: "all" }}>
               {pairBusy ? "…" : pairCode}
             </div>
             <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "12px 0 16px", lineHeight: 1.5 }}>
-              Solo se escribe una vez: la tablet queda vinculada. Sirve para pantallas antiguas (Android 4/5) por su versión liviana.
+              Solo se vincula una vez. La versión liviana sirve para pantallas antiguas (Android 4/5). Si la tablet no puede escanear, usa el código.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={genPair} disabled={pairBusy} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1px solid #8a97ad", background: "#eceff5", color: "#000", fontWeight: 700, cursor: "pointer" }}>Generar otro</button>
