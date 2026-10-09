@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -160,6 +160,15 @@ export default function KdsPage() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [groupHour, setGroupHour] = useState(false);
   const [completeMode, setCompleteMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rightRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => { if (rightRef.current && !rightRef.current.contains(e.target as Node)) setMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [menuOpen]);
 
   useEffect(() => {
     try {
@@ -243,12 +252,15 @@ export default function KdsPage() {
 
       <div className="topbar">
         <h1>KDS Cocina</h1>
-        <div className="right">
+        <div className="right" ref={rightRef}>
           <span className="kpi" title="Completados en menos de 10 minutos">Pedidos preparados en buen tiempo: <b>{greenCount}</b></span>
-          <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Permite marcar pedidos como Listo desde esta pantalla">✓ Completar desde KDS</button>
-          <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
-          <Link href="/panel/centro-pedidos" className="ghost">Volver</Link>
-          <button type="button" className="ghost" onClick={fetchOrders}>Refrescar</button>
+          <button type="button" className="nav-toggle" aria-label="Menú" aria-expanded={menuOpen} onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>☰</button>
+          <div className={`nav-links${menuOpen ? " open" : ""}`}>
+            <Link href="/panel/centro-pedidos" className="ghost" onClick={() => setMenuOpen(false)}>↩️ Volver</Link>
+            <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Permite marcar pedidos como Listo desde esta pantalla">✓ Completar desde KDS</button>
+            <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
+            <button type="button" className="ghost" onClick={() => { fetchOrders(); setMenuOpen(false); }}>🔄 Refrescar</button>
+          </div>
         </div>
       </div>
 
@@ -309,7 +321,10 @@ const KDS_CSS = `
     padding:12px 16px; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
   .kds-root .topbar h1{ margin:0; font-size:17px; font-weight:700; letter-spacing:.02em; display:flex; align-items:center; gap:9px; }
   .kds-root .topbar h1::before{ content:"🍣"; font-size:18px; }
-  .kds-root .topbar .right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
+  .kds-root .topbar .right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; position:relative; }
+  .kds-root .topbar .right .nav-links{ display:flex; gap:8px; align-items:center; }
+  .kds-root .topbar .right .nav-toggle{ display:none; width:40px; height:38px; padding:0; border-radius:10px; cursor:pointer; background:var(--bg-soft); color:var(--text); border:1px solid var(--line); font-size:20px; line-height:1; align-items:center; justify-content:center; font-family:inherit; }
+  .kds-root .topbar .right .nav-toggle:hover{ background:#e2e8f2; }
   .kds-root .topbar .right .ghost{ text-decoration:none; color:var(--text); background:var(--bg-soft); padding:8px 14px; border-radius:10px; border:1px solid var(--line); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; }
   .kds-root .topbar .right .ghost:hover{ background:#e2e8f2; }
   .kds-root .topbar .right .ghost.on{ background:#2563eb; color:#fff; border-color:#2563eb; }
@@ -386,6 +401,13 @@ const KDS_CSS = `
   .kds-root .kds-card.is-completed .kds-items li strong{ color:#33415c; }
   .kds-root .kds-card.is-completed .kds-timer{ background:#e2e8f2; color:#51607a; box-shadow:none; }
 
-  @media (max-width:820px){ .kds-root .topbar .right .kpi{ padding:7px 11px; font-size:12px; } }
+  @media (max-width:820px){
+    .kds-root .topbar .right .kpi{ padding:7px 11px; font-size:12px; }
+    .kds-root .topbar .right .nav-toggle{ display:inline-flex; }
+    .kds-root .topbar .right .nav-links{ display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:30; flex-direction:column; align-items:stretch; gap:6px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px; min-width:220px; box-shadow:0 12px 30px rgba(13,21,38,.16); }
+    .kds-root .topbar .right .nav-links.open{ display:flex; }
+    .kds-root .topbar .right .nav-links .ghost{ width:100%; text-align:left; justify-content:flex-start; }
+  }
+  @media (max-width:480px){ .kds-root .topbar .right .kpi{ flex:1 1 auto; justify-content:center; font-size:11px; padding:6px 9px; } }
   @media (max-width:480px){ .kds-root .kds-customer{ font-size:19px; } .kds-root .kds-timer{ font-size:20px; } }
 `;
