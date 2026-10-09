@@ -54,9 +54,9 @@ const CSS = `
   .card .cust{ font-size:23px; font-weight:800; color:#000; margin:0 0 2px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .card .done-t{ font-size:13px; font-weight:700; color:#1b2534; margin-top:2px; }
   .card .items{ list-style:none; margin:12px 0 0; padding:12px 0 0; border-top:1px dashed #8a97ad; }
-  .card .items li{ color:#000; font-size:16px; font-weight:600; line-height:1.5; margin:0 0 9px; padding-left:19px; position:relative; }
+  .card .items li{ color:#000; font-size:16px; font-weight:600; line-height:1.3; margin:0 0 5px; padding-left:19px; position:relative; }
   .card .items li strong{ font-weight:800; }
-  .card .items li:before{ content:""; position:absolute; left:0; top:9px; width:7px; height:7px; background:#475569; }
+  .card .items li:before{ content:""; position:absolute; left:0; top:7px; width:7px; height:7px; background:#475569; }
   .card .ready{ display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:10px; background:#16a34a; color:#fff; font-weight:800; font-size:15px; cursor:pointer; text-align:center; }
   .empty{ color:#1b2534; font-size:14px; padding:6px 0; }
 `;
