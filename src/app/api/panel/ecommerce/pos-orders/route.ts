@@ -38,7 +38,23 @@ export async function GET(req: NextRequest) {
   const dateRange = { gte: start, lte: end };
 
   const where: any = { restaurantId };
-  if (scope === "historial") {
+  if (scope === "kds") {
+    // KDS de cocina: Pendientes = en preparación (siempre, trabajo en curso);
+    // Completados = los que SALIERON de preparación dentro del rango, por FECHA DE
+    // COMPLETADO (no de creación). La hora de completado es cuando pasó a "listo"
+    // (opsReadyForDeliveryAt), o entregado/completado si no la tiene.
+    const doneInRange = {
+      OR: [
+        { opsReadyForDeliveryAt: dateRange },
+        { opsReadyForDeliveryAt: null, opsDeliveredAt: dateRange },
+        { opsReadyForDeliveryAt: null, opsDeliveredAt: null, completedAt: dateRange },
+      ],
+    };
+    where.AND = [
+      { posStatus: { not: "canceled" } },
+      { OR: [{ opsStage: "preparing" }, { AND: [{ opsStage: { not: "preparing" } }, doneInRange] }] },
+    ];
+  } else if (scope === "historial") {
     // Historial: entregados/cancelados creados dentro del rango.
     where.createdAt = dateRange;
     where.OR = [{ opsStage: "delivered" }, { posStatus: "canceled" }];

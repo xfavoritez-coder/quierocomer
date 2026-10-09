@@ -194,7 +194,7 @@ export default function KdsPage() {
   const fetchOrders = useCallback(async () => {
     if (!restaurantId) return;
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos&from=${date}&to=${date}`);
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=kds&from=${date}&to=${date}`);
       const d = await r.json();
       if (r.ok && d.orders) setOrders(d.orders);
     } catch { /* noop */ }

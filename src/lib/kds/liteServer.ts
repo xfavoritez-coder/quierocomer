@@ -84,13 +84,24 @@ export interface KdsOrderLite {
 // Pedidos "activos" de hoy, separados y formateados para la vista liviana.
 export async function kdsOrders(restaurantId: string): Promise<{ pend: KdsOrderLite[]; comp: KdsOrderLite[] }> {
   const today = chileTodayYmd();
-  const { start } = chileDayRangeUtc(today);
-  const { end } = chileDayRangeUtc(today);
+  const { start, end } = chileDayRangeUtc(today);
+  const dateRange = { gte: start, lte: end };
+  // Pendientes = en preparación (siempre). Completados = los que salieron de
+  // preparación HOY, por fecha de completado (no de creación).
+  const doneInRange = {
+    OR: [
+      { opsReadyForDeliveryAt: dateRange },
+      { opsReadyForDeliveryAt: null, opsDeliveredAt: dateRange },
+      { opsReadyForDeliveryAt: null, opsDeliveredAt: null, completedAt: dateRange },
+    ],
+  };
   const orders = await prisma.posOrder.findMany({
     where: {
       restaurantId,
-      posStatus: { not: "canceled" },
-      OR: [{ opsStage: { not: "delivered" } }, { opsStage: "delivered", createdAt: { gte: start, lte: end } }],
+      AND: [
+        { posStatus: { not: "canceled" } },
+        { OR: [{ opsStage: "preparing" }, { AND: [{ opsStage: { not: "preparing" } }, doneInRange] }] },
+      ],
     },
     orderBy: { createdAt: "desc" },
     take: 400,
