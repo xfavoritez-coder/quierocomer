@@ -55,17 +55,36 @@ function tipo(o: PosOrder): { cls: string; text: string } {
 }
 
 const BAN = ["delivery", "envío", "envio", "costo", "fee", "cargo", "tarifa", "propina", "tip", "vuelto", "cambio", "descuento", "discount", "cupón", "cupon", "servicio", "service", "impuesto", "tax", "total"];
+const nameOf = (it: any): string => String(it?.productName ?? it?.name ?? it?.dishName ?? it?.description ?? it?.title ?? "").trim();
 function kitchenLines(items: any): { qty: number; name: string; mods: string }[] {
   const arr = Array.isArray(items) ? items : [];
+  // Extras de Toteat: líneas con isExtra=true que referencian el lineNumber del
+  // producto padre (los modificadores NO vienen anidados, vienen como líneas aparte).
+  const extrasByRef = new Map<number, string[]>();
+  for (const it of arr) {
+    if (it && typeof it === "object" && it.isExtra) {
+      const ref = Number(it.referenceLine);
+      const nm = nameOf(it);
+      if (!Number.isNaN(ref) && nm) {
+        if (!extrasByRef.has(ref)) extrasByRef.set(ref, []);
+        extrasByRef.get(ref)!.push(nm);
+      }
+    }
+  }
   const out: { qty: number; name: string; mods: string }[] = [];
   for (const it of arr) {
     if (!it || typeof it !== "object") continue;
-    const name = String(it.productName ?? it.name ?? it.dishName ?? it.description ?? it.title ?? "").trim();
+    if (it.isExtra) continue; // los extras se adjuntan a su producto padre
+    const name = nameOf(it);
     if (!name) continue;
     if (BAN.some((w) => name.toLowerCase().includes(w))) continue;
     const qtyRaw = Number(it.quantity ?? it.qty ?? it.count ?? 1) || 1;
     const qty = qtyRaw <= 0 ? 1 : qtyRaw;
     const mods: string[] = [];
+    // Extras de Toteat por referenceLine
+    const ln = Number(it.lineNumber);
+    if (!Number.isNaN(ln) && extrasByRef.has(ln)) mods.push(...extrasByRef.get(ln)!);
+    // Modificadores anidados (pedidos manuales / otras fuentes)
     for (const k of ["modifiers", "selectedOptions", "extras", "options", "additions"]) {
       if (Array.isArray(it[k])) for (const m of it[k]) {
         const mn = String(m?.optionName ?? m?.name ?? m?.title ?? m?.label ?? m?.value ?? "").trim();
@@ -214,7 +233,7 @@ export default function KdsPage() {
 
       <div className="wrap">
         <section className="section pending">
-          <h2 className="section-title">Pendientes <span className="count">{pend.length}</span></h2>
+          <h2 className="section-title">📌 Pendientes <span className="count">{pend.length}</span></h2>
           {pend.length === 0 ? (
             <div className="empty">No hay pedidos en preparación.</div>
           ) : (
@@ -225,7 +244,7 @@ export default function KdsPage() {
         <div className="hard-sep" />
 
         <section className="section completed-block">
-          <h2 className="section-title">Completados <span className="count">{comp.length}</span></h2>
+          <h2 className="section-title">✅ Completados <span className="count">{comp.length}</span></h2>
           {comp.length === 0 ? (
             <div className="empty">No hay pedidos completados.</div>
           ) : groupHour ? (
