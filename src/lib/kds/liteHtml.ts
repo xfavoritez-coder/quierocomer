@@ -24,8 +24,13 @@ const CSS = `
   .hard-sep{ height:2px; background:#8a97ad; margin:16px 0; }
 
   .grid{ font-size:0; }  /* elimina el espacio entre inline-block */
-  .card{ display:inline-block; vertical-align:top; width:320px; margin:0 10px 10px 0; background:#fff; border:1px solid #8a97ad;
+  .col{ display:inline-block; vertical-align:top; width:33.333%; padding:0 10px 10px 0; box-sizing:border-box; }
+  @media (min-width:1500px){ .col{ width:25%; } }
+  @media (max-width:899px){ .col{ width:50%; } }
+  @media (max-width:599px){ .col{ width:100%; } }
+  .card{ background:#fff; border:1px solid #8a97ad;
     border-left-width:9px; border-left-color:#64748b; border-radius:14px; padding:12px 14px; font-size:14px; }
+  .card .type .ic{ width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.2; vertical-align:-2px; margin-right:5px; }
   .card.a-gray{ border-left-color:#475569; }
   .card.a-yellow{ border-left-color:#f59e0b; }
   .card.a-red{ border-left-color:#f97316; }
@@ -66,6 +71,11 @@ const JS = `
   function ageClass(sec, done){ if(done){ if(sec<600)return'a-green'; if(sec<1200)return'a-yellow'; if(sec<2400)return'a-red'; return'a-redx'; } if(sec<600)return'a-gray'; if(sec<1200)return'a-yellow'; if(sec<2400)return'a-red'; return'a-redx'; }
   function nowSec(){ return Math.floor(new Date().getTime()/1000) + OFFSET; }
   function completeOn(){ try{ return localStorage.getItem('kdsComplete')==='1'; }catch(e){ return false; } }
+  function icon(cls){
+    if(cls==='t-delivery') return '<svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="17" r="2.5"></circle><circle cx="17" cy="17" r="2.5"></circle><path d="M8.5 17H14l2-7h3"></path><path d="M14 10l-1.5-4H9"></path></svg>';
+    if(cls==='t-mesa') return '<svg class="ic" viewBox="0 0 24 24"><path d="M7 2v20"></path><path d="M5 2v6a2 2 0 0 0 4 0V2"></path><path d="M17 2c-1.5 0-3 1.5-3 5s1.5 4 3 4v11"></path></svg>';
+    return '<svg class="ic" viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7L6 7Z"></path><path d="M9 7a3 3 0 0 1 6 0"></path></svg>';
+  }
 
   function cardHtml(o){
     var completed = !!o.completed;
@@ -79,11 +89,11 @@ const JS = `
     }
     var doneT = (completed && o.doneHM) ? '<div class="done-t">Completado '+esc(o.doneHM)+'</div>' : '';
     var readyBtn = (!completed && completeOn()) ? '<button class="ready" data-id="'+esc(o.id)+'">\\u2713 Marcar listo</button>' : '';
-    return '<div class="card '+cls+(completed?' done':'')+'" data-id="'+esc(o.id)+'" data-created="'+(o.created||0)+'" data-done="'+(o.done||0)+'" data-completed="'+(completed?1:0)+'">'
-      + '<div class="head cf"><span class="timer">'+fmt(sec)+'</span><span class="type '+esc(o.typeCls)+'">'+esc(o.typeText)+'</span></div>'
+    return '<div class="col"><div class="card '+cls+(completed?' done':'')+'" data-id="'+esc(o.id)+'" data-created="'+(o.created||0)+'" data-done="'+(o.done||0)+'" data-completed="'+(completed?1:0)+'">'
+      + '<div class="head cf"><span class="timer">'+fmt(sec)+'</span><span class="type '+esc(o.typeCls)+'">'+icon(o.typeCls)+esc(o.typeText)+'</span></div>'
       + '<div class="cust">'+esc(o.customer)+'</div>'
       + doneT + items + readyBtn
-      + '</div>';
+      + '</div></div>';
   }
   function listHtml(arr){
     if(!arr || !arr.length) return '<div class="empty">Sin pedidos.</div>';
