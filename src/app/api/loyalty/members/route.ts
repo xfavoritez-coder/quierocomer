@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
           ],
         }),
       },
-      orderBy: [{ lastStampAt: { sort: "desc", nulls: "last" } }, { enrolledAt: "desc" }],
+      // Orden por actividad: último escaneo (sello o canje) primero; si nunca
+      // tuvo actividad, por fecha de creación de la tarjeta (más nuevas primero).
+      orderBy: [{ lastScanAt: { sort: "desc", nulls: "last" } }, { enrolledAt: "desc" }],
       take: 200,
       select: {
         id: true,

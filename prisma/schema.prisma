@@ -2424,6 +2424,7 @@ model LoyaltyMember {
   authToken           String               @default(cuid())
   enrolledAt          DateTime             @default(now())
   lastStampAt         DateTime?
+  lastScanAt          DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   completedCards      Int                  @default(0)

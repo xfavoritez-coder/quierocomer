@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         data: {
           stamps,
           redeemedTiers,
-          ...(delta === 1 && { lastStampAt: new Date() }),
+          ...(delta === 1 && { lastStampAt: new Date(), lastScanAt: new Date() }),
         },
         select: memberSelect,
       });

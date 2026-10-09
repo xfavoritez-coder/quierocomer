@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       });
       return tx.loyaltyMember.update({
         where: { id },
-        data: { redeemedTiers: { push: stamp } },
+        data: { redeemedTiers: { push: stamp }, lastScanAt: new Date() },
         select: {
           id: true,
           name: true,

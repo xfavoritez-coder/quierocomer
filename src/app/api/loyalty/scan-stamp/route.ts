@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       }
       return tx.loyaltyMember.update({
         where: { id: memberId },
-        data: { stamps, lastStampAt: new Date() },
+        data: { stamps, lastStampAt: new Date(), lastScanAt: new Date() },
         select: { id: true, name: true, stamps: true, redeemedTiers: true, googleObjectId: true },
       });
     });
