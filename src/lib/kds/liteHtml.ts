@@ -175,25 +175,34 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
 }
 
 export function pairPage(error?: string): string {
-  const err = error ? `<p class="err">${escapeHtml(error)}</p>` : "";
+  const err = error ? `<div class="err">${escapeHtml(error)}</div>` : "";
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>Vincular KDS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Vincular KDS · QuieroComer</title>
 <style>
-  *{ box-sizing:border-box; } html,body{ margin:0; height:100%; background:#0d1526; color:#fff; font-family:system-ui,-apple-system,Arial,sans-serif; }
-  .box{ max-width:360px; margin:12% auto 0; background:#fff; color:#000; border-radius:16px; padding:26px 22px; text-align:center; }
-  .box h1{ font-size:20px; margin:0 0 6px; }
-  .box p{ color:#1b2534; font-size:14px; margin:0 0 16px; }
-  .box input{ width:100%; font-size:28px; letter-spacing:4px; text-align:center; text-transform:uppercase; padding:12px; border:2px solid #8a97ad; border-radius:12px; margin-bottom:12px; }
-  .box button{ width:100%; padding:14px; border:0; border-radius:12px; background:#16a34a; color:#fff; font-size:17px; font-weight:800; cursor:pointer; }
-  .err{ color:#b91c1c; font-weight:700; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:#A8DEEF; font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif; }
+  .wrap{ text-align:center; padding-top:9%; }
+  .genie{ font-size:52px; line-height:1; margin-bottom:10px; }
+  .box{ display:inline-block; width:360px; max-width:88%; text-align:center; background:#fff; border:1px solid rgba(244,166,35,.6); border-radius:14px; padding:28px 24px; box-shadow:0 12px 40px rgba(100,60,10,.15); }
+  .brand{ font-size:27px; font-weight:600; color:#1a1a1a; margin:0 0 2px; }
+  .brand span{ color:#F4A623; }
+  .sub{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a7550; margin:0 0 18px; }
+  .box p{ color:#51607a; font-size:14px; margin:0 0 16px; line-height:1.5; }
+  .box input{ width:100%; font-size:26px; letter-spacing:5px; text-align:center; text-transform:uppercase; padding:13px; border:1px solid #e0d5c3; border-radius:10px; margin-bottom:12px; color:#1a1a1a; outline:none; }
+  .box button{ width:100%; padding:14px; border:0; border-radius:10px; background:#F4A623; color:#1a1a1a; font-size:17px; font-weight:800; cursor:pointer; }
+  .err{ background:#FEF2F2; border:1px solid #FECACA; color:#dc2626; border-radius:8px; padding:9px 12px; font-size:13px; font-weight:700; margin:0 0 12px; }
 </style></head>
 <body>
-  <form class="box" method="post" action="/api/kds/pair">
-    <h1>Vincular esta pantalla</h1>
-    <p>Escribe el código que aparece en el panel (Centro de pedidos → Vincular tablet).</p>
-    ${err}
-    <input name="code" autofocus autocomplete="off" placeholder="CÓDIGO" maxlength="12">
-    <button type="submit">Vincular</button>
-  </form>
+  <div class="wrap">
+    <div class="genie">🧞</div>
+    <form class="box" method="post" action="/api/kds/pair">
+      <h1 class="brand">Quiero<span>Comer</span></h1>
+      <div class="sub">KDS · Vincular pantalla</div>
+      ${err}
+      <p>Escribe el código que aparece en el panel (Centro de pedidos → Vincular tablet).</p>
+      <input name="code" autocomplete="off" placeholder="CÓDIGO" maxlength="12">
+      <button type="submit">Vincular</button>
+    </form>
+  </div>
 </body></html>`;
 }
