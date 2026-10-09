@@ -35,9 +35,12 @@ export async function resolveKdsRestaurant(token: string): Promise<KdsRestaurant
 const BAN = ["delivery", "envío", "envio", "costo", "fee", "cargo", "tarifa", "propina", "tip", "vuelto", "cambio", "descuento", "discount", "cupón", "cupon", "servicio", "service", "impuesto", "tax", "total"];
 const nameOf = (it: any): string => String(it?.productName ?? it?.name ?? it?.dishName ?? it?.description ?? it?.title ?? "").trim();
 
+// Línea de cocina: `t` = "N × Producto" (va en negrita), `m` = " (modificadores)".
+export interface KdsLine { t: string; m: string }
+
 // Devuelve las líneas de cocina (producto + modificadores), uniendo los extras de
-// Toteat (isExtra + referenceLine) y los modificadores anidados.
-export function kitchenLines(items: any): string[] {
+// Toteat (isExtra + referenceLine) y los modificadores anidados, agrupando iguales.
+export function kitchenLines(items: any): KdsLine[] {
   const arr = Array.isArray(items) ? items : [];
   const extrasByRef = new Map<number, string[]>();
   for (const it of arr) {
@@ -74,7 +77,7 @@ export function kitchenLines(items: any): string[] {
     if (g) g.qty += li.qty;
     else { grouped.set(key, { ...li }); order.push(key); }
   }
-  return order.map((k) => { const g = grouped.get(k)!; return `${g.qty} × ${g.name}${g.mods}`; });
+  return order.map((k) => { const g = grouped.get(k)!; return { t: `${g.qty} × ${g.name}`, m: g.mods }; });
 }
 
 function tipo(o: any): { cls: string; text: string } {
@@ -87,7 +90,7 @@ const SEC = (v: any): number => (v ? Math.floor(new Date(v).getTime() / 1000) : 
 
 export interface KdsOrderLite {
   id: string; typeCls: string; typeText: string; customer: string;
-  lines: string[]; created: number; done: number; completed: boolean; doneHM: string;
+  lines: KdsLine[]; created: number; done: number; completed: boolean; doneHM: string;
 }
 
 // Pedidos "activos" de hoy, separados y formateados para la vista liviana.

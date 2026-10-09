@@ -54,7 +54,8 @@ const CSS = `
   .card .cust{ font-size:21px; font-weight:800; color:#000; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .card .done-t{ font-size:12px; font-weight:700; color:#1b2534; margin-top:1px; }
   .card .items{ list-style:none; margin:8px 0 0; padding:9px 0 0; border-top:1px dashed #8a97ad; }
-  .card .items li{ color:#000; font-size:14px; font-weight:700; line-height:1.3; margin:0 0 5px; padding-left:16px; position:relative; }
+  .card .items li{ color:#000; font-size:14px; font-weight:600; line-height:1.3; margin:0 0 5px; padding-left:16px; position:relative; }
+  .card .items li strong{ font-weight:800; }
   .card .items li:before{ content:""; position:absolute; left:0; top:7px; width:7px; height:7px; background:#475569; }
   .card .ready{ display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:10px; background:#16a34a; color:#fff; font-weight:800; font-size:15px; cursor:pointer; text-align:center; }
   .empty{ color:#1b2534; font-size:14px; padding:6px 0; }
@@ -84,7 +85,7 @@ const JS = `
     var items = '';
     if(o.lines && o.lines.length){
       items = '<ul class="items">';
-      for(var i=0;i<o.lines.length;i++){ items += '<li>'+esc(o.lines[i])+'</li>'; }
+      for(var i=0;i<o.lines.length;i++){ var L=o.lines[i]; items += '<li><strong>'+esc(L.t)+'</strong>'+esc(L.m)+'</li>'; }
       items += '</ul>';
     }
     var doneT = (completed && o.doneHM) ? '<div class="done-t">Completado '+esc(o.doneHM)+'</div>' : '';
