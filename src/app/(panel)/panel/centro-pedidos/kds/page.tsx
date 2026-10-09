@@ -120,7 +120,7 @@ function doneSec(o: PosOrder): number {
   return SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt);
 }
 
-function Card({ o, now }: { o: PosOrder; now: number }) {
+function Card({ o, now, canComplete, onReady }: { o: PosOrder; now: number; canComplete: boolean; onReady: (id: string) => void }) {
   const completed = o.opsStage !== "preparing";
   const created = SEC(o.createdAt);
   const stop = completed ? doneSec(o) : 0;
@@ -145,6 +145,9 @@ function Card({ o, now }: { o: PosOrder; now: number }) {
           ))}
         </ul>
       )}
+      {!completed && canComplete && (
+        <button type="button" className="kds-ready" onClick={() => onReady(o.id)}>✓ Marcar listo</button>
+      )}
     </div>
   );
 }
@@ -156,8 +159,14 @@ export default function KdsPage() {
   const [date, setDate] = useState<string>(() => chileTodayLocal());
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [groupHour, setGroupHour] = useState(false);
+  const [completeMode, setCompleteMode] = useState(false);
 
-  useEffect(() => { try { setGroupHour(localStorage.getItem("kdsGroupHour") === "1"); } catch { /* noop */ } }, []);
+  useEffect(() => {
+    try {
+      setGroupHour(localStorage.getItem("kdsGroupHour") === "1");
+      setCompleteMode(localStorage.getItem("kdsComplete") === "1");
+    } catch { /* noop */ }
+  }, []);
 
   const fetchOrders = useCallback(async () => {
     if (!restaurantId) return;
@@ -170,6 +179,21 @@ export default function KdsPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
   useEffect(() => { const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000); return () => clearInterval(t); }, []);
+
+  // Marca un pedido como "Listo" desde el KDS (mismo PATCH que el Centro de pedidos).
+  // Optimista: lo mueve a Completados al instante; el cambio se refleja en Centro de
+  // pedidos por Supabase Realtime.
+  const markReady = useCallback(async (id: string) => {
+    if (!restaurantId) return;
+    setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "ready" as Stage } : x)));
+    try {
+      const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id, opsStage: "ready" }) });
+      if (!r.ok) { fetchOrders(); return; }
+      const d = await r.json().catch(() => ({}));
+      const finalStage = d?.order?.opsStage as Stage | undefined;
+      if (finalStage) setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: finalStage } : x)));
+    } catch { fetchOrders(); }
+  }, [restaurantId, fetchOrders]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -192,6 +216,7 @@ export default function KdsPage() {
 
   const today = chileTodayLocal();
   const toggleGroup = () => setGroupHour((g) => { const n = !g; try { localStorage.setItem("kdsGroupHour", n ? "1" : "0"); } catch { /* noop */ } return n; });
+  const toggleComplete = () => setCompleteMode((v) => { const n = !v; try { localStorage.setItem("kdsComplete", n ? "1" : "0"); } catch { /* noop */ } return n; });
 
   // Agrupa completados por bloque horario (hora de completado).
   const compGroups: { hk: string; label: string; rate: string; items: PosOrder[] }[] = [];
@@ -220,6 +245,7 @@ export default function KdsPage() {
         <h1>KDS Cocina</h1>
         <div className="right">
           <span className="kpi" title="Completados en menos de 10 minutos">Pedidos preparados en buen tiempo: <b>{greenCount}</b></span>
+          <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Permite marcar pedidos como Listo desde esta pantalla">✓ Completar desde KDS</button>
           <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
           <Link href="/panel/centro-pedidos" className="ghost">Volver</Link>
           <button type="button" className="ghost" onClick={fetchOrders}>Refrescar</button>
@@ -240,7 +266,7 @@ export default function KdsPage() {
           {pend.length === 0 ? (
             <div className="empty">No hay pedidos en preparación.</div>
           ) : (
-            <div className="kds-grid">{pend.map((o) => <Card key={o.id} o={o} now={now} />)}</div>
+            <div className="kds-grid">{pend.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}</div>
           )}
         </section>
 
@@ -255,12 +281,12 @@ export default function KdsPage() {
               {compGroups.map((g) => (
                 <div key={g.hk} style={{ display: "contents" }}>
                   <div className="hour-group"><span>{g.label}</span><span className="hg-count">{g.items.length}</span><span className="hg-line" /><span className="hg-rate">{g.rate}</span></div>
-                  {g.items.map((o) => <Card key={o.id} o={o} now={now} />)}
+                  {g.items.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="kds-grid">{comp.map((o) => <Card key={o.id} o={o} now={now} />)}</div>
+            <div className="kds-grid">{comp.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}</div>
           )}
         </section>
       </div>
@@ -287,6 +313,10 @@ const KDS_CSS = `
   .kds-root .topbar .right .ghost{ text-decoration:none; color:var(--text); background:var(--bg-soft); padding:8px 14px; border-radius:10px; border:1px solid var(--line); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; }
   .kds-root .topbar .right .ghost:hover{ background:#e2e8f2; }
   .kds-root .topbar .right .ghost.on{ background:#2563eb; color:#fff; border-color:#2563eb; }
+  .kds-root .topbar .right .ghost.on-green{ background:#16a34a; color:#fff; border-color:#16a34a; }
+  .kds-root .kds-ready{ margin-top:4px; width:100%; padding:10px; border:none; border-radius:10px; background:#16a34a; color:#fff; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .kds-root .kds-ready:hover{ background:#15803d; }
+  .kds-root .kds-ready:active{ transform:translateY(1px); }
   .kds-root .topbar .right .kpi{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; background:rgba(5,150,105,.12); border:1px solid rgba(5,150,105,.35); color:#047857; font-weight:600; font-size:13px; white-space:nowrap; }
   .kds-root .topbar .right .kpi b{ font-weight:800; font-size:15px; font-variant-numeric:tabular-nums; }
 
