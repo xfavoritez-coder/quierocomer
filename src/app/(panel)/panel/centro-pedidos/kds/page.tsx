@@ -194,7 +194,7 @@ export default function KdsPage() {
   const toggleGroup = () => setGroupHour((g) => { const n = !g; try { localStorage.setItem("kdsGroupHour", n ? "1" : "0"); } catch { /* noop */ } return n; });
 
   // Agrupa completados por bloque horario (hora de completado).
-  const compGroups: { hk: string; label: string; items: PosOrder[] }[] = [];
+  const compGroups: { hk: string; label: string; rate: string; items: PosOrder[] }[] = [];
   if (groupHour) {
     const by = new Map<string, PosOrder[]>();
     for (const o of comp) {
@@ -205,7 +205,10 @@ export default function KdsPage() {
     }
     for (const [hk, items] of by) {
       const hh = hk.slice(-2);
-      compGroups.push({ hk, label: `${hh}:00 – ${hh}:59`, items });
+      // Cadencia del bloque: 1 pedido cada (60/N) minutos.
+      const cada = Math.round(60 / items.length);
+      const rate = items.length >= 1 ? `1 pedido cada ${cada} ${cada === 1 ? "minuto" : "minutos"}` : "";
+      compGroups.push({ hk, label: `${hh}:00 – ${hh}:59`, rate, items });
     }
   }
 
@@ -251,7 +254,7 @@ export default function KdsPage() {
             <div className="kds-grid">
               {compGroups.map((g) => (
                 <div key={g.hk} style={{ display: "contents" }}>
-                  <div className="hour-group"><span>{g.label}</span><span className="hg-count">{g.items.length}</span><span className="hg-line" /></div>
+                  <div className="hour-group"><span>{g.label}</span><span className="hg-count">{g.items.length}</span><span className="hg-line" /><span className="hg-rate">{g.rate}</span></div>
                   {g.items.map((o) => <Card key={o.id} o={o} now={now} />)}
                 </div>
               ))}
@@ -314,6 +317,7 @@ const KDS_CSS = `
   .kds-root .hour-group::before{ content:""; width:9px; height:9px; border-radius:50%; background:var(--accent-comp); }
   .kds-root .hour-group .hg-line{ flex:1 1 auto; height:1px; background:var(--line); }
   .kds-root .hour-group .hg-count{ font-variant-numeric:tabular-nums; font-weight:700; font-size:12px; background:var(--bg-soft); border:1px solid var(--line); color:var(--muted); padding:1px 9px; border-radius:999px; }
+  .kds-root .hour-group .hg-rate{ flex:0 0 auto; text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; }
 
   .kds-root .kds-card{ --age:#64748b; --age-soft:rgba(100,116,139,.14); position:relative; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px 14px 18px; box-shadow:0 2px 8px rgba(13,21,38,.08); display:flex; flex-direction:column; gap:9px; }
   .kds-root .kds-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--age); }
