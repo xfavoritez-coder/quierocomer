@@ -137,30 +137,30 @@ export default function LoyaltyMembersPage() {
   };
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-          <CreditCard size={20} color="var(--adm-text3)" /> Fidelidad
+        <h1 style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
+          <CreditCard size={22} color="var(--adm-text3)" /> Fidelidad
         </h1>
-        <p style={{ fontFamily: FB, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-          Gestiona tus miembros y sus sellos.{!loadingList && <span style={{ marginLeft: 8, fontFamily: F, fontWeight: 700, color: "var(--adm-text3)", fontSize: "0.82rem" }}>{members.length} {members.length === 1 ? "miembro" : "miembros"}</span>}
+        <p style={{ fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+          Gestiona tus miembros y sus sellos.{!loadingList && <span style={{ marginLeft: 8, fontFamily: F, fontWeight: 700, color: "var(--adm-text3)", fontSize: "0.84rem" }}>{members.length} {members.length === 1 ? "miembro" : "miembros"}</span>}
         </p>
       </div>
 
 
       {/* Buscador + agregar */}
       <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+        <div style={{ position: "relative", flex: "1 1 320px", minWidth: 200, maxWidth: 520 }}>
           <Search size={16} color="var(--adm-text3)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
-          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, email o teléfono…" style={{ ...inputStyle, paddingLeft: 36 }} />
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, email o teléfono…" style={{ ...inputStyle, paddingLeft: 36, height: 44 }} />
         </div>
         <button
           type="button"
           onClick={() => setShowAdd((s) => !s)}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", borderRadius: 8, border: `1.5px solid ${GOLD}`, background: "rgba(244,166,35,0.12)", color: GOLD, fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+          style={{ display: "flex", alignItems: "center", gap: 6, height: 44, padding: "0 18px", borderRadius: 10, border: `1.5px solid ${GOLD}`, background: "rgba(244,166,35,0.12)", color: GOLD, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
         >
-          <Plus size={15} /> Agregar miembro
+          <Plus size={16} /> Agregar miembro
         </button>
       </div>
 
@@ -186,62 +186,64 @@ export default function LoyaltyMembersPage() {
           </p>
         </div>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 14, alignItems: "stretch" }}>
           {members.map((m) => {
             const pct = stampGoal > 0 ? Math.min(100, (m.stamps / stampGoal) * 100) : 0;
             const cardFull = m.stamps >= stampGoal;
             const busy = busyId === m.id;
             return (
-              <li key={m.id} style={{ padding: 14, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <li key={m.id} style={{ padding: 18, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, display: "flex", flexDirection: "column", gap: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                 {/* Info del cliente */}
-                <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 600, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{m.name || "Sin nombre"}</span>
-                  {m.completedCards > 0 && (
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: GOLD }}>
-                      {m.completedCards} completada{m.completedCards > 1 ? "s" : ""}
-                    </span>
-                  )}
-                </p>
-                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {[m.email, m.phone].filter(Boolean).join(" · ") || "Sin contacto"}
-                </p>
-                {m.birthDate && (
-                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                    🎂 {new Date(m.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" })}
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "1.02rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{m.name || "Sin nombre"}</span>
+                    {m.completedCards > 0 && (
+                      <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, padding: "2px 7px", borderRadius: 999, background: "rgba(244,166,35,0.14)", color: GOLD }}>
+                        {m.completedCards} completada{m.completedCards > 1 ? "s" : ""}
+                      </span>
+                    )}
                   </p>
-                )}
+                  <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {[m.email, m.phone].filter(Boolean).join(" · ") || "Sin contacto"}
+                  </p>
+                  {m.birthDate && (
+                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
+                      🎂 {new Date(m.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" })}
+                    </p>
+                  )}
+                </div>
 
                 {/* Progreso */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-                  <div style={{ height: 6, flex: 1, maxWidth: 160, borderRadius: 999, overflow: "hidden", background: "var(--adm-hover)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ height: 8, flex: 1, borderRadius: 999, overflow: "hidden", background: "var(--adm-hover)" }}>
                     <div style={{ height: "100%", width: `${pct}%`, background: cardFull ? "#16a34a" : GOLD, borderRadius: 999, transition: "width 0.2s" }} />
                   </div>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: cardFull ? "#16a34a" : "var(--adm-text2)", flexShrink: 0 }}>
                     {m.stamps}/{stampGoal} {stampIcon === "logo" ? "•" : stampIcon}
                   </span>
                 </div>
 
-                {/* Miembro desde (fecha de inscripción) */}
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
-                  Miembro desde: {new Date(m.enrolledAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
-
-                {/* Última compra (último sello escaneado) */}
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
-                  {m.lastStampAt
-                    ? `Última compra: ${new Date(m.lastStampAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
-                    : "Sin compras aún"}
-                </p>
+                {/* Metadatos */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.77rem", color: "var(--adm-text3)", margin: 0 }}>
+                    Miembro desde: {new Date(m.enrolledAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                  <p style={{ fontFamily: FB, fontSize: "0.77rem", color: "var(--adm-text3)", margin: 0 }}>
+                    {m.lastStampAt
+                      ? `Última compra: ${new Date(m.lastStampAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
+                      : "Sin compras aún"}
+                  </p>
+                </div>
 
                 {/* Checklist de recompensas ganadas (informativo) */}
                 {rewards.length > 0 && (
-                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5, paddingTop: 10, borderTop: "1px solid var(--adm-card-border)" }}>
                     {rewards.map((t) => {
                       const won = m.stamps >= t.stamp;
                       return (
-                        <div key={t.stamp} style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                          {won ? <Check size={14} color="#16a34a" /> : <Circle size={13} color="var(--adm-card-border)" />}
-                          <span style={{ fontFamily: FB, fontSize: "0.75rem", color: won ? "var(--adm-text2)" : "var(--adm-text3)", textDecoration: won ? "none" : "none" }}>
+                        <div key={t.stamp} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {won ? <Check size={15} color="#16a34a" /> : <Circle size={14} color="var(--adm-card-border)" />}
+                          <span style={{ fontFamily: FB, fontSize: "0.8rem", color: won ? "var(--adm-text2)" : "var(--adm-text3)" }}>
                             <span style={{ fontWeight: 700 }}>{t.stamp} {stampIcon === "logo" ? "•" : stampIcon}</span> · {t.reward}
                             {won && <span style={{ color: "#16a34a", fontWeight: 700 }}> ✓ ganada</span>}
                           </span>
@@ -251,21 +253,23 @@ export default function LoyaltyMembersPage() {
                   </div>
                 )}
 
+                {/* Empuja las acciones al fondo (tarjetas de igual alto en el grid) */}
+                <div style={{ flex: 1 }} />
+
                 {/* Acciones */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                  <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.1rem", cursor: "pointer", opacity: busy ? 0.4 : 1 }}>−</button>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: -1 })} title="Quitar sello" style={{ height: 42, width: 42, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)", fontSize: "1.25rem", cursor: "pointer", opacity: busy ? 0.4 : 1, flexShrink: 0 }}>−</button>
                   {cardFull ? (
-                    <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
-                      <RotateCcw size={13} /> Reiniciar
+                    <button type="button" disabled={busy} onClick={() => post(m, "reset", undefined, "Tarjeta reiniciada")} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, height: 42, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
+                      <RotateCcw size={15} /> Reiniciar tarjeta
                     </button>
                   ) : (
-                    <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: 1 })} style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: "var(--adm-text)", color: "var(--adm-bg)", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
-                      +1 sello
+                    <button type="button" disabled={busy} onClick={() => post(m, "stamp", { delta: 1 })} style={{ flex: 1, height: 42, borderRadius: 10, border: "none", background: "var(--adm-text)", color: "var(--adm-bg)", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: "pointer", opacity: busy ? 0.4 : 1 }}>
+                      + 1 sello
                     </button>
                   )}
-                  <span style={{ flex: 1 }} />
-                  <button type="button" disabled={busy} onClick={() => removeMember(m)} title="Revocar pase" style={{ height: 36, width: 36, borderRadius: 8, border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.06)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1 }}>
-                    <Trash2 size={15} />
+                  <button type="button" disabled={busy} onClick={() => removeMember(m)} title="Revocar pase" style={{ height: 42, width: 42, borderRadius: 10, border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.06)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: busy ? 0.4 : 1, flexShrink: 0 }}>
+                    <Trash2 size={16} />
                   </button>
                 </div>
 
