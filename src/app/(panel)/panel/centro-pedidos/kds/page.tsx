@@ -455,7 +455,7 @@ export default function KdsPage() {
 
       {(keyBuf || picked) && (
         <div className="kds-numpad" style={picked ? { background: picked.bg, color: picked.fg } : undefined}>
-          <div className="np-num">#{picked ? picked.text.replace(/^#/, "") : keyBuf}<span className="np-caret">{picked ? "" : "▌"}</span></div>
+          <div className="np-num">{picked ? picked.text.replace(/^#/, "") : keyBuf}</div>
           {picked
             ? (picked.sub ? <div className="np-sub">{picked.sub}</div> : null)
             : <div className="np-hint">Pulsa Enter para seleccionar</div>}
@@ -611,7 +611,6 @@ const KDS_CSS = `
   /* Overlay a pantalla completa mientras se escribe / al seleccionar por teclado */
   .kds-root .kds-numpad{ position:fixed; inset:0; z-index:100; background:#fff; color:#0d1526; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; transition:background-color .2s ease, color .2s ease; }
   .kds-root .kds-numpad .np-num{ font-size:clamp(130px, 40vmin, 560px); font-weight:900; line-height:.92; letter-spacing:.01em; font-variant-numeric:tabular-nums; }
-  .kds-root .kds-numpad .np-caret{ animation:kdsCaret 1s step-end infinite; }
   .kds-root .kds-numpad .np-sub{ font-size:clamp(22px, 6vmin, 76px); font-weight:800; margin-top:2.2vh; max-width:92vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .kds-root .kds-numpad .np-hint{ position:absolute; bottom:5vh; font-size:clamp(14px, 3vmin, 30px); font-weight:700; opacity:.5; letter-spacing:.02em; }
 
