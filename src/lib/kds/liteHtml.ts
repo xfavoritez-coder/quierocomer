@@ -43,7 +43,7 @@ const CSS = `
   .card .type.t-delivery{ background:#bfdbfe; color:#0b2a6b; }
   .card .type.t-mesa{ background:#ddd6fe; color:#2e1065; }
   .card .type.t-retiro{ background:#a7f3d0; color:#064e3b; }
-  .card .timer{ float:right; font-size:24px; font-weight:800; background:#64748b; color:#000; border-radius:9px; padding:3px 11px; }
+  .card .timer{ float:right; font-size:20px; font-weight:800; background:#64748b; color:#000; border-radius:9px; padding:3px 10px; }
   .card.a-gray .timer{ background:#475569; color:#fff; }
   .card.a-yellow .timer{ background:#f59e0b; color:#000; }
   .card.a-red .timer{ background:#f97316; color:#000; }

@@ -516,7 +516,7 @@ const KDS_CSS = `
   .kds-root .kds-type.t-delivery{ background:var(--del-bg); color:var(--del-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='17' r='2.5'/%3E%3Ccircle cx='17' cy='17' r='2.5'/%3E%3Cpath d='M8.5 17H14l2-7h3'/%3E%3Cpath d='M14 10l-1.5-4H9'/%3E%3C/svg%3E"); }
   .kds-root .kds-type.t-mesa{ background:var(--mesa-bg); color:var(--mesa-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 2v20'/%3E%3Cpath d='M5 2v6a2 2 0 0 0 4 0V2'/%3E%3Cpath d='M17 2c-1.5 0-3 1.5-3 5s1.5 4 3 4v11'/%3E%3C/svg%3E"); }
   .kds-root .kds-type.t-retiro{ background:var(--ret-bg); color:var(--ret-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 7h12l-1 13H7L6 7Z'/%3E%3Cpath d='M9 7a3 3 0 0 1 6 0'/%3E%3C/svg%3E"); }
-  .kds-root .kds-timer{ margin-left:auto; font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--age); color:#000; border-radius:10px; padding:3px 11px; box-shadow:0 1px 4px rgba(13,21,38,.18); }
+  .kds-root .kds-timer{ margin-left:auto; font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--age); color:#000; border-radius:10px; padding:3px 10px; box-shadow:0 1px 4px rgba(13,21,38,.18); }
   .kds-root .card-age-red-strong .kds-timer{ color:#fff; }
 
   .kds-root .kds-customer{ font-size:21px; font-weight:800; line-height:1.15; margin:0; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -560,5 +560,5 @@ const KDS_CSS = `
     .kds-root .topbar .right .nav-links .ghost{ width:100%; text-align:left; justify-content:flex-start; }
   }
   @media (max-width:480px){ .kds-root .topbar .right .kpi{ flex:1 1 auto; justify-content:center; font-size:11px; padding:6px 9px; } }
-  @media (max-width:480px){ .kds-root .kds-customer{ font-size:19px; } .kds-root .kds-timer{ font-size:20px; } }
+  @media (max-width:480px){ .kds-root .kds-customer{ font-size:19px; } .kds-root .kds-timer{ font-size:17px; } }
 `;
