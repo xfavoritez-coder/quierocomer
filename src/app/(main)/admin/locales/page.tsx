@@ -46,6 +46,7 @@ interface Restaurant {
   bodegaEnabled?: boolean;
   centroPedidosEnabled?: boolean;
   posEnabled?: boolean;
+  orderingNavHidden?: boolean;
   bodegaId?: string | null;
   ecommerceConfig?: EcommerceConfig | null;
   ecommerceDeliveryZones?: unknown;
@@ -771,6 +772,46 @@ export default function AdminLocales() {
           </div>
           </div>
         )}
+
+        {/* Toggle "Pedidos Online" en el sidebar (legacy) — super-admin only. Default: visible. */}
+        {isSuper && (() => {
+          const visible = !selected.orderingNavHidden;
+          return (
+          <div style={{ padding: "14px 16px", background: visible ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${visible ? "rgba(99,102,241,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: visible ? "#818cf8" : "white", margin: 0 }}>🛒 Pedidos Online (menú)</p>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+                {visible
+                  ? "Visible en el sidebar del local (módulo legacy pedir-online)"
+                  : "Oculto del sidebar del local"}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const val = !selected.orderingNavHidden; // true = ocultar
+                const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderingNavHidden: val }) });
+                if (!res.ok) { alert("Error al actualizar"); return; }
+                const u = { ...selected, orderingNavHidden: val };
+                setSelected(u);
+                setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+                background: visible ? "#6366f1" : "rgba(255,255,255,0.15)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+                left: visible ? 23 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              }} />
+            </button>
+          </div>
+          </div>
+          );
+        })()}
 
         {/* Toggle Bodega (pilar de inventario) — super-admin only */}
         {isSuper && (

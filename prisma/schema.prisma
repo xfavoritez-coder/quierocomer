@@ -314,6 +314,7 @@ model Restaurant {
   communeSlug                String?
   controlEnabled             Boolean                   @default(false)
   orderingEnabled            Boolean                   @default(false)
+  orderingNavHidden          Boolean                   @default(false)
   orderingPhone              String?
   orderingDelivery           String                    @default("BOTH")
   orderingMinAmount          Int?
