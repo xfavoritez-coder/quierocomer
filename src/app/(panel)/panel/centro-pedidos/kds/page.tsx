@@ -277,6 +277,24 @@ export default function KdsPage() {
   }, []);
 
   useEffect(() => {
+    // Marca el pedido seleccionado como Listo (Completados).
+    const doComplete = () => {
+      const id = selRef.current;
+      if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); return; }
+      const o = ordersRef.current.find((x) => x.id === id);
+      if (o && o.opsStage === "preparing") { markReady(id); showFlash(`Pedido #${o.dailyNumber ?? ""} marcado Listo ✓`); }
+      else { showFlash("Ese pedido ya estaba listo"); }
+      select(null);
+    };
+    // Regresa el pedido seleccionado a Pendientes.
+    const doPending = () => {
+      const id = selRef.current;
+      if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); return; }
+      const o = ordersRef.current.find((x) => x.id === id);
+      if (o && o.opsStage !== "preparing") { markPreparing(id); showFlash(`Pedido #${o.dailyNumber ?? ""} regresado a Pendientes ↩`); }
+      else { showFlash("Ese pedido ya está en Pendientes"); }
+      select(null);
+    };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
@@ -293,48 +311,29 @@ export default function KdsPage() {
       if (e.key === "Escape") { setBuf(""); select(null); setFlash(null); return; }
       if (e.key === "Enter") {
         const raw = bufRef.current;
-        if (!raw) return;
-        const n = parseInt(raw, 10);
-        setBuf("");
         e.preventDefault();
-        const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
-        if (found) {
-          select(found.id);
-          showFlash(`Pedido #${n} seleccionado · C = Listo · P = Pendientes`);
-          requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
-        } else {
-          select(null);
-          showFlash(`El pedido #${n} no está en pantalla`);
+        if (raw) {
+          const n = parseInt(raw, 10);
+          setBuf("");
+          const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
+          if (found) {
+            select(found.id);
+            showFlash(`Pedido #${n} seleccionado · C/Enter/− = Listo · P / = Pendientes`);
+            requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
+          } else {
+            select(null);
+            showFlash(`El pedido #${n} no está en pantalla`);
+          }
+        } else if (selRef.current) {
+          // Enter de nuevo (sin número pendiente) = marcar Listo el seleccionado.
+          doComplete();
         }
         return;
       }
-      if (e.key === "c" || e.key === "C") {
-        const id = selRef.current;
-        if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
-        const o = ordersRef.current.find((x) => x.id === id);
-        if (o && o.opsStage === "preparing") {
-          markReady(id);
-          showFlash(`Pedido #${o.dailyNumber ?? ""} marcado Listo ✓`);
-        } else {
-          showFlash("Ese pedido ya estaba listo");
-        }
-        select(null);
-        e.preventDefault();
-        return;
-      }
-      if (e.key === "p" || e.key === "P") {
-        const id = selRef.current;
-        if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
-        const o = ordersRef.current.find((x) => x.id === id);
-        if (o && o.opsStage !== "preparing") {
-          markPreparing(id);
-          showFlash(`Pedido #${o.dailyNumber ?? ""} regresado a Pendientes ↩`);
-        } else {
-          showFlash("Ese pedido ya está en Pendientes");
-        }
-        select(null);
-        e.preventDefault();
-      }
+      // Completar: C o la tecla "−" (del pad numérico o del teclado principal).
+      if (e.key === "c" || e.key === "C" || e.key === "-") { doComplete(); e.preventDefault(); return; }
+      // Devolver a Pendientes: P o la tecla "/" (del pad numérico o del teclado principal).
+      if (e.key === "p" || e.key === "P" || e.key === "/") { doPending(); e.preventDefault(); return; }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -394,7 +393,7 @@ export default function KdsPage() {
         <span className="day">{date.split("-").reverse().join("-")}</span>
         <button type="button" className="nav-day" onClick={() => setDate((d) => addDaysYmd(d, 1))} disabled={date >= today} aria-label="Día siguiente">›</button>
         {date !== today && <button type="button" className="hoy" onClick={() => setDate(today)}>Hoy</button>}
-        <span className="khelp">⌨️ N° + <b>Enter</b> · <b>C</b> = Listo · <b>P</b> = Pendientes</span>
+        <span className="khelp">⌨️ N° + <b>Enter</b> · Listo: <b>C Enter −</b> · Pendientes: <b>P /</b></span>
         <span className="meta">{weekdayLabel(date)}</span>
       </div>
 
