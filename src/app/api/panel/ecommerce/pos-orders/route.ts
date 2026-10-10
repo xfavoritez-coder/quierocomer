@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
+import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,6 +74,14 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     take: scope === "historial" ? 300 : 400,
   });
+
+  // KDS: número de pedido corto que se reinicia cada día (para control por teclado).
+  if (scope === "kds") {
+    const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
+    const withNum = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null }));
+    return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today });
+  }
+
   return NextResponse.json({ orders, from: fromYmd, to: toYmd, today });
 }
 

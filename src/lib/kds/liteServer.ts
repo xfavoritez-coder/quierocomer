@@ -2,6 +2,7 @@
 // Resuelve el local por token de KDS y arma el JSON de pedidos ya formateado.
 import { prisma } from "@/lib/prisma";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
+import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 
 export interface KdsRestaurant { id: string; name: string; posEnabled: boolean }
 
@@ -89,7 +90,7 @@ function tipo(o: any): { cls: string; text: string } {
 const SEC = (v: any): number => (v ? Math.floor(new Date(v).getTime() / 1000) : 0);
 
 export interface KdsOrderLite {
-  id: string; typeCls: string; typeText: string; customer: string;
+  id: string; n: number | null; typeCls: string; typeText: string; customer: string;
   lines: KdsLine[]; created: number; done: number; completed: boolean; doneHM: string;
 }
 
@@ -119,13 +120,16 @@ export async function kdsOrders(restaurantId: string): Promise<{ pend: KdsOrderL
     take: 400,
   });
 
+  // Número de pedido corto que se reinicia cada día (para control por teclado).
+  const nums = await dailyOrderNumbers(restaurantId, orders.map((o: any) => ({ id: o.id, createdAt: o.createdAt })));
+
   const toLite = (o: any): KdsOrderLite => {
     const completed = o.opsStage !== "preparing";
     const done = completed ? SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt) : 0;
     const t = tipo(o);
     const doneHM = completed && done > 0 ? new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }).format(new Date(done * 1000)) : "";
     return {
-      id: o.id, typeCls: t.cls, typeText: t.text,
+      id: o.id, n: nums[o.id] ?? null, typeCls: t.cls, typeText: t.text,
       customer: o.customerName || (o.orderReference ? `#${o.orderReference}` : "—"),
       lines: kitchenLines(o.items), created: SEC(o.createdAt), done, completed, doneHM,
     };

@@ -29,6 +29,7 @@ interface PosOrder {
   opsReadyForDeliveryAt?: string | null;
   opsDispatchedAt?: string | null;
   opsDeliveredAt?: string | null;
+  dailyNumber?: number | null;
 }
 
 function chileTodayLocal(): string {
@@ -131,7 +132,7 @@ function doneSec(o: PosOrder): number {
   return SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt);
 }
 
-function Card({ o, now, canComplete, onReady }: { o: PosOrder; now: number; canComplete: boolean; onReady: (id: string) => void }) {
+function Card({ o, now, canComplete, selected, onReady }: { o: PosOrder; now: number; canComplete: boolean; selected: boolean; onReady: (id: string) => void }) {
   const completed = o.opsStage !== "preparing";
   const created = SEC(o.createdAt);
   const stop = completed ? doneSec(o) : 0;
@@ -142,8 +143,9 @@ function Card({ o, now, canComplete, onReady }: { o: PosOrder; now: number; canC
   const doneHM = completed && stop > 0 ? new Date(stop * 1000).toLocaleTimeString("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }) : "";
 
   return (
-    <div className={`kds-card ${cls}${completed ? " is-completed" : ""}`}>
+    <div id={`kds-card-${o.id}`} className={`kds-card ${cls}${completed ? " is-completed" : ""}${selected ? " is-selected" : ""}`}>
       <div className="kds-head">
+        {o.dailyNumber != null && <div className="kds-num">#{o.dailyNumber}</div>}
         <div className={`kds-type ${t.cls}`}>{t.text}</div>
         <div className="kds-timer">{fmtHMS(sec)}</div>
       </div>
@@ -175,6 +177,14 @@ export default function KdsPage() {
   const [pairCode, setPairCode] = useState<string | null>(null);
   const [pairBusy, setPairBusy] = useState(false);
   const rightRef = useRef<HTMLDivElement>(null);
+  // Control por teclado: escribir N° → Enter selecciona → "P" marca Listo.
+  const [keyBuf, setKeyBuf] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+  const bufRef = useRef("");
+  const selRef = useRef<string | null>(null);
+  const ordersRef = useRef<PosOrder[]>([]);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const genPair = useCallback(async () => {
     if (!restaurantId) return;
@@ -240,6 +250,69 @@ export default function KdsPage() {
     return () => { supabase.removeChannel(channel); document.removeEventListener("visibilitychange", onVis); clearInterval(backup); };
   }, [restaurantId, fetchOrders]);
 
+  // ── Control por teclado ──────────────────────────────────────────────
+  // Flujo: el cocinero escribe el N° del pedido, pulsa Enter (lo selecciona y
+  // resalta) y luego la tecla "P" lo marca como Listo. Funciona siempre, sin
+  // depender del toggle del botón en pantalla.
+  useEffect(() => { ordersRef.current = orders; }, [orders]);
+  const setBuf = useCallback((v: string) => { bufRef.current = v; setKeyBuf(v); }, []);
+  const select = useCallback((id: string | null) => { selRef.current = id; setSelectedId(id); }, []);
+  const showFlash = useCallback((msg: string) => {
+    setFlash(msg);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 2000);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key >= "0" && e.key <= "9") {
+        setBuf((bufRef.current + e.key).slice(0, 6));
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "Backspace") {
+        if (bufRef.current) { setBuf(bufRef.current.slice(0, -1)); e.preventDefault(); }
+        return;
+      }
+      if (e.key === "Escape") { setBuf(""); select(null); setFlash(null); return; }
+      if (e.key === "Enter") {
+        const raw = bufRef.current;
+        if (!raw) return;
+        const n = parseInt(raw, 10);
+        setBuf("");
+        e.preventDefault();
+        const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
+        if (found) {
+          select(found.id);
+          showFlash(`Pedido #${n} seleccionado · pulsa P para marcar Listo`);
+          requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
+        } else {
+          select(null);
+          showFlash(`El pedido #${n} no está en pantalla`);
+        }
+        return;
+      }
+      if (e.key === "p" || e.key === "P") {
+        const id = selRef.current;
+        if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
+        const o = ordersRef.current.find((x) => x.id === id);
+        if (o && o.opsStage === "preparing") {
+          markReady(id);
+          showFlash(`Pedido #${o.dailyNumber ?? ""} marcado Listo ✓`);
+        } else {
+          showFlash("Ese pedido ya estaba listo");
+        }
+        select(null);
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [markReady, setBuf, select, showFlash]);
+
   const active = orders.filter((o) => o.posStatus !== "canceled");
   const pend = active.filter((o) => o.opsStage === "preparing").sort((a, b) => SEC(a.createdAt) - SEC(b.createdAt));
   const comp = active.filter((o) => o.opsStage !== "preparing").sort((a, b) => doneSec(b) - doneSec(a));
@@ -294,6 +367,7 @@ export default function KdsPage() {
         <span className="day">{date.split("-").reverse().join("-")}</span>
         <button type="button" className="nav-day" onClick={() => setDate((d) => addDaysYmd(d, 1))} disabled={date >= today} aria-label="Día siguiente">›</button>
         {date !== today && <button type="button" className="hoy" onClick={() => setDate(today)}>Hoy</button>}
+        <span className="khelp">⌨️ Escribe el N°, <b>Enter</b> y <b>P</b> = Listo</span>
         <span className="meta">{weekdayLabel(date)}</span>
       </div>
 
@@ -303,7 +377,7 @@ export default function KdsPage() {
           {pend.length === 0 ? (
             <div className="empty">No hay pedidos en preparación.</div>
           ) : (
-            <div className="kds-grid">{pend.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}</div>
+            <div className="kds-grid">{pend.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} selected={o.id === selectedId} onReady={markReady} />)}</div>
           )}
         </section>
 
@@ -318,15 +392,23 @@ export default function KdsPage() {
               {compGroups.map((g) => (
                 <div key={g.hk} style={{ display: "contents" }}>
                   <div className="hour-group"><span>{g.label}</span><span className="hg-count">{g.items.length}</span><span className="hg-line" /><span className="hg-rate">{g.rate}</span></div>
-                  {g.items.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}
+                  {g.items.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} selected={o.id === selectedId} onReady={markReady} />)}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="kds-grid">{comp.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} onReady={markReady} />)}</div>
+            <div className="kds-grid">{comp.map((o) => <Card key={o.id} o={o} now={now} canComplete={completeMode} selected={o.id === selectedId} onReady={markReady} />)}</div>
           )}
         </section>
       </div>
+
+      {(keyBuf || flash) && (
+        <div className="kds-keyhint">
+          {keyBuf
+            ? <span className="kb">N° <b>{keyBuf}</b><i>▌</i></span>
+            : <span>{flash}</span>}
+        </div>
+      )}
 
       {pairCode !== null && (
         <div onClick={() => setPairCode(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -452,6 +534,23 @@ const KDS_CSS = `
   .kds-root .kds-card.is-completed .kds-items li{ color:#000; }
   .kds-root .kds-card.is-completed .kds-items li strong{ color:#000; }
   .kds-root .kds-card.is-completed .kds-timer{ background:#9fb0c6; color:#000; box-shadow:none; }
+
+  /* N° de pedido corto (reinicia cada día) — para el control por teclado */
+  .kds-root .kds-num{ display:inline-flex; align-items:center; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:#0d1526; color:#fff; padding:3px 10px; border-radius:8px; }
+  .kds-root .kds-card.is-completed .kds-num{ background:#475569; }
+  /* Pedido seleccionado por teclado */
+  .kds-root .kds-card.is-selected{ outline:4px solid #2563eb; outline-offset:2px; box-shadow:0 0 0 4px rgba(37,99,235,.28), 0 6px 18px rgba(13,21,38,.22); }
+  .kds-root .kds-card.is-selected .kds-num{ background:#2563eb; }
+  /* Ayuda en la barra de herramientas */
+  .kds-root .toolbar .khelp{ font-size:12px; font-weight:600; color:var(--muted); background:#fff; border:1px solid var(--line); border-radius:8px; padding:5px 10px; }
+  .kds-root .toolbar .khelp b{ font-weight:800; color:var(--text); }
+  @media (max-width:700px){ .kds-root .toolbar .khelp{ display:none; } }
+  /* Indicador flotante del teclado (N° escribiéndose / confirmaciones) */
+  .kds-root .kds-keyhint{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:70; background:#0d1526; color:#fff; font-size:18px; font-weight:800; padding:12px 22px; border-radius:14px; box-shadow:0 12px 34px rgba(0,0,0,.4); max-width:92vw; text-align:center; }
+  .kds-root .kds-keyhint .kb{ font-variant-numeric:tabular-nums; letter-spacing:.04em; }
+  .kds-root .kds-keyhint .kb b{ font-size:24px; font-weight:900; }
+  .kds-root .kds-keyhint .kb i{ font-style:normal; animation:kdsCaret 1s step-end infinite; margin-left:1px; }
+  @keyframes kdsCaret{ 0%,100%{opacity:1} 50%{opacity:0} }
 
   @media (max-width:820px){
     .kds-root .topbar .right .kpi{ padding:7px 11px; font-size:12px; }

@@ -59,6 +59,17 @@ const CSS = `
   .card .items li:before{ content:""; position:absolute; left:0; top:7px; width:7px; height:7px; background:#475569; }
   .card .ready{ display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:10px; background:#16a34a; color:#fff; font-weight:800; font-size:15px; cursor:pointer; text-align:center; }
   .empty{ color:#1b2534; font-size:14px; padding:6px 0; }
+
+  /* N° de pedido corto (reinicia cada día) para el control por teclado */
+  .card .num{ display:inline-block; vertical-align:middle; font-size:14px; font-weight:800; background:#0d1526; color:#fff; padding:3px 9px; border-radius:7px; margin-right:7px; }
+  .card.done .num{ background:#475569; }
+  .card.sel{ box-shadow:0 0 0 3px #2563eb; }
+  .card.sel .num{ background:#2563eb; }
+  .topbar .khelp{ display:inline-block; vertical-align:middle; margin-left:12px; font-size:12px; font-weight:700; color:#1b2534; }
+  @media (max-width:599px){ .topbar .khelp{ display:none; } }
+  /* Indicador flotante del teclado */
+  .keyhint{ display:none; position:fixed; left:7%; right:7%; bottom:18px; background:#0d1526; color:#fff; font-size:16px; font-weight:800; padding:12px 16px; border-radius:12px; text-align:center; z-index:60; }
+  .keyhint b{ font-size:21px; }
 `;
 
 // Script ES5 (var, XMLHttpRequest, concatenación). Debe funcionar en WebView viejas.
@@ -66,6 +77,7 @@ const JS = `
 (function(){
   var DATA = window.__KDS_DATA || {pend:[],comp:[],now:0};
   var OFFSET = (DATA.now||0) - Math.floor(new Date().getTime()/1000);
+  var buf = '', selId = null, hintTimer = null; // control por teclado
   function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function pad(n){ return (n<10?'0':'')+n; }
   function fmt(sec){ if(sec<0)sec=0; var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return pad(h)+':'+pad(m)+':'+pad(s); }
@@ -90,8 +102,9 @@ const JS = `
     }
     var doneT = (completed && o.doneHM) ? '<div class="done-t">Completado '+esc(o.doneHM)+'</div>' : '';
     var readyBtn = (!completed && completeOn()) ? '<button class="ready" data-id="'+esc(o.id)+'">\\u2713 Marcar listo</button>' : '';
-    return '<div class="col"><div class="card '+cls+(completed?' done':'')+'" data-id="'+esc(o.id)+'" data-created="'+(o.created||0)+'" data-done="'+(o.done||0)+'" data-completed="'+(completed?1:0)+'">'
-      + '<div class="head cf"><span class="timer">'+fmt(sec)+'</span><span class="type '+esc(o.typeCls)+'">'+icon(o.typeCls)+esc(o.typeText)+'</span></div>'
+    var numHtml = (o.n!=null) ? '<span class="num">#'+esc(o.n)+'</span>' : '';
+    return '<div class="col"><div id="card-'+esc(o.id)+'" class="card '+cls+(completed?' done':'')+(selId===o.id?' sel':'')+'" data-id="'+esc(o.id)+'" data-created="'+(o.created||0)+'" data-done="'+(o.done||0)+'" data-completed="'+(completed?1:0)+'">'
+      + '<div class="head cf"><span class="timer">'+fmt(sec)+'</span>'+numHtml+'<span class="type '+esc(o.typeCls)+'">'+icon(o.typeCls)+esc(o.typeText)+'</span></div>'
       + '<div class="cust">'+esc(o.customer)+'</div>'
       + doneT + items + readyBtn
       + '</div></div>';
@@ -118,7 +131,7 @@ const JS = `
       var t = c.getElementsByClassName('timer')[0];
       if(t) t.innerHTML = fmt(sec);
       var want = ageClass(sec,false);
-      c.className = 'card '+want;
+      c.className = 'card '+want+(c.getAttribute('data-id')===selId?' sel':'');
     }
   }
   function bindReady(){
@@ -153,6 +166,30 @@ const JS = `
   }
   var rf = document.getElementById('btnRefresh'); if(rf){ rf.onclick = function(){ poll(); }; }
 
+  // ── Control por teclado: N° + Enter selecciona, P marca Listo ──────────
+  function setHint(html){ var el=document.getElementById('keyhint'); if(!el)return; if(!html){ el.style.display='none'; el.innerHTML=''; } else { el.innerHTML=html; el.style.display='block'; } }
+  function flash(msg){ setHint(msg); if(hintTimer)clearTimeout(hintTimer); hintTimer=setTimeout(function(){ if(!buf) setHint(''); },2000); }
+  function allOrders(){ var a=[]; if(DATA.pend)a=a.concat(DATA.pend); if(DATA.comp)a=a.concat(DATA.comp); return a; }
+  function findByNum(n){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].n===n) return a[i]; } return null; }
+  function applySel(){ var cs=document.getElementsByClassName('card'); for(var i=0;i<cs.length;i++){ var c=cs[i], on=(c.getAttribute('data-id')===selId); var has=(' '+c.className+' ').indexOf(' sel ')>=0; if(on&&!has)c.className+=' sel'; else if(!on&&has)c.className=c.className.replace(/\\s*\\bsel\\b/,''); } }
+  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' seleccionado · pulsa <b>P</b> para marcar Listo'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
+  function markReadyId(id){ var x=new XMLHttpRequest(); x.open('POST','/api/kds/ready',true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
+  function pressP(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var a=allOrders(),o=null; for(var i=0;i<a.length;i++){ if(a[i].id===selId){ o=a[i]; break; } } if(o&&!o.completed){ markReadyId(selId); flash('Pedido #'+(o.n||'')+' marcado Listo \\u2713'); } else { flash('Ese pedido ya estaba listo'); } selId=null; applySel(); }
+  function killEvt(e){ if(e.preventDefault)e.preventDefault(); e.returnValue=false; return false; }
+  document.onkeydown = function(e){
+    e = e || window.event;
+    var src = e.target || e.srcElement; var tag = src ? (src.tagName||'') : '';
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+    if(e.ctrlKey||e.metaKey||e.altKey) return;
+    var k = e.keyCode || e.which;
+    if(k>=48&&k<=57){ buf=(buf+(k-48)).substring(0,6); setHint('N° <b>'+buf+'</b>'); return killEvt(e); }
+    if(k>=96&&k<=105){ buf=(buf+(k-96)).substring(0,6); setHint('N° <b>'+buf+'</b>'); return killEvt(e); }
+    if(k===8){ if(buf){ buf=buf.substring(0,buf.length-1); setHint(buf?('N° <b>'+buf+'</b>'):''); return killEvt(e); } return; }
+    if(k===27){ buf=''; selId=null; applySel(); setHint(''); return; }
+    if(k===13){ if(buf){ var n=parseInt(buf,10); buf=''; selectNum(n); } return killEvt(e); }
+    if(k===80){ pressP(); return killEvt(e); }
+  };
+
   render(); tick();
   setInterval(tick, 1000);
   setInterval(poll, 4000);
@@ -168,11 +205,13 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
 <body>
   <div class="topbar cf">
     <span class="t">KDS Cocina</span>
+    <span class="khelp">⌨️ N° + Enter + P = Listo</span>
     <span class="r">
       <span class="btn" id="tgComplete">Boton Listo: OFF</span>
       <span class="btn" id="btnRefresh">↻ Actualizar</span>
     </span>
   </div>
+  <div class="keyhint" id="keyhint"></div>
   <div class="wrap">
     <h2 class="sect-title">📌 Pendientes <span class="count" id="cntPend">0</span></h2>
     <div class="grid" id="gridPend"></div>
