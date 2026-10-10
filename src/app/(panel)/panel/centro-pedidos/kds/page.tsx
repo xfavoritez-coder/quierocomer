@@ -138,7 +138,9 @@ function ageColor(o: PosOrder): { bg: string; fg: string } {
   const created = SEC(o.createdAt);
   const stop = completed ? doneSec(o) : 0;
   const sec = stop > 0 ? Math.max(0, stop - created) : Math.max(0, Math.floor(Date.now() / 1000) - created);
-  const cls = ageClass(sec, completed);
+  // Para el overlay usamos la escala de "buen tiempo" (verde < 10 min) tanto en
+  // pendientes como en completados (en las tarjetas, el pendiente fresco es gris).
+  const cls = ageClass(sec, true);
   const bg = AGE_HEX[cls] || "#64748b";
   const fg = cls === "card-age-red-strong" || cls === "card-age-gray" ? "#ffffff" : "#0d1526";
   return { bg, fg };
