@@ -172,7 +172,7 @@ const JS = `
   function allOrders(){ var a=[]; if(DATA.pend)a=a.concat(DATA.pend); if(DATA.comp)a=a.concat(DATA.comp); return a; }
   function findByNum(n){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].n===n) return a[i]; } return null; }
   function applySel(){ var cs=document.getElementsByClassName('card'); for(var i=0;i<cs.length;i++){ var c=cs[i], on=(c.getAttribute('data-id')===selId); var has=(' '+c.className+' ').indexOf(' sel ')>=0; if(on&&!has)c.className+=' sel'; else if(!on&&has)c.className=c.className.replace(/\\s*\\bsel\\b/,''); } }
-  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' · <b>P</b> = Listo · <b>C</b> = Pendientes'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
+  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' · <b>C</b> = Listo · <b>P</b> = Pendientes'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
   function post(url,id){ var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
   function markReadyId(id){ post('/api/kds/ready', id); }
   function markPreparingId(id){ post('/api/kds/unready', id); }
@@ -191,8 +191,8 @@ const JS = `
     if(k===8){ if(buf){ buf=buf.substring(0,buf.length-1); setHint(buf?('N° <b>'+buf+'</b>'):''); return killEvt(e); } return; }
     if(k===27){ buf=''; selId=null; applySel(); setHint(''); return; }
     if(k===13){ if(buf){ var n=parseInt(buf,10); buf=''; selectNum(n); } return killEvt(e); }
-    if(k===80){ pressP(); return killEvt(e); }
-    if(k===67){ pressC(); return killEvt(e); }
+    if(k===67){ pressP(); return killEvt(e); }
+    if(k===80){ pressC(); return killEvt(e); }
   };
 
   render(); tick();
@@ -210,7 +210,7 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
 <body>
   <div class="topbar cf">
     <span class="t">KDS Cocina</span>
-    <span class="khelp">⌨️ N° + Enter · P = Listo · C = Pendientes</span>
+    <span class="khelp">⌨️ N° + Enter · C = Listo · P = Pendientes</span>
     <span class="r">
       <span class="btn" id="tgComplete">Boton Listo: OFF</span>
       <span class="btn" id="btnRefresh">↻ Actualizar</span>

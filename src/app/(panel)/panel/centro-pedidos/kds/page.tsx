@@ -300,7 +300,7 @@ export default function KdsPage() {
         const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
         if (found) {
           select(found.id);
-          showFlash(`Pedido #${n} seleccionado · P = Listo · C = Pendientes`);
+          showFlash(`Pedido #${n} seleccionado · C = Listo · P = Pendientes`);
           requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
         } else {
           select(null);
@@ -308,7 +308,7 @@ export default function KdsPage() {
         }
         return;
       }
-      if (e.key === "p" || e.key === "P") {
+      if (e.key === "c" || e.key === "C") {
         const id = selRef.current;
         if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
         const o = ordersRef.current.find((x) => x.id === id);
@@ -322,7 +322,7 @@ export default function KdsPage() {
         e.preventDefault();
         return;
       }
-      if (e.key === "c" || e.key === "C") {
+      if (e.key === "p" || e.key === "P") {
         const id = selRef.current;
         if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
         const o = ordersRef.current.find((x) => x.id === id);
@@ -394,7 +394,7 @@ export default function KdsPage() {
         <span className="day">{date.split("-").reverse().join("-")}</span>
         <button type="button" className="nav-day" onClick={() => setDate((d) => addDaysYmd(d, 1))} disabled={date >= today} aria-label="Día siguiente">›</button>
         {date !== today && <button type="button" className="hoy" onClick={() => setDate(today)}>Hoy</button>}
-        <span className="khelp">⌨️ N° + <b>Enter</b> · <b>P</b> = Listo · <b>C</b> = Pendientes</span>
+        <span className="khelp">⌨️ N° + <b>Enter</b> · <b>C</b> = Listo · <b>P</b> = Pendientes</span>
         <span className="meta">{weekdayLabel(date)}</span>
       </div>
 
