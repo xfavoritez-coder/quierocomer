@@ -70,6 +70,14 @@ const CSS = `
   /* Indicador flotante del teclado */
   .keyhint{ display:none; position:fixed; left:7%; right:7%; bottom:18px; background:#0d1526; color:#fff; font-size:16px; font-weight:800; padding:12px 16px; border-radius:12px; text-align:center; z-index:60; }
   .keyhint b{ font-size:21px; }
+  /* Overlay a pantalla completa (número gigante al escribir / seleccionar) */
+  .numpad{ display:none; position:fixed; left:0; top:0; right:0; bottom:0; width:100%; height:100%; background:#fff; color:#000; z-index:100; }
+  .numpad.on{ display:table; }
+  .numpad .cell{ display:table-cell; vertical-align:middle; text-align:center; padding:0 16px; }
+  .numpad .np-num{ font-size:220px; font-weight:800; line-height:1; }
+  .numpad .np-sub{ font-size:42px; font-weight:800; margin-top:14px; }
+  @media (max-width:899px){ .numpad .np-num{ font-size:150px; } .numpad .np-sub{ font-size:30px; } }
+  @media (max-width:599px){ .numpad .np-num{ font-size:110px; } .numpad .np-sub{ font-size:24px; } }
 `;
 
 // Script ES5 (var, XMLHttpRequest, concatenación). Debe funcionar en WebView viejas.
@@ -167,29 +175,36 @@ const JS = `
   var rf = document.getElementById('btnRefresh'); if(rf){ rf.onclick = function(){ poll(); }; }
 
   // ── Control por teclado: N° + Enter selecciona, P marca Listo ──────────
+  // Overlay a pantalla completa con el número gigante.
+  var npTimer=null;
+  function npShow(num, sub, bg, fg){ var el=document.getElementById('numpad'); if(!el)return; document.getElementById('npNum').innerHTML=num; document.getElementById('npSub').innerHTML=sub||''; el.style.background=bg||'#fff'; el.style.color=fg||'#000'; el.className='numpad on'; }
+  function npHide(){ if(npTimer){ clearTimeout(npTimer); npTimer=null; } var el=document.getElementById('numpad'); if(el) el.className='numpad'; }
+  function npAuto(){ if(npTimer)clearTimeout(npTimer); npTimer=setTimeout(function(){ npHide(); }, 1800); }
+  function orderColor(o){ var completed=!!o.completed; var sec=completed?Math.max(0,(o.done||0)-(o.created||0)):Math.max(0,nowSec()-(o.created||0)); var cls=ageClass(sec, completed); var m={'a-gray':'#475569','a-yellow':'#f59e0b','a-red':'#f97316','a-redx':'#ef4444','a-green':'#22c55e'}; var bg=m[cls]||'#64748b'; var fg=(cls==='a-redx'||cls==='a-gray')?'#fff':'#0d1526'; return { bg:bg, fg:fg }; }
   function setHint(html){ var el=document.getElementById('keyhint'); if(!el)return; if(!html){ el.style.display='none'; el.innerHTML=''; } else { el.innerHTML=html; el.style.display='block'; } }
   function flash(msg){ setHint(msg); if(hintTimer)clearTimeout(hintTimer); hintTimer=setTimeout(function(){ if(!buf) setHint(''); },2000); }
   function allOrders(){ var a=[]; if(DATA.pend)a=a.concat(DATA.pend); if(DATA.comp)a=a.concat(DATA.comp); return a; }
   function findByNum(n){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].n===n) return a[i]; } return null; }
   function applySel(){ var cs=document.getElementsByClassName('card'); for(var i=0;i<cs.length;i++){ var c=cs[i], on=(c.getAttribute('data-id')===selId); var has=(' '+c.className+' ').indexOf(' sel ')>=0; if(on&&!has)c.className+=' sel'; else if(!on&&has)c.className=c.className.replace(/\\s*\\bsel\\b/,''); } }
-  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' · Listo: <b>C Enter −</b> · Pendientes: <b>P /</b>'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
+  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); var c=orderColor(o); npShow('#'+n, esc(o.customer||''), c.bg, c.fg); npAuto(); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); npShow('#'+n, 'no está en pantalla', '#0d1526', '#fff'); npAuto(); } }
   function post(url,id){ var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
   function markReadyId(id){ post('/api/kds/ready', id); }
   function markPreparingId(id){ post('/api/kds/unready', id); }
   function findSel(){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].id===selId) return a[i]; } return null; }
-  function pressP(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&!o.completed){ markReadyId(selId); flash('Pedido #'+(o.n||'')+' marcado Listo \\u2713'); } else { flash('Ese pedido ya estaba listo'); } selId=null; applySel(); }
-  function pressC(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&o.completed){ markPreparingId(selId); flash('Pedido #'+(o.n||'')+' regresado a Pendientes \\u21A9'); } else { flash('Ese pedido ya está en Pendientes'); } selId=null; applySel(); }
+  function pressP(){ npHide(); if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&!o.completed){ markReadyId(selId); flash('Pedido #'+(o.n||'')+' marcado Listo \\u2713'); } else { flash('Ese pedido ya estaba listo'); } selId=null; applySel(); }
+  function pressC(){ npHide(); if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&o.completed){ markPreparingId(selId); flash('Pedido #'+(o.n||'')+' regresado a Pendientes \\u21A9'); } else { flash('Ese pedido ya está en Pendientes'); } selId=null; applySel(); }
   function killEvt(e){ if(e.preventDefault)e.preventDefault(); e.returnValue=false; return false; }
+  function npType(){ if(npTimer){ clearTimeout(npTimer); npTimer=null; } if(buf){ npShow('#'+buf, 'Pulsa Enter para seleccionar', '#fff', '#000'); } else { npHide(); } }
   document.onkeydown = function(e){
     e = e || window.event;
     var src = e.target || e.srcElement; var tag = src ? (src.tagName||'') : '';
     if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
     if(e.ctrlKey||e.metaKey||e.altKey) return;
     var k = e.keyCode || e.which; var key = e.key || '';
-    if(k>=48&&k<=57){ buf=(buf+(k-48)).substring(0,6); setHint('N° <b>'+buf+'</b>'); return killEvt(e); }
-    if(k>=96&&k<=105){ buf=(buf+(k-96)).substring(0,6); setHint('N° <b>'+buf+'</b>'); return killEvt(e); }
-    if(k===8){ if(buf){ buf=buf.substring(0,buf.length-1); setHint(buf?('N° <b>'+buf+'</b>'):''); return killEvt(e); } return; }
-    if(k===27){ buf=''; selId=null; applySel(); setHint(''); return; }
+    if(k>=48&&k<=57){ buf=(buf+(k-48)).substring(0,6); npType(); return killEvt(e); }
+    if(k>=96&&k<=105){ buf=(buf+(k-96)).substring(0,6); npType(); return killEvt(e); }
+    if(k===8){ if(buf){ buf=buf.substring(0,buf.length-1); npType(); return killEvt(e); } return; }
+    if(k===27){ buf=''; selId=null; applySel(); npHide(); return; }
     if(k===13){ if(buf){ var n=parseInt(buf,10); buf=''; selectNum(n); } else if(selId){ pressP(); } return killEvt(e); }
     // Completar (Listo): C, o "-" (pad numérico o teclado principal).
     if(k===67 || key==='-' || (!key && (k===189||k===173||k===109))){ pressP(); return killEvt(e); }
@@ -219,6 +234,7 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
     </span>
   </div>
   <div class="keyhint" id="keyhint"></div>
+  <div class="numpad" id="numpad"><div class="cell"><div class="np-num" id="npNum"></div><div class="np-sub" id="npSub"></div></div></div>
   <div class="wrap">
     <h2 class="sect-title">📌 Pendientes <span class="count" id="cntPend">0</span></h2>
     <div class="grid" id="gridPend"></div>

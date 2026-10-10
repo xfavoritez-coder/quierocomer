@@ -131,6 +131,18 @@ function ageClass(sec: number, completed: boolean): string {
 function doneSec(o: PosOrder): number {
   return SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt);
 }
+// Color (y color de texto) según la antigüedad del pedido — para pintar el overlay.
+const AGE_HEX: Record<string, string> = { "card-age-gray": "#64748b", "card-age-yellow": "#f59e0b", "card-age-red": "#f97316", "card-age-red-strong": "#ef4444", "card-age-green": "#22c55e" };
+function ageColor(o: PosOrder): { bg: string; fg: string } {
+  const completed = o.opsStage !== "preparing";
+  const created = SEC(o.createdAt);
+  const stop = completed ? doneSec(o) : 0;
+  const sec = stop > 0 ? Math.max(0, stop - created) : Math.max(0, Math.floor(Date.now() / 1000) - created);
+  const cls = ageClass(sec, completed);
+  const bg = AGE_HEX[cls] || "#64748b";
+  const fg = cls === "card-age-red-strong" || cls === "card-age-gray" ? "#ffffff" : "#0d1526";
+  return { bg, fg };
+}
 
 function Card({ o, now, canComplete, selected, onReady }: { o: PosOrder; now: number; canComplete: boolean; selected: boolean; onReady: (id: string) => void }) {
   const completed = o.opsStage !== "preparing";
@@ -181,10 +193,12 @@ export default function KdsPage() {
   const [keyBuf, setKeyBuf] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [picked, setPicked] = useState<{ text: string; sub: string; bg: string; fg: string } | null>(null);
   const bufRef = useRef("");
   const selRef = useRef<string | null>(null);
   const ordersRef = useRef<PosOrder[]>([]);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const genPair = useCallback(async () => {
     if (!restaurantId) return;
@@ -275,10 +289,18 @@ export default function KdsPage() {
     if (flashTimer.current) clearTimeout(flashTimer.current);
     flashTimer.current = setTimeout(() => setFlash(null), 2000);
   }, []);
+  // Overlay a pantalla completa con el número gigante (confirmación coloreada).
+  const showPicked = useCallback((p: { text: string; sub: string; bg: string; fg: string }) => {
+    setPicked(p);
+    if (pickTimer.current) clearTimeout(pickTimer.current);
+    pickTimer.current = setTimeout(() => setPicked(null), 1800);
+  }, []);
+  const hidePicked = useCallback(() => { if (pickTimer.current) clearTimeout(pickTimer.current); setPicked(null); }, []);
 
   useEffect(() => {
     // Marca el pedido seleccionado como Listo (Completados).
     const doComplete = () => {
+      hidePicked();
       const id = selRef.current;
       if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); return; }
       const o = ordersRef.current.find((x) => x.id === id);
@@ -288,6 +310,7 @@ export default function KdsPage() {
     };
     // Regresa el pedido seleccionado a Pendientes.
     const doPending = () => {
+      hidePicked();
       const id = selRef.current;
       if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); return; }
       const o = ordersRef.current.find((x) => x.id === id);
@@ -300,6 +323,7 @@ export default function KdsPage() {
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key >= "0" && e.key <= "9") {
+        hidePicked();
         setBuf((bufRef.current + e.key).slice(0, 6));
         e.preventDefault();
         return;
@@ -308,7 +332,7 @@ export default function KdsPage() {
         if (bufRef.current) { setBuf(bufRef.current.slice(0, -1)); e.preventDefault(); }
         return;
       }
-      if (e.key === "Escape") { setBuf(""); select(null); setFlash(null); return; }
+      if (e.key === "Escape") { setBuf(""); select(null); setFlash(null); hidePicked(); return; }
       if (e.key === "Enter") {
         const raw = bufRef.current;
         e.preventDefault();
@@ -318,11 +342,12 @@ export default function KdsPage() {
           const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
           if (found) {
             select(found.id);
-            showFlash(`Pedido #${n} seleccionado · C/Enter/− = Listo · P / = Pendientes`);
+            const c = ageColor(found);
+            showPicked({ text: `#${n}`, sub: found.customerName || "", bg: c.bg, fg: c.fg });
             requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
           } else {
             select(null);
-            showFlash(`El pedido #${n} no está en pantalla`);
+            showPicked({ text: `#${n}`, sub: "no está en pantalla", bg: "#0d1526", fg: "#ffffff" });
           }
         } else if (selRef.current) {
           // Enter de nuevo (sin número pendiente) = marcar Listo el seleccionado.
@@ -337,7 +362,7 @@ export default function KdsPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [markReady, markPreparing, setBuf, select, showFlash]);
+  }, [markReady, markPreparing, setBuf, select, showFlash, showPicked, hidePicked]);
 
   const active = orders.filter((o) => o.posStatus !== "canceled");
   const pend = active.filter((o) => o.opsStage === "preparing").sort((a, b) => SEC(a.createdAt) - SEC(b.createdAt));
@@ -428,12 +453,17 @@ export default function KdsPage() {
         </section>
       </div>
 
-      {(keyBuf || flash) && (
-        <div className="kds-keyhint">
-          {keyBuf
-            ? <span className="kb">N° <b>{keyBuf}</b><i>▌</i></span>
-            : <span>{flash}</span>}
+      {(keyBuf || picked) && (
+        <div className="kds-numpad" style={picked ? { background: picked.bg, color: picked.fg } : undefined}>
+          <div className="np-num">#{picked ? picked.text.replace(/^#/, "") : keyBuf}<span className="np-caret">{picked ? "" : "▌"}</span></div>
+          {picked
+            ? (picked.sub ? <div className="np-sub">{picked.sub}</div> : null)
+            : <div className="np-hint">Pulsa Enter para seleccionar</div>}
         </div>
+      )}
+
+      {flash && !picked && !keyBuf && (
+        <div className="kds-keyhint"><span>{flash}</span></div>
       )}
 
       {pairCode !== null && (
@@ -577,6 +607,13 @@ const KDS_CSS = `
   .kds-root .kds-keyhint .kb b{ font-size:24px; font-weight:900; }
   .kds-root .kds-keyhint .kb i{ font-style:normal; animation:kdsCaret 1s step-end infinite; margin-left:1px; }
   @keyframes kdsCaret{ 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Overlay a pantalla completa mientras se escribe / al seleccionar por teclado */
+  .kds-root .kds-numpad{ position:fixed; inset:0; z-index:100; background:#fff; color:#0d1526; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; transition:background-color .2s ease, color .2s ease; }
+  .kds-root .kds-numpad .np-num{ font-size:clamp(130px, 40vmin, 560px); font-weight:900; line-height:.92; letter-spacing:.01em; font-variant-numeric:tabular-nums; }
+  .kds-root .kds-numpad .np-caret{ animation:kdsCaret 1s step-end infinite; }
+  .kds-root .kds-numpad .np-sub{ font-size:clamp(22px, 6vmin, 76px); font-weight:800; margin-top:2.2vh; max-width:92vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .kds-root .kds-numpad .np-hint{ position:absolute; bottom:5vh; font-size:clamp(14px, 3vmin, 30px); font-weight:700; opacity:.5; letter-spacing:.02em; }
 
   @media (max-width:820px){
     .kds-root .topbar .right .kpi{ padding:7px 11px; font-size:12px; }
