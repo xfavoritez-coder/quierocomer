@@ -172,9 +172,13 @@ const JS = `
   function allOrders(){ var a=[]; if(DATA.pend)a=a.concat(DATA.pend); if(DATA.comp)a=a.concat(DATA.comp); return a; }
   function findByNum(n){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].n===n) return a[i]; } return null; }
   function applySel(){ var cs=document.getElementsByClassName('card'); for(var i=0;i<cs.length;i++){ var c=cs[i], on=(c.getAttribute('data-id')===selId); var has=(' '+c.className+' ').indexOf(' sel ')>=0; if(on&&!has)c.className+=' sel'; else if(!on&&has)c.className=c.className.replace(/\\s*\\bsel\\b/,''); } }
-  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' seleccionado · pulsa <b>P</b> para marcar Listo'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
-  function markReadyId(id){ var x=new XMLHttpRequest(); x.open('POST','/api/kds/ready',true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
-  function pressP(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var a=allOrders(),o=null; for(var i=0;i<a.length;i++){ if(a[i].id===selId){ o=a[i]; break; } } if(o&&!o.completed){ markReadyId(selId); flash('Pedido #'+(o.n||'')+' marcado Listo \\u2713'); } else { flash('Ese pedido ya estaba listo'); } selId=null; applySel(); }
+  function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); flash('Pedido #'+n+' · <b>P</b> = Listo · <b>C</b> = Pendientes'); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); flash('El pedido #'+n+' no está en pantalla'); } }
+  function post(url,id){ var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
+  function markReadyId(id){ post('/api/kds/ready', id); }
+  function markPreparingId(id){ post('/api/kds/unready', id); }
+  function findSel(){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].id===selId) return a[i]; } return null; }
+  function pressP(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&!o.completed){ markReadyId(selId); flash('Pedido #'+(o.n||'')+' marcado Listo \\u2713'); } else { flash('Ese pedido ya estaba listo'); } selId=null; applySel(); }
+  function pressC(){ if(!selId){ flash('Escribe el N° del pedido y pulsa <b>Enter</b> primero'); return; } var o=findSel(); if(o&&o.completed){ markPreparingId(selId); flash('Pedido #'+(o.n||'')+' regresado a Pendientes \\u21A9'); } else { flash('Ese pedido ya está en Pendientes'); } selId=null; applySel(); }
   function killEvt(e){ if(e.preventDefault)e.preventDefault(); e.returnValue=false; return false; }
   document.onkeydown = function(e){
     e = e || window.event;
@@ -188,6 +192,7 @@ const JS = `
     if(k===27){ buf=''; selId=null; applySel(); setHint(''); return; }
     if(k===13){ if(buf){ var n=parseInt(buf,10); buf=''; selectNum(n); } return killEvt(e); }
     if(k===80){ pressP(); return killEvt(e); }
+    if(k===67){ pressC(); return killEvt(e); }
   };
 
   render(); tick();
@@ -205,7 +210,7 @@ export function kdsPage(data: { pend: KdsOrderLite[]; comp: KdsOrderLite[]; now:
 <body>
   <div class="topbar cf">
     <span class="t">KDS Cocina</span>
-    <span class="khelp">⌨️ N° + Enter + P = Listo</span>
+    <span class="khelp">⌨️ N° + Enter · P = Listo · C = Pendientes</span>
     <span class="r">
       <span class="btn" id="tgComplete">Boton Listo: OFF</span>
       <span class="btn" id="btnRefresh">↻ Actualizar</span>

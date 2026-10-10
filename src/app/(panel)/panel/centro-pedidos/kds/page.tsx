@@ -238,6 +238,19 @@ export default function KdsPage() {
     } catch { fetchOrders(); }
   }, [restaurantId, fetchOrders]);
 
+  // Regresa un pedido a "Pendientes" (cualquier etapa → preparing) desde el KDS.
+  const markPreparing = useCallback(async (id: string) => {
+    if (!restaurantId) return;
+    setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "preparing" as Stage, opsReadyForDeliveryAt: null } : x)));
+    try {
+      const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id, opsStage: "preparing" }) });
+      if (!r.ok) { fetchOrders(); return; }
+      const d = await r.json().catch(() => ({}));
+      const finalStage = d?.order?.opsStage as Stage | undefined;
+      if (finalStage) setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: finalStage } : x)));
+    } catch { fetchOrders(); }
+  }, [restaurantId, fetchOrders]);
+
   useEffect(() => {
     if (!restaurantId) return;
     const channel = supabase
@@ -287,7 +300,7 @@ export default function KdsPage() {
         const found = ordersRef.current.find((o) => o.dailyNumber === n && o.posStatus !== "canceled");
         if (found) {
           select(found.id);
-          showFlash(`Pedido #${n} seleccionado · pulsa P para marcar Listo`);
+          showFlash(`Pedido #${n} seleccionado · P = Listo · C = Pendientes`);
           requestAnimationFrame(() => { document.getElementById(`kds-card-${found.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); });
         } else {
           select(null);
@@ -307,11 +320,25 @@ export default function KdsPage() {
         }
         select(null);
         e.preventDefault();
+        return;
+      }
+      if (e.key === "c" || e.key === "C") {
+        const id = selRef.current;
+        if (!id) { showFlash("Escribe el N° del pedido y pulsa Enter primero"); e.preventDefault(); return; }
+        const o = ordersRef.current.find((x) => x.id === id);
+        if (o && o.opsStage !== "preparing") {
+          markPreparing(id);
+          showFlash(`Pedido #${o.dailyNumber ?? ""} regresado a Pendientes ↩`);
+        } else {
+          showFlash("Ese pedido ya está en Pendientes");
+        }
+        select(null);
+        e.preventDefault();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [markReady, setBuf, select, showFlash]);
+  }, [markReady, markPreparing, setBuf, select, showFlash]);
 
   const active = orders.filter((o) => o.posStatus !== "canceled");
   const pend = active.filter((o) => o.opsStage === "preparing").sort((a, b) => SEC(a.createdAt) - SEC(b.createdAt));
@@ -367,7 +394,7 @@ export default function KdsPage() {
         <span className="day">{date.split("-").reverse().join("-")}</span>
         <button type="button" className="nav-day" onClick={() => setDate((d) => addDaysYmd(d, 1))} disabled={date >= today} aria-label="Día siguiente">›</button>
         {date !== today && <button type="button" className="hoy" onClick={() => setDate(today)}>Hoy</button>}
-        <span className="khelp">⌨️ Escribe el N°, <b>Enter</b> y <b>P</b> = Listo</span>
+        <span className="khelp">⌨️ N° + <b>Enter</b> · <b>P</b> = Listo · <b>C</b> = Pendientes</span>
         <span className="meta">{weekdayLabel(date)}</span>
       </div>
 
