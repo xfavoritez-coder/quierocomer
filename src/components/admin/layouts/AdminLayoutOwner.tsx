@@ -77,6 +77,8 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         ...(opts.hasControl && !CONTROL_HIDDEN.includes(opts.slug ?? "") ? [{ icon: Calculator, labelKey: "nav_control", href: `${base}/control` }] : []),
         { icon: Printer, labelKey: "nav_export", href: `${base}/exportar` },
         { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
+        { icon: Star, labelKey: "nav_reviews", href: `${base}/valoraciones` },
+        { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
         { icon: QrCode, labelKey: "nav_generate_qr", href: `${base}/qr` },
         { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
       ],
@@ -158,15 +160,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
       ],
     },
-    ...(!isStore ? [{
-      key: "valoraciones",
-      label: "Valoraciones",
-      icon: Star,
-      items: [
-        { icon: Settings, labelKey: "nav_reviews_config", href: `${base}/valoraciones` },
-        { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
-      ],
-    }] : []),
     ...(FINANCIAL_ALLOWED.includes(opts.slug ?? "") ? [{
       key: "administracion",
       label: "Administración",
