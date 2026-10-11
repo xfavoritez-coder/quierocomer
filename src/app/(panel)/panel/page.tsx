@@ -47,7 +47,7 @@ const DEMO_DATA: DashData = {
   weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
 
-interface PageHits { landing: number; carta: number; pedir: number; fidelidad: number; resena: number }
+interface PageHits { landing: number; carta: number; pedir: number; fidelidad: number; resena: number; ecommerce: number }
 
 interface DashData {
   visitsThisWeek: number; visitsDelta: number | null;
@@ -550,6 +550,7 @@ export default function PanelDashboard() {
           { key: "landing",   label: "Página del local",  emoji: "🌐" },
           { key: "carta",     label: "Carta QR",          emoji: "📖" },
           { key: "pedir",     label: "Pedido online",     emoji: "🛒" },
+          { key: "ecommerce", label: "Tienda online",     emoji: "🛍️" },
           { key: "fidelidad", label: "Tarjeta de premios",emoji: "🎁" },
           { key: "resena",    label: "Valoraciones",      emoji: "⭐" },
         ];

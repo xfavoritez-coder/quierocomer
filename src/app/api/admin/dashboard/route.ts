@@ -414,7 +414,7 @@ export async function GET(req: NextRequest) {
 
     // Page hits by type
     const toHitMap = (rows: { page: string; _count: { id: number } }[]) => {
-      const m: Record<string, number> = { landing: 0, pedir: 0, fidelidad: 0, resena: 0 };
+      const m: Record<string, number> = { landing: 0, pedir: 0, fidelidad: 0, resena: 0, ecommerce: 0 };
       for (const r of rows) if (r.page in m) m[r.page] = r._count.id;
       return m;
     };

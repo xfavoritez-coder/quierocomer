@@ -5,6 +5,7 @@ import StoreFront from "@/components/ecommerce/StoreFront";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
+import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,9 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   const gtm = <GtmScript id={data.tenant.gtmId} />;
   // PWA instalable solo en dominio propio (scope "/"); en el dominio principal la tienda sigue como web.
   const pwa = <StorePwa enabled={basePath === ""} />;
+  const hit = <PageHitTracker restaurantId={data.tenant.id} page="ecommerce" />;
   if (data.tenant.theme === "impact") {
-    return <>{gtm}{pwa}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+    return <>{gtm}{pwa}{hit}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
   }
-  return <>{gtm}{pwa}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+  return <>{gtm}{pwa}{hit}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
 }
