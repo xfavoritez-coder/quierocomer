@@ -648,6 +648,35 @@ export default function PanelDashboard() {
               )}
             </div>
 
+            {data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
+              const fu = data.filterUsage!;
+              const total = fu.popular + fu.estrella + fu.veggie + (fu["gluten-free"] || 0);
+              const filters = [
+                { key: "popular",     emoji: "🔥", label: "Popular",       count: fu.popular },
+                { key: "estrella",    emoji: "⭐", label: "Recomendados",  count: fu.estrella },
+                { key: "veggie",      emoji: "🌿", label: "Veggie",        count: fu.veggie },
+                { key: "gluten-free", emoji: "🌾", label: "Sin gluten",    count: fu["gluten-free"] || 0 },
+              ].filter(f => f.count > 0).sort((a, b) => b.count - a.count);
+              return (
+                <div style={{ ...cardStyle, padding: "17px 17px 14px", marginBottom: 18 }}>
+                  <b style={{ display: "block", fontFamily: F, fontSize: "0.64rem", color: GOLD, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>{t("home_filters_used")}</b>
+                  {filters.map((f, i) => (
+                    <div key={f.key} style={{ display: "grid", gridTemplateColumns: "28px 1fr 38px", alignItems: "center", gap: 10, marginTop: i > 0 ? 12 : 0 }}>
+                      <span style={{ fontSize: "1rem", textAlign: "center" }}>{f.emoji}</span>
+                      <div>
+                        <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 850, color: "var(--adm-text)", marginBottom: 4 }}>{f.label}</div>
+                        <div style={{ height: 5, background: "var(--adm-hover)", borderRadius: 10, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${total > 0 ? (f.count / filters[0].count) * 100 : 0}%`, background: GOLD, borderRadius: 10 }} />
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 900, textAlign: "right" }}>{f.count}</div>
+                    </div>
+                  ))}
+                  <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "14px 0 0" }}>{total} {t("home_filter_clicks")}</p>
+                </div>
+              );
+            })()}
+
             {/* ── Clientes ── */}
             <h4 style={subHead}>Clientes</h4>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 18 }}>
@@ -703,36 +732,6 @@ export default function PanelDashboard() {
         </div>
       )}
 
-
-      {/* ═══ Filtros usados ═══ */}
-      {!isStore && !isDemo && data.filterUsage && (data.filterUsage.popular + data.filterUsage.estrella + data.filterUsage.veggie + (data.filterUsage["gluten-free"] || 0)) > 0 && (() => {
-        const fu = data.filterUsage!;
-        const total = fu.popular + fu.estrella + fu.veggie + (fu["gluten-free"] || 0);
-        const filters = [
-          { key: "popular",     emoji: "🔥", label: "Popular",       count: fu.popular },
-          { key: "estrella",    emoji: "⭐", label: "Recomendados",  count: fu.estrella },
-          { key: "veggie",      emoji: "🌿", label: "Veggie",        count: fu.veggie },
-          { key: "gluten-free", emoji: "🌾", label: "Sin gluten",    count: fu["gluten-free"] || 0 },
-        ].filter(f => f.count > 0).sort((a, b) => b.count - a.count);
-        return (
-          <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
-            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>{t("home_filters_used")}</h3>
-            {filters.map((f, i) => (
-              <div key={f.key} style={{ display: "grid", gridTemplateColumns: "28px 1fr 38px", alignItems: "center", gap: 10, marginTop: i > 0 ? 12 : 0 }}>
-                <span style={{ fontSize: "1rem", textAlign: "center" }}>{f.emoji}</span>
-                <div>
-                  <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 850, color: "var(--adm-text)", marginBottom: 4 }}>{f.label}</div>
-                  <div style={{ height: 5, background: "var(--adm-hover)", borderRadius: 10, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${total > 0 ? (f.count / filters[0].count) * 100 : 0}%`, background: GOLD, borderRadius: 10 }} />
-                  </div>
-                </div>
-                <div style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 900, textAlign: "right" }}>{f.count}</div>
-              </div>
-            ))}
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "14px 0 0" }}>{total} {t("home_filter_clicks")}</p>
-          </div>
-        );
-      })()}
 
     </div>
   );
