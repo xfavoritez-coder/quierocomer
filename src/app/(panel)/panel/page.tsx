@@ -617,67 +617,74 @@ export default function PanelDashboard() {
         </div>
       )}
 
-      {/* ═══ ESTA SEMANA (solo restaurantes) ═══ */}
-      {!isStore && !isDemo && <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>{t("home_this_week")}</h3>}
-      {!isStore && !isDemo && (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.visitsThisWeek}</strong>
-            <Users size={16} color="var(--adm-text3)" />
-          </div>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_total_visits")}</span>
-          {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% {t("home_vs_prev")}</small>}
-        </div>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekBirthdays || 0}</strong>
-            <Cake size={16} color="var(--adm-text3)" />
-          </div>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_birthdays_week")}</span>
-          <small style={{ display: "block", color: "#36e982", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>+12 {t("home_vs_prev")}</small>
-        </div>
-        {data.loyaltyActive && (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekNewMembers || 0}</strong>
-              <UserPlus size={16} color="var(--adm-text3)" />
-            </div>
-            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Nuevos miembros</span>
-          </div>
-        )}
-        {data.loyaltyActive && (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekStamps || 0}</strong>
-              <Stamp size={16} color="var(--adm-text3)" />
-            </div>
-            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Sellos colocados</span>
-          </div>
-        )}
-      </div>
-      )}
+      {/* ═══ ESTA SEMANA (solo restaurantes) — agrupada en secciones ═══ */}
+      {!isStore && !isDemo && (() => {
+        const cardStyle: React.CSSProperties = { background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" };
+        const bigNum: React.CSSProperties = { fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" };
+        const lbl: React.CSSProperties = { fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 };
+        const subHead: React.CSSProperties = { fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" };
+        const star = data.starDish;
+        return (
+          <div style={{ marginBottom: 22 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>{t("home_this_week")}</h3>
 
-      {/* ═══ Plato estrella ═══ */}
-      {!isStore && !isDemo && data.starDish && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 14,
-          border: "1px solid var(--adm-card-border)", borderRadius: 25, padding: 14, marginBottom: 18,
-          background: "linear-gradient(135deg, rgba(255,173,24,0.10), rgba(255,255,255,0.01)), var(--adm-card)",
-          boxShadow: "var(--adm-card-shadow)",
-        }}>
-          {data.starDish.photo ? (
-            <img src={data.starDish.photo} alt={data.starDish.name} style={{ width: 72, height: 72, borderRadius: 23, objectFit: "cover", flexShrink: 0 }} />
-          ) : (
-            <div style={{ width: 72, height: 72, borderRadius: 23, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", flexShrink: 0 }}>🍽️</div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <b style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: GOLD, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>{t("home_star_dish")}</b>
-            <h3 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 900, color: "var(--adm-text)", margin: "0 0 6px", letterSpacing: "-0.04em" }}>{data.starDish.name}</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, fontWeight: 700 }}><span style={{ color: GOLD }}>{data.starDish.count}</span> {t("home_views_week")}</p>
+            {/* ── Carta QR ── */}
+            <h4 style={subHead}>Carta QR</h4>
+            <div style={{ display: "grid", gridTemplateColumns: star ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 18 }}>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <strong style={bigNum}>{data.visitsThisWeek}</strong>
+                  <Users size={16} color="var(--adm-text3)" />
+                </div>
+                <span style={lbl}>{t("home_total_visits")}</span>
+                {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% {t("home_vs_prev")}</small>}
+              </div>
+              {star && (
+                <div style={cardStyle}>
+                  <b style={{ display: "block", fontFamily: F, fontSize: "0.64rem", color: GOLD, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>Producto ganador</b>
+                  <h4 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 900, color: "var(--adm-text)", margin: "0 0 6px", letterSpacing: "-0.03em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{star.name}</h4>
+                  <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, fontWeight: 700 }}><span style={{ color: GOLD }}>{star.count}</span> {t("home_views_week")}</p>
+                </div>
+              )}
+            </div>
+
+            {/* ── Clientes ── */}
+            <h4 style={subHead}>Clientes</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 18 }}>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <strong style={bigNum}>{data.weekBirthdays || 0}</strong>
+                  <Cake size={16} color="var(--adm-text3)" />
+                </div>
+                <span style={lbl}>{t("home_birthdays_week")}</span>
+              </div>
+            </div>
+
+            {/* ── Loyalty (solo si el programa está activo) ── */}
+            {data.loyaltyActive && (
+              <>
+                <h4 style={subHead}>Loyalty</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
+                  <div style={cardStyle}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <strong style={bigNum}>{data.weekNewMembers || 0}</strong>
+                      <UserPlus size={16} color="var(--adm-text3)" />
+                    </div>
+                    <span style={lbl}>Nuevos miembros</span>
+                  </div>
+                  <div style={cardStyle}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <strong style={bigNum}>{data.weekStamps || 0}</strong>
+                      <Stamp size={16} color="var(--adm-text3)" />
+                    </div>
+                    <span style={lbl}>Sellos colocados</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ═══ Top 5 más vistos ═══ */}
       {!isStore && !isDemo && topViewed.length > 0 && (
