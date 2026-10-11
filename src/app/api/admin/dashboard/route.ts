@@ -298,6 +298,15 @@ export async function GET(req: NextRequest) {
       prisma.pageHit.groupBy({ by: ["page"], where: { ...restaurantFilter, createdAt: { gte: weekAgo } }, _count: { id: true } }),
     ]);
 
+    // ── Loyalty (programa de fidelidad) esta semana ──
+    const [loyaltyActiveCount, weekNewMembers, weekStampsAgg] = await Promise.all([
+      prisma.loyaltyProgram.count({ where: { ...restaurantFilter, active: true } }),
+      prisma.loyaltyMember.count({ where: { ...restaurantFilter, revoked: false, enrolledAt: { gte: weekAgo } } }),
+      prisma.loyaltyTransaction.aggregate({ where: { type: "STAMP_ADD", createdAt: { gte: weekAgo }, member: { ...restaurantFilter } }, _sum: { amount: true } }),
+    ]);
+    const loyaltyActive = loyaltyActiveCount > 0;
+    const weekStamps = weekStampsAgg._sum.amount || 0;
+
     const uniqueGuests = uniqueGuestsCount as number;
 
     // Build view + device distributions from groupBy (no 10k row fetch needed)
@@ -490,6 +499,10 @@ export async function GET(req: NextRequest) {
       // Visitas por sección (hoy y semana)
       pageHitsToday: { ...pageHitsToday, carta: todaySessionCount },
       pageHitsWeek: { ...pageHitsWeek, carta: visitsThisWeek },
+      // Loyalty esta semana (solo si el programa está activo)
+      loyaltyActive,
+      weekNewMembers,
+      weekStamps,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

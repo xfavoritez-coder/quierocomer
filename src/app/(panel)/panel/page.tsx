@@ -4,7 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
 import Link from "next/link";
-import { QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart } from "lucide-react";
+import { QrCode, Bell, ExternalLink, Copy, Cake, Users, ShoppingCart, UserPlus, Stamp } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 import { TrialBanner } from "./layout";
 import { usePanelLang } from "@/lib/i18n/panel";
@@ -64,6 +64,7 @@ interface DashData {
   filterUsage?: { popular: number; estrella: number; veggie: number; "gluten-free"?: number };
   pageHitsToday?: PageHits;
   pageHitsWeek?: PageHits;
+  loyaltyActive?: boolean; weekNewMembers?: number; weekStamps?: number;
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -636,6 +637,24 @@ export default function PanelDashboard() {
           <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>{t("home_birthdays_week")}</span>
           <small style={{ display: "block", color: "#36e982", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>+12 {t("home_vs_prev")}</small>
         </div>
+        {data.loyaltyActive && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekNewMembers || 0}</strong>
+              <UserPlus size={16} color="var(--adm-text3)" />
+            </div>
+            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Nuevos miembros</span>
+          </div>
+        )}
+        {data.loyaltyActive && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekStamps || 0}</strong>
+              <Stamp size={16} color="var(--adm-text3)" />
+            </div>
+            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Sellos colocados</span>
+          </div>
+        )}
       </div>
       )}
 
