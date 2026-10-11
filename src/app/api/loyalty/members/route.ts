@@ -43,10 +43,19 @@ export async function GET(req: NextRequest) {
         enrolledAt: true,
         lastStampAt: true,
         birthDate: true,
+        // Dispositivo con el que registró la tarjeta: Apple Wallet (iOS) o Google Wallet (Android).
+        appleSerial: true,
+        googleObjectId: true,
       },
     });
 
-    return NextResponse.json({ members, total: members.length });
+    // Deriva el tipo de dispositivo y no expone los identificadores de wallet.
+    const mapped = members.map(({ appleSerial, googleObjectId, ...m }) => ({
+      ...m,
+      device: appleSerial ? "ios" : googleObjectId ? "android" : null,
+    }));
+
+    return NextResponse.json({ members: mapped, total: mapped.length });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
     console.error("[Loyalty members GET]", e);
@@ -101,7 +110,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ member });
+    return NextResponse.json({ member: { ...member, device: null } });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
     console.error("[Loyalty members POST]", e);

@@ -38,6 +38,7 @@ interface Member {
   completedCards: number;
   enrolledAt: string;
   lastStampAt: string | null;
+  device?: "ios" | "android" | null;
 }
 
 export default function LoyaltyMembersPage() {
@@ -200,6 +201,11 @@ export default function LoyaltyMembersPage() {
                     {m.completedCards > 0 && (
                       <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, padding: "2px 7px", borderRadius: 999, background: "rgba(244,166,35,0.14)", color: GOLD }}>
                         {m.completedCards} completada{m.completedCards > 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {m.device && (
+                      <span title={`Registró la tarjeta desde ${m.device === "ios" ? "un dispositivo Apple (iOS)" : "un dispositivo Android"}`} style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: m.device === "ios" ? "rgba(100,116,139,0.16)" : "rgba(16,163,74,0.14)", color: m.device === "ios" ? "var(--adm-text2)" : "#16a34a" }}>
+                        {m.device === "ios" ? "🍎 iOS" : "🤖 Android"}
                       </span>
                     )}
                   </p>
