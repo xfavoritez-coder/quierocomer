@@ -4,163 +4,13 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { resolveDishLeaf, isBrandedDrink, isNamedDrink, isCocktailDrink, isVolumeBeverage, isPackagedProduct, isNonFoodItem, isCondimentOrExtra } from '@/app/a/lib/feed-queries'
 import { isExcludedCategory, inferMealTime, inferDishType, getParentCategory } from '@/app/a/lib/categories'
-import { getMeiliClient, isMeiliConfigured, type MeiliDish } from '@/lib/meilisearch'
 import type { FeedDish } from '@/app/a/types'
 
 function normStr(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
-// ── Meilisearch path ────────────────────────────────────────────────────────────
-
-async function searchViaMeilisearch(params: {
-  q: string
-  lat: number | null
-  lng: number | null
-  maxKm: number
-  diet: string
-  meal: string
-  categoriesParam: string[]
-  categoryPill: string | null
-  locationName: string | null
-}): Promise<FeedDish[]> {
-  const { q, lat, lng, maxKm, diet, meal, categoriesParam, categoryPill, locationName } = params
-
-  const filters: string[] = ['isEligibleForFeed = true']
-
-  if (diet === 'VEGAN') filters.push("dishDiet = 'VEGAN'")
-  else if (diet === 'VEGETARIAN') filters.push("dishDiet IN ['VEGAN', 'VEGETARIAN']")
-
-  // Geo filter: siempre que haya coordenadas. Si el usuario no activó "cerca de ti",
-  // el frontend no envía lat/lng y este filtro no aplica.
-  const hasGeo = lat !== null && lng !== null
-  if (hasGeo) {
-    filters.push(`_geoRadius(${lat}, ${lng}, ${Math.round(maxKm * 1000)})`)
-  }
-
-  // City filter solo cuando hay nombre de ciudad pero NO coordenadas GPS.
-  // Si hay lat/lng, el filtro de distancia (geo) ya maneja la ubicación.
-  if (locationName && !q && lat === null) {
-    const city = locationName.split(',')[0].trim()
-    filters.push(`restaurantCity = '${city.replace(/'/g, "\\'")}'`)
-  }
-
-  const client = getMeiliClient()
-  const searchOpts = {
-    sort: ['isHero:desc', 'popularityScore:desc', 'createdAtTs:desc'] as string[],
-    // 'all' = todos los tokens deben aparecer — evita que "Horus Vegan" matchee
-    // cualquier plato con solo "vegan" en descripción de otro restaurante
-    matchingStrategy: (q ? 'all' : 'last') as 'all' | 'last',
-    limit: 5000,
-    attributesToRetrieve: [
-      'id', 'name', 'description', 'price', 'discountPrice', 'photos',
-      'dishDiet', 'isSpicy', 'isGlutenFree', 'isLactoseFree', 'isSoyFree',
-      'containsNuts', 'flavorTags', 'isHero', 'tags', 'leafOverride', 'txDishType',
-      'categoryName', 'dishType', 'cuisineTag', 'catNormOverride',
-      'categoriaNorm', 'categoriaParent', 'mealTime', 'createdAtTs',
-      'restaurantId', 'restaurantName', 'restaurantSlug', 'logoUrl', 'address',
-      'isShowcase', 'googleRating', 'googleRatingCount', 'googleMapsUrl', 'googlePlaceId',
-      'phone', 'website', 'websiteIsOrderUrl', 'cartaProvider', 'instagram',
-      'primaryCategory', 'avgRating', 'ratingCount', 'commentCount', 'popularityScore',
-      '_geo',
-    ],
-  }
-
-  let result = await client.index('dishes').search<MeiliDish>(q || '', {
-    filter: filters.join(' AND '),
-    ...searchOpts,
-  })
-
-  // Si hay query de texto y no hay resultados, reintentar sin filtros de dieta/distancia.
-  // Permite buscar "Empanadazo" aunque el filtro veggie esté activo o el local esté lejos.
-  if (q && result.hits.length === 0) {
-    result = await client.index('dishes').search<MeiliDish>(q, {
-      filter: 'isEligibleForFeed = true',
-      ...searchOpts,
-    })
-  }
-
-  const seenKey = new Set<string>()
-  let dishes: FeedDish[] = []
-
-  for (const d of result.hits) {
-    // Dedup: showcase → unique per id; normal → dedup by restaurant+name
-    const dupKey = d.isShowcase
-      ? `${d.restaurantId}::id::${d.id}`
-      : `${d.restaurantId}::${d.name.toLowerCase().trim()}`
-    if (seenKey.has(dupKey)) continue
-    seenKey.add(dupKey)
-
-    dishes.push({
-      id: d.id,
-      nombre: d.name,
-      descripcion: d.description,
-      precio: Number(d.price),
-      precioDescuento: d.discountPrice != null ? Number(d.discountPrice) : null,
-      fotoUrl: Array.isArray(d.photos) && d.photos.length > 0 ? d.photos[0] : null,
-      categoria: d.categoryName,
-      categoriaNorm: d.categoriaNorm,
-      categoriaParent: d.categoriaParent,
-      categoriaTipo: inferDishType(d.categoriaNorm, d.dishType),
-      txDishType: Array.isArray(d.txDishType) ? d.txDishType : [],
-      sabores: Array.isArray(d.flavorTags) ? d.flavorTags : [],
-      dieta: {
-        tipo: d.dishDiet as 'VEGAN' | 'VEGETARIAN' | 'OMNIVORE',
-        sinGluten: d.isGlutenFree,
-        sinLactosa: d.isLactoseFree,
-        sinSoja: d.isSoyFree,
-        contieneFrutosSecos: d.containsNuts,
-        esPicante: d.isSpicy,
-      },
-      restauranteId: d.restaurantId,
-      restaurante: d.restaurantName,
-      restauranteSlug: d.restaurantSlug,
-      restauranteLogo: d.logoUrl,
-      restauranteDireccion: d.address,
-      restaurantePhone: d.phone ?? null,
-      restaurantePlaceId: d.googlePlaceId ?? null,
-      restauranteWebsite: d.website ?? null,
-      restauranteWebsiteIsOrderUrl: Boolean(d.websiteIsOrderUrl),
-      restauranteCartaProvider: d.cartaProvider ?? null,
-      restauranteInstagram: d.instagram ?? null,
-      restauranteLat: d._geo?.lat ?? null,
-      restauranteLng: d._geo?.lng ?? null,
-      enOferta: d.discountPrice != null && Number(d.discountPrice) < Number(d.price),
-      mealTime: d.mealTime as any,
-      tags: Array.isArray(d.tags) ? d.tags : [],
-      isHero: d.isHero,
-      googleRating: d.googleRating != null ? Number(d.googleRating) : null,
-      googleRatingCount: d.googleRatingCount != null ? Number(d.googleRatingCount) : null,
-      googleMapsUrl: d.googleMapsUrl ?? null,
-      isShowcase: Boolean(d.isShowcase),
-      avgRating: d.avgRating != null ? Number(d.avgRating) : null,
-      ratingCount: Number(d.ratingCount ?? 0),
-      commentCount: Number(d.commentCount ?? 0),
-      popularityScore: Number(d.popularityScore ?? 0),
-      cuisineTag: d.cuisineTag ?? null,
-      createdAt: d.createdAtTs ? new Date(d.createdAtTs).toISOString() : null,
-    })
-  }
-
-  // JS-level category + meal filters (same logic as before)
-  const matchesCategory = (fd: FeedDish, cat: string) =>
-    fd.categoriaParent === cat || fd.categoriaNorm === cat || fd.cuisineTag === cat
-
-  if (categoryPill) {
-    dishes = dishes.filter(fd => matchesCategory(fd, categoryPill))
-  } else if (categoriesParam.length > 0) {
-    dishes = dishes.filter(fd => categoriesParam.some(cat => matchesCategory(fd, cat)))
-  }
-
-  if (meal !== 'all') {
-    dishes = dishes.filter(fd => fd.mealTime === meal)
-  }
-
-  // Cap response to avoid oversized payloads — the client shuffles and paginates anyway
-  return dishes.slice(0, 2500)
-}
-
-// ── Postgres fallback path ──────────────────────────────────────────────────────
+// ── Postgres path ──────────────────────────────────────────────────────────────
 
 async function searchViaDB(params: {
   q: string
@@ -368,18 +218,7 @@ export async function GET(req: NextRequest) {
 
     const p = { q, lat, lng, maxKm, diet, meal, categoriesParam, categoryPill, locationName }
 
-    let feedDishes: FeedDish[]
-
-    if (isMeiliConfigured()) {
-      try {
-        feedDishes = await searchViaMeilisearch(p)
-      } catch (meiliErr) {
-        console.error('[/api/dishes/search] Meilisearch error, falling back to DB:', meiliErr)
-        feedDishes = await searchViaDB(p)
-      }
-    } else {
-      feedDishes = await searchViaDB(p)
-    }
+    const feedDishes: FeedDish[] = await searchViaDB(p)
 
     // Log search query (fire-and-forget)
     if (q) {
