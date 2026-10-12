@@ -106,6 +106,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
         { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
+        { icon: BarChart3, labelKey: "nav_ecommerce_reports", href: `${base}/ecommerce/reportes` },
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
       ],
     }] : []),
