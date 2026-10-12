@@ -51,8 +51,8 @@ const STATUS_ORDER: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DEL
 const ACTIVE_STATUSES: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING", "IN_DELIVERY", "READY"];
 const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; color: string }[]> = {
   PENDING: [{ status: "ACCEPTED", label: "Aceptar", color: BLUE }, { status: "CANCELLED", label: "Rechazar", color: RED }],
-  ACCEPTED: [{ status: "PREPARING", label: "Preparando", color: GOLD }, { status: "CANCELLED", label: "Cancelar", color: RED }],
-  PREPARING: [{ status: "IN_DELIVERY", label: "En reparto", color: GREEN }, { status: "READY", label: "Listo", color: GREEN }, { status: "CANCELLED", label: "Cancelar", color: RED }],
+  ACCEPTED: [{ status: "PREPARING", label: "Preparando", color: GOLD }, { status: "CANCELLED", label: "Cancelar pedido", color: RED }],
+  PREPARING: [{ status: "IN_DELIVERY", label: "En reparto", color: GREEN }, { status: "READY", label: "Listo", color: GREEN }, { status: "CANCELLED", label: "Cancelar pedido", color: RED }],
   IN_DELIVERY: [{ status: "DONE", label: "Entregado", color: GRAY }],
   READY: [{ status: "DONE", label: "Entregado", color: GRAY }],
   DONE: [], CANCELLED: [],
