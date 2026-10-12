@@ -14,21 +14,26 @@ interface Report {
   month: string; monthLabel: string; today: string;
   totalSales: number; orderCount: number; avgTicket: number;
   byDay: DayPoint[]; products: Product[];
-  prev?: { month: string; monthLabel: string; totalSales: number; orderCount: number; avgTicket: number };
+  prev?: { month: string; monthLabel: string; totalSales: number; orderCount: number; avgTicket: number; throughDay: number; partial: boolean };
   deltas?: { sales: number | null; orders: number | null; ticket: number | null };
 }
 
 const fmt = (n: number) => `$${Math.round(n || 0).toLocaleString("es-CL")}`;
 
 // Indicador de variación vs. mes anterior.
-function Delta({ pct, prevLabel }: { pct: number | null | undefined; prevLabel?: string }) {
-  if (pct == null) return <small style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3)" }}>Sin dato del mes anterior</small>;
+function Delta({ pct, prevLabel, partial }: { pct: number | null | undefined; prevLabel?: string; partial?: boolean }) {
+  if (pct == null) return <small style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3)" }}>Sin dato comparable</small>;
   const up = pct >= 0;
   return (
-    <small title={prevLabel} style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.72rem", fontWeight: 900, color: up ? "#16a34a" : "#ef4444" }}>
-      {up ? "▲" : "▼"} {up ? "+" : ""}{pct}% <span style={{ color: "var(--adm-text3)", fontWeight: 700 }}>vs. mes anterior</span>
+    <small title={prevLabel} style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.72rem", fontWeight: 900, color: up ? "#16a34a" : "#ef4444", cursor: prevLabel ? "help" : undefined }}>
+      {up ? "▲" : "▼"} {up ? "+" : ""}{pct}% <span style={{ color: "var(--adm-text3)", fontWeight: 700 }}>{partial ? "vs. mismo período mes anterior" : "vs. mes anterior"}</span>
     </small>
   );
+}
+function prevTip(prev: Report["prev"], valueStr: string): string | undefined {
+  if (!prev) return undefined;
+  const range = prev.partial ? ` (1–${prev.throughDay})` : "";
+  return `${prev.monthLabel}${range}: ${valueStr}`;
 }
 const DIAS = ["D", "L", "M", "M", "J", "V", "S"];
 const DIAS_FULL = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -107,7 +112,7 @@ export default function ReportesPage() {
                 <TrendingUp size={16} color={GOLD} />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Venta del mes</span>
-              <Delta pct={data.deltas?.sales} prevLabel={data.prev ? `${data.prev.monthLabel}: ${fmt(data.prev.totalSales)}` : undefined} />
+              <Delta pct={data.deltas?.sales} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.totalSales ?? 0))} />
             </div>
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -115,7 +120,7 @@ export default function ReportesPage() {
                 <ShoppingBag size={16} color="var(--adm-text3)" />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Pedidos</span>
-              <Delta pct={data.deltas?.orders} prevLabel={data.prev ? `${data.prev.monthLabel}: ${data.prev.orderCount}` : undefined} />
+              <Delta pct={data.deltas?.orders} partial={data.prev?.partial} prevLabel={prevTip(data.prev, String(data.prev?.orderCount ?? 0))} />
             </div>
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -123,7 +128,7 @@ export default function ReportesPage() {
                 <Receipt size={16} color="var(--adm-text3)" />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Ticket promedio</span>
-              <Delta pct={data.deltas?.ticket} prevLabel={data.prev ? `${data.prev.monthLabel}: ${fmt(data.prev.avgTicket)}` : undefined} />
+              <Delta pct={data.deltas?.ticket} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.avgTicket ?? 0))} />
             </div>
           </div>
 

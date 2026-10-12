@@ -88,13 +88,21 @@ export async function GET(req: NextRequest) {
   const avgTicket = orderCount > 0 ? Math.round(totalSales / orderCount) : 0;
 
   // ── Comparativo vs. mes anterior (solo totales, sin ítems) ──
+  // Si el mes visto está en curso, se compara contra el mes anterior pero SOLO
+  // hasta el mismo día del mes (p. ej. 1–12 oct vs 1–12 sep), topando al último
+  // día si el mes anterior es más corto (31 vs 30/28). Si el mes está cerrado,
+  // se compara el mes completo contra el mes anterior completo.
+  const isCurrentMonth = month === today.slice(0, 7);
   const prevMonth = (() => { const d = new Date(Date.UTC(y, m - 2, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; })();
   const [py, pm] = prevMonth.split("-").map(Number);
   const prevDays = new Date(py, pm, 0).getDate();
+  const throughDay = isCurrentMonth ? Math.min(Number(today.slice(-2)), prevDays) : prevDays;
+  const partial = isCurrentMonth && throughDay < prevDays;
+
   const prevAgg = await prisma.onlineOrder.aggregate({
     where: {
       restaurantId, source: "ecommerce",
-      createdAt: { gte: chileDayRangeUtc(`${prevMonth}-01`).start, lte: chileDayRangeUtc(`${prevMonth}-${String(prevDays).padStart(2, "0")}`).end },
+      createdAt: { gte: chileDayRangeUtc(`${prevMonth}-01`).start, lte: chileDayRangeUtc(`${prevMonth}-${String(throughDay).padStart(2, "0")}`).end },
       status: { not: "CANCELLED" },
       OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_METHODS } }],
     },
@@ -116,7 +124,7 @@ export async function GET(req: NextRequest) {
     avgTicket,
     byDay,
     products,
-    prev: { month: prevMonth, monthLabel: `${MESES[pm - 1]} ${py}`, totalSales: prevSales, orderCount: prevCount, avgTicket: prevTicket },
+    prev: { month: prevMonth, monthLabel: `${MESES[pm - 1]} ${py}`, totalSales: prevSales, orderCount: prevCount, avgTicket: prevTicket, throughDay, partial },
     deltas: { sales: pct(totalSales, prevSales), orders: pct(orderCount, prevCount), ticket: pct(avgTicket, prevTicket) },
   });
 }
