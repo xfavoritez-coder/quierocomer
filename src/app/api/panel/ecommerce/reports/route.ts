@@ -85,6 +85,27 @@ export async function GET(req: NextRequest) {
   const byDay = Array.from(byDayMap.entries()).map(([ymd, v]) => ({ ymd, day: Number(ymd.slice(-2)), total: v.total, count: v.count }));
   const products = Array.from(prodMap.values()).sort((a, b) => b.qty - a.qty || b.revenue - a.revenue).slice(0, 30);
   const orderCount = orders.length;
+  const avgTicket = orderCount > 0 ? Math.round(totalSales / orderCount) : 0;
+
+  // ── Comparativo vs. mes anterior (solo totales, sin ítems) ──
+  const prevMonth = (() => { const d = new Date(Date.UTC(y, m - 2, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; })();
+  const [py, pm] = prevMonth.split("-").map(Number);
+  const prevDays = new Date(py, pm, 0).getDate();
+  const prevAgg = await prisma.onlineOrder.aggregate({
+    where: {
+      restaurantId, source: "ecommerce",
+      createdAt: { gte: chileDayRangeUtc(`${prevMonth}-01`).start, lte: chileDayRangeUtc(`${prevMonth}-${String(prevDays).padStart(2, "0")}`).end },
+      status: { not: "CANCELLED" },
+      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_METHODS } }],
+    },
+    _sum: { total: true },
+    _count: { _all: true },
+  });
+  const prevSales = prevAgg._sum.total || 0;
+  const prevCount = prevAgg._count._all || 0;
+  const prevTicket = prevCount > 0 ? Math.round(prevSales / prevCount) : 0;
+  // % de variación (null si el mes anterior fue 0, para no dividir por cero).
+  const pct = (cur: number, prev: number) => (prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null);
 
   return NextResponse.json({
     month,
@@ -92,8 +113,10 @@ export async function GET(req: NextRequest) {
     today,
     totalSales,
     orderCount,
-    avgTicket: orderCount > 0 ? Math.round(totalSales / orderCount) : 0,
+    avgTicket,
     byDay,
     products,
+    prev: { month: prevMonth, monthLabel: `${MESES[pm - 1]} ${py}`, totalSales: prevSales, orderCount: prevCount, avgTicket: prevTicket },
+    deltas: { sales: pct(totalSales, prevSales), orders: pct(orderCount, prevCount), ticket: pct(avgTicket, prevTicket) },
   });
 }

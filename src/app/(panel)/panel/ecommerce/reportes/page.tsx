@@ -14,9 +14,22 @@ interface Report {
   month: string; monthLabel: string; today: string;
   totalSales: number; orderCount: number; avgTicket: number;
   byDay: DayPoint[]; products: Product[];
+  prev?: { month: string; monthLabel: string; totalSales: number; orderCount: number; avgTicket: number };
+  deltas?: { sales: number | null; orders: number | null; ticket: number | null };
 }
 
 const fmt = (n: number) => `$${Math.round(n || 0).toLocaleString("es-CL")}`;
+
+// Indicador de variación vs. mes anterior.
+function Delta({ pct, prevLabel }: { pct: number | null | undefined; prevLabel?: string }) {
+  if (pct == null) return <small style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, color: "var(--adm-text3)" }}>Sin dato del mes anterior</small>;
+  const up = pct >= 0;
+  return (
+    <small title={prevLabel} style={{ display: "block", marginTop: 7, fontFamily: F, fontSize: "0.72rem", fontWeight: 900, color: up ? "#16a34a" : "#ef4444" }}>
+      {up ? "▲" : "▼"} {up ? "+" : ""}{pct}% <span style={{ color: "var(--adm-text3)", fontWeight: 700 }}>vs. mes anterior</span>
+    </small>
+  );
+}
 const DIAS = ["D", "L", "M", "M", "J", "V", "S"];
 function weekdayOf(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00Z`);
@@ -89,6 +102,7 @@ export default function ReportesPage() {
                 <TrendingUp size={16} color={GOLD} />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Venta del mes</span>
+              <Delta pct={data.deltas?.sales} prevLabel={data.prev ? `${data.prev.monthLabel}: ${fmt(data.prev.totalSales)}` : undefined} />
             </div>
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -96,6 +110,7 @@ export default function ReportesPage() {
                 <ShoppingBag size={16} color="var(--adm-text3)" />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Pedidos</span>
+              <Delta pct={data.deltas?.orders} prevLabel={data.prev ? `${data.prev.monthLabel}: ${data.prev.orderCount}` : undefined} />
             </div>
             <div style={card}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -103,6 +118,7 @@ export default function ReportesPage() {
                 <Receipt size={16} color="var(--adm-text3)" />
               </div>
               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Ticket promedio</span>
+              <Delta pct={data.deltas?.ticket} prevLabel={data.prev ? `${data.prev.monthLabel}: ${fmt(data.prev.avgTicket)}` : undefined} />
             </div>
           </div>
 
