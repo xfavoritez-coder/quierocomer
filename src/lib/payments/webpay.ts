@@ -24,8 +24,31 @@ export interface WebpayConfirmResult {
   authorized: boolean;
   amount?: number;
   transactionId?: string;
+  responseCode?: number;
+  status?: string;
+  reason?: string;
   raw?: unknown;
   error?: string;
+}
+
+/**
+ * Traduce el response_code de Transbank a un motivo legible.
+ * 0 = aprobado; negativos = rechazos del emisor/pasarela (no es que "la pasarela
+ * falle": casi siempre es el banco/tarjeta del cliente quien rechaza).
+ */
+export function webpayReason(code: number | null | undefined): string {
+  switch (code) {
+    case 0: return "Aprobado";
+    case -1: return "Rechazo del emisor (posible error de datos de la tarjeta)";
+    case -2: return "Rechazo — reintentar (fondos/validación del banco)";
+    case -3: return "Error en la transacción";
+    case -4: return "Rechazada por el banco emisor";
+    case -5: return "Rechazo por posible fraude / validación de riesgo";
+    case -6: return "Excede el cupo máximo mensual";
+    case -7: return "Excede el límite diario por transacción";
+    case -8: return "Rubro no autorizado";
+    default: return code == null ? "Sin código de respuesta" : `Rechazo (código ${code})`;
+  }
 }
 
 function getTransaction(settings: WebpaySettings) {
@@ -59,15 +82,37 @@ export async function webpayConfirm(token: string, settings: WebpaySettings = {}
     const tx = getTransaction(settings);
     const res = await tx.commit(token);
     const authorized = res.response_code === 0 && ["AUTHORIZED", "CAPTURED"].includes(res.status ?? "");
+    const reason = webpayReason(res.response_code);
+    // Log de diagnóstico del commit: distingue rechazo del banco vs. aprobado.
+    const card = (res as { card_detail?: { card_number?: string } }).card_detail?.card_number;
+    console.log("[webpay] commit", JSON.stringify({
+      buyOrder: res.buy_order,
+      authorized,
+      responseCode: res.response_code,
+      status: res.status,
+      reason,
+      amount: res.amount,
+      paymentType: (res as { payment_type_code?: string }).payment_type_code,
+      installments: (res as { installments_number?: number }).installments_number,
+      vci: (res as { vci?: string }).vci,
+      cardLast4: card,
+      authorizationCode: res.authorization_code,
+      transactionDate: (res as { transaction_date?: string }).transaction_date,
+    }));
     return {
       ok: true,
       authorized,
       amount: res.amount,
       transactionId: res.authorization_code ?? res.buy_order,
+      responseCode: res.response_code,
+      status: res.status ?? undefined,
+      reason,
       raw: res,
     };
   } catch (err: unknown) {
-    return { ok: false, authorized: false, error: err instanceof Error ? err.message : "Error Webpay" };
+    const msg = err instanceof Error ? err.message : "Error Webpay";
+    console.error("[webpay] commit ERROR", JSON.stringify({ error: msg }));
+    return { ok: false, authorized: false, error: msg };
   }
 }
 
