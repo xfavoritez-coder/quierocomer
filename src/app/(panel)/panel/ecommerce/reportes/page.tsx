@@ -31,9 +31,14 @@ function Delta({ pct, prevLabel }: { pct: number | null | undefined; prevLabel?:
   );
 }
 const DIAS = ["D", "L", "M", "M", "J", "V", "S"];
+const DIAS_FULL = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 function weekdayOf(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00Z`);
   return DIAS[d.getUTCDay()];
+}
+function weekdayFull(ymd: string): string {
+  const d = new Date(`${ymd}T12:00:00Z`);
+  return DIAS_FULL[d.getUTCDay()];
 }
 function addMonth(ym: string, delta: number): string {
   const [y, m] = ym.split("-").map(Number);
@@ -128,6 +133,7 @@ export default function ReportesPage() {
             {data.totalSales === 0 ? (
               <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
             ) : (
+              <>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 170, overflowX: "auto", paddingBottom: 2 }}>
                 {data.byDay.map((d) => {
                   const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 140)) : 2;
@@ -143,6 +149,21 @@ export default function ReportesPage() {
                   );
                 })}
               </div>
+
+              {/* Detalle por día con monto exacto */}
+              <div style={{ marginTop: 16, borderTop: "1px solid var(--adm-card-border)", paddingTop: 12 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 8px" }}>Detalle por día</p>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {data.byDay.filter((d) => d.count > 0).map((d, i, arr) => (
+                    <div key={d.ymd} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 12, padding: "8px 2px", borderBottom: i < arr.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+                      <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: d.ymd === data.today ? "#16a34a" : "var(--adm-text)" }}>{weekdayFull(d.ymd)} {d.day}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{d.count} pedido{d.count !== 1 ? "s" : ""}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 900, color: "var(--adm-text)", textAlign: "right", minWidth: 90 }}>{fmt(d.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              </>
             )}
           </div>
 
