@@ -27,7 +27,7 @@ interface Order {
   deliveryLat?: number | null; deliveryLng?: number | null;
   uberDeliveryId?: string | null;
   courier?: CourierInfo | null;
-  statusHistory?: { status: string; ts: string }[];
+  statusHistory?: { status: string; ts: string; category?: string; reason?: string; responseCode?: number | null; trStatus?: string | null; secondsOnForm?: number | null }[];
 }
 
 interface CourierInfo {
@@ -67,6 +67,24 @@ function payInfo(o: Order): { label: string; color: string } {
   if (o.paymentStatus === "failed") return { label: "Pago fallido", color: RED };
   if (isOnline(o)) return { label: "Pago pendiente", color: ORANGE };
   return { label: "Por pagar", color: GRAY };
+}
+const PAYFAIL_CAT: Record<string, string> = {
+  user_aborted: "El cliente canceló o se le agotó el tiempo",
+  rejected_by_bank: "Rechazado por el banco emisor",
+  commit_error: "Error al confirmar con Webpay",
+};
+// Motivo del "Pago fallido" tomado del último PAYMENT_LOG (lo registra el retorno de Webpay).
+function payFailInfo(o: Order): { title: string; detail: string } | null {
+  if (o.paymentStatus !== "failed") return null;
+  const hist = Array.isArray(o.statusHistory) ? o.statusHistory : [];
+  const log = [...hist].reverse().find((h) => h.status === "PAYMENT_LOG");
+  if (!log) return null;
+  const title = (log.category && PAYFAIL_CAT[log.category]) || log.reason || "Pago no completado";
+  const parts: string[] = [];
+  if (log.reason && log.reason !== title) parts.push(log.reason);
+  if (log.responseCode != null) parts.push(`código ${log.responseCode}`);
+  if (log.secondsOnForm != null) parts.push(`${log.secondsOnForm}s en el formulario`);
+  return { title, detail: parts.join(" · ") };
 }
 
 const fmt = (n: number) => `$${Math.round(n || 0).toLocaleString("es-CL")}`;
@@ -394,7 +412,9 @@ export default function EcommercePedidosPage() {
                     <td style={{ ...tdStyle, color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{relativeTime(o.createdAt)}</td>
                     <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                       <span style={{ color: "var(--adm-text2)" }}>{PAY_LABEL[o.paymentMethod] || o.paymentMethod}</span>
-                      <span style={{ color: pay.color, fontWeight: 700 }}> · {pay.label}</span>
+                      {(() => { const pf = payFailInfo(o); return (
+                        <span title={pf ? `${pf.title}${pf.detail ? ` — ${pf.detail}` : ""}` : undefined} style={{ color: pay.color, fontWeight: 700, cursor: pf ? "help" : undefined }}> · {pay.label}{pf ? " ⓘ" : ""}</span>
+                      ); })()}
                     </td>
                     <td style={{ ...tdStyle, textAlign: "right", whiteSpace: "nowrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
@@ -617,6 +637,11 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
             {(order.discount ?? 0) > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: ACCENT }}><span>Descuento{order.couponCode ? ` (${order.couponCode})` : ""}</span><span>−{fmt(order.discount!)}</span></div>}
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: F, fontWeight: 900, color: "var(--adm-text)", paddingTop: 5, borderTop: "1px solid var(--adm-card-border)" }}><span>Total</span><span>{fmt(order.total)}</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", marginTop: 2 }}><span style={{ color: "var(--adm-text3)" }}>Pago</span><span style={{ color: pay.color, fontWeight: 700 }}>{PAY_LABEL[order.paymentMethod] || order.paymentMethod} · {pay.label}</span></div>
+            {(() => { const pf = payFailInfo(order); return pf ? (
+              <div style={{ fontSize: "0.72rem", marginTop: 4, color: RED, textAlign: "right", lineHeight: 1.35 }}>
+                <span style={{ fontWeight: 700 }}>{pf.title}</span>{pf.detail ? <span style={{ color: "var(--adm-text3)" }}> · {pf.detail}</span> : null}
+              </div>
+            ) : null; })()}
           </div>
 
           {order.notes && <div style={{ fontFamily: FB, fontSize: "0.8rem", background: "var(--adm-hover)", borderRadius: 10, padding: "10px 12px", color: "var(--adm-text2)" }}>📝 {order.notes}</div>}
@@ -632,12 +657,12 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
             </button>
           )}
 
-          {/* Timeline */}
-          {Array.isArray(order.statusHistory) && order.statusHistory.length > 0 && (
+          {/* Timeline (se omiten las entradas de diagnóstico de pago PAYMENT_LOG) */}
+          {Array.isArray(order.statusHistory) && order.statusHistory.filter((h) => h.status !== "PAYMENT_LOG").length > 0 && (
             <div>
               <p style={{ fontFamily: FB, fontSize: "0.66rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.4, margin: "0 0 6px" }}>Línea de tiempo</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {order.statusHistory.map((h, i) => (
+                {order.statusHistory.filter((h) => h.status !== "PAYMENT_LOG").map((h, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FB, fontSize: "0.76rem" }}>
                     <span style={{ color: STATUS_COLOR[h.status as OrderStatus] || "var(--adm-text2)", fontWeight: 600 }}>{STATUS_LABEL[h.status as OrderStatus] || h.status}</span>
                     <span style={{ color: "var(--adm-text3)" }}>{new Date(h.ts).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Santiago" })}</span>
