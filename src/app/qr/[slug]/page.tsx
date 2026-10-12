@@ -96,12 +96,12 @@ export default async function CartaPage({
     const fresh = await prisma.restaurant.findUnique({
       where: { slug },
       select: { id: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true },
-    });
+    }).catch(() => null);
     if (fresh) {
       const loyaltyActive = !!(await prisma.loyaltyProgram.findUnique({
         where: { restaurantId: fresh.id },
         select: { active: true },
-      }))?.active;
+      }).catch(() => null))?.active;
       const hasLanding = fresh.orderingEnabled
         || loyaltyActive
         || fresh.reviewMode === "private"
@@ -223,8 +223,8 @@ export default async function CartaPage({
   );
   const [topDishesRaw, activePromos, rawAnnouncements] = await Promise.all([
     getCachedTopDishIds(restaurant.id).catch(() => ({ dishIds: [] as string[], source: "none" as const, totalSalesToday: 0 })),
-    getPromos(restaurant.id),
-    getAnnouncements(restaurant.id),
+    getPromos(restaurant.id).catch(() => [] as any[]),
+    getAnnouncements(restaurant.id).catch(() => [] as any[]),
   ]);
   const topDishesResult = { ...topDishesRaw, dishIds: new Set(topDishesRaw.dishIds) };
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
@@ -234,7 +234,7 @@ export default async function CartaPage({
   const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
     where: { id: { in: promoDishIds } },
     select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true },
-  }) : [];
+  }).catch(() => []) : [];
   const promoDishMap = Object.fromEntries(promoDishes.map(d => [d.id, d]));
   const marketingPromos = filteredPromos.map(p => ({
     id: p.id, name: p.name, description: p.description,
@@ -292,7 +292,7 @@ export default async function CartaPage({
     where: { generatedSlug: slug },
     select: { ownerName: true, email: true, whatsapp: true, panelVisitedAt: true },
     orderBy: { createdAt: "desc" },
-  }) : null;
+  }).catch(() => null) : null;
   const ownerAlreadyVisitedPanel = !!leadData?.panelVisitedAt;
   // Empty carta: show "próximamente" when demo restaurant has no dishes yet
   if ((restaurant as any).isDemo && dishes.length === 0 && !isShowcase && !isEmbed) {
