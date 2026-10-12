@@ -139,9 +139,9 @@ export default function ReportesPage() {
                   const isToday = d.ymd === data.today;
                   return (
                     <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      {/* Monto exacto sobre la barra (vertical para que quepa) */}
-                      <div style={{ height: 54, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", writingMode: "vertical-rl", transform: "rotate(180deg)", whiteSpace: "nowrap", lineHeight: 1 }}>{fmt(d.total)}</span>}
+                      {/* Monto exacto sobre la barra (diagonal para que quepa) */}
+                      <div style={{ height: 46, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "center bottom" }}>{fmt(d.total)}</span>}
                       </div>
                       <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
                         <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
