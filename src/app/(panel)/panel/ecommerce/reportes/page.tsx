@@ -36,14 +36,9 @@ function prevTip(prev: Report["prev"], valueStr: string): string | undefined {
   return `${prev.monthLabel}${range}: ${valueStr}`;
 }
 const DIAS = ["D", "L", "M", "M", "J", "V", "S"];
-const DIAS_FULL = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 function weekdayOf(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00Z`);
   return DIAS[d.getUTCDay()];
-}
-function weekdayFull(ymd: string): string {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  return DIAS_FULL[d.getUTCDay()];
 }
 function addMonth(ym: string, delta: number): string {
   const [y, m] = ym.split("-").map(Number);
@@ -138,37 +133,25 @@ export default function ReportesPage() {
             {data.totalSales === 0 ? (
               <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
             ) : (
-              <>
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 170, overflowX: "auto", paddingBottom: 2 }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2 }}>
                 {data.byDay.map((d) => {
-                  const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 140)) : 2;
+                  const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
                   const isToday = d.ymd === data.today;
                   return (
-                    <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 16px", minWidth: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div style={{ width: "100%", height: 140, display: "flex", alignItems: "flex-end" }}>
+                    <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      {/* Monto exacto sobre la barra (vertical para que quepa) */}
+                      <div style={{ height: 54, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", writingMode: "vertical-rl", transform: "rotate(180deg)", whiteSpace: "nowrap", lineHeight: 1 }}>{fmt(d.total)}</span>}
+                      </div>
+                      <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
                         <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
                       </div>
-                      <span style={{ fontFamily: FB, fontSize: "0.58rem", color: "var(--adm-text3)", lineHeight: 1 }}>{d.day}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.58rem", fontWeight: d.total > 0 ? 700 : 400, color: "var(--adm-text3)", lineHeight: 1 }}>{d.day}</span>
                       <span style={{ fontFamily: FB, fontSize: "0.52rem", color: "var(--adm-text3)", lineHeight: 1, opacity: 0.7 }}>{weekdayOf(d.ymd)}</span>
                     </div>
                   );
                 })}
               </div>
-
-              {/* Detalle por día con monto exacto */}
-              <div style={{ marginTop: 16, borderTop: "1px solid var(--adm-card-border)", paddingTop: 12 }}>
-                <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 8px" }}>Detalle por día</p>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {data.byDay.filter((d) => d.count > 0).map((d, i, arr) => (
-                    <div key={d.ymd} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 12, padding: "8px 2px", borderBottom: i < arr.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
-                      <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: d.ymd === data.today ? "#16a34a" : "var(--adm-text)" }}>{weekdayFull(d.ymd)} {d.day}</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{d.count} pedido{d.count !== 1 ? "s" : ""}</span>
-                      <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 900, color: "var(--adm-text)", textAlign: "right", minWidth: 90 }}>{fmt(d.total)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              </>
             )}
           </div>
 
