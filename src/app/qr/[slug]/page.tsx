@@ -223,8 +223,8 @@ export default async function CartaPage({
   );
   const [topDishesRaw, activePromos, rawAnnouncements] = await Promise.all([
     getCachedTopDishIds(restaurant.id).catch(() => ({ dishIds: [] as string[], source: "none" as const, totalSalesToday: 0 })),
-    getPromos(restaurant.id).catch(() => [] as any[]),
-    getAnnouncements(restaurant.id).catch(() => [] as any[]),
+    getPromos(restaurant.id).catch((): Awaited<ReturnType<typeof getPromos>> => []),
+    getAnnouncements(restaurant.id).catch((): Awaited<ReturnType<typeof getAnnouncements>> => []),
   ]);
   const topDishesResult = { ...topDishesRaw, dishIds: new Set(topDishesRaw.dishIds) };
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
