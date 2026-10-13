@@ -28,8 +28,13 @@ const CSS = `
   @media (min-width:1500px){ .col{ width:25%; } }
   @media (max-width:899px){ .col{ width:50%; } }
   @media (max-width:599px){ .col{ width:100%; } }
-  .card{ background:#fff; border:1px solid #8a97ad; border-radius:14px; overflow:hidden; font-size:15px; }
-  /* Cabecera de color (antigüedad): número + tipo */
+  .card{ background:#fff; border:1px solid #8a97ad; border-left:7px solid #64748b; border-radius:14px; overflow:hidden; font-size:15px; }
+  /* Franja izquierda y cabecera de color (antigüedad) */
+  .card.a-gray{ border-left-color:#475569; }
+  .card.a-yellow{ border-left-color:#f59e0b; }
+  .card.a-red{ border-left-color:#f97316; }
+  .card.a-redx{ border-left-color:#ef4444; }
+  .card.a-green{ border-left-color:#22c55e; }
   .card .band{ padding:9px 12px; background:#64748b; }
   .card .band:after{ content:""; display:block; clear:both; }
   .card.a-gray .band{ background:#475569; }
@@ -39,16 +44,16 @@ const CSS = `
   .card.a-green .band{ background:#22c55e; }
   .card .num{ float:left; width:42px; height:42px; line-height:42px; text-align:center; font-size:23px; font-weight:800; background:#0d1526; color:#fff; border-radius:11px; }
   .card.sel .num{ background:#2563eb; }
-  .card .type{ float:right; line-height:42px; color:#fff; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
-  .card .type .ic{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2; vertical-align:-3px; margin-right:6px; }
+  .card .type{ float:right; line-height:42px; color:#fff; font-size:17px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+  .card .type .ic{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.4; vertical-align:-4px; margin-right:6px; }
 
   /* Cuerpo blanco */
   .card .body{ padding:14px 16px; }
   .card.done .body{ background:#eceff5; }
   .card .timerwrap{ text-align:center; margin-bottom:8px; }
-  .card .timer{ display:inline-block; font-size:30px; font-weight:800; background:#eceff5; color:#000; border-radius:12px; padding:6px 20px; }
+  .card .timer{ display:inline-block; font-size:31px; font-weight:900; background:#eceff5; color:#000; border-radius:12px; padding:6px 20px; }
   .card.done .timer{ background:#dfe4ec; }
-  .card .cust{ font-size:22px; font-weight:800; color:#000; margin:0 0 2px; line-height:1.18; word-break:break-word; }
+  .card .cust{ font-size:22px; font-weight:900; color:#000; margin:0 0 2px; line-height:1.18; word-break:break-word; }
   .card .created{ font-size:13px; font-weight:700; color:#1b2534; margin-top:3px; }
   .card .created .cic{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; vertical-align:-2px; margin-right:4px; }
   .card .done-t{ font-size:13px; font-weight:700; color:#1b2534; margin-top:2px; }
