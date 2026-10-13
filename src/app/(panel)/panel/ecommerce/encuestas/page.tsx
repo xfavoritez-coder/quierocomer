@@ -22,7 +22,7 @@ export default function EncuestasPage() {
   const [cfg, setCfg] = useState<EcommerceStoreConfig>(() => parseStoreConfig(null));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"config" | "preguntas" | "respuestas">("config");
+  const [tab, setTab] = useState<"config" | "preguntas" | "respuestas">("respuestas");
   const [newQ, setNewQ] = useState("");
   const [testEmail, setTestEmail] = useState("");
   const [testing, setTesting] = useState(false);
@@ -120,9 +120,9 @@ export default function EncuestasPage() {
 
       {!loading && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
+          <Tab active={tab === "respuestas"} onClick={() => { setTab("respuestas"); loadResponses(); }} icon={BarChart3} label={`Respuestas${resp ? ` (${resp.total})` : ""}`} />
           <Tab active={tab === "config"} onClick={() => setTab("config")} icon={Settings} label="Configuración" />
           <Tab active={tab === "preguntas"} onClick={() => setTab("preguntas")} icon={ListChecks} label="Preguntas" />
-          <Tab active={tab === "respuestas"} onClick={() => { setTab("respuestas"); loadResponses(); }} icon={BarChart3} label={`Respuestas${resp ? ` (${resp.total})` : ""}`} />
         </div>
       )}
 
