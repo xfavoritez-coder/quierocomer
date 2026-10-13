@@ -42,18 +42,18 @@ const CSS = `
   .card.a-red .band{ background:#f97316; }
   .card.a-redx .band{ background:#ef4444; }
   .card.a-green .band{ background:#22c55e; }
-  .card .num{ float:left; width:42px; height:42px; line-height:42px; text-align:center; font-size:23px; font-weight:800; background:#0d1526; color:#fff; border-radius:11px; }
+  .card .num{ float:left; width:42px; height:42px; line-height:42px; text-align:center; font-size:24px; font-weight:900; -webkit-text-stroke:0.7px #fff; background:#0d1526; color:#fff; border-radius:11px; }
   .card.sel .num{ background:#2563eb; }
-  .card .type{ float:right; line-height:42px; color:#fff; font-size:17px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+  .card .type{ float:right; line-height:42px; color:#fff; font-size:18px; font-weight:900; -webkit-text-stroke:0.7px #fff; text-transform:uppercase; letter-spacing:.04em; }
   .card .type .ic{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.4; vertical-align:-4px; margin-right:6px; }
 
   /* Cuerpo blanco */
   .card .body{ padding:14px 16px; }
   .card.done .body{ background:#eceff5; }
   .card .timerwrap{ text-align:center; margin-bottom:8px; }
-  .card .timer{ display:inline-block; font-size:31px; font-weight:900; background:#eceff5; color:#000; border-radius:12px; padding:6px 20px; }
+  .card .timer{ display:inline-block; font-size:33px; font-weight:900; -webkit-text-stroke:0.8px #000; background:#eceff5; color:#000; border-radius:12px; padding:6px 20px; }
   .card.done .timer{ background:#dfe4ec; }
-  .card .cust{ font-size:22px; font-weight:900; color:#000; margin:0 0 2px; line-height:1.18; word-break:break-word; }
+  .card .cust{ font-size:23px; font-weight:900; -webkit-text-stroke:0.6px #000; color:#000; margin:0 0 2px; line-height:1.18; word-break:break-word; }
   .card .created{ font-size:13px; font-weight:700; color:#1b2534; margin-top:3px; }
   .card .created .cic{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; vertical-align:-2px; margin-right:4px; }
   .card .done-t{ font-size:13px; font-weight:700; color:#1b2534; margin-top:2px; }

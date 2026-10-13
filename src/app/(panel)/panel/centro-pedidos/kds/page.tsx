@@ -572,14 +572,14 @@ const KDS_CSS = `
   .kds-root .kds-card.card-age-red-strong:not(.is-completed) .kds-band{ animation:kdsPulse 1.3s ease-in-out infinite; }
   @keyframes kdsPulse{ 0%,100%{opacity:1} 50%{opacity:.45} }
 
-  .kds-root .kds-type{ display:inline-flex; align-items:center; gap:7px; font-size:17px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .kds-root .kds-type{ display:inline-flex; align-items:center; gap:7px; font-size:18px; font-weight:900; -webkit-text-stroke:0.7px #fff; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.3); }
   .kds-root .kds-type::before{ content:""; width:20px; height:20px; flex:0 0 auto; background:currentColor; -webkit-mask:center/contain no-repeat var(--ic); mask:center/contain no-repeat var(--ic); }
   .kds-root .kds-type.t-delivery{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='17' r='2.5'/%3E%3Ccircle cx='17' cy='17' r='2.5'/%3E%3Cpath d='M8.5 17H14l2-7h3'/%3E%3Cpath d='M14 10l-1.5-4H9'/%3E%3C/svg%3E"); }
   .kds-root .kds-type.t-mesa{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 2v20'/%3E%3Cpath d='M5 2v6a2 2 0 0 0 4 0V2'/%3E%3Cpath d='M17 2c-1.5 0-3 1.5-3 5s1.5 4 3 4v11'/%3E%3C/svg%3E"); }
   .kds-root .kds-type.t-retiro{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 7h12l-1 13H7L6 7Z'/%3E%3Cpath d='M9 7a3 3 0 0 1 6 0'/%3E%3C/svg%3E"); }
-  .kds-root .kds-timer{ align-self:center; font-size:31px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--bg-soft); color:#000; border-radius:12px; padding:7px 22px; box-shadow:inset 0 0 0 1px rgba(13,21,38,.06); margin-bottom:2px; }
+  .kds-root .kds-timer{ align-self:center; font-size:33px; font-weight:900; -webkit-text-stroke:0.8px #000; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--bg-soft); color:#000; border-radius:12px; padding:7px 22px; box-shadow:inset 0 0 0 1px rgba(13,21,38,.06); margin-bottom:2px; }
 
-  .kds-root .kds-customer{ font-size:22px; font-weight:900; line-height:1.15; margin:0; color:var(--text); word-break:break-word; }
+  .kds-root .kds-customer{ font-size:23px; font-weight:900; -webkit-text-stroke:0.6px var(--text); line-height:1.15; margin:0; color:var(--text); word-break:break-word; }
   .kds-root .kds-created{ font-size:13px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:5px; }
   .kds-root .kds-donetime{ font-size:12px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; margin-top:-2px; }
 
@@ -592,7 +592,7 @@ const KDS_CSS = `
   .kds-root .kds-card.is-completed .kds-band{ animation:none; }
 
   /* N° de pedido corto (reinicia cada día) — caja negra tipo deliveryhandroll */
-  .kds-root .kds-num{ display:inline-flex; align-items:center; justify-content:center; min-width:42px; height:42px; padding:0 9px; font-size:24px; font-weight:900; font-variant-numeric:tabular-nums; background:#0d1526; color:#fff; border-radius:11px; }
+  .kds-root .kds-num{ display:inline-flex; align-items:center; justify-content:center; min-width:42px; height:42px; padding:0 9px; font-size:24px; font-weight:900; -webkit-text-stroke:0.7px #fff; font-variant-numeric:tabular-nums; background:#0d1526; color:#fff; border-radius:11px; }
   /* Pedido seleccionado por teclado */
   .kds-root .kds-card.is-selected{ outline:4px solid #2563eb; outline-offset:2px; box-shadow:0 0 0 4px rgba(37,99,235,.28), 0 6px 18px rgba(13,21,38,.22); }
   .kds-root .kds-card.is-selected .kds-num{ background:#2563eb; }
