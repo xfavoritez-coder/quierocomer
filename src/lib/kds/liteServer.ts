@@ -91,7 +91,7 @@ const SEC = (v: any): number => (v ? Math.floor(new Date(v).getTime() / 1000) : 
 
 export interface KdsOrderLite {
   id: string; n: number | null; typeCls: string; typeText: string; customer: string;
-  lines: KdsLine[]; created: number; done: number; completed: boolean; doneHM: string;
+  lines: KdsLine[]; created: number; done: number; completed: boolean; doneHM: string; createdHM: string;
 }
 
 // Pedidos "activos" de hoy, separados y formateados para la vista liviana.
@@ -128,10 +128,11 @@ export async function kdsOrders(restaurantId: string): Promise<{ pend: KdsOrderL
     const done = completed ? SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt) : 0;
     const t = tipo(o);
     const doneHM = completed && done > 0 ? new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }).format(new Date(done * 1000)) : "";
+    const createdHM = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }).format(new Date(o.createdAt));
     return {
       id: o.id, n: nums[o.id] ?? null, typeCls: t.cls, typeText: t.text,
       customer: o.customerName || (o.orderReference ? `#${o.orderReference}` : "—"),
-      lines: kitchenLines(o.items), created: SEC(o.createdAt), done, completed, doneHM,
+      lines: kitchenLines(o.items), created: SEC(o.createdAt), done, completed, doneHM, createdHM,
     };
   };
 

@@ -28,43 +28,41 @@ const CSS = `
   @media (min-width:1500px){ .col{ width:25%; } }
   @media (max-width:899px){ .col{ width:50%; } }
   @media (max-width:599px){ .col{ width:100%; } }
-  .card{ background:#fff; border:1px solid #8a97ad;
-    border-left-width:9px; border-left-color:#64748b; border-radius:14px; padding:15px 17px; font-size:15px; }
-  .card .type .ic{ width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.2; vertical-align:-2px; margin-right:5px; }
-  .card.a-gray{ border-left-color:#475569; }
-  .card.a-yellow{ border-left-color:#f59e0b; }
-  .card.a-red{ border-left-color:#f97316; }
-  .card.a-redx{ border-left-color:#ef4444; }
-  .card.a-green{ border-left-color:#22c55e; }
-  .card.done{ background:#eceff5; }
+  .card{ background:#fff; border:1px solid #8a97ad; border-radius:14px; overflow:hidden; font-size:15px; }
+  /* Cabecera de color (antigüedad): número + tipo */
+  .card .band{ padding:9px 12px; background:#64748b; }
+  .card .band:after{ content:""; display:block; clear:both; }
+  .card.a-gray .band{ background:#475569; }
+  .card.a-yellow .band{ background:#f59e0b; }
+  .card.a-red .band{ background:#f97316; }
+  .card.a-redx .band{ background:#ef4444; }
+  .card.a-green .band{ background:#22c55e; }
+  .card .num{ float:left; width:42px; height:42px; line-height:42px; text-align:center; font-size:23px; font-weight:800; background:#0d1526; color:#fff; border-radius:11px; }
+  .card.sel .num{ background:#2563eb; }
+  .card .type{ float:right; line-height:42px; color:#fff; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+  .card .type .ic{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2; vertical-align:-3px; margin-right:6px; }
 
-  .card .head{ margin-bottom:11px; }
-  .card .type{ display:inline-block; vertical-align:middle; font-size:13px; font-weight:800; padding:4px 11px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; background:#eceff5; color:#000; }
-  .card .type.t-delivery{ background:#bfdbfe; color:#0b2a6b; }
-  .card .type.t-mesa{ background:#ddd6fe; color:#2e1065; }
-  .card .type.t-retiro{ background:#a7f3d0; color:#064e3b; }
-  .card .timer{ float:right; font-size:20px; font-weight:800; background:#64748b; color:#000; border-radius:9px; padding:3px 10px; }
-  .card.a-gray .timer{ background:#475569; color:#fff; }
-  .card.a-yellow .timer{ background:#f59e0b; color:#000; }
-  .card.a-red .timer{ background:#f97316; color:#000; }
-  .card.a-redx .timer{ background:#ef4444; color:#fff; }
-  .card.a-green .timer{ background:#22c55e; color:#000; }
-  .card.done .timer{ background:#9fb0c6; color:#000; }
-
-  .card .cust{ font-size:23px; font-weight:800; color:#000; margin:0 0 2px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* Cuerpo blanco */
+  .card .body{ padding:14px 16px; }
+  .card.done .body{ background:#eceff5; }
+  .card .timerwrap{ text-align:center; margin-bottom:8px; }
+  .card .timer{ display:inline-block; font-size:30px; font-weight:800; background:#eceff5; color:#000; border-radius:12px; padding:6px 20px; }
+  .card.done .timer{ background:#dfe4ec; }
+  .card .cust{ font-size:22px; font-weight:800; color:#000; margin:0 0 2px; line-height:1.18; word-break:break-word; }
+  .card .created{ font-size:13px; font-weight:700; color:#1b2534; margin-top:3px; }
+  .card .created .cic{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; vertical-align:-2px; margin-right:4px; }
   .card .done-t{ font-size:13px; font-weight:700; color:#1b2534; margin-top:2px; }
   .card .items{ list-style:none; margin:12px 0 0; padding:12px 0 0; border-top:1px dashed #8a97ad; }
   .card .items li{ color:#000; font-size:16px; font-weight:600; line-height:1.3; margin:0 0 5px; padding-left:19px; position:relative; }
   .card .items li strong{ font-weight:800; }
   .card .items li:before{ content:""; position:absolute; left:0; top:7px; width:7px; height:7px; background:#475569; }
+  .card.a-yellow .items li:before{ background:#f59e0b; }
+  .card.a-red .items li:before{ background:#f97316; }
+  .card.a-redx .items li:before{ background:#ef4444; }
+  .card.a-green .items li:before{ background:#22c55e; }
   .card .ready{ display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:10px; background:#16a34a; color:#fff; font-weight:800; font-size:15px; cursor:pointer; text-align:center; }
-  .empty{ color:#1b2534; font-size:14px; padding:6px 0; }
-
-  /* N° de pedido corto (reinicia cada día) para el control por teclado */
-  .card .num{ display:inline-block; vertical-align:middle; font-size:14px; font-weight:800; background:#0d1526; color:#fff; padding:3px 9px; border-radius:7px; margin-right:7px; }
-  .card.done .num{ background:#475569; }
   .card.sel{ box-shadow:0 0 0 3px #2563eb; }
-  .card.sel .num{ background:#2563eb; }
+  .empty{ color:#1b2534; font-size:14px; padding:6px 0; }
   .topbar .khelp{ display:inline-block; vertical-align:middle; margin-left:12px; font-size:12px; font-weight:700; color:#1b2534; }
   @media (max-width:599px){ .topbar .khelp{ display:none; } }
   /* Indicador flotante del teclado */
@@ -110,11 +108,16 @@ const JS = `
     }
     var doneT = (completed && o.doneHM) ? '<div class="done-t">Completado '+esc(o.doneHM)+'</div>' : '';
     var readyBtn = (!completed && completeOn()) ? '<button class="ready" data-id="'+esc(o.id)+'">\\u2713 Marcar listo</button>' : '';
-    var numHtml = (o.n!=null) ? '<span class="num">#'+esc(o.n)+'</span>' : '';
+    var numHtml = (o.n!=null) ? '<span class="num">'+esc(o.n)+'</span>' : '';
+    var clock = '<svg class="cic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+    var createdT = o.createdHM ? '<div class="created">'+clock+esc(o.createdHM)+'</div>' : '';
     return '<div class="col"><div id="card-'+esc(o.id)+'" class="card '+cls+(completed?' done':'')+(selId===o.id?' sel':'')+'" data-id="'+esc(o.id)+'" data-created="'+(o.created||0)+'" data-done="'+(o.done||0)+'" data-completed="'+(completed?1:0)+'">'
-      + '<div class="head cf"><span class="timer">'+fmt(sec)+'</span>'+numHtml+'<span class="type '+esc(o.typeCls)+'">'+icon(o.typeCls)+esc(o.typeText)+'</span></div>'
-      + '<div class="cust">'+esc(o.customer)+'</div>'
-      + doneT + items + readyBtn
+      + '<div class="band">'+numHtml+'<span class="type '+esc(o.typeCls)+'">'+icon(o.typeCls)+esc(o.typeText)+'</span></div>'
+      + '<div class="body">'
+      +   '<div class="timerwrap"><span class="timer">'+fmt(sec)+'</span></div>'
+      +   '<div class="cust">'+esc(o.customer)+'</div>'
+      +   createdT + doneT + items + readyBtn
+      + '</div>'
       + '</div></div>';
   }
   function listHtml(arr){

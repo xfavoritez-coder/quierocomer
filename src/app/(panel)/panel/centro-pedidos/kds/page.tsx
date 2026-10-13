@@ -155,26 +155,31 @@ function Card({ o, now, canComplete, selected, onReady }: { o: PosOrder; now: nu
   const t = tipo(o);
   const lines = kitchenLines(o.items);
   const doneHM = completed && stop > 0 ? new Date(stop * 1000).toLocaleTimeString("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }) : "";
+  const createdHM = new Date(created * 1000).toLocaleTimeString("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" });
 
   return (
     <div id={`kds-card-${o.id}`} className={`kds-card ${cls}${completed ? " is-completed" : ""}${selected ? " is-selected" : ""}`}>
-      <div className="kds-head">
-        {o.dailyNumber != null && <div className="kds-num">#{o.dailyNumber}</div>}
+      {/* Cabecera de color (antigüedad): número + tipo */}
+      <div className="kds-band">
+        {o.dailyNumber != null && <div className="kds-num">{o.dailyNumber}</div>}
         <div className={`kds-type ${t.cls}`}>{t.text}</div>
-        <div className="kds-timer">{fmtHMS(sec)}</div>
       </div>
-      <div className="kds-customer">{o.customerName || (o.orderReference ? `#${o.orderReference}` : "—")}</div>
-      {completed && doneHM && <div className="kds-donetime">Completado {doneHM}</div>}
-      {lines.length > 0 && (
-        <ul className="kds-items">
-          {lines.map((li, i) => (
-            <li key={i}><strong>{li.qty} × {li.name}</strong>{li.mods}</li>
-          ))}
-        </ul>
-      )}
-      {!completed && canComplete && (
-        <button type="button" className="kds-ready" onClick={() => onReady(o.id)}>✓ Marcar listo</button>
-      )}
+      <div className="kds-body">
+        <div className="kds-timer">{fmtHMS(sec)}</div>
+        <div className="kds-customer">{o.customerName || (o.orderReference ? `#${o.orderReference}` : "—")}</div>
+        <div className="kds-created">🕐 {createdHM}</div>
+        {completed && doneHM && <div className="kds-donetime">Completado {doneHM}</div>}
+        {lines.length > 0 && (
+          <ul className="kds-items">
+            {lines.map((li, i) => (
+              <li key={i}><strong>{li.qty} × {li.name}</strong>{li.mods}</li>
+            ))}
+          </ul>
+        )}
+        {!completed && canComplete && (
+          <button type="button" className="kds-ready" onClick={() => onReady(o.id)}>✓ Marcar listo</button>
+        )}
+      </div>
     </div>
   );
 }
@@ -556,28 +561,26 @@ const KDS_CSS = `
   .kds-root .hour-group .hg-count{ font-variant-numeric:tabular-nums; font-weight:700; font-size:12px; background:var(--bg-soft); border:1px solid var(--line); color:var(--muted); padding:1px 9px; border-radius:999px; }
   .kds-root .hour-group .hg-rate{ flex:0 0 auto; text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; }
 
-  .kds-root .kds-card{ --age:#64748b; --age-soft:rgba(100,116,139,.14); position:relative; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px 14px 22px; box-shadow:0 2px 10px rgba(13,21,38,.14); display:flex; flex-direction:column; gap:9px; }
-  .kds-root .kds-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:9px; background:var(--age); }
-  .kds-root .kds-card::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0; background:linear-gradient(180deg, var(--age-soft), transparent 40%); }
-  .kds-root .kds-card > *{ position:relative; z-index:1; }
+  .kds-root .kds-card{ --age:#64748b; --age-soft:rgba(100,116,139,.14); position:relative; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 2px 10px rgba(13,21,38,.14); display:flex; flex-direction:column; }
+  .kds-root .kds-band{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--age); padding:9px 12px; min-height:52px; }
+  .kds-root .kds-body{ padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
   .kds-root .card-age-gray{ --age:#64748b; --age-soft:rgba(100,116,139,.12); }
   .kds-root .card-age-yellow{ --age:#f59e0b; --age-soft:rgba(245,158,11,.16); }
   .kds-root .card-age-red{ --age:#f97316; --age-soft:rgba(249,115,22,.18); }
   .kds-root .card-age-red-strong{ --age:#ef4444; --age-soft:rgba(239,68,68,.22); }
   .kds-root .card-age-green{ --age:#22c55e; --age-soft:rgba(34,197,94,.14); }
-  .kds-root .kds-card.card-age-red-strong:not(.is-completed)::before{ animation:kdsPulse 1.3s ease-in-out infinite; }
+  .kds-root .kds-card.card-age-red-strong:not(.is-completed) .kds-band{ animation:kdsPulse 1.3s ease-in-out infinite; }
   @keyframes kdsPulse{ 0%,100%{opacity:1} 50%{opacity:.45} }
 
-  .kds-root .kds-head{ display:flex; gap:9px; align-items:center; }
-  .kds-root .kds-type{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:3px 11px; border-radius:999px; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; background:var(--bg-soft); color:var(--muted); }
-  .kds-root .kds-type::before{ content:""; width:14px; height:14px; flex:0 0 auto; background:currentColor; -webkit-mask:center/contain no-repeat var(--ic); mask:center/contain no-repeat var(--ic); }
-  .kds-root .kds-type.t-delivery{ background:var(--del-bg); color:var(--del-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='17' r='2.5'/%3E%3Ccircle cx='17' cy='17' r='2.5'/%3E%3Cpath d='M8.5 17H14l2-7h3'/%3E%3Cpath d='M14 10l-1.5-4H9'/%3E%3C/svg%3E"); }
-  .kds-root .kds-type.t-mesa{ background:var(--mesa-bg); color:var(--mesa-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 2v20'/%3E%3Cpath d='M5 2v6a2 2 0 0 0 4 0V2'/%3E%3Cpath d='M17 2c-1.5 0-3 1.5-3 5s1.5 4 3 4v11'/%3E%3C/svg%3E"); }
-  .kds-root .kds-type.t-retiro{ background:var(--ret-bg); color:var(--ret-fg); --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 7h12l-1 13H7L6 7Z'/%3E%3Cpath d='M9 7a3 3 0 0 1 6 0'/%3E%3C/svg%3E"); }
-  .kds-root .kds-timer{ margin-left:auto; font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--age); color:#000; border-radius:10px; padding:3px 10px; box-shadow:0 1px 4px rgba(13,21,38,.18); }
-  .kds-root .card-age-red-strong .kds-timer{ color:#fff; }
+  .kds-root .kds-type{ display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .kds-root .kds-type::before{ content:""; width:18px; height:18px; flex:0 0 auto; background:currentColor; -webkit-mask:center/contain no-repeat var(--ic); mask:center/contain no-repeat var(--ic); }
+  .kds-root .kds-type.t-delivery{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='17' r='2.5'/%3E%3Ccircle cx='17' cy='17' r='2.5'/%3E%3Cpath d='M8.5 17H14l2-7h3'/%3E%3Cpath d='M14 10l-1.5-4H9'/%3E%3C/svg%3E"); }
+  .kds-root .kds-type.t-mesa{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 2v20'/%3E%3Cpath d='M5 2v6a2 2 0 0 0 4 0V2'/%3E%3Cpath d='M17 2c-1.5 0-3 1.5-3 5s1.5 4 3 4v11'/%3E%3C/svg%3E"); }
+  .kds-root .kds-type.t-retiro{ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 7h12l-1 13H7L6 7Z'/%3E%3Cpath d='M9 7a3 3 0 0 1 6 0'/%3E%3C/svg%3E"); }
+  .kds-root .kds-timer{ align-self:center; font-size:30px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:var(--bg-soft); color:#000; border-radius:12px; padding:7px 22px; box-shadow:inset 0 0 0 1px rgba(13,21,38,.06); margin-bottom:2px; }
 
-  .kds-root .kds-customer{ font-size:21px; font-weight:800; line-height:1.15; margin:0; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kds-root .kds-customer{ font-size:22px; font-weight:800; line-height:1.15; margin:0; color:var(--text); word-break:break-word; }
+  .kds-root .kds-created{ font-size:13px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:5px; }
   .kds-root .kds-donetime{ font-size:12px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; margin-top:-2px; }
 
   .kds-root .kds-items{ margin:4px 0 0; padding:10px 0 0; list-style:none; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:5px; }
@@ -585,17 +588,11 @@ const KDS_CSS = `
   .kds-root .kds-items li::before{ content:""; position:absolute; left:2px; top:.42em; width:7px; height:7px; border-radius:2px; background:var(--age); box-shadow:0 0 0 2px var(--age-soft); }
   .kds-root .kds-items li strong{ font-weight:800; color:var(--text); }
 
-  .kds-root .kds-card.is-completed{ background:var(--bg-soft); }
-  .kds-root .kds-card.is-completed::before{ animation:none; }
-  .kds-root .kds-card.is-completed::after{ display:none; }
-  .kds-root .kds-card.is-completed .kds-customer{ color:#000; }
-  .kds-root .kds-card.is-completed .kds-items li{ color:#000; }
-  .kds-root .kds-card.is-completed .kds-items li strong{ color:#000; }
-  .kds-root .kds-card.is-completed .kds-timer{ background:#9fb0c6; color:#000; box-shadow:none; }
+  .kds-root .kds-card.is-completed .kds-body{ background:var(--bg-soft); }
+  .kds-root .kds-card.is-completed .kds-band{ animation:none; }
 
-  /* N° de pedido corto (reinicia cada día) — para el control por teclado */
-  .kds-root .kds-num{ display:inline-flex; align-items:center; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.02em; background:#0d1526; color:#fff; padding:3px 10px; border-radius:8px; }
-  .kds-root .kds-card.is-completed .kds-num{ background:#475569; }
+  /* N° de pedido corto (reinicia cada día) — caja negra tipo deliveryhandroll */
+  .kds-root .kds-num{ display:inline-flex; align-items:center; justify-content:center; min-width:42px; height:42px; padding:0 9px; font-size:24px; font-weight:900; font-variant-numeric:tabular-nums; background:#0d1526; color:#fff; border-radius:11px; }
   /* Pedido seleccionado por teclado */
   .kds-root .kds-card.is-selected{ outline:4px solid #2563eb; outline-offset:2px; box-shadow:0 0 0 4px rgba(37,99,235,.28), 0 6px 18px rgba(13,21,38,.22); }
   .kds-root .kds-card.is-selected .kds-num{ background:#2563eb; }
@@ -624,5 +621,5 @@ const KDS_CSS = `
     .kds-root .topbar .right .nav-links .ghost{ width:100%; text-align:left; justify-content:flex-start; }
   }
   @media (max-width:480px){ .kds-root .topbar .right .kpi{ flex:1 1 auto; justify-content:center; font-size:11px; padding:6px 9px; } }
-  @media (max-width:480px){ .kds-root .kds-customer{ font-size:19px; } .kds-root .kds-timer{ font-size:17px; } }
+  @media (max-width:480px){ .kds-root .kds-customer{ font-size:20px; } .kds-root .kds-timer{ font-size:26px; padding:6px 18px; } .kds-root .kds-num{ min-width:38px; height:38px; font-size:21px; } }
 `;
