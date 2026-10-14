@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const VALID_PAGES = new Set(["landing", "pedir", "fidelidad", "resena"]);
+const VALID_PAGES = new Set(["landing", "pedir", "fidelidad", "resena", "ecommerce"]);
 
 export async function POST(req: NextRequest) {
   try {
