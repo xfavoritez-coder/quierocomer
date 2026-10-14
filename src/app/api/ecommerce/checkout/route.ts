@@ -103,8 +103,39 @@ export async function POST(req: NextRequest) {
 
     const isDelivery = orderType === "DELIVERY";
 
+    // ── Precios recalculados en el servidor desde la BD ──────────────────────
+    // Nunca se confía en el `unit_price` del cliente: un carrito viejo (precio de
+    // una oferta pasada) o manipulado traería un precio incorrecto. Para cada
+    // producto se usa el precio real del plato (oferta vigente discountPrice, si
+    // es menor, o price) más los ajustes reales de las opciones elegidas.
+    const productIds = Array.from(new Set(items.map((it) => String(it.product_id)).filter(Boolean)));
+    const dishes = await prisma.dish.findMany({
+      where: { id: { in: productIds }, restaurantId: restaurant.id, isActive: true, deletedAt: null },
+      select: {
+        id: true, price: true, discountPrice: true,
+        modifierTemplates: { select: { groups: { select: { options: { select: { id: true, priceAdjustment: true } } } } } },
+      },
+    });
+    const dishMap = new Map<string, { base: number; opt: Map<string, number> }>();
+    for (const d of dishes) {
+      const hasOffer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price;
+      const opt = new Map<string, number>();
+      for (const t of d.modifierTemplates) for (const g of t.groups) for (const o of g.options) opt.set(o.id, o.priceAdjustment || 0);
+      dishMap.set(d.id, { base: hasOffer ? d.discountPrice! : d.price, opt });
+    }
+    // Precio unitario y cantidad saneados por ítem (cantidad 1..99).
+    const priced: { it: CartItemIn; qty: number; unit: number }[] = [];
+    for (const it of items) {
+      const d = dishMap.get(String(it.product_id));
+      if (!d) return NextResponse.json({ error: "Algún producto ya no está disponible o cambió de precio. Vuelve a cargar la tienda e inténtalo de nuevo." }, { status: 409 });
+      let unit = d.base;
+      for (const o of it.options ?? []) unit += d.opt.get(String(o.value_id)) ?? 0;
+      const qty = Math.min(99, Math.max(1, Math.round(Number(it.quantity) || 1)));
+      priced.push({ it, qty, unit: Math.max(0, Math.round(unit)) });
+    }
+
     // Subtotal + fee de delivery, todo calculado en el servidor (nunca confiar en el cliente).
-    const subtotal = Math.round(items.reduce((s, it) => s + Number(it.unit_price) * Number(it.quantity), 0));
+    const subtotal = Math.round(priced.reduce((s, p) => s + p.unit * p.qty, 0));
     if (!Number.isFinite(subtotal) || subtotal < 50) return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
 
     // Mínimo de compra por tipo de entrega (0 = sin mínimo).
@@ -177,15 +208,15 @@ export async function POST(req: NextRequest) {
 
     // Guardar cada item como superset: campos del visor/panel (dishName, unitTotal,
     // selectedOptions) + campos que necesita el POS (name, unit_price, toteat_code, options).
-    const storedItems = items.map((it) => ({
+    const storedItems = priced.map(({ it, qty, unit }) => ({
       dishName: it.name,
-      quantity: it.quantity,
-      unitTotal: it.unit_price,
+      quantity: qty,
+      unitTotal: unit,
       selectedOptions: (it.options ?? []).map((o) => ({ optionName: o.value })),
       // datos para el POS (Toteat)
       name: it.name,
       product_id: it.product_id,
-      unit_price: it.unit_price,
+      unit_price: unit,
       toteat_code: it.toteat_code ?? null,
       options: it.options ?? [],
     }));
