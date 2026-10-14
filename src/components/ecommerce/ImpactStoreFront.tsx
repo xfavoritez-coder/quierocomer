@@ -50,6 +50,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   }, []);
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
+  const repriceItems = useCartStore((s) => s.repriceItems);
   const addItem = useCartStore((s) => s.addItem);
   const itemCount = useCartStore((s) => s.itemCount());
   const subtotal = useCartStore((s) => s.subtotal());
@@ -58,7 +59,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   const deliveryAddress = useCartStore((s) => s.deliveryAddress);
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
+  useEffect(() => { setRestaurantId(tenant.id); repriceItems(products); }, [tenant.id, products, setRestaurantId, repriceItems]);
 
   // Altura del header (para dejar los chips de categoría sticky justo debajo).
   const headerRef = useRef<HTMLDivElement>(null);

@@ -85,10 +85,11 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   }, [updateCatScroll, categories.length, searchOpen]);
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
+  const repriceItems = useCartStore((s) => s.repriceItems);
   const itemCount = useCartStore((s) => s.itemCount());
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { setRestaurantId(tenant.id); }, [tenant.id, setRestaurantId]);
+  useEffect(() => { setRestaurantId(tenant.id); repriceItems(products); }, [tenant.id, products, setRestaurantId, repriceItems]);
 
   // Si se llega con ?menu=<vista> (p.ej. desde la página de seguimiento del
   // pedido), abrir el menú en esa vista y limpiar la URL para que no reabra al

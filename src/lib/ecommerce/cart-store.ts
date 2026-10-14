@@ -47,6 +47,7 @@ interface CartState {
   deliveryAddress: DeliveryAddress | null;
 
   setRestaurantId: (id: string) => void;
+  repriceItems: (products: RepriceProduct[]) => void;
   addItem: (item: CartItem) => void;
   removeItem: (productId: string, options: CartItemOption[]) => void;
   updateQty: (productId: string, options: CartItemOption[], delta: number) => void;
@@ -66,6 +67,14 @@ function optionsKey(options: CartItemOption[]): string {
   return options.map((o) => `${o.value_id}`).sort().join(",");
 }
 
+// Forma mínima del producto de la carta que necesita el re-cotizado del carrito.
+export interface RepriceProduct {
+  id: string;
+  price: number; // precio actual ya con la oferta vigente aplicada
+  is_sold_out?: boolean;
+  option_groups: { id: string; values: { id: string; price_delta: number }[] }[];
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -83,6 +92,32 @@ export const useCartStore = create<CartState>()(
         } else {
           set({ restaurantId: id });
         }
+      },
+
+      // Re-cotiza los ítems guardados contra el catálogo actual: actualiza el
+      // precio (base + deltas de opciones vigentes) y quita lo que ya no existe o
+      // está agotado. Evita que un carrito viejo (de una oferta pasada) muestre o
+      // intente pagar un precio desactualizado.
+      repriceItems: (products) => {
+        const byId = new Map(products.map((p) => [p.id, p]));
+        const prev = get().items;
+        const next: CartItem[] = [];
+        for (const it of prev) {
+          const p = byId.get(it.product_id);
+          if (!p || p.is_sold_out) continue; // ya no disponible → se quita
+          const opts = it.options
+            .map((o) => {
+              const g = p.option_groups.find((gr) => gr.id === o.group_id);
+              const v = g?.values.find((vv) => vv.id === o.value_id);
+              return v ? { ...o, price_delta: v.price_delta } : null;
+            })
+            .filter((o): o is CartItemOption => o !== null);
+          const base = p.price;
+          const unit = base + opts.reduce((s, o) => s + (o.price_delta ?? 0), 0);
+          next.push({ ...it, base_price: base, unit_price: unit, options: opts });
+        }
+        const changed = prev.length !== next.length || next.some((n, i) => prev[i]?.unit_price !== n.unit_price || prev[i]?.product_id !== n.product_id);
+        if (changed) set({ items: next });
       },
 
       addItem: (newItem) => {
