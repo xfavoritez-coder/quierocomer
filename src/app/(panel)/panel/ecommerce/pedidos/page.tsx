@@ -410,11 +410,14 @@ export default function EcommercePedidosPage() {
                       <span style={{ fontFamily: F, fontSize: "0.68rem", fontWeight: 800, color: "#fff", background: STATUS_COLOR[o.status], padding: "3px 9px", borderRadius: 999, whiteSpace: "nowrap" }}>{STATUS_LABEL[o.status]}</span>
                     </td>
                     <td style={{ ...tdStyle, color: "var(--adm-text3)", whiteSpace: "nowrap" }}>{relativeTime(o.createdAt)}</td>
-                    <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
-                      <span style={{ color: "var(--adm-text2)" }}>{PAY_LABEL[o.paymentMethod] || o.paymentMethod}</span>
-                      {(() => { const pf = payFailInfo(o); return (
-                        <span title={pf ? `${pf.title}${pf.detail ? ` — ${pf.detail}` : ""}` : undefined} style={{ color: pay.color, fontWeight: 700, cursor: pf ? "help" : undefined }}> · {pay.label}{pf ? " ⓘ" : ""}</span>
-                      ); })()}
+                    <td style={tdStyle}>
+                      {(() => { const pf = payFailInfo(o); return (<>
+                        <div style={{ whiteSpace: "nowrap" }}>
+                          <span style={{ color: "var(--adm-text2)" }}>{PAY_LABEL[o.paymentMethod] || o.paymentMethod}</span>
+                          <span style={{ color: pay.color, fontWeight: 700 }}> · {pay.label}</span>
+                        </div>
+                        {pf && <div title={pf.detail || undefined} style={{ color: RED, fontSize: "0.7rem", fontWeight: 600, marginTop: 2, maxWidth: 230, lineHeight: 1.25, whiteSpace: "normal", cursor: pf.detail ? "help" : undefined }}>{pf.title}</div>}
+                      </>); })()}
                     </td>
                     <td style={{ ...tdStyle, textAlign: "right", whiteSpace: "nowrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
