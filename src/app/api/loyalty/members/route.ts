@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { ensureProgram } from "@/lib/loyalty";
@@ -16,41 +17,29 @@ export async function GET(req: NextRequest) {
 
     const q = (req.nextUrl.searchParams.get("q") || "").trim();
 
-    const members = await prisma.loyaltyMember.findMany({
-      where: {
-        restaurantId,
-        revoked: false,
-        ...(q && {
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
-            { phone: { contains: q, mode: "insensitive" } },
-          ],
-        }),
-      },
-      // Orden por actividad: último escaneo (sello o canje) primero; si nunca
-      // tuvo actividad, por fecha de creación de la tarjeta (más nuevas primero).
-      orderBy: [{ lastScanAt: { sort: "desc", nulls: "last" } }, { enrolledAt: "desc" }],
-      take: 200,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        stamps: true,
-        redeemedTiers: true,
-        completedCards: true,
-        enrolledAt: true,
-        lastStampAt: true,
-        birthDate: true,
-        // Dispositivo con el que registró la tarjeta: Apple Wallet (iOS) o Google Wallet (Android).
-        appleSerial: true,
-        googleObjectId: true,
-      },
-    });
+    // Orden por ÚLTIMA ACTIVIDAD de la tarjeta: cualquier cambio (registro o
+    // sello) la pone primera. La actividad = el más reciente entre la fecha de
+    // registro (enrolledAt), el último sello (lastStampAt) y el último escaneo/
+    // canje (lastScanAt). Se ordena a nivel de BD con GREATEST para que funcione
+    // correctamente con paginación sin importar cuántos miembros haya.
+    const like = q ? `%${q}%` : null;
+    const rows = await prisma.$queryRaw<Array<{
+      id: string; name: string | null; email: string | null; phone: string | null;
+      stamps: number; redeemedTiers: number[]; completedCards: number;
+      enrolledAt: Date; lastStampAt: Date | null; birthDate: Date | null;
+      appleSerial: string | null; googleObjectId: string | null;
+    }>>(Prisma.sql`
+      SELECT "id", "name", "email", "phone", "stamps", "redeemedTiers", "completedCards",
+             "enrolledAt", "lastStampAt", "birthDate", "appleSerial", "googleObjectId"
+      FROM "LoyaltyMember"
+      WHERE "restaurantId" = ${restaurantId} AND "revoked" = false
+      ${like ? Prisma.sql`AND ("name" ILIKE ${like} OR "email" ILIKE ${like} OR "phone" ILIKE ${like})` : Prisma.empty}
+      ORDER BY GREATEST("enrolledAt", COALESCE("lastStampAt", "enrolledAt"), COALESCE("lastScanAt", "enrolledAt")) DESC
+      LIMIT 200
+    `);
 
     // Deriva el tipo de dispositivo y no expone los identificadores de wallet.
-    const mapped = members.map(({ appleSerial, googleObjectId, ...m }) => ({
+    const mapped = rows.map(({ appleSerial, googleObjectId, ...m }) => ({
       ...m,
       device: appleSerial ? "ios" : googleObjectId ? "android" : null,
     }));
