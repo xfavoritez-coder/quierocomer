@@ -127,6 +127,11 @@ function ageClass(sec: number, completed: boolean): string {
   if (sec < 2400) return "card-age-red";
   return "card-age-red-strong";
 }
+// Fija la pantalla del KDS arriba (al completar o regresar un pedido, en vez de
+// que la lista salte al reordenarse).
+function kdsScrollTop(): void {
+  requestAnimationFrame(() => { const el = document.querySelector(".kds-root") as HTMLElement | null; if (el) el.scrollTop = 0; });
+}
 // Momento en que el pedido dejó preparación (para congelar el tiempo del completado).
 function doneSec(o: PosOrder): number {
   return SEC(o.opsReadyForDeliveryAt || o.opsDispatchedAt || o.opsDeliveredAt || o.completedAt || o.updatedAt);
@@ -250,6 +255,7 @@ export default function KdsPage() {
   const markReady = useCallback(async (id: string) => {
     if (!restaurantId) return;
     setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "ready" as Stage } : x)));
+    kdsScrollTop();
     try {
       const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id, opsStage: "ready" }) });
       if (!r.ok) { fetchOrders(); return; }
@@ -263,6 +269,7 @@ export default function KdsPage() {
   const markPreparing = useCallback(async (id: string) => {
     if (!restaurantId) return;
     setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "preparing" as Stage, opsReadyForDeliveryAt: null } : x)));
+    kdsScrollTop();
     try {
       const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id, opsStage: "preparing" }) });
       if (!r.ok) { fetchOrders(); return; }

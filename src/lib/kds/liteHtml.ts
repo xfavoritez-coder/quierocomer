@@ -156,6 +156,7 @@ const JS = `
       btns[i].onclick = function(){
         var id = this.getAttribute('data-id');
         this.disabled = true; this.innerHTML = '...';
+        try{ window.scrollTo(0,0); }catch(e){}
         var x = new XMLHttpRequest();
         x.open('POST','/api/kds/ready',true);
         x.setRequestHeader('Content-Type','application/json');
@@ -195,7 +196,7 @@ const JS = `
   function findByNum(n){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].n===n) return a[i]; } return null; }
   function applySel(){ var cs=document.getElementsByClassName('card'); for(var i=0;i<cs.length;i++){ var c=cs[i], on=(c.getAttribute('data-id')===selId); var has=(' '+c.className+' ').indexOf(' sel ')>=0; if(on&&!has)c.className+=' sel'; else if(!on&&has)c.className=c.className.replace(/\\s*\\bsel\\b/,''); } }
   function selectNum(n){ var o=findByNum(n); if(o){ selId=o.id; applySel(); var c=orderColor(o); npShow(''+n, esc(o.customer||''), c.bg, c.fg); npAuto(); var el=document.getElementById('card-'+o.id); if(el&&el.scrollIntoView){ try{ el.scrollIntoView(); }catch(e){} } } else { selId=null; applySel(); npShow(''+n, 'no está en pantalla', '#0d1526', '#fff'); npAuto(); } }
-  function post(url,id){ var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
+  function post(url,id){ try{ window.scrollTo(0,0); }catch(e){} var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('Content-Type','application/json'); x.onreadystatechange=function(){ if(x.readyState===4){ poll(); } }; x.send(JSON.stringify({id:id})); }
   function markReadyId(id){ post('/api/kds/ready', id); }
   function markPreparingId(id){ post('/api/kds/unready', id); }
   function findSel(){ var a=allOrders(); for(var i=0;i<a.length;i++){ if(a[i].id===selId) return a[i]; } return null; }
