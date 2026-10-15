@@ -19,9 +19,11 @@ export async function GET(req: NextRequest) {
     orderBy: { _count: { id: "desc" } },
   });
 
-  // Loyalty members por restaurante (agrupado)
+  // Loyalty members por restaurante (agrupado). Solo miembros activos
+  // (revoked=false), para que coincida con lo que ve el panel de cada local.
   const loyaltyRaw = await prisma.loyaltyMember.groupBy({
     by: ["restaurantId"],
+    where: { revoked: false },
     _count: { id: true },
     orderBy: { _count: { id: "desc" } },
   });
