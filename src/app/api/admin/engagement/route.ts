@@ -58,12 +58,14 @@ export async function GET(req: NextRequest) {
   const activeMap = new Map(programs.map(p => [p.restaurantId, p.active]));
 
   // Sellos aplicados por local: suma de transacciones STAMP_ADD (unidas al
-  // miembro para obtener su restaurantId).
+  // miembro para obtener su restaurantId). Solo tarjetas activas (revoked=false),
+  // para no contar sellos de tarjetas caducadas/revocadas y ser consistente con
+  // el conteo de miembros.
   const stampsRaw = await prisma.$queryRaw<{ restaurantId: string; stamps: bigint }[]>(Prisma.sql`
     SELECT m."restaurantId" AS "restaurantId", COALESCE(SUM(t."amount"), 0) AS "stamps"
     FROM "LoyaltyTransaction" t
     JOIN "LoyaltyMember" m ON m."id" = t."memberId"
-    WHERE t."type" = 'STAMP_ADD'
+    WHERE t."type" = 'STAMP_ADD' AND m."revoked" = false
     GROUP BY m."restaurantId"
   `);
   const stampsMap = new Map(stampsRaw.map(s => [s.restaurantId, Number(s.stamps)]));
