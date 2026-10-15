@@ -72,6 +72,7 @@ const PAYFAIL_CAT: Record<string, string> = {
   user_aborted: "El cliente canceló o se le agotó el tiempo",
   rejected_by_bank: "Rechazado por el banco emisor",
   commit_error: "Error al confirmar con Webpay",
+  abandoned: "El cliente no completó el pago",
 };
 // Motivo del "Pago fallido" tomado del último PAYMENT_LOG (lo registra el retorno de Webpay).
 function payFailInfo(o: Order): { title: string; detail: string } | null {
