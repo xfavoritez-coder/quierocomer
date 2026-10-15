@@ -61,14 +61,15 @@ export async function GET(req: NextRequest) {
   // miembro para obtener su restaurantId). Solo tarjetas activas (revoked=false),
   // para no contar sellos de tarjetas caducadas/revocadas y ser consistente con
   // el conteo de miembros.
-  const stampsRaw = await prisma.$queryRaw<{ restaurantId: string; stamps: bigint }[]>(Prisma.sql`
-    SELECT m."restaurantId" AS "restaurantId", COALESCE(SUM(t."amount"), 0) AS "stamps"
+  const stampsRaw = await prisma.$queryRaw<{ restaurantId: string; stamps: bigint; lastStampAt: Date | null }[]>(Prisma.sql`
+    SELECT m."restaurantId" AS "restaurantId", COALESCE(SUM(t."amount"), 0) AS "stamps", MAX(t."createdAt") AS "lastStampAt"
     FROM "LoyaltyTransaction" t
     JOIN "LoyaltyMember" m ON m."id" = t."memberId"
     WHERE t."type" = 'STAMP_ADD' AND m."revoked" = false
     GROUP BY m."restaurantId"
   `);
   const stampsMap = new Map(stampsRaw.map(s => [s.restaurantId, Number(s.stamps)]));
+  const lastStampMap = new Map(stampsRaw.map(s => [s.restaurantId, s.lastStampAt]));
 
   const loyalty = loyaltyRaw.map(r => ({
     restaurantId: r.restaurantId,
@@ -77,6 +78,7 @@ export async function GET(req: NextRequest) {
     members: r._count.id,
     active: activeMap.get(r.restaurantId) ?? false,
     stamps: stampsMap.get(r.restaurantId) ?? 0,
+    lastStampAt: lastStampMap.get(r.restaurantId) ?? null,
   }));
 
   return NextResponse.json({ reviews, loyalty });

@@ -42,7 +42,7 @@ interface EngagementReview {
   restaurantId: string; name: string; slug: string | undefined; count: number; lastAt: string | null;
 }
 interface EngagementLoyalty {
-  restaurantId: string; name: string; slug: string | undefined; members: number; active: boolean; stamps: number;
+  restaurantId: string; name: string; slug: string | undefined; members: number; active: boolean; stamps: number; lastStampAt: string | null;
 }
 interface EngagementData {
   reviews: EngagementReview[];
@@ -85,7 +85,7 @@ function StatCard({ label, value, sub, accent, icon }: { label: string; value: s
   );
 }
 
-function BarList({ items }: { items: { label: string; value: number; sub?: string; badge?: { text: string; color: string }; value2?: number; value2Label?: string }[] }) {
+function BarList({ items }: { items: { label: string; value: number; sub?: string; badge?: { text: string; color: string }; value2?: number; value2Label?: string; meta?: string; metaTitle?: string }[] }) {
   const max = items[0]?.value || 1;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -99,6 +99,7 @@ function BarList({ items }: { items: { label: string; value: number; sub?: strin
             <span style={{ display: "flex", alignItems: "baseline", gap: 12, flexShrink: 0 }}>
               <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 700 }}>{item.value}</span>
               {item.value2 != null && <span title={item.value2Label} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", fontWeight: 700 }}>{item.value2.toLocaleString("es-CL")} <span style={{ fontSize: "0.64rem", color: "var(--adm-text3)", fontWeight: 600 }}>sellos</span></span>}
+              {item.meta && <span title={item.metaTitle} style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", fontWeight: 600, whiteSpace: "nowrap" }}>{item.meta}</span>}
             </span>
           </div>
           <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)", overflow: "hidden" }}>
@@ -274,7 +275,7 @@ function EngagementSection({ data }: { data: EngagementData }) {
       {data.loyalty.length > 0 && (
         <div style={card}>
           <h3 style={sectionTitle}>🎴 Miembros loyalty por local</h3>
-          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members, badge: { text: r.active ? "Activo" : "Inactivo", color: r.active ? "#16a34a" : "#94a3b8" }, value2: r.stamps, value2Label: "Sellos aplicados" }))} />
+          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members, badge: { text: r.active ? "Activo" : "Inactivo", color: r.active ? "#16a34a" : "#94a3b8" }, value2: r.stamps, value2Label: "Sellos aplicados", meta: r.stamps > 0 ? `últ. ${fmtRelative(r.lastStampAt) ?? "—"}` : undefined, metaTitle: "Último sello aplicado" }))} />
         </div>
       )}
     </div>
