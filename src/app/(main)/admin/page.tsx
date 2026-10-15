@@ -42,7 +42,7 @@ interface EngagementReview {
   restaurantId: string; name: string; slug: string | undefined; count: number; lastAt: string | null;
 }
 interface EngagementLoyalty {
-  restaurantId: string; name: string; slug: string | undefined; members: number; active: boolean;
+  restaurantId: string; name: string; slug: string | undefined; members: number; active: boolean; stamps: number;
 }
 interface EngagementData {
   reviews: EngagementReview[];
@@ -85,7 +85,7 @@ function StatCard({ label, value, sub, accent, icon }: { label: string; value: s
   );
 }
 
-function BarList({ items }: { items: { label: string; value: number; sub?: string; badge?: { text: string; color: string } }[] }) {
+function BarList({ items }: { items: { label: string; value: number; sub?: string; badge?: { text: string; color: string }; value2?: number; value2Label?: string }[] }) {
   const max = items[0]?.value || 1;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -96,7 +96,10 @@ function BarList({ items }: { items: { label: string; value: number; sub?: strin
               <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
               {item.badge && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", padding: "2px 7px", borderRadius: 999, background: `${item.badge.color}22`, color: item.badge.color, whiteSpace: "nowrap", flexShrink: 0 }}>{item.badge.text}</span>}
             </span>
-            <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 700, flexShrink: 0 }}>{item.value}</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 12, flexShrink: 0 }}>
+              <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 700 }}>{item.value}</span>
+              {item.value2 != null && <span title={item.value2Label} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", fontWeight: 700 }}>{item.value2.toLocaleString("es-CL")} <span style={{ fontSize: "0.64rem", color: "var(--adm-text3)", fontWeight: 600 }}>sellos</span></span>}
+            </span>
           </div>
           <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)", overflow: "hidden" }}>
             <div style={{ width: `${Math.min((item.value / max) * 100, 100)}%`, height: "100%", borderRadius: 3, background: i === 0 ? GOLD : `rgba(244,166,35,${Math.max(0.2, 0.7 - i * 0.06)})` }} />
@@ -271,7 +274,7 @@ function EngagementSection({ data }: { data: EngagementData }) {
       {data.loyalty.length > 0 && (
         <div style={card}>
           <h3 style={sectionTitle}>🎴 Miembros loyalty por local</h3>
-          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members, badge: { text: r.active ? "Activo" : "Inactivo", color: r.active ? "#16a34a" : "#94a3b8" } }))} />
+          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members, badge: { text: r.active ? "Activo" : "Inactivo", color: r.active ? "#16a34a" : "#94a3b8" }, value2: r.stamps, value2Label: "Sellos aplicados" }))} />
         </div>
       )}
     </div>

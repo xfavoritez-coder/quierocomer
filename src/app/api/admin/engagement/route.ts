@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -56,12 +57,24 @@ export async function GET(req: NextRequest) {
   });
   const activeMap = new Map(programs.map(p => [p.restaurantId, p.active]));
 
+  // Sellos aplicados por local: suma de transacciones STAMP_ADD (unidas al
+  // miembro para obtener su restaurantId).
+  const stampsRaw = await prisma.$queryRaw<{ restaurantId: string; stamps: bigint }[]>(Prisma.sql`
+    SELECT m."restaurantId" AS "restaurantId", COALESCE(SUM(t."amount"), 0) AS "stamps"
+    FROM "LoyaltyTransaction" t
+    JOIN "LoyaltyMember" m ON m."id" = t."memberId"
+    WHERE t."type" = 'STAMP_ADD'
+    GROUP BY m."restaurantId"
+  `);
+  const stampsMap = new Map(stampsRaw.map(s => [s.restaurantId, Number(s.stamps)]));
+
   const loyalty = loyaltyRaw.map(r => ({
     restaurantId: r.restaurantId,
     name: nameMap.get(r.restaurantId) || r.restaurantId,
     slug: slugMap.get(r.restaurantId),
     members: r._count.id,
     active: activeMap.get(r.restaurantId) ?? false,
+    stamps: stampsMap.get(r.restaurantId) ?? 0,
   }));
 
   return NextResponse.json({ reviews, loyalty });
