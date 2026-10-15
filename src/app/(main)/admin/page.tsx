@@ -42,7 +42,7 @@ interface EngagementReview {
   restaurantId: string; name: string; slug: string | undefined; count: number; lastAt: string | null;
 }
 interface EngagementLoyalty {
-  restaurantId: string; name: string; slug: string | undefined; members: number;
+  restaurantId: string; name: string; slug: string | undefined; members: number; active: boolean;
 }
 interface EngagementData {
   reviews: EngagementReview[];
@@ -85,14 +85,17 @@ function StatCard({ label, value, sub, accent, icon }: { label: string; value: s
   );
 }
 
-function BarList({ items }: { items: { label: string; value: number; sub?: string }[] }) {
+function BarList({ items }: { items: { label: string; value: number; sub?: string; badge?: { text: string; color: string } }[] }) {
   const max = items[0]?.value || 1;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {items.map((item, i) => (
         <div key={i}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "75%" }}>{item.label}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 5 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+              <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
+              {item.badge && <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", padding: "2px 7px", borderRadius: 999, background: `${item.badge.color}22`, color: item.badge.color, whiteSpace: "nowrap", flexShrink: 0 }}>{item.badge.text}</span>}
+            </span>
             <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 700, flexShrink: 0 }}>{item.value}</span>
           </div>
           <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)", overflow: "hidden" }}>
@@ -270,7 +273,7 @@ function EngagementSection({ data }: { data: EngagementData }) {
       {data.loyalty.length > 0 && (
         <div style={card}>
           <h3 style={sectionTitle}>🎴 Miembros loyalty por local</h3>
-          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members }))} />
+          <BarList items={data.loyalty.slice(0, 12).map(r => ({ label: r.name, value: r.members, badge: { text: r.active ? "Activo" : "Inactivo", color: r.active ? "#16a34a" : "#94a3b8" } }))} />
         </div>
       )}
     </div>

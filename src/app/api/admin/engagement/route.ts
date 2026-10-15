@@ -49,11 +49,19 @@ export async function GET(req: NextRequest) {
     lastAt: r._max.createdAt,
   }));
 
+  // ¿El programa de fidelidad está activo en cada local?
+  const programs = await prisma.loyaltyProgram.findMany({
+    where: { restaurantId: { in: loyaltyRaw.map(r => r.restaurantId) } },
+    select: { restaurantId: true, active: true },
+  });
+  const activeMap = new Map(programs.map(p => [p.restaurantId, p.active]));
+
   const loyalty = loyaltyRaw.map(r => ({
     restaurantId: r.restaurantId,
     name: nameMap.get(r.restaurantId) || r.restaurantId,
     slug: slugMap.get(r.restaurantId),
     members: r._count.id,
+    active: activeMap.get(r.restaurantId) ?? false,
   }));
 
   return NextResponse.json({ reviews, loyalty });
