@@ -254,7 +254,11 @@ export default function KdsPage() {
   // pedidos por Supabase Realtime.
   const markReady = useCallback(async (id: string) => {
     if (!restaurantId) return;
-    setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "ready" as Stage } : x)));
+    // Fija opsReadyForDeliveryAt = ahora en la actualización optimista: sin esto,
+    // doneSec() cae a updatedAt (≈ creación) → el tiempo se ve ~0 y la tarjeta
+    // parpadea en verde antes de tomar su color real al volver del servidor.
+    const nowIso = new Date().toISOString();
+    setOrders((prev) => prev.map((x) => (x.id === id ? { ...x, opsStage: "ready" as Stage, opsReadyForDeliveryAt: nowIso } : x)));
     kdsScrollTop();
     try {
       const r = await fetch("/api/panel/ecommerce/pos-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id, opsStage: "ready" }) });
