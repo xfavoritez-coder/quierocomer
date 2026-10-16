@@ -218,6 +218,14 @@ export interface QuoteParams {
 }
 export interface QuoteResult { ok: boolean; fee?: number; durationMin?: number | null; error?: string; raw?: unknown }
 
+/** Traduce el error de cotización de Uber a un mensaje claro para el cliente. */
+export function uberQuoteErrorEs(raw?: string | null): string {
+  const m = (raw || "").toLowerCase();
+  if (m.includes("deliverable area") || m.includes("undeliverable") || m.includes("not in a deliver") || m.includes("out of range") || m.includes("too far")) return "No llegamos a esa dirección";
+  if (m.includes("address") && (m.includes("invalid") || m.includes("not found") || m.includes("could not") || m.includes("resolve"))) return "No pudimos validar esa dirección, revísala";
+  return "No pudimos cotizar el despacho a esa dirección";
+}
+
 /**
  * Cotiza una entrega en Uber Direct (sin crearla). Devuelve el costo actual que
  * cobraría Uber (en CLP). Útil para calcular el despacho al vuelo en el checkout.

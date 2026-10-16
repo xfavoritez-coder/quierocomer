@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
-import { uberSettingsFor, uberConfigured, uberCreateQuote } from "@/lib/ecommerce/uberDirect";
+import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 
 export const runtime = "nodejs";
 
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       dropoffLng: Number.isFinite(lng) ? lng : null,
     });
     if (!q.ok || q.fee == null) {
-      return NextResponse.json({ ok: false, error: q.error || "No se pudo cotizar el despacho a esa dirección" }, { status: 422 });
+      return NextResponse.json({ ok: false, error: uberQuoteErrorEs(q.error) }, { status: 422 });
     }
     return NextResponse.json({ ok: true, fee: q.fee, durationMin: q.durationMin ?? null });
   } catch {

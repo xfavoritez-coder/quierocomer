@@ -7,7 +7,7 @@ import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
-import { uberSettingsFor, uberConfigured, uberCreateQuote } from "@/lib/ecommerce/uberDirect";
+import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
           dropoffLat: Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
           dropoffLng: Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         });
-        if (!q.ok || q.fee == null) return NextResponse.json({ error: q.error || "No se pudo cotizar el despacho a esa dirección" }, { status: 400 });
+        if (!q.ok || q.fee == null) return NextResponse.json({ error: uberQuoteErrorEs(q.error) }, { status: 400 });
         deliveryFee = q.fee;
       } else {
         const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
