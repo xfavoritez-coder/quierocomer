@@ -17,7 +17,7 @@ type OrderStatus = "PENDING" | "ACCEPTED" | "PREPARING" | "IN_DELIVERY" | "READY
 
 interface OrderItem { dishName?: string; name?: string; quantity: number; unitTotal?: number; unit_price?: number; selectedOptions?: { optionName: string }[] }
 interface Order {
-  id: string; orderNumber?: number | null; customerName: string; customerPhone: string; customerEmail?: string | null;
+  id: string; restaurantId?: string; orderNumber?: number | null; customerName: string; customerPhone: string; customerEmail?: string | null;
   orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string; paymentGateway?: string | null;
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
@@ -538,6 +538,19 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
   const [testOpen, setTestOpen] = useState(false);
   const [copied, setCopied] = useState<"token" | "buy" | null>(null);
   const copyText = (text: string, which: "token" | "buy") => { navigator.clipboard?.writeText(text).then(() => { setCopied(which); setTimeout(() => setCopied(null), 1500); }).catch(() => {}); };
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundBusy, setRefundBusy] = useState(false);
+  const [refundMsg, setRefundMsg] = useState<string | null>(null);
+  const doRefund = async (amount?: number) => {
+    if (!order.restaurantId) return;
+    setRefundBusy(true); setRefundMsg(null);
+    try {
+      const r = await fetch("/api/panel/ecommerce/webpay/refund", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: order.restaurantId, orderId: order.id, amount }) });
+      const d = await r.json().catch(() => ({}));
+      setRefundMsg(r.ok ? `✓ Reembolso OK (${d.type || "hecho"})` : `⚠️ ${d.error || "No se pudo reembolsar"}`);
+    } catch { setRefundMsg("⚠️ Error de conexión"); }
+    setRefundBusy(false);
+  };
   const [forceBusy, setForceBusy] = useState(false);
   const [posBusy, setPosBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
@@ -640,6 +653,17 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
                   </div>
                 )}
                 {copied && <p style={{ fontFamily: FB, fontSize: "0.68rem", color: GREEN, margin: "2px 0 0", textAlign: "right" }}>¡Copiado!</p>}
+                {order.paymentStatus === "paid" && order.paymentGateway === "webpay" && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--adm-card-border)" }}>
+                    <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 6px" }}>Reembolso (certificación)</p>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                      <input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder={`Monto (máx ${order.total})`} style={{ ...inp, flex: "1 1 120px", minWidth: 100 }} />
+                      <button onClick={() => doRefund(Number(refundAmount))} disabled={refundBusy || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) >= order.total} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Parcial</button>
+                      <button onClick={() => doRefund()} disabled={refundBusy} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Total</button>
+                    </div>
+                    {refundMsg && <p style={{ fontFamily: FB, fontSize: "0.72rem", margin: "6px 0 0", color: refundMsg.startsWith("✓") ? GREEN : RED }}>{refundMsg}</p>}
+                  </div>
+                )}
               </div>
             )}
           </div>

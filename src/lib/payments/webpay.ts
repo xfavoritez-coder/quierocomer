@@ -116,6 +116,28 @@ export async function webpayConfirm(token: string, settings: WebpaySettings = {}
   }
 }
 
+export interface WebpayRefundResult { ok: boolean; type?: string; error?: string; raw?: unknown }
+
+/**
+ * Reembolsa (anula/reversa) una transacción Webpay por un monto. Si el monto es
+ * igual al total, Transbank hace anulación total; si es menor, reembolso parcial.
+ * El token es el mismo de la transacción confirmada.
+ */
+export async function webpayRefund(token: string, amount: number, settings: WebpaySettings = {}): Promise<WebpayRefundResult> {
+  try {
+    const tx = getTransaction(settings);
+    const res = await tx.refund(token, amount);
+    const type = (res as { type?: string }).type;
+    console.log("[webpay] refund", JSON.stringify({ amount, type, raw: res }));
+    // La respuesta trae `type` (REVERSED / NULLIFIED). Cualquiera indica éxito.
+    return { ok: !!type, type, raw: res };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error Webpay";
+    console.error("[webpay] refund ERROR", JSON.stringify({ error: msg }));
+    return { ok: false, error: msg };
+  }
+}
+
 /**
  * Lee la config Webpay del restaurante desde Restaurant.ecommerceConfig.
  * Si hay credenciales de producción completas, usa producción; si no,
