@@ -443,7 +443,7 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} onResendPos={resendPos} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} onResendPos={resendPos} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} showWebpayToken={showWebpayToken} />}
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
@@ -530,7 +530,7 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPos, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; onResendPos: (id: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void }) {
+function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPos, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint, showWebpayToken }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; onResendPos: (id: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void; showWebpayToken?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -618,7 +618,7 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
                 </div>
               ) : null; })()}
             </div>
-            {(order.webpayToken || order.webpayBuyOrder) && (
+            {showWebpayToken && (order.webpayToken || order.webpayBuyOrder) && (
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 4 }}>
                 <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Transacción Webpay</p>
                 {order.webpayBuyOrder && (
