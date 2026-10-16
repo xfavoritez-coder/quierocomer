@@ -616,6 +616,13 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
                 </div>
               ) : null; })()}
             </div>
+            {(order.webpayToken || order.webpayBuyOrder) && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 4 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Transacción Webpay</p>
+                {order.webpayBuyOrder && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: FB, fontSize: "0.72rem" }}><span style={{ color: "var(--adm-text3)" }}>Orden de compra</span><span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayBuyOrder}</span></div>}
+                {order.webpayToken && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: FB, fontSize: "0.72rem" }}><span style={{ color: "var(--adm-text3)", flexShrink: 0 }}>Token</span><span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayToken}</span></div>}
+              </div>
+            )}
           </div>
 
           {/* Notas y estado del POS */}
