@@ -99,7 +99,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "ecommerce",
       label: "Ecommerce",
       icon: Rocket,
-      badge: "Beta",
       items: [
         { icon: Rocket, labelKey: "nav_ecommerce_home", href: `${base}/ecommerce` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
@@ -114,7 +113,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "centro-pedidos",
       label: "Centro de pedidos",
       icon: ListChecks,
-      badge: "Beta",
       items: [
         { icon: ListChecks, labelKey: "nav_centro_home", href: `${base}/centro-pedidos` },
         { icon: MonitorPlay, labelKey: "nav_centro_kds", href: `${base}/centro-pedidos/kds` },
@@ -138,7 +136,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "bodega",
       label: "Bodega",
       icon: Warehouse,
-      badge: "Beta",
       items: [
         { icon: Warehouse, labelKey: "nav_bodega_home", href: `${base}/bodega` },
         { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
