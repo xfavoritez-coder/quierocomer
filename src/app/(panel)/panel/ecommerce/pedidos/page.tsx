@@ -536,6 +536,8 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
   const [reason, setReason] = useState("");
   const [courierBusy, setCourierBusy] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const [copied, setCopied] = useState<"token" | "buy" | null>(null);
+  const copyText = (text: string, which: "token" | "buy") => { navigator.clipboard?.writeText(text).then(() => { setCopied(which); setTimeout(() => setCopied(null), 1500); }).catch(() => {}); };
   const [forceBusy, setForceBusy] = useState(false);
   const [posBusy, setPosBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
@@ -619,8 +621,25 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
             {(order.webpayToken || order.webpayBuyOrder) && (
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 4 }}>
                 <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: 0 }}>Transacción Webpay</p>
-                {order.webpayBuyOrder && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: FB, fontSize: "0.72rem" }}><span style={{ color: "var(--adm-text3)" }}>Orden de compra</span><span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayBuyOrder}</span></div>}
-                {order.webpayToken && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: FB, fontSize: "0.72rem" }}><span style={{ color: "var(--adm-text3)", flexShrink: 0 }}>Token</span><span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayToken}</span></div>}
+                {order.webpayBuyOrder && (
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, fontFamily: FB, fontSize: "0.72rem" }}>
+                    <span style={{ color: "var(--adm-text3)", flexShrink: 0 }}>Orden de compra</span>
+                    <span style={{ display: "flex", alignItems: "flex-start", gap: 6, minWidth: 0 }}>
+                      <span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayBuyOrder}</span>
+                      <button onClick={() => copyText(order.webpayBuyOrder!, "buy")} title="Copiar" style={{ flexShrink: 0, border: "none", background: "none", cursor: "pointer", color: copied === "buy" ? GREEN : "var(--adm-text3)", padding: 0, lineHeight: 1 }}><Copy size={14} /></button>
+                    </span>
+                  </div>
+                )}
+                {order.webpayToken && (
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, fontFamily: FB, fontSize: "0.72rem" }}>
+                    <span style={{ color: "var(--adm-text3)", flexShrink: 0 }}>Token</span>
+                    <span style={{ display: "flex", alignItems: "flex-start", gap: 6, minWidth: 0 }}>
+                      <span style={{ color: "var(--adm-text)", fontFamily: "monospace", userSelect: "all", wordBreak: "break-all", textAlign: "right" }}>{order.webpayToken}</span>
+                      <button onClick={() => copyText(order.webpayToken!, "token")} title="Copiar" style={{ flexShrink: 0, border: "none", background: "none", cursor: "pointer", color: copied === "token" ? GREEN : "var(--adm-text3)", padding: 0, lineHeight: 1 }}><Copy size={14} /></button>
+                    </span>
+                  </div>
+                )}
+                {copied && <p style={{ fontFamily: FB, fontSize: "0.68rem", color: GREEN, margin: "2px 0 0", textAlign: "right" }}>¡Copiado!</p>}
               </div>
             )}
           </div>
