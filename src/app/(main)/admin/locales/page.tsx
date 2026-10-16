@@ -699,6 +699,22 @@ export default function AdminLocales() {
           </div>
         )}
 
+        {/* Eliminar todos los pedidos del ecommerce — super-admin only */}
+        {isSuper && (
+          <button
+            onClick={async () => {
+              if (!confirm(`¿Eliminar TODOS los pedidos del ecommerce de "${selected.name}"?\n\nSe borrarán de forma permanente. Esta acción no se puede deshacer.`)) return;
+              const res = await fetch(`/api/admin/locales/${selected.id}/ecommerce-orders`, { method: "DELETE" });
+              const d = await res.json().catch(() => ({}));
+              if (!res.ok) { alert(d.error || "Error al eliminar los pedidos"); return; }
+              alert(`Se eliminaron ${d.deleted ?? 0} pedido(s) del ecommerce de "${selected.name}".`);
+            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, padding: "9px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}
+          >
+            🗑 Eliminar pedidos del ecommerce
+          </button>
+        )}
+
         {/* Toggle Centro de pedidos (pilar de despacho/operación) — super-admin only */}
         {isSuper && (
           <div style={{ padding: "14px 16px", background: selected.centroPedidosEnabled ? "rgba(251,146,60,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.centroPedidosEnabled ? "rgba(251,146,60,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
