@@ -212,6 +212,50 @@ export async function uberCreateDelivery(creds: UberCreds, params: CreateDeliver
   }
 }
 
+export interface QuoteParams {
+  pickupAddress: string; pickupCity?: string | null; pickupLat?: number | null; pickupLng?: number | null;
+  dropoffAddress: string; dropoffCity?: string | null; dropoffLat?: number | null; dropoffLng?: number | null;
+}
+export interface QuoteResult { ok: boolean; fee?: number; durationMin?: number | null; error?: string; raw?: unknown }
+
+/**
+ * Cotiza una entrega en Uber Direct (sin crearla). Devuelve el costo actual que
+ * cobraría Uber (en CLP). Útil para calcular el despacho al vuelo en el checkout.
+ */
+export async function uberCreateQuote(creds: UberCreds, params: QuoteParams): Promise<QuoteResult> {
+  if (!uberConfigured(creds)) return { ok: false, error: "Uber Direct no configurado" };
+  const token = await uberToken(creds);
+  if (!token) return { ok: false, error: "No se pudo autenticar con Uber" };
+
+  const pickupCity = params.pickupCity || "Santiago";
+  const dropoffCity = params.dropoffCity || pickupCity;
+  const body: Record<string, unknown> = {
+    pickup_address: uberAddress(params.pickupAddress, pickupCity),
+    dropoff_address: uberAddress(params.dropoffAddress, dropoffCity),
+    ...(params.pickupLat != null && params.pickupLng != null ? { pickup_latitude: params.pickupLat, pickup_longitude: params.pickupLng } : {}),
+    ...(params.dropoffLat != null && params.dropoffLng != null ? { dropoff_latitude: params.dropoffLat, dropoff_longitude: params.dropoffLng } : {}),
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/customers/${creds.customerId}/delivery_quotes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
+    const fee = (data as { fee?: number }).fee;
+    if (!res.ok || typeof fee !== "number") {
+      const msg = (data as { message?: string; code?: string }).message || (data as { code?: string }).code || `HTTP ${res.status}`;
+      return { ok: false, error: msg, raw: data };
+    }
+    // CLP: Uber envía el fee ×100 (como centavos), igual que en las entregas.
+    const durRaw = (data as { duration?: number }).duration;
+    return { ok: true, fee: Math.round(fee / 100), durationMin: typeof durRaw === "number" ? durRaw : null, raw: data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error Uber" };
+  }
+}
+
 /** Consulta una entrega. */
 export async function uberGetDelivery(creds: UberCreds, deliveryId: string): Promise<CreateDeliveryResult> {
   const token = await uberToken(creds);

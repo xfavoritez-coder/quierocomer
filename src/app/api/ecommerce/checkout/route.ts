@@ -7,6 +7,7 @@ import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
+import { uberSettingsFor, uberConfigured, uberCreateQuote } from "@/lib/ecommerce/uberDirect";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true } as const;
+    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -155,6 +156,23 @@ export async function POST(req: NextRequest) {
         const res = computeDistanceFee(dcfg, { lat: Number(deliveryLat), lng: Number(deliveryLng) });
         if (!res.available) return NextResponse.json({ error: res.reason || "Fuera de la zona de reparto" }, { status: 400 });
         deliveryFee = res.fee;
+      } else if (dcfg.mode === "uber") {
+        // Cotización en vivo de Uber Direct (no confiar en el fee del cliente).
+        const creds = uberSettingsFor({ ecommerceConfig: restaurant.ecommerceConfig });
+        if (!uberConfigured(creds)) return NextResponse.json({ error: "El despacho no está disponible en este momento" }, { status: 400 });
+        const addr = (deliveryAddress || "").toString().trim();
+        if (!addr && !(Number.isFinite(Number(deliveryLat)) && Number.isFinite(Number(deliveryLng)))) {
+          return NextResponse.json({ error: "Falta la dirección de entrega" }, { status: 400 });
+        }
+        const q = await uberCreateQuote(creds, {
+          pickupAddress: dcfg.originAddress || restaurant.address || "",
+          pickupLat: dcfg.origin?.lat ?? null, pickupLng: dcfg.origin?.lng ?? null,
+          dropoffAddress: addr,
+          dropoffLat: Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
+          dropoffLng: Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
+        });
+        if (!q.ok || q.fee == null) return NextResponse.json({ error: q.error || "No se pudo cotizar el despacho a esa dirección" }, { status: 400 });
+        deliveryFee = q.fee;
       } else {
         const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
         const zone = zones.find((z) => z.name === deliveryZone);

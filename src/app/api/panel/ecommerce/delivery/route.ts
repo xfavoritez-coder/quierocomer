@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { uberSettingsFor, uberConfigured } from "@/lib/ecommerce/uberDirect";
 
 /** Verifica que el panel logueado sea dueño (o miembro) del restaurante. */
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
     deliveryEnabled: (r.orderingDelivery || "").toUpperCase() !== "PICKUP",
     googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
     restaurantAddress: r.address || null,
+    uberConfigured: uberConfigured(uberSettingsFor({ ecommerceConfig: r.ecommerceConfig })),
   });
 }
 

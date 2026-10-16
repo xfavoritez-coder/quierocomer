@@ -713,6 +713,8 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
   const distanceMode = tenant.deliveryConfig.mode === "distance";
+  const uberMode = tenant.deliveryConfig.mode === "uber";
+  const mapMode = distanceMode || uberMode; // ambos usan dirección en el mapa
   const [tab, setTab] = useState<"pickup" | "delivery">(
     !tenant.pickupEnabled ? "delivery" : !tenant.deliveryEnabled ? "pickup" : deliveryType,
   );
@@ -724,10 +726,25 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
   const selectedZone = zones.find((z) => z.id === zoneId) ?? null;
 
   // Modo distancia (Google Maps autocomplete)
-  const gmapsReady = useGoogleMaps(distanceMode ? tenant.googleMapsKey : null);
+  const gmapsReady = useGoogleMaps(mapMode ? tenant.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dest, setDest] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [feeResult, setFeeResult] = useState<DistanceFeeResult | null>(null);
+  const [feeLoading, setFeeLoading] = useState(false);
+
+  // Calcula el costo para un destino: por distancia (local) o cotizando a Uber
+  // Direct en vivo (modo "uber"), vía el endpoint del servidor.
+  const computeFeeFor = useCallback(async (d: { lat: number; lng: number; address: string }) => {
+    if (!uberMode) { setFeeResult(computeDistanceFee(tenant.deliveryConfig, d)); return; }
+    setFeeLoading(true); setFeeResult(null);
+    try {
+      const r = await fetch("/api/ecommerce/delivery/quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: tenant.id, address: d.address, lat: d.lat, lng: d.lng }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) setFeeResult({ available: true, fee: j.fee, distanceKm: 0 });
+      else setFeeResult({ available: false, fee: 0, distanceKm: 0, reason: j.error || "No se pudo cotizar el despacho a esa dirección" });
+    } catch { setFeeResult({ available: false, fee: 0, distanceKm: 0, reason: "No se pudo cotizar el despacho" }); }
+    setFeeLoading(false);
+  }, [uberMode, tenant.deliveryConfig, tenant.id]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -737,7 +754,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
 
   // Adjunta el autocompletado cuando el SDK está listo y estamos en delivery+distancia.
   useEffect(() => {
-    if (!distanceMode || tab !== "delivery" || !gmapsReady || !inputRef.current) return;
+    if (!mapMode || tab !== "delivery" || !gmapsReady || !inputRef.current) return;
     const g = (window as unknown as { google?: any }).google;
     if (!g?.maps?.places?.Autocomplete) return;
     const ac = new g.maps.places.Autocomplete(inputRef.current, {
@@ -751,23 +768,22 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
       if (!loc) return;
       const d = { lat: loc.lat(), lng: loc.lng(), address: place.formatted_address || inputRef.current!.value };
       setDest(d);
-      setFeeResult(computeDistanceFee(tenant.deliveryConfig, d));
+      computeFeeFor(d);
     });
     inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
     return () => { g.maps.event?.removeListener?.(listener); };
-  }, [distanceMode, tab, gmapsReady, tenant.deliveryConfig]);
+  }, [mapMode, tab, gmapsReady, computeFeeFor]);
 
-  const deliveryReady = distanceMode ? !!(feeResult?.available && dest) : (!!selectedZone && !!address.trim());
+  const deliveryReady = mapMode ? !!(feeResult?.available && dest) : (!!selectedZone && !!address.trim());
 
   // Al arrastrar el pin en el mapa: actualiza la ubicación y recalcula el despacho.
   function onMapMove(lat: number, lng: number) {
-    setDest((d) => (d ? { ...d, lat, lng } : d));
-    setFeeResult(computeDistanceFee(tenant.deliveryConfig, { lat, lng }));
+    setDest((d) => { const next = d ? { ...d, lat, lng } : { lat, lng, address: "" }; computeFeeFor(next); return next; });
   }
 
   function confirm() {
     if (tab === "pickup") { confirmPickup(); requestClose(); return; }
-    if (distanceMode) {
+    if (mapMode) {
       if (!feeResult?.available || !dest) return;
       setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null });
       requestClose();
@@ -778,7 +794,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
     requestClose();
   }
 
-  const noZones = !distanceMode && zones.length === 0;
+  const noZones = !mapMode && zones.length === 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -809,7 +825,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
               <p className="text-sm font-bold text-gray-700 mb-1">🏠 Retiras en tienda</p>
               {tenant.address ? <p className="text-sm text-gray-500">{tenant.address}</p> : <p className="text-sm text-gray-400">Dirección disponible al confirmar el pedido.</p>}
             </div>
-          ) : distanceMode ? (
+          ) : mapMode ? (
             <>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección de entrega</span>
@@ -827,6 +843,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
                 </>
               )}
               {!tenant.googleMapsKey && <p className="text-xs text-red-500 px-1">El local aún no configuró Google Maps.</p>}
+              {feeLoading && <p className="text-xs text-gray-400 px-1">Cotizando despacho…</p>}
               {feeResult && !feeResult.available && <p className="text-xs text-red-500 px-1">{feeResult.reason}</p>}
               {feeResult?.available && (
                 <div className="flex items-center justify-between text-xs px-1">

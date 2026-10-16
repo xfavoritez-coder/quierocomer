@@ -47,7 +47,7 @@ export interface LatLng {
   lng: number;
 }
 
-export type DeliveryMode = "zones" | "distance";
+export type DeliveryMode = "zones" | "distance" | "uber";
 
 export interface DeliveryConfig {
   mode: DeliveryMode;
@@ -94,7 +94,7 @@ export function parseDeliveryConfig(raw: unknown): DeliveryConfig {
   const originLat = Number((o.origin as Record<string, unknown>)?.lat);
   const originLng = Number((o.origin as Record<string, unknown>)?.lng);
   return {
-    mode: o.mode === "distance" ? "distance" : "zones",
+    mode: o.mode === "distance" ? "distance" : o.mode === "uber" ? "uber" : "zones",
     origin: Number.isFinite(originLat) && Number.isFinite(originLng) ? { lat: originLat, lng: originLng } : null,
     originAddress: o.originAddress ? String(o.originAddress) : null,
     basePrice: Math.max(0, Math.round(Number(o.basePrice) || 0)),

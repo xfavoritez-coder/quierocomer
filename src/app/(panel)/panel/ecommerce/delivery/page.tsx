@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Truck, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Truck, Save, Bike } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { defaultDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
@@ -25,6 +25,7 @@ export default function EcommerceDeliveryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deliveryEnabled, setDeliveryEnabled] = useState(true);
+  const [uberOk, setUberOk] = useState(false);
 
   const mode = config.mode;
   const setMode = (m: DeliveryConfig["mode"]) => setConfig((c) => ({ ...c, mode: m }));
@@ -42,6 +43,7 @@ export default function EcommerceDeliveryPage() {
           setGmapsKey(d.googleMapsKey || null);
           setRestaurantAddress(d.restaurantAddress || null);
           setDeliveryEnabled(d.deliveryEnabled);
+          setUberOk(!!d.uberConfigured);
         }
       })
       .catch(() => {})
@@ -100,17 +102,35 @@ export default function EcommerceDeliveryPage() {
       ) : (
         <>
           {/* Selector de modo */}
-          <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap" }}>
             <button onClick={() => setMode("zones")} style={modeBtn(mode === "zones")}>Por comuna</button>
             <button onClick={() => setMode("distance")} style={modeBtn(mode === "distance")}>Por mapa (distancia)</button>
+            <button onClick={() => setMode("uber")} style={modeBtn(mode === "uber")}>Por cotización externa</button>
           </div>
           <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "8px 2px 0" }}>
-            {mode === "distance" ? "Dibuja tu zona de reparto en el mapa; el costo se calcula por distancia (como delivery por km)." : "Cobras una tarifa fija por comuna/sector."}
+            {mode === "distance" ? "Dibuja tu zona de reparto en el mapa; el costo se calcula por distancia (como delivery por km)." : mode === "uber" ? "El costo de despacho se cotiza en vivo con Uber Direct según la dirección del cliente, usando tu integración ya configurada." : "Cobras una tarifa fija por comuna/sector."}
           </p>
 
           {mode === "distance" ? (
             <div style={{ marginTop: 14 }}>
               <DeliveryPolygonEditor config={config} gmapsKey={gmapsKey} restaurantAddress={restaurantAddress} onChange={patchConfig} />
+            </div>
+          ) : mode === "uber" ? (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16 }}>
+                <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><Bike size={18} /> Cotización en vivo con Uber Direct</p>
+                <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.55 }}>
+                  Al pagar, el cliente ingresa su dirección y el costo de despacho se calcula con la tarifa que Uber cobra en ese momento para esa ruta. No fijas comunas ni km: el precio sale directo de Uber.
+                </p>
+                <div style={{ borderRadius: 10, padding: "10px 12px", background: uberOk ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.07)", border: `1px solid ${uberOk ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}` }}>
+                  <p style={{ fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: uberOk ? "#16a34a" : "#ef4444", margin: 0 }}>
+                    {uberOk ? "✓ Uber Direct está configurado en este local." : "⚠️ Uber Direct no está configurado. Configúralo en los ajustes de integraciones para usar esta opción."}
+                  </p>
+                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "10px 2px 0" }}>
+                  Origen (retiro): <b>{config.originAddress || restaurantAddress || "la dirección registrada del local"}</b>.
+                </p>
+              </div>
             </div>
           ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
