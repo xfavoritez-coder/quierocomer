@@ -10,6 +10,8 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
 const DAY_LABELS: Record<string, string> = { D: "Dom", L: "Lun", M: "Mar", Mi: "Mié", J: "Jue", V: "Vie", S: "Sáb" };
+// Hoy en hora de Chile (YYYY-MM-DD) para comparar la fecha de vencimiento del cupón.
+const chileTodayYmd = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 type Dish = { id: string; name: string };
 
@@ -81,14 +83,15 @@ export default function CouponsPage() {
             const open = expanded === c.id;
             const used = uses[c.code] ?? 0;
             const summary = c.type === "product" ? "Producto gratis" : c.discountType === "percent" ? `${c.discountValue}% off` : `−$${c.discountValue.toLocaleString("es-CL")}`;
+            const expired = !!c.endDate && c.endDate < chileTodayYmd();
             return (
               <div key={c.id} style={card}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setExpanded(open ? null : c.id)}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: 0.5 }}>{c.code || "(sin código)"} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", letterSpacing: 0 }}>· {summary}</span></p>
-                    <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{c.isEnabled ? "Activo" : "Inactivo"}{used > 0 ? ` · ${used} uso${used !== 1 ? "s" : ""}` : ""}</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{expired ? <span style={{ color: "#ef4444", fontWeight: 700 }}>Vencido</span> : (c.isEnabled ? "Activo" : "Inactivo")}{used > 0 ? ` · ${used} uso${used !== 1 ? "s" : ""}` : ""}{expired && c.endDate ? ` · venció el ${c.endDate.split("-").reverse().join("-")}` : ""}</p>
                   </div>
-                  <Toggle on={c.isEnabled} onClick={(e) => { e.stopPropagation(); upd(c.id, { isEnabled: !c.isEnabled }); }} />
+                  <Toggle on={c.isEnabled && !expired} disabled={expired} onClick={(e) => { e.stopPropagation(); if (!expired) upd(c.id, { isEnabled: !c.isEnabled }); }} />
                   <ChevronDown size={18} color="var(--adm-text3)" style={{ transform: open ? "rotate(180deg)" : "none", transition: ".2s" }} />
                 </div>
 
@@ -186,6 +189,6 @@ function Check({ label, on, onClick }: { label: string; on: boolean; onClick: ()
   </button>;
 }
 
-function Toggle({ on, onClick }: { on: boolean; onClick: (e: React.MouseEvent) => void }) {
-  return <button onClick={onClick} style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative", background: on ? "#22c55e" : "var(--adm-toggle-off, #ccc)", flexShrink: 0 }}><span style={{ position: "absolute", top: 3, left: on ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 2px rgba(0,0,0,.3)" }} /></button>;
+function Toggle({ on, onClick, disabled }: { on: boolean; onClick: (e: React.MouseEvent) => void; disabled?: boolean }) {
+  return <button onClick={onClick} disabled={disabled} title={disabled ? "Cupón vencido: extiende la fecha para reactivarlo" : undefined} style={{ width: 44, height: 24, borderRadius: 12, border: "none", cursor: disabled ? "not-allowed" : "pointer", position: "relative", background: on ? "#22c55e" : "var(--adm-toggle-off, #ccc)", flexShrink: 0, opacity: disabled ? 0.5 : 1 }}><span style={{ position: "absolute", top: 3, left: on ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 2px rgba(0,0,0,.3)" }} /></button>;
 }
