@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, ChevronRight, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer, Image as ImageIcon, Upload, X as XIcon, Clock } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Printer, Image as ImageIcon, Upload, X as XIcon, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -29,7 +29,7 @@ export default function EcommerceConfiguracionPage() {
   const [allMethods, setAllMethods] = useState<string[]>(["webpay", "efectivo", "transferencia", "tarjeta"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "impresion" | "web" | "mas">("tienda");
+  const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "impresion" | "web">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
   const [uploadingFav, setUploadingFav] = useState(false);
 
@@ -214,7 +214,8 @@ export default function EcommerceConfiguracionPage() {
           <TabChip active={tab === "avisos"} onClick={() => setTab("avisos")} icon={Bell} label="Avisos" />
           <TabChip active={tab === "impresion"} onClick={() => setTab("impresion")} icon={Printer} label="Impresión" />
           <TabChip active={tab === "web"} onClick={() => setTab("web")} icon={Globe} label="Web y marca" />
-          <TabChip active={tab === "mas"} onClick={() => setTab("mas")} icon={Settings} label="Más" />
+          <TabLink href="/panel/ecommerce/delivery" icon={Truck} label="Delivery" />
+          <TabLink href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} label="Acompañamientos" />
         </div>
       )}
 
@@ -612,18 +613,7 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {/* Más ajustes de la tienda (páginas propias) */}
-          {tab === "mas" && (
-          <section style={card}>
-            <SectionTitle icon={Settings} title="Más ajustes de la tienda" sub="Zonas de delivery y acompañamientos." />
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
-              <NavRow href="/panel/ecommerce/delivery" icon={Truck} title="Delivery" desc="Zonas de reparto y despacho" />
-              <NavRow href="/panel/ecommerce/acompanamientos" icon={UtensilsCrossed} title="Acompañamientos" desc="Palitos, salsas y extras del checkout" />
-            </div>
-          </section>
-          )}
-
-          {tab !== "mas" && tab !== "horario" && (
+          {tab !== "horario" && (
           <button onClick={save} disabled={saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled)} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 20px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.85rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving || cfg.paymentMethods.length === 0 || (!cfg.pickupEnabled && !cfg.deliveryEnabled) ? 0.5 : 1 }}>
             <Save size={16} /> {saving ? "Guardando…" : "Guardar configuración"}
           </button>
@@ -677,17 +667,12 @@ function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onCl
   );
 }
 
-function NavRow({ href, icon: Icon, title, desc }: { href: string; icon: any; title: string; desc: string }) {
+// Chip que navega a una página propia (Delivery, Acompañamientos), con el mismo
+// estilo que los tabs.
+function TabLink({ href, icon: Icon, label }: { href: string; icon: any; label: string }) {
   return (
-    <Link href={href} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", textDecoration: "none" }}>
-      <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon size={17} color={ACCENT} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)" }}>{title}</div>
-        <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{desc}</div>
-      </div>
-      <ChevronRight size={18} color="var(--adm-text3)" />
+    <Link href={href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 13px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", textDecoration: "none" }}>
+      <Icon size={15} /> {label}
     </Link>
   );
 }
