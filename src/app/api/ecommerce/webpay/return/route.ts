@@ -48,20 +48,23 @@ async function handle(req: NextRequest) {
   // base = "" en dominio propio (haruna.cl/checkout) o /ecommerce/<slug> en el principal.
   const checkoutFor = (base: string, q: string) => `${baseUrl}${base}/checkout?${q}`;
 
-  // Pago cancelado/abortado por el usuario → fallido, volver al checkout a reintentar.
-  // Transbank devuelve TBK_TOKEN sin token_ws cuando el cliente pulsa "Anular" o se
-  // agota el tiempo del formulario (~10 min). NO es una falla de la pasarela.
-  if (tbkToken && !tokenWs) {
-    const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tbkToken }, select: { id: true, total: true, createdAt: true, webpayBuyOrder: true, statusHistory: true, restaurant: { select: { slug: true, ecommerceStoreConfig: true } } } });
+  // Pago no completado en el formulario de Webpay (no es falla de la pasarela):
+  //  - "Anular compra" → Transbank devuelve TBK_TOKEN (sin token_ws).
+  //  - Timeout (~10 min sin completar) → devuelve solo TBK_ORDEN_COMPRA / TBK_ID_SESION,
+  //    sin token_ws ni TBK_TOKEN.
+  if (!tokenWs && (tbkToken || tbkOrden)) {
+    const isTimeout = !tbkToken && !!tbkOrden;
+    const order = await prisma.onlineOrder.findFirst({
+      where: tbkToken ? { webpayToken: tbkToken } : { webpayBuyOrder: tbkOrden! },
+      select: { id: true, total: true, createdAt: true, webpayBuyOrder: true, statusHistory: true, restaurant: { select: { slug: true, ecommerceStoreConfig: true } } },
+    });
     const secs = secsSince(order?.createdAt);
-    console.warn("[webpay-return] user_aborted", JSON.stringify({
-      orderId: order?.id, buyOrder: order?.webpayBuyOrder, amount: order?.total,
-      secondsOnForm: secs, tbkOrdenCompra: tbkOrden, tbkIdSesion: tbkSesion,
-      note: "TBK_TOKEN sin token_ws → el cliente canceló o se agotó el tiempo (abandono, no falla de la pasarela)",
-    }));
+    const category = isTimeout ? "timeout" : "user_aborted";
+    const reason = isTimeout ? "Se agotó el tiempo del formulario de Webpay" : "Cancelado por el cliente en el formulario de Webpay";
+    console.warn(`[webpay-return] ${category}`, JSON.stringify({ orderId: order?.id, buyOrder: order?.webpayBuyOrder, amount: order?.total, secondsOnForm: secs, tbkOrdenCompra: tbkOrden, tbkIdSesion: tbkSesion }));
     if (order) await prisma.onlineOrder.update({
       where: { id: order.id },
-      data: { paymentStatus: "failed", statusHistory: withPaymentLog(order.statusHistory, { category: "user_aborted", reason: "Cancelado por el cliente o tiempo agotado en el formulario de Webpay", secondsOnForm: secs }) },
+      data: { paymentStatus: "failed", statusHistory: withPaymentLog(order.statusHistory, { category, reason, secondsOnForm: secs }) },
     });
     const base = order ? storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain }) : "";
     return NextResponse.redirect(order ? checkoutFor(base, "pago=fallido") : `${baseUrl}/?pago=cancelado`, 303);

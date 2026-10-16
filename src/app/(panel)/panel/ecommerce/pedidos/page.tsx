@@ -69,7 +69,8 @@ function payInfo(o: Order): { label: string; color: string } {
   return { label: "Por pagar", color: GRAY };
 }
 const PAYFAIL_CAT: Record<string, string> = {
-  user_aborted: "El cliente canceló o se le agotó el tiempo",
+  user_aborted: "El cliente canceló el pago",
+  timeout: "Se agotó el tiempo del pago",
   rejected_by_bank: "Rechazado por el banco emisor",
   commit_error: "Error al confirmar con Webpay",
   abandoned: "El cliente no completó el pago",
