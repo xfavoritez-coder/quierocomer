@@ -281,6 +281,38 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Marca multisucursal */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={Store} title="Marca multisucursal" sub="Si tienes varias sucursales, usa el MISMO identificador de marca en todas. Tus clientes entran a una página de marca y se les asigna la sucursal más cercana." />
+            <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
+              <div>
+                <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)" }}>Identificador de marca (igual en todas las sucursales)</label>
+                <input
+                  value={cfg.brandSlug ?? ""}
+                  onChange={(e) => patch({ brandSlug: e.target.value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || null })}
+                  placeholder="hand-roll"
+                  autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                  style={{ width: "100%", padding: "10px 12px", marginTop: 4, background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                />
+                {cfg.brandSlug && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>Página de marca: <b>quierocomer.com/ecommerce/marca/{cfg.brandSlug}</b></p>}
+              </div>
+              <div>
+                <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)" }}>Nombre de esta sucursal</label>
+                <input
+                  value={cfg.branchName ?? ""}
+                  onChange={(e) => patch({ branchName: e.target.value || null })}
+                  placeholder="Ej: Providencia"
+                  style={{ width: "100%", padding: "10px 12px", marginTop: 4, background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                />
+              </div>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                Déjalo vacío si tienes un solo local. La asignación por cercanía usa la ubicación del local (configúrala en <b>Delivery → origen</b>).
+              </p>
+            </div>
+          </section>
+          )}
+
           {/* Google Tag Manager */}
           {tab === "web" && (
           <section style={card}>

@@ -300,3 +300,66 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     products,
   };
 }
+
+// ═══════════════════════════════════════════════════════════
+//  Marca multisucursal: varias tiendas con el mismo brandSlug
+//  (ecommerceStoreConfig.brandSlug) son sucursales de una marca.
+// ═══════════════════════════════════════════════════════════
+export interface BrandBranch {
+  id: string;
+  slug: string;
+  name: string;
+  branchName: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  logoUrl: string | null;
+  primaryColor: string;
+  pickupEnabled: boolean;
+  deliveryEnabled: boolean;
+  open: boolean;
+}
+export interface BrandData {
+  brandSlug: string;
+  brandName: string;
+  logoUrl: string | null;
+  googleMapsKey: string | null;
+  branches: BrandBranch[];
+}
+
+/** Carga una marca y sus sucursales (locales ecommerce con el mismo brandSlug). */
+export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData | null> {
+  const key = (brandSlug || "").trim().toLowerCase();
+  if (!key) return null;
+  const rows = await prisma.restaurant.findMany({
+    where: { ecommerceEnabled: true, ecommerceStoreConfig: { path: ["brandSlug"], equals: key } },
+    select: {
+      id: true, slug: true, name: true, logoUrl: true, address: true, lat: true, lng: true,
+      cartaAccentColor: true, ecommerceStoreConfig: true, ecommerceConfig: true,
+      ecommerceHours: true, ecommerceDeliveryConfig: true,
+    },
+  });
+  if (!rows.length) return null;
+
+  const branches: BrandBranch[] = rows.map((r) => {
+    const cfg = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor });
+    const dcfg = parseDeliveryConfig(r.ecommerceDeliveryConfig);
+    const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: cfg.deliveryEnabled, pickupEnabled: cfg.pickupEnabled });
+    return {
+      id: r.id, slug: r.slug, name: r.name, branchName: cfg.branchName, address: r.address,
+      lat: dcfg.origin?.lat ?? r.lat ?? null, lng: dcfg.origin?.lng ?? r.lng ?? null,
+      logoUrl: r.logoUrl, primaryColor: cfg.primaryColor,
+      pickupEnabled: cfg.pickupEnabled, deliveryEnabled: cfg.deliveryEnabled,
+      open: avail.openStatus.open,
+    };
+  }).sort((a, b) => (a.branchName || a.name).localeCompare(b.branchName || b.name));
+
+  const gmaps = parseEcommerceConfig(rows[0].ecommerceConfig).googleMaps?.apiKey || null;
+  return {
+    brandSlug: key,
+    brandName: branches[0]?.name || key,
+    logoUrl: branches.find((b) => b.logoUrl)?.logoUrl ?? null,
+    googleMapsKey: gmaps,
+    branches,
+  };
+}

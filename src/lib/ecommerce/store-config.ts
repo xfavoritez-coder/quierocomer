@@ -31,6 +31,8 @@ export interface EcommerceStoreConfig {
   theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
   customDomain: string | null; // dominio propio (ej: "haruna.cl"); null = quierocomer.com/ecommerce/<slug>
+  brandSlug: string | null; // marca multisucursal: varias tiendas con el mismo brandSlug son sucursales de una misma marca (entrada /ecommerce/marca/<brandSlug>)
+  branchName: string | null; // nombre de esta sucursal dentro de la marca (ej: "Providencia")
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
   orderNotifyEmail: string | null; // correo del local que recibe aviso de cada pedido nuevo
@@ -159,6 +161,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],
     customDomain: normalizeDomain(o.customDomain),
+    brandSlug: typeof o.brandSlug === "string" && o.brandSlug.trim() ? o.brandSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || null : null,
+    branchName: typeof o.branchName === "string" && o.branchName.trim() ? o.branchName.trim().slice(0, 60) : null,
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
     gtmId: normalizeGtmId(o.gtmId),
     orderNotifyEmail: normalizeEmail(o.orderNotifyEmail),
