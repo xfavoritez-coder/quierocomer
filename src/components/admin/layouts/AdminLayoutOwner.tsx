@@ -215,6 +215,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const router = useRouter();
   const { t } = usePanelLang();
   const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
+  // Etiqueta del local: si pertenece a una marca, agrega el nombre de sucursal.
+  const restLabel = (r: any) => (r?.branchName ? `${r.name} · ${r.branchName}` : r?.name);
   const hasToteat = !!(selected as any)?.hasToteat;
   const plan = (selected as any)?.plan || activePlan;
   const hasControl = !!(selected as any)?.hasControl;
@@ -460,13 +462,13 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 }}
               >
                 {restaurants.map((r: any) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
+                  <option key={r.id} value={r.id}>{restLabel(r)}</option>
                 ))}
               </select>
             ) : (
               <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
                 <RestLogo size={28} />
-                <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{activeRest?.name || "Local"}</p>
+                <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{restLabel(activeRest) || "Local"}</p>
               </Link>
             )}
             {activeRest?.slug && (
@@ -510,7 +512,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 12px" }}>
             <RestLogo size={26} />
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+              <p style={{ fontFamily: F, fontSize: "15px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restLabel(activeRest) || "Local"}</p>
             </div>
           </Link>
         )}
@@ -547,7 +549,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <div style={{ display: "flex", alignItems: "center", padding: "12px 14px", flexShrink: 0 }}>
             <Link href={basePath} onClick={closeSidebar} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
               <RestLogo size={26} />
-              <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+              <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restLabel(activeRest) || "Local"}</p>
             </Link>
             <button onClick={closeSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
               <X size={18} color="var(--adm-text3)" />
