@@ -133,7 +133,9 @@ export function integrationStatus(cfg: EcommerceConfig) {
     // Webpay se considera CONFIGURADO solo en producción con credenciales reales.
     // El modo integración/prueba funciona con las creds del SDK, pero no cuenta como configurado.
     webpay: !!(w?.env === "production" && w.commerceCode && w.apiKey),
-    flow: !!(cfg.flow?.apiKey && cfg.flow?.secretKey),
+    // Flow: igual que Webpay, solo cuenta como configurado en producción. En
+    // sandbox (pruebas) NO se muestra como "Configurada".
+    flow: !!(cfg.flow?.env === "production" && cfg.flow?.apiKey && cfg.flow?.secretKey),
     mercadopago: !!cfg.mercadopago?.accessToken,
     uberDirect: !!(cfg.uberDirect?.customerId && cfg.uberDirect?.clientId && cfg.uberDirect?.clientSecret),
     pedidosya: !!(cfg.pedidosya?.clientId && cfg.pedidosya?.clientSecret),
