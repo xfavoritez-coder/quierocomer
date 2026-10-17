@@ -11,7 +11,7 @@ const DISH_FIELDS = [
   "isHero", "isActive", "stockCountdown", "soldOut", "ingredients", "allergens", "position",
   "dishDiet", "isSpicy", "flavorTags", "isHighMargin", "isPhotoReferential",
   "isGlutenFree", "isLactoseFree", "isSoyFree", "containsNuts", "hiddenFromFeed",
-  "hideFromOrdering", "ecommerceOnly", "toteatProductId", "photoCredits",
+  "hideFromOrdering", "ecommerceOnly", "photoCredits",
   "txDishType", "txCuisine", "txMealSlot", "txIngredient", "txEstilo",
 ] as const;
 
@@ -61,6 +61,16 @@ export async function POST(req: NextRequest) {
   let dishesCopied = 0;
   for (const target of targets) {
     await prisma.$transaction(async (tx) => {
+      // Preservar los códigos Toteat propios de la sucursal (por nombre), antes de
+      // borrar su carta: cada sucursal mantiene SUS códigos, no se copian los del origen.
+      const norm = (s: string | null | undefined) => (s || "").trim().toLowerCase();
+      const tgtDishes = await tx.dish.findMany({ where: { restaurantId: target.id }, select: { name: true, toteatProductId: true } });
+      const dishCodeByName = new Map<string, string>();
+      for (const x of tgtDishes) if (x.toteatProductId) dishCodeByName.set(norm(x.name), x.toteatProductId);
+      const tgtOpts = await tx.modifierTemplateOption.findMany({ where: { group: { template: { restaurantId: target.id } } }, select: { name: true, toteatProductId: true } });
+      const optCodeByName = new Map<string, string>();
+      for (const x of tgtOpts) if (x.toteatProductId) optCodeByName.set(norm(x.name), x.toteatProductId);
+
       // Borrar la carta actual de la sucursal (dishes → categories → templates).
       await tx.dish.deleteMany({ where: { restaurantId: target.id } });
       await tx.category.deleteMany({ where: { restaurantId: target.id } });
@@ -73,7 +83,7 @@ export async function POST(req: NextRequest) {
         tmplMap.set(t.id, nt.id);
         for (const g of t.groups) {
           const ng = await tx.modifierTemplateGroup.create({ data: { templateId: nt.id, name: g.name, required: g.required, minSelect: g.minSelect, maxSelect: g.maxSelect, position: g.position }, select: { id: true } });
-          if (g.options.length) await tx.modifierTemplateOption.createMany({ data: g.options.map((o) => ({ groupId: ng.id, ...o })) });
+          if (g.options.length) await tx.modifierTemplateOption.createMany({ data: g.options.map((o) => ({ groupId: ng.id, ...o, toteatProductId: optCodeByName.get(norm(o.name)) ?? null })) });
         }
       }
 
@@ -95,6 +105,8 @@ export async function POST(req: NextRequest) {
             ...(fields as object),
             restaurantId: target.id,
             categoryId: newCat,
+            // Código Toteat: se conserva el de la sucursal (por nombre), no el del origen.
+            toteatProductId: dishCodeByName.get(norm(String((fields as { name?: string }).name))) ?? null,
             modifierTemplates: { connect: modifierTemplates.map((m) => ({ id: tmplMap.get(m.id)! })).filter((x) => x.id) },
           } as any,
         });
