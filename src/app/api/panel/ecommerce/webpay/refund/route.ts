@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, restaurantId: true, total: true, webpayToken: true, paymentGateway: true, restaurant: { select: { ecommerceConfig: true } } },
+    select: { id: true, restaurantId: true, total: true, webpayToken: true, paymentGateway: true, statusHistory: true, restaurant: { select: { ecommerceConfig: true } } },
   });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (order.paymentGateway !== "webpay" || !order.webpayToken) return NextResponse.json({ error: "El pedido no tiene una transacción Webpay" }, { status: 400 });
@@ -42,5 +42,17 @@ export async function POST(req: NextRequest) {
 
   const res = await webpayRefund(order.webpayToken, amount, webpaySettingsFor({ ecommerceConfig: order.restaurant.ecommerceConfig }));
   if (!res.ok) return NextResponse.json({ error: res.error || "No se pudo reembolsar" }, { status: 400 });
-  return NextResponse.json({ ok: true, type: res.type, amount });
+
+  // Reembolso OK → marca el pedido como reembolsado (total o parcial) y deja
+  // registro en el historial. Transbank es la fuente de verdad del dinero; esto
+  // es solo el reflejo en el panel.
+  const full = amount >= order.total;
+  const hist = Array.isArray(order.statusHistory) ? (order.statusHistory as unknown[]) : [];
+  hist.push({ type: "REFUND_LOG", ts: new Date().toISOString(), amount, refundType: res.type || null, full });
+  await prisma.onlineOrder.update({
+    where: { id: order.id },
+    data: { paymentStatus: full ? "refunded" : "partial_refund", statusHistory: hist as unknown as object },
+  });
+
+  return NextResponse.json({ ok: true, type: res.type, amount, full });
 }

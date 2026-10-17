@@ -61,8 +61,10 @@ const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; co
 const PAY_LABEL: Record<string, string> = { webpay: "Webpay", flow: "Flow", mercadopago: "MercadoPago", efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" };
 const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 const isOnline = (o: Order) => ONLINE_METHODS.includes(o.paymentMethod) || !!o.paymentGateway;
-const isAttempt = (o: Order) => isOnline(o) && o.paymentStatus !== "paid"; // intento de pago no completado
+const isAttempt = (o: Order) => isOnline(o) && o.paymentStatus !== "paid" && o.paymentStatus !== "refunded" && o.paymentStatus !== "partial_refund"; // intento de pago no completado
 function payInfo(o: Order): { label: string; color: string } {
+  if (o.paymentStatus === "refunded") return { label: "Reembolsado", color: "#8b5cf6" };
+  if (o.paymentStatus === "partial_refund") return { label: "Reembolso parcial", color: "#8b5cf6" };
   if (o.paymentStatus === "paid") return { label: "Pagado", color: GREEN };
   if (o.paymentStatus === "failed") return { label: "Pago fallido", color: RED };
   if (isOnline(o)) return { label: "Pago pendiente", color: ORANGE };
