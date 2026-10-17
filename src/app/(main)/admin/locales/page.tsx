@@ -256,6 +256,17 @@ export default function AdminLocales() {
           ))}
         </div>
 
+        {/* Sucursal / marca a la que pertenece este local */}
+        {selected.ecommerceStoreConfig?.branchName && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", marginBottom: 14, background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 10 }}>
+            <span style={{ fontSize: "0.95rem" }}>🏷️</span>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ccc" }}>
+              Estás en la sucursal <strong style={{ color: "#4ade80" }}>{selected.ecommerceStoreConfig.branchName}</strong>
+              {selected.ecommerceStoreConfig.brandSlug && <span style={{ color: "#777" }}> · marca {selected.ecommerceStoreConfig.brandSlug}</span>}
+            </span>
+          </div>
+        )}
+
         {/* Tabs del detalle */}
         {(() => {
           const tabs: { id: DetailTab; label: string; sup?: boolean }[] = [
