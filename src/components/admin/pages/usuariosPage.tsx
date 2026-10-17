@@ -72,7 +72,7 @@ function StatusDot({ status, statusConfig }: { status: string; statusConfig: Rec
 
 export default function UsuariosPage() {
   const { t } = usePanelLang();
-  const { selectedRestaurantId, role: sessionRole } = useAdminSession();
+  const { selectedRestaurantId, role: sessionRole, restaurants } = useAdminSession();
 
   const ROLE_CONFIG: Record<string, RoleCfg> = {
     OWNER: { label: t("users_owner"), color: GOLD, bg: `rgba(244,166,35,0.12)`, icon: Crown, desc: t("users_role_owner_desc") },
@@ -92,6 +92,7 @@ export default function UsuariosPage() {
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formRole, setFormRole] = useState<"ADMIN" | "VIEWER">("ADMIN");
+  const [formBranches, setFormBranches] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editNewPassword, setEditNewPassword] = useState("");
@@ -181,19 +182,22 @@ export default function UsuariosPage() {
   }, [rid]);
 
   useEffect(() => { fetchTeam(); }, [fetchTeam]);
+  // Al cambiar de local, la selección de sucursales del formulario parte en el actual.
+  useEffect(() => { if (rid) setFormBranches(new Set([rid])); }, [rid]);
 
   const handleInvite = async () => {
     if (!formName.trim() || !formEmail.trim() || !rid) return;
+    const branchIds = formBranches.size ? Array.from(formBranches) : [rid];
     setSubmitting(true);
     try {
       const res = await fetch("/api/panel/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: rid, name: formName.trim(), email: formEmail.trim().toLowerCase(), role: formRole }),
+        body: JSON.stringify({ restaurantIds: branchIds, name: formName.trim(), email: formEmail.trim().toLowerCase(), role: formRole }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || t("users_error_invite")); setSubmitting(false); return; }
-      setMembers(prev => [...prev, data]);
+      await fetchTeam();
       setFormName(""); setFormEmail(""); setShowForm(false);
       toast.success(t("users_invitation_sent").replace("{email}", formEmail.trim()));
     } catch { toast.error(t("users_error_connection")); }
@@ -338,6 +342,41 @@ export default function UsuariosPage() {
             <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
               {formRole === "ADMIN" ? t("users_admin_role_desc") : t("users_viewer_role_desc")}
             </p>
+
+            {restaurants.length > 1 && (
+              <div>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 8 }}>
+                  Sucursales con acceso
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {restaurants.map((r: any) => {
+                    const on = formBranches.has(r.id);
+                    const label = r.branchName || r.name;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setFormBranches(prev => { const n = new Set(prev); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, cursor: "pointer",
+                          background: on ? "rgba(244,166,35,0.14)" : "var(--adm-input)",
+                          color: on ? GOLD : "var(--adm-text3)",
+                          border: `1px solid ${on ? "rgba(244,166,35,0.35)" : "var(--adm-input-border)"}`,
+                          fontFamily: F, fontSize: "0.78rem", fontWeight: on ? 700 : 500, transition: "all 0.15s",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.9rem", lineHeight: 1 }}>{on ? "✓" : "+"}</span>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>
+                  El usuario tendrá acceso a {formBranches.size || 1} sucursal{(formBranches.size || 1) === 1 ? "" : "es"}. Recibirá un solo correo con su acceso.
+                </p>
+              </div>
+            )}
+
             <button
               onClick={handleInvite}
               disabled={submitting || !formName.trim() || !formEmail.trim()}

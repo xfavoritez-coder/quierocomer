@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const member = await prisma.teamMember.findUnique({
     where: { inviteToken: token },
-    select: { id: true, status: true, inviteExpiresAt: true },
+    select: { id: true, status: true, inviteExpiresAt: true, email: true, restaurant: { select: { ownerId: true } } },
   });
 
   if (!member) return NextResponse.json({ error: "Invalid token" }, { status: 404 });
@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
       inviteExpiresAt: null,
     },
   });
+
+  // Acceso multi-sucursal: activa también las demás filas del mismo usuario
+  // (mismo email + mismo dueño) que quedaron pendientes al invitarlo.
+  const ownerId = member.restaurant?.ownerId || null;
+  if (ownerId) {
+    await prisma.teamMember.updateMany({
+      where: { email: { equals: member.email, mode: "insensitive" }, status: "PENDING", restaurant: { ownerId }, id: { not: member.id } },
+      data: { passwordHash, status: "ACTIVE", inviteToken: null, inviteExpiresAt: null },
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

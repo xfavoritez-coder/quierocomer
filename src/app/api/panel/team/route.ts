@@ -32,70 +32,121 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// POST /api/admin/team — invite new member
+// Resuelve el ownerId de la sesión actual (dueño directo o team member ADMIN).
+async function resolveOwnerId(req: NextRequest): Promise<string | null> {
+  const panelId = req.cookies.get("panel_id")?.value;
+  if (!panelId || panelId === "demo") return null;
+  if (panelId.startsWith("tm_")) {
+    const m = await prisma.teamMember.findUnique({
+      where: { id: panelId.slice(3) },
+      select: { role: true, restaurant: { select: { ownerId: true } } },
+    });
+    if (!m || m.role !== "ADMIN") return null;
+    return m.restaurant?.ownerId ?? null;
+  }
+  return panelId;
+}
+
+// POST /api/panel/team — invita a un usuario a 1 o más sucursales del dueño.
 export async function POST(req: NextRequest) {
-  const { restaurantId, name, email, role } = await req.json();
-  if (!restaurantId || !name || !email) {
+  const body = await req.json();
+  const { name, email, role } = body;
+  // Compatibilidad: acepta restaurantId (uno) o restaurantIds (varios).
+  const ids: string[] = Array.isArray(body.restaurantIds) && body.restaurantIds.length
+    ? body.restaurantIds
+    : (body.restaurantId ? [body.restaurantId] : []);
+  if (!ids.length || !name || !email) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
-
+  const emailNorm = String(email).trim().toLowerCase();
   const validRole = role === "ADMIN" || role === "VIEWER" ? role : "VIEWER";
 
-  // Check if already exists
-  const existing = await prisma.teamMember.findUnique({
-    where: { restaurantId_email: { restaurantId, email } },
-  });
-  if (existing) return NextResponse.json({ error: "Este email ya está registrado en tu equipo" }, { status: 409 });
+  // Autorización: solo el dueño (o un admin de su equipo) puede invitar, y solo
+  // a locales de ese mismo dueño.
+  const ownerId = await resolveOwnerId(req);
+  if (!ownerId) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  // Check if it's the owner's email
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: restaurantId },
-    select: { name: true, owner: { select: { email: true } } },
+  const targets = await prisma.restaurant.findMany({
+    where: { id: { in: ids }, ownerId },
+    select: { id: true, name: true, ecommerceStoreConfig: true, owner: { select: { email: true } } },
   });
-  if (restaurant?.owner?.email === email) {
-    return NextResponse.json({ error: "Este email ya es el dueño del restaurante" }, { status: 409 });
+  if (targets.length !== ids.length) {
+    return NextResponse.json({ error: "Alguna sucursal no pertenece a tu cuenta" }, { status: 403 });
+  }
+  if (targets.some((t) => t.owner?.email?.toLowerCase() === emailNorm)) {
+    return NextResponse.json({ error: "Este email es el del dueño de la cuenta" }, { status: 409 });
   }
 
-  const inviteToken = crypto.randomUUID();
-  const member = await prisma.teamMember.create({
-    data: {
-      restaurantId,
-      name,
-      email,
-      role: validRole,
-      status: "PENDING",
-      inviteToken,
-      inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    },
-    select: { id: true, name: true, email: true, role: true, status: true, weeklyEmailEnabled: true, createdAt: true },
+  // Locales donde ya existe este usuario (se omiten).
+  const existing = await prisma.teamMember.findMany({
+    where: { email: { equals: emailNorm, mode: "insensitive" }, restaurantId: { in: ids } },
+    select: { restaurantId: true },
+  });
+  const existingSet = new Set(existing.map((e) => e.restaurantId));
+  const toCreate = targets.filter((t) => !existingSet.has(t.id));
+  if (!toCreate.length) {
+    return NextResponse.json({ error: "Este email ya está registrado en las sucursales seleccionadas" }, { status: 409 });
+  }
+
+  // Si ya tiene contraseña en otra sucursal (del mismo dueño), reusamos su hash
+  // y lo dejamos ACTIVE directo (no se le reinvita).
+  const siblingActive = await prisma.teamMember.findFirst({
+    where: { email: { equals: emailNorm, mode: "insensitive" }, passwordHash: { not: null }, restaurant: { ownerId } },
+    select: { passwordHash: true },
   });
 
-  // Send invite email
-  try {
-    const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-    await sendAdminEmail({
-      to: email,
-      subject: `Te invitaron al equipo de ${restaurant?.name || "un restaurante"} · QuieroComer`,
-      html: adminEmailTemplate(`
-        <h2 style="color:#FFD600;font-size:20px;margin:0 0 16px">${name}, te invitaron a ${restaurant?.name || "un restaurante"}</h2>
-        <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 24px">
-          Ahora puedes acceder al panel de <strong>${restaurant?.name}</strong> como <strong>${validRole === "ADMIN" ? "Administrador" : "Visor"}</strong>.
-        </p>
-        <div style="text-align:center">
-          <a href="${baseUrl}/panel/invite?token=${inviteToken}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none">
-            Aceptar invitación
-          </a>
-        </div>
-        <p style="color:#5a4028;font-size:12px;margin:24px 0 0">Esta invitación expira en 7 días.</p>
-      `),
-      purpose: "team_invite",
+  const branchLabel = (t: { name: string; ecommerceStoreConfig: unknown }) =>
+    (t.ecommerceStoreConfig as { branchName?: string | null } | null)?.branchName || t.name;
+
+  const firstToken = crypto.randomUUID();
+  let createdCount = 0;
+  for (let i = 0; i < toCreate.length; i++) {
+    const t = toCreate[i];
+    await prisma.teamMember.create({
+      data: {
+        restaurantId: t.id,
+        name,
+        email: emailNorm,
+        role: validRole,
+        status: siblingActive ? "ACTIVE" : "PENDING",
+        passwordHash: siblingActive?.passwordHash ?? null,
+        inviteToken: siblingActive ? null : (i === 0 ? firstToken : crypto.randomUUID()),
+        inviteExpiresAt: siblingActive ? null : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
     });
-  } catch (e) {
-    console.error("[team] invite email error:", e);
+    createdCount++;
   }
 
-  return NextResponse.json(member);
+  // Un solo email de invitación (salvo que ya tuviera contraseña).
+  if (!siblingActive) {
+    try {
+      const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      const brandName = toCreate[0].name;
+      const branchNames = toCreate.map(branchLabel).join(", ");
+      await sendAdminEmail({
+        to: emailNorm,
+        subject: `Te invitaron al equipo de ${brandName} · QuieroComer`,
+        html: adminEmailTemplate(`
+          <h2 style="color:#FFD600;font-size:20px;margin:0 0 16px">${name}, te invitaron a ${brandName}</h2>
+          <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 24px">
+            Tendrás acceso como <strong>${validRole === "ADMIN" ? "Administrador" : "Visor"}</strong> a: <strong>${branchNames}</strong>.
+          </p>
+          <div style="text-align:center">
+            <a href="${baseUrl}/panel/invite?token=${firstToken}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none">
+              Aceptar invitación
+            </a>
+          </div>
+          <p style="color:#5a4028;font-size:12px;margin:24px 0 0">Esta invitación expira en 7 días.</p>
+        `),
+        purpose: "team_invite",
+      });
+    } catch (e) {
+      console.error("[team] invite email error:", e);
+    }
+  }
+
+  return NextResponse.json({ ok: true, created: createdCount, branches: toCreate.length, activated: !!siblingActive });
 }
 
 // PUT /api/panel/team — update member role/status/weeklyEmail or reset password

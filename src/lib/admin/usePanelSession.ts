@@ -23,6 +23,7 @@ export interface PanelSession {
   name: string;
   restaurants: PanelRestaurant[];
   selectedRestaurantId: string | null;
+  teamMember: boolean;
   loading: boolean;
   error: boolean;
   mustChangePassword: boolean;
@@ -37,6 +38,7 @@ let _session: PanelSession = {
   name: "",
   restaurants: [],
   selectedRestaurantId: null,
+  teamMember: false,
   loading: true,
   error: false,
   mustChangePassword: false,
@@ -75,6 +77,7 @@ function fetchSession() {
         name: data.name,
         restaurants: data.restaurants,
         selectedRestaurantId: validSaved ? savedId : (data.selectedRestaurantId || data.restaurants[0]?.id || null),
+        teamMember: data.teamMember || false,
         loading: false,
         error: false,
         mustChangePassword: data.mustChangePassword || false,
@@ -96,6 +99,7 @@ export function resetPanelSession() {
     name: "",
     restaurants: [],
     selectedRestaurantId: null,
+    teamMember: false,
     loading: true,
     error: false,
     mustChangePassword: false,
@@ -113,6 +117,20 @@ export function usePanelSession() {
 
   const setSelectedRestaurant = useCallback((id: string) => {
     localStorage.setItem(SELECTED_KEY, id);
+    // Usuario de equipo con acceso multi-sucursal: la autorización por local va
+    // ligada a la cookie panel_id (una fila TeamMember por sucursal). Hay que
+    // intercambiar la cookie en el servidor y recargar para re-scopear el panel.
+    if (_session.teamMember) {
+      fetch("/api/panel/switch-branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: id }),
+      })
+        .then((r) => { if (!r.ok) throw new Error("switch failed"); return r.json(); })
+        .then(() => { window.location.reload(); })
+        .catch(() => { alert("No se pudo cambiar de sucursal."); });
+      return;
+    }
     _session = { ..._session, selectedRestaurantId: id };
     notify();
   }, []);
@@ -127,6 +145,7 @@ export function usePanelSession() {
       name: "",
       restaurants: [],
       selectedRestaurantId: null,
+      teamMember: false,
       loading: true,
       error: false,
       mustChangePassword: false,

@@ -36,19 +36,43 @@ export async function GET(req: NextRequest) {
       const memberId = panelId.slice(3);
       const member = await prisma.teamMember.findUnique({
         where: { id: memberId },
-        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true } } },
+        select: { id: true, name: true, role: true, status: true, email: true, restaurantId: true, seenFeatures: true, restaurant: { select: { ownerId: true } } },
       });
 
       if (!member) return NextResponse.json({ error: "User not found" }, { status: 401 });
       if (member.status !== "ACTIVE") return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
 
-      const { toteatApiToken, isDemo, controlEnabled: _ce2, financialEnabled: _fe2, ecommerceStoreConfig, ...rest } = member.restaurant;
-      const branchName = (ecommerceStoreConfig as { branchName?: string | null } | null)?.branchName ?? null;
+      // Un usuario de equipo puede tener acceso a varias sucursales (una fila
+      // TeamMember por local, mismo email, del mismo dueño). Devolvemos todas.
+      const ownerId = member.restaurant?.ownerId || null;
+      const siblings = await prisma.teamMember.findMany({
+        where: {
+          email: { equals: member.email, mode: "insensitive" },
+          status: "ACTIVE",
+          ...(ownerId ? { restaurant: { ownerId } } : { restaurantId: member.restaurantId }),
+        },
+        select: { role: true, restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true } } },
+        orderBy: { restaurant: { createdAt: "asc" } },
+      });
+
+      const seen = new Set<string>();
+      const restaurants = siblings
+        .filter((s) => {
+          if (!s.restaurant || seen.has(s.restaurant.id)) return false;
+          seen.add(s.restaurant.id);
+          return true;
+        })
+        .map((s) => {
+          const { toteatApiToken, isDemo, controlEnabled, financialEnabled, ecommerceStoreConfig, ...rest } = s.restaurant!;
+          return { ...rest, branchName: (ecommerceStoreConfig as { branchName?: string | null } | null)?.branchName ?? null, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!controlEnabled, hasFinancial: true };
+        });
+
       return NextResponse.json({
         role: member.role,
         name: member.name,
-        restaurants: [{ ...rest, branchName, hasToteat: !!toteatApiToken, isDemo: !!isDemo, hasControl: !!_ce2, hasFinancial: true }],
-        selectedRestaurantId: member.restaurant.id,
+        restaurants,
+        selectedRestaurantId: member.restaurantId,
+        teamMember: true,
         mustChangePassword: false,
         seenFeatures: member.seenFeatures || [],
       });
