@@ -1685,17 +1685,41 @@ function BrandBranchesBox({ restaurant, onOpenBranch }: { restaurant: { id: stri
   const [loading, setLoading] = useState(true);
   const [brandSlug, setBrandSlug] = useState<string | null>(null);
   const [branches, setBranches] = useState<{ id: string; name: string; slug: string; isActive: boolean; ecommerceEnabled: boolean; branchName: string | null; self: boolean }[]>([]);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
     fetch(`/api/admin/locales/${restaurant.id}/branches`)
       .then(r => r.json())
-      .then(d => { if (!alive) return; setBrandSlug(d.brandSlug ?? null); setBranches(Array.isArray(d.branches) ? d.branches : []); })
+      .then(d => {
+        if (!alive) return;
+        setBrandSlug(d.brandSlug ?? null);
+        const list = Array.isArray(d.branches) ? d.branches : [];
+        setBranches(list);
+        setDraft(Object.fromEntries(list.map((b: { id: string; branchName: string | null }) => [b.id, b.branchName || ""])));
+      })
       .catch(() => { if (alive) { setBrandSlug(null); setBranches([]); } })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [restaurant.id]);
+
+  const saveName = async (branchId: string) => {
+    const branchName = (draft[branchId] || "").trim();
+    setSavingId(branchId);
+    try {
+      const res = await fetch(`/api/admin/locales/${restaurant.id}/branches`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branchId, branchName: branchName || null }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(d.error || "No se pudo guardar el nombre"); setSavingId(null); return; }
+      setBranches(prev => prev.map(b => b.id === branchId ? { ...b, branchName: branchName || null } : b));
+    } catch { alert("Error de conexión"); }
+    setSavingId(null);
+  };
 
   return (
     <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 8 }}>
@@ -1714,21 +1738,38 @@ function BrandBranchesBox({ restaurant, onOpenBranch }: { restaurant: { id: stri
           </div>
           <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#666", margin: "0 0 10px" }}>Entrada pública: quierocomer.com/ecommerce/marca/{brandSlug}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {branches.map(b => (
+            {branches.map(b => {
+              const dirty = (draft[b.id] ?? "").trim() !== (b.branchName || "");
+              return (
               <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: b.self ? "rgba(244,166,35,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${b.self ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: b.isActive ? "#4ade80" : "#ff6b6b", flexShrink: 0 }} />
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: b.isActive ? "#4ade80" : "#ff6b6b", flexShrink: 0 }} title={b.isActive ? "Activo" : "Inactivo"} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {b.branchName || b.name}
+                  <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {b.name}
                     {b.self && <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#F4A623", marginLeft: 6 }}>(este)</span>}
+                    {!b.ecommerceEnabled && <span style={{ fontSize: "0.58rem", color: "#777", marginLeft: 6 }}>ecommerce off</span>}
                   </p>
-                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#666", margin: 0 }}>/{b.slug}{!b.ecommerceEnabled && " · ecommerce off"}</p>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input
+                      value={draft[b.id] ?? ""}
+                      onChange={e => setDraft(prev => ({ ...prev, [b.id]: e.target.value }))}
+                      placeholder="Nombre de sucursal (ej: Centro)"
+                      maxLength={60}
+                      style={{ flex: 1, minWidth: 0, padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.74rem", outline: "none" }}
+                    />
+                    {dirty && (
+                      <button onClick={() => saveName(b.id)} disabled={savingId === b.id} style={{ padding: "5px 10px", background: "#4ade80", border: "none", borderRadius: 6, color: "#0a0a0a", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: savingId === b.id ? "wait" : "pointer", flexShrink: 0 }}>
+                        {savingId === b.id ? "…" : "Guardar"}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {!b.self && onOpenBranch && (
                   <button onClick={() => onOpenBranch(b.id)} style={{ padding: "4px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid #2A2A2A", borderRadius: 6, color: "#aaa", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>Abrir</button>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
