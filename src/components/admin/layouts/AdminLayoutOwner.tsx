@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt, MonitorPlay } from "lucide-react";
@@ -208,6 +208,49 @@ function getActiveSectionKeys(pathname: string, sections: NavSection[], base: st
   }
   if (keys.size === 0) keys.add(sections[0]?.key ?? "dashboard");
   return keys;
+}
+
+// Selector de local a dos líneas (marca arriba, sucursal destacada). Reemplaza
+// al <select> nativo para no cortar nombres largos de marca+sucursal.
+function BranchSwitcher({ restaurants, selectedRestaurantId, setSelectedRestaurant }: { restaurants: any[]; selectedRestaurantId: string | null; setSelectedRestaurant: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const active = restaurants.find((r: any) => r.id === selectedRestaurantId) || restaurants[0];
+  const ell = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const };
+  return (
+    <div ref={ref} style={{ position: "relative", flex: 1, minWidth: 0 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 6, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", textAlign: "left" }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {active?.branchName && <p style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "var(--adm-text3)", margin: 0, lineHeight: 1.1, ...ell }}>{active.name}</p>}
+          <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1.2, ...ell }}>{active?.branchName || active?.name || "Local"}</p>
+        </div>
+        <ChevronDown size={15} style={{ flexShrink: 0, color: "var(--adm-text3)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 60, maxHeight: 340, overflowY: "auto", padding: 4 }}>
+          {restaurants.map((r: any) => (
+            <button
+              key={r.id}
+              onClick={() => { setSelectedRestaurant(r.id); setOpen(false); }}
+              style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0, textAlign: "left", padding: "7px 9px", borderRadius: 6, border: "none", cursor: "pointer", background: r.id === active?.id ? "var(--adm-hover)" : "transparent" }}
+            >
+              {r.branchName && <span style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "var(--adm-text3)", lineHeight: 1.1, ...ell, display: "block" }}>{r.name}</span>}
+              <span style={{ fontFamily: F, fontSize: "13.5px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, ...ell, display: "block" }}>{r.branchName || r.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, hasLoyalty, seenFeatures = [], markFeatureSeen, role, children }: Props) {
@@ -451,20 +494,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <div style={{ padding: "14px 16px 12px", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {restaurants.length > 1 ? (
-              <select
-                value={selectedRestaurantId || ""}
-                onChange={e => setSelectedRestaurant(e.target.value)}
-                style={{
-                  flex: 1, minWidth: 0, fontFamily: F, fontSize: "14px", fontWeight: 700,
-                  color: "var(--adm-text)", background: "var(--adm-card)",
-                  border: "1px solid var(--adm-card-border)", borderRadius: 8,
-                  padding: "5px 8px", cursor: "pointer", outline: "none",
-                }}
-              >
-                {restaurants.map((r: any) => (
-                  <option key={r.id} value={r.id}>{restLabel(r)}</option>
-                ))}
-              </select>
+              <BranchSwitcher restaurants={restaurants} selectedRestaurantId={selectedRestaurantId} setSelectedRestaurant={setSelectedRestaurant} />
             ) : (
               <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
                 <RestLogo size={28} />
@@ -494,20 +524,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <MenuIcon size={18} color="var(--adm-text2)" />
         </button>
         {restaurants.length > 1 ? (
-          <select
-            value={selectedRestaurantId || ""}
-            onChange={e => setSelectedRestaurant(e.target.value)}
-            style={{
-              flex: 1, minWidth: 0, margin: "0 12px", fontFamily: F, fontSize: "14px", fontWeight: 700,
-              color: "var(--adm-text)", background: "var(--adm-card)",
-              border: "1px solid var(--adm-card-border)", borderRadius: 8,
-              padding: "5px 8px", cursor: "pointer", outline: "none",
-            }}
-          >
-            {restaurants.map((r: any) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
+          <div style={{ flex: 1, minWidth: 0, margin: "0 12px", display: "flex" }}>
+            <BranchSwitcher restaurants={restaurants} selectedRestaurantId={selectedRestaurantId} setSelectedRestaurant={setSelectedRestaurant} />
+          </div>
         ) : (
           <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, margin: "0 12px" }}>
             <RestLogo size={26} />
