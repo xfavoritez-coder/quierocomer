@@ -59,8 +59,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    // Config de tienda heredada (apariencia + marca), SIN dominio propio ni credenciales.
-    const branchStoreConfig = { ...(srcCfg as unknown as object), brandSlug, branchName, customDomain: null };
+    // Config de tienda heredada (apariencia + marca), SIN dominio propio ni
+    // credenciales. Cada sucursal tiene las suyas: se limpian el token del
+    // agente de impresión (es por dispositivo/caja) y el correo de aviso.
+    const branchStoreConfig = {
+      ...(srcCfg as unknown as object),
+      brandSlug, branchName, customDomain: null,
+      printToken: null, printTokenAt: null, printTestAt: null, printTestAckAt: null,
+      orderNotifyEmail: null,
+    };
 
     const branch = await prisma.restaurant.create({
       data: {
