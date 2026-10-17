@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package, Star, Ban } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Search, Check, Loader2, UtensilsCrossed, Package, Star, Ban, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import type { StorefrontData } from "@/lib/ecommerce/storefront-data";
@@ -23,6 +23,24 @@ export default function EcommerceCatalogoPage() {
   const [tab, setTab] = useState<"productos" | "modificadores">("productos");
   const [search, setSearch] = useState("");
   const [only, setOnly] = useState<"all" | "hidden" | "nocode">("all");
+  const [brandSlug, setBrandSlug] = useState<string | null>(null);
+  const [copyBusy, setCopyBusy] = useState(false);
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`).then((r) => (r.ok ? r.json() : null)).then((d) => setBrandSlug(d?.config?.brandSlug ?? null)).catch(() => {});
+  }, [restaurantId]);
+  const copyToBranches = async () => {
+    if (!restaurantId || copyBusy) return;
+    if (!confirm("¿Copiar esta carta a TODAS las sucursales de tu marca?\n\nSe REEMPLAZARÁ la carta actual de cada sucursal (categorías, productos y modificadores). Esta acción no se puede deshacer.")) return;
+    setCopyBusy(true);
+    try {
+      const r = await fetch("/api/panel/ecommerce/catalog/copy-to-branches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { toast.error(d.error || "No se pudo copiar la carta"); return; }
+      toast.success(`Carta copiada a ${d.branches} sucursal(es): ${(d.branchNames || []).join(", ")}`);
+    } catch { toast.error("Error de conexión"); }
+    setCopyBusy(false);
+  };
 
   // Catálogo del POS Toteat (código→nombre) para mostrar el nombre Toteat al asignar código.
   const [toteatMap, setToteatMap] = useState<Record<string, { name: string; price: number }> | null>(null);
@@ -148,6 +166,11 @@ export default function EcommerceCatalogoPage() {
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Catálogo</h1>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Asigna el código POS a cada producto y modificador para enviar los pedidos a tu punto de venta.</p>
         </div>
+        {brandSlug && (
+          <button onClick={copyToBranches} disabled={copyBusy} title="Reemplaza la carta de las demás sucursales de tu marca con esta" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: `1px solid ${ACCENT}`, background: `${ACCENT}14`, color: ACCENT, fontFamily: F, fontSize: "0.8rem", fontWeight: 800, cursor: copyBusy ? "wait" : "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {copyBusy ? <Loader2 size={15} className="animate-spin" /> : <Copy size={15} />} {copyBusy ? "Copiando…" : "Copiar carta a sucursales"}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
