@@ -715,6 +715,9 @@ export default function AdminLocales() {
           </button>
         )}
 
+        {/* Agregar sucursal (feature de pago) — super-admin only */}
+        {isSuper && <AddBranchBox restaurant={selected} />}
+
         {/* Toggle Centro de pedidos (pilar de despacho/operación) — super-admin only */}
         {isSuper && (
           <div style={{ padding: "14px 16px", background: selected.centroPedidosEnabled ? "rgba(251,146,60,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.centroPedidosEnabled ? "rgba(251,146,60,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
@@ -1619,6 +1622,82 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
           <div>
             <button onClick={save} disabled={busy} style={{ padding: "9px 16px", background: "#a78bfa", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
               {busy ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Agregar sucursal (feature de pago) — solo super-admin. Crea un local nuevo
+// bajo el mismo dueño y marca, con ecommerce activo y (opcional) la carta copiada.
+function AddBranchBox({ restaurant }: { restaurant: { id: string; name: string } }) {
+  const [open, setOpen] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [address, setAddress] = useState("");
+  const [copyMenu, setCopyMenu] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  const create = async () => {
+    const nm = branchName.trim();
+    if (!nm) { alert("Escribe el nombre de la sucursal (ej: Providencia)."); return; }
+    if (!confirm(`¿Crear la sucursal "${nm}" de ${restaurant.name}?\n\nSe creará un local NUEVO (facturable) bajo el mismo dueño y la misma marca${copyMenu ? ", copiando la carta de este local" : ""}.`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/locales/${restaurant.id}/add-branch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branchName: nm, address: address.trim() || undefined, copyMenu }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(d.error || "No se pudo crear la sucursal."); setBusy(false); return; }
+      alert(`✓ Sucursal creada: ${d.branch?.name}${d.dishesCopied ? ` · ${d.dishesCopied} productos copiados` : ""}.\nMarca: ${d.brandSlug}`);
+      window.location.reload();
+    } catch { alert("Error de conexión."); setBusy(false); }
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "8px 10px", background: "rgba(255,255,255,0.04)",
+    border: "1px solid #2A2A2A", borderRadius: 8, color: "white",
+    fontFamily: F, fontSize: "0.8rem", outline: "none",
+  } as const;
+
+  return (
+    <div style={{ padding: "14px 16px", background: open ? "rgba(74,222,128,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${open ? "rgba(74,222,128,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: open ? "#4ade80" : "white", margin: 0 }}>➕ Agregar sucursal <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#4ade80", background: "rgba(74,222,128,0.16)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>EXTRA</span></p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+            Crea un local nuevo de esta marca (misma cuenta y dueño). Es un servicio de pago: el dueño no puede crear sucursales desde su panel.
+          </p>
+        </div>
+        <button
+          onClick={() => setOpen(o => !o)}
+          style={{ padding: "7px 12px", background: open ? "rgba(255,255,255,0.06)" : "rgba(74,222,128,0.1)", border: `1px solid ${open ? "#2A2A2A" : "rgba(74,222,128,0.4)"}`, borderRadius: 8, color: open ? "#888" : "#4ade80", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+        >
+          {open ? "Cancelar" : "Nueva sucursal"}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: "#aaa", marginBottom: 4 }}>Nombre de la sucursal *</label>
+            <input value={branchName} onChange={e => setBranchName(e.target.value)} placeholder="Providencia" maxLength={60} style={inputStyle} />
+            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#666", margin: "4px 0 0" }}>El local se llamará &quot;{restaurant.name} · {branchName.trim() || "…"}&quot;.</p>
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: "#aaa", marginBottom: 4 }}>Dirección (opcional)</label>
+            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Av. Providencia 1234, Santiago" style={inputStyle} />
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", color: "#ccc" }}>
+            <input type="checkbox" checked={copyMenu} onChange={e => setCopyMenu(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#4ade80" }} />
+            Copiar la carta de {restaurant.name} a la nueva sucursal <span style={{ color: "#666" }}>(sin códigos Toteat)</span>
+          </label>
+          <div>
+            <button onClick={create} disabled={busy} style={{ padding: "9px 16px", background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Creando sucursal…" : "Crear sucursal"}
             </button>
           </div>
         </div>
