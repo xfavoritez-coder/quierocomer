@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Bike, Store } from "lucide-react";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import type { BrandData, BrandBranch } from "@/lib/ecommerce/storefront-data";
 
@@ -44,7 +45,7 @@ export default function BrandChooser({ brand }: { brand: BrandData }) {
     return () => { g.maps.event?.removeListener?.(listener); };
   }, [tab, gmapsReady]);
 
-  const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer" });
+  const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
 
   return (
     <div style={{ minHeight: "100dvh", background: "#f8f8f8", display: "flex", flexDirection: "column", alignItems: "center", padding: "28px 16px", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
@@ -56,8 +57,8 @@ export default function BrandChooser({ brand }: { brand: BrandData }) {
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {hasDelivery && <button onClick={() => setTab("delivery")} style={tabBtn(tab === "delivery")}>🛵 Delivery</button>}
-          {hasPickup && <button onClick={() => setTab("pickup")} style={tabBtn(tab === "pickup")}>🏠 Retiro</button>}
+          {hasDelivery && <button onClick={() => setTab("delivery")} style={tabBtn(tab === "delivery")}><Bike size={17} /> Delivery</button>}
+          {hasPickup && <button onClick={() => setTab("pickup")} style={tabBtn(tab === "pickup")}><Store size={17} /> Retiro</button>}
         </div>
 
         {tab === "delivery" ? (
