@@ -49,6 +49,7 @@ interface Restaurant {
   orderingNavHidden?: boolean;
   bodegaId?: string | null;
   ecommerceConfig?: EcommerceConfig | null;
+  ecommerceStoreConfig?: { brandSlug?: string | null; branchName?: string | null } | null;
   ecommerceDeliveryZones?: unknown;
   ecommerceDeliveryConfig?: unknown;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
@@ -1226,6 +1227,7 @@ export default function AdminLocales() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <p style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
+                  {r.ecommerceStoreConfig?.branchName && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.12)", color: "#4ade80", fontFamily: F, fontWeight: 700, flexShrink: 0 }}>🏷️ {r.ecommerceStoreConfig.branchName}</span>}
                   {r.isDemo && <span style={{ fontSize: "0.58rem", padding: "1px 5px", borderRadius: 4, background: "rgba(127,191,220,0.12)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>DEMO</span>}
                 </div>
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>

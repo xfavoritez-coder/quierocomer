@@ -39,7 +39,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const source = await prisma.restaurant.findUnique({
       where: { id },
-      select: { id: true, name: true, ownerId: true, cartaAccentColor: true, ecommerceStoreConfig: true },
+      select: {
+        id: true, name: true, ownerId: true, ecommerceStoreConfig: true,
+        // Identidad/apariencia de marca que hereda la sucursal
+        logoUrl: true, description: true, dietType: true, enabledLangs: true,
+        cartaTheme: true, cartaColorMode: true, cartaAccentColor: true, defaultView: true,
+      },
     });
     if (!source) return NextResponse.json({ error: "Local base no encontrado" }, { status: 404 });
     if (!source.ownerId) return NextResponse.json({ error: "El local base no tiene dueño asignado; asígnalo antes de crear sucursales." }, { status: 400 });
@@ -75,7 +80,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         slug,
         ownerId: source.ownerId,
         address,
+        // Identidad de marca heredada: logo, descripción, tema y colores de carta.
+        logoUrl: source.logoUrl,
+        description: source.description,
+        dietType: source.dietType,
+        enabledLangs: source.enabledLangs,
+        cartaTheme: source.cartaTheme,
+        cartaColorMode: source.cartaColorMode,
         cartaAccentColor: source.cartaAccentColor,
+        defaultView: source.defaultView,
         ecommerceEnabled: true,
         ecommerceStoreConfig: branchStoreConfig as unknown as object,
       },
