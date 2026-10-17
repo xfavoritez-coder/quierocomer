@@ -756,8 +756,16 @@ export default function AdminLocales() {
         )}
 
         {/* ═══ TAB: MARCA Y SUCURSALES ═══ */}
-        {/* Agregar sucursal (feature de pago) — super-admin only */}
-        {isSuper && detailTab === "marca" && <AddBranchBox restaurant={selected} />}
+        {isSuper && detailTab === "marca" && (
+          <>
+            <BrandBranchesBox
+              restaurant={selected}
+              onOpenBranch={(bid) => { const r = restaurants.find(x => x.id === bid); if (r) setSelected(r); }}
+            />
+            {/* Agregar sucursal (feature de pago) — super-admin only */}
+            <AddBranchBox restaurant={selected} />
+          </>
+        )}
 
         {/* Toggle Centro de pedidos (pilar de despacho/operación) — super-admin only */}
         {isSuper && detailTab === "pilares" && (
@@ -1666,6 +1674,63 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             </button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Marca multisucursal: muestra el identificador de marca (brandSlug) del local
+// y la lista de sucursales hermanas (mismo dueño + mismo brandSlug).
+function BrandBranchesBox({ restaurant, onOpenBranch }: { restaurant: { id: string; name: string }; onOpenBranch?: (id: string) => void }) {
+  const [loading, setLoading] = useState(true);
+  const [brandSlug, setBrandSlug] = useState<string | null>(null);
+  const [branches, setBranches] = useState<{ id: string; name: string; slug: string; isActive: boolean; ecommerceEnabled: boolean; branchName: string | null; self: boolean }[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetch(`/api/admin/locales/${restaurant.id}/branches`)
+      .then(r => r.json())
+      .then(d => { if (!alive) return; setBrandSlug(d.brandSlug ?? null); setBranches(Array.isArray(d.branches) ? d.branches : []); })
+      .catch(() => { if (alive) { setBrandSlug(null); setBranches([]); } })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [restaurant.id]);
+
+  return (
+    <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 8 }}>
+      <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", margin: 0 }}>🏷️ Marca</p>
+      {loading ? (
+        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: "8px 0 0" }}>Cargando…</p>
+      ) : !brandSlug ? (
+        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "6px 0 0", lineHeight: 1.5 }}>
+          Este local aún no pertenece a una marca. Al crear la primera sucursal se generará el identificador de marca automáticamente.
+        </p>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0 2px" }}>
+            <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 6, padding: "2px 8px" }}>{brandSlug}</span>
+            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#888" }}>{branches.length} sucursal{branches.length === 1 ? "" : "es"}</span>
+          </div>
+          <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#666", margin: "0 0 10px" }}>Entrada pública: quierocomer.com/ecommerce/marca/{brandSlug}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {branches.map(b => (
+              <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: b.self ? "rgba(244,166,35,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${b.self ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: b.isActive ? "#4ade80" : "#ff6b6b", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {b.branchName || b.name}
+                    {b.self && <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#F4A623", marginLeft: 6 }}>(este)</span>}
+                  </p>
+                  <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#666", margin: 0 }}>/{b.slug}{!b.ecommerceEnabled && " · ecommerce off"}</p>
+                </div>
+                {!b.self && onOpenBranch && (
+                  <button onClick={() => onOpenBranch(b.id)} style={{ padding: "4px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid #2A2A2A", borderRadius: 6, color: "#aaa", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>Abrir</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
