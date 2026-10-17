@@ -15,6 +15,7 @@ export interface StoreTenant {
   id: string;
   slug: string;
   name: string;
+  branchName: string | null; // nombre de sucursal dentro de la marca (ej. "Recoleta")
   logoUrl: string | null;
   bannerUrl: string | null;
   primaryColor: string;
@@ -122,7 +123,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: r.orderingMinAmount ?? null, waitTime: r.orderingWaitTime });
   const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
-    id: r.id, slug: r.slug, name: r.name, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
+    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: r.logoUrl, bannerUrl: r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId,
@@ -259,6 +260,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       id: restaurant.id,
       slug: restaurant.slug,
       name: restaurant.name,
+      branchName: store.branchName,
       logoUrl: restaurant.logoUrl,
       bannerUrl: restaurant.orderingBannerUrl,
       primaryColor: store.primaryColor,

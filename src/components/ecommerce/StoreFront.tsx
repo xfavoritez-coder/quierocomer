@@ -481,7 +481,7 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
         ) : (
           <>
             <Store className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-            <span className="text-sm font-semibold text-gray-700">Retiro en tienda</span>
+            <span className="text-sm font-semibold text-gray-700 truncate">{tenant.branchName ? `Retiro · ${tenant.branchName}` : "Retiro en tienda"}</span>
             <Pencil className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           </>
         )}
@@ -601,7 +601,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
               </>
             ) : (
               <>
-                <p className="text-xs font-bold text-gray-700">🏠 Retiro en tienda</p>
+                <p className="text-xs font-bold text-gray-700">🏠 {tenant.branchName ? `Retiro · ${tenant.branchName}` : "Retiro en tienda"}</p>
                 {tenant.address && <p className="text-xs text-gray-400 truncate">{tenant.address}</p>}
               </>
             )}
@@ -822,7 +822,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
         <div className="px-4 pb-4 flex flex-col gap-3">
           {tab === "pickup" ? (
             <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-              <p className="text-sm font-bold text-gray-700 mb-1">🏠 Retiras en tienda</p>
+              <p className="text-sm font-bold text-gray-700 mb-1">🏠 {tenant.branchName ? `Retiras en ${tenant.branchName}` : "Retiras en tienda"}</p>
               {tenant.address ? <p className="text-sm text-gray-500">{tenant.address}</p> : <p className="text-sm text-gray-400">Dirección disponible al confirmar el pedido.</p>}
             </div>
           ) : mapMode ? (
