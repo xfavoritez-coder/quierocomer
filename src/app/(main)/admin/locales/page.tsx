@@ -56,6 +56,8 @@ interface Restaurant {
 
 const F = "var(--font-display)";
 
+type DetailTab = "general" | "pilares" | "credenciales" | "marca" | "avanzado";
+
 export default function AdminLocales() {
   const { isSuper } = useAdminSession();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -63,6 +65,7 @@ export default function AdminLocales() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"todos" | "activos" | "inactivos" | "sin_owner">("todos");
   const [selected, setSelected] = useState<Restaurant | null>(null);
+  const [detailTab, setDetailTab] = useState<DetailTab>("general");
   const [bodegaSearch, setBodegaSearch] = useState("");
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [handoffOpen, setHandoffOpen] = useState(false);
@@ -140,6 +143,7 @@ export default function AdminLocales() {
   // Sync form when selected changes
   useEffect(() => {
     if (!selected) return;
+    setDetailTab("general");
     setEditName(selected.name);
     setEditDesc(selected.description || "");
     setEditPhone(selected.phone || "");
@@ -251,6 +255,31 @@ export default function AdminLocales() {
           ))}
         </div>
 
+        {/* Tabs del detalle */}
+        {(() => {
+          const tabs: { id: DetailTab; label: string; sup?: boolean }[] = [
+            { id: "general", label: "General" },
+            { id: "pilares", label: "Pilares", sup: true },
+            { id: "credenciales", label: "Credenciales", sup: true },
+            { id: "marca", label: "Marca y sucursales", sup: true },
+            { id: "avanzado", label: "Avanzado" },
+          ];
+          return (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18, borderBottom: "1px solid #2A2A2A", paddingBottom: 12 }}>
+              {tabs.filter(t => !t.sup || isSuper).map(t => (
+                <button key={t.id} onClick={() => setDetailTab(t.id)} style={{
+                  padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: 700,
+                  background: detailTab === t.id ? "#F4A623" : "rgba(255,255,255,0.05)",
+                  color: detailTab === t.id ? "#0a0a0a" : "#888",
+                }}>{t.label}</button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* ═══ TAB: GENERAL ═══ */}
+        {detailTab === "general" && (<>
         {/* Editable fields */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
           <div>
@@ -483,65 +512,13 @@ export default function AdminLocales() {
               🔑 Entrar como owner
             </button>
           )}
-          {!selected.ownerId && !selected.billingExempt && (
-            <button
-              onClick={() => {
-                setHandoffEmail(selected.owner?.email || "");
-                setHandoffName(selected.owner?.name || "");
-                setHandoffWhatsapp("");
-                // Default al plan actual del local — el vendedor lo cambia en el modal
-                // si el dueño escogio otro
-                const currentPlan = (selected.plan === "GOLD" || selected.plan === "PREMIUM" || selected.plan === "FREE") ? selected.plan : "PREMIUM";
-                setHandoffPlan(currentPlan as "FREE" | "GOLD" | "PREMIUM");
-                setHandoffError(null);
-                setHandoffResult(null);
-                setHandoffOpen(true);
-              }}
-              style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
-            >
-              🤝 Entregar al dueño
-            </button>
-          )}
           <button onClick={() => { navigator.clipboard.writeText(`https://quierocomer.com/qr/generar/${selected.slug}`); setQrModalOpen(true); }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>📱 Generar QR</button>
           <a href={`/qr/${selected.slug}?mesa=demo&demo=true`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>🔔 Demo Garzón</a>
           <a href={`/qr/admin/garzon/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>📱 Panel Garzón</a>
           <button onClick={() => { toggleActive(selected); setSelected({ ...selected, isActive: !selected.isActive }); }} style={{ flex: 1, padding: "10px", background: selected.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${selected.isActive ? "rgba(255,100,100,0.2)" : "rgba(74,222,128,0.2)"}`, borderRadius: 10, color: selected.isActive ? "#ff6b6b" : "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
             {selected.isActive ? "Desactivar" : "Activar"}
           </button>
-          {selected.plan === "PREMIUM" && !(selected as any).billingExempt && (
-            <button
-              onClick={async () => {
-                if (!confirm(`¿Pasar "${selected.name}" a plan FREE?\n\nEl dueño verá el plan Gratis al entrar al panel y podrá activar el trial Gold/Premium cuando quiera.`)) return;
-                const res = await fetch(`/api/admin/locales/${selected.id}`, {
-                  method: "PUT", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ plan: "FREE" }),
-                });
-                if (res.ok) {
-                  const updated = { ...selected, plan: "FREE" };
-                  setSelected(updated);
-                  setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
-                } else {
-                  const d = await res.json().catch(() => ({}));
-                  alert(d.error || "Error");
-                }
-              }}
-              style={{ flex: 1, padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
-            >
-              ✅ Entregar al dueño (FREE)
-            </button>
-          )}
-          <button onClick={() => deleteRestaurant(selected)} style={{ flex: 1, padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-            🗑 Eliminar local
-          </button>
         </div>
-
-        {/* Toteat integration — super-admin only */}
-        {isSuper && (
-          <ToteatSection
-            restaurant={selected}
-            onUpdate={(patch) => { const updated = { ...selected, ...patch }; setSelected(updated); setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x)); }}
-          />
-        )}
 
         {/* Inline QR */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 16 }}>
@@ -553,7 +530,19 @@ export default function AdminLocales() {
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.com/qr/{selected.slug}</p>
           </div>
         </div>
+        </>)}
 
+        {/* ═══ TAB: CREDENCIALES ═══ */}
+        {/* Toteat integration — super-admin only */}
+        {isSuper && detailTab === "credenciales" && (
+          <ToteatSection
+            restaurant={selected}
+            onUpdate={(patch) => { const updated = { ...selected, ...patch }; setSelected(updated); setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x)); }}
+          />
+        )}
+
+        {/* ═══ TAB: PILARES ═══ */}
+        {detailTab === "pilares" && (<>
         {/* Toggle garzón */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 12 }}>
           <div>
@@ -654,8 +643,10 @@ export default function AdminLocales() {
           </button>
         </div>
 
+        </>)}
+
         {/* Toggle Ecommerce (pilar nuevo) — super-admin only */}
-        {isSuper && (
+        {isSuper && detailTab === "pilares" && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.ecommerceEnabled ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.ecommerceEnabled ? "rgba(167,139,250,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.ecommerceEnabled ? "#a78bfa" : "white", margin: 0 }}>🚀 Ecommerce <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#a78bfa", background: "rgba(167,139,250,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
@@ -699,8 +690,57 @@ export default function AdminLocales() {
           </div>
         )}
 
+        {/* ═══ TAB: AVANZADO ═══ */}
+        {/* Acciones de propiedad / riesgo */}
+        {detailTab === "avanzado" && (
+          <div className="adm-btn-row" style={{ display: "flex", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+            {!selected.ownerId && !selected.billingExempt && (
+              <button
+                onClick={() => {
+                  setHandoffEmail(selected.owner?.email || "");
+                  setHandoffName(selected.owner?.name || "");
+                  setHandoffWhatsapp("");
+                  const currentPlan = (selected.plan === "GOLD" || selected.plan === "PREMIUM" || selected.plan === "FREE") ? selected.plan : "PREMIUM";
+                  setHandoffPlan(currentPlan as "FREE" | "GOLD" | "PREMIUM");
+                  setHandoffError(null);
+                  setHandoffResult(null);
+                  setHandoffOpen(true);
+                }}
+                style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+              >
+                🤝 Entregar al dueño
+              </button>
+            )}
+            {selected.plan === "PREMIUM" && !(selected as any).billingExempt && (
+              <button
+                onClick={async () => {
+                  if (!confirm(`¿Pasar "${selected.name}" a plan FREE?\n\nEl dueño verá el plan Gratis al entrar al panel y podrá activar el trial Gold/Premium cuando quiera.`)) return;
+                  const res = await fetch(`/api/admin/locales/${selected.id}`, {
+                    method: "PUT", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan: "FREE" }),
+                  });
+                  if (res.ok) {
+                    const updated = { ...selected, plan: "FREE" };
+                    setSelected(updated);
+                    setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                  } else {
+                    const d = await res.json().catch(() => ({}));
+                    alert(d.error || "Error");
+                  }
+                }}
+                style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
+              >
+                ✅ Entregar al dueño (FREE)
+              </button>
+            )}
+            <button onClick={() => deleteRestaurant(selected)} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+              🗑 Eliminar local
+            </button>
+          </div>
+        )}
+
         {/* Eliminar todos los pedidos del ecommerce — super-admin only */}
-        {isSuper && (
+        {isSuper && detailTab === "avanzado" && (
           <button
             onClick={async () => {
               if (!confirm(`¿Eliminar TODOS los pedidos del ecommerce de "${selected.name}"?\n\nSe borrarán de forma permanente. Esta acción no se puede deshacer.`)) return;
@@ -715,11 +755,12 @@ export default function AdminLocales() {
           </button>
         )}
 
+        {/* ═══ TAB: MARCA Y SUCURSALES ═══ */}
         {/* Agregar sucursal (feature de pago) — super-admin only */}
-        {isSuper && <AddBranchBox restaurant={selected} />}
+        {isSuper && detailTab === "marca" && <AddBranchBox restaurant={selected} />}
 
         {/* Toggle Centro de pedidos (pilar de despacho/operación) — super-admin only */}
-        {isSuper && (
+        {isSuper && detailTab === "pilares" && (
           <div style={{ padding: "14px 16px", background: selected.centroPedidosEnabled ? "rgba(251,146,60,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.centroPedidosEnabled ? "rgba(251,146,60,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: 1 }}>
@@ -756,7 +797,7 @@ export default function AdminLocales() {
         )}
 
         {/* Toggle POS / Punto de venta (pilar de caja) — super-admin only */}
-        {isSuper && (
+        {isSuper && detailTab === "pilares" && (
           <div style={{ padding: "14px 16px", background: selected.posEnabled ? "rgba(59,130,246,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.posEnabled ? "rgba(59,130,246,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: 1 }}>
@@ -793,7 +834,7 @@ export default function AdminLocales() {
         )}
 
         {/* Toggle "Pedidos Online" en el sidebar (legacy) — super-admin only. Default: visible. */}
-        {isSuper && (() => {
+        {isSuper && detailTab === "pilares" && (() => {
           const visible = !selected.orderingNavHidden;
           return (
           <div style={{ padding: "14px 16px", background: visible ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${visible ? "rgba(99,102,241,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
@@ -833,7 +874,7 @@ export default function AdminLocales() {
         })()}
 
         {/* Toggle Bodega (pilar de inventario) — super-admin only */}
-        {isSuper && (
+        {isSuper && detailTab === "pilares" && (
           <div style={{ padding: "14px 16px", background: selected.bodegaEnabled ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.bodegaEnabled ? "rgba(45,212,191,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ flex: 1 }}>
@@ -931,7 +972,7 @@ export default function AdminLocales() {
         )}
 
         {/* Credenciales Ecommerce (pasarelas + couriers) — super-admin only, cuando el pilar está activo */}
-        {isSuper && selected.ecommerceEnabled && (
+        {isSuper && selected.ecommerceEnabled && detailTab === "credenciales" && (
           <EcommerceSection
             restaurant={selected}
             onUpdate={(patch) => { const updated = { ...selected, ...patch }; setSelected(updated); setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x)); }}
