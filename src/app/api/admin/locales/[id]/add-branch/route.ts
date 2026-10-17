@@ -76,7 +76,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const branch = await prisma.restaurant.create({
       data: {
-        name: `${source.name} · ${branchName}`,
+        // Todas las sucursales de la marca comparten el mismo nombre; se
+        // distinguen por branchName (chip) y por su slug.
+        name: source.name,
         slug,
         ownerId: source.ownerId,
         address,
