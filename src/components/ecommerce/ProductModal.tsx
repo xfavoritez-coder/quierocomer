@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
@@ -31,6 +31,8 @@ function parseIncludes(text: string | null): { title: string; detail: string }[]
 export default function ProductModal({ product, primaryColor, onClose, scrollImage }: Props) {
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [errorGroupId, setErrorGroupId] = useState<string | null>(null);
+  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const addItem = useCartStore((s) => s.addItem);
   const { closing, requestClose } = useCloseAnimation(onClose);
 
@@ -51,6 +53,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
   }, []);
 
   function toggleOption(groupId: string, valueId: string, maxSelect: number) {
+    setErrorGroupId((cur) => (cur === groupId ? null : cur));
     setSelectedOptions((prev) => {
       const current = prev[groupId];
       if (maxSelect === 1) return { ...prev, [groupId]: valueId };
@@ -77,6 +80,10 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       const needed = Math.max(g.is_required ? 1 : 0, g.min_select);
       if (count < needed) {
         toast.error(needed > 1 ? `Elige al menos ${needed} en ${g.name}` : `Debes seleccionar ${g.name}`);
+        // Desliza el modal hasta el grupo que falta y lo resalta un momento.
+        setErrorGroupId(g.id);
+        groupRefs.current[g.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => setErrorGroupId((cur) => (cur === g.id ? null : cur)), 2000);
         return;
       }
     }
@@ -149,7 +156,11 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
 
       {/* Grupos de opciones */}
       {groups.map((group) => (
-        <div key={group.id}>
+        <div
+          key={group.id}
+          ref={(el) => { groupRefs.current[group.id] = el; }}
+          className={`scroll-mt-4 rounded-2xl transition-all ${errorGroupId === group.id ? "ring-2 ring-red-400 bg-red-50/60 p-3 -mx-1" : ""}`}
+        >
           <div className="flex items-center gap-2 mb-2">
             <span className="font-bold text-sm text-gray-800">{group.name}</span>
             {group.is_required && (
