@@ -1444,16 +1444,23 @@ function EnvSelect({ label, value, onChange, options }: { label: string; value: 
 }
 
 function IntegrationGroup({ title, sub, ok, children }: { title: string; sub: string; ok: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div>
-          <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "#fff", margin: 0 }}>{title}</p>
-          <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "1px 0 0" }}>{sub}</p>
+    <div style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${open ? "#3a3a3a" : "#2A2A2A"}`, borderRadius: 10, overflow: "hidden" }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "11px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <span style={{ fontSize: "0.7rem", color: "#777", transform: open ? "rotate(90deg)" : "none", transition: "transform 0.15s", flexShrink: 0 }}>▶</span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "#fff", margin: 0 }}>{title}</p>
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
+          </div>
         </div>
-        <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: ok ? "#4ade80" : "#666" }}>{ok ? "● Configurada" : "○ Sin configurar"}</span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+        <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: ok ? "#4ade80" : "#666", flexShrink: 0 }}>{ok ? "● Configurada" : "○ Sin configurar"}</span>
+      </button>
+      {open && <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 14px 14px" }}>{children}</div>}
     </div>
   );
 }
