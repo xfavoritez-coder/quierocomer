@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy, ChevronRight } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy, ChevronRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -106,7 +106,7 @@ export default function EcommercePedidosPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [orders, setOrders] = useState<Order[]>([]);
-  const [view, setView] = useState<"activos" | "historial">("activos");
+  const [view, setView] = useState<"activos" | "historial" | "pagados">("activos");
   const [statusFilter, setStatusFilter] = useState<"todos" | OrderStatus>("todos");
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD (local)
@@ -278,10 +278,14 @@ export default function EcommercePedidosPage() {
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
   // Activos: pedidos realmente en curso (no entregados, no cancelados, no intentos
   // de pago). El "entregado" se alimenta según se mueva en Centro de pedidos.
-  const base = view === "activos" ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED" && o.status !== "DONE") : orders;
+  const base = view === "activos"
+    ? orders.filter((o) => !isAttempt(o) && o.status !== "CANCELLED" && o.status !== "DONE")
+    : view === "pagados"
+      ? orders.filter((o) => o.paymentStatus === "paid")
+      : orders;
   const chipStatuses = view === "activos" ? ACTIVE_STATUSES : STATUS_ORDER;
-  // Historial: backlog completo, sin filtros. Activos: filtra por chip.
-  const shown = view === "historial" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
+  // Historial/Pagados: sin filtro por chip. Activos: filtra por chip.
+  const shown = view !== "activos" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
 
@@ -327,12 +331,14 @@ export default function EcommercePedidosPage() {
         <button onClick={() => fetchOrders(false)} title="Actualizar" style={iconBtn}><RefreshCw size={16} /></button>
       </div>
 
-      {/* Vista: Activos / Historial */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      {/* Vista: Activos / Pagados / Historial */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <button onClick={() => { setView("activos"); setStatusFilter("todos"); }} style={viewBtn(view === "activos")}><ListChecks size={15} /> Activos</button>
+        <button onClick={() => { setView("pagados"); setStatusFilter("todos"); }} style={viewBtn(view === "pagados")}><CheckCircle2 size={15} /> Pagados</button>
         <button onClick={() => { setView("historial"); setStatusFilter("todos"); }} style={viewBtn(view === "historial")}><History size={15} /> Historial</button>
       </div>
       {view === "historial" && <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 2px 12px" }}>Backlog de todos los pedidos, incluidos cancelados e intentos de pago.</p>}
+      {view === "pagados" && <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 2px 12px" }}>Solo pedidos con pago confirmado ({base.length}).</p>}
 
       {/* Chips por estado — solo en Activos (Historial no filtra). Sin "Todos":
           verlos todos es justamente el Historial. Clic en un chip filtra; volver
