@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
+const F = "var(--font-display)";
+const GOLD = "#F4A623";
+
 interface InvoiceInfo {
   id: string;
   pdfUrl: string | null;
@@ -25,13 +28,13 @@ interface RestaurantRow {
 }
 
 const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ];
 
 function periodoLabel(p: string): string {
   const [year, month] = p.split("-");
-  return `${MONTHS[parseInt(month, 10) - 1]} ${year}`;
+  return `${MONTHS[parseInt(month, 10) - 1] ?? month} ${year}`;
 }
 
 function currentPeriodo(): string {
@@ -39,15 +42,9 @@ function currentPeriodo(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function prevPeriodo(p: string): string {
+function stepPeriodo(p: string, dir: 1 | -1): string {
   const [y, m] = p.split("-").map(Number);
-  const d = new Date(y, m - 2);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function nextPeriodo(p: string): string {
-  const [y, m] = p.split("-").map(Number);
-  const d = new Date(y, m);
+  const d = new Date(y, m - 1 + dir);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
@@ -56,19 +53,19 @@ function fmt(n: number): string {
 }
 
 const PLAN_COLORS: Record<string, { text: string; bg: string; border: string }> = {
-  SILVER:  { text: "#475569", bg: "#F1F5F9", border: "#94a3b8" },
-  GOLD:    { text: "#92400e", bg: "#FFF8E7", border: "#F4A623" },
-  PREMIUM: { text: "#6d28d9", bg: "#F3E8FF", border: "#c4b5fd" },
+  SILVER:  { text: "#94a3b8", bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)" },
+  GOLD:    { text: GOLD,      bg: "rgba(244,166,35,0.12)",  border: "rgba(244,166,35,0.3)" },
+  PREMIUM: { text: "#c4b5fd", bg: "rgba(196,181,253,0.12)", border: "rgba(196,181,253,0.3)" },
 };
 
 function PlanBadge({ plan }: { plan: string }) {
-  const c = PLAN_COLORS[plan] ?? { text: "#888", bg: "#f4f4f4", border: "#ddd" };
+  const c = PLAN_COLORS[plan] ?? { text: "#666", bg: "rgba(100,100,100,0.12)", border: "#333" };
   return (
     <span style={{
-      fontSize: 11, fontWeight: 600, padding: "2px 8px",
+      fontSize: 11, fontWeight: 700, padding: "3px 8px",
       borderRadius: 20, background: c.bg, color: c.text,
-      border: `1px solid ${c.border}`, letterSpacing: "0.02em",
-      whiteSpace: "nowrap",
+      border: `1px solid ${c.border}`, letterSpacing: "0.04em",
+      whiteSpace: "nowrap", fontFamily: F,
     }}>
       {plan}
     </span>
@@ -88,12 +85,13 @@ function CopyBtn({ text }: { text: string }) {
       onClick={copy}
       title="Copiar RUT"
       style={{
-        marginLeft: 6, padding: "2px 7px", fontSize: 11,
-        border: "1px solid #ddd", borderRadius: 6,
-        background: copied ? "#e6f4ea" : "#f9f9f9",
-        color: copied ? "#2d6a4f" : "#666",
+        marginLeft: 7, padding: "2px 8px", fontSize: 11,
+        border: `1px solid ${copied ? "#4ade80" : "#333"}`,
+        borderRadius: 6,
+        background: copied ? "rgba(74,222,128,0.12)" : "#1a1a1a",
+        color: copied ? "#4ade80" : "#666",
         cursor: "pointer", transition: "all 0.15s",
-        fontWeight: copied ? 600 : 400,
+        fontWeight: copied ? 700 : 400,
       }}
     >
       {copied ? "✓" : "Copiar"}
@@ -107,7 +105,7 @@ export default function FacturasPage() {
   const [periodo, setPeriodo] = useState(currentPeriodo());
   const [rows, setRows] = useState<RestaurantRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState<string | null>(null); // restaurantId uploading
+  const [uploading, setUploading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<string | null>(null);
@@ -127,7 +125,7 @@ export default function FacturasPage() {
 
   const showToast = (msg: string, type: "ok" | "err") => {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 4500);
   };
 
   const triggerUpload = (restaurantId: string) => {
@@ -155,11 +153,8 @@ export default function FacturasPage() {
         showToast(data.error || "Error al subir", "err");
         return;
       }
-
       showToast(
-        data.emailTo
-          ? `Factura subida y enviada a ${data.emailTo}`
-          : "Factura subida (sin email de dueño)",
+        data.emailTo ? `Subida y enviada a ${data.emailTo}` : "Factura subida (dueño sin email)",
         "ok"
       );
       await load(periodo);
@@ -173,36 +168,30 @@ export default function FacturasPage() {
   const handleDelete = async (invoiceId: string, restaurantName: string) => {
     if (!confirm(`¿Eliminar factura de "${restaurantName}"?`)) return;
     const res = await fetch(`/api/admin/facturas?invoiceId=${invoiceId}`, { method: "DELETE" });
-    if (res.ok) {
-      showToast("Factura eliminada", "ok");
-      load(periodo);
-    } else {
-      showToast("Error al eliminar", "err");
-    }
+    if (res.ok) { showToast("Eliminada", "ok"); load(periodo); }
+    else showToast("Error al eliminar", "err");
   };
 
   const facturadas = rows.filter(r => r.invoice?.pdfUrl);
   const pendientes = rows.filter(r => !r.invoice?.pdfUrl);
-  const total = rows.length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f5f2", padding: "32px 24px" }}>
+    <div style={{ padding: "0 0 60px", color: "#fff" }}>
       {/* Toast */}
       {toast && (
         <div style={{
           position: "fixed", top: 20, right: 20, zIndex: 9999,
-          padding: "12px 20px", borderRadius: 10, fontWeight: 500, fontSize: 14,
-          background: toast.type === "ok" ? "#e6f4ea" : "#fdecea",
-          color: toast.type === "ok" ? "#1e4d2b" : "#7f1d1d",
-          border: `1px solid ${toast.type === "ok" ? "#a3d9b1" : "#f5c6cb"}`,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-          transition: "all 0.2s",
+          padding: "12px 20px", borderRadius: 10, fontWeight: 600, fontSize: 13,
+          background: toast.type === "ok" ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)",
+          color: toast.type === "ok" ? "#4ade80" : "#f87171",
+          border: `1px solid ${toast.type === "ok" ? "rgba(74,222,128,0.4)" : "rgba(248,113,113,0.4)"}`,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+          fontFamily: F,
         }}>
           {toast.type === "ok" ? "✓ " : "✕ "}{toast.msg}
         </div>
       )}
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -212,277 +201,273 @@ export default function FacturasPage() {
       />
 
       {/* Header */}
-      <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#1a1a1a" }}>
-              Facturación
-            </h1>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#888" }}>
-              Sube las facturas PDF a cada local activo
-            </p>
-          </div>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 500, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.02em" }}>
+            Facturación
+          </h1>
+          <p style={{ color: "#888", fontSize: 13, margin: 0 }}>
+            Sube las facturas PDF a cada local activo
+          </p>
         </div>
 
         {/* Period selector */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          marginBottom: 24, background: "#fff",
-          border: "1px solid #e8e2d9", borderRadius: 12,
-          padding: "12px 16px", width: "fit-content",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+          display: "flex", alignItems: "center", gap: 4,
+          background: "#1a1a1a", border: "1px solid #2a2a2a",
+          borderRadius: 10, padding: "6px 10px",
         }}>
           <button
-            onClick={() => setPeriodo(prevPeriodo(periodo))}
-            style={{ border: "none", background: "none", cursor: "pointer", fontSize: 18, color: "#888", padding: "0 4px" }}
-          >
-            ‹
-          </button>
-          <span style={{ fontSize: 16, fontWeight: 600, color: "#1a1a1a", minWidth: 160, textAlign: "center" }}>
+            onClick={() => setPeriodo(p => stepPeriodo(p, -1))}
+            style={{ border: "none", background: "none", cursor: "pointer", color: "#888", fontSize: 18, padding: "0 6px", lineHeight: 1 }}
+          >‹</button>
+          <span style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "#fff", minWidth: 150, textAlign: "center" }}>
             {periodoLabel(periodo)}
           </span>
           <button
-            onClick={() => setPeriodo(nextPeriodo(periodo))}
+            onClick={() => setPeriodo(p => stepPeriodo(p, 1))}
             disabled={periodo >= currentPeriodo()}
             style={{
-              border: "none", background: "none", cursor: periodo >= currentPeriodo() ? "default" : "pointer",
-              fontSize: 18, color: periodo >= currentPeriodo() ? "#ddd" : "#888", padding: "0 4px",
+              border: "none", background: "none",
+              cursor: periodo >= currentPeriodo() ? "default" : "pointer",
+              color: periodo >= currentPeriodo() ? "#333" : "#888",
+              fontSize: 18, padding: "0 6px", lineHeight: 1,
             }}
-          >
-            ›
-          </button>
+          >›</button>
         </div>
+      </div>
 
-        {/* Stats */}
-        {!loading && (
-          <div style={{ display: "flex", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
-            <StatPill label="Activos" value={total} color="#888" />
-            <StatPill label="Facturados" value={facturadas.length} color="#2d6a4f" bg="#e6f4ea" border="#a3d9b1" />
-            <StatPill label="Pendientes" value={pendientes.length} color="#92400e" bg="#FFF8E7" border="#F4A623" />
+      {/* Stats */}
+      {!loading && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 24 }}>
+          <StatCard label="Activos" value={rows.length} color="#fff" />
+          <StatCard label="Facturados" value={facturadas.length} color="#4ade80" />
+          <StatCard label="Pendientes" value={pendientes.length} color={GOLD} />
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ textAlign: "center", padding: 80, color: "#555", fontFamily: F }}>
+          Cargando…
+        </div>
+      )}
+
+      {!loading && rows.length === 0 && (
+        <div style={{
+          textAlign: "center", padding: 60, color: "#555", fontFamily: F, fontSize: 14,
+          background: "#1a1a1a", borderRadius: 12, border: "1px solid #2a2a2a",
+        }}>
+          No hay locales activos en este período.
+        </div>
+      )}
+
+      {/* PENDIENTES */}
+      {!loading && pendientes.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: GOLD, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Pendientes
+            </span>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 99,
+              background: "rgba(244,166,35,0.15)", color: GOLD, border: "1px solid rgba(244,166,35,0.3)",
+            }}>{pendientes.length}</span>
           </div>
-        )}
 
-        {loading && (
-          <div style={{ textAlign: "center", padding: 60, color: "#aaa", fontSize: 15 }}>
-            Cargando...
-          </div>
-        )}
-
-        {!loading && rows.length === 0 && (
-          <div style={{
-            textAlign: "center", padding: 60, color: "#aaa", fontSize: 15,
-            background: "#fff", borderRadius: 12, border: "1px solid #e8e2d9",
-          }}>
-            No hay locales activos para este período.
-          </div>
-        )}
-
-        {/* PENDIENTES */}
-        {!loading && pendientes.length > 0 && (
-          <section style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.06em", textTransform: "uppercase", margin: "0 0 10px" }}>
-              Pendientes ({pendientes.length})
-            </h2>
-            <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e8e2d9", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #f0ede8" }}>
-                    <Th>Local</Th>
-                    <Th>RUT</Th>
-                    <Th center>Plan</Th>
-                    <Th right>Neto</Th>
-                    <Th right>Total c/IVA</Th>
-                    <Th center>Acción</Th>
+          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
+                  <TH>Local</TH>
+                  <TH>RUT</TH>
+                  <TH center>Plan</TH>
+                  <TH right>Neto</TH>
+                  <TH right>c/IVA</TH>
+                  <TH center>Acción</TH>
+                </tr>
+              </thead>
+              <tbody>
+                {pendientes.map((r, i) => (
+                  <tr
+                    key={r.id}
+                    style={{ borderBottom: i < pendientes.length - 1 ? "1px solid #222" : "none" }}
+                  >
+                    <td style={{ padding: "13px 16px" }}>
+                      <div style={{ fontWeight: 600, color: "#fff", fontFamily: F }}>{r.name}</div>
+                      {r.billingCompanyName && r.billingCompanyName !== r.name && (
+                        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{r.billingCompanyName}</div>
+                      )}
+                      {r.ownerEmail && (
+                        <div style={{ fontSize: 11, color: "#555", marginTop: 1 }}>{r.ownerEmail}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
+                      {r.billingRut ? (
+                        <span style={{ fontFamily: "monospace", fontSize: 13, color: "#ccc" }}>
+                          {r.billingRut}
+                          <CopyBtn text={r.billingRut} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "#444", fontSize: 12 }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "13px 16px", textAlign: "center" }}>
+                      <PlanBadge plan={r.plan} />
+                    </td>
+                    <td style={{ padding: "13px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#ccc" }}>
+                      {fmt(r.amountNet)}
+                    </td>
+                    <td style={{ padding: "13px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#666" }}>
+                      {fmt(r.amountGross)}
+                    </td>
+                    <td style={{ padding: "13px 16px", textAlign: "center" }}>
+                      <button
+                        onClick={() => triggerUpload(r.id)}
+                        disabled={uploading === r.id}
+                        style={{
+                          padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                          border: "none", background: uploading === r.id ? "#2a2a2a" : GOLD,
+                          color: uploading === r.id ? "#666" : "#000",
+                          cursor: uploading === r.id ? "default" : "pointer",
+                          fontFamily: F, whiteSpace: "nowrap",
+                          transition: "opacity 0.15s",
+                        }}
+                      >
+                        {uploading === r.id ? "Subiendo…" : "↑ Subir PDF"}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {pendientes.map((r, i) => (
-                    <tr
-                      key={r.id}
-                      style={{ borderBottom: i < pendientes.length - 1 ? "1px solid #f7f5f2" : "none" }}
-                    >
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ fontWeight: 600, color: "#1a1a1a" }}>{r.name}</div>
-                        {r.billingCompanyName && r.billingCompanyName !== r.name && (
-                          <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>{r.billingCompanyName}</div>
-                        )}
-                        {r.ownerEmail && (
-                          <div style={{ fontSize: 12, color: "#bbb", marginTop: 1 }}>{r.ownerEmail}</div>
-                        )}
-                      </td>
-                      <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
-                        {r.billingRut ? (
-                          <span style={{ fontFamily: "monospace", fontSize: 13 }}>
-                            {r.billingRut}
-                            <CopyBtn text={r.billingRut} />
-                          </span>
-                        ) : (
-                          <span style={{ color: "#ddd", fontSize: 12 }}>Sin RUT</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                        <PlanBadge plan={r.plan} />
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                        {fmt(r.amountNet)}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#666" }}>
-                        {fmt(r.amountGross)}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                        <button
-                          onClick={() => triggerUpload(r.id)}
-                          disabled={uploading === r.id}
-                          style={{
-                            padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                            border: "1px solid #e8930a", background: uploading === r.id ? "#f9f0e3" : "#e8930a",
-                            color: uploading === r.id ? "#c47a2a" : "#fff",
-                            cursor: uploading === r.id ? "default" : "pointer",
-                            transition: "all 0.15s", whiteSpace: "nowrap",
-                          }}
-                        >
-                          {uploading === r.id ? "Subiendo…" : "↑ Subir PDF"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-        {/* FACTURADAS */}
-        {!loading && facturadas.length > 0 && (
-          <section>
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: "#2d6a4f", letterSpacing: "0.06em", textTransform: "uppercase", margin: "0 0 10px" }}>
-              Facturadas ({facturadas.length})
-            </h2>
-            <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #d4edda", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #edf7f0" }}>
-                    <Th>Local</Th>
-                    <Th>RUT</Th>
-                    <Th center>Plan</Th>
-                    <Th right>Neto</Th>
-                    <Th right>Total c/IVA</Th>
-                    <Th center>Factura</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {facturadas.map((r, i) => (
-                    <tr
-                      key={r.id}
-                      style={{
-                        borderBottom: i < facturadas.length - 1 ? "1px solid #f0faf4" : "none",
-                        opacity: 0.75,
-                      }}
-                    >
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ fontWeight: 600, color: "#4b7a5e", textDecoration: "line-through", textDecorationColor: "#a3d9b1" }}>
-                          {r.name}
-                        </div>
-                        {r.billingCompanyName && r.billingCompanyName !== r.name && (
-                          <div style={{ fontSize: 12, color: "#bbb", marginTop: 2 }}>{r.billingCompanyName}</div>
-                        )}
-                        {r.ownerEmail && (
-                          <div style={{ fontSize: 12, color: "#bbb", marginTop: 1 }}>{r.ownerEmail}</div>
-                        )}
-                      </td>
-                      <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
-                        {r.billingRut ? (
-                          <span style={{ fontFamily: "monospace", fontSize: 13, color: "#7a9e8a" }}>
-                            {r.billingRut}
-                            <CopyBtn text={r.billingRut} />
-                          </span>
-                        ) : (
-                          <span style={{ color: "#ddd", fontSize: 12 }}>Sin RUT</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                        <PlanBadge plan={r.plan} />
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#7a9e8a" }}>
-                        {fmt(r.amountNet)}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#aaa" }}>
-                        {fmt(r.amountGross)}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                          <span style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            fontSize: 12, fontWeight: 600, color: "#2d6a4f",
-                            padding: "3px 8px", borderRadius: 20,
-                            background: "#e6f4ea", border: "1px solid #a3d9b1",
-                          }}>
-                            ✓ {r.invoice?.emailSentAt ? "Enviada" : "Subida"}
-                          </span>
-                          {r.invoice?.pdfUrl && (
-                            <a
-                              href={r.invoice.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                fontSize: 12, color: "#666", padding: "3px 8px",
-                                borderRadius: 20, border: "1px solid #e0e0e0",
-                                textDecoration: "none", background: "#f9f9f9",
-                              }}
-                            >
-                              Ver PDF
-                            </a>
-                          )}
-                          <button
-                            onClick={() => r.invoice && handleDelete(r.invoice.id, r.name)}
-                            title="Eliminar factura"
+      {/* FACTURADAS */}
+      {!loading && facturadas.length > 0 && (
+        <section>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#4ade80", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Facturadas
+            </span>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 99,
+              background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)",
+            }}>{facturadas.length}</span>
+          </div>
+
+          <div style={{ background: "#1a1a1a", border: "1px solid #1e3a2a", borderRadius: 12, overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #1e3a2a" }}>
+                  <TH>Local</TH>
+                  <TH>RUT</TH>
+                  <TH center>Plan</TH>
+                  <TH right>Neto</TH>
+                  <TH right>c/IVA</TH>
+                  <TH center>Estado</TH>
+                </tr>
+              </thead>
+              <tbody>
+                {facturadas.map((r, i) => (
+                  <tr
+                    key={r.id}
+                    style={{ borderBottom: i < facturadas.length - 1 ? "1px solid #1a2e20" : "none", opacity: 0.7 }}
+                  >
+                    <td style={{ padding: "12px 16px" }}>
+                      <div style={{ fontWeight: 600, color: "#4a7a5a", fontFamily: F, textDecoration: "line-through", textDecorationColor: "#2d5a3a" }}>
+                        {r.name}
+                      </div>
+                      {r.ownerEmail && (
+                        <div style={{ fontSize: 11, color: "#3a5a44", marginTop: 1 }}>{r.ownerEmail}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
+                      {r.billingRut ? (
+                        <span style={{ fontFamily: "monospace", fontSize: 13, color: "#4a7a5a" }}>
+                          {r.billingRut}
+                          <CopyBtn text={r.billingRut} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "#333", fontSize: 12 }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <PlanBadge plan={r.plan} />
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#4a7a5a" }}>
+                      {fmt(r.amountNet)}
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#3a5a44" }}>
+                      {fmt(r.amountGross)}
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99,
+                          background: "rgba(74,222,128,0.12)", color: "#4ade80",
+                          border: "1px solid rgba(74,222,128,0.3)", fontFamily: F,
+                        }}>
+                          ✓ {r.invoice?.emailSentAt ? "Enviada" : "Subida"}
+                        </span>
+                        {r.invoice?.pdfUrl && (
+                          <a
+                            href={r.invoice.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             style={{
-                              border: "none", background: "none", cursor: "pointer",
-                              color: "#ccc", fontSize: 15, padding: "0 2px",
-                              lineHeight: 1,
+                              fontSize: 11, color: "#666", padding: "3px 8px",
+                              borderRadius: 99, border: "1px solid #2a2a2a",
+                              textDecoration: "none", background: "#111",
                             }}
                           >
-                            ×
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-      </div>
+                            PDF
+                          </a>
+                        )}
+                        <button
+                          onClick={() => r.invoice && handleDelete(r.invoice.id, r.name)}
+                          title="Eliminar"
+                          style={{
+                            border: "none", background: "none", cursor: "pointer",
+                            color: "#333", fontSize: 16, padding: "0 2px", lineHeight: 1,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-function Th({ children, center, right }: { children: React.ReactNode; center?: boolean; right?: boolean }) {
+function TH({ children, center, right }: { children: React.ReactNode; center?: boolean; right?: boolean }) {
   return (
     <th style={{
-      padding: "10px 16px", textAlign: center ? "center" : right ? "right" : "left",
-      fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: "0.05em",
-      textTransform: "uppercase", background: "#fafaf8",
+      padding: "9px 16px", textAlign: center ? "center" : right ? "right" : "left",
+      fontSize: 10, fontWeight: 700, color: "#555", letterSpacing: "0.07em",
+      textTransform: "uppercase", background: "#161616", fontFamily: "var(--font-display)",
     }}>
       {children}
     </th>
   );
 }
 
-function StatPill({
-  label, value, color = "#555", bg = "#f4f4f4", border = "#e0e0e0",
-}: {
-  label: string; value: number; color?: string; bg?: string; border?: string;
-}) {
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div style={{
-      padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-      background: bg, color, border: `1px solid ${border}`,
-      display: "flex", alignItems: "center", gap: 6,
+      background: "#1a1a1a", border: "1px solid #2a2a2a",
+      borderRadius: 12, padding: "14px 16px", textAlign: "center",
     }}>
-      <span style={{ fontSize: 18, fontWeight: 700 }}>{value}</span>
-      <span style={{ fontWeight: 500 }}>{label}</span>
+      <div style={{ fontSize: 26, fontWeight: 700, color, fontFamily: "var(--font-display)" }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{label}</div>
     </div>
   );
 }

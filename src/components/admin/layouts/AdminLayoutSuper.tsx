@@ -13,6 +13,7 @@ const NAV = [
   { icon: "✉️", label: "Mail Marketing", href: "/admin/mailmarketing" },
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "🛒", label: "Pedidos Online", href: "/admin/pedidos-online" },
+  { icon: "🧾", label: "Facturación", href: "/admin/facturas" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
