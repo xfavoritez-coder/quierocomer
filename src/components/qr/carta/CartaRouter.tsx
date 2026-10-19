@@ -12,7 +12,7 @@ import CartaLista from "./CartaLista";
 import CartaImpact from "./CartaImpact";
 import CartaFeed from "./CartaFeed";
 import CartaEsencial from "./CartaEsencial";
-import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
+import HappyHourBanner, { applyActiveHappyHourPrices } from "./HappyHourBanner";
 import CategoryLobby from "./CategoryLobby";
 import MenuSwitcher from "./MenuSwitcher";
 import ProfileDrawer from "../auth/ProfileDrawer";
@@ -227,10 +227,9 @@ export default function CartaRouter(props: Props) {
   const popularSet = useRef(new Set(props.popularDishIds || []));
 
   const readyKey = readyKeyRef.current;
-  const activeHH = getActiveHappyHour(props.happyHours || []);
   const hhDishes = useMemo(
-    () => activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes,
-    [props.dishes, activeHH],
+    () => applyActiveHappyHourPrices(props.dishes, props.happyHours || []),
+    [props.dishes, props.happyHours],
   );
 
   // Inject promo discountPrice for dishes in active marketing promotions

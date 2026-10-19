@@ -35,17 +35,34 @@ function timeStr(d: Date): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-/** Devuelve el primer happy hour activo AHORA (día + ventana horaria), o null. */
-export function findActiveHappyHour<T extends HappyHourRule>(hours: T[] | null | undefined, now: Date = chileNow()): T | null {
-  if (!hours?.length) return null;
+/** Devuelve TODOS los happy hours activos AHORA (día + ventana horaria). */
+export function activeHappyHours<T extends HappyHourRule>(hours: T[] | null | undefined, now: Date = chileNow()): T[] {
+  if (!hours?.length) return [];
   const day = now.getDay();
   const time = timeStr(now);
-  for (const hh of hours) {
-    if (!hh.isActive) continue;
-    if (!hh.days?.includes(day)) continue;
-    if (time >= hh.startTime && time < hh.endTime) return hh;
+  return hours.filter((hh) => hh.isActive && hh.days?.includes(day) && time >= hh.startTime && time < hh.endTime);
+}
+
+/** Devuelve el primer happy hour activo AHORA, o null (útil para el banner). */
+export function findActiveHappyHour<T extends HappyHourRule>(hours: T[] | null | undefined, now: Date = chileNow()): T | null {
+  return activeHappyHours(hours, now)[0] ?? null;
+}
+
+/**
+ * Mejor (menor) precio de happy hour para un producto entre TODOS los happy
+ * hours activos que lo afectan. null si ninguno aplica. Permite varios happy
+ * hours simultáneos (p. ej. uno para postres y otro para hand rolls).
+ */
+export function bestHappyHourPrice(
+  item: { id: string; categoryId: string; price: number },
+  activeList: HappyHourRule[],
+): number | null {
+  let best: number | null = null;
+  for (const hh of activeList) {
+    const p = happyHourPriceFor(item, hh);
+    if (p != null && (best == null || p < best)) best = p;
   }
-  return null;
+  return best;
 }
 
 /**

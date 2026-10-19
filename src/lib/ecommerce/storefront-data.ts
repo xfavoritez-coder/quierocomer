@@ -10,7 +10,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
 import { parseHours, resolveAvailability, type OpenStatus } from "@/lib/ecommerce/hours";
-import { findActiveHappyHour, happyHourPriceFor, appliesToChannel } from "@/lib/happyHour";
+import { activeHappyHours, bestHappyHourPrice, appliesToChannel } from "@/lib/happyHour";
 
 export interface StoreTenant {
   id: string;
@@ -167,8 +167,9 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
 
   if (!restaurant || !restaurant.ecommerceEnabled) return null;
 
-  // Happy hour activo ahora para el canal ecommerce (no se aplica en gestión de carta).
-  const activeHH = includeHidden ? null : findActiveHappyHour((restaurant.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
+  // Happy hours activos ahora para el canal ecommerce (puede haber varios a la
+  // vez; cada producto toma el mejor). No se aplica en modo gestión de carta.
+  const activeHHs = includeHidden ? [] : activeHappyHours((restaurant.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
 
   const categories = await prisma.category.findMany({
     where: { restaurantId: restaurant.id, ...(includeHidden ? {} : { isActive: true }) },
@@ -215,7 +216,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       // el precio actual es la oferta y el original queda tachado.
       // Happy hour (si activo) compite con la oferta: gana el menor.
       const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
-      const hhPrice = activeHH ? happyHourPriceFor({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHH) : null;
+      const hhPrice = activeHHs.length ? bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHHs) : null;
       const effective = Math.min(offer ?? d.price, hhPrice ?? d.price);
       const hasOffer = effective < d.price;
 

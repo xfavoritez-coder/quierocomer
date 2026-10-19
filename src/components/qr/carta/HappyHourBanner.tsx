@@ -1,6 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { activeHappyHours, bestHappyHourPrice } from "@/lib/happyHour";
+
+/** Aplica TODOS los happy hours activos ahora (puede haber varios a la vez);
+ *  cada plato toma el mejor precio de los que lo afectan. */
+export function applyActiveHappyHourPrices(dishes: any[], happyHours: any[]): any[] {
+  const active = activeHappyHours(happyHours || []);
+  if (!active.length) return dishes;
+  return dishes.map(d => {
+    const newPrice = bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, active as any);
+    if (newPrice == null) return d;
+    return { ...d, discountPrice: newPrice, _originalPrice: d.price, _happyHour: true };
+  });
+}
 
 interface HappyHour {
   id: string;
