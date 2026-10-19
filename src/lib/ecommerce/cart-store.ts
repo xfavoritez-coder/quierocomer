@@ -25,6 +25,7 @@ export interface CartItem {
   quantity: number;
   image_url: string | null;
   toteat_code?: string | null;
+  is_happy_hour?: boolean; // el precio del ítem viene de un happy hour activo
   options: CartItemOption[];
 }
 
@@ -72,6 +73,7 @@ export interface RepriceProduct {
   id: string;
   price: number; // precio actual ya con la oferta vigente aplicada
   is_sold_out?: boolean;
+  is_happy_hour?: boolean;
   option_groups: { id: string; values: { id: string; price_delta: number }[] }[];
 }
 
@@ -114,9 +116,9 @@ export const useCartStore = create<CartState>()(
             .filter((o): o is CartItemOption => o !== null);
           const base = p.price;
           const unit = base + opts.reduce((s, o) => s + (o.price_delta ?? 0), 0);
-          next.push({ ...it, base_price: base, unit_price: unit, options: opts });
+          next.push({ ...it, base_price: base, unit_price: unit, is_happy_hour: p.is_happy_hour === true, options: opts });
         }
-        const changed = prev.length !== next.length || next.some((n, i) => prev[i]?.unit_price !== n.unit_price || prev[i]?.product_id !== n.product_id);
+        const changed = prev.length !== next.length || next.some((n, i) => prev[i]?.unit_price !== n.unit_price || prev[i]?.product_id !== n.product_id || prev[i]?.is_happy_hour !== n.is_happy_hour);
         if (changed) set({ items: next });
       },
 

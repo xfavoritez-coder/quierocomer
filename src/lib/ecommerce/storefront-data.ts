@@ -86,6 +86,7 @@ export interface StoreProduct {
   detailed_description: string | null; // descripción larga (lista tipo "Incluye")
   price: number;
   original_price: number | null; // precio tachado (si hay oferta)
+  is_happy_hour?: boolean; // el precio vigente viene de un happy hour activo
   image_url: string | null;
   is_sold_out: boolean;
   is_hero: boolean; // destacado (para el banner del tema impact)
@@ -248,6 +249,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         detailed_description: d.detailedDescription ?? null,
         price: hasOffer ? effective : d.price,
         original_price: hasOffer ? d.price : null,
+        is_happy_hour: hhPrice != null,
         image_url: d.photos?.[0] ?? null,
         is_sold_out: d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0),
         is_hero: d.isHero === true,

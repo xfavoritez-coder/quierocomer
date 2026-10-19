@@ -67,7 +67,11 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
   // ── Pedidos programados ──
   type SlotDay = { ymd: string; label: string; slots: { iso: string; label: string }[] };
-  const canSchedule = tenant.scheduledOrdersEnabled === true;
+  // Si el carrito tiene un producto de happy hour, se oculta en silencio la
+  // opción de programar (evita pedir en la ventana del happy hour para mucho
+  // más tarde). El cobro igual se recalcula en el servidor.
+  const cartHasHappyHour = items.some((i) => i.is_happy_hour === true);
+  const canSchedule = tenant.scheduledOrdersEnabled === true && !cartHasHappyHour;
   const [scheduleMode, setScheduleMode] = useState<"asap" | "scheduled">("asap");
   const [scheduledIso, setScheduledIso] = useState<string | null>(null);
   const [scheduleDayYmd, setScheduleDayYmd] = useState<string | null>(null);
@@ -241,6 +245,10 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   useEffect(() => {
     if (canSchedule && !isOpen) setScheduleMode("scheduled");
   }, [canSchedule, isOpen]);
+  // Si deja de poder programar (p. ej. entró un producto de happy hour), vuelve a ASAP.
+  useEffect(() => {
+    if (!canSchedule) setScheduleMode("asap");
+  }, [canSchedule]);
 
   // Al cambiar de día o de franjas, mantener una selección coherente.
   useEffect(() => {
