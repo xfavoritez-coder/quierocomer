@@ -10,6 +10,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
 import { parseHours, resolveAvailability, type OpenStatus } from "@/lib/ecommerce/hours";
+import { findActiveHappyHour, happyHourPriceFor } from "@/lib/happyHour";
 
 export interface StoreTenant {
   id: string;
@@ -159,10 +160,14 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
+      happyHours: { where: { isActive: true }, select: { id: true, name: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, bannerText: true, bannerColor: true, isActive: true } },
     },
   });
 
   if (!restaurant || !restaurant.ecommerceEnabled) return null;
+
+  // Happy hour activo ahora (no se aplica en modo gestión de carta).
+  const activeHH = includeHidden ? null : findActiveHappyHour(restaurant.happyHours as any);
 
   const categories = await prisma.category.findMany({
     where: { restaurantId: restaurant.id, ...(includeHidden ? {} : { isActive: true }) },
@@ -207,7 +212,11 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     for (const d of cat.dishes) {
       // discountPrice es el precio de oferta (menor). Si existe y es menor,
       // el precio actual es la oferta y el original queda tachado.
-      const hasOffer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price;
+      // Happy hour (si activo) compite con la oferta: gana el menor.
+      const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
+      const hhPrice = activeHH ? happyHourPriceFor({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHH) : null;
+      const effective = Math.min(offer ?? d.price, hhPrice ?? d.price);
+      const hasOffer = effective < d.price;
 
       // Aplanar los grupos de modificadores de todas las plantillas del plato.
       const optionGroups: StoreOptionGroup[] = [];
@@ -237,7 +246,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         name: d.name,
         description: d.description,
         detailed_description: d.detailedDescription ?? null,
-        price: hasOffer ? d.discountPrice! : d.price,
+        price: hasOffer ? effective : d.price,
         original_price: hasOffer ? d.price : null,
         image_url: d.photos?.[0] ?? null,
         is_sold_out: d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0),
