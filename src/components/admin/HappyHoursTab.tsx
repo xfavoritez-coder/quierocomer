@@ -14,7 +14,7 @@ interface HappyHour {
   days: number[];
   startTime: string;
   endTime: string;
-  discountType: "FIXED_PRICE" | "PERCENTAGE";
+  discountType: "FIXED_PRICE" | "PERCENTAGE" | "FIXED_AMOUNT";
   discountValue: number;
   categoryIds: string[];
   dishIds: string[];
@@ -45,7 +45,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
   const [fDays, setFDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [fStart, setFStart] = useState("16:00");
   const [fEnd, setFEnd] = useState("19:00");
-  const [fType, setFType] = useState<"FIXED_PRICE" | "PERCENTAGE">("FIXED_PRICE");
+  const [fType, setFType] = useState<"FIXED_PRICE" | "PERCENTAGE" | "FIXED_AMOUNT">("FIXED_PRICE");
   const [fValue, setFValue] = useState("");
   const [fCatIds, setFCatIds] = useState<string[]>([]);
   const [fDishIds, setFDishIds] = useState<string[]>([]);
@@ -197,29 +197,24 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
           </div>
 
           {/* Discount type + value */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-            <div>
-              <label style={LBL}>Tipo de descuento</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={() => setFType("FIXED_PRICE")} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer",
+          <div style={{ marginBottom: 14 }}>
+            <label style={LBL}>Tipo de descuento</label>
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {([["FIXED_PRICE", "Precio fijo"], ["PERCENTAGE", "Porcentaje"], ["FIXED_AMOUNT", "Monto a descontar"]] as const).map(([val, lbl]) => (
+                <button key={val} onClick={() => setFType(val)} style={{
+                  flex: 1, padding: "8px 4px", borderRadius: 8, border: "none", cursor: "pointer",
                   fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-                  background: fType === "FIXED_PRICE" ? GOLD : "var(--adm-input)",
-                  color: fType === "FIXED_PRICE" ? "white" : "var(--adm-text3)",
-                }}>Precio fijo</button>
-                <button onClick={() => setFType("PERCENTAGE")} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer",
-                  fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-                  background: fType === "PERCENTAGE" ? GOLD : "var(--adm-input)",
-                  color: fType === "PERCENTAGE" ? "white" : "var(--adm-text3)",
-                }}>Porcentaje</button>
-              </div>
+                  background: fType === val ? GOLD : "var(--adm-input)",
+                  color: fType === val ? "white" : "var(--adm-text3)",
+                }}>{lbl}</button>
+              ))}
             </div>
-            <div>
-              <label style={LBL}>{fType === "FIXED_PRICE" ? "Precio ($)" : "Descuento (%)"}</label>
-              <input type="number" value={fValue} onChange={e => setFValue(e.target.value)}
-                placeholder={fType === "FIXED_PRICE" ? "3990" : "20"} style={INP} />
-            </div>
+            <label style={LBL}>{fType === "FIXED_PRICE" ? "Precio final ($)" : fType === "FIXED_AMOUNT" ? "Monto a descontar ($)" : "Descuento (%)"}</label>
+            <input type="number" value={fValue} onChange={e => setFValue(e.target.value)}
+              placeholder={fType === "FIXED_PRICE" ? "3990" : fType === "FIXED_AMOUNT" ? "1000" : "20"} style={INP} />
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+              {fType === "FIXED_PRICE" ? "Todos los productos quedan a este precio fijo." : fType === "FIXED_AMOUNT" ? "A cada producto se le resta este monto de su precio normal (ej. $1.000 menos)." : "Se descuenta este porcentaje del precio normal de cada producto."}
+            </p>
           </div>
 
           {/* Canal de venta donde aplica */}
@@ -405,7 +400,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
                     {!hh.isActive && <span style={{ fontSize: "0.6rem", fontWeight: 700, background: "rgba(255,100,100,0.08)", color: "#ff6b6b", padding: "2px 8px", borderRadius: 50 }}>PAUSADO</span>}
                   </div>
                   <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                    {dayStr} · {hh.startTime} - {hh.endTime} · {hh.discountType === "FIXED_PRICE" ? `$${hh.discountValue.toLocaleString("es-CL")}` : `${hh.discountValue}% dcto`} · {chLabel}
+                    {dayStr} · {hh.startTime} - {hh.endTime} · {hh.discountType === "FIXED_PRICE" ? `$${hh.discountValue.toLocaleString("es-CL")}` : hh.discountType === "FIXED_AMOUNT" ? `-$${hh.discountValue.toLocaleString("es-CL")}` : `${hh.discountValue}% dcto`} · {chLabel}
                   </p>
                   {(catNames.length > 0 || dishNames.length > 0) && (
                     <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>

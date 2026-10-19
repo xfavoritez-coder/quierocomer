@@ -8,7 +8,7 @@ interface HappyHour {
   days: number[];
   startTime: string;
   endTime: string;
-  discountType: "FIXED_PRICE" | "PERCENTAGE";
+  discountType: "FIXED_PRICE" | "PERCENTAGE" | "FIXED_AMOUNT";
   discountValue: number;
   categoryIds: string[];
   dishIds: string[];
@@ -71,6 +71,8 @@ export function applyHappyHourPrices(dishes: any[], hh: any): any[] {
     let newPrice: number;
     if (hh.discountType === "FIXED_PRICE") {
       newPrice = hh.discountValue;
+    } else if (hh.discountType === "FIXED_AMOUNT") {
+      newPrice = d.price - hh.discountValue;
     } else {
       newPrice = Math.round(d.price * (1 - hh.discountValue / 100));
     }
@@ -107,7 +109,9 @@ export function HappyHourPill({ happyHours }: { happyHours: any[] }) {
   const text = active.bannerText ||
     (active.discountType === "FIXED_PRICE"
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
-      : `${active.name} — ${active.discountValue}% de descuento`);
+      : active.discountType === "FIXED_AMOUNT"
+        ? `${active.name} — $${active.discountValue.toLocaleString("es-CL")} de descuento`
+        : `${active.name} — ${active.discountValue}% de descuento`);
 
   return (
     <div
@@ -172,7 +176,9 @@ export default function HappyHourBanner({ happyHours }: { happyHours: any[] }) {
   const bannerText = active.bannerText ||
     (active.discountType === "FIXED_PRICE"
       ? `${active.name} — Todo a $${active.discountValue.toLocaleString("es-CL")}`
-      : `${active.name} — ${active.discountValue}% de descuento`);
+      : active.discountType === "FIXED_AMOUNT"
+        ? `${active.name} — $${active.discountValue.toLocaleString("es-CL")} de descuento`
+        : `${active.name} — ${active.discountValue}% de descuento`);
 
   const needsClamp = bannerText.length > 90;
 

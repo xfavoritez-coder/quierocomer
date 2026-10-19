@@ -10,7 +10,7 @@ export interface HappyHourRule {
   days: number[]; // 0=Dom .. 6=Sáb
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
-  discountType: "FIXED_PRICE" | "PERCENTAGE";
+  discountType: "FIXED_PRICE" | "PERCENTAGE" | "FIXED_AMOUNT";
   discountValue: number;
   categoryIds: string[];
   dishIds: string[];
@@ -62,6 +62,8 @@ export function happyHourPriceFor(
   if (!byCat && !byDish) return null;
   const p = hh.discountType === "FIXED_PRICE"
     ? hh.discountValue
-    : Math.round(item.price * (1 - hh.discountValue / 100));
+    : hh.discountType === "FIXED_AMOUNT"
+      ? item.price - hh.discountValue
+      : Math.round(item.price * (1 - hh.discountValue / 100));
   return p > 0 && p < item.price ? p : null;
 }
