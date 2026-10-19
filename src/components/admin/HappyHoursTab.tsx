@@ -18,6 +18,7 @@ interface HappyHour {
   discountValue: number;
   categoryIds: string[];
   dishIds: string[];
+  channels?: string[];
   bannerText: string | null;
   bannerColor: string;
   isActive: boolean;
@@ -50,6 +51,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
   const [fDishIds, setFDishIds] = useState<string[]>([]);
   const [fDishSearch, setFDishSearch] = useState("");
   const [fDishCatFilter, setFDishCatFilter] = useState<string | null>(null);
+  const [fChannels, setFChannels] = useState<string[]>(["qr", "ecommerce"]);
   const [fBannerText, setFBannerText] = useState("");
   const [fSaving, setFSaving] = useState(false);
 
@@ -63,7 +65,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
 
   const resetForm = () => {
     setFName(""); setFDays([1, 2, 3, 4, 5]); setFStart("16:00"); setFEnd("19:00");
-    setFType("FIXED_PRICE"); setFValue(""); setFCatIds([]); setFDishIds([]); setFDishSearch(""); setFDishCatFilter(null); setFBannerText("");
+    setFType("FIXED_PRICE"); setFValue(""); setFCatIds([]); setFDishIds([]); setFDishSearch(""); setFDishCatFilter(null); setFChannels(["qr", "ecommerce"]); setFBannerText("");
     setCreating(false); setEditing(null);
   };
 
@@ -76,13 +78,14 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
     setFValue(String(hh.discountValue));
     setFCatIds([...hh.categoryIds]);
     setFDishIds([...(hh.dishIds || [])]);
+    setFChannels(hh.channels?.length ? [...hh.channels] : ["qr", "ecommerce"]);
     setFBannerText(hh.bannerText || "");
     setEditing(hh.id);
     setCreating(true);
   };
 
   const handleSave = async () => {
-    if (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)) return;
+    if (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0) || fChannels.length === 0) return;
     setFSaving(true);
 
     const payload = {
@@ -95,6 +98,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
       discountValue: Number(fValue),
       categoryIds: fCatIds,
       dishIds: fDishIds,
+      channels: fChannels,
       bannerText: fBannerText.trim() || null,
     };
 
@@ -218,77 +222,102 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Canal de venta donde aplica */}
           <div style={{ marginBottom: 14 }}>
-            <label style={LBL}>Categorias afectadas</label>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {categories.map(c => {
-                const sel = fCatIds.includes(c.id);
+            <label style={LBL}>¿Dónde aplica?</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {([["qr", "📱 Carta QR"], ["ecommerce", "🛒 Tienda online"]] as const).map(([val, lbl]) => {
+                const on = fChannels.includes(val);
                 return (
-                  <button key={c.id} onClick={() => setFCatIds(prev => sel ? prev.filter(x => x !== c.id) : [...prev, c.id])} style={{
-                    padding: "6px 14px", borderRadius: 50, border: "none", cursor: "pointer",
-                    fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-                    background: sel ? GOLD : "var(--adm-input)",
-                    color: sel ? "white" : "var(--adm-text3)",
-                  }}>{c.name}</button>
+                  <button key={val} onClick={() => setFChannels(prev => on ? prev.filter(x => x !== val) : [...prev, val])} style={{
+                    flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${on ? GOLD : "var(--adm-card-border)"}`, cursor: "pointer",
+                    fontFamily: F, fontSize: "0.76rem", fontWeight: 700,
+                    background: on ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                    color: on ? GOLD : "var(--adm-text3)",
+                  }}>{on ? "✓ " : ""}{lbl}</button>
                 );
               })}
             </div>
+            {fChannels.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444", margin: "6px 0 0" }}>Elige al menos un canal</p>}
           </div>
 
-          {/* Productos individuales */}
-          {dishes.length > 0 && (
-            <div style={{ marginBottom: 14 }}>
-              <label style={LBL}>Productos afectados (opcional)</label>
-              <input value={fDishSearch} onChange={e => setFDishSearch(e.target.value)} placeholder="Buscar producto…" style={{ ...INP, marginBottom: 8 }} />
-              {/* Filtro por categoría */}
+          {/* Productos / categorías del happy hour */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={LBL}>Productos del happy hour</label>
+
+            {/* Categorías completas aplicadas */}
+            {fCatIds.length > 0 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                <button onClick={() => setFDishCatFilter(null)} style={{
-                  padding: "4px 11px", borderRadius: 50, border: "none", cursor: "pointer",
-                  fontFamily: F, fontSize: "0.68rem", fontWeight: 700,
-                  background: fDishCatFilter === null ? "var(--adm-text)" : "var(--adm-input)",
-                  color: fDishCatFilter === null ? "var(--adm-bg, #fff)" : "var(--adm-text3)",
-                }}>Todas</button>
-                {categories.map(c => {
-                  const on = fDishCatFilter === c.id;
-                  const n = dishes.filter(d => d.categoryId === c.id).length;
-                  if (n === 0) return null;
+                {fCatIds.map(id => {
+                  const name = categories.find(c => c.id === id)?.name || id;
                   return (
-                    <button key={c.id} onClick={() => setFDishCatFilter(on ? null : c.id)} style={{
-                      padding: "4px 11px", borderRadius: 50, border: "none", cursor: "pointer",
-                      fontFamily: F, fontSize: "0.68rem", fontWeight: 600,
-                      background: on ? "var(--adm-text)" : "var(--adm-input)",
-                      color: on ? "var(--adm-bg, #fff)" : "var(--adm-text3)",
-                    }}>{c.name} <span style={{ opacity: 0.6 }}>{n}</span></button>
+                    <button key={id} onClick={() => setFCatIds(prev => prev.filter(x => x !== id))} style={{
+                      padding: "5px 11px", borderRadius: 50, border: "none", cursor: "pointer",
+                      fontFamily: F, fontSize: "0.72rem", fontWeight: 700, background: GOLD, color: "white",
+                    }}>🏷 Toda «{name}» ✕</button>
                   );
                 })}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px", gap: 8, flexWrap: "wrap" }}>
-                {fDishIds.length > 0 && (
-                  <p style={{ fontFamily: F, fontSize: "0.7rem", color: GOLD, fontWeight: 700, margin: 0 }}>{fDishIds.length} producto{fDishIds.length !== 1 ? "s" : ""} seleccionado{fDishIds.length !== 1 ? "s" : ""}</p>
-                )}
-                {fDishCatFilter && (() => {
-                  const visibleIds = dishes.filter(d => d.categoryId === fDishCatFilter).map(d => d.id);
-                  const allSel = visibleIds.length > 0 && visibleIds.every(id => fDishIds.includes(id));
-                  return (
-                    <button onClick={() => setFDishIds(prev => allSel ? prev.filter(id => !visibleIds.includes(id)) : Array.from(new Set([...prev, ...visibleIds])))} style={{
-                      padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", background: "none",
-                      fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: "var(--adm-text3)", cursor: "pointer", marginLeft: "auto",
-                    }}>{allSel ? "Quitar categoría" : "Seleccionar toda la categoría"}</button>
-                  );
-                })()}
-              </div>
+            )}
+
+            <input value={fDishSearch} onChange={e => setFDishSearch(e.target.value)} placeholder="Buscar producto…" style={{ ...INP, marginBottom: 8 }} />
+
+            {/* Filtro por categoría */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+              <button onClick={() => setFDishCatFilter(null)} style={{
+                padding: "4px 11px", borderRadius: 50, border: "none", cursor: "pointer",
+                fontFamily: F, fontSize: "0.68rem", fontWeight: 700,
+                background: fDishCatFilter === null ? "var(--adm-text)" : "var(--adm-input)",
+                color: fDishCatFilter === null ? "var(--adm-bg, #fff)" : "var(--adm-text3)",
+              }}>Todas</button>
+              {categories.map(c => {
+                const on = fDishCatFilter === c.id;
+                const n = dishes.filter(d => d.categoryId === c.id).length;
+                if (n === 0) return null;
+                return (
+                  <button key={c.id} onClick={() => setFDishCatFilter(on ? null : c.id)} style={{
+                    padding: "4px 11px", borderRadius: 50, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.68rem", fontWeight: 600,
+                    background: on ? "var(--adm-text)" : (fCatIds.includes(c.id) ? "rgba(244,166,35,0.12)" : "var(--adm-input)"),
+                    color: on ? "var(--adm-bg, #fff)" : (fCatIds.includes(c.id) ? GOLD : "var(--adm-text3)"),
+                  }}>{c.name} <span style={{ opacity: 0.6 }}>{n}</span></button>
+                );
+              })}
+            </div>
+
+            {/* Aplicar / quitar toda la categoría filtrada */}
+            {fDishCatFilter && (() => {
+              const applied = fCatIds.includes(fDishCatFilter);
+              const cname = categories.find(c => c.id === fDishCatFilter)?.name || "";
+              return (
+                <button onClick={() => setFCatIds(prev => applied ? prev.filter(x => x !== fDishCatFilter) : [...prev, fDishCatFilter!])} style={{
+                  width: "100%", padding: "9px 0", borderRadius: 10, border: `1px solid ${applied ? GOLD : "var(--adm-card-border)"}`, cursor: "pointer",
+                  fontFamily: F, fontSize: "0.74rem", fontWeight: 700, marginBottom: 8,
+                  background: applied ? "rgba(244,166,35,0.12)" : "var(--adm-input)", color: applied ? GOLD : "var(--adm-text2)",
+                }}>{applied ? `✓ Toda «${cname}» incluida — Quitar` : `➕ Aplicar en toda la categoría «${cname}»`}</button>
+              );
+            })()}
+
+            {/* Productos (chips). Los de una categoría aplicada se muestran como incluidos. */}
+            {dishes.length > 0 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", maxHeight: 180, overflowY: "auto", padding: 2 }}>
                 {dishes
                   .filter(d => {
                     const q = fDishSearch.trim().toLowerCase();
-                    if (fDishIds.includes(d.id)) return true; // los seleccionados siempre visibles
-                    if (fDishCatFilter && d.categoryId !== fDishCatFilter) return false;
-                    return !q || d.name.toLowerCase().includes(q);
+                    if (fDishIds.includes(d.id) || fCatIds.includes(d.categoryId)) return true; // seleccionados/incluidos siempre
+                    if (fDishCatFilter) return d.categoryId === fDishCatFilter && (!q || d.name.toLowerCase().includes(q));
+                    return q ? d.name.toLowerCase().includes(q) : false; // "Todas": solo con búsqueda
                   })
-                  .slice(0, 150)
+                  .slice(0, 200)
                   .map(d => {
+                    const byCat = fCatIds.includes(d.categoryId);
                     const sel = fDishIds.includes(d.id);
+                    if (byCat) return (
+                      <span key={d.id} title="Incluido por su categoría" style={{
+                        padding: "6px 12px", borderRadius: 50, fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                        background: "rgba(244,166,35,0.12)", color: GOLD, opacity: 0.85,
+                      }}>✓ {d.name}</span>
+                    );
                     return (
                       <button key={d.id} onClick={() => setFDishIds(prev => sel ? prev.filter(x => x !== d.id) : [...prev, d.id])} style={{
                         padding: "6px 12px", borderRadius: 50, border: "none", cursor: "pointer",
@@ -299,8 +328,11 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
                     );
                   })}
               </div>
-            </div>
-          )}
+            )}
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>
+              Filtra por categoría y marca productos sueltos, o usa «Aplicar en toda la categoría» (incluye también productos que agregues luego).
+            </p>
+          </div>
 
           {fCatIds.length === 0 && fDishIds.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444", margin: "0 0 14px" }}>Selecciona al menos una categoría o un producto</p>}
 
@@ -316,10 +348,10 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleSave} disabled={fSaving || !fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)} style={{
+            <button onClick={handleSave} disabled={fSaving || !fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0) || fChannels.length === 0} style={{
               padding: "10px 20px", background: GOLD, color: "white", border: "none", borderRadius: 10,
               fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
-              opacity: (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)) ? 0.5 : 1,
+              opacity: (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0) || fChannels.length === 0) ? 0.5 : 1,
             }}>{fSaving ? "..." : editing ? "Guardar cambios" : "Crear horario"}</button>
             <button onClick={resetForm} style={{
               padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)",
@@ -350,6 +382,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
           const catNames = hh.categoryIds.map(id => categories.find(c => c.id === id)?.name || "").filter(Boolean);
           const dishNames = (hh.dishIds || []).map(id => dishes.find(d => d.id === id)?.name || "").filter(Boolean);
           const dayStr = hh.days.map(d => DAY_LABELS[d]).join(", ");
+          const chLabel = (hh.channels?.length ? hh.channels : ["qr", "ecommerce"]).map(c => c === "qr" ? "Carta QR" : "Tienda online").join(" + ");
           const isNowActive = (() => {
             const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
             const day = now.getDay();
@@ -372,7 +405,7 @@ export default function HappyHoursTab({ restaurantId, categories, dishes = [] }:
                     {!hh.isActive && <span style={{ fontSize: "0.6rem", fontWeight: 700, background: "rgba(255,100,100,0.08)", color: "#ff6b6b", padding: "2px 8px", borderRadius: 50 }}>PAUSADO</span>}
                   </div>
                   <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                    {dayStr} · {hh.startTime} - {hh.endTime} · {hh.discountType === "FIXED_PRICE" ? `$${hh.discountValue.toLocaleString("es-CL")}` : `${hh.discountValue}% dcto`}
+                    {dayStr} · {hh.startTime} - {hh.endTime} · {hh.discountType === "FIXED_PRICE" ? `$${hh.discountValue.toLocaleString("es-CL")}` : `${hh.discountValue}% dcto`} · {chLabel}
                   </p>
                   {(catNames.length > 0 || dishNames.length > 0) && (
                     <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>

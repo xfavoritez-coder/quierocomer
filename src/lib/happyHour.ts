@@ -14,9 +14,17 @@ export interface HappyHourRule {
   discountValue: number;
   categoryIds: string[];
   dishIds: string[];
+  channels?: string[]; // "qr" | "ecommerce"; vacío/ausente = todos los canales
   bannerText?: string | null;
   bannerColor?: string | null;
   isActive: boolean;
+}
+
+/** ¿El happy hour aplica en este canal? Sin channels (vacío) = todos. */
+export function appliesToChannel(hh: { channels?: string[] | null }, channel: "qr" | "ecommerce"): boolean {
+  const ch = hh.channels;
+  if (!ch || ch.length === 0) return true;
+  return ch.includes(channel);
 }
 
 export function chileNow(): Date {

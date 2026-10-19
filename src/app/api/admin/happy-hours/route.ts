@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { restaurantId, name, days, startTime, endTime, discountType, discountValue, categoryIds, dishIds, bannerText, bannerColor } = body;
+    const { restaurantId, name, days, startTime, endTime, discountType, discountValue, categoryIds, dishIds, channels, bannerText, bannerColor } = body;
 
     if (!restaurantId || !name || !days?.length || !startTime || !endTime || !discountType || discountValue == null) {
       return NextResponse.json({ error: "Campos requeridos" }, { status: 400 });
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
         discountValue: Number(discountValue),
         categoryIds: categoryIds || [],
         dishIds: dishIds || [],
+        channels: Array.isArray(channels) && channels.length ? channels.filter((c: string) => c === "qr" || c === "ecommerce") : ["qr", "ecommerce"],
         bannerText: bannerText || null,
         bannerColor: bannerColor || "#f59e0b",
       },
@@ -81,6 +82,10 @@ export async function PUT(req: NextRequest) {
     await requireRestaurantForOwner(req, existing.restaurantId);
 
     if (data.discountValue != null) data.discountValue = Number(data.discountValue);
+    if (data.channels != null) {
+      data.channels = Array.isArray(data.channels) ? data.channels.filter((c: string) => c === "qr" || c === "ecommerce") : [];
+      if (!data.channels.length) data.channels = ["qr", "ecommerce"];
+    }
 
     const updated = await prisma.happyHour.update({ where: { id }, data });
     return NextResponse.json(updated);

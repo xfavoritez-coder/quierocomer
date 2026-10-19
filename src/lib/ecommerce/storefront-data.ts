@@ -10,7 +10,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
 import { parseHours, resolveAvailability, type OpenStatus } from "@/lib/ecommerce/hours";
-import { findActiveHappyHour, happyHourPriceFor } from "@/lib/happyHour";
+import { findActiveHappyHour, happyHourPriceFor, appliesToChannel } from "@/lib/happyHour";
 
 export interface StoreTenant {
   id: string;
@@ -160,14 +160,14 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
-      happyHours: { where: { isActive: true }, select: { id: true, name: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, bannerText: true, bannerColor: true, isActive: true } },
+      happyHours: { where: { isActive: true }, select: { id: true, name: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, bannerText: true, bannerColor: true, isActive: true } },
     },
   });
 
   if (!restaurant || !restaurant.ecommerceEnabled) return null;
 
-  // Happy hour activo ahora (no se aplica en modo gestión de carta).
-  const activeHH = includeHidden ? null : findActiveHappyHour(restaurant.happyHours as any);
+  // Happy hour activo ahora para el canal ecommerce (no se aplica en gestión de carta).
+  const activeHH = includeHidden ? null : findActiveHappyHour((restaurant.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
 
   const categories = await prisma.category.findMany({
     where: { restaurantId: restaurant.id, ...(includeHidden ? {} : { isActive: true }) },

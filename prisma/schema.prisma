@@ -1204,6 +1204,7 @@ model HappyHour {
   discountValue Float
   categoryIds   String[]
   dishIds       String[]
+  channels      String[]              @default(["qr", "ecommerce"]) // canales donde aplica: qr | ecommerce
   bannerText    String?
   bannerColor   String                @default("#f59e0b")
   isActive      Boolean               @default(true)

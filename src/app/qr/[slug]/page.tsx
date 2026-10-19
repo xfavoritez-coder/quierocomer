@@ -280,7 +280,7 @@ export default async function CartaPage({
     isQrScan,
     initialView: serverView,
     lang,
-    happyHours: (restaurant as any).happyHours || [],
+    happyHours: ((restaurant as any).happyHours || []).filter((h: any) => !h.channels?.length || h.channels.includes("qr")),
     timeOfDay,
     weather,
     popularDishIds: Array.from(topDishesResult.dishIds),

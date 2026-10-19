@@ -13,7 +13,7 @@ import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/c
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { parseHours, resolveAvailability } from "@/lib/ecommerce/hours";
-import { findActiveHappyHour, happyHourPriceFor } from "@/lib/happyHour";
+import { findActiveHappyHour, happyHourPriceFor, appliesToChannel } from "@/lib/happyHour";
 import { validateScheduledFor, parseWaitMinutes } from "@/lib/ecommerce/scheduling";
 
 export const runtime = "nodejs";
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, isActive: true } } } as const;
+    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, isActive: true } } } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -118,8 +118,8 @@ export async function POST(req: NextRequest) {
         modifierTemplates: { select: { groups: { select: { options: { select: { id: true, priceAdjustment: true } } } } } },
       },
     });
-    // Happy hour activo ahora: compite con la oferta vigente; se cobra el menor.
-    const activeHH = findActiveHappyHour(restaurant.happyHours as any);
+    // Happy hour activo ahora (canal ecommerce): compite con la oferta; se cobra el menor.
+    const activeHH = findActiveHappyHour((restaurant.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
     const dishMap = new Map<string, { base: number; opt: Map<string, number> }>();
     for (const d of dishes) {
       const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
