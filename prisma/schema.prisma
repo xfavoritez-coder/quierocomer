@@ -679,13 +679,15 @@ model EcommerceCouponUse {
 model Invoice {
   id           String     @id @default(cuid())
   restaurantId String
-  folio        Int
-  tipoDTE      Int
-  total        Int
+  folio        Int?
+  tipoDTE      Int?
+  total        Int?
   periodo      String?
   status       String     @default("EMITIDA")
   emittedAt    DateTime   @default(now())
   metadata     Json?
+  pdfUrl       String?
+  emailSentAt  DateTime?
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])

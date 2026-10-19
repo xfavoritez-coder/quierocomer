@@ -12,9 +12,10 @@ interface SendEmailOptions {
   purpose?: string;
   /** Skip creating an emailLog (caller already created one, e.g. cron jobs with tracking) */
   skipLog?: boolean;
+  attachments?: { filename: string; content: Buffer }[];
 }
 
-export async function sendAdminEmail({ to, subject, html, purpose = "other", skipLog }: SendEmailOptions) {
+export async function sendAdminEmail({ to, subject, html, purpose = "other", skipLog, attachments }: SendEmailOptions) {
   // Create log first so we can inject tracking pixel
   let logId: string | undefined;
   if (!skipLog) {
@@ -40,6 +41,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other", ski
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       },
+      ...(attachments?.length ? { attachments: attachments.map(a => ({ filename: a.filename, content: a.content })) } : {}),
     });
 
     if (error) {
@@ -875,6 +877,88 @@ export function trialExpiredEmailHtml(
       <td style="font-size:11px;color:#ccc;padding:0 6px;">&middot;</td>
       <td style="font-size:11px;color:#b8a888;">&copy; ${new Date().getFullYear()}</td>
     </tr></table>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+// ─── Factura email template ────────────────────────────────────────────────
+
+export function facturaEmailHtml({
+  restaurantName,
+  periodo,
+  amountNet,
+  amountGross,
+}: {
+  restaurantName: string;
+  periodo: string;
+  amountNet: number;
+  amountGross: number;
+}): string {
+  const [year, month] = periodo.split("-");
+  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const mesLabel = MONTHS[parseInt(month, 10) - 1] ?? month;
+  const periodoLabel = `${mesLabel} ${year}`;
+  const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fefefe;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td align="center" style="padding-bottom:24px;">
+    <a href="https://quierocomer.com" style="text-decoration:none;"><table cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle;padding-right:6px;"><img src="https://quierocomer.com/logo.png" alt="" width="22" height="22" style="width:22px;height:22px;display:block;" /></td>
+      <td style="vertical-align:middle;"><span style="font-family:Georgia,serif;font-size:16px;color:#e8930a;">QuieroComer</span></td>
+    </tr></table></a>
+  </td></tr>
+
+  <tr><td style="padding-bottom:20px;">
+    <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1a1a1a;margin:0 0 8px;text-align:center;">Tu factura está lista</h1>
+    <p style="font-size:15px;color:#7a6547;text-align:center;margin:0;">
+      Adjuntamos la factura de <strong>${periodoLabel}</strong> correspondiente a tu suscripción en <strong style="color:#e8930a;">${restaurantName}</strong>.
+    </p>
+  </td></tr>
+
+  <tr><td style="padding-bottom:20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fffbf3;border:1px solid #e8dcc4;border-radius:14px;">
+      <tr><td style="padding:18px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="font-size:13px;color:#7a6547;padding-bottom:10px;">Período</td>
+            <td style="font-size:13px;color:#1a1a1a;font-weight:600;text-align:right;padding-bottom:10px;">${periodoLabel}</td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#7a6547;padding-bottom:10px;">Neto</td>
+            <td style="font-size:13px;color:#1a1a1a;text-align:right;padding-bottom:10px;">${fmt(amountNet)}</td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#7a6547;padding-bottom:10px;">IVA (19%)</td>
+            <td style="font-size:13px;color:#1a1a1a;text-align:right;padding-bottom:10px;">${fmt(amountGross - amountNet)}</td>
+          </tr>
+          <tr>
+            <td style="border-top:1px solid #e8dcc4;padding-top:10px;font-size:14px;color:#1a1a1a;font-weight:700;">Total</td>
+            <td style="border-top:1px solid #e8dcc4;padding-top:10px;font-size:14px;color:#e8930a;font-weight:700;text-align:right;">${fmt(amountGross)}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="font-size:13px;color:#b8a888;text-align:center;padding-bottom:24px;">
+    El documento está adjunto a este correo en formato PDF.
+  </td></tr>
+
+  <tr><td style="padding-top:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#e8dcc4;"></td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="padding:16px 0 0;">
+    <a href="https://quierocomer.com" style="font-size:12px;color:#e8930a;text-decoration:none;">quierocomer.com</a>
+    <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
   </td></tr>
 
 </table>

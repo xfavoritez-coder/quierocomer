@@ -27,6 +27,12 @@ export async function GET(req: NextRequest) {
   });
   if (!owner || !owner.restaurants[0]) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
+  // Load invoices with PDF for this restaurant
+  const invoices = await prisma.invoice.findMany({
+    where: { restaurantId, pdfUrl: { not: null } },
+    select: { periodo: true, pdfUrl: true },
+  });
+
   const restaurant = owner.restaurants[0];
 
   // 1. Pagos registrados con detalle (panelActivity payment_received)
@@ -53,26 +59,35 @@ export async function GET(req: NextRequest) {
   // Combinar y deduplicar por fecha (ventana de 1 min para actividad vs email del mismo pago)
   const activityDates = new Set(activityPayments.map(p => new Date(p.createdAt).toISOString().slice(0, 16)));
 
+  // Build lookup: "YYYY-MM" -> pdfUrl
+  const invoiceByPeriodo = new Map(invoices.map(inv => [inv.periodo ?? "", inv.pdfUrl ?? ""]));
+
   const fromActivity = activityPayments.map(p => {
     const d = p.details as any;
+    const periodo = new Date(p.createdAt).toISOString().slice(0, 7);
     return {
       date: p.createdAt,
       plan: d?.plan || planKey,
       amountNet: d?.amountNet || amountNet,
       amountGross: d?.amountGross || amountGross,
       source: "activity" as const,
+      pdfUrl: invoiceByPeriodo.get(periodo) || null,
     };
   });
 
   const fromEmail = emailPayments
     .filter(e => !activityDates.has(new Date(e.createdAt).toISOString().slice(0, 16)))
-    .map(e => ({
-      date: e.createdAt,
-      plan: planKey,
-      amountNet,
-      amountGross,
-      source: "email" as const,
-    }));
+    .map(e => {
+      const periodo = new Date(e.createdAt).toISOString().slice(0, 7);
+      return {
+        date: e.createdAt,
+        plan: planKey,
+        amountNet,
+        amountGross,
+        source: "email" as const,
+        pdfUrl: invoiceByPeriodo.get(periodo) || null,
+      };
+    });
 
   const payments = [...fromActivity, ...fromEmail]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())

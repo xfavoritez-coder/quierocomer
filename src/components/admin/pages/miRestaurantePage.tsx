@@ -111,7 +111,7 @@ export default function MiRestaurantePage() {
   const [cancelingAutoRenew, setCancelingAutoRenew] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [paymentHistory, setPaymentHistory] = useState<Array<{ date: string; plan: string; amountNet: number; amountGross: number }>>([]);
+  const [paymentHistory, setPaymentHistory] = useState<Array<{ date: string; plan: string; amountNet: number; amountGross: number; pdfUrl?: string | null }>>([]);
 
   // Form state
   const [name, setName] = useState("");
@@ -664,9 +664,26 @@ export default function MiRestaurantePage() {
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Plan {p.plan === "PREMIUM" ? "Premium" : p.plan === "GOLD" ? "Gold" : p.plan}</p>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{formatCLP(p.amountGross)}</p>
-                    <p style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{formatCLP(p.amountNet)} + IVA</p>
+                  <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 10 }}>
+                    {p.pdfUrl && (
+                      <a
+                        href={p.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: "0.72rem", fontWeight: 600, color: "#e8930a",
+                          textDecoration: "none", padding: "3px 9px",
+                          border: "1px solid #f4c97a", borderRadius: 20,
+                          background: "#fffbf0", whiteSpace: "nowrap",
+                        }}
+                      >
+                        PDF
+                      </a>
+                    )}
+                    <div>
+                      <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{formatCLP(p.amountGross)}</p>
+                      <p style={{ fontFamily: FB, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{formatCLP(p.amountNet)} + IVA</p>
+                    </div>
                   </div>
                 </div>
               ))}
