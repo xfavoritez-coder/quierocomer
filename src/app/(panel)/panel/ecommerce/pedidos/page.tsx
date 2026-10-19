@@ -275,6 +275,20 @@ export default function EcommercePedidosPage() {
     } catch { toast.error("Error de conexión"); }
   }
 
+  // Saltar programado: libera YA un pedido programado (deja de estar en espera y
+  // se envía al POS/Toteat como un pedido normal).
+  async function releaseScheduled(id: string) {
+    try {
+      const res = await fetch("/api/panel/ecommerce/release-scheduled", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo liberar el pedido"); return; }
+      const nowIso = new Date().toISOString();
+      setOrders((os) => os.map((o) => (o.id === id ? { ...o, scheduledReleasedAt: nowIso } : o)));
+      setDetail((dt) => (dt && dt.id === id ? { ...dt, scheduledReleasedAt: nowIso } : dt));
+      toast.success("Pedido liberado y enviado a cocina");
+    } catch { toast.error("Error de conexión"); }
+  }
+
   // Base según vista: activos oculta intentos de pago; historial muestra todo.
   // Activos: pedidos realmente en curso (no entregados, no cancelados, no intentos
   // de pago). El "entregado" se alimenta según se mueva en Centro de pedidos.
@@ -452,7 +466,7 @@ export default function EcommercePedidosPage() {
         </div>
       )}
 
-      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} onResendPos={resendPos} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} showWebpayToken={showWebpayToken} />}
+      {detail && <DetailModal order={detail} onClose={() => setDetail(null)} onStatusChange={updateStatus} onForceStatus={forceStatus} onResendPos={resendPos} onReleaseScheduled={releaseScheduled} uberEnabled={uberEnabled} mapsKey={mapsKey} onRequestCourier={requestCourier} printEnabled={printMode !== "off" || agentEnabled} onPrint={() => printComanda(detail)} showWebpayToken={showWebpayToken} />}
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
@@ -539,7 +553,7 @@ function CourierCard({ courier: c, mapsKey, dropoff, compact }: { courier: Couri
   );
 }
 
-function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPos, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint, showWebpayToken }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; onResendPos: (id: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void; showWebpayToken?: boolean }) {
+function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPos, onReleaseScheduled, uberEnabled, mapsKey, onRequestCourier, printEnabled, onPrint, showWebpayToken }: { order: Order; onClose: () => void; onStatusChange: (id: string, s: OrderStatus, r?: string) => Promise<void>; onForceStatus: (id: string, s: OrderStatus) => Promise<void>; onResendPos: (id: string) => Promise<void>; onReleaseScheduled: (id: string) => Promise<void>; uberEnabled: boolean; mapsKey: string | null; onRequestCourier: (id: string) => Promise<void>; printEnabled?: boolean; onPrint?: () => void; showWebpayToken?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -562,6 +576,7 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
   };
   const [forceBusy, setForceBusy] = useState(false);
   const [posBusy, setPosBusy] = useState(false);
+  const [relBusy, setRelBusy] = useState(false);
   const items = Array.isArray(order.items) ? order.items : [];
   const actions = NEXT_ACTIONS[order.status] ?? [];
   const pay = payInfo(order);
@@ -697,6 +712,7 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
               <a href={`/pedido/${order.id}`} target="_blank" rel="noopener noreferrer" style={secBtn}><ExternalLink size={15} /> Seguimiento</a>
               {printEnabled && <button onClick={() => onPrint?.()} style={secBtn}><Printer size={15} /> Imprimir comanda</button>}
               {resendPos && <button onClick={async () => { setPosBusy(true); await onResendPos(order.id); setPosBusy(false); }} disabled={posBusy} style={{ ...secBtn, borderColor: GOLD, color: GOLD, cursor: posBusy ? "wait" : "pointer", opacity: posBusy ? 0.6 : 1 }}>🖨️ {posBusy ? "Enviando…" : "Reenviar a Toteat"}</button>}
+              {order.scheduledFor && !order.scheduledReleasedAt && <button onClick={async () => { if (!confirm("¿Saltar la programación y enviar el pedido a cocina ahora? Dejará de ser programado.")) return; setRelBusy(true); await onReleaseScheduled(order.id); setRelBusy(false); }} disabled={relBusy} style={{ ...secBtn, borderColor: "#a855f7", color: "#a855f7", cursor: relBusy ? "wait" : "pointer", opacity: relBusy ? 0.6 : 1 }}>⏭️ {relBusy ? "Liberando…" : "Saltar programado"}</button>}
               {canRequestCourier && <button onClick={reqCourier} disabled={courierBusy} style={{ ...secBtn, borderColor: GREEN, color: GREEN, cursor: courierBusy ? "wait" : "pointer" }}><Bike size={15} /> {courierBusy ? "Solicitando…" : "Repartidor (Uber)"}</button>}
             </div>
           </div>
