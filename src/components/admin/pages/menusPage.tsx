@@ -2104,7 +2104,7 @@ export default function AdminMenus() {
 
       {/* ── Horarios tab ── */}
       {menuTab === "horarios" && selectedRestaurantId && (
-        <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
+        <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} dishes={dishes.map(d => ({ id: d.id, name: d.name, categoryId: (d as any).categoryId }))} />
       )}
       {/* ── Multi-Menú tab ── */}
       {menuTab === "multimenu" && selectedRestaurantId && (

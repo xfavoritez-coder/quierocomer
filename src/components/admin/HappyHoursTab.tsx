@@ -24,8 +24,9 @@ interface HappyHour {
 }
 
 interface Category { id: string; name: string; }
+interface DishLite { id: string; name: string; categoryId: string; }
 
-export default function HappyHoursTab({ restaurantId, categories }: { restaurantId: string; categories: Category[] }) {
+export default function HappyHoursTab({ restaurantId, categories, dishes = [] }: { restaurantId: string; categories: Category[]; dishes?: DishLite[] }) {
   const [hours, setHours] = useState<HappyHour[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -46,6 +47,8 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
   const [fType, setFType] = useState<"FIXED_PRICE" | "PERCENTAGE">("FIXED_PRICE");
   const [fValue, setFValue] = useState("");
   const [fCatIds, setFCatIds] = useState<string[]>([]);
+  const [fDishIds, setFDishIds] = useState<string[]>([]);
+  const [fDishSearch, setFDishSearch] = useState("");
   const [fBannerText, setFBannerText] = useState("");
   const [fSaving, setFSaving] = useState(false);
 
@@ -59,7 +62,7 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
 
   const resetForm = () => {
     setFName(""); setFDays([1, 2, 3, 4, 5]); setFStart("16:00"); setFEnd("19:00");
-    setFType("FIXED_PRICE"); setFValue(""); setFCatIds([]); setFBannerText("");
+    setFType("FIXED_PRICE"); setFValue(""); setFCatIds([]); setFDishIds([]); setFBannerText("");
     setCreating(false); setEditing(null);
   };
 
@@ -71,13 +74,14 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
     setFType(hh.discountType);
     setFValue(String(hh.discountValue));
     setFCatIds([...hh.categoryIds]);
+    setFDishIds([...(hh.dishIds || [])]);
     setFBannerText(hh.bannerText || "");
     setEditing(hh.id);
     setCreating(true);
   };
 
   const handleSave = async () => {
-    if (!fName.trim() || !fValue || fCatIds.length === 0) return;
+    if (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)) return;
     setFSaving(true);
 
     const payload = {
@@ -89,7 +93,7 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
       discountType: fType,
       discountValue: Number(fValue),
       categoryIds: fCatIds,
-      dishIds: [],
+      dishIds: fDishIds,
       bannerText: fBannerText.trim() || null,
     };
 
@@ -229,8 +233,36 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
                 );
               })}
             </div>
-            {fCatIds.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444", margin: "6px 0 0" }}>Selecciona al menos una categoria</p>}
           </div>
+
+          {/* Productos individuales */}
+          {dishes.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <label style={LBL}>Productos afectados (opcional)</label>
+              <input value={fDishSearch} onChange={e => setFDishSearch(e.target.value)} placeholder="Buscar producto…" style={{ ...INP, marginBottom: 8 }} />
+              {fDishIds.length > 0 && (
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: GOLD, fontWeight: 700, margin: "0 0 6px" }}>{fDishIds.length} producto{fDishIds.length !== 1 ? "s" : ""} seleccionado{fDishIds.length !== 1 ? "s" : ""}</p>
+              )}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", maxHeight: 180, overflowY: "auto", padding: 2 }}>
+                {dishes
+                  .filter(d => { const q = fDishSearch.trim().toLowerCase(); return (!q || d.name.toLowerCase().includes(q)) || fDishIds.includes(d.id); })
+                  .slice(0, 120)
+                  .map(d => {
+                    const sel = fDishIds.includes(d.id);
+                    return (
+                      <button key={d.id} onClick={() => setFDishIds(prev => sel ? prev.filter(x => x !== d.id) : [...prev, d.id])} style={{
+                        padding: "6px 12px", borderRadius: 50, border: "none", cursor: "pointer",
+                        fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                        background: sel ? GOLD : "var(--adm-input)",
+                        color: sel ? "white" : "var(--adm-text3)",
+                      }}>{sel ? "✓ " : ""}{d.name}</button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {fCatIds.length === 0 && fDishIds.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444", margin: "0 0 14px" }}>Selecciona al menos una categoría o un producto</p>}
 
           {/* Banner text */}
           <div style={{ marginBottom: 18 }}>
@@ -244,10 +276,10 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleSave} disabled={fSaving || !fName.trim() || !fValue || fCatIds.length === 0} style={{
+            <button onClick={handleSave} disabled={fSaving || !fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)} style={{
               padding: "10px 20px", background: GOLD, color: "white", border: "none", borderRadius: 10,
               fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
-              opacity: (!fName.trim() || !fValue || fCatIds.length === 0) ? 0.5 : 1,
+              opacity: (!fName.trim() || !fValue || (fCatIds.length === 0 && fDishIds.length === 0)) ? 0.5 : 1,
             }}>{fSaving ? "..." : editing ? "Guardar cambios" : "Crear horario"}</button>
             <button onClick={resetForm} style={{
               padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)",
@@ -276,6 +308,7 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {hours.map(hh => {
           const catNames = hh.categoryIds.map(id => categories.find(c => c.id === id)?.name || "").filter(Boolean);
+          const dishNames = (hh.dishIds || []).map(id => dishes.find(d => d.id === id)?.name || "").filter(Boolean);
           const dayStr = hh.days.map(d => DAY_LABELS[d]).join(", ");
           const isNowActive = (() => {
             const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
@@ -301,9 +334,10 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
                   <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
                     {dayStr} · {hh.startTime} - {hh.endTime} · {hh.discountType === "FIXED_PRICE" ? `$${hh.discountValue.toLocaleString("es-CL")}` : `${hh.discountValue}% dcto`}
                   </p>
-                  {catNames.length > 0 && (
+                  {(catNames.length > 0 || dishNames.length > 0) && (
                     <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
-                      {catNames.map(n => <span key={n} style={{ fontSize: "0.65rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontWeight: 600, fontFamily: F }}>{n}</span>)}
+                      {catNames.map(n => <span key={`c-${n}`} style={{ fontSize: "0.65rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontWeight: 600, fontFamily: F }}>{n}</span>)}
+                      {dishNames.map(n => <span key={`d-${n}`} style={{ fontSize: "0.65rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 600, fontFamily: F }}>🍽 {n}</span>)}
                     </div>
                   )}
                 </div>
