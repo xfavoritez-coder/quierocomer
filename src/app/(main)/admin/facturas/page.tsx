@@ -6,6 +6,11 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
 
+/** Quita los puntos de un RUT dejando solo el guión: 12.345.678-9 → 12345678-9 */
+function cleanRut(rut: string): string {
+  return rut.replace(/\./g, "");
+}
+
 interface InvoiceInfo {
   id: string;
   pdfUrl: string | null;
@@ -304,8 +309,8 @@ export default function FacturasPage() {
                     <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
                       {r.billingRut ? (
                         <span style={{ fontFamily: "monospace", fontSize: 13, color: "#ccc" }}>
-                          {r.billingRut}
-                          <CopyBtn text={r.billingRut} />
+                          {cleanRut(r.billingRut)}
+                          <CopyBtn text={cleanRut(r.billingRut)} />
                         </span>
                       ) : (
                         <span style={{ color: "#444", fontSize: 12 }}>—</span>
