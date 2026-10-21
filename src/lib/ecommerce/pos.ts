@@ -12,6 +12,7 @@ interface StoredCartItem {
   quantity: number;
   unit_price: number;
   toteat_code?: string | null;
+  comment?: string | null;
   options?: { value: string; price_delta: number; toteat_modifier_code?: string | null }[];
 }
 
@@ -39,6 +40,7 @@ export async function dispatchOrderToPos(
     quantity: it.quantity,
     unit_price: it.unit_price,
     toteat_code: it.toteat_code ?? null,
+    comment: it.comment ?? null,
     options: (it.options ?? []).map((o) => ({ value: o.value, price_delta: o.price_delta, toteat_modifier_code: o.toteat_modifier_code ?? null })),
   }));
 

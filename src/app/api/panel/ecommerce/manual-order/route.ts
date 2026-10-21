@@ -72,11 +72,12 @@ export async function POST(req: NextRequest) {
     // Correlativo por restaurante.
     const orderNumber = (await prisma.onlineOrder.count({ where: { restaurantId } })) + 1;
 
-    // Nota final: notas generales + cortesías (motivo) + comentarios por ítem.
+    // Nota general: solo notas generales + cortesías. El comentario por ítem NO
+    // va aquí (iría junto a los acompañamientos); se guarda en el ítem y se
+    // muestra en su propia línea (comanda del agente) y junto al producto en Toteat.
     const extraNotes: string[] = [];
     for (const it of items) {
       if (it.courtesy) extraNotes.push(`🎁 Cortesía: ${it.name}${it.courtesyReason ? ` (${it.courtesyReason})` : ""}`);
-      if (it.comment?.trim()) extraNotes.push(`📝 ${it.name}: ${it.comment.trim()}`);
     }
     const finalNotes = [notes?.trim(), ...extraNotes].filter(Boolean).join(" · ") || null;
 

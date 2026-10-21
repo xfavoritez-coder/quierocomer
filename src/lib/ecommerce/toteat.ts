@@ -17,6 +17,7 @@ export interface PosOrderItem {
   quantity: number;
   unit_price: number; // precio unitario ya incluye deltas de las opciones
   toteat_code?: string | null;
+  comment?: string | null; // nota por producto (ej. "SIN CEBOLLIN")
   options: PosOrderItemOption[];
 }
 
@@ -143,7 +144,13 @@ export async function sendOrderToToteat(order: PosOrder, items: PosOrderItem[], 
         withoutCode.push(modName);
       }
     }
-    if (withoutCode.length) itemOptionNotes.push(`${item.product_name}: ${withoutCode.join(", ")}`);
+    // Nota por producto: modificadores sin código + comentario del ítem. Se
+    // etiqueta con el nombre del producto para que quede asociado a él (no
+    // mezclado con la nota general / acompañamientos).
+    const perProduct: string[] = [];
+    if (withoutCode.length) perProduct.push(withoutCode.join(", "));
+    if (item.comment?.trim()) perProduct.push(item.comment.trim());
+    if (perProduct.length) itemOptionNotes.push(`${item.product_name}: ${perProduct.join(" · ")}`);
   }
 
   // Descuento (cupón) — Toteat EXIGE productCode en líneas con monto negativo

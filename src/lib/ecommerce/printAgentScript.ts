@@ -159,6 +159,7 @@ namespace QuieroComerAgente {
     [DataMember(Name="unitTotal")] public double? unitTotal;
     [DataMember(Name="unit_price")] public double? unit_price;
     [DataMember(Name="selectedOptions")] public Opt[] selectedOptions;
+    [DataMember(Name="comment")] public string comment;
     [DataMember(Name="notes")] public string notes;
   }
 
@@ -449,6 +450,7 @@ namespace QuieroComerAgente {
         double lt = unit * qty; subtotal += lt;
         B(new byte[] { 27, 69, 1 }); Row(((long)qty).ToString() + "x " + name, Money(lt)); B(new byte[] { 27, 69, 0 });
         if (it.selectedOptions != null) foreach (Opt op in it.selectedOptions) { if (op != null && !string.IsNullOrEmpty(op.optionName)) { T("  - " + op.optionName); NL(); } }
+        if (!string.IsNullOrEmpty(it.comment)) { B(new byte[] { 27, 69, 1 }); T("  * " + it.comment); NL(); B(new byte[] { 27, 69, 0 }); }
         if (!string.IsNullOrEmpty(it.notes)) { T("  * " + it.notes); NL(); }
       }
       Line();
