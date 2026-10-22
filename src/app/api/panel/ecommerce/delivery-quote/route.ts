@@ -34,6 +34,18 @@ export async function POST(req: NextRequest) {
   if (!r) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
   const dcfg = parseDeliveryConfig(r.ecommerceDeliveryConfig);
+
+  // Si el cliente ya resolvió la dirección con Autocomplete (coordenadas
+  // precisas de Google Places), usamos ESAS y no re-geocodificamos (evita que
+  // "Rojas Magallanes 926" sin comuna caiga en un punto equivocado).
+  const latIn = Number(body?.lat);
+  const lngIn = Number(body?.lng);
+  if (Number.isFinite(latIn) && Number.isFinite(lngIn)) {
+    const res = computeDistanceFee(dcfg, { lat: latIn, lng: lngIn });
+    if (!res.available) return NextResponse.json({ available: false, reason: res.reason || "Fuera de la zona de reparto." });
+    return NextResponse.json({ available: true, fee: res.fee, formatted: address, lat: latIn, lng: lngIn });
+  }
+
   const key = parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey;
   if (!key) return NextResponse.json({ available: false, reason: "El local no tiene Google Maps configurado; ingresa el envío manualmente." });
 

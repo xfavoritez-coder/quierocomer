@@ -9,6 +9,7 @@ import {
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import StoreStyles from "@/components/ecommerce/StoreStyles";
 import AccompanimentsSection from "@/components/ecommerce/AccompanimentsSection";
+import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import type { StorefrontData, StoreProduct, StoreOptionGroup } from "@/lib/ecommerce/storefront-data";
 import type { AccompConfig } from "@/lib/ecommerce/accompaniments";
 
@@ -43,6 +44,7 @@ const C = {
 export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos" }: { restaurantId?: string | null; backHref?: string; backLabel?: string }) {
   const [data, setData] = useState<StorefrontData | null>(null);
   const [posAvailable, setPosAvailable] = useState(false);
+  const [mapsKey, setMapsKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       fetch(`/api/panel/ecommerce/menu?restaurantId=${restaurantId}`).then((r) => (r.ok ? r.json() : Promise.reject(new Error("No se pudo cargar el catálogo")))),
       fetch(`/api/panel/ecommerce/status?restaurantId=${restaurantId}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ])
-      .then(([menu, status]) => { setData(menu); setPosAvailable(!!status?.integrations?.pos); setErr(null); })
+      .then(([menu, status]) => { setData(menu); setPosAvailable(!!status?.integrations?.pos); setMapsKey(status?.googleMapsKey || null); setErr(null); })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
   }, [restaurantId]);
@@ -65,7 +67,7 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       <CollapseSidebar />
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} backHref={backHref} backLabel={backLabel} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} />}
     </>
   );
 }
@@ -85,7 +87,7 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; backHref: string; backLabel: string }) {
+function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; mapsKey: string | null; backHref: string; backLabel: string }) {
   const { tenant, categories, products } = data;
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
@@ -124,6 +126,11 @@ function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: 
   const [zoneName, setZoneName] = useState("");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [geo, setGeo] = useState<{ status: "idle" | "loading" | "ok" | "error"; msg: string; lat?: number; lng?: number }>({ status: "idle", msg: "" });
+  // Dirección elegida con Autocomplete de Google (coordenadas precisas): evita
+  // que el server geocodifique un texto ambiguo y caiga en un punto equivocado.
+  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
+  const addrRef = useRef<HTMLInputElement>(null);
+  const gmapsReady = useGoogleMaps(deliveryType === "DELIVERY" && deliveryMode === "distance" ? mapsKey : null);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
@@ -167,13 +174,36 @@ function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: 
     setGeo({ status: "loading", msg: "Calculando envío…" });
     geoTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch("/api/panel/ecommerce/delivery-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, address: address.trim() }) });
+        const res = await fetch("/api/panel/ecommerce/delivery-quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, address: address.trim(), lat: picked?.lat, lng: picked?.lng }) });
         const q = await res.json();
         if (q.available) { setDeliveryFee(q.fee); setGeo({ status: "ok", msg: `🛵 ${fmt(q.fee)} · ${q.formatted}`, lat: q.lat, lng: q.lng }); }
         else { setDeliveryFee(0); setGeo({ status: "error", msg: `⚠️ ${q.reason || "Zona no disponible"}` }); }
       } catch { setDeliveryFee(0); setGeo({ status: "error", msg: "⚠️ Error al calcular" }); }
-    }, 700);
-  }, [address, deliveryType, deliveryMode, restaurantId]);
+    }, picked ? 0 : 700);
+  }, [address, picked, deliveryType, deliveryMode, restaurantId]);
+
+  // Autocomplete de Google en el campo de dirección (coordenadas precisas).
+  useEffect(() => {
+    if (deliveryType !== "DELIVERY" || deliveryMode !== "distance" || !gmapsReady || !addrRef.current) return;
+    const g = (window as unknown as { google?: any }).google;
+    if (!g?.maps?.places?.Autocomplete) return;
+    const ac = new g.maps.places.Autocomplete(addrRef.current, {
+      componentRestrictions: { country: ["cl"] },
+      types: ["address"],
+      fields: ["formatted_address", "geometry"],
+    });
+    const listener = ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const loc = place?.geometry?.location;
+      if (!loc) return;
+      setAddress(place.formatted_address || addrRef.current!.value);
+      setPicked({ lat: loc.lat(), lng: loc.lng() });
+    });
+    const el = addrRef.current;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Enter") e.preventDefault(); };
+    el.addEventListener("keydown", onKey);
+    return () => { g.maps.event?.removeListener?.(listener); el.removeEventListener("keydown", onKey); };
+  }, [deliveryType, deliveryMode, gmapsReady]);
 
   // Acciones de carrito
   const addToCart = useCallback((base: Omit<CartItem, "key" | "quantity" | "comment" | "courtesy" | "courtesyReason">, qty: number) => {
@@ -316,7 +346,7 @@ function POS({ data, restaurantId, posAvailable, backHref, backLabel }: { data: 
         {deliveryType === "DELIVERY" && (
           <Section icon={<MapPin size={13} />} title="Entrega">
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle 123, Comuna *" style={inp} />
+              <input ref={addrRef} value={address} onChange={(e) => { setAddress(e.target.value); setPicked(null); }} placeholder="Escribe y elige la dirección de la lista *" style={inp} />
               <input value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Dpto / Piso (opcional)" style={inp} />
               {deliveryMode === "zones" ? (
                 <>
