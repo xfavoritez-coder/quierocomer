@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { ListOrdered, Plus, Bell, Check, X, ChevronRight, Copy, RefreshCw, QrCode } from "lucide-react";
+import { ListOrdered, Plus, Bell, Check, X, Copy, RefreshCw, QrCode } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -89,7 +89,7 @@ export default function GestionFilaPage() {
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Fila virtual</h1>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Fila virtual de espera por número de turno.</p>
         </div>
-        <button onClick={() => { setLoading(true); load(); }} title="Actualizar" style={{ width: 38, height: 38, borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text3)", cursor: "pointer" }}><RefreshCw size={16} /></button>
+        <button onClick={() => { setLoading(true); load(); }} title="Actualizar" style={{ width: 38, height: 38, borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text3)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><RefreshCw size={16} /></button>
       </div>
 
       {/* Activar fila + link público */}
@@ -144,10 +144,14 @@ export default function GestionFilaPage() {
                     <span style={{ fontSize: "0.6rem", fontWeight: 800, padding: "2px 7px", borderRadius: 50, background: st.bg, color: st.color }}>{st.label}</span>
                     {e.source === "public" && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "var(--adm-text3)" }}>auto</span>}
                   </div>
-                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{e.phone}{e.partySize > 1 ? ` · ${e.partySize} pers.` : ""}</p>
+                  <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{e.phone}</p>
+                </div>
+                {/* Nº de personas — destacado para asignar la mesa correcta */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, padding: "4px 12px", borderRadius: 12, background: "rgba(37,99,235,0.1)", minWidth: 58 }}>
+                  <span style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, color: "#2563eb", lineHeight: 1 }}>{e.partySize}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.58rem", fontWeight: 700, color: "#2563eb", textTransform: "uppercase", letterSpacing: ".04em", marginTop: 2 }}>{e.partySize === 1 ? "persona" : "personas"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  {e.status === "WAITING" && <button onClick={() => setStatus(e.id, "NEAR")} style={actBtn("#2563eb")}><ChevronRight size={13} /> Próximo</button>}
                   {e.status !== "CALLED" && <button onClick={() => setStatus(e.id, "CALLED")} style={actBtn("#16a34a")}><Bell size={13} /> Llamar</button>}
                   <button onClick={() => setStatus(e.id, "DONE")} style={actBtn("#6b7280")}><Check size={13} /> Atendido</button>
                   <button onClick={() => setStatus(e.id, "CANCELLED")} title="Cancelar" style={actBtn("#dc2626")}><X size={13} /></button>
