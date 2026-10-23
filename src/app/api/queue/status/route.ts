@@ -17,16 +17,19 @@ export async function GET(req: NextRequest) {
   });
   if (!entry) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  // Personas por delante: en espera/próximas/llamadas con un número menor.
-  const ahead = entry.status === "WAITING" || entry.status === "NEAR"
+  // Posición en la fila = personas activas (en espera/próximas/llamadas) con un
+  // número menor o igual al del cliente, INCLUYÉNDOLO a él. Baja a 1 (es el
+  // próximo) a medida que atienden a los de adelante.
+  const active = entry.status === "WAITING" || entry.status === "NEAR" || entry.status === "CALLED";
+  const position = active
     ? await prisma.queueEntry.count({
         where: {
           restaurantId: entry.restaurantId,
-          number: { lt: entry.number },
+          number: { lte: entry.number },
           status: { in: ["WAITING", "NEAR", "CALLED"] },
         },
       })
     : 0;
 
-  return NextResponse.json({ status: entry.status, number: entry.number, ahead });
+  return NextResponse.json({ status: entry.status, position });
 }

@@ -14,7 +14,7 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
   // Registro activo del cliente (persiste en el teléfono).
   const storeKey = `qc_fila_${slug}`;
   const [entryId, setEntryId] = useState<string | null>(null);
-  const [live, setLive] = useState<{ status: Status; number: number; ahead: number } | null>(null);
+  const [live, setLive] = useState<{ status: Status; position: number } | null>(null);
   const prevStatus = useRef<Status | null>(null);
 
   // Recupera el registro guardado al abrir.
@@ -27,7 +27,7 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
       const res = await fetch(`/api/queue/status?id=${id}`);
       if (res.status === 404) { try { localStorage.removeItem(storeKey); } catch {}; setEntryId(null); setLive(null); return; }
       const d = await res.json();
-      setLive({ status: d.status, number: d.number, ahead: d.ahead ?? 0 });
+      setLive({ status: d.status, position: d.position ?? 0 });
       // Aviso háptico al pasar a "ya es tu turno".
       if (prevStatus.current && prevStatus.current !== "CALLED" && d.status === "CALLED") {
         try { navigator.vibrate?.([200, 100, 200]); } catch {}
@@ -64,24 +64,31 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
   const card: React.CSSProperties = { width: "100%", maxWidth: 420, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 10px 40px rgba(0,0,0,0.06)" };
   const input: React.CSSProperties = { width: "100%", padding: "13px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 12, fontSize: "1rem", outline: "none", boxSizing: "border-box", color: "#111" };
 
-  // Mensajes por estado (lo que ve el cliente en su teléfono).
+  // Mensajes por estado. El número grande es la POSICIÓN en la fila (cuántos
+  // faltan contándote); baja a 1 y luego pasa a "es tu turno" / atendido.
   const view = (() => {
     if (!live) return null;
-    const n = live.number;
+    const p = live.position;
+    const next = p <= 1;
     switch (live.status) {
       case "WAITING":
-        return { emoji: "🎫", tone: "#6b7280", title: "Estás en la fila", lead: `Tu número de turno es ${n}`,
-          body: live.ahead > 0 ? `Tienes ${live.ahead} ${live.ahead === 1 ? "persona" : "personas"} por delante. Te avisaremos cuando se aproxime tu turno.` : "Eres el siguiente. Mantente atento a tu teléfono." };
       case "NEAR":
-        return { emoji: "⏳", tone: "#2563eb", title: "Tu turno está próximo", lead: `Turno ${n}`,
-          body: "Mantente atento y preparado para acercarte cuando el personal te lo indique." };
+        return {
+          emoji: next ? "🙌" : "🎫",
+          tone: next ? "#2563eb" : "#6b7280",
+          big: p,
+          bigLabel: next ? "¡Eres el siguiente!" : "faltan por atender (contándote)",
+          title: next ? "Prepárate" : (live.status === "NEAR" ? "Tu turno está próximo" : "Estás en la fila"),
+          body: next
+            ? "Eres el próximo. Mantente atento a tu teléfono, te llamaremos en cualquier momento."
+            : "A medida que atienden a los de adelante, tu número va bajando. Te avisaremos cuando sea tu turno.",
+        };
       case "CALLED":
-        return { emoji: "🔔", tone: "#16a34a", title: "¡Ya es tu turno!", lead: `Turno ${n}`,
-          body: "Por favor, dirígete al punto de atención para ser atendido. ¡Gracias por tu espera!" };
+        return { emoji: "🔔", tone: "#16a34a", title: "¡Ya es tu turno!", body: "Por favor, dirígete al punto de atención para ser atendido. ¡Gracias por tu espera!" };
       case "DONE":
-        return { emoji: "✅", tone: "#6b7280", title: "¡Gracias!", lead: `Turno ${n}`, body: "Fuiste atendido. ¡Que lo disfrutes!", final: true };
+        return { emoji: "✅", tone: "#6b7280", title: "¡Gracias!", body: "Fuiste atendido. ¡Que lo disfrutes!", final: true };
       case "CANCELLED":
-        return { emoji: "⚠️", tone: "#dc2626", title: "Registro cancelado", lead: `Turno ${n}`, body: "Tu turno fue cancelado. Si fue un error, vuelve a registrarte o acércate al local.", final: true };
+        return { emoji: "⚠️", tone: "#dc2626", title: "Registro cancelado", body: "Tu turno fue cancelado. Si fue un error, vuelve a registrarte o acércate al local.", final: true };
     }
   })();
 
@@ -98,8 +105,13 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
           <div style={{ textAlign: "center" }}>
             <div style={{ width: 72, height: 72, borderRadius: "50%", background: live!.status === "CALLED" ? `${view.tone}1f` : "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: 34 }}>{view.emoji}</div>
             <p style={{ fontSize: "1.15rem", color: view.tone, fontWeight: 900, margin: "0 0 2px" }}>{view.title}</p>
-            <div style={{ fontSize: "3rem", fontWeight: 900, color: accent, lineHeight: 1.1, margin: "6px 0" }}>{live!.number}</div>
-            <p style={{ fontSize: "0.9rem", color: "#4b5563", margin: "10px 0 0", lineHeight: 1.55 }}>{view.body}</p>
+            {typeof view.big === "number" && (
+              <>
+                <div style={{ fontSize: "3.6rem", fontWeight: 900, color: accent, lineHeight: 1.05, margin: "8px 0 0" }}>{view.big}</div>
+                <p style={{ fontSize: "0.78rem", color: "#9ca3af", fontWeight: 700, margin: "2px 0 0", textTransform: "uppercase", letterSpacing: ".03em" }}>{view.bigLabel}</p>
+              </>
+            )}
+            <p style={{ fontSize: "0.9rem", color: "#4b5563", margin: "14px 0 0", lineHeight: 1.55 }}>{view.body}</p>
             {view.final && (
               <button onClick={reset} style={{ width: "100%", marginTop: 18, padding: "13px", borderRadius: 12, border: `1px solid ${accent}`, background: "transparent", color: accent, fontSize: "0.95rem", fontWeight: 800, cursor: "pointer" }}>Registrarme de nuevo</button>
             )}
