@@ -124,7 +124,7 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled, phoneRe
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input value={fName} onChange={(e) => setFName(e.target.value)} placeholder="Tu nombre" style={input} />
-              <input value={fPhone} onChange={(e) => setFPhone(e.target.value)} placeholder={phoneRequired ? "Tu teléfono (+56 9 …)" : "Tu teléfono (opcional)"} inputMode="tel" style={input} />
+              {phoneRequired && <input value={fPhone} onChange={(e) => setFPhone(e.target.value)} placeholder="Tu teléfono (+56 9 …)" inputMode="tel" style={input} />}
               <div>
                 <label style={{ fontSize: "0.8rem", color: "#6b7280", display: "block", marginBottom: 6 }}>¿Cuántas personas?</label>
                 <input value={fParty} onChange={(e) => setFParty(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={input} />

@@ -132,12 +132,12 @@ export default function GestionFilaPage() {
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-          <button onClick={togglePhone} style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", background: phoneRequired ? "#4ade80" : "var(--adm-input-border)", transition: "background .2s", flexShrink: 0 }}>
-            <span style={{ position: "absolute", top: 3, left: phoneRequired ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+          <button onClick={togglePhone} style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", background: !phoneRequired ? "#4ade80" : "var(--adm-input-border)", transition: "background .2s", flexShrink: 0 }}>
+            <span style={{ position: "absolute", top: 3, left: !phoneRequired ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
           </button>
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Pedir teléfono</p>
-            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>{phoneRequired ? "El teléfono es obligatorio al registrarse." : "El teléfono es opcional (solo nombre)."}</p>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>No pedir teléfono</p>
+            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>{!phoneRequired ? "El formulario no pide teléfono (solo nombre)." : "El teléfono es obligatorio al registrarse."}</p>
           </div>
         </div>
       </div>
@@ -148,16 +148,16 @@ export default function GestionFilaPage() {
         {isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre *" style={inp} />
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={phoneRequired ? "Teléfono *" : "Teléfono (opcional)"} inputMode="tel" style={inp} />
+            {phoneRequired && <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono *" inputMode="tel" style={inp} />}
             <div style={{ display: "flex", gap: 8 }}>
               <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Pers." title="Personas" inputMode="numeric" style={{ ...inp, width: 72, textAlign: "center", flexShrink: 0 }} />
               <button onClick={add} disabled={adding || !name.trim() || (phoneRequired && !phone.trim())} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: adding ? "wait" : "pointer", opacity: (!name.trim() || (phoneRequired && !phone.trim())) ? 0.5 : 1 }}><Plus size={16} /> {adding ? "…" : "Agregar"}</button>
             </div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 70px auto", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: phoneRequired ? "1fr 1fr 70px auto" : "1fr 70px auto", gap: 8, alignItems: "center" }}>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre *" style={inp} />
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={phoneRequired ? "Teléfono *" : "Teléfono (opcional)"} style={inp} />
+            {phoneRequired && <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono *" style={inp} />}
             <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Pers." title="Personas" style={{ ...inp, textAlign: "center" }} />
             <button onClick={add} disabled={adding || !name.trim() || (phoneRequired && !phone.trim())} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: adding ? "wait" : "pointer", opacity: (!name.trim() || (phoneRequired && !phone.trim())) ? 0.5 : 1 }}><Plus size={15} /> {adding ? "…" : "Agregar"}</button>
           </div>
