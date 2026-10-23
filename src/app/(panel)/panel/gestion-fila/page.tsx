@@ -177,8 +177,10 @@ export default function GestionFilaPage() {
             const st = STATUS[e.status];
             return (
               <div key={e.id} style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 10 : 12, padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, flexWrap: isMobile ? "wrap" : "nowrap" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "#F4A623" }}>{e.number}</span>
+                {/* Cantidad de personas — clave para asignar la mesa correcta */}
+                <div style={{ width: 52, height: 52, borderRadius: 12, background: "rgba(37,99,235,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title={`${e.partySize} ${e.partySize === 1 ? "persona" : "personas"}`}>
+                  <span style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 900, color: "#2563eb", lineHeight: 1 }}>{e.partySize}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.5rem", fontWeight: 800, color: "#2563eb", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 2 }}>pers.</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -187,11 +189,6 @@ export default function GestionFilaPage() {
                     {e.source === "public" && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "var(--adm-text3)" }}>auto</span>}
                   </div>
                   <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{e.phone || "Sin teléfono"}</p>
-                </div>
-                {/* Nº de personas — destacado para asignar la mesa correcta */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, padding: "4px 12px", borderRadius: 12, background: "rgba(37,99,235,0.1)", minWidth: 58 }}>
-                  <span style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, color: "#2563eb", lineHeight: 1 }}>{e.partySize}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.58rem", fontWeight: 700, color: "#2563eb", textTransform: "uppercase", letterSpacing: ".04em", marginTop: 2 }}>{e.partySize === 1 ? "persona" : "personas"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end", width: isMobile ? "100%" : undefined }}>
                   {e.status !== "CALLED" && <button onClick={() => setStatus(e.id, "CALLED")} style={{ ...actBtn("#16a34a"), flex: isMobile ? 1 : undefined, justifyContent: "center", padding: isMobile ? "9px 10px" : "6px 10px" }}><Bell size={13} /> Llamar</button>}
