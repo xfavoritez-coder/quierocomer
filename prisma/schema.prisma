@@ -425,6 +425,8 @@ model Restaurant {
   waiterCalls                WaiterCall[]
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
+  queueEnabled               Boolean                   @default(false) // fila virtual (Gestión de fila) activa
+  queueEntries               QueueEntry[]
 
   @@index([ownerId])
   @@index([communeSlug])
@@ -1191,6 +1193,26 @@ model RestaurantScheduleRule {
   restaurant   Restaurant       @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])
+}
+
+// Fila virtual ("Gestión de fila"): cada persona en espera con su número de turno.
+model QueueEntry {
+  id           String     @id @default(cuid())
+  restaurantId String
+  number       Int // número de turno (se reinicia por día)
+  name         String
+  phone        String
+  partySize    Int        @default(1)
+  status       String     @default("WAITING") // WAITING | NEAR | CALLED | DONE | CANCELLED
+  source       String     @default("staff") // staff | public
+  note         String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  calledAt     DateTime?
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, status])
 }
 
 model HappyHour {
