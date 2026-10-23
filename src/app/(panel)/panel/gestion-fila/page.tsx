@@ -132,12 +132,12 @@ export default function GestionFilaPage() {
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 12, borderTop: "1px solid var(--adm-card-border)" }}>
-          <button onClick={togglePhone} style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", background: !phoneRequired ? "#4ade80" : "var(--adm-input-border)", transition: "background .2s", flexShrink: 0 }}>
-            <span style={{ position: "absolute", top: 3, left: !phoneRequired ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+          <button onClick={togglePhone} style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", background: phoneRequired ? "#4ade80" : "var(--adm-input-border)", transition: "background .2s", flexShrink: 0 }}>
+            <span style={{ position: "absolute", top: 3, left: phoneRequired ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
           </button>
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>No pedir teléfono</p>
-            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>{!phoneRequired ? "El formulario no pide teléfono (solo nombre)." : "El teléfono es obligatorio al registrarse."}</p>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Pedir número de teléfono</p>
+            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>{phoneRequired ? "El formulario solicita el teléfono (obligatorio)." : "El formulario no pide teléfono (solo nombre)."}</p>
           </div>
         </div>
       </div>
