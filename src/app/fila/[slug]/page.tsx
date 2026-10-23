@@ -15,7 +15,7 @@ export default async function FilaPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const r = await prisma.restaurant.findUnique({
     where: { slug },
-    select: { name: true, logoUrl: true, cartaAccentColor: true, queueEnabled: true },
+    select: { name: true, logoUrl: true, cartaAccentColor: true, queueEnabled: true, queuePhoneRequired: true },
   });
   if (!r) return notFound();
 
@@ -26,6 +26,7 @@ export default async function FilaPage({ params }: { params: Promise<{ slug: str
       logoUrl={r.logoUrl}
       accent={r.cartaAccentColor || "#e63946"}
       enabled={r.queueEnabled}
+      phoneRequired={r.queuePhoneRequired !== false}
     />
   );
 }

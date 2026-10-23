@@ -33,13 +33,13 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { queueEnabled: true, slug: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { queueEnabled: true, queuePhoneRequired: true, slug: true } });
   const entries = await prisma.queueEntry.findMany({
     where: { restaurantId, createdAt: { gte: chileDayStartUtc() } },
     orderBy: { number: "asc" },
     select: SEL,
   });
-  return NextResponse.json({ enabled: !!r?.queueEnabled, slug: r?.slug ?? null, entries });
+  return NextResponse.json({ enabled: !!r?.queueEnabled, phoneRequired: r?.queuePhoneRequired !== false, slug: r?.slug ?? null, entries });
 }
 
 /** POST /api/panel/queue { restaurantId, name, phone, partySize?, note? } → agrega a la fila */
@@ -50,8 +50,11 @@ export async function POST(req: NextRequest) {
   const phone = (body?.phone || "").toString().trim().slice(0, 30);
   const partySize = Math.max(1, Math.min(50, Math.round(Number(body?.partySize) || 1)));
   const note = (body?.note || "").toString().trim().slice(0, 200) || null;
-  if (!restaurantId || !name || !phone) return NextResponse.json({ error: "Nombre y teléfono requeridos" }, { status: 400 });
+  if (!restaurantId || !name) return NextResponse.json({ error: "Falta el nombre" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const rCfg = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { queuePhoneRequired: true } });
+  if (rCfg?.queuePhoneRequired !== false && !phone) return NextResponse.json({ error: "El teléfono es requerido" }, { status: 400 });
 
   const last = await prisma.queueEntry.findFirst({
     where: { restaurantId, createdAt: { gte: chileDayStartUtc() } },
@@ -86,13 +89,16 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ ok: true, entry });
 }
 
-/** PUT /api/panel/queue { restaurantId, enabled } → activa/desactiva la fila virtual */
+/** PUT /api/panel/queue { restaurantId, enabled?, phoneRequired? } → ajustes de la fila */
 export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const restaurantId = (body?.restaurantId || "").toString();
-  const enabled = body?.enabled === true;
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  await prisma.restaurant.update({ where: { id: restaurantId }, data: { queueEnabled: enabled } });
-  return NextResponse.json({ ok: true, enabled });
+  const data: { queueEnabled?: boolean; queuePhoneRequired?: boolean } = {};
+  if (typeof body?.enabled === "boolean") data.queueEnabled = body.enabled;
+  if (typeof body?.phoneRequired === "boolean") data.queuePhoneRequired = body.phoneRequired;
+  if (!Object.keys(data).length) return NextResponse.json({ error: "Nada que actualizar" }, { status: 400 });
+  await prisma.restaurant.update({ where: { id: restaurantId }, data });
+  return NextResponse.json({ ok: true, ...data });
 }

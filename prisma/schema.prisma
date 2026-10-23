@@ -426,6 +426,7 @@ model Restaurant {
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
   queueEnabled               Boolean                   @default(false) // fila virtual (Gestión de fila) activa
+  queuePhoneRequired         Boolean                   @default(true) // pedir teléfono al registrarse en la fila
   queueEntries               QueueEntry[]
 
   @@index([ownerId])

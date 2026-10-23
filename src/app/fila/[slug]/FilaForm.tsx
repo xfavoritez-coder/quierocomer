@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Status = "WAITING" | "NEAR" | "CALLED" | "DONE" | "CANCELLED";
 
-export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slug: string; name: string; logoUrl: string | null; accent: string; enabled: boolean }) {
+export default function FilaForm({ slug, name, logoUrl, accent, enabled, phoneRequired = true }: { slug: string; name: string; logoUrl: string | null; accent: string; enabled: boolean; phoneRequired?: boolean }) {
   const [fName, setFName] = useState("");
   const [fPhone, setFPhone] = useState("");
   const [fParty, setFParty] = useState("1");
@@ -47,7 +47,8 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
 
   const submit = async () => {
     setErr(null);
-    if (!fName.trim() || fPhone.replace(/\D/g, "").length < 8) { setErr("Ingresa tu nombre y un teléfono válido."); return; }
+    if (!fName.trim()) { setErr("Ingresa tu nombre."); return; }
+    if (phoneRequired && fPhone.replace(/\D/g, "").length < 8) { setErr("Ingresa un teléfono válido."); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/queue/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug, name: fName.trim(), phone: fPhone.trim(), partySize: Number(fParty) || 1 }) });
@@ -123,7 +124,7 @@ export default function FilaForm({ slug, name, logoUrl, accent, enabled }: { slu
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input value={fName} onChange={(e) => setFName(e.target.value)} placeholder="Tu nombre" style={input} />
-              <input value={fPhone} onChange={(e) => setFPhone(e.target.value)} placeholder="Tu teléfono (+56 9 …)" inputMode="tel" style={input} />
+              <input value={fPhone} onChange={(e) => setFPhone(e.target.value)} placeholder={phoneRequired ? "Tu teléfono (+56 9 …)" : "Tu teléfono (opcional)"} inputMode="tel" style={input} />
               <div>
                 <label style={{ fontSize: "0.8rem", color: "#6b7280", display: "block", marginBottom: 6 }}>¿Cuántas personas?</label>
                 <input value={fParty} onChange={(e) => setFParty(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={input} />

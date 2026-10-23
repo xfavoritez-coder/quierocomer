@@ -25,21 +25,26 @@ export async function POST(req: NextRequest) {
   const name = (body?.name || "").toString().trim().slice(0, 80);
   const phone = (body?.phone || "").toString().trim().slice(0, 30);
   const partySize = Math.max(1, Math.min(50, Math.round(Number(body?.partySize) || 1)));
-  if (!slug || !name || phone.replace(/\D/g, "").length < 8) {
-    return NextResponse.json({ error: "Ingresa tu nombre y un teléfono válido." }, { status: 400 });
-  }
 
-  const r = await prisma.restaurant.findUnique({ where: { slug }, select: { id: true, queueEnabled: true } });
+  const r = await prisma.restaurant.findUnique({ where: { slug }, select: { id: true, queueEnabled: true, queuePhoneRequired: true } });
   if (!r) return NextResponse.json({ error: "Local no encontrado" }, { status: 404 });
   if (!r.queueEnabled) return NextResponse.json({ error: "La fila virtual no está disponible en este momento." }, { status: 403 });
 
+  const phoneRequired = r.queuePhoneRequired !== false;
+  if (!name) return NextResponse.json({ error: "Ingresa tu nombre." }, { status: 400 });
+  if (phoneRequired && phone.replace(/\D/g, "").length < 8) {
+    return NextResponse.json({ error: "Ingresa un teléfono válido." }, { status: 400 });
+  }
+
   const dayStart = chileDayStartUtc();
-  // Evita registros duplicados del mismo teléfono el mismo día (si ya está en espera).
-  const dup = await prisma.queueEntry.findFirst({
-    where: { restaurantId: r.id, phone, createdAt: { gte: dayStart }, status: { in: ["WAITING", "NEAR", "CALLED"] } },
-    select: { id: true, number: true },
-  });
-  if (dup) return NextResponse.json({ ok: true, id: dup.id, number: dup.number, already: true });
+  // Evita registros duplicados del mismo teléfono el mismo día (solo si dio teléfono).
+  if (phone) {
+    const dup = await prisma.queueEntry.findFirst({
+      where: { restaurantId: r.id, phone, createdAt: { gte: dayStart }, status: { in: ["WAITING", "NEAR", "CALLED"] } },
+      select: { id: true, number: true },
+    });
+    if (dup) return NextResponse.json({ ok: true, id: dup.id, number: dup.number, already: true });
+  }
 
   const last = await prisma.queueEntry.findFirst({
     where: { restaurantId: r.id, createdAt: { gte: dayStart } },
