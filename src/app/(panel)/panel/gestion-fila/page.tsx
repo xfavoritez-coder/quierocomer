@@ -21,7 +21,20 @@ const STATUS: Record<Entry["status"], { label: string; color: string; bg: string
   CANCELLED: { label: "Cancelado", color: "#dc2626", bg: "rgba(220,38,38,0.1)" },
 };
 
+function useIsMobile(): boolean {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const h = () => setM(mq.matches);
+    h();
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+  return m;
+}
+
 export default function GestionFilaPage() {
+  const isMobile = useIsMobile();
   const { selectedRestaurantId } = useAdminSession();
   const rid = selectedRestaurantId;
   const [enabled, setEnabled] = useState(false);
@@ -114,12 +127,23 @@ export default function GestionFilaPage() {
       {/* Agregar a la fila */}
       <div style={{ padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, marginBottom: 16 }}>
         <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 10px" }}>Agregar persona</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 70px auto", gap: 8, alignItems: "center" }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre *" style={inp} />
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono *" style={inp} />
-          <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Pers." title="Personas" style={{ ...inp, textAlign: "center" }} />
-          <button onClick={add} disabled={adding || !name.trim() || !phone.trim()} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: adding ? "wait" : "pointer", opacity: !name.trim() || !phone.trim() ? 0.5 : 1 }}><Plus size={15} /> {adding ? "…" : "Agregar"}</button>
-        </div>
+        {isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre *" style={inp} />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono *" inputMode="tel" style={inp} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Pers." title="Personas" inputMode="numeric" style={{ ...inp, width: 72, textAlign: "center", flexShrink: 0 }} />
+              <button onClick={add} disabled={adding || !name.trim() || !phone.trim()} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: adding ? "wait" : "pointer", opacity: !name.trim() || !phone.trim() ? 0.5 : 1 }}><Plus size={16} /> {adding ? "…" : "Agregar"}</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 70px auto", gap: 8, alignItems: "center" }}>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre *" style={inp} />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono *" style={inp} />
+            <input value={party} onChange={(e) => setParty(e.target.value.replace(/\D/g, ""))} placeholder="Pers." title="Personas" style={{ ...inp, textAlign: "center" }} />
+            <button onClick={add} disabled={adding || !name.trim() || !phone.trim()} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: adding ? "wait" : "pointer", opacity: !name.trim() || !phone.trim() ? 0.5 : 1 }}><Plus size={15} /> {adding ? "…" : "Agregar"}</button>
+          </div>
+        )}
         {msg && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: msg.includes("copiado") ? "#16a34a" : "#dc2626", margin: "8px 0 0" }}>{msg}</p>}
       </div>
 
@@ -134,7 +158,7 @@ export default function GestionFilaPage() {
           {active.map((e) => {
             const st = STATUS[e.status];
             return (
-              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+              <div key={e.id} style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 10 : 12, padding: "12px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, flexWrap: isMobile ? "wrap" : "nowrap" }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "#F4A623" }}>{e.number}</span>
                 </div>
@@ -151,10 +175,10 @@ export default function GestionFilaPage() {
                   <span style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, color: "#2563eb", lineHeight: 1 }}>{e.partySize}</span>
                   <span style={{ fontFamily: F, fontSize: "0.58rem", fontWeight: 700, color: "#2563eb", textTransform: "uppercase", letterSpacing: ".04em", marginTop: 2 }}>{e.partySize === 1 ? "persona" : "personas"}</span>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  {e.status !== "CALLED" && <button onClick={() => setStatus(e.id, "CALLED")} style={actBtn("#16a34a")}><Bell size={13} /> Llamar</button>}
-                  <button onClick={() => setStatus(e.id, "DONE")} style={actBtn("#6b7280")}><Check size={13} /> Atendido</button>
-                  <button onClick={() => setStatus(e.id, "CANCELLED")} title="Cancelar" style={actBtn("#dc2626")}><X size={13} /></button>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end", width: isMobile ? "100%" : undefined }}>
+                  {e.status !== "CALLED" && <button onClick={() => setStatus(e.id, "CALLED")} style={{ ...actBtn("#16a34a"), flex: isMobile ? 1 : undefined, justifyContent: "center", padding: isMobile ? "9px 10px" : "6px 10px" }}><Bell size={13} /> Llamar</button>}
+                  <button onClick={() => setStatus(e.id, "DONE")} style={{ ...actBtn("#6b7280"), flex: isMobile ? 1 : undefined, justifyContent: "center", padding: isMobile ? "9px 10px" : "6px 10px" }}><Check size={13} /> Atendido</button>
+                  <button onClick={() => setStatus(e.id, "CANCELLED")} title="Cancelar" style={{ ...actBtn("#dc2626"), justifyContent: "center", padding: isMobile ? "9px 14px" : "6px 10px" }}><X size={13} /></button>
                 </div>
               </div>
             );
