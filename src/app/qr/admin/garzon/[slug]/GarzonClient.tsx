@@ -211,29 +211,35 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
   }, []);
 
   const endShift = useCallback(async () => {
+    // Terminar el turno PRIMERO: feedback inmediato y garantizado, pase lo que
+    // pase con el service worker. (Antes se hacía `await serviceWorker.ready`
+    // antes de esto; si no había SW activo, esa promesa nunca resolvía y el
+    // botón "no hacía nada".)
+    setPushActive(false);
+    setSubscribed(false);
+    setCalls([]);
+    // Marca el turno como terminado en esta sesión de pestaña — evita re-suscribir
+    // al recargar. sessionStorage se limpia al cerrar la app, así mañana reconecta.
+    sessionStorage.setItem("garzon_shift_ended", "1");
+    setShiftEnded(true);
+
+    // Limpieza de push en segundo plano (no debe bloquear la salida). Usamos
+    // getRegistration() (resuelve al toque con la reg o undefined), no `ready`.
     try {
       if ("serviceWorker" in navigator) {
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.getSubscription();
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = reg ? await reg.pushManager.getSubscription() : null;
         if (sub) {
-          // Notify backend to stop sending push notifications
           await fetch("/api/qr/waiter/subscribe", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: sub.endpoint }),
           });
-          // DON'T call sub.unsubscribe() — keep the browser subscription alive
-          // so we can reuse it when the waiter starts the next shift
+          // No llamamos sub.unsubscribe(): conservamos la suscripción del
+          // navegador para reutilizarla en el próximo turno.
         }
       }
     } catch {}
-    setPushActive(false);
-    setSubscribed(false);
-    setCalls([]);
-    // Mark shift as ended for this tab session — prevents auto-resubscribe on reload.
-    // sessionStorage clears when the app is fully closed, so next day it auto-connects.
-    sessionStorage.setItem("garzon_shift_ended", "1");
-    setShiftEnded(true);
   }, []);
 
   const answerCall = async (callId: string) => {
