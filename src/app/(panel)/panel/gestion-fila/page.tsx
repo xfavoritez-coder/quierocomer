@@ -86,7 +86,7 @@ export default function GestionFilaPage() {
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(244,166,35,0.14)", display: "flex", alignItems: "center", justifyContent: "center" }}><ListOrdered size={20} color="#F4A623" /></div>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Gestión de fila</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Fila virtual</h1>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Fila virtual de espera por número de turno.</p>
         </div>
         <button onClick={() => { setLoading(true); load(); }} title="Actualizar" style={{ width: 38, height: 38, borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text3)", cursor: "pointer" }}><RefreshCw size={16} /></button>
