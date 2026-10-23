@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { ListOrdered, Plus, Bell, Check, X, ChevronRight, Copy, RefreshCw } from "lucide-react";
+import { ListOrdered, Plus, Bell, Check, X, ChevronRight, Copy, RefreshCw, QrCode } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -104,7 +104,10 @@ export default function GestionFilaPage() {
           </div>
         </div>
         {enabled && slug && (
-          <button onClick={() => { navigator.clipboard.writeText(publicUrl); setMsg("Link copiado"); setTimeout(() => setMsg(null), 1500); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: "pointer" }}><Copy size={14} /> Copiar link de registro</button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button onClick={() => { navigator.clipboard.writeText(publicUrl); setMsg("Link copiado"); setTimeout(() => setMsg(null), 1500); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: "pointer" }}><Copy size={14} /> Copiar link</button>
+            <a href={`/fila/${slug}/cartel`} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 10, color: "#F4A623", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, textDecoration: "none" }}><QrCode size={14} /> Imprimir cartel QR</a>
+          </div>
         )}
       </div>
 
