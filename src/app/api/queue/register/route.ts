@@ -36,10 +36,10 @@ export async function POST(req: NextRequest) {
   const dayStart = chileDayStartUtc();
   // Evita registros duplicados del mismo teléfono el mismo día (si ya está en espera).
   const dup = await prisma.queueEntry.findFirst({
-    where: { restaurantId: r.id, phone, createdAt: { gte: dayStart }, status: { in: ["WAITING", "NEAR"] } },
-    select: { number: true },
+    where: { restaurantId: r.id, phone, createdAt: { gte: dayStart }, status: { in: ["WAITING", "NEAR", "CALLED"] } },
+    select: { id: true, number: true },
   });
-  if (dup) return NextResponse.json({ ok: true, number: dup.number, already: true });
+  if (dup) return NextResponse.json({ ok: true, id: dup.id, number: dup.number, already: true });
 
   const last = await prisma.queueEntry.findFirst({
     where: { restaurantId: r.id, createdAt: { gte: dayStart } },
@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
   const number = (last?.number ?? 0) + 1;
   const entry = await prisma.queueEntry.create({
     data: { restaurantId: r.id, number, name, phone, partySize, source: "public", status: "WAITING" },
-    select: { number: true, createdAt: true },
+    select: { id: true, number: true, createdAt: true },
   });
 
   const when = entry.createdAt.toLocaleString("es-CL", { timeZone: "America/Santiago", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  return NextResponse.json({ ok: true, number: entry.number, when });
+  return NextResponse.json({ ok: true, id: entry.id, number: entry.number, when });
 }
