@@ -10,7 +10,16 @@ const FB = "var(--font-body)";
 interface Entry {
   id: string; number: number; name: string; phone: string; partySize: number;
   status: "WAITING" | "NEAR" | "CALLED" | "DONE" | "CANCELLED"; source: string; note: string | null;
-  createdAt: string; calledAt: string | null;
+  createdAt: string; calledAt: string | null; updatedAt: string;
+}
+
+// Duración legible entre dos instantes (ej. "12 min", "1h 5m", "< 1 min").
+function fmtWait(fromIso: string, toIso: string): string {
+  const ms = new Date(toIso).getTime() - new Date(fromIso).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "< 1 min";
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)}h ${min % 60}m`;
 }
 
 const STATUS: Record<Entry["status"], { label: string; color: string; bg: string }> = {
@@ -207,9 +216,9 @@ export default function GestionFilaPage() {
           <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 2px 8px" }}>Finalizados hoy ({finished.length})</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {finished.map((e) => (
-              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", opacity: 0.6 }}>
-                <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text3)", minWidth: 24 }}>{e.number}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</span>
+              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
+                <span title="Tiempo desde que se registró hasta que fue atendido" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: F, fontSize: "0.74rem", fontWeight: 800, color: "#2563eb", background: "rgba(37,99,235,0.1)", padding: "3px 8px", borderRadius: 50, minWidth: 64, justifyContent: "center" }}>⏱ {fmtWait(e.createdAt, e.updatedAt)}</span>
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}{e.partySize > 1 ? <span style={{ color: "var(--adm-text3)" }}> · {e.partySize} pers.</span> : null}</span>
                 <span style={{ fontSize: "0.6rem", fontWeight: 700, color: STATUS[e.status].color }}>{STATUS[e.status].label}</span>
               </div>
             ))}

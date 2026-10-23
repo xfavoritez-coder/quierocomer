@@ -25,7 +25,7 @@ export function chileDayStartUtc(now: Date = new Date()): Date {
   return new Date(cl.getTime() - diffMs);
 }
 
-const SEL = { id: true, number: true, name: true, phone: true, partySize: true, status: true, source: true, note: true, createdAt: true, calledAt: true } as const;
+const SEL = { id: true, number: true, name: true, phone: true, partySize: true, status: true, source: true, note: true, createdAt: true, calledAt: true, updatedAt: true } as const;
 
 /** GET /api/panel/queue?restaurantId= → { enabled, entries: [hoy] } */
 export async function GET(req: NextRequest) {
