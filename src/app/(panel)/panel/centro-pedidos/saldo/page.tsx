@@ -43,7 +43,23 @@ export default function SaldoDeliveryPage() {
     try { navigator.clipboard.writeText(val); setCopied(key); setTimeout(() => setCopied(null), 1500); } catch { /* noop */ }
   };
 
+  const copyAll = () => {
+    const lines = [
+      bank.bankName && `Banco: ${bank.bankName}`,
+      bank.accountType && `Tipo de cuenta: ${bank.accountType}`,
+      bank.accountNumber && `N° de cuenta: ${bank.accountNumber}`,
+      bank.rut && `RUT: ${bank.rut}`,
+      bank.holder && `Titular: ${bank.holder}`,
+      bank.email && `Email: ${bank.email}`,
+    ].filter(Boolean);
+    copy(lines.join("\n"), "all");
+  };
+
   const hasBank = bank.accountNumber || bank.bankName;
+  const rows = [
+    ["Banco", bank.bankName], ["Tipo de cuenta", bank.accountType], ["N° de cuenta", bank.accountNumber],
+    ["RUT", bank.rut], ["Titular", bank.holder], ["Email", bank.email],
+  ].filter(([, v]) => v) as [string, string][];
   const low = balance != null && balance <= 0;
 
   return (
@@ -68,23 +84,28 @@ export default function SaldoDeliveryPage() {
       </div>
 
       {/* Datos bancarios para recargar */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <Building2 size={18} color={ACCENT} />
-          <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>¿Cómo recargar?</h2>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <Building2 size={17} color={ACCENT} />
+          <h2 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>¿Cómo recargar?</h2>
+          {hasBank && (
+            <button onClick={copyAll} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, border: "none", background: copied === "all" ? GREEN : ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}>
+              {copied === "all" ? <><Check size={13} /> Copiado</> : <><Copy size={13} /> Copiar datos</>}
+            </button>
+          )}
         </div>
         {hasBank ? (
           <>
-            <p style={{ fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text2)", margin: "0 0 14px" }}>Transfiere a la siguiente cuenta y te acreditamos el saldo:</p>
-            <div style={{ display: "grid", gap: 8 }}>
-              <BankRow label="Banco" value={bank.bankName} />
-              <BankRow label="Tipo de cuenta" value={bank.accountType} />
-              <BankRow label="N° de cuenta" value={bank.accountNumber} onCopy={bank.accountNumber ? () => copy(bank.accountNumber!, "acc") : undefined} copied={copied === "acc"} />
-              <BankRow label="RUT" value={bank.rut} onCopy={bank.rut ? () => copy(bank.rut!, "rut") : undefined} copied={copied === "rut"} />
-              <BankRow label="Titular" value={bank.holder} />
-              <BankRow label="Email" value={bank.email} onCopy={bank.email ? () => copy(bank.email!, "email") : undefined} copied={copied === "email"} />
+            <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 10px" }}>Transfiere a esta cuenta y te acreditamos el saldo:</p>
+            <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 10, overflow: "hidden" }}>
+              {rows.map(([label, value], i) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 12px", background: i % 2 ? "transparent" : "var(--adm-hover)" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", minWidth: 100, flexShrink: 0 }}>{label}</span>
+                  <span style={{ flex: 1, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", wordBreak: "break-all", textAlign: "right" }}>{value}</span>
+                </div>
+              ))}
             </div>
-            {bank.instructions && <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "14px 0 0", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{bank.instructions}</p>}
+            {bank.instructions && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{bank.instructions}</p>}
           </>
         ) : (
           <p style={{ fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text3)", margin: 0 }}>Los datos de transferencia aún no están configurados. Contáctanos para recargar tu saldo.</p>
@@ -124,17 +145,3 @@ export default function SaldoDeliveryPage() {
   );
 }
 
-function BankRow({ label, value, onCopy, copied }: { label: string; value?: string; onCopy?: () => void; copied?: boolean }) {
-  if (!value) return null;
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: "var(--adm-hover)", borderRadius: 10 }}>
-      <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", minWidth: 110 }}>{label}</span>
-      <span style={{ flex: 1, fontFamily: F, fontSize: "0.86rem", fontWeight: 700, color: "var(--adm-text)", wordBreak: "break-all" }}>{value}</span>
-      {onCopy && (
-        <button onClick={onCopy} style={{ display: "inline-flex", alignItems: "center", gap: 4, border: "none", background: "transparent", color: copied ? GREEN : "var(--adm-text2)", cursor: "pointer", fontFamily: FB, fontSize: "0.74rem", fontWeight: 700 }}>
-          {copied ? <><Check size={13} /> Copiado</> : <><Copy size={13} /> Copiar</>}
-        </button>
-      )}
-    </div>
-  );
-}
