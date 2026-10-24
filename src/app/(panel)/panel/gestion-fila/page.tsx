@@ -13,13 +13,15 @@ interface Entry {
   createdAt: string; calledAt: string | null; updatedAt: string;
 }
 
-// Duración legible entre dos instantes (ej. "12 min", "1h 5m", "< 1 min").
-function fmtWait(fromIso: string, toIso: string): string {
-  const ms = new Date(toIso).getTime() - new Date(fromIso).getTime();
+// Duración legible a partir de milisegundos (ej. "12 min", "1h 5m", "< 1 min").
+function fmtDurationMs(ms: number): string {
   const min = Math.floor(ms / 60000);
   if (min < 1) return "< 1 min";
   if (min < 60) return `${min} min`;
   return `${Math.floor(min / 60)}h ${min % 60}m`;
+}
+function fmtWait(fromIso: string, toIso: string): string {
+  return fmtDurationMs(new Date(toIso).getTime() - new Date(fromIso).getTime());
 }
 
 const STATUS: Record<Entry["status"], { label: string; color: string; bg: string }> = {
@@ -103,6 +105,8 @@ export default function GestionFilaPage() {
 
   const active = entries.filter((e) => e.status === "WAITING" || e.status === "NEAR" || e.status === "CALLED");
   const finished = entries.filter((e) => e.status === "DONE" || e.status === "CANCELLED");
+  const attended = finished.filter((e) => e.status === "DONE");
+  const avgWaitMs = attended.length ? attended.reduce((s, e) => s + (new Date(e.updatedAt).getTime() - new Date(e.createdAt).getTime()), 0) / attended.length : 0;
   const publicUrl = slug ? `https://quierocomer.com/fila/${slug}` : "";
 
   const inp: React.CSSProperties = { padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.85rem", outline: "none" };
@@ -213,7 +217,12 @@ export default function GestionFilaPage() {
       {/* Finalizados hoy */}
       {finished.length > 0 && (
         <div style={{ marginTop: 20 }}>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 2px 8px" }}>Finalizados hoy ({finished.length})</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", margin: "0 2px 8px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: ".06em", margin: 0 }}>Finalizados hoy ({finished.length})</p>
+            {attended.length > 0 && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#2563eb", background: "rgba(37,99,235,0.1)", padding: "4px 10px", borderRadius: 50 }}>⏱ Promedio de espera: {fmtDurationMs(avgWaitMs)} · {attended.length} atendido{attended.length === 1 ? "" : "s"}</span>
+            )}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {finished.map((e) => (
               <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
