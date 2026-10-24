@@ -370,6 +370,8 @@ model Restaurant {
   bodegaId                   String?
   centroPedidosEnabled       Boolean                   @default(false)
   centroPedidosConfig        Json?
+  deliveryBalance            Int                       @default(0) // saldo prepago (CLP) para solicitar repartidores externos
+  walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
   viewerSections             Json?                     // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
@@ -2644,6 +2646,22 @@ model PlatformSetting {
   key       String   @id
   value     String?
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+// Movimientos de la billetera prepaga de delivery (recargas y cargos por courier).
+model DeliveryWalletTxn {
+  id           String     @id @default(cuid())
+  restaurantId String
+  amount       Int        // CLP: positivo = recarga; negativo = cargo
+  type         String     // "topup" | "charge" | "refund" | "adjust"
+  description  String?
+  orderId      String?    // PosOrder relacionado (en cargos por courier)
+  balanceAfter Int        // saldo resultante tras el movimiento
+  createdBy    String?    // quién lo registró (admin) o el proveedor
+  createdAt    DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
 }
 
 model EcommerceSurveyResponse {

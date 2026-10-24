@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt, MonitorPlay } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt, MonitorPlay, Wallet } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -120,6 +120,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: ConciergeBell, labelKey: "nav_centro_pos", href: `${base}/centro-pedidos/tomar-pedidos` },
         { icon: Navigation, labelKey: "nav_centro_tracking", href: `${base}/centro-pedidos/seguimiento` },
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
+        { icon: Wallet, labelKey: "nav_centro_wallet", href: `${base}/centro-pedidos/saldo` },
         { icon: BarChart3, labelKey: "nav_centro_report", href: `${base}/centro-pedidos/reporte` },
         { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
       ],

@@ -125,8 +125,18 @@ export default function CentroPedidosPage() {
   const [local, setLocal] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [leafletReady, setLeafletReady] = useState(false);
   // Cotización Uber pendiente de confirmación (modal).
-  const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; durationMin: number | null; quoteId: string | null } | null>(null);
+  const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; durationMin: number | null; quoteId: string | null; balance: number; sufficient: boolean } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+  // Saldo prepago de delivery (gate para solicitar repartidores externos).
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/delivery-wallet?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && typeof d.balance === "number") setWalletBalance(d.balance); })
+      .catch(() => {});
+  }, [restaurantId]);
 
   // Carga Leaflet (CDN) una vez, para los mini-mapas en vivo de las tarjetas.
   useEffect(() => {
@@ -219,17 +229,18 @@ export default function CentroPedidosPage() {
   }
 
   // Ejecuta la solicitud real del courier (tras confirmar / aceptar la cotización).
-  async function doRequestCourier(o: PosOrder, provider: "uber" | "pedidosya", quoteId?: string | null) {
+  async function doRequestCourier(o: PosOrder, provider: "uber" | "pedidosya", quoteId?: string | null, fee?: number | null) {
     if (!restaurantId) return;
     if (courierReq.current.has(o.id) || o.uberDeliveryId || o.pyaShippingId) return;
     courierReq.current.add(o.id);
     setCourierBusy((s) => ({ ...s, [o.id]: true }));
     const path = provider === "uber" ? "uber" : "pedidosya";
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id, ...(quoteId ? { quoteId } : {}) }) });
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id, ...(quoteId ? { quoteId } : {}), ...(fee ? { fee } : {}) }) });
       const d = await r.json();
       if (!r.ok) { toast.error(d.error || "No se pudo solicitar el courier"); return; }
       toast.success(d.alreadyRequested ? "Este pedido ya tenía courier" : (provider === "uber" ? "Uber solicitado" : "PedidosYa solicitado"));
+      if (typeof d.balance === "number") setWalletBalance(d.balance);
       fetchOrders(true);
     } catch { toast.error("Error de conexión"); }
     finally {
@@ -252,7 +263,8 @@ export default function CentroPedidosPage() {
       const r = await fetch(`/api/panel/ecommerce/pos-orders/uber?restaurantId=${restaurantId}&id=${o.id}`);
       const d = await r.json();
       if (!r.ok) { toast.error(d.error || "No se pudo cotizar"); return; }
-      setUberQuote({ order: o, fee: d.fee ?? null, durationMin: d.durationMin ?? null, quoteId: d.quoteId ?? null });
+      if (typeof d.balance === "number") setWalletBalance(d.balance);
+      setUberQuote({ order: o, fee: d.fee ?? null, durationMin: d.durationMin ?? null, quoteId: d.quoteId ?? null, balance: d.balance ?? 0, sufficient: d.sufficient !== false });
     } catch { toast.error("Error de conexión"); }
     finally { setQuoteLoading(null); }
   }
@@ -331,7 +343,7 @@ export default function CentroPedidosPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10 }}>
-            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} />)}
+            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} walletBalance={walletBalance} />)}
           </div>
         )
       ) : (() => {
@@ -383,7 +395,7 @@ export default function CentroPedidosPage() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10, alignItems: "start" }}>
-                {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} />)}
+                {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} walletBalance={walletBalance} />)}
               </div>
             )}
           </>
@@ -403,10 +415,20 @@ export default function CentroPedidosPage() {
               <div style={{ fontFamily: F, fontSize: "1.9rem", fontWeight: 900, color: "var(--adm-text)" }}>{uberQuote.fee != null ? clp(uberQuote.fee) : "—"}</div>
               {uberQuote.durationMin != null && <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", marginTop: 4 }}>🏍️ Llega al local en ~{uberQuote.durationMin} min</div>}
             </div>
-            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginBottom: 16 }}>Pedido {uberQuote.order.orderReference ? `#${uberQuote.order.orderReference}` : uberQuote.order.customerName}</div>
+            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginBottom: 12 }}>Pedido {uberQuote.order.orderReference ? `#${uberQuote.order.orderReference}` : uberQuote.order.customerName}</div>
+            {/* Saldo prepago */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderRadius: 10, background: uberQuote.sufficient ? "var(--adm-hover)" : "#fef2f2", marginBottom: 14 }}>
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)" }}>Saldo para delivery</span>
+              <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: uberQuote.sufficient ? "var(--adm-text)" : "#dc2626" }}>{clp(uberQuote.balance)}</span>
+            </div>
+            {!uberQuote.sufficient && (
+              <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "#dc2626", textAlign: "center", marginBottom: 12 }}>
+                Saldo insuficiente para este despacho. <a href="/panel/centro-pedidos/saldo" style={{ color: "#dc2626", fontWeight: 800 }}>Recargar saldo →</a>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setUberQuote(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.86rem", fontWeight: 700, cursor: "pointer" }}>Cancelar</button>
-              <button onClick={() => { const q = uberQuote; setUberQuote(null); doRequestCourier(q.order, "uber", q.quoteId); }} style={{ flex: 2, padding: "11px", borderRadius: 10, border: "none", background: "#000", color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: "pointer" }}>Solicitar repartidor</button>
+              <button disabled={!uberQuote.sufficient} onClick={() => { const q = uberQuote; setUberQuote(null); doRequestCourier(q.order, "uber", q.quoteId, q.fee); }} style={{ flex: 2, padding: "11px", borderRadius: 10, border: "none", background: uberQuote.sufficient ? "#000" : "#9ca3af", color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: uberQuote.sufficient ? "pointer" : "not-allowed" }}>Solicitar repartidor</button>
             </div>
           </div>
         </div>
@@ -494,7 +516,7 @@ function CourierMiniMap({ orderId, courier, local, dropoff, leafletReady }: { or
   );
 }
 
-function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy, quoting = false, uberEnabled = true, pedidosyaEnabled = true, local, leafletReady = false }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean; quoting?: boolean; uberEnabled?: boolean; pedidosyaEnabled?: boolean; local?: { lat: number | null; lng: number | null }; leafletReady?: boolean }) {
+function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy, quoting = false, uberEnabled = true, pedidosyaEnabled = true, local, leafletReady = false, walletBalance = null }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean; quoting?: boolean; uberEnabled?: boolean; pedidosyaEnabled?: boolean; local?: { lat: number | null; lng: number | null }; leafletReady?: boolean; walletBalance?: number | null }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
@@ -695,6 +717,13 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         </div>
         );
       })() : canRequestCourier ? (
+        (walletBalance != null && walletBalance <= 0) ? (
+          <div style={{ marginTop: 8, padding: "9px 10px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca" }}>
+            <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: "#dc2626", marginBottom: 2 }}>Sin saldo para delivery</span>
+            <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text2)" }}>Recarga para solicitar repartidores. </span>
+            <a href="/panel/centro-pedidos/saldo" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FB, fontSize: "0.68rem", fontWeight: 800, color: "#dc2626", textDecoration: "none" }}>Recargar →</a>
+          </div>
+        ) : (
         <div style={{ marginTop: 8, padding: "8px 9px", borderRadius: 10, background: "var(--adm-hover)" }}>
           <span style={{ display: "block", fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>{quoting ? "Cotizando…" : courierBusy ? "Solicitando…" : "Solicitar:"}</span>
           <div style={{ display: "flex", gap: 6 }}>
@@ -712,6 +741,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
             )}
           </div>
         </div>
+        )
       ) : null}
     </div>
   );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uberSettingsFor, uberCreateDelivery, uberCancelDelivery, uberCreateQuote, uberQuoteErrorEs, type CreateDeliveryParams } from "@/lib/ecommerce/uberDirect";
+import { chargeWallet, refundWallet } from "@/lib/ecommerce/deliveryWallet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, address: true, lat: true, lng: true, ecommerceConfig: true } } } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, address: true, lat: true, lng: true, ecommerceConfig: true, deliveryBalance: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.isDelivery) return NextResponse.json({ error: "El pedido no es de delivery" }, { status: 400 });
   if (!order.restaurant.address) return NextResponse.json({ error: "Falta la dirección del local (configúrala en el perfil)" }, { status: 400 });
@@ -40,7 +41,8 @@ export async function GET(req: NextRequest) {
     dropoffLng: order.customerLng,
   });
   if (!res.ok) return NextResponse.json({ error: uberQuoteErrorEs(res.error) }, { status: 502 });
-  return NextResponse.json({ ok: true, fee: res.fee, durationMin: res.durationMin ?? null, quoteId: res.quoteId ?? null });
+  const balance = order.restaurant.deliveryBalance ?? 0;
+  return NextResponse.json({ ok: true, fee: res.fee, durationMin: res.durationMin ?? null, quoteId: res.quoteId ?? null, balance, sufficient: res.fee == null || balance >= res.fee });
 }
 
 /** POST → solicita repartidor Uber Direct para un PosOrder. Body { restaurantId, id, quoteId? } */
@@ -49,14 +51,20 @@ export async function POST(req: NextRequest) {
   const restaurantId = (body?.restaurantId || "").toString();
   const id = (body?.id || "").toString();
   const quoteId = (body?.quoteId || "").toString() || null;
+  const expectedFee = Math.max(0, Math.round(Number(body?.fee) || 0)); // costo cotizado que vio el local
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, name: true, address: true, phone: true, whatsapp: true, lat: true, lng: true, ecommerceConfig: true } } } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, name: true, address: true, phone: true, whatsapp: true, lat: true, lng: true, ecommerceConfig: true, deliveryBalance: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!order.isDelivery) return NextResponse.json({ error: "El pedido no es de delivery" }, { status: 400 });
   if (order.uberDeliveryId) return NextResponse.json({ ok: true, alreadyRequested: true, courier: order.courier });
   if (order.pyaShippingId) return NextResponse.json({ error: "Este pedido ya tiene PedidosYa" }, { status: 409 });
+
+  // Billetera prepaga: debe haber saldo suficiente para cubrir el despacho.
+  const balance = order.restaurant.deliveryBalance ?? 0;
+  if (balance <= 0) return NextResponse.json({ error: "Sin saldo para delivery. Recarga tu saldo para solicitar repartidores externos." }, { status: 402 });
+  if (expectedFee > 0 && balance < expectedFee) return NextResponse.json({ error: `Saldo insuficiente. El despacho cuesta ${expectedFee.toLocaleString("es-CL")} y tu saldo es ${balance.toLocaleString("es-CL")}.` }, { status: 402 });
 
   // ── Claim atómico: evita que varios clics rápidos creen varias entregas Uber.
   //    Solo UN request logra pasar uberDeliveryId de null → "PENDING" y crea.
@@ -102,7 +110,15 @@ export async function POST(req: NextRequest) {
   }
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { uberDeliveryId: res.delivery.deliveryId, courier: res.delivery as unknown as object, assignedTo: "Uber Direct" } });
-  return NextResponse.json({ ok: true, courier: res.delivery });
+
+  // Cobra el costo real del despacho al saldo prepago.
+  const fee = res.delivery.fee ?? expectedFee;
+  let newBalance = balance;
+  if (fee > 0) {
+    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `Uber · despacho pedido ${order.orderReference || order.id.slice(-6)}`, orderId: order.id, createdBy: "uber" });
+    newBalance = charge.balance;
+  }
+  return NextResponse.json({ ok: true, courier: res.delivery, balance: newBalance });
 }
 
 /** DELETE → cancela el courier Uber. ?restaurantId=&id= */
@@ -125,5 +141,10 @@ export async function DELETE(req: NextRequest) {
   const res = await uberCancelDelivery(uberSettingsFor(order.restaurant), order.uberDeliveryId);
   if (!res.ok) return NextResponse.json({ error: res.error || "No se pudo cancelar" }, { status: 502 });
   await prisma.posOrder.update({ where: { id }, data: { uberDeliveryId: null, courier: undefined as any, assignedTo: null } });
+
+  // Reembolsa al saldo el costo cobrado por este despacho (neto, si quedó algo cobrado).
+  const txns = await prisma.deliveryWalletTxn.findMany({ where: { restaurantId, orderId: id }, select: { amount: true } });
+  const net = txns.reduce((s, t) => s + t.amount, 0); // cargos negativos + reembolsos positivos
+  if (net < 0) await refundWallet(restaurantId, -net, { description: `Reembolso · courier cancelado pedido ${order.orderReference || id.slice(-6)}`, orderId: id, createdBy: "uber" });
   return NextResponse.json({ ok: true });
 }

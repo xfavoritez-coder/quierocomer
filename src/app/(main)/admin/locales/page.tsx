@@ -256,6 +256,8 @@ export default function AdminLocales() {
           ))}
         </div>
 
+        {isSuper && <WalletSection restaurantId={selected.id} />}
+
         {/* Sucursal / marca a la que pertenece este local */}
         {selected.ecommerceStoreConfig?.branchName && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", marginBottom: 14, background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 10 }}>
@@ -1866,6 +1868,91 @@ function AddBranchBox({ restaurant }: { restaurant: { id: string; name: string }
             <button onClick={create} disabled={busy} style={{ padding: "9px 16px", background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
               {busy ? "Creando sucursal…" : "Crear sucursal"}
             </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const clpAdmin = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+const WALLET_TXN_LABEL: Record<string, string> = { topup: "Recarga", charge: "Despacho", refund: "Reembolso", adjust: "Ajuste" };
+
+// Saldo para delivery de un local (superadmin): ver saldo, recargar y ver movimientos.
+function WalletSection({ restaurantId }: { restaurantId: string }) {
+  const [balance, setBalance] = useState<number | null>(null);
+  const [txns, setTxns] = useState<{ id: string; amount: number; type: string; description: string | null; balanceAfter: number; createdAt: string }[]>([]);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = async () => {
+    try {
+      const r = await fetch(`/api/admin/locales/${restaurantId}/wallet`);
+      const d = await r.json();
+      if (r.ok) { setBalance(d.balance ?? 0); setTxns(d.txns || []); }
+    } catch { /* noop */ }
+  };
+  useEffect(() => { setBalance(null); setTxns([]); setAmount(""); setNote(""); setMsg(null); load(); /* eslint-disable-next-line */ }, [restaurantId]);
+
+  const topUp = async (amt: number) => {
+    if (!amt) { setMsg("Monto inválido"); return; }
+    setSaving(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/admin/locales/${restaurantId}/wallet`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: amt, note: note.trim() || undefined }) });
+      const d = await r.json();
+      if (!r.ok) { setMsg(d.error || "No se pudo recargar"); setSaving(false); return; }
+      setBalance(d.balance); setAmount(""); setNote(""); setMsg(amt >= 0 ? `Recargado ${clpAdmin(amt)}` : `Ajustado ${clpAdmin(amt)}`);
+      load();
+    } catch { setMsg("Error de conexión"); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+        <div>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 2px" }}>Saldo para delivery</h3>
+          <p style={{ fontFamily: F, fontSize: "0.76rem", color: "#888", margin: 0 }}>Saldo prepago para solicitar repartidores externos (Uber / PedidosYa).</p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px" }}>Saldo actual</div>
+          <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 800, color: (balance ?? 0) <= 0 ? "#ff6b6b" : "#4ade80" }}>{balance == null ? "…" : clpAdmin(balance)}</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        {[5000, 10000, 20000, 50000].map((v) => (
+          <button key={v} disabled={saving} onClick={() => topUp(v)} style={{ padding: "7px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#eee", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>+{clpAdmin(v)}</button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d-]/g, ""))} placeholder="Monto (ej: 15000)" inputMode="numeric"
+          style={{ width: 150, padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Nota (opcional: n° transferencia)"
+          style={{ flex: 1, minWidth: 180, padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+        <button disabled={saving || !amount} onClick={() => topUp(Number(amount))} style={{ padding: "9px 18px", background: "#F4A623", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: saving || !amount ? "not-allowed" : "pointer", opacity: saving || !amount ? 0.6 : 1 }}>
+          {saving ? "Guardando…" : "Recargar"}
+        </button>
+      </div>
+      {msg && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: "8px 0 0" }}>{msg}</p>}
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", margin: "6px 0 0" }}>Usa un monto negativo (ej: -5000) para ajustar a la baja.</p>
+
+      {txns.length > 0 && (
+        <div style={{ marginTop: 14, borderTop: "1px solid #2A2A2A", paddingTop: 12 }}>
+          <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Movimientos recientes</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 220, overflowY: "auto" }}>
+            {txns.map((t) => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ddd", fontWeight: 600 }}>{WALLET_TXN_LABEL[t.type] || t.type}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#777" }}> · {t.description || "—"} · {new Date(t.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: t.amount >= 0 ? "#4ade80" : "#ff6b6b" }}>{t.amount >= 0 ? "+" : "−"}{clpAdmin(Math.abs(t.amount))}</span>
+                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", minWidth: 70, textAlign: "right" }}>{clpAdmin(t.balanceAfter)}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
