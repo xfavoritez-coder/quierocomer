@@ -689,7 +689,7 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
 
           {/* Seguir / cancelar */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {c.trackingUrl && <a href={c.trackingUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none", fontWeight: 700 }}>Ver seguimiento →</a>}
+            {(o.trackingToken || c.trackingUrl) && <a href={o.trackingToken ? `/track/${o.trackingToken}` : c.trackingUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none", fontWeight: 700 }}>Ver seguimiento →</a>}
             {o.opsStage !== "delivered" && c.status !== "canceled" && <button onClick={() => onCancelCourier(o)} style={{ marginLeft: "auto", fontFamily: FB, fontSize: "0.72rem", color: RED, background: "transparent", border: "none", cursor: "pointer" }}>Cancelar courier</button>}
           </div>
         </div>
