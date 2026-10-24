@@ -8,7 +8,7 @@ type Track = {
   isDelivery?: boolean; orderType?: string; orderReference?: string | null;
   customerName?: string; address?: string; destLat?: number | null; destLng?: number | null;
   items?: Line[]; total?: number; deliveryFee?: number; tip?: number; discount?: number; createdAt?: string | null;
-  driverLat?: number | null; driverLng?: number | null; driverName?: string | null; lastPingAt?: string | null; courierTrackingUrl?: string | null; courierPin?: string | null;
+  driverLat?: number | null; driverLng?: number | null; driverName?: string | null; lastPingAt?: string | null; courierTrackingUrl?: string | null; courierPin?: string | null; proofPhotoUrl?: string | null;
 };
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
@@ -70,11 +70,13 @@ export default function TrackPage() {
     if (d.destLat != null && d.destLng != null && !markersRef.current.dest) {
       markersRef.current.dest = L.circleMarker([d.destLat, d.destLng], { radius: 8, color: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.9 }).addTo(map).bindPopup("Destino");
     }
-    const pts = [];
+    const pts: [number, number][] = [];
     if (d.driverLat != null && d.driverLng != null) pts.push([d.driverLat, d.driverLng]);
     if (d.destLat != null && d.destLng != null) pts.push([d.destLat, d.destLng]);
-    if (pts.length === 2) map.fitBounds(pts, { padding: [50, 50] });
-    else if (pts.length === 1) map.setView(pts[0], 15);
+    // Si el repartidor y el destino coinciden (p.ej. entregado), centra en vez de encuadrar.
+    const same = pts.length === 2 && Math.abs(pts[0][0] - pts[1][0]) < 1e-5 && Math.abs(pts[0][1] - pts[1][1]) < 1e-5;
+    if (pts.length === 2 && !same) map.fitBounds(pts, { padding: [50, 50] });
+    else if (pts.length >= 1) map.setView(pts[0], d.delivered ? 16 : 15);
   }, [leafletReady, d]);
 
   if (err) return <Center><p style={{ fontFamily: "system-ui", color: "#666" }}>Pedido no encontrado.</p></Center>;
@@ -122,6 +124,13 @@ export default function TrackPage() {
 
         {hasMap && (
           <div id="track-map" style={{ height: 340, borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }} />
+        )}
+
+        {d.delivered && d.proofPhotoUrl && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: 14, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginTop: 14 }}>
+            <div style={{ fontSize: "0.82rem", color: "#666", fontWeight: 700, marginBottom: 10 }}>📸 Foto de la entrega</div>
+            <img src={d.proofPhotoUrl} alt="Foto de la entrega" style={{ width: "100%", borderRadius: 12, display: "block" }} />
+          </div>
         )}
 
         {/* Resumen del pedido */}
