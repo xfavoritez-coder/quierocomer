@@ -256,6 +256,16 @@ export default function AdminLocales() {
           ))}
         </div>
 
+        {isSuper && selected.owner && (
+          <OwnerEditor
+            owner={selected.owner}
+            onSaved={(o) => {
+              setSelected((s) => (s ? { ...s, owner: o } : s));
+              setRestaurants((prev) => prev.map((x) => (x.id === selected.id ? { ...x, owner: o } : x)));
+            }}
+          />
+        )}
+
         {isSuper && <WalletSection restaurantId={selected.id} />}
 
         {/* Sucursal / marca a la que pertenece este local */}
@@ -1963,6 +1973,56 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Editor del dueño (nombre + email) desde la ficha del local. Solo superadmin.
+function OwnerEditor({ owner, onSaved }: { owner: { id: string; name: string; email: string }; onSaved: (o: { id: string; name: string; email: string }) => void }) {
+  const [name, setName] = useState(owner.name || "");
+  const [email, setEmail] = useState(owner.email || "");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => { setName(owner.name || ""); setEmail(owner.email || ""); setMsg(null); }, [owner.id]);
+
+  const dirty = name.trim() !== (owner.name || "") || email.trim() !== (owner.email || "");
+
+  const save = async () => {
+    if (!name.trim() || !email.trim()) { setMsg("Nombre y correo son obligatorios"); return; }
+    setSaving(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/admin/owners/${owner.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim(), email: email.trim() }) });
+      const d = await r.json();
+      if (!r.ok) { setMsg(d.error || "No se pudo guardar"); setSaving(false); return; }
+      onSaved({ id: owner.id, name: name.trim(), email: email.trim() });
+      setMsg("Datos del dueño actualizados");
+    } catch { setMsg("Error de conexión"); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+      <h3 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 2px" }}>Dueño del local</h3>
+      <p style={{ fontFamily: F, fontSize: "0.76rem", color: "#888", margin: "0 0 14px" }}>Edita el nombre y el correo del dueño asignado a este local.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+        <div>
+          <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Nombre</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del dueño"
+            style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+        </div>
+        <div>
+          <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Correo</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@dueño.com" type="email"
+            style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
+        <button onClick={save} disabled={saving || !dirty} style={{ padding: "10px 18px", background: "#F4A623", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: saving || !dirty ? "not-allowed" : "pointer", opacity: saving || !dirty ? 0.6 : 1 }}>
+          {saving ? "Guardando…" : "Guardar dueño"}
+        </button>
+        {msg && <span style={{ fontFamily: F, fontSize: "0.8rem", color: msg.includes("actualizado") ? "#4ade80" : "#ff6b6b" }}>{msg}</span>}
+      </div>
     </div>
   );
 }
