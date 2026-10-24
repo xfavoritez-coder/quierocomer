@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { uberSettingsFor, uberProofOfDelivery, parseDelivery, uberStatusToOrder, type CourierInfo } from "@/lib/ecommerce/uberDirect";
+import { uberSettingsFor, uberDeliveryPhoto, parseDelivery, uberStatusToOrder, type CourierInfo } from "@/lib/ecommerce/uberDirect";
 
 export const runtime = "nodejs";
 
@@ -40,9 +40,9 @@ export async function POST(req: NextRequest) {
   // Objeto delivery: en delivery_status viene en data; en courier_update puede venir parcial.
   const merged: CourierInfo = parseDelivery({ id: deliveryId, ...data }, prev);
 
-  // Foto de entrega (best-effort) al entregar.
+  // Foto de entrega (solo la imagen) al entregar.
   if (merged.status === "delivered" && !merged.proofPhotoUrl) {
-    merged.proofPhotoUrl = await uberProofOfDelivery(creds, deliveryId).catch(() => null);
+    merged.proofPhotoUrl = await uberDeliveryPhoto(creds, deliveryId).catch(() => null);
   }
 
   // Transición de estado del pedido.
@@ -74,7 +74,7 @@ async function handlePosOrder(req: NextRequest, raw: string, deliveryId: string,
 
   const prev = (pos.courier as unknown as Partial<CourierInfo>) || undefined;
   const merged: CourierInfo = parseDelivery({ id: deliveryId, ...data }, prev);
-  if (merged.status === "delivered" && !merged.proofPhotoUrl) merged.proofPhotoUrl = await uberProofOfDelivery(creds, deliveryId).catch(() => null);
+  if (merged.status === "delivered" && !merged.proofPhotoUrl) merged.proofPhotoUrl = await uberDeliveryPhoto(creds, deliveryId).catch(() => null);
 
   const upd: Record<string, unknown> = { courier: merged as unknown as object };
   if (merged.status === "pickup_complete" || merged.status === "dropoff") {

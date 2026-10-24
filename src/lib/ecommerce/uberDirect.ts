@@ -299,6 +299,34 @@ export async function uberCancelDelivery(creds: UberCreds, deliveryId: string): 
 }
 
 /** Foto de prueba de entrega (base64 → data URI). Best-effort. */
+/**
+ * Foto CRUDA de la entrega (solo la imagen, sin la tarjeta "Proof of Delivery").
+ * Se lee de `dropoff.verification.picture.image_url` del GET de la entrega y se
+ * descarga a un data URI para que quede persistente (la URL de Uber expira).
+ */
+export async function uberDeliveryPhoto(creds: UberCreds, deliveryId: string): Promise<string | null> {
+  const token = await uberToken(creds);
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_BASE}/customers/${creds.customerId}/deliveries/${deliveryId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
+    const dropoff = (data.dropoff as Record<string, any>) || {};
+    const pic = dropoff?.verification?.picture;
+    const url = firstStr(pic?.image_url, pic?.url, typeof pic === "string" ? pic : null);
+    if (!url) return null;
+    const img = await fetch(url);
+    if (!img.ok) return null;
+    const buf = Buffer.from(await img.arrayBuffer());
+    const ct = img.headers.get("content-type") || "image/jpeg";
+    return `data:${ct};base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function uberProofOfDelivery(creds: UberCreds, deliveryId: string): Promise<string | null> {
   const token = await uberToken(creds);
   if (!token) return null;
