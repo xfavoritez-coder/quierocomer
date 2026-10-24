@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck, MonitorPlay } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck, MonitorPlay, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -128,13 +128,14 @@ export default function CentroPedidosPage() {
   const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; durationMin: number | null; quoteId: string | null; balance: number; sufficient: boolean } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [showWalletBalance, setShowWalletBalance] = useState(false);
 
   // Saldo prepago de delivery (gate para solicitar repartidores externos).
   useEffect(() => {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/delivery-wallet?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d && typeof d.balance === "number") setWalletBalance(d.balance); })
+      .then((d) => { if (d && typeof d.balance === "number") { setWalletBalance(d.balance); setShowWalletBalance(d.showBalance === true); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -296,6 +297,11 @@ export default function CentroPedidosPage() {
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontFamily: F, fontSize: "0.66rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
           <Radio size={11} /> {live ? "En vivo" : "Conectando…"}
         </span>
+        {showWalletBalance && walletBalance != null && (
+          <Link href="/panel/centro-pedidos/saldo" title="Saldo para delivery" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 999, fontFamily: F, fontSize: "0.72rem", fontWeight: 800, textDecoration: "none", background: walletBalance <= 0 ? "rgba(239,68,68,0.12)" : "rgba(244,166,35,0.14)", color: walletBalance <= 0 ? RED : "#b45309", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
+            <Wallet size={12} /> {clp(walletBalance)}
+          </Link>
+        )}
         <Link href="/panel/centro-pedidos/kds" title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
           <MonitorPlay size={15} /> KDS
         </Link>

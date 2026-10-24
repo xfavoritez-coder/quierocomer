@@ -25,6 +25,8 @@ export default function SaldoDeliveryPage() {
   const [txns, setTxns] = useState<Txn[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showBalance, setShowBalance] = useState(false);
+  const [savingShow, setSavingShow] = useState(false);
 
   const load = useCallback(async () => {
     if (!restaurantId) return;
@@ -32,10 +34,21 @@ export default function SaldoDeliveryPage() {
     try {
       const r = await fetch(`/api/panel/ecommerce/delivery-wallet?restaurantId=${restaurantId}`);
       const d = await r.json();
-      if (r.ok) { setBalance(d.balance ?? 0); setBank(d.bank || {}); setTxns(d.txns || []); }
+      if (r.ok) { setBalance(d.balance ?? 0); setBank(d.bank || {}); setTxns(d.txns || []); setShowBalance(d.showBalance === true); }
     } catch { /* noop */ }
     setLoading(false);
   }, [restaurantId]);
+
+  const toggleShow = async () => {
+    if (!restaurantId) return;
+    const next = !showBalance;
+    setShowBalance(next); setSavingShow(true);
+    try {
+      const r = await fetch("/api/panel/ecommerce/delivery-wallet", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, showBalance: next }) });
+      if (!r.ok) setShowBalance(!next);
+    } catch { setShowBalance(!next); }
+    setSavingShow(false);
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -81,6 +94,18 @@ export default function SaldoDeliveryPage() {
           {loading ? "…" : clp(balance || 0)}
         </div>
         {low && <div style={{ fontFamily: FB, fontSize: "0.85rem", color: RED, fontWeight: 700, marginTop: 6 }}>Sin saldo. Transfiere para recargar y seguir solicitando repartidores.</div>}
+      </div>
+
+      {/* Toggle: mostrar saldo en Centro de pedidos */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", marginBottom: 16 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>Mostrar saldo en Centro de pedidos</div>
+          <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", marginTop: 2 }}>Muestra tu saldo disponible arriba en la pantalla de Centro de pedidos.</div>
+        </div>
+        <button onClick={toggleShow} disabled={savingShow} aria-pressed={showBalance}
+          style={{ position: "relative", width: 46, height: 26, borderRadius: 999, border: "none", background: showBalance ? GREEN : "var(--adm-card-border)", cursor: savingShow ? "wait" : "pointer", flexShrink: 0, transition: "background .15s" }}>
+          <span style={{ position: "absolute", top: 3, left: showBalance ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", transition: "left .15s" }} />
+        </button>
       </div>
 
       {/* Datos bancarios para recargar */}
