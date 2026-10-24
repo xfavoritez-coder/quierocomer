@@ -1909,6 +1909,17 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
     setSaving(false);
   };
 
+  const removeTxn = async (txnId: string) => {
+    if (!confirm("¿Eliminar este movimiento? Se revertirá su efecto en el saldo.")) return;
+    try {
+      const r = await fetch(`/api/admin/locales/${restaurantId}/wallet?txnId=${txnId}`, { method: "DELETE" });
+      const d = await r.json();
+      if (!r.ok) { setMsg(d.error || "No se pudo eliminar"); return; }
+      setBalance(d.balance); setMsg("Movimiento eliminado");
+      load();
+    } catch { setMsg("Error de conexión"); }
+  };
+
   return (
     <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
@@ -1922,11 +1933,6 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-        {[5000, 10000, 20000, 50000].map((v) => (
-          <button key={v} disabled={saving} onClick={() => topUp(v)} style={{ padding: "7px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#eee", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>+{clpAdmin(v)}</button>
-        ))}
-      </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d-]/g, ""))} placeholder="Monto (ej: 15000)" inputMode="numeric"
           style={{ width: 150, padding: "9px 12px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
@@ -1951,6 +1957,7 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
                 </div>
                 <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: t.amount >= 0 ? "#4ade80" : "#ff6b6b" }}>{t.amount >= 0 ? "+" : "−"}{clpAdmin(Math.abs(t.amount))}</span>
                 <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", minWidth: 70, textAlign: "right" }}>{clpAdmin(t.balanceAfter)}</span>
+                <button onClick={() => removeTxn(t.id)} title="Eliminar movimiento" style={{ border: "none", background: "transparent", color: "#ff6b6b", cursor: "pointer", fontFamily: F, fontSize: "0.9rem", lineHeight: 1, padding: "0 2px", flexShrink: 0 }}>✕</button>
               </div>
             ))}
           </div>
