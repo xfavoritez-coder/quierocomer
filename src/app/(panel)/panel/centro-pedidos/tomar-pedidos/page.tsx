@@ -91,6 +91,9 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
   const { tenant, categories, products } = data;
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
+  // Modos que resuelven la dirección con mapa/geocoding y cotizan por coordenadas
+  // (distancia propia o cotización externa Uber).
+  const geoMode = deliveryMode === "distance" || deliveryMode === "uber";
   const zones = tenant.deliveryZones ?? [];
 
   const [isWide, setIsWide] = useState(true);
@@ -130,7 +133,7 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
   // que el server geocodifique un texto ambiguo y caiga en un punto equivocado.
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
   const addrRef = useRef<HTMLInputElement>(null);
-  const gmapsReady = useGoogleMaps(deliveryType === "DELIVERY" && deliveryMode === "distance" ? mapsKey : null);
+  const gmapsReady = useGoogleMaps(deliveryType === "DELIVERY" && geoMode ? mapsKey : null);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
@@ -168,7 +171,7 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
   // Delivery: distancia → geocodificar (debounced)
   const geoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    if (deliveryType !== "DELIVERY" || deliveryMode !== "distance") return;
+    if (deliveryType !== "DELIVERY" || !geoMode) return;
     clearTimeout(geoTimer.current);
     if (address.trim().length < 6) { setGeo({ status: "idle", msg: "" }); setDeliveryFee(0); return; }
     setGeo({ status: "loading", msg: "Calculando envío…" });
@@ -184,7 +187,7 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
 
   // Autocomplete de Google en el campo de dirección (coordenadas precisas).
   useEffect(() => {
-    if (deliveryType !== "DELIVERY" || deliveryMode !== "distance" || !gmapsReady || !addrRef.current) return;
+    if (deliveryType !== "DELIVERY" || !geoMode || !gmapsReady || !addrRef.current) return;
     const g = (window as unknown as { google?: any }).google;
     if (!g?.maps?.places?.Autocomplete) return;
     const ac = new g.maps.places.Autocomplete(addrRef.current, {

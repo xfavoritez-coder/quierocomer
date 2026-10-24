@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 
 export const runtime = "nodejs";
 
@@ -30,10 +31,31 @@ export async function POST(req: NextRequest) {
 
   if (!(await verifyAccess(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceDeliveryConfig: true, ecommerceConfig: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceDeliveryConfig: true, ecommerceConfig: true, address: true } });
   if (!r) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
   const dcfg = parseDeliveryConfig(r.ecommerceDeliveryConfig);
+
+  // Cotiza el fee según las coordenadas del destino y el modo configurado.
+  async function quoteFor(lat: number, lng: number, formatted: string) {
+    if (dcfg.mode === "uber") {
+      const creds = uberSettingsFor(r);
+      if (!uberConfigured(creds)) return NextResponse.json({ available: false, reason: "Uber Direct no está configurado en este local." });
+      const q = await uberCreateQuote(creds, {
+        pickupAddress: dcfg.originAddress || r!.address || "",
+        pickupLat: dcfg.origin?.lat ?? null,
+        pickupLng: dcfg.origin?.lng ?? null,
+        dropoffAddress: formatted,
+        dropoffLat: lat,
+        dropoffLng: lng,
+      });
+      if (!q.ok) return NextResponse.json({ available: false, reason: uberQuoteErrorEs(q.error) });
+      return NextResponse.json({ available: true, fee: q.fee, formatted, lat, lng, source: "uber" });
+    }
+    const res = computeDistanceFee(dcfg, { lat, lng });
+    if (!res.available) return NextResponse.json({ available: false, reason: res.reason || "Fuera de la zona de reparto." });
+    return NextResponse.json({ available: true, fee: res.fee, formatted, lat, lng });
+  }
 
   // Si el cliente ya resolvió la dirección con Autocomplete (coordenadas
   // precisas de Google Places), usamos ESAS y no re-geocodificamos (evita que
@@ -41,9 +63,7 @@ export async function POST(req: NextRequest) {
   const latIn = Number(body?.lat);
   const lngIn = Number(body?.lng);
   if (Number.isFinite(latIn) && Number.isFinite(lngIn)) {
-    const res = computeDistanceFee(dcfg, { lat: latIn, lng: lngIn });
-    if (!res.available) return NextResponse.json({ available: false, reason: res.reason || "Fuera de la zona de reparto." });
-    return NextResponse.json({ available: true, fee: res.fee, formatted: address, lat: latIn, lng: lngIn });
+    return quoteFor(latIn, lngIn, address);
   }
 
   const key = parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey;
@@ -66,10 +86,7 @@ export async function POST(req: NextRequest) {
 
     const lat = result.geometry.location.lat as number;
     const lng = result.geometry.location.lng as number;
-    const res = computeDistanceFee(dcfg, { lat, lng });
-    if (!res.available) return NextResponse.json({ available: false, reason: res.reason || "Fuera de la zona de reparto." });
-
-    return NextResponse.json({ available: true, fee: res.fee, formatted: result.formatted_address as string, lat, lng });
+    return quoteFor(lat, lng, result.formatted_address as string);
   } catch {
     return NextResponse.json({ available: false, reason: "Error al calcular el envío." });
   }
