@@ -8,7 +8,7 @@ type Track = {
   isDelivery?: boolean; orderType?: string; orderReference?: string | null;
   customerName?: string; address?: string; destLat?: number | null; destLng?: number | null;
   items?: Line[]; total?: number; deliveryFee?: number; tip?: number; discount?: number; createdAt?: string | null;
-  driverLat?: number | null; driverLng?: number | null; driverName?: string | null; lastPingAt?: string | null; courierTrackingUrl?: string | null;
+  driverLat?: number | null; driverLng?: number | null; driverName?: string | null; lastPingAt?: string | null; courierTrackingUrl?: string | null; courierPin?: string | null;
 };
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
@@ -112,12 +112,17 @@ export default function TrackPage() {
           {d.address ? <div style={{ marginTop: 6, fontSize: "0.82rem", color: "#666" }}>📍 {d.address}</div> : null}
         </div>
 
+        {d.courierPin && !d.delivered && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: 18, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 14, textAlign: "center", border: "1px solid #F4A62355" }}>
+            <div style={{ fontSize: "0.82rem", color: "#666", fontWeight: 700, marginBottom: 6 }}>🔑 Código para el repartidor</div>
+            <div style={{ fontSize: "2rem", fontWeight: 900, color: "#111", letterSpacing: "0.3em", fontFamily: "monospace" }}>{d.courierPin}</div>
+            <div style={{ fontSize: "0.76rem", color: "#888", marginTop: 6 }}>Entrégale este código al repartidor al recibir tu pedido.</div>
+          </div>
+        )}
+
         {hasMap && (
           <div id="track-map" style={{ height: 340, borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }} />
         )}
-        {d.courierTrackingUrl ? (
-          <a href={d.courierTrackingUrl} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", marginTop: 14, padding: 12, borderRadius: 12, background: "#111", color: "#fff", fontWeight: 700, textDecoration: "none" }}>Ver seguimiento del courier →</a>
-        ) : null}
 
         {/* Resumen del pedido */}
         <div style={{ background: "#fff", borderRadius: 16, padding: 18, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginTop: 14 }}>
@@ -152,6 +157,11 @@ export default function TrackPage() {
         </div>
 
         <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.72rem", color: "#aaa" }}>Pedido gestionado por {d.store}</div>
+        {d.courierTrackingUrl ? (
+          <div style={{ textAlign: "center", marginTop: 4 }}>
+            <a href={d.courierTrackingUrl} target="_blank" rel="noreferrer" style={{ fontSize: "0.68rem", color: "#bbb", textDecoration: "underline" }}>Ver seguimiento del courier</a>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
+import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,14 +76,20 @@ export async function GET(req: NextRequest) {
     take: scope === "historial" ? 300 : 400,
   });
 
+  // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
+  const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true } });
+  const dCfg = parseDeliveryConfig(rLoc?.ecommerceDeliveryConfig);
+  const localLat = dCfg.origin?.lat ?? rLoc?.lat ?? null;
+  const localLng = dCfg.origin?.lng ?? rLoc?.lng ?? null;
+
   // KDS: número de pedido corto que se reinicia cada día (para control por teclado).
   if (scope === "kds") {
     const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
     const withNum = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null }));
-    return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today });
+    return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng });
   }
 
-  return NextResponse.json({ orders, from: fromYmd, to: toYmd, today });
+  return NextResponse.json({ orders, from: fromYmd, to: toYmd, today, localLat, localLng });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

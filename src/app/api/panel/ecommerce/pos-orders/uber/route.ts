@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { uberSettingsFor, uberCreateDelivery, uberCancelDelivery, type CreateDeliveryParams } from "@/lib/ecommerce/uberDirect";
+import { uberSettingsFor, uberCreateDelivery, uberCancelDelivery, uberCreateQuote, uberQuoteErrorEs, type CreateDeliveryParams } from "@/lib/ecommerce/uberDirect";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,11 +17,38 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
   return r?.ownerId === panelId;
 }
 
-/** POST → solicita repartidor Uber Direct para un PosOrder. Body { restaurantId, id } */
+/** GET → cotiza (sin crear) el despacho Uber de un PosOrder. ?restaurantId=&id=
+ *  Devuelve { ok, fee, durationMin, quoteId } para mostrar el precio antes de solicitar. */
+export async function GET(req: NextRequest) {
+  const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
+  const id = req.nextUrl.searchParams.get("id") || "";
+  if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+  if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const order = await prisma.posOrder.findUnique({ where: { id }, include: { restaurant: { select: { id: true, address: true, lat: true, lng: true, ecommerceConfig: true } } } });
+  if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
+  if (!order.isDelivery) return NextResponse.json({ error: "El pedido no es de delivery" }, { status: 400 });
+  if (!order.restaurant.address) return NextResponse.json({ error: "Falta la dirección del local (configúrala en el perfil)" }, { status: 400 });
+  if (!order.addressLine) return NextResponse.json({ error: "El pedido no tiene dirección de entrega" }, { status: 400 });
+
+  const res = await uberCreateQuote(uberSettingsFor(order.restaurant), {
+    pickupAddress: order.restaurant.address,
+    pickupLat: order.restaurant.lat,
+    pickupLng: order.restaurant.lng,
+    dropoffAddress: order.addressLine,
+    dropoffLat: order.customerLat,
+    dropoffLng: order.customerLng,
+  });
+  if (!res.ok) return NextResponse.json({ error: uberQuoteErrorEs(res.error) }, { status: 502 });
+  return NextResponse.json({ ok: true, fee: res.fee, durationMin: res.durationMin ?? null, quoteId: res.quoteId ?? null });
+}
+
+/** POST → solicita repartidor Uber Direct para un PosOrder. Body { restaurantId, id, quoteId? } */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const restaurantId = (body?.restaurantId || "").toString();
   const id = (body?.id || "").toString();
+  const quoteId = (body?.quoteId || "").toString() || null;
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
@@ -61,9 +88,13 @@ export async function POST(req: NextRequest) {
     manifestItems: items.length ? items.map((it) => ({ name: (it?.productName || it?.name || "Producto").toString(), quantity: Math.max(1, Number(it?.quantity) || 1) })).slice(0, 30) : [{ name: `Pedido ${order.orderReference || order.id.slice(-6)}`, quantity: 1 }],
     manifestTotalValue: order.totalAmount,
     externalId: order.id,
+    quoteId,
   };
 
-  const res = await uberCreateDelivery(uberSettingsFor(order.restaurant), params);
+  const creds = uberSettingsFor(order.restaurant);
+  let res = await uberCreateDelivery(creds, params);
+  // Si la cotización ya venció, reintenta sin fijar el precio (Uber recotiza).
+  if (!res.ok && quoteId) res = await uberCreateDelivery(creds, { ...params, quoteId: null });
   if (!res.ok || !res.delivery) {
     // Liberar el claim para permitir reintentar.
     await prisma.posOrder.updateMany({ where: { id: order.id, uberDeliveryId: "PENDING" }, data: { uberDeliveryId: null } });

@@ -78,5 +78,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     driverName: o.assignedTo || courier?.courierName || null,
     lastPingAt: o.trackingLastPingAt,
     courierTrackingUrl: courier?.trackingUrl || null,
+    // PIN que el cliente le da al repartidor de Uber (respaldo de verificación).
+    courierPin: courier?.dropoffPin || null,
   });
 }

@@ -21,6 +21,7 @@ interface PosOrder {
   currency: string; vendorName: string | null; orderReference: string | null;
   items: any; completedAt: string | null; createdAt: string; updatedAt: string; opsDeliveredAt?: string | null;
   assignedTo?: string | null; uberDeliveryId?: string | null; pyaShippingId?: string | null; courier?: any; trackingToken?: string | null;
+  customerLat?: number | null; customerLng?: number | null; lastLat?: number | null; lastLng?: number | null;
 }
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
@@ -121,6 +122,24 @@ export default function CentroPedidosPage() {
   const [uberEnabled, setUberEnabled] = useState(true);
   const [pedidosyaEnabled, setPedidosyaEnabled] = useState(true);
   const courierReq = useRef<Set<string>>(new Set());
+  const [local, setLocal] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
+  const [leafletReady, setLeafletReady] = useState(false);
+  // Cotización Uber pendiente de confirmación (modal).
+  const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; durationMin: number | null; quoteId: string | null } | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState<string | null>(null);
+
+  // Carga Leaflet (CDN) una vez, para los mini-mapas en vivo de las tarjetas.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ((window as any).L) { setLeafletReady(true); return; }
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    js.onload = () => setLeafletReady(true);
+    document.body.appendChild(js);
+  }, []);
 
   // Flags de couriers externos (para mostrar/ocultar los botones de solicitar).
   useEffect(() => {
@@ -137,7 +156,10 @@ export default function CentroPedidosPage() {
     try {
       const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${view}&from=${fromDate}&to=${toDate}`);
       const d = await r.json();
-      if (r.ok && d.orders) setOrders(d.orders);
+      if (r.ok && d.orders) {
+        setOrders(d.orders);
+        if (d.localLat != null || d.localLng != null) setLocal({ lat: d.localLat ?? null, lng: d.localLng ?? null });
+      }
     } catch { /* noop */ }
     setLoading(false);
   }, [restaurantId, view, fromDate, toDate]);
@@ -196,17 +218,15 @@ export default function CentroPedidosPage() {
     } catch { toast.error("Error de conexión"); fetchOrders(true); }
   }
 
-  async function requestCourier(o: PosOrder, provider: "uber" | "pedidosya") {
+  // Ejecuta la solicitud real del courier (tras confirmar / aceptar la cotización).
+  async function doRequestCourier(o: PosOrder, provider: "uber" | "pedidosya", quoteId?: string | null) {
     if (!restaurantId) return;
-    // Guard inmediato: ignora clics repetidos mientras hay una solicitud en curso
-    // (evita crear varias entregas Uber que luego llegan al local).
     if (courierReq.current.has(o.id) || o.uberDeliveryId || o.pyaShippingId) return;
-    if (!confirm(provider === "uber" ? "¿Solicitar un repartidor de Uber para este pedido?" : "¿Solicitar un repartidor de PedidosYa para este pedido?")) return;
     courierReq.current.add(o.id);
     setCourierBusy((s) => ({ ...s, [o.id]: true }));
     const path = provider === "uber" ? "uber" : "pedidosya";
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id }) });
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, id: o.id, ...(quoteId ? { quoteId } : {}) }) });
       const d = await r.json();
       if (!r.ok) { toast.error(d.error || "No se pudo solicitar el courier"); return; }
       toast.success(d.alreadyRequested ? "Este pedido ya tenía courier" : (provider === "uber" ? "Uber solicitado" : "PedidosYa solicitado"));
@@ -216,6 +236,25 @@ export default function CentroPedidosPage() {
       courierReq.current.delete(o.id);
       setCourierBusy((s) => { const n = { ...s }; delete n[o.id]; return n; });
     }
+  }
+
+  async function requestCourier(o: PosOrder, provider: "uber" | "pedidosya") {
+    if (!restaurantId) return;
+    if (courierReq.current.has(o.id) || o.uberDeliveryId || o.pyaShippingId) return;
+    // PedidosYa: confirmación simple (sin cotización previa).
+    if (provider === "pedidosya") {
+      if (!confirm("¿Solicitar un repartidor de PedidosYa para este pedido?")) return;
+      return doRequestCourier(o, "pedidosya");
+    }
+    // Uber: primero cotiza y muestra el precio en un modal para aceptar.
+    setQuoteLoading(o.id);
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/uber?restaurantId=${restaurantId}&id=${o.id}`);
+      const d = await r.json();
+      if (!r.ok) { toast.error(d.error || "No se pudo cotizar"); return; }
+      setUberQuote({ order: o, fee: d.fee ?? null, durationMin: d.durationMin ?? null, quoteId: d.quoteId ?? null });
+    } catch { toast.error("Error de conexión"); }
+    finally { setQuoteLoading(null); }
   }
 
   async function cancelCourier(o: PosOrder) {
@@ -292,7 +331,7 @@ export default function CentroPedidosPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10 }}>
-            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
+            {orders.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} />)}
           </div>
         )
       ) : (() => {
@@ -344,12 +383,34 @@ export default function CentroPedidosPage() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 10, alignItems: "start" }}>
-                {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} />)}
+                {items.map((o) => <OrderCard key={o.id} o={o} flash={!!flash[o.id]} onAdvance={advance} onDelete={eliminar} onCourier={requestCourier} onCancelCourier={cancelCourier} courierBusy={!!courierBusy[o.id]} quoting={quoteLoading === o.id} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} local={local} leafletReady={leafletReady} />)}
               </div>
             )}
           </>
         );
       })()}
+
+      {/* Modal de cotización Uber: muestra el precio antes de solicitar */}
+      {uberQuote && (
+        <div onClick={() => setUberQuote(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: "var(--adm-card)", borderRadius: 16, padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <span style={{ width: 30, height: 30, borderRadius: 7, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.9rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>U</span>
+              <div style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)" }}>Repartidor de Uber</div>
+            </div>
+            <div style={{ background: "var(--adm-hover)", borderRadius: 12, padding: 16, textAlign: "center", marginBottom: 6 }}>
+              <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", marginBottom: 4 }}>Costo del despacho</div>
+              <div style={{ fontFamily: F, fontSize: "1.9rem", fontWeight: 900, color: "var(--adm-text)" }}>{uberQuote.fee != null ? clp(uberQuote.fee) : "—"}</div>
+              {uberQuote.durationMin != null && <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", marginTop: 4 }}>🏍️ Llega al local en ~{uberQuote.durationMin} min</div>}
+            </div>
+            <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginBottom: 16 }}>Pedido {uberQuote.order.orderReference ? `#${uberQuote.order.orderReference}` : uberQuote.order.customerName}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setUberQuote(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.86rem", fontWeight: 700, cursor: "pointer" }}>Cancelar</button>
+              <button onClick={() => { const q = uberQuote; setUberQuote(null); doRequestCourier(q.order, "uber", q.quoteId); }} style={{ flex: 2, padding: "11px", borderRadius: 10, border: "none", background: "#000", color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: "pointer" }}>Solicitar repartidor</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -377,7 +438,63 @@ function ElapsedTimer({ since }: { since: string }) {
   );
 }
 
-function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy, uberEnabled = true, pedidosyaEnabled = true }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean; uberEnabled?: boolean; pedidosyaEnabled?: boolean }) {
+// Mini-mapa en vivo del repartidor dentro de la tarjeta (se expande al tocar).
+function CourierMiniMap({ orderId, courier, local, dropoff, leafletReady }: { orderId: string; courier: { lat: number; lng: number }; local: { lat: number; lng: number } | null; dropoff: { lat: number; lng: number } | null; leafletReady: boolean }) {
+  const [open, setOpen] = useState(false);
+  const mapRef = useRef<any>(null);
+  const driverRef = useRef<any>(null);
+  const mapId = `mini-map-${orderId}`;
+
+  // Inicializa el mapa al abrir y cuando Leaflet esté listo.
+  useEffect(() => {
+    if (!open || !leafletReady) return;
+    const L = (window as any).L;
+    if (!L) return;
+    if (!mapRef.current) {
+      const el = document.getElementById(mapId);
+      if (!el) return;
+      mapRef.current = L.map(mapId, { zoomControl: false, attributionControl: false, dragging: true }).setView([courier.lat, courier.lng], 14);
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, maxNativeZoom: 16 }).addTo(mapRef.current);
+    }
+    const map = mapRef.current;
+    const pts: [number, number][] = [];
+    // Repartidor (moto).
+    const motoIcon = L.divIcon({ html: `<div style="font-size:26px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">🏍️</div>`, className: "", iconSize: [30, 30], iconAnchor: [15, 26] });
+    if (!driverRef.current) driverRef.current = L.marker([courier.lat, courier.lng], { icon: motoIcon, zIndexOffset: 1000 }).addTo(map);
+    else driverRef.current.setLatLng([courier.lat, courier.lng]);
+    pts.push([courier.lat, courier.lng]);
+    // Local (El Suculento).
+    if (local) {
+      const localIcon = L.divIcon({ html: `<div style="width:16px;height:16px;border-radius:50%;background:#F4A623;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`, className: "", iconSize: [16, 16], iconAnchor: [8, 8] });
+      L.marker([local.lat, local.lng], { icon: localIcon }).addTo(map).bindTooltip("Local", { direction: "top" });
+      pts.push([local.lat, local.lng]);
+    }
+    // Destino (cliente).
+    if (dropoff) {
+      const homeIcon = L.divIcon({ html: `<div style="font-size:18px">🏠</div>`, className: "", iconSize: [18, 18], iconAnchor: [9, 9] });
+      L.marker([dropoff.lat, dropoff.lng], { icon: homeIcon }).addTo(map);
+      pts.push([dropoff.lat, dropoff.lng]);
+    }
+    if (pts.length > 1) map.fitBounds(pts, { padding: [28, 28], maxZoom: 15 });
+    else map.setView([courier.lat, courier.lng], 14);
+    setTimeout(() => map.invalidateSize(), 60);
+  }, [open, leafletReady, courier.lat, courier.lng, local, dropoff, mapId]);
+
+  // Limpia el mapa al cerrar/desmontar.
+  useEffect(() => () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; driverRef.current = null; } }, []);
+  useEffect(() => { if (!open && mapRef.current) { mapRef.current.remove(); mapRef.current = null; driverRef.current = null; } }, [open]);
+
+  return (
+    <div onClick={(e) => e.stopPropagation()}>
+      <button onClick={() => setOpen((v) => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: BLUE, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>
+        <MapPinned size={13} /> {open ? "Ocultar ubicación" : "Ver ubicación en vivo"}
+      </button>
+      {open && <div id={mapId} style={{ height: 170, borderRadius: 10, overflow: "hidden", marginTop: 7, border: "1px solid var(--adm-card-border)" }} />}
+    </div>
+  );
+}
+
+function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, courierBusy, quoting = false, uberEnabled = true, pedidosyaEnabled = true, local, leafletReady = false }: { o: PosOrder; flash: boolean; onAdvance: (o: PosOrder, s: Stage) => void; onDelete: (o: PosOrder) => void; onCourier: (o: PosOrder, p: "uber" | "pedidosya") => void; onCancelCourier: (o: PosOrder) => void; courierBusy?: boolean; quoting?: boolean; uberEnabled?: boolean; pedidosyaEnabled?: boolean; local?: { lat: number | null; lng: number | null }; leafletReady?: boolean }) {
   const badge = saleBadge(o);
   const acts = nextActions(o);
   const canceled = o.posStatus === "canceled";
@@ -559,6 +676,17 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
           )}
           {c.dropoffPin && <span style={{ fontFamily: FB, fontSize: "0.66rem", color: "var(--adm-text3)" }}>El cliente le da el <strong>código cliente</strong> al repartidor (respaldo si no le llegó).</span>}
 
+          {/* Mini-mapa en vivo: ubicación del repartidor */}
+          {c.location && o.opsStage !== "delivered" && c.status !== "canceled" && (
+            <CourierMiniMap
+              orderId={o.id}
+              courier={c.location}
+              local={local && local.lat != null && local.lng != null ? { lat: local.lat, lng: local.lng } : null}
+              dropoff={o.customerLat != null && o.customerLng != null ? { lat: o.customerLat, lng: o.customerLng } : null}
+              leafletReady={leafletReady}
+            />
+          )}
+
           {/* Seguir / cancelar */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {c.trackingUrl && <a href={c.trackingUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontFamily: FB, fontSize: "0.74rem", color: BLUE, textDecoration: "none", fontWeight: 700 }}>Ver seguimiento →</a>}
@@ -568,10 +696,10 @@ function OrderCard({ o, flash, onAdvance, onDelete, onCourier, onCancelCourier, 
         );
       })() : canRequestCourier ? (
         <div style={{ marginTop: 8, padding: "8px 9px", borderRadius: 10, background: "var(--adm-hover)" }}>
-          <span style={{ display: "block", fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>{courierBusy ? "Solicitando…" : "Solicitar:"}</span>
+          <span style={{ display: "block", fontFamily: FB, fontSize: "0.68rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>{quoting ? "Cotizando…" : courierBusy ? "Solicitando…" : "Solicitar:"}</span>
           <div style={{ display: "flex", gap: 6 }}>
             {uberEnabled && (
-              <button disabled={courierBusy} onClick={() => onCourier(o, "uber")} style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap", cursor: courierBusy ? "wait" : "pointer", opacity: courierBusy ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
+              <button disabled={courierBusy || quoting} onClick={() => onCourier(o, "uber")} style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.74rem", fontWeight: 700, whiteSpace: "nowrap", cursor: (courierBusy || quoting) ? "wait" : "pointer", opacity: (courierBusy || quoting) ? 0.5 : 1, boxShadow: "0 1px 3px rgba(0,0,0,0.14)" }}>
                 <span style={{ width: 16, height: 16, borderRadius: 4, background: "#000", color: "#fff", fontFamily: F, fontSize: "0.62rem", fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>U</span>
                 Uber Direct
               </button>

@@ -159,6 +159,7 @@ export interface CreateDeliveryParams {
   manifestItems: { name: string; quantity: number }[];
   manifestTotalValue: number; // CLP
   externalId: string;
+  quoteId?: string | null; // fija el precio cotizado (del delivery_quote), opcional
 }
 
 export interface CreateDeliveryResult {
@@ -188,6 +189,7 @@ export async function uberCreateDelivery(creds: UberCreds, params: CreateDeliver
     manifest_total_value: Math.max(1, Math.round(params.manifestTotalValue)),
     external_id: params.externalId,
     pickup_ready_dt: new Date().toISOString(),
+    ...(params.quoteId ? { quote_id: params.quoteId } : {}),
     // Verificación en la entrega: PIN de 4 dígitos (respaldo del cliente) + foto.
     dropoff_verification: { pincode: { enabled: true }, picture: true },
     ...(params.pickupLat != null && params.pickupLng != null ? { pickup_latitude: params.pickupLat, pickup_longitude: params.pickupLng } : {}),
@@ -216,7 +218,7 @@ export interface QuoteParams {
   pickupAddress: string; pickupCity?: string | null; pickupLat?: number | null; pickupLng?: number | null;
   dropoffAddress: string; dropoffCity?: string | null; dropoffLat?: number | null; dropoffLng?: number | null;
 }
-export interface QuoteResult { ok: boolean; fee?: number; durationMin?: number | null; error?: string; raw?: unknown }
+export interface QuoteResult { ok: boolean; fee?: number; durationMin?: number | null; quoteId?: string | null; error?: string; raw?: unknown }
 
 /** Traduce el error de cotización de Uber a un mensaje claro para el cliente. */
 export function uberQuoteErrorEs(raw?: string | null): string {
@@ -258,7 +260,8 @@ export async function uberCreateQuote(creds: UberCreds, params: QuoteParams): Pr
     }
     // CLP: Uber envía el fee ×100 (como centavos), igual que en las entregas.
     const durRaw = (data as { duration?: number }).duration;
-    return { ok: true, fee: Math.round(fee / 100), durationMin: typeof durRaw === "number" ? durRaw : null, raw: data };
+    const quoteId = (data as { id?: string }).id ?? null;
+    return { ok: true, fee: Math.round(fee / 100), durationMin: typeof durRaw === "number" ? durRaw : null, quoteId, raw: data };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error Uber" };
   }
