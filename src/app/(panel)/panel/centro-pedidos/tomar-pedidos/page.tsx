@@ -523,7 +523,7 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
               <p style={{ fontFamily: FB, fontSize: "0.86rem", color: C.text2, margin: "4px 0 0" }}>Pedido #{success} registrado. Aparece en Pedidos.</p>
             </div>
             <button onClick={reset} style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: C.text, color: "#fff", fontFamily: F, fontWeight: 700, cursor: "pointer" }}>Nuevo pedido</button>
-            <Link href="/panel/ecommerce/pedidos" style={{ fontFamily: FB, fontSize: "0.8rem", color: C.text2, textDecoration: "none" }}>Ver pedidos →</Link>
+            <Link href="/panel/centro-pedidos" style={{ fontFamily: FB, fontSize: "0.8rem", color: C.text2, textDecoration: "none" }}>Ver pedidos →</Link>
           </div>
         </Overlay>
       )}

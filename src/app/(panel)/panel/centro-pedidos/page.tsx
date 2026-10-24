@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck, MonitorPlay, Wallet } from "lucide-react";
+import { ArrowLeft, Radio, RefreshCw, History, ClipboardCheck, Phone, MapPin, Utensils, Bike, ShoppingBag, Check, Trash2, MoreVertical, MapPinned, ChevronLeft, ChevronRight, Calendar, Clock, Flame, Bell, CheckSquare, Truck, MonitorPlay, Wallet, ConciergeBell } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -302,6 +302,9 @@ export default function CentroPedidosPage() {
             <Wallet size={12} /> {clp(walletBalance)}
           </Link>
         )}
+        <Link href="/panel/centro-pedidos/tomar-pedidos" title="Tomar un pedido" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
+          <ConciergeBell size={15} /> Tomar pedidos
+        </Link>
         <Link href="/panel/centro-pedidos/kds" title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
           <MonitorPlay size={15} /> KDS
         </Link>
