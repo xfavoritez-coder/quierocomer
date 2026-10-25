@@ -110,7 +110,10 @@ export function generateSlots(opts: {
     // Recorre las marcas del día (respeta ventana normal o nocturna hasta 24h).
     const endM = fromM <= toM ? toM : toM + 1440;
     const slots: { iso: string; label: string }[] = [];
-    for (let m = Math.ceil(fromM / step) * step; m <= endM; m += step) {
+    // El primer horario programable es la APERTURA + el tiempo estimado: no se puede
+    // preparar/despachar antes de abrir (ej: abre 13:30 y delivery 60min → desde 14:30).
+    const startM = Math.ceil((fromM + estimatedMinutes) / step) * step;
+    for (let m = startM; m <= endM; m += step) {
       const realMin = m % 1440;
       if (!withinWindow(realMin, fromM, toM) && m < 1440) continue;
       const slotYmd = m >= 1440 ? addDaysYmd(ymd, 1) : ymd;
@@ -158,6 +161,13 @@ export function validateScheduledFor(opts: {
     const rawTo = day.to || "23:59";
     const toM = rawTo === "00:00" ? 1440 : toMins(rawTo);
     if (!withinWindow(minutes, fromM, toM)) return { ok: false, error: "Fuera del horario de atención." };
+    // No antes de: apertura del día + tiempo estimado (no se prepara antes de abrir).
+    if (minutes >= fromM) {
+      const openDate = chileWallToDate(ymd, day.from || "00:00");
+      if (date.getTime() < openDate.getTime() + estimatedMinutes * 60_000 - 60_000) {
+        return { ok: false, error: "Muy pronto: el local recién abre a esa hora, elige una más tarde." };
+      }
+    }
   }
   // No en cierre programado.
   const wall = chileParts(date).ymd + "T" + chileParts(date).hhmm;
