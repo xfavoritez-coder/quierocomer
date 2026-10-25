@@ -14,6 +14,7 @@ interface CentroPedidosConfig {
   posMode?: boolean;
   uberEnabled?: boolean;
   pedidosyaEnabled?: boolean;
+  customerAbsorbsSurcharge?: boolean;
 }
 
 export default function CentroPedidosConfigPage() {
