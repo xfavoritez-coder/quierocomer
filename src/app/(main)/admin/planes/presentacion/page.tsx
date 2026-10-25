@@ -197,23 +197,22 @@ function SceneKds() {
     </div>
   );
   return (
-    <div style={{ width: "100%", maxWidth: 440, aspectRatio: "4 / 3", position: "relative", borderRadius: 14, overflow: "hidden", background: "linear-gradient(180deg,#EFE4CC,#E8DBC1)" }}>
-      {/* azulejos cuadrados de la pared */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "74%", backgroundImage: "linear-gradient(rgba(120,95,45,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,45,0.09) 1px,transparent 1px)", backgroundSize: "clamp(30px,8%,40px) clamp(30px,8%,40px)" }} />
-      {/* mesón de acero (pass) */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "26%", background: "linear-gradient(180deg,#D7D0C2 0%,#C4BCAC 60%,#B4AB9A 100%)" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "rgba(255,248,235,0.5)" }} />
-      </div>
-      {/* luz de calor sobre el pass */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: "26%", height: 30, background: "linear-gradient(180deg,rgba(255,180,90,0),rgba(255,165,70,0.3))" }} />
-      {/* platos emplatados + vapor + cocinero */}
-      <div style={{ position: "absolute", bottom: "7%", left: "11%" }}>{plate("#C98A3A", "p1")}</div>
-      <div style={{ position: "absolute", bottom: "6%", left: "33%" }}>{plate("#86A85A", "p2")}</div>
-      {[0, 1, 2].map((i) => <div key={i} style={{ position: "absolute", left: `${15 + i * 3}%`, bottom: "22%", width: 7, height: 7, borderRadius: "50%", background: "rgba(252,247,238,0.75)", animation: `qcsteam 2.6s ease-in-out ${i * 0.55}s infinite` }} />)}
-      <div style={{ position: "absolute", bottom: "9%", right: "9%", fontSize: "clamp(30px,7vw,48px)" }}>👨‍🍳</div>
+    <div style={{ width: "100%", maxWidth: 450, aspectRatio: "4 / 3", position: "relative", borderRadius: 14, overflow: "hidden", perspective: "640px", perspectiveOrigin: "50% 34%", background: "linear-gradient(180deg,#EFE4CC 0%,#EADDC2 52%)" }}>
+      {/* pared del fondo con azulejos */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "56%", backgroundImage: "linear-gradient(rgba(120,95,45,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,45,0.09) 1px,transparent 1px)", backgroundSize: "34px 34px" }} />
+      {/* piso / mesón de acero en perspectiva (cuadrícula que converge al punto de fuga) */}
+      <div style={{ position: "absolute", left: 0, right: 0, top: "50%", bottom: 0, transform: "rotateX(62deg)", transformOrigin: "top center", background: "linear-gradient(180deg,#CBC4B6,#B5AC9C)", backgroundImage: "linear-gradient(90deg,rgba(90,82,66,0.35) 1px,transparent 1px),linear-gradient(rgba(90,82,66,0.35) 1px,transparent 1px)", backgroundSize: "44px 44px" }} />
+      {/* sombra/junta donde la pared toca el piso */}
+      <div style={{ position: "absolute", left: 0, right: 0, top: "calc(50% - 4px)", height: 8, background: "linear-gradient(180deg,rgba(60,45,20,0.18),transparent)" }} />
+      {/* luz de calor */}
+      <div style={{ position: "absolute", left: 0, right: 0, top: "48%", height: 26, background: "linear-gradient(180deg,rgba(255,170,70,0.28),transparent)" }} />
+      {/* platos emplatados + vapor */}
+      <div style={{ position: "absolute", bottom: "8%", left: "16%" }}>{plate("#C98A3A", "p1")}</div>
+      <div style={{ position: "absolute", bottom: "6%", left: "40%" }}>{plate("#86A85A", "p2")}</div>
+      {[0, 1, 2].map((i) => <div key={i} style={{ position: "absolute", left: `${20 + i * 3}%`, bottom: "24%", width: 7, height: 7, borderRadius: "50%", background: "rgba(252,247,238,0.8)", animation: `qcsteam 2.6s ease-in-out ${i * 0.55}s infinite` }} />)}
 
       {/* pantalla KDS montada en la pared */}
-      <div style={{ position: "absolute", left: "50%", top: "9%", transform: "translateX(-50%)", width: "72%" }}>
+      <div style={{ position: "absolute", left: "50%", top: "7%", transform: "translateX(-50%)", width: "66%" }}>
         <div style={{ background: "#0d0f12", borderRadius: 14, padding: 8, border: "4px solid #2b2f36", boxShadow: "0 20px 30px -16px rgba(0,0,0,.6)" }}>
           <div style={{ background: "#14181c", borderRadius: 7, padding: 10, position: "relative", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
