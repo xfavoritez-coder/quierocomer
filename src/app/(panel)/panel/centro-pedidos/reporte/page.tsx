@@ -37,6 +37,15 @@ interface Report {
   byType: TypeBucket[];
   monthly: { month: string; days: MonthlyDay[] };
 }
+interface ToteatSales {
+  available: boolean;
+  reason?: string;
+  error?: string;
+  total?: number;
+  count?: number;
+  dineIn?: { total: number; count: number };
+  delivery?: { total: number; count: number };
+}
 
 export default function ReportePage() {
   const session = useSessionContext();
@@ -45,6 +54,8 @@ export default function ReportePage() {
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState<string>(() => chileTodayLocal());
   const [toDate, setToDate] = useState<string>(() => chileTodayLocal());
+  const [toteat, setToteat] = useState<ToteatSales | null>(null);
+  const [toteatLoading, setToteatLoading] = useState(false);
 
   const fetchReport = useCallback(async () => {
     if (!restaurantId) return;
@@ -57,7 +68,19 @@ export default function ReportePage() {
     setLoading(false);
   }, [restaurantId, fromDate, toDate]);
 
-  useEffect(() => { fetchReport(); }, [fetchReport]);
+  // Ventas totales de Toteat (consume /sales: incluye salón/mesas, no solo pedidos del webhook).
+  const fetchToteat = useCallback(async () => {
+    if (!restaurantId) return;
+    setToteatLoading(true);
+    try {
+      const r = await fetch(`/api/panel/ecommerce/toteat-sales-total?restaurantId=${restaurantId}&from=${fromDate}&to=${toDate}`);
+      const d = await r.json();
+      setToteat(r.ok ? d : null);
+    } catch { setToteat(null); }
+    setToteatLoading(false);
+  }, [restaurantId, fromDate, toDate]);
+
+  useEffect(() => { fetchReport(); fetchToteat(); }, [fetchReport, fetchToteat]);
 
   const today = chileTodayLocal();
   const singleDay = fromDate === toDate;
@@ -78,7 +101,7 @@ export default function ReportePage() {
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Reporte</h1>
           <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Ventas del período seleccionado y su distribución por hora.</p>
         </div>
-        <button onClick={() => fetchReport()} title="Refrescar" style={{ width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={16} /></button>
+        <button onClick={() => { fetchReport(); fetchToteat(); }} title="Refrescar" style={{ width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer" }}><RefreshCw size={16} /></button>
       </div>
 
       {/* Barra de fechas */}
@@ -102,6 +125,29 @@ export default function ReportePage() {
         <>
           {/* Venta por día del mes en curso */}
           <MonthlyChart monthly={data.monthly} />
+
+          {/* Ventas totales de Toteat (incluye salón/mesas, directo de /sales) */}
+          {toteat?.available && !toteat.error && (
+            <div style={{ background: "linear-gradient(135deg, #16a34a14, #16a34a05)", border: "1px solid #16a34a40", borderRadius: 16, padding: 18, marginBottom: 18, display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}>
+                  <TrendingUp size={16} color={GREEN} />
+                  <span style={{ fontFamily: FB, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)" }}>Ventas totales en Toteat {singleDay ? "(hoy)" : "(período)"}</span>
+                </div>
+                <div style={{ fontFamily: F, fontSize: "2.1rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1.05 }}>{toteatLoading ? "…" : clp(toteat.total || 0)}</div>
+                <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", marginTop: 2 }}>{toteat.count || 0} ventas · incluye salón, delivery y retiro (fuente: Toteat)</div>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <MiniStat label="🍽️ Salón (mesas)" value={clp(toteat.dineIn?.total || 0)} sub={`${toteat.dineIn?.count || 0} ventas`} />
+                <MiniStat label="🛵 Online" value={clp(toteat.delivery?.total || 0)} sub={`${toteat.delivery?.count || 0} ventas`} />
+              </div>
+            </div>
+          )}
+          {toteat?.available && toteat.error && (
+            <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)" }}>
+              No se pudieron cargar las ventas de Toteat: {toteat.error}
+            </div>
+          )}
 
           {/* KPIs */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14, marginBottom: 18 }}>
@@ -149,6 +195,16 @@ function BigStat({ label, value, hint, icon, color, big }: { label: string; valu
       </div>
       <div style={{ fontFamily: F, fontSize: big ? "1.9rem" : "1.5rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1.1 }}>{value}</div>
       {hint && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 4 }}>{hint}</div>}
+    </div>
+  );
+}
+
+function MiniStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "10px 14px", minWidth: 120 }}>
+      <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 800, color: "var(--adm-text)" }}>{value}</div>
+      {sub && <div style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{sub}</div>}
     </div>
   );
 }
