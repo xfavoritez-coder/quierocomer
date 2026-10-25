@@ -15,7 +15,7 @@ const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 interface Bank { bankName?: string; accountType?: string; accountNumber?: string; rut?: string; holder?: string; email?: string; instructions?: string }
 interface Txn { id: string; amount: number; type: string; description: string | null; balanceAfter: number; createdAt: string }
 
-const TXN_LABEL: Record<string, string> = { topup: "Recarga", charge: "Despacho", refund: "Reembolso", adjust: "Ajuste" };
+const TXN_LABEL: Record<string, string> = { topup: "Recarga", charge: "Despacho", surcharge: "Recargo plataforma", refund: "Reembolso", adjust: "Ajuste" };
 
 export default function SaldoDeliveryPage() {
   const session = useSessionContext();

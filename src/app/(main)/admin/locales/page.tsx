@@ -1887,7 +1887,7 @@ function AddBranchBox({ restaurant }: { restaurant: { id: string; name: string }
 }
 
 const clpAdmin = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
-const WALLET_TXN_LABEL: Record<string, string> = { topup: "Recarga", charge: "Despacho", refund: "Reembolso", adjust: "Ajuste" };
+const WALLET_TXN_LABEL: Record<string, string> = { topup: "Recarga", charge: "Despacho", surcharge: "Recargo plataforma", refund: "Reembolso", adjust: "Ajuste" };
 
 // Saldo para delivery de un local (superadmin): ver saldo, recargar y ver movimientos.
 function WalletSection({ restaurantId }: { restaurantId: string }) {
