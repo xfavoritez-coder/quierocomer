@@ -191,25 +191,14 @@ function ScenePrinter() {
 
 function SceneKds() {
   const tickets: [string, string, string][] = [["#1042", "04:12", "#E8A33A"], ["#1043", "02:30", "#7fd1a8"], ["#1044", "00:45", "#7fd1a8"]];
-  const plate = (food: string, key: string) => (
-    <div key={key} style={{ width: "clamp(36px,9vw,54px)", aspectRatio: "1", borderRadius: "50%", background: "#F4EDDE", boxShadow: "0 5px 9px -4px rgba(0,0,0,.4), inset 0 0 0 4px #EADFC9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: "52%", height: "52%", borderRadius: "50%", background: food }} />
-    </div>
-  );
   return (
     <div style={{ width: "100%", maxWidth: 450, aspectRatio: "4 / 3", position: "relative", borderRadius: 14, overflow: "hidden", perspective: "640px", perspectiveOrigin: "50% 34%", background: "linear-gradient(180deg,#EFE4CC 0%,#EADDC2 52%)" }}>
       {/* pared del fondo con azulejos */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "56%", backgroundImage: "linear-gradient(rgba(120,95,45,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,45,0.09) 1px,transparent 1px)", backgroundSize: "34px 34px" }} />
-      {/* piso / mesón de acero en perspectiva (cuadrícula que converge al punto de fuga) */}
-      <div style={{ position: "absolute", left: 0, right: 0, top: "50%", bottom: 0, transform: "rotateX(62deg)", transformOrigin: "top center", background: "linear-gradient(180deg,#CBC4B6,#B5AC9C)", backgroundImage: "linear-gradient(90deg,rgba(90,82,66,0.35) 1px,transparent 1px),linear-gradient(rgba(90,82,66,0.35) 1px,transparent 1px)", backgroundSize: "44px 44px" }} />
+      {/* piso de acero inoxidable en perspectiva (cuadrícula que converge al punto de fuga) */}
+      <div style={{ position: "absolute", left: 0, right: 0, top: "50%", bottom: 0, transform: "rotateX(62deg)", transformOrigin: "top center", backgroundColor: "#B4B9C1", backgroundImage: "linear-gradient(180deg,rgba(250,251,253,0.5),rgba(250,251,253,0) 42%,rgba(55,60,68,0.22)),linear-gradient(90deg,rgba(60,66,74,0.4) 1px,transparent 1px),linear-gradient(rgba(60,66,74,0.4) 1px,transparent 1px)", backgroundSize: "auto,44px 44px,44px 44px" }} />
       {/* sombra/junta donde la pared toca el piso */}
-      <div style={{ position: "absolute", left: 0, right: 0, top: "calc(50% - 4px)", height: 8, background: "linear-gradient(180deg,rgba(60,45,20,0.18),transparent)" }} />
-      {/* luz de calor */}
-      <div style={{ position: "absolute", left: 0, right: 0, top: "48%", height: 26, background: "linear-gradient(180deg,rgba(255,170,70,0.28),transparent)" }} />
-      {/* platos emplatados + vapor */}
-      <div style={{ position: "absolute", bottom: "8%", left: "16%" }}>{plate("#C98A3A", "p1")}</div>
-      <div style={{ position: "absolute", bottom: "6%", left: "40%" }}>{plate("#86A85A", "p2")}</div>
-      {[0, 1, 2].map((i) => <div key={i} style={{ position: "absolute", left: `${20 + i * 3}%`, bottom: "24%", width: 7, height: 7, borderRadius: "50%", background: "rgba(252,247,238,0.8)", animation: `qcsteam 2.6s ease-in-out ${i * 0.55}s infinite` }} />)}
+      <div style={{ position: "absolute", left: 0, right: 0, top: "calc(50% - 4px)", height: 8, background: "linear-gradient(180deg,rgba(40,44,50,0.22),transparent)" }} />
 
       {/* pantalla KDS montada en la pared */}
       <div style={{ position: "absolute", left: "50%", top: "7%", transform: "translateX(-50%)", width: "66%" }}>
