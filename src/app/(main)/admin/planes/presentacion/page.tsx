@@ -301,9 +301,16 @@ export default function PresentacionPage() {
   const router = useRouter();
   const [cfg, setCfg] = useState<PricingConfig | null>(null);
   const [idx, setIdx] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCfg(d)).catch(() => {}); }, []);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   type Slide = { type: "cover" } | { type: "intro" } | { type: "feature"; f: Feature } | { type: "panorama" } | { type: "plan"; plan: PricePlan; i: number; total: number } | { type: "addons" } | { type: "costos" } | { type: "cierre" };
   const slides: Slide[] = cfg ? [
@@ -397,7 +404,7 @@ export default function PresentacionPage() {
     if (slide.type === "panorama") return (
       <div style={{ ...wrap, gap: "clamp(12px,1.8vh,22px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
           {cfg.plans.map((p, i) => {
             const hi = /premium/i.test(p.name) && !/futuro/i.test(p.name);
             const prev = i > 0 ? cfg.plans[i - 1] : null;
@@ -576,8 +583,8 @@ export default function PresentacionPage() {
 @keyframes qcdrop{0%{transform:translateY(-56px);opacity:0}22%{opacity:1}50%{transform:translateY(0)}82%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}`}</style>
 
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
-        <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>
-        <button onClick={() => router.push("/admin/planes")} style={{ ...topBtn, ...darkBtn }}>✕ Cerrar</button>
+        {!isMobile && <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>}
+        <button onClick={() => router.push("/admin/planes")} aria-label="Cerrar" style={{ ...topBtn, ...darkBtn, ...(isMobile ? { padding: "8px 13px", fontSize: "1.05rem", lineHeight: 1 } : {}) }}>{isMobile ? "✕" : "✕ Cerrar"}</button>
       </div>
 
       <div className="qc-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
