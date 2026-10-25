@@ -42,8 +42,8 @@ function SceneBrowser() {
             <span style={{ fontFamily: DISP, color: PAPER, fontWeight: 600, fontSize: 18 }}>Tu Restaurante</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-            {([["🍣", "Sushi Roll", "$6.900"], ["🍜", "Ramen", "$7.500"], ["🥟", "Gyozas", "$4.200"]] as const).map(([e, n, p], i) => (
-              <div key={n} style={{ background: PAPER, border: "1px solid #EFE2C6", borderRadius: 9, overflow: "hidden", animation: `qcfloat 3s ease-in-out ${i * 0.3}s infinite` }}>
+            {([["🍣", "Sushi Roll", "$6.900"], ["🍜", "Ramen", "$7.500"], ["🥟", "Gyozas", "$4.200"]] as const).map(([e, n, p]) => (
+              <div key={n} style={{ background: PAPER, border: "1px solid #EFE2C6", borderRadius: 9, overflow: "hidden" }}>
                 <div style={{ height: 44, background: "linear-gradient(135deg,#FBEFD6,#F2E0BC)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>{e}</div>
                 <div style={{ padding: "5px 7px 7px" }}>
                   <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: INK, lineHeight: 1.1 }}>{n}</div>
