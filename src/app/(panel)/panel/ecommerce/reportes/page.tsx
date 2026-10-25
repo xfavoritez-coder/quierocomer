@@ -133,15 +133,15 @@ export default function ReportesPage() {
             {data.totalSales === 0 ? (
               <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
             ) : (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2 }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2, paddingRight: 52 }}>
                 {data.byDay.map((d) => {
                   const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
                   const isToday = d.ymd === data.today;
                   return (
                     <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                       {/* Monto exacto sobre la barra (diagonal para que quepa) */}
-                      <div style={{ height: 46, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "center bottom" }}>{fmt(d.total)}</span>}
+                      <div style={{ height: 46, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "flex-start", overflow: "visible" }}>
+                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "left bottom" }}>{fmt(d.total)}</span>}
                       </div>
                       <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
                         <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
