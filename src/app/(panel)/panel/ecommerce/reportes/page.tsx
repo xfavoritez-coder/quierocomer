@@ -7,6 +7,7 @@ import { useSessionContext } from "@/lib/admin/SessionContext";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+const CELESTE = "#38BDF8"; // mismo día de la semana que hoy
 
 interface DayPoint { ymd: string; day: number; total: number; count: number }
 interface Product { name: string; qty: number; revenue: number }
@@ -40,6 +41,7 @@ function weekdayOf(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00Z`);
   return DIAS[d.getUTCDay()];
 }
+function weekdayNum(ymd: string): number { return new Date(`${ymd}T12:00:00Z`).getUTCDay(); }
 function addMonth(ym: string, delta: number): string {
   const [y, m] = ym.split("-").map(Number);
   const d = new Date(Date.UTC(y, m - 1 + delta, 1));
@@ -137,14 +139,15 @@ export default function ReportesPage() {
                 {data.byDay.map((d) => {
                   const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
                   const isToday = d.ymd === data.today;
+                  const sameWeekday = !!data.today && !isToday && weekdayNum(d.ymd) === weekdayNum(data.today);
                   return (
                     <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                       {/* Monto exacto sobre la barra (diagonal para que quepa) */}
                       <div style={{ height: 46, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "flex-start", overflow: "visible" }}>
-                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "left bottom" }}>{fmt(d.total)}</span>}
+                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : sameWeekday ? CELESTE : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "left bottom" }}>{fmt(d.total)}</span>}
                       </div>
                       <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
-                        <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
+                        <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : sameWeekday ? CELESTE : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
                       </div>
                       <span style={{ fontFamily: FB, fontSize: "0.58rem", fontWeight: d.total > 0 ? 700 : 400, color: "var(--adm-text3)", lineHeight: 1 }}>{d.day}</span>
                       <span style={{ fontFamily: FB, fontSize: "0.52rem", color: "var(--adm-text3)", lineHeight: 1, opacity: 0.7 }}>{weekdayOf(d.ymd)}</span>
