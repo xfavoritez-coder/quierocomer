@@ -107,8 +107,15 @@ function ScenePayment() {
         <div style={{ position: "absolute", bottom: 16, left: 18, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, letterSpacing: 1 }}>TU RESTAURANTE</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "#1F9D57", display: "flex", alignItems: "center", justifyContent: "center", color: PAPER, fontSize: 24, animation: "qcpop 2.6s ease-in-out infinite" }}>✓</div>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1F9D57", display: "flex", alignItems: "center", justifyContent: "center", color: PAPER, fontSize: 23, animation: "qcpop 2.6s ease-in-out infinite" }}>✓</div>
         <span style={{ fontFamily: SANS, fontWeight: 700, color: INK, fontSize: 16 }}>Pago aprobado</span>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        {([["Webpay", "#E52F2F"], ["MercadoPago", "#009EE3"], ["Flow", "#12A594"]] as const).map(([n, c]) => (
+          <span key={n} style={{ display: "flex", alignItems: "center", gap: 6, background: PAPER, border: "1px solid #E6D9BF", borderRadius: 20, padding: "5px 12px", fontFamily: SANS, fontSize: 12, fontWeight: 700, color: INK }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: c }} />{n}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -248,7 +255,7 @@ type Feature = { id: string; scope: string; title: string; desc: string; scene: 
 const FEATURES: Feature[] = [
   { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión y con la relación.", scene: "browser" },
   { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Toma y gestiona cada pedido en un solo lugar: elige productos del menú, aplica descuentos, cobra y despacha. Todo tu equipo trabaja sobre la misma pantalla, en tiempo real, y ningún pedido se pierde.", scene: "comandador" },
-  { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta (Webpay) y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
+  { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta a través de Webpay, MercadoPago o Flow, y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
   { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor de Uber o PedidosYa con un clic, sin tener flota propia: pagas solo el despacho. Y tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que en las apps grandes.", scene: "map" },
   { id: "whatsapp", scope: "Incluido en todos los planes", title: "WhatsApp automático", desc: "Apenas entra el pedido, el cliente recibe por WhatsApp la confirmación, el estado y el link para seguir su despacho. Todo automático, sin que tu equipo tenga que escribir nada.", scene: "whatsapp" },
   { id: "impresion", scope: "Incluido en todos los planes", title: "Impresión de comandas", desc: "La comanda se imprime sola en la cocina apenas entra el pedido. Tu equipo cocina sin copiar nada a mano ni mirar pantallas, con cero errores de transcripción en las horas peak.", scene: "printer" },
