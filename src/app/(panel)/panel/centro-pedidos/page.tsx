@@ -175,7 +175,15 @@ export default function CentroPedidosPage() {
     setLoading(false);
   }, [restaurantId, view, fromDate, toDate]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => {
+    fetchOrders();
+    // Catch-up: un pedido recién tomado (Tomar pedidos) se crea de forma asíncrona
+    // (espejo al Centro / ida y vuelta por Toteat); re-consultamos a los pocos segundos
+    // para que aparezca sin recargar, por si el evento en vivo llega antes de montar.
+    const t1 = setTimeout(() => fetchOrders(true), 2500);
+    const t2 = setTimeout(() => fetchOrders(true), 7000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [fetchOrders]);
 
   // Tiempo real (Supabase) — sin polling. Refresco por evento.
   useEffect(() => {
@@ -198,10 +206,12 @@ export default function CentroPedidosPage() {
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
 
     const onVis = () => { if (document.visibilityState === "visible") fetchOrders(true); };
+    const onFocus = () => fetchOrders(true);
     document.addEventListener("visibilitychange", onVis);
-    const backup = setInterval(() => fetchOrders(true), 60000); // respaldo lento
+    window.addEventListener("focus", onFocus);
+    const backup = setInterval(() => fetchOrders(true), 20000); // respaldo (por si el evento en vivo no llega)
 
-    return () => { supabase.removeChannel(channel); document.removeEventListener("visibilitychange", onVis); clearInterval(backup); };
+    return () => { supabase.removeChannel(channel); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("focus", onFocus); clearInterval(backup); };
   }, [restaurantId, fetchOrders]);
 
   async function advance(o: PosOrder, stage: Stage) {
