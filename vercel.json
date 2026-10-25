@@ -47,6 +47,14 @@
     {
       "path": "/api/cron/billing-recovery",
       "schedule": "0 9,21 * * *"
+    },
+    {
+      "path": "/api/cron/meta-ads?action=activate",
+      "schedule": "0 19 * * 1-6"
+    },
+    {
+      "path": "/api/cron/meta-ads?action=deactivate",
+      "schedule": "0 1 * * 0,2,3,4,5,6"
     }
   ]
 }
