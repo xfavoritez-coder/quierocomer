@@ -244,11 +244,25 @@ function SceneChart() {
 
 function SceneLoyalty() {
   return (
-    <div style={{ width: 208, height: 130, borderRadius: 16, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 15, position: "relative", boxShadow: "0 16px 30px -14px rgba(180,110,20,.6)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
-      <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 18 }}>Tu Restaurante</div>
-      <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 11, marginTop: 2 }}>Miembro desde 2026</div>
-      <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 15, height: 15, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.25)" }} />)}</div>
-      <div style={{ position: "absolute", top: 13, right: 14, fontSize: 20 }}>★</div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+      {/* teléfono con el Wallet: la tarjeta cae dentro */}
+      <div style={{ width: 152, borderRadius: 22, background: "#211E18", padding: 9, boxShadow: "0 18px 30px -16px rgba(0,0,0,.5)" }}>
+        <div style={{ background: PAPER, borderRadius: 15, padding: "10px 9px 14px", position: "relative", overflow: "hidden" }}>
+          <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: INKSOFT, textAlign: "center", marginBottom: 8 }}>Wallet</div>
+          <div style={{ height: 58, borderRadius: 10, background: "#EADFC9", marginBottom: -42 }} />
+          <div style={{ height: 82, borderRadius: 12, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 11, position: "relative", boxShadow: "0 10px 16px -8px rgba(180,110,20,.6)", animation: "qcdrop 3.8s ease-in-out infinite" }}>
+            <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 13 }}>Tu Restaurante</div>
+            <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 8, marginTop: 1 }}>Miembro desde 2026</div>
+            <div style={{ position: "absolute", bottom: 11, left: 11, display: "flex", gap: 4 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.25)" }} />)}</div>
+            <div style={{ position: "absolute", top: 9, right: 10, fontSize: 13 }}>★</div>
+          </div>
+        </div>
+      </div>
+      {/* billeteras */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, background: "#1b1b1d", color: "#f2f2f2", borderRadius: 20, padding: "6px 12px", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}><span style={{ width: 11, height: 11, borderRadius: 3, background: "#f2f2f2" }} />Apple Wallet</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, background: PAPER, border: "1px solid #E6D9BF", color: INK, borderRadius: 20, padding: "6px 12px", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}><span style={{ width: 11, height: 11, borderRadius: "50%", background: "conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0 100%)" }} />Google Wallet</span>
+      </div>
     </div>
   );
 }
@@ -556,7 +570,7 @@ export default function PresentacionPage() {
 @keyframes qcdot{from{offset-distance:0%}to{offset-distance:100%}}
 @keyframes qcfeed{0%{transform:translateY(-100%);opacity:1}45%{transform:translateY(0);opacity:1}80%{transform:translateY(0);opacity:1}92%{transform:translateY(8%);opacity:0}100%{transform:translateY(-100%);opacity:0}}
 @keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}
-@keyframes qcsteam{0%{transform:translateY(0) scale(.8);opacity:0}30%{opacity:.7}100%{transform:translateY(-22px) scale(1.3);opacity:0}}`}</style>
+@keyframes qcdrop{0%{transform:translateY(-56px);opacity:0}22%{opacity:1}50%{transform:translateY(0)}82%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}`}</style>
 
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
         <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>

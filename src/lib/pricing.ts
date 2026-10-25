@@ -53,7 +53,7 @@ export const DEFAULT_PRICING: PricingConfig = {
     { id: "futuro-premium", name: "Futuro Plan Premium", price: 99900, features: [...COMMON, "Pedidos ilimitados", SEGUIMIENTO, WPP_AUTO, "POS Propio", "Bodega-Inventario"] },
   ],
   addons: [
-    { id: "loyalty", name: "Loyalty", price: 29900, features: ["Tarjeta de membresía", "Notificaciones a clientes", "Notificaciones automáticas el día del cumpleaños"] },
+    { id: "loyalty", name: "Loyalty", price: 29900, features: ["Tarjeta de membresía en Apple Wallet y Google Wallet", "Notificaciones a clientes", "Notificaciones automáticas el día del cumpleaños"] },
     { id: "qr-loyalty", name: "Carta QR Premium + Loyalty", price: 44900, features: ["Carta QR Premium", "Pedidos online por WhatsApp", "Valoraciones", "Multilenguaje", "Llamar al garzón", "Exportar carta imprimible", "Tarjeta de membresía", "Gestión de fila virtual"] },
   ],
   implementation: [
