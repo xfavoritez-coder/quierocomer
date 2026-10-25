@@ -12,6 +12,9 @@ import { buildPrintAgentInstaller, buildPrintAgentUninstaller } from "@/lib/ecom
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
+// Driver genérico de impresoras térmicas POS (Windows). Se instala una vez para que
+// Windows reconozca la impresora con el nombre que se pone en "Impresora del agente".
+const POS_DRIVER_URL = "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/drivers/diver-generico-pos.exe";
 
 const PAY_LABELS: Record<string, { label: string; hint: string }> = {
   webpay: { label: "Webpay", hint: "Pago online con tarjeta" },
@@ -531,9 +534,15 @@ export default function EcommerceConfiguracionPage() {
                         <button type="button" onClick={downloadAgent} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: "pointer" }}>
                           <Printer size={15} /> Descargar instalador (Windows)
                         </button>
+                        <a href={POS_DRIVER_URL} download style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", textDecoration: "none" }}>
+                          <Printer size={15} /> Descargar driver de impresora
+                        </a>
                         <button type="button" onClick={testPrint} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Imprimir de prueba</button>
                         <button type="button" onClick={generatePrintToken} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>Regenerar token</button>
                       </div>
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
+                        <strong>Driver de impresora:</strong> si la impresora térmica es nueva en ese Windows, instala primero el <strong>driver</strong> (se instala una vez) y asegúrate de que el nombre que le quede en Windows coincida con el de <em>Impresora del agente</em> (ej: <code>POS-80</code>). Luego instala el agente.
+                      </p>
                       <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.55 }}>
                         Guarda el archivo <code>instalar-agente-{fileSlug}.bat</code> en la PC Windows y <strong>haz doble clic</strong> (si aparece un aviso de Windows: <em>Más información → Ejecutar de todas formas</em>). El instalador crea el agente, lo deja corriendo <strong>junto al reloj</strong> (en la bandeja, junto a la hora) y hace que <strong>arranque solo con Windows</strong> — ya no queda ninguna ventana negra abierta. Cuando termine puedes cerrar la ventana del instalador. Al pasar el mouse por el ícono verás el nombre del local. Clic derecho → <em>Imprimir prueba local</em> para probar, <em>Desinstalar este agente</em> para quitarlo del equipo, o <em>Salir</em> para pausarlo. Regenera el token si crees que se filtró (invalida el anterior).
                       </p>
