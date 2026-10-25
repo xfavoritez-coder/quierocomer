@@ -595,7 +595,6 @@ export default function PresentacionPage() {
         {!isMobile && <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>}
         <button onClick={() => router.push("/admin/planes")} aria-label="Cerrar" style={{ ...topBtn, ...darkBtn, ...(isMobile ? { padding: "8px 13px", fontSize: "1.05rem", lineHeight: 1 } : {}) }}>{isMobile ? "✕" : "✕ Cerrar"}</button>
       </div>
-      {isMobile && <span style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", fontFamily: SANS, fontSize: "0.85rem", fontWeight: 700, color: onDark ? "rgba(255,253,247,0.6)" : "rgba(0,0,0,0.5)", zIndex: 2 }}>{idx + 1} / {slides.length}</span>}
 
       <div ref={scrollRef} className="qc-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
         <div key={idx} style={{ minHeight: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", padding: "76px clamp(28px,5vw,96px) 92px", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
