@@ -111,6 +111,9 @@ export default function CentroPedidosPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [orders, setOrders] = useState<PosOrder[]>([]);
+  // Ids recién eliminados: se filtran de cualquier lista entrante para que un refetch
+  // en carrera con el DELETE (o una respuesta cacheada) no haga "reaparecer" el pedido.
+  const deletedIds = useRef<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"activos" | "historial">("activos");
   const [fromDate, setFromDate] = useState<string>(() => chileTodayLocal());
@@ -165,10 +168,10 @@ export default function CentroPedidosPage() {
     if (!restaurantId) return;
     if (!silent) setLoading(true);
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${view}&from=${fromDate}&to=${toDate}`);
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${view}&from=${fromDate}&to=${toDate}`, { cache: "no-store" });
       const d = await r.json();
       if (r.ok && d.orders) {
-        setOrders(d.orders);
+        setOrders((d.orders as PosOrder[]).filter((o) => !deletedIds.current.has(o.id)));
         if (d.localLat != null || d.localLng != null) setLocal({ lat: d.localLat ?? null, lng: d.localLng ?? null });
       }
     } catch { /* noop */ }
@@ -193,6 +196,7 @@ export default function CentroPedidosPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "PosOrder", filter: `restaurantId=eq.${restaurantId}` }, (payload: any) => {
         const row = payload.new as PosOrder;
         if (payload.eventType === "INSERT") {
+          if (deletedIds.current.has(row.id)) return; // no re-agregar un pedido recién borrado
           setOrders((prev) => (prev.some((o) => o.id === row.id) ? prev : [row, ...prev]));
           setFlash((f) => ({ ...f, [row.id]: true }));
           setTimeout(() => setFlash((f) => { const n = { ...f }; delete n[row.id]; return n; }), 6000);
@@ -232,11 +236,13 @@ export default function CentroPedidosPage() {
   async function eliminar(o: PosOrder) {
     if (!restaurantId) return;
     if (!confirm(`¿Eliminar este pedido${o.externalId.startsWith("TEST-") ? " de prueba" : ""}?`)) return;
+    deletedIds.current.add(o.id);
     setOrders((prev) => prev.filter((x) => x.id !== o.id));
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&id=${o.id}`, { method: "DELETE" });
-      if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo eliminar"); fetchOrders(true); }
-    } catch { toast.error("Error de conexión"); fetchOrders(true); }
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&id=${o.id}`, { method: "DELETE", cache: "no-store" });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo eliminar"); deletedIds.current.delete(o.id); fetchOrders(true); }
+      else { setTimeout(() => deletedIds.current.delete(o.id), 20000); } // ya consistente en el server
+    } catch { toast.error("Error de conexión"); deletedIds.current.delete(o.id); fetchOrders(true); }
   }
 
   // Ejecuta la solicitud real del courier (tras confirmar / aceptar la cotización).
