@@ -258,6 +258,7 @@ export default function AdminLocales() {
 
         {isSuper && selected.owner && (
           <OwnerEditor
+            restaurantId={selected.id}
             owner={selected.owner}
             onSaved={(o) => {
               setSelected((s) => (s ? { ...s, owner: o } : s));
@@ -1978,25 +1979,45 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
 }
 
 // Editor del dueño (nombre + email) desde la ficha del local. Solo superadmin.
-function OwnerEditor({ owner, onSaved }: { owner: { id: string; name: string; email: string }; onSaved: (o: { id: string; name: string; email: string }) => void }) {
+function OwnerEditor({ restaurantId, owner, onSaved }: { restaurantId: string; owner: { id: string; name: string; email: string }; onSaved: (o: { id: string; name: string; email: string }) => void }) {
   const [name, setName] = useState(owner.name || "");
   const [email, setEmail] = useState(owner.email || "");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [emailTaken, setEmailTaken] = useState(false);
 
-  useEffect(() => { setName(owner.name || ""); setEmail(owner.email || ""); setMsg(null); }, [owner.id]);
+  useEffect(() => { setName(owner.name || ""); setEmail(owner.email || ""); setMsg(null); setEmailTaken(false); }, [owner.id]);
 
   const dirty = name.trim() !== (owner.name || "") || email.trim() !== (owner.email || "");
 
   const save = async () => {
     if (!name.trim() || !email.trim()) { setMsg("Nombre y correo son obligatorios"); return; }
-    setSaving(true); setMsg(null);
+    setSaving(true); setMsg(null); setEmailTaken(false);
     try {
       const r = await fetch(`/api/admin/owners/${owner.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim(), email: email.trim() }) });
       const d = await r.json();
-      if (!r.ok) { setMsg(d.error || "No se pudo guardar"); setSaving(false); return; }
+      if (!r.ok) {
+        // El correo pertenece a OTRO dueño: ofrecer reasignar el local a ese dueño.
+        if (r.status === 409 || /registrado/i.test(d.error || "")) setEmailTaken(true);
+        setMsg(d.error || "No se pudo guardar"); setSaving(false); return;
+      }
       onSaved({ id: owner.id, name: name.trim(), email: email.trim() });
       setMsg("Datos del dueño actualizados");
+    } catch { setMsg("Error de conexión"); }
+    setSaving(false);
+  };
+
+  // Reasigna el local al dueño YA existente que tiene ese correo (no renombra).
+  const reassign = async () => {
+    setSaving(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/admin/locales/${restaurantId}/reassign-owner`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim() }) });
+      const d = await r.json();
+      if (!r.ok) { setMsg(d.error || "No se pudo reasignar"); setSaving(false); return; }
+      setEmailTaken(false);
+      onSaved(d.owner);
+      setName(d.owner.name || ""); setEmail(d.owner.email || "");
+      setMsg(`Local reasignado a ${d.owner.name}`);
     } catch { setMsg("Error de conexión"); }
     setSaving(false);
   };
@@ -2004,7 +2025,7 @@ function OwnerEditor({ owner, onSaved }: { owner: { id: string; name: string; em
   return (
     <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, marginBottom: 20 }}>
       <h3 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 2px" }}>Dueño del local</h3>
-      <p style={{ fontFamily: F, fontSize: "0.76rem", color: "#888", margin: "0 0 14px" }}>Edita el nombre y el correo del dueño asignado a este local.</p>
+      <p style={{ fontFamily: F, fontSize: "0.76rem", color: "#888", margin: "0 0 14px" }}>Edita el nombre y el correo del dueño. Si el correo pertenece a otro dueño existente, podrás reasignar este local a ese dueño.</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
         <div>
           <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Nombre</label>
@@ -2021,7 +2042,12 @@ function OwnerEditor({ owner, onSaved }: { owner: { id: string; name: string; em
         <button onClick={save} disabled={saving || !dirty} style={{ padding: "10px 18px", background: "#F4A623", color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: saving || !dirty ? "not-allowed" : "pointer", opacity: saving || !dirty ? 0.6 : 1 }}>
           {saving ? "Guardando…" : "Guardar dueño"}
         </button>
-        {msg && <span style={{ fontFamily: F, fontSize: "0.8rem", color: msg.includes("actualizado") ? "#4ade80" : "#ff6b6b" }}>{msg}</span>}
+        {emailTaken && (
+          <button onClick={reassign} disabled={saving} style={{ padding: "10px 18px", background: "transparent", color: "#F4A623", border: "1px solid #F4A623", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: saving ? "wait" : "pointer" }}>
+            Asignar este local a ese dueño →
+          </button>
+        )}
+        {msg && <span style={{ fontFamily: F, fontSize: "0.8rem", color: (msg.includes("actualizado") || msg.includes("reasignado")) ? "#4ade80" : "#ff6b6b" }}>{msg}</span>}
       </div>
     </div>
   );
