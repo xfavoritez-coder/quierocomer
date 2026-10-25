@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike, ConciergeBell } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -21,6 +21,7 @@ export default function CentroPedidosConfigPage() {
   const restaurantId = session?.selectedRestaurantId;
   const [cfg, setCfg] = useState<CentroPedidosConfig>({});
   const [posMode, setPosMode] = useState(false); // valor efectivo mostrado en el toggle
+  const [showDesc, setShowDesc] = useState(false); // mostrar descripción en Tomar pedidos
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -34,7 +35,7 @@ export default function CentroPedidosConfigPage() {
     setLoading(true);
     fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { if (d.config) setCfg(d.config); if (typeof d.posModeEffective === "boolean") setPosMode(d.posModeEffective); } })
+      .then((d) => { if (d) { if (d.config) setCfg(d.config); if (typeof d.posModeEffective === "boolean") setPosMode(d.posModeEffective); if (typeof d.posShowDescriptions === "boolean") setShowDesc(d.posShowDescriptions); } })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
@@ -63,6 +64,21 @@ export default function CentroPedidosConfigPage() {
       if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo guardar"); load(); return; }
       toast.success("Configuración guardada");
     } catch { toast.error("Error de conexión"); load(); }
+    setSaving(false);
+  }
+
+  async function updateShowDesc(v: boolean) {
+    if (!restaurantId) return;
+    setShowDesc(v); // optimista
+    setSaving(true);
+    try {
+      const r = await fetch("/api/panel/ecommerce/pos-orders/settings", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, posShowDescriptions: v }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); toast.error(d.error || "No se pudo guardar"); setShowDesc(!v); return; }
+      toast.success("Configuración guardada");
+    } catch { toast.error("Error de conexión"); setShowDesc(!v); }
     setSaving(false);
   }
 
@@ -182,6 +198,14 @@ export default function CentroPedidosConfigPage() {
             checked={cfg.pedidosyaEnabled !== false}
             disabled={saving}
             onChange={(v) => update({ pedidosyaEnabled: v })}
+          />
+          <ToggleRow
+            icon={ConciergeBell}
+            title="Mostrar descripción de los productos"
+            desc="En la pantalla de «Tomar pedidos» (mostrador), muestra la descripción debajo del nombre de cada producto."
+            checked={showDesc}
+            disabled={saving}
+            onChange={(v) => updateShowDesc(v)}
           />
         </div>
       )}

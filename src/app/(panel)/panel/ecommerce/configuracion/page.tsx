@@ -629,17 +629,6 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
-          {/* Tomar pedidos */}
-          {tab === "pedidos" && (
-          <section style={card}>
-            <SectionTitle icon={ConciergeBell} title="Tomar pedidos" sub="Ajustes de la pantalla de mostrador (Tomar pedidos)." />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)" }}>Mostrar descripción de los productos</span>
-              <Toggle on={cfg.posShowDescriptions} onClick={() => patch({ posShowDescriptions: !cfg.posShowDescriptions })} />
-            </div>
-          </section>
-          )}
-
           {/* Envío al POS (Toteat) — reintento automático */}
           {tab === "pedidos" && (
           <section style={card}>

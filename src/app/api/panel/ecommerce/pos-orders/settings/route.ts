@@ -23,11 +23,12 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true } });
   const config = parseCentroPedidosConfig(r?.centroPedidosConfig);
   const ecom = parseEcommerceConfig(r?.ecommerceConfig);
   const hasPos = ecom.pos?.provider === "toteat";
-  return NextResponse.json({ config, hasPos, posModeEffective: effectivePosMode(config, ecom) });
+  const store = (r?.ecommerceStoreConfig && typeof r.ecommerceStoreConfig === "object") ? (r.ecommerceStoreConfig as Record<string, unknown>) : {};
+  return NextResponse.json({ config, hasPos, posModeEffective: effectivePosMode(config, ecom), posShowDescriptions: store.posShowDescriptions === true });
 }
 
 /** PUT /api/panel/ecommerce/pos-orders/settings → guarda la config del pilar.
@@ -38,7 +39,7 @@ export async function PUT(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const current = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true } });
+  const current = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceStoreConfig: true } });
   const merged: CentroPedidosConfig = { ...parseCentroPedidosConfig(current?.centroPedidosConfig) };
   const incoming = parseCentroPedidosConfig(body?.config);
   if (typeof incoming.autoDeliverPickup === "boolean") merged.autoDeliverPickup = incoming.autoDeliverPickup;
@@ -46,6 +47,14 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.uberEnabled === "boolean") merged.uberEnabled = incoming.uberEnabled;
   if (typeof incoming.pedidosyaEnabled === "boolean") merged.pedidosyaEnabled = incoming.pedidosyaEnabled;
 
-  await prisma.restaurant.update({ where: { id: restaurantId }, data: { centroPedidosConfig: merged as unknown as object } });
-  return NextResponse.json({ ok: true, config: merged });
+  const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };
+  // "Mostrar descripción en Tomar pedidos" vive en ecommerceStoreConfig (lo lee el tomador).
+  if (typeof body?.posShowDescriptions === "boolean") {
+    const store = (current?.ecommerceStoreConfig && typeof current.ecommerceStoreConfig === "object") ? { ...(current.ecommerceStoreConfig as Record<string, unknown>) } : {};
+    store.posShowDescriptions = body.posShowDescriptions;
+    data.ecommerceStoreConfig = store;
+  }
+
+  await prisma.restaurant.update({ where: { id: restaurantId }, data });
+  return NextResponse.json({ ok: true, config: merged, posShowDescriptions: data.ecommerceStoreConfig ? body.posShowDescriptions : undefined });
 }
