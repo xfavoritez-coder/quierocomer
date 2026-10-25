@@ -105,6 +105,9 @@ export interface CentroPedidosConfig {
   uberEnabled?: boolean;
   /** Mostrar el botón para solicitar PedidosYa en las tarjetas (default: sí). */
   pedidosyaEnabled?: boolean;
+  /** En delivery, el cargo de servicio de la plataforma lo paga el CLIENTE (se suma
+   *  a su despacho) en vez de descontarse del saldo del restaurante (default: no). */
+  customerAbsorbsSurcharge?: boolean;
 }
 
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {

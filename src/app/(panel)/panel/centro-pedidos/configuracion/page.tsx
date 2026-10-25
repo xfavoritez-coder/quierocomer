@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike, ConciergeBell } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike, ConciergeBell, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
@@ -198,6 +198,14 @@ export default function CentroPedidosConfigPage() {
             checked={cfg.pedidosyaEnabled !== false}
             disabled={saving}
             onChange={(v) => update({ pedidosyaEnabled: v })}
+          />
+          <ToggleRow
+            icon={Receipt}
+            title="El cliente paga el cargo de servicio en delivery"
+            desc="En los pedidos de delivery, el cargo de servicio de la plataforma se suma al despacho que paga el cliente, en vez de descontarse de tu saldo. Desactivado: lo absorbe el restaurante (se descuenta de tu saldo al solicitar el repartidor)."
+            checked={!!cfg.customerAbsorbsSurcharge}
+            disabled={saving}
+            onChange={(v) => update({ customerAbsorbsSurcharge: v })}
           />
           <ToggleRow
             icon={ConciergeBell}

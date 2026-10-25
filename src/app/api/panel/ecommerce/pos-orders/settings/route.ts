@@ -46,6 +46,7 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.posMode === "boolean") merged.posMode = incoming.posMode;
   if (typeof incoming.uberEnabled === "boolean") merged.uberEnabled = incoming.uberEnabled;
   if (typeof incoming.pedidosyaEnabled === "boolean") merged.pedidosyaEnabled = incoming.pedidosyaEnabled;
+  if (typeof incoming.customerAbsorbsSurcharge === "boolean") merged.customerAbsorbsSurcharge = incoming.customerAbsorbsSurcharge;
 
   const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };
   // "Mostrar descripción en Tomar pedidos" vive en ecommerceStoreConfig (lo lee el tomador).
