@@ -250,7 +250,7 @@ function SceneChart() {
 
 function SceneLoyalty() {
   return (
-    <div style={{ width: 230, height: 144, borderRadius: 16, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 16, position: "relative", boxShadow: "0 16px 30px -14px rgba(180,110,20,.6)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
+    <div style={{ width: 208, height: 130, borderRadius: 16, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 15, position: "relative", boxShadow: "0 16px 30px -14px rgba(180,110,20,.6)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
       <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 18 }}>Tu Restaurante</div>
       <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 11, marginTop: 2 }}>Miembro desde 2026</div>
       <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 15, height: 15, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.25)" }} />)}</div>
@@ -262,13 +262,13 @@ function SceneLoyalty() {
 function SceneQr() {
   const on = new Set([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24, 7, 12, 17]);
   return (
-    <div style={{ width: 150, height: 228, borderRadius: 22, background: "#211E18", padding: 10, boxShadow: "0 16px 30px -14px rgba(0,0,0,.5)" }}>
-      <div style={{ background: PAPER, borderRadius: 14, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 10 }}>
-        <div style={{ fontFamily: DISP, fontWeight: 600, color: INK, fontSize: 15 }}>Carta QR</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 3, width: 92 }}>
+    <div style={{ width: 128, height: 186, borderRadius: 20, background: "#211E18", padding: 9, boxShadow: "0 16px 30px -14px rgba(0,0,0,.5)" }}>
+      <div style={{ background: PAPER, borderRadius: 13, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 8 }}>
+        <div style={{ fontFamily: DISP, fontWeight: 600, color: INK, fontSize: 14 }}>Carta QR</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 2.5, width: 74 }}>
           {Array.from({ length: 25 }).map((_, i) => <div key={i} style={{ aspectRatio: "1", background: on.has(i) ? INK : "transparent", borderRadius: 1 }} />)}
         </div>
-        <div style={{ fontFamily: SANS, fontSize: 10, color: INKSOFT }}>Escanea y pide</div>
+        <div style={{ fontFamily: SANS, fontSize: 9, color: INKSOFT }}>Escanea y pide</div>
       </div>
     </div>
   );
@@ -384,8 +384,8 @@ export default function PresentacionPage() {
     }
 
     if (slide.type === "panorama") return (
-      <div style={{ ...wrap, gap: "clamp(16px,2.4vh,30px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.8rem,3.8vw,3.2rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
+      <div style={{ ...wrap, gap: "clamp(12px,1.8vh,22px)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
           {cfg.plans.map((p, i) => {
             const hi = /premium/i.test(p.name) && !/futuro/i.test(p.name);
@@ -568,8 +568,8 @@ export default function PresentacionPage() {
         <button onClick={() => router.push("/admin/planes")} style={{ ...topBtn, ...darkBtn }}>✕ Cerrar</button>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(44px,6vw,96px) clamp(28px,5vw,96px)" }}>
-        <div key={idx} style={{ width: "100%", display: "flex", justifyContent: "center", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+        <div key={idx} style={{ minHeight: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", padding: "76px clamp(28px,5vw,96px) 92px", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
       </div>
 
       <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 18, zIndex: 2 }}>
