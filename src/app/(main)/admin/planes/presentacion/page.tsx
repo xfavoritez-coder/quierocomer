@@ -104,7 +104,7 @@ function ScenePayment() {
       <div style={{ width: 260, height: 150, borderRadius: 16, background: "linear-gradient(135deg,#2B2620,#4A4236)", padding: 18, position: "relative", boxShadow: "0 18px 32px -16px rgba(0,0,0,.5)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
         <div style={{ width: 42, height: 30, borderRadius: 6, background: "linear-gradient(135deg,#E8C87a,#C99a3a)" }} />
         <div style={{ position: "absolute", bottom: 42, left: 18, fontFamily: SANS, letterSpacing: 3, color: "#E9DFC9", fontSize: 16 }}>•••• •••• •••• 4028</div>
-        <div style={{ position: "absolute", bottom: 16, left: 18, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, letterSpacing: 1 }}>TU RESTAURANTE</div>
+        <div style={{ position: "absolute", bottom: 16, left: 18, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, letterSpacing: 1 }}>CLIENTE</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1F9D57", display: "flex", alignItems: "center", justifyContent: "center", color: PAPER, fontSize: 23, animation: "qcpop 2.6s ease-in-out infinite" }}>✓</div>
@@ -286,10 +286,10 @@ const SCENES: Record<string, () => React.JSX.Element> = { browser: SceneBrowser,
 
 type Feature = { id: string; scope: string; title: string; desc: string; scene: string; note?: string };
 const FEATURES: Feature[] = [
-  { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión y con la relación.", scene: "browser" },
-  { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Toma y gestiona cada pedido en un solo lugar: elige productos del menú, aplica descuentos, cobra y despacha. Todo tu equipo trabaja sobre la misma pantalla, en tiempo real, y ningún pedido se pierde.", scene: "comandador" },
+  { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión.", scene: "browser" },
+  { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Toma y gestiona cada pedido en un solo lugar: elige productos del menú, aplica descuentos, cobra y despacha. Todo tu equipo trabaja sobre la misma pantalla, en tiempo real, y comanda sin errores.", scene: "comandador" },
   { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta a través de Webpay, MercadoPago o Flow, y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
-  { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor externo de QuieroComer Delivery con un clic, o despacha con tu propia flota usando la app de repartidores propios. En ambos casos tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que en las apps grandes.", scene: "map" },
+  { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor externo de QuieroComer Delivery con un clic, o despacha con tu propia flota usando la app de repartidores propios. En ambos casos tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que las apps de delivery de comida.", scene: "map" },
   { id: "whatsapp", scope: "Incluido en todos los planes", title: "WhatsApp automático", desc: "Apenas entra el pedido, el cliente recibe por WhatsApp la confirmación, el estado y el link para seguir su despacho. Todo automático, sin que tu equipo tenga que escribir nada.", scene: "whatsapp" },
   { id: "impresion", scope: "Incluido en todos los planes", title: "Impresión de comandas", desc: "La comanda se imprime sola en la cocina apenas entra el pedido. Tu equipo cocina sin copiar nada a mano ni mirar pantallas, con cero errores de transcripción en las horas peak.", scene: "printer", note: "Requiere una impresora térmica: puedes usar la que ya tienes o adquirir una." },
   { id: "kds", scope: "Incluido en todos los planes", title: "Pantalla de cocina (KDS)", desc: "Una pantalla que ordena los pedidos por estado y tiempo de espera, con colores de alerta. Menos papeles, menos errores y una cocina que avanza más rápido cuando hay mucha demanda.", scene: "kds" },
@@ -356,7 +356,7 @@ export default function PresentacionPage() {
       <div style={{ ...wrap, gap: "clamp(20px,3vh,40px)" }}>
         {eyebrow("QuieroComer · Planes 2026", true)}
         <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.6rem,7vw,6.5rem)", fontWeight: 600, lineHeight: 1.03, color: CREAM, margin: 0 }}>Tu restaurante,<br /><span style={{ color: GOLDB }}>en una sola plataforma</span></h1>
-        <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,2vw,2rem)", color: "#CFC6B4", margin: 0, lineHeight: 1.35, maxWidth: 1050 }}>Sitio propio, pedidos online, delivery con seguimiento en vivo, fidelización y punto de venta. Todo con tu marca.</p>
+        <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,2vw,2rem)", color: "#CFC6B4", margin: 0, lineHeight: 1.35, maxWidth: 1050 }}>Sitio web propio, pedidos online, delivery con seguimiento en vivo, fidelización y punto de venta. Todo con tu marca.</p>
       </div>
     );
 
