@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowGet } from "@/lib/billing/flow";
 import { planFromFlowId } from "@/lib/billing/plans-config";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 /**
  * Cron — billing-recovery  (09:00 y 21:00 UTC)
@@ -117,6 +118,7 @@ export async function GET(req: NextRequest) {
           },
         }).catch(() => {});
 
+        revalidateQrCache(r.slug);
         results.push({ name: r.name, action: "extended", detail: `until ${newEnd.toLocaleDateString("es-CL")}` });
         console.log(`[billing-recovery] ✅ Período extendido: ${r.name} → ${newEnd.toLocaleDateString("es-CL")}`);
       } catch (err: any) {

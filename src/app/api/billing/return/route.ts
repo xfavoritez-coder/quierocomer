@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { planFromFlowId, FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, monthlyRenewalEmailHtml } from "@/lib/email/sendAdminEmail";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 function redirect303(url: string) {
   return NextResponse.redirect(url, 303);
@@ -102,6 +103,8 @@ async function handleReturn(req: NextRequest) {
         flowRegisterToken: null,
       },
     });
+
+    revalidateQrCache(restaurant.slug);
 
     // Email de confirmación
     const ownerEmail = restaurant.owner?.email;

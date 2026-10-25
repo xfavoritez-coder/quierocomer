@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { FLOW_PLANS, PLAN_LABELS, grossOf, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml } from "@/lib/email/sendAdminEmail";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 /**
  * POST /api/admin/manual-payment
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
       billingExempt: false,
     },
   });
+
+  revalidateQrCache(restaurant.slug);
 
   // Registrar en activity log
   const methodLabels: Record<string, string> = {

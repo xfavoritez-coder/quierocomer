@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
 import { FLOW_PLANS, planFromFlowId, grossOf, PLAN_LABELS, type PlanKey } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 function r303(url: string) { return NextResponse.redirect(url, 303); }
 
@@ -74,6 +75,8 @@ async function handleReturn(req: NextRequest) {
     prisma.dish.updateMany({ where: { restaurantId: restaurant.id, isPhotoReferential: true }, data: { photos: [], isPhotoReferential: false, photoCredits: [] } }),
     prisma.session.deleteMany({ where: { restaurantId: restaurant.id } }),
   ]);
+
+  revalidateQrCache(restaurant.slug);
 
   // Emails
   const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;

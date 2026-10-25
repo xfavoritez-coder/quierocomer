@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TRIAL_DAYS } from "@/lib/billing/plans-central";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 /**
  * Activates a 7-day Premium trial directly — no payment required.
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
       isDemo: false,
     },
   });
+
+  revalidateQrCache(restaurant.slug);
 
   // Email simple: tu prueba comenzó (sin credenciales ni WhatsApp)
   const trialEndLabel = trialEndsAt.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Santiago" });
