@@ -108,6 +108,7 @@ export default function EcommercePedidosPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [view, setView] = useState<"activos" | "historial" | "pagados">("activos");
   const [statusFilter, setStatusFilter] = useState<"todos" | OrderStatus>("todos");
+  const [hideManual, setHideManual] = useState(true); // oculta pedidos del tomador manual
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD (local)
   const [dateTo, setDateTo] = useState(""); // YYYY-MM-DD (local)
@@ -302,11 +303,14 @@ export default function EcommercePedidosPage() {
   const shown = view !== "activos" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
+  const manualCount = base.filter((o) => !isOnline(o)).length; // pedidos del tomador manual en la vista actual
 
   // Filtros de búsqueda + fecha (se aplican sobre la lista visible actual).
   const q = query.trim().toLowerCase();
   const qDigits = q.replace(/\D/g, "");
   const filtered = shown.filter((o) => {
+    // Oculta pedidos del tomador manual (pago en persona, sin pasarela online).
+    if (hideManual && !isOnline(o)) return false;
     if (dateFrom || dateTo) {
       const d = new Date(o.createdAt);
       const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -380,6 +384,12 @@ export default function EcommercePedidosPage() {
             style={{ boxSizing: "border-box", padding: "9px 10px", borderRadius: 10, border: `1px solid ${dateTo ? ACCENT : "var(--adm-card-border)"}`, background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" }} />
           {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(""); setDateTo(""); }} title="Quitar fechas" style={iconBtn}><X size={15} /></button>}
         </div>
+        {manualCount > 0 && (
+          <button onClick={() => setHideManual((v) => !v)} title="Pedidos tomados manualmente (pago en persona), no de la tienda online"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10, border: `1px solid ${hideManual ? "var(--adm-card-border)" : ACCENT}`, background: hideManual ? "transparent" : `${ACCENT}14`, color: hideManual ? "var(--adm-text2)" : ACCENT, fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+            {hideManual ? "Mostrar manuales" : "Ocultar manuales"} ({manualCount})
+          </button>
+        )}
       </div>
 
       {loading ? (
