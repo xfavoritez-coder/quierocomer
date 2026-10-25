@@ -54,7 +54,7 @@ export const DEFAULT_PRICING: PricingConfig = {
   ],
   addons: [
     { id: "loyalty", name: "Loyalty", price: 29900, features: ["Tarjeta de membresía", "Notificaciones a clientes", "Notificaciones automáticas el día del cumpleaños"] },
-    { id: "qr-loyalty", name: "Carta QR Premium + Loyalty", price: 44900, features: ["Carta QR Premium", "Pedidos online por WhatsApp", "Valoraciones", "Multilenguaje", "Llamar al garzón", "Exportar carta imprimible", "Loyalty", "Gestión de fila virtual"] },
+    { id: "qr-loyalty", name: "Carta QR Premium + Loyalty", price: 44900, features: ["Carta QR Premium", "Pedidos online por WhatsApp", "Valoraciones", "Multilenguaje", "Llamar al garzón", "Exportar carta imprimible", "Tarjeta de membresía", "Gestión de fila virtual"] },
   ],
   implementation: [
     { id: "imp-basico", label: "Plan Básico", price: 29900 },
