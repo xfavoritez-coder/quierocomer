@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
 import type { PricingConfig, PricePlan, PriceLine } from "@/lib/pricing";
@@ -23,7 +24,7 @@ const uid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.r
 const fmt = (n: number) => `$${(Number(n) || 0).toLocaleString("es-CL")}`;
 const clone = <T,>(x: T): T => (typeof structuredClone === "function" ? structuredClone(x) : JSON.parse(JSON.stringify(x)));
 
-export default function PreciosPage() {
+export default function PlanesPage() {
   const { isSuper } = useAdminSession();
   const [cfg, setCfg] = useState<PricingConfig | null>(null);
   const [saved, setSaved] = useState<PricingConfig | null>(null);
@@ -34,7 +35,7 @@ export default function PreciosPage() {
     fetch("/api/admin/pricing")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) { setCfg(d); setSaved(clone(d)); } })
-      .catch(() => toast.error("No se pudieron cargar los precios"));
+      .catch(() => toast.error("No se pudieron cargar los planes"));
   }, []);
 
   const mutate = (fn: (c: PricingConfig) => void) =>
@@ -51,7 +52,7 @@ export default function PreciosPage() {
       if (!r.ok) throw new Error(d?.error || "Error al guardar");
       const next = d?.pricing || cfg;
       setCfg(next); setSaved(clone(next)); setEditing(false);
-      toast.success("Precios guardados");
+      toast.success("Planes guardados");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al guardar");
     } finally {
@@ -71,7 +72,7 @@ export default function PreciosPage() {
   const removeLine = (k: LineKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
 
   if (!isSuper) return <div style={{ padding: 32, color: "#888", fontFamily: FB }}>Solo superadmin</div>;
-  if (!cfg) return <div style={{ padding: 32, color: GOLD, fontFamily: F }}>Cargando precios…</div>;
+  if (!cfg) return <div style={{ padding: 32, color: GOLD, fontFamily: F }}>Cargando planes…</div>;
 
   const implFor = (name: string) => cfg.implementation.find((l) => l.label.trim().toLowerCase() === name.trim().toLowerCase())?.price ?? null;
   const isHighlight = (p: PricePlan) => p.id === "premium" || /(^|\s)premium$/i.test(p.name.trim());
@@ -217,7 +218,7 @@ export default function PreciosPage() {
     <div style={{ padding: "24px 24px 100px", maxWidth: 1040, fontFamily: FB }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#fff", margin: 0 }}>💲 Precios</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#fff", margin: 0 }}>📦 Planes</h1>
           <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#888", margin: "4px 0 0" }}>Planes, paquetes, implementación y otros cobros de QuieroComer.</p>
         </div>
         {editing ? (
@@ -226,7 +227,10 @@ export default function PreciosPage() {
             <button onClick={save} disabled={saving} style={goldBtn(saving)}>{saving ? "Guardando…" : "Guardar cambios"}</button>
           </div>
         ) : (
-          <button onClick={() => setEditing(true)} style={{ ...smallBtn, padding: "10px 18px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 7 }}>✏️ Editar precios</button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/admin/planes/presentacion" style={{ ...goldBtn(false), textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>▶ Ver presentación</Link>
+            <button onClick={() => setEditing(true)} style={{ ...smallBtn, padding: "11px 18px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 7 }}>✏️ Editar</button>
+          </div>
         )}
       </div>
 

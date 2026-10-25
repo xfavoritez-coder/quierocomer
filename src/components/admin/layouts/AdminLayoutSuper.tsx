@@ -14,7 +14,7 @@ const NAV = [
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
   { icon: "🛒", label: "Pedidos Online", href: "/admin/pedidos-online" },
   { icon: "🧾", label: "Facturación", href: "/admin/facturas" },
-  { icon: "💲", label: "Precios", href: "/admin/precios" },
+  { icon: "📦", label: "Planes", href: "/admin/planes" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
