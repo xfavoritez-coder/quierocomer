@@ -43,8 +43,6 @@ export async function GET(req: NextRequest) {
 
   // Ventas reales: pagadas (pasarela) o con pago en persona (efectivo/tarjeta/transferencia).
   const allOrders = nonCancelled.filter((o) => o.paymentStatus === "paid" || !ONLINE_METHODS.includes(o.paymentMethod));
-  // Intentos de pago online que no se completaron (para la tarjeta "Pendientes").
-  const pendingPayments = nonCancelled.filter((o) => ONLINE_METHODS.includes(o.paymentMethod) && o.paymentStatus !== "paid").length;
 
   // Totales (solo ventas reales)
   const totalOrders = allOrders.length;
@@ -122,6 +120,5 @@ export async function GET(req: NextRequest) {
     deliveryCount,
     pickupCount,
     byRestaurant,
-    pendingPayments,
   });
 }
