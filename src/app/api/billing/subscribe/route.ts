@@ -59,11 +59,20 @@ export async function POST(req: NextRequest) {
       // en la BD pero no en Flow). Recuperar el customerId existente buscando por email.
       if (msg.includes("externalId")) {
         try {
-          const list = await flowGet<{ data: { customerId: string; externalId: string }[] }>(
-            "/customer/getList",
-            { filter: owner.email, start: 0, limit: 50 }
-          );
-          const match = list.data?.find((c) => c.externalId === restaurantId);
+          type FlowCustomer = { customerId: string; externalId: string };
+          type FlowList = { data?: FlowCustomer[]; total?: number };
+
+          // Intentar con múltiples filtros: restaurantId primero (es el externalId),
+          // luego email como fallback.
+          const searches = [restaurantId, owner.email];
+          let match: FlowCustomer | undefined;
+          for (const filter of searches) {
+            const list = await flowGet<FlowList>("/customer/getList", { filter, start: 0, limit: 50 });
+            console.log(`[subscribe] getList filter="${filter}": total=${list.total ?? "?"}, found=${list.data?.length ?? 0}`);
+            match = list.data?.find((c) => c.externalId === restaurantId);
+            if (match) break;
+          }
+
           if (match) {
             flowCustomerId = match.customerId;
             await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
