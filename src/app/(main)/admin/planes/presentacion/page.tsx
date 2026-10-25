@@ -303,6 +303,7 @@ export default function PresentacionPage() {
   const [idx, setIdx] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCfg(d)).catch(() => {}); }, []);
   useEffect(() => {
@@ -311,6 +312,8 @@ export default function PresentacionPage() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+  // Al cambiar de slide, vuelve el scroll arriba.
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [idx]);
 
   type Slide = { type: "cover" } | { type: "intro" } | { type: "feature"; f: Feature } | { type: "panorama" } | { type: "plan"; plan: PricePlan; i: number; total: number } | { type: "addons" } | { type: "costos" } | { type: "cierre" };
   const slides: Slide[] = cfg ? [
@@ -593,7 +596,7 @@ export default function PresentacionPage() {
         <button onClick={() => router.push("/admin/planes")} aria-label="Cerrar" style={{ ...topBtn, ...darkBtn, ...(isMobile ? { padding: "8px 13px", fontSize: "1.05rem", lineHeight: 1 } : {}) }}>{isMobile ? "✕" : "✕ Cerrar"}</button>
       </div>
 
-      <div className="qc-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+      <div ref={scrollRef} className="qc-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
         <div key={idx} style={{ minHeight: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", padding: "76px clamp(28px,5vw,96px) 92px", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
       </div>
 
