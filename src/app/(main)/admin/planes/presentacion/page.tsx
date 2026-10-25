@@ -364,17 +364,43 @@ export default function PresentacionPage() {
     }
 
     if (slide.type === "panorama") return (
-      <div style={{ ...wrap, gap: "clamp(24px,3.5vh,46px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Cuatro planes, una misma plataforma</h2></div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(12px,1.4vw,22px)" }}>
-          {cfg.plans.map((p) => {
+      <div style={{ ...wrap, gap: "clamp(16px,2.4vh,30px)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.8rem,3.8vw,3.2rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
+          {cfg.plans.map((p, i) => {
             const hi = /premium/i.test(p.name) && !/futuro/i.test(p.name);
+            const prev = i > 0 ? cfg.plans[i - 1] : null;
+            const prevSet = prev ? new Set(prev.features.map((x) => x.trim().toLowerCase())) : null;
+            const shown = prevSet ? p.features.filter((f) => !prevSet.has(f.trim().toLowerCase())) : p.features;
+            const tInk = hi ? CREAM : INK, tSub = hi ? "#CFC6B4" : INKSOFT, line = hi ? "#4A4236" : CARDB;
             return (
-              <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 20, padding: "clamp(20px,2vw,34px) clamp(16px,1.6vw,28px)", display: "flex", flexDirection: "column", gap: 10, boxShadow: CARDSHADOW }}>
-                {hi && eyebrow("Recomendado", true)}
-                <h3 style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.5vw,1.5rem)", fontWeight: 700, color: hi ? CREAM : INK, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.7rem,2.8vw,2.6rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{fmt(p.price)}</p>
-                <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.2rem)", color: hi ? "#F3EBDB" : INK, margin: 0, lineHeight: 1.3 }}>{taglineFor(p.name)}</p>
+              <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 18, padding: "clamp(16px,1.6vw,26px) clamp(14px,1.4vw,22px)", display: "flex", flexDirection: "column", gap: 8, boxShadow: CARDSHADOW }}>
+                {hi ? eyebrow("Recomendado", true) : <div style={{ height: "clamp(0.8rem,1.1vw,1.05rem)" }} />}
+                <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.4vw,1.4rem)", fontWeight: 700, color: tInk, margin: 0 }}>{p.name}</h3>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
+                <div style={{ height: 1, background: line, margin: "6px 0 2px" }} />
+                {prev ? (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, background: hi ? "rgba(232,163,58,0.14)" : "#FBF2DF", border: `1px solid ${hi ? "rgba(232,163,58,0.4)" : "#E7C98A"}`, borderRadius: 9, padding: "7px 9px" }}>
+                      <span style={{ color: GOLDB, fontWeight: 900, fontSize: "clamp(0.85rem,1.1vw,1.1rem)" }}>✚</span>
+                      <span style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1.05rem)", fontWeight: 700, color: tInk, lineHeight: 1.2 }}>Todo lo del {prev.name}</span>
+                    </div>
+                    {shown.length > 0 && <p style={{ fontFamily: SANS, fontSize: "clamp(0.68rem,0.85vw,0.9rem)", color: tSub, margin: "4px 0 0", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Y además</p>}
+                    {shown.map((f) => (
+                      <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+                        <span style={{ color: GOLDB, fontWeight: 900, fontSize: "clamp(0.8rem,1vw,1.05rem)", flexShrink: 0 }}>★</span>
+                        <span style={{ fontFamily: SANS, fontSize: "clamp(0.82rem,1.05vw,1.15rem)", color: tInk, fontWeight: 600, lineHeight: 1.25 }}>{f}</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  p.features.map((f) => (
+                    <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+                      <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.78rem,0.95vw,1rem)", flexShrink: 0 }}>✓</span>
+                      <span style={{ fontFamily: SANS, fontSize: "clamp(0.76rem,0.95vw,1.02rem)", color: tInk, lineHeight: 1.22 }}>{f}</span>
+                    </div>
+                  ))
+                )}
               </div>
             );
           })}
@@ -386,6 +412,9 @@ export default function PresentacionPage() {
       const { plan, i, total } = slide;
       const impl = cfg.implementation.find((l) => l.label.trim().toLowerCase() === plan.name.trim().toLowerCase())?.price ?? null;
       const isNew = (f: string) => /ilimitad|pos |pos$|bodega|inventario/i.test(f);
+      const prev = i > 0 ? cfg.plans[i - 1] : null;
+      const prevSet = prev ? new Set(prev.features.map((x) => x.trim().toLowerCase())) : null;
+      const shown = prevSet ? plan.features.filter((f) => !prevSet.has(f.trim().toLowerCase())) : plan.features;
       return (
         <div style={{ ...wrap, gap: "clamp(20px,3vh,36px)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20, flexWrap: "wrap" }}>
@@ -399,11 +428,17 @@ export default function PresentacionPage() {
               <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.15rem)", color: INKSOFT, margin: "4px 0 0" }}>por mes{impl != null ? ` · + ${fmt(impl)} implementación` : ""}</p>
             </div>
           </div>
-          <div style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(22px,2.6vw,38px)", boxShadow: CARDSHADOW }}>
-            <p style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1rem)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, color: GOLDT, margin: "0 0 18px" }}>Qué incluye</p>
+          <div style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(22px,2.6vw,38px)", boxShadow: CARDSHADOW, display: "flex", flexDirection: "column", gap: "clamp(14px,2vh,22px)" }}>
+            {prev && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#FBF2DF", border: "1px solid #E7C98A", borderRadius: 12, padding: "clamp(12px,1.4vw,18px) clamp(16px,1.8vw,24px)" }}>
+                <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1.3rem,1.8vw,1.9rem)" }}>✚</span>
+                <span style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,1.5vw,1.7rem)", fontWeight: 700, color: INK }}>Todo lo del {prev.name}</span>
+              </div>
+            )}
+            <p style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1rem)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, color: GOLDT, margin: 0 }}>{prev ? "Y además incluye" : "Qué incluye"}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(10px,1.4vh,16px) clamp(24px,3vw,48px)" }}>
-              {plan.features.map((f) => {
-                const nw = isNew(f);
+              {(prev ? shown : plan.features).map((f) => {
+                const nw = prev ? true : isNew(f);
                 return (
                   <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                     <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1.1rem,1.4vw,1.4rem)", flexShrink: 0, lineHeight: 1.2 }}>{nw ? "★" : "✓"}</span>
