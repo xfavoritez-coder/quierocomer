@@ -312,7 +312,6 @@ export default function PresentacionPage() {
     { type: "panorama" },
     ...(cfg.addons.length ? [{ type: "addons" } as Slide] : []),
     ...(cfg.extras.length || cfg.implementation.length ? [{ type: "costos" } as Slide] : []),
-    { type: "cierre" },
   ] : [];
 
   const go = useCallback((d: number) => setIdx((i) => Math.max(0, Math.min(slides.length - 1, i + d))), [slides.length]);
