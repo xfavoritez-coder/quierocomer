@@ -58,8 +58,12 @@ export async function GET(req: NextRequest) {
   for (const sale of resp.data) {
     const amt = Number(sale.total) || 0;
     total += amt; count++;
-    // tableId positivo = mesa física (salón); negativo = canal online (delivery/retiro).
-    if (typeof sale.tableId === "number" && sale.tableId > 0) { dineInTotal += amt; dineInCount++; }
+    // En /sales las mesas virtuales (canal online) vienen con tableId "V-..." o
+    // tableName "Virtual"; una mesa física real tiene otro tableId/tableName.
+    const tid = sale.tableId != null ? String(sale.tableId) : "";
+    const tname = String((sale as { tableName?: string }).tableName || "").toLowerCase();
+    const isVirtual = tid === "" || tid.startsWith("V-") || tid.startsWith("-") || tname === "virtual";
+    if (!isVirtual) { dineInTotal += amt; dineInCount++; }
     else { deliveryTotal += amt; deliveryCount++; }
   }
 
