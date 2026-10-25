@@ -557,7 +557,9 @@ export default function PresentacionPage() {
   return (
     <div ref={containerRef} style={{ position: "fixed", inset: 0, zIndex: 9999, background: bg, transition: "background 0.35s ease", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=DM+Sans:wght@400;500;700&display=swap');
-@keyframes qcslide{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes qcslide{from{opacity:0}to{opacity:1}}
+.qc-scroll{scrollbar-width:none;-ms-overflow-style:none}
+.qc-scroll::-webkit-scrollbar{width:0;height:0;display:none}
 @keyframes qcfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes qcblink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes qcrise{0%{opacity:0;transform:translateY(18px) scale(.98)}14%{opacity:1;transform:none}88%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
@@ -574,7 +576,7 @@ export default function PresentacionPage() {
         <button onClick={() => router.push("/admin/planes")} style={{ ...topBtn, ...darkBtn }}>✕ Cerrar</button>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+      <div className="qc-scroll" style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
         <div key={idx} style={{ minHeight: "100%", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", padding: "76px clamp(28px,5vw,96px) 92px", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
       </div>
 
