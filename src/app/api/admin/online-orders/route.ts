@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import { chileDayRangeUtc } from "@/lib/driver/serialize";
 
+const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
+
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
@@ -24,6 +26,11 @@ export async function GET(req: NextRequest) {
   const where: any = {};
   if (resId) where.restaurantId = resId;
   if (status) where.status = status;
+  // Por defecto oculta los intentos de pago online no completados (Webpay fallido/pendiente).
+  const includeFailed = searchParams.get("includeFailed") === "1";
+  if (!includeFailed) {
+    where.OR = [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_METHODS } }];
+  }
   const month = searchParams.get("month"); // YYYY-MM
   if (month && /^\d{4}-\d{2}$/.test(month)) {
     const [y, m] = month.split("-").map(Number);

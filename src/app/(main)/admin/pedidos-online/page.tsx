@@ -99,6 +99,7 @@ export default function PedidosOnlinePage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [restaurantFilter, setRestaurantFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState(""); // "" = todos; "YYYY-MM"
+  const [showFailed, setShowFailed] = useState(false); // mostrar intentos de pago fallidos
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -109,6 +110,7 @@ export default function PedidosOnlinePage() {
     if (s) params.set("status", s);
     if (rid) params.set("restaurantId", rid);
     if (monthFilter) params.set("month", monthFilter);
+    if (showFailed) params.set("includeFailed", "1");
     const res = await fetch(`/api/admin/online-orders?${params}`);
     if (res.ok) {
       const data = await res.json();
@@ -118,7 +120,7 @@ export default function PedidosOnlinePage() {
       setPage(p);
     }
     setLoading(false);
-  }, [statusFilter, restaurantFilter, monthFilter]);
+  }, [statusFilter, restaurantFilter, monthFilter, showFailed]);
 
   const fetchStats = useCallback(async (rid = restaurantFilter) => {
     setStatsLoading(true);
@@ -138,7 +140,7 @@ export default function PedidosOnlinePage() {
       fetchOrders(1, statusFilter, restaurantFilter);
       fetchStats(restaurantFilter);
     }
-  }, [authLoading, statusFilter, restaurantFilter, monthFilter]);
+  }, [authLoading, statusFilter, restaurantFilter, monthFilter, showFailed]);
 
   const updateStatus = async (id: string, status: string) => {
     await fetch("/api/admin/online-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
@@ -192,6 +194,10 @@ export default function PedidosOnlinePage() {
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <button onClick={() => setShowFailed(v => !v)} title="Intentos de pago Webpay no completados"
+          style={{ padding: "9px 14px", borderRadius: 10, border: `1px solid ${showFailed ? ACCENT : "#333"}`, background: showFailed ? "rgba(244,166,35,0.12)" : "transparent", color: showFailed ? ACCENT : "#999", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          {showFailed ? "Ocultar intentos fallidos" : "Mostrar intentos fallidos"}
+        </button>
         <button onClick={() => { fetchOrders(page, statusFilter, restaurantFilter); fetchStats(restaurantFilter); }}
           style={{ padding: "9px 18px", borderRadius: 10, border: "none", background: "#262626", color: "#ccc", fontSize: 14, cursor: "pointer" }}>
           ↺ Refrescar
