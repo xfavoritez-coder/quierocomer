@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
+import { chileDayRangeUtc } from "@/lib/driver/serialize";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -26,7 +27,10 @@ export async function GET(req: NextRequest) {
   const month = searchParams.get("month"); // YYYY-MM
   if (month && /^\d{4}-\d{2}$/.test(month)) {
     const [y, m] = month.split("-").map(Number);
-    where.createdAt = { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) };
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const start = chileDayRangeUtc(`${month}-01`).start;
+    const end = chileDayRangeUtc(`${month}-${String(daysInMonth).padStart(2, "0")}`).end;
+    where.createdAt = { gte: start, lte: end }; // corte del mes en hora de Chile
   }
 
   const [orders, total] = await Promise.all([

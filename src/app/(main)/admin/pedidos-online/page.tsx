@@ -45,6 +45,7 @@ interface Stats {
   deliveryCount: number;
   pickupCount: number;
   byRestaurant: { id: string; name: string; count: number; revenue: number }[];
+  pendingPayments?: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -172,7 +173,7 @@ export default function PedidosOnlinePage() {
       {/* Header */}
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ fontFamily: F, fontSize: 28, fontWeight: 800, margin: "0 0 6px", color: "#fff" }}>Pedidos Online</h1>
-        <p style={{ color: "#777", fontSize: 14, margin: 0 }}>{total} pedidos · {statsLoading ? "..." : fmtCLP(stats?.totalRevenue || 0)} en pedidos</p>
+        <p style={{ color: "#777", fontSize: 14, margin: 0 }}>{statsLoading ? "..." : (stats?.totalOrders ?? total)} pedidos · {statsLoading ? "..." : fmtCLP(stats?.totalRevenue || 0)} en ventas reales</p>
       </div>
 
       {/* Filtro por local + acciones */}
@@ -206,7 +207,7 @@ export default function PedidosOnlinePage() {
             <StatCard label="Total delivery" value={fmtCLP(stats.deliveryRevenue)} sub={`${stats.deliveryCount} pedidos delivery`} color="#60a5fa" />
             <StatCard label="Clientes únicos" value={String(stats.uniqueCustomers)} sub={`${stats.repeatCustomers} repiten (${stats.uniqueCustomers > 0 ? Math.round(stats.repeatCustomers / stats.uniqueCustomers * 100) : 0}%)`} color="#f472b6" />
             <StatCard label="Retiros" value={String(stats.pickupCount)} sub={`${stats.deliveryCount} delivery`} color="#a78bfa" />
-            <StatCard label="Pendientes" value={String(stats.byStatus["PENDING"] || 0)} color="#f59e0b" />
+            <StatCard label="Pendientes" value={String(stats.pendingPayments ?? stats.byStatus["PENDING"] ?? 0)} sub="Webpay sin completar" color="#f59e0b" />
           </div>
 
           {/* Top platos + métodos pago */}

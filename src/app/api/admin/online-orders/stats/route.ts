@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
+import { chileDayRangeUtc } from "@/lib/driver/serialize";
+
+// Métodos online (con pasarela): solo cuentan como venta si están PAGADOS.
+const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -14,10 +18,13 @@ export async function GET(req: NextRequest) {
   const month = searchParams.get("month"); // YYYY-MM
   if (month && /^\d{4}-\d{2}$/.test(month)) {
     const [y, m] = month.split("-").map(Number);
-    where.createdAt = { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) };
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const start = chileDayRangeUtc(`${month}-01`).start;
+    const end = chileDayRangeUtc(`${month}-${String(daysInMonth).padStart(2, "0")}`).end;
+    where.createdAt = { gte: start, lte: end }; // corte del mes en hora de Chile
   }
 
-  const allOrders = await prisma.onlineOrder.findMany({
+  const nonCancelled = await prisma.onlineOrder.findMany({
     where,
     select: {
       id: true,
@@ -25,6 +32,7 @@ export async function GET(req: NextRequest) {
       customerPhone: true,
       orderType: true,
       paymentMethod: true,
+      paymentStatus: true,
       items: true,
       total: true,
       status: true,
@@ -33,9 +41,14 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  // Totales
+  // Ventas reales: pagadas (pasarela) o con pago en persona (efectivo/tarjeta/transferencia).
+  const allOrders = nonCancelled.filter((o) => o.paymentStatus === "paid" || !ONLINE_METHODS.includes(o.paymentMethod));
+  // Intentos de pago online que no se completaron (para la tarjeta "Pendientes").
+  const pendingPayments = nonCancelled.filter((o) => ONLINE_METHODS.includes(o.paymentMethod) && o.paymentStatus !== "paid").length;
+
+  // Totales (solo ventas reales)
   const totalOrders = allOrders.length;
-  const totalRevenue = allOrders.reduce((s, o) => s + o.total, 0); // todos no-cancelados
+  const totalRevenue = allOrders.reduce((s, o) => s + o.total, 0);
   const totalRevenueAll = totalRevenue;
   const totalRevenueDone = allOrders.filter(o => o.status === "DONE").reduce((s, o) => s + o.total, 0);
   const deliveryRevenue = allOrders.filter(o => o.orderType === "DELIVERY").reduce((s, o) => s + o.total, 0);
@@ -109,5 +122,6 @@ export async function GET(req: NextRequest) {
     deliveryCount,
     pickupCount,
     byRestaurant,
+    pendingPayments,
   });
 }
