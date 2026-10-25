@@ -21,7 +21,7 @@ interface Order {
   orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string; paymentGateway?: string | null;
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
-  source?: string | null;
+  source?: string | null; channel?: string | null;
   scheduledFor?: string | null; scheduledReleasedAt?: string | null;
   webpayToken?: string | null; webpayBuyOrder?: string | null; flowToken?: string | null;
   deliveryLat?: number | null; deliveryLng?: number | null;
@@ -61,6 +61,9 @@ const NEXT_ACTIONS: Record<OrderStatus, { status: OrderStatus; label: string; co
 const PAY_LABEL: Record<string, string> = { webpay: "Webpay", flow: "Flow", mercadopago: "MercadoPago", efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta" };
 const ONLINE_METHODS = ["webpay", "flow", "mercadopago"];
 const isOnline = (o: Order) => ONLINE_METHODS.includes(o.paymentMethod) || !!o.paymentGateway;
+// Pedido tomado manualmente (tomador de pedidos), marcado explícitamente al crearse.
+// NO se infiere por el medio de pago (un local puede ofrecer efectivo/tarjeta en su tienda).
+const isManual = (o: Order) => o.channel === "manual";
 const isAttempt = (o: Order) => isOnline(o) && o.paymentStatus !== "paid" && o.paymentStatus !== "refunded" && o.paymentStatus !== "partial_refund"; // intento de pago no completado
 function payInfo(o: Order): { label: string; color: string } {
   if (o.paymentStatus === "refunded") return { label: "Reembolsado", color: "#8b5cf6" };
@@ -303,14 +306,14 @@ export default function EcommercePedidosPage() {
   const shown = view !== "activos" || statusFilter === "todos" ? base : base.filter((o) => o.status === statusFilter);
   const pendingCount = orders.filter((o) => o.status === "PENDING" && !isAttempt(o)).length;
   const countFor = (s: OrderStatus | "todos") => (s === "todos" ? base.length : base.filter((o) => o.status === s).length);
-  const manualCount = base.filter((o) => !isOnline(o)).length; // pedidos del tomador manual en la vista actual
+  const manualCount = base.filter((o) => isManual(o)).length; // pedidos del tomador manual en la vista actual
 
   // Filtros de búsqueda + fecha (se aplican sobre la lista visible actual).
   const q = query.trim().toLowerCase();
   const qDigits = q.replace(/\D/g, "");
   const filtered = shown.filter((o) => {
-    // Oculta pedidos del tomador manual (pago en persona, sin pasarela online).
-    if (hideManual && !isOnline(o)) return false;
+    // Oculta pedidos del tomador manual (marcados con channel="manual" al crearse).
+    if (hideManual && isManual(o)) return false;
     if (dateFrom || dateTo) {
       const d = new Date(o.createdAt);
       const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

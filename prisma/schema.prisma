@@ -467,6 +467,7 @@ model OnlineOrder {
   discount           Int        @default(0)
   couponCode         String?
   source             String     @default("pedir-online")
+  channel            String     @default("online") // "online" (tienda) | "manual" (tomador de pedidos)
   deliveryLat        Float?
   deliveryLng        Float?
   uberDeliveryId     String?

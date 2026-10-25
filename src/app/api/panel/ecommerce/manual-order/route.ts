@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
       data: {
         restaurantId,
         source: "ecommerce",
+        channel: "manual", // creado desde el tomador de pedidos (no es de la tienda pública)
         customerName: String(customerName).trim(),
         customerPhone: customerPhone?.trim() || "",
         customerEmail: null,
