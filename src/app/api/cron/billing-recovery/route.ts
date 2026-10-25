@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         billingExempt: false,
       },
       select: {
-        id: true, name: true, plan: true,
+        id: true, name: true, slug: true, plan: true,
         flowSubscriptionId: true, flowPlanId: true,
         currentPeriodEnd: true, lastPaymentAt: true,
       },
