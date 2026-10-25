@@ -203,7 +203,7 @@ export default function CentroPedidosConfigPage() {
           <ToggleRow
             icon={Receipt}
             title="El cliente paga el cargo de servicio en delivery"
-            desc="En los pedidos de delivery, el cargo de servicio de la plataforma se suma al despacho que paga el cliente, en vez de descontarse de tu saldo. Desactivado: lo absorbe el restaurante (se descuenta de tu saldo al solicitar el repartidor)."
+            desc="Activado: el cargo de servicio de la plataforma se suma al despacho que paga el cliente, así lo trasladas a él (lo recuperas). Desactivado: no se le cobra al cliente y lo asume el restaurante. En ambos casos el cargo se descuenta de tu saldo al solicitar el repartidor externo."
             checked={!!cfg.customerAbsorbsSurcharge}
             disabled={saving}
             onChange={(v) => update({ customerAbsorbsSurcharge: v })}

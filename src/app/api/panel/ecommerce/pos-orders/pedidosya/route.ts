@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { pyaSettingsFor, pyaCreateShipping, pyaCancelShipping } from "@/lib/ecommerce/pedidosya";
 import { chargeWallet, refundWallet } from "@/lib/ecommerce/deliveryWallet";
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
-import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,11 +65,9 @@ export async function POST(req: NextRequest) {
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { pyaShippingId: res.courier.deliveryId, courier: res.courier as unknown as object, assignedTo: "PedidosYa" } });
 
-  // Cobra el costo real del despacho al saldo. El recargo se descuenta SOLO si lo
-  // absorbe el restaurante (si lo paga el cliente, ya va en el despacho del pedido).
+  // Cobra el costo real del despacho + el recargo de plataforma al saldo prepago.
   const fee = (res.courier as { fee?: number | null }).fee ?? 0;
-  const customerAbsorbs = parseCentroPedidosConfig(order.restaurant.centroPedidosConfig).customerAbsorbsSurcharge === true;
-  const surcharge = customerAbsorbs ? 0 : computeSurcharge(await getSurchargeTiers(), fee);
+  const surcharge = computeSurcharge(await getSurchargeTiers(), fee);
   const ref = order.orderReference || order.id.slice(-6);
   let newBalance = balance;
   if (fee > 0) {
