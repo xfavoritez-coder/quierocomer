@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
   }
 
   const byDay = Array.from(byDayMap.entries()).map(([ymd, v]) => ({ ymd, day: Number(ymd.slice(-2)), total: v.total, count: v.count }));
-  const products = Array.from(prodMap.values()).sort((a, b) => b.qty - a.qty || b.revenue - a.revenue).slice(0, 30);
+  const products = Array.from(prodMap.values()).sort((a, b) => b.qty - a.qty || b.revenue - a.revenue).slice(0, 100);
   const orderCount = orders.length;
   const avgTicket = orderCount > 0 ? Math.round(totalSales / orderCount) : 0;
 
