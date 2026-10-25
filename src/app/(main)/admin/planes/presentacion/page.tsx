@@ -358,16 +358,23 @@ export default function PresentacionPage() {
     );
 
     if (slide.type === "intro") {
-      const items = [["★", "Tu propia marca", "Tu sitio y tu carta, con tus colores y tu dominio. No un marketplace."], ["♥", "Más margen", "Cobras online directo a tu cuenta, sin las altas comisiones de las apps."], ["⚡", "Todo en un lugar", "Pedidos, delivery, cocina, fidelización y punto de venta, juntos."]];
+      const sp = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, style: { width: "56%", height: "56%" } };
+      const items = [
+        { t: "Tu propia marca", d: "Tu sitio y tu carta, con tus colores y tu dominio. No un marketplace.", icon: (<svg {...sp}><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18" /></svg>) },
+        { t: "Más margen", d: "Cobras online directo a tu cuenta, sin las altas comisiones de las apps.", icon: (<svg {...sp}><path d="M3 17l5-5 4 3 6-7" /><path d="M14 8h5v5" /></svg>) },
+        { t: "Todo en un lugar", d: "Pedidos, delivery, cocina, fidelización y punto de venta, juntos.", icon: (<svg {...sp}><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6" /><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.6" /><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.6" /><rect x="13" y="13" width="7.5" height="7.5" rx="1.6" /></svg>) },
+      ];
       return (
         <div style={{ ...wrap, gap: "clamp(28px,4vh,52px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Qué es QuieroComer")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,5vw,4.5rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Una plataforma hecha para que tu local venda más</h2></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
-            {items.map(([ic, t, d]) => (
-              <div key={t} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(24px,2.6vw,40px)", display: "flex", flexDirection: "column", gap: 14, boxShadow: CARDSHADOW }}>
-                <span style={{ color: GOLD, fontSize: "clamp(1.8rem,3vw,3rem)" }}>{ic}</span>
-                <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.4rem)", fontWeight: 600, color: INK, margin: 0 }}>{t}</h3>
-                <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0, lineHeight: 1.4 }}>{d}</p>
+            {items.map((it) => (
+              <div key={it.t} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(22px,2.4vw,34px)", display: "flex", flexDirection: "column", gap: "clamp(12px,1.5vw,18px)", boxShadow: CARDSHADOW }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "clamp(12px,1.4vw,18px)" }}>
+                  <div style={{ width: "clamp(44px,4.6vw,56px)", height: "clamp(44px,4.6vw,56px)", borderRadius: 14, background: "#FBF2DF", border: "1px solid #E7C98A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: GOLD }}>{it.icon}</div>
+                  <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.3rem,2vw,2.2rem)", fontWeight: 600, color: INK, margin: 0, lineHeight: 1.1 }}>{it.t}</h3>
+                </div>
+                <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0, lineHeight: 1.4 }}>{it.d}</p>
               </div>
             ))}
           </div>
