@@ -110,6 +110,7 @@ export default function PedidosOnlinePage() {
     if (rid) params.set("restaurantId", rid);
     if (monthFilter) params.set("month", monthFilter);
     if (showFailed) params.set("includeFailed", "1");
+    if (search.trim()) params.set("q", search.trim());
     const res = await fetch(`/api/admin/online-orders?${params}`);
     if (res.ok) {
       const data = await res.json();
@@ -119,7 +120,7 @@ export default function PedidosOnlinePage() {
       setPage(p);
     }
     setLoading(false);
-  }, [statusFilter, restaurantFilter, monthFilter, showFailed]);
+  }, [statusFilter, restaurantFilter, monthFilter, showFailed, search]);
 
   const fetchStats = useCallback(async (rid = restaurantFilter) => {
     setStatsLoading(true);
@@ -141,6 +142,14 @@ export default function PedidosOnlinePage() {
     }
   }, [authLoading, statusFilter, restaurantFilter, monthFilter, showFailed]);
 
+  // Búsqueda en el servidor (debounce) — busca en TODOS los pedidos, no solo la página.
+  useEffect(() => {
+    if (authLoading) return;
+    const t = setTimeout(() => fetchOrders(1, statusFilter, restaurantFilter), 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
   const updateStatus = async (id: string, status: string) => {
     await fetch("/api/admin/online-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
     fetchOrders(page, statusFilter, restaurantFilter);
@@ -160,9 +169,7 @@ export default function PedidosOnlinePage() {
     return out;
   }, []);
 
-  const filtered = search.trim()
-    ? orders.filter(o => o.customerName.toLowerCase().includes(search.toLowerCase()) || o.restaurant.name.toLowerCase().includes(search.toLowerCase()) || o.customerPhone.includes(search))
-    : orders;
+  const filtered = orders; // el servidor ya aplica la búsqueda sobre todos los pedidos
 
   if (authLoading) return null;
 

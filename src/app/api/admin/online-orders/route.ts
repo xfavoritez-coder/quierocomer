@@ -26,11 +26,24 @@ export async function GET(req: NextRequest) {
   const where: any = {};
   if (resId) where.restaurantId = resId;
   if (status) where.status = status;
+  const and: any[] = [];
   // Por defecto oculta los intentos de pago online no completados (Webpay fallido/pendiente).
   const includeFailed = searchParams.get("includeFailed") === "1";
   if (!includeFailed) {
-    where.OR = [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_METHODS } }];
+    and.push({ OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_METHODS } }] });
   }
+  // Búsqueda por cliente / teléfono / restaurante (en TODOS los pedidos, no solo la página).
+  const q = (searchParams.get("q") || "").trim();
+  if (q) {
+    const qDigits = q.replace(/\D/g, "");
+    const or: any[] = [
+      { customerName: { contains: q, mode: "insensitive" } },
+      { restaurant: { name: { contains: q, mode: "insensitive" } } },
+    ];
+    if (qDigits.length >= 3) or.push({ customerPhone: { contains: qDigits } });
+    and.push({ OR: or });
+  }
+  if (and.length) where.AND = and;
   const month = searchParams.get("month"); // YYYY-MM
   if (month && /^\d{4}-\d{2}$/.test(month)) {
     const [y, m] = month.split("-").map(Number);
