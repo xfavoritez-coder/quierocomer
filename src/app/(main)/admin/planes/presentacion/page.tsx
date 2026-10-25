@@ -42,11 +42,13 @@ function SceneBrowser() {
             <span style={{ fontFamily: DISP, color: PAPER, fontWeight: 600, fontSize: 18 }}>Tu Restaurante</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{ animation: `qcfloat 3s ease-in-out ${i * 0.3}s infinite` }}>
-                <div style={{ height: 44, borderRadius: 8, background: "#F3E7CE" }} />
-                <div style={{ height: 7, width: "70%", borderRadius: 4, background: "#E3D4B4", marginTop: 6 }} />
-                <div style={{ height: 7, width: "45%", borderRadius: 4, background: "#EAC58A", marginTop: 4 }} />
+            {([["🍣", "Sushi Roll", "$6.900"], ["🍜", "Ramen", "$7.500"], ["🥟", "Gyozas", "$4.200"]] as const).map(([e, n, p], i) => (
+              <div key={n} style={{ background: PAPER, border: "1px solid #EFE2C6", borderRadius: 9, overflow: "hidden", animation: `qcfloat 3s ease-in-out ${i * 0.3}s infinite` }}>
+                <div style={{ height: 44, background: "linear-gradient(135deg,#FBEFD6,#F2E0BC)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>{e}</div>
+                <div style={{ padding: "5px 7px 7px" }}>
+                  <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: INK, lineHeight: 1.1 }}>{n}</div>
+                  <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: GOLD, marginTop: 2 }}>{p}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -59,22 +61,37 @@ function SceneBrowser() {
   );
 }
 
-function SceneKanban() {
-  const cols = ["Nuevo", "Preparando", "Listo"];
+function SceneComandador() {
+  const prods: [string, string][] = [["Perro Pollo", "$4.000"], ["Hamb. clásica", "$4.000"], ["Papas fritas", "$3.000"], ["Pepito", "$11.500"]];
+  const chips = ["Perros", "Hamburguesas", "Pepito"];
   return (
-    <div style={{ width: 360, maxWidth: "100%", position: "relative" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-        {cols.map((c) => (
-          <div key={c} style={{ background: "#F3E7CE", borderRadius: 10, padding: 8, minHeight: 148 }}>
-            <div style={{ fontFamily: SANS, fontWeight: 700, fontSize: 12, color: INKSOFT, marginBottom: 8, textAlign: "center" }}>{c}</div>
-          </div>
-        ))}
+    <div style={{ width: "100%", maxWidth: 480, display: "flex", gap: 10 }}>
+      {/* Carrito */}
+      <div style={{ flex: "0 0 40%", background: PAPER, border: "1px solid #E6D9BF", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", gap: 7, boxShadow: "0 12px 22px -12px rgba(80,55,15,.35)" }}>
+        <div style={{ display: "flex", gap: 5 }}>
+          <span style={{ flex: 1, textAlign: "center", fontFamily: SANS, fontSize: 9, fontWeight: 700, color: PAPER, background: "#211E18", borderRadius: 7, padding: "5px 0" }}>Retiro</span>
+          <span style={{ flex: 1, textAlign: "center", fontFamily: SANS, fontSize: 9, fontWeight: 700, color: INKSOFT, background: "#F0E6D2", borderRadius: 7, padding: "5px 0" }}>Delivery</span>
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 8, fontWeight: 700, letterSpacing: 1, color: INKSOFT, textTransform: "uppercase", marginTop: 2 }}>Pedido</div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: SANS, fontSize: 10, color: INK }}><span>1× Perro Pollo</span><span>$4.000</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: SANS, fontSize: 10, color: INK, animation: "qcrise 5s ease-in-out infinite" }}><span>1× Papas fritas</span><span>$3.000</span></div>
+        <div style={{ flex: 1, minHeight: 8 }} />
+        <div style={{ borderTop: "1px dashed #D9CBA9", paddingTop: 6, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}><span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: INK }}>Total</span><span style={{ fontFamily: DISP, fontSize: 16, fontWeight: 600, color: GOLD }}>$7.000</span></div>
+        <div style={{ background: "#211E18", color: PAPER, textAlign: "center", fontFamily: SANS, fontSize: 10, fontWeight: 700, padding: "7px 0", borderRadius: 8 }}>Agregar al pedido</div>
       </div>
-      <div style={{ position: "absolute", top: 34, left: 10, width: 96, animation: "qckanban 5s ease-in-out infinite" }}>
-        <div style={{ background: PAPER, border: "1px solid #E6D9BF", borderRadius: 8, padding: 8, boxShadow: "0 10px 18px -8px rgba(0,0,0,.3)" }}>
-          <div style={{ height: 7, width: "80%", background: "#E8A33A", borderRadius: 4 }} />
-          <div style={{ height: 6, width: "55%", background: "#E3D4B4", borderRadius: 4, marginTop: 5 }} />
-          <div style={{ fontFamily: SANS, fontSize: 10, color: INKSOFT, marginTop: 6 }}>#1042 · 2 ítems</div>
+      {/* Productos */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
+        <div style={{ background: PAPER, border: "1px solid #E6D9BF", borderRadius: 20, padding: "6px 12px", fontFamily: SANS, fontSize: 10, color: INKSOFT }}>🔍 Buscar producto…</div>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          {chips.map((c, i) => <span key={c} style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, color: i === 0 ? "#3a2a0e" : INKSOFT, background: i === 0 ? "#E8A33A" : "#F0E6D2", borderRadius: 20, padding: "4px 10px" }}>{c}</span>)}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+          {prods.map(([n, p], i) => (
+            <div key={n} style={{ background: PAPER, border: `1px solid ${i === 2 ? "#E8A33A" : "#E6D9BF"}`, borderRadius: 9, padding: "8px 9px", display: "flex", flexDirection: "column", gap: 4, animation: i === 2 ? "qcpulse 2s ease-in-out infinite" : undefined, boxShadow: i === 2 ? "0 8px 16px -8px rgba(216,138,31,.5)" : "none" }}>
+              <span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 700, color: INK, lineHeight: 1.1 }}>{n}</span>
+              <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: GOLD }}>{p}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -225,12 +242,12 @@ function SceneQr() {
   );
 }
 
-const SCENES: Record<string, () => React.JSX.Element> = { browser: SceneBrowser, kanban: SceneKanban, payment: ScenePayment, map: SceneMap, whatsapp: SceneWhatsApp, printer: ScenePrinter, kds: SceneKds, chart: SceneChart };
+const SCENES: Record<string, () => React.JSX.Element> = { browser: SceneBrowser, comandador: SceneComandador, payment: ScenePayment, map: SceneMap, whatsapp: SceneWhatsApp, printer: ScenePrinter, kds: SceneKds, chart: SceneChart };
 
 type Feature = { id: string; scope: string; title: string; desc: string; scene: string };
 const FEATURES: Feature[] = [
   { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión y con la relación.", scene: "browser" },
-  { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Un panel donde ves cada pedido entrar en tiempo real y lo haces avanzar con un toque: recibido, en preparación, listo y despachado. Todo tu equipo mira lo mismo y ningún pedido se pierde.", scene: "kanban" },
+  { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Toma y gestiona cada pedido en un solo lugar: elige productos del menú, aplica descuentos, cobra y despacha. Todo tu equipo trabaja sobre la misma pantalla, en tiempo real, y ningún pedido se pierde.", scene: "comandador" },
   { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta (Webpay) y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
   { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor de Uber o PedidosYa con un clic, sin tener flota propia: pagas solo el despacho. Y tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que en las apps grandes.", scene: "map" },
   { id: "whatsapp", scope: "Incluido en todos los planes", title: "WhatsApp automático", desc: "Apenas entra el pedido, el cliente recibe por WhatsApp la confirmación, el estado y el link para seguir su despacho. Todo automático, sin que tu equipo tenga que escribir nada.", scene: "whatsapp" },
