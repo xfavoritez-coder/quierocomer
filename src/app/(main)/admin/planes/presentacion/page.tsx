@@ -4,59 +4,16 @@ import { useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import type { PricingConfig, PricePlan } from "@/lib/pricing";
 
-// Paleta de la presentación (independiente del tema oscuro del admin).
+// Paleta (independiente del tema oscuro del admin). Nunca usar #FFF/white/rgb(255
+// en backgrounds inline: una regla global del admin los fuerza a oscuro.
 const CREAM = "#FBF7EF", CREAM2 = "#F3EBDB", INK = "#211E18", INKSOFT = "#6B6153";
 const GOLD = "#D98A1F", GOLDB = "#E8A33A", GOLDT = "#9A5E12";
-const CARD = "#FEFBF3", CARDB = "#EADFC9";
-const CARDSHADOW = "0 10px 26px -16px rgba(90,65,20,0.35)";
+const CARD = "#FEFBF3", CARDB = "#EADFC9", PAPER = "#FDFBF6";
+const CARDSHADOW = "0 12px 30px -18px rgba(90,65,20,0.4)";
 const DISP = "'Fraunces', Georgia, serif";
 const SANS = "'DM Sans', system-ui, -apple-system, sans-serif";
 
 const fmt = (n: number) => `$${(Number(n) || 0).toLocaleString("es-CL")}`;
-
-// Explicación corta por característica (match por palabra clave; robusto a ediciones menores).
-const RULES: [string, string][] = [
-  ["whatsapp automático", "Link y estado del pedido."],
-  ["pedidos online por whatsapp", "El cliente pide por WhatsApp."],
-  ["pedidos por whatsapp", "El cliente pide por WhatsApp."],
-  ["seguimiento", "Tu cliente ve al repartidor en vivo."],
-  ["tracking", "Tu cliente ve al repartidor en vivo."],
-  ["sitio web", "Tu tienda online con tu marca."],
-  ["comandador", "Gestiona cada pedido en vivo."],
-  ["pasarela", "Cobra online directo a tu cuenta."],
-  ["repartidor", "Uber o PedidosYa en un clic."],
-  ["soporte", "Te acompañamos por WhatsApp."],
-  ["comanda", "Imprime en cocina al instante."],
-  ["impresión", "Imprime en cocina al instante."],
-  ["cupon", "Descuentos y promociones."],
-  ["cupón", "Descuentos y promociones."],
-  ["encuesta", "Mide la satisfacción real."],
-  ["reporte", "Ventas y clientes con datos."],
-  ["kds", "Pantalla de cocina sin papeles."],
-  ["ilimitado", "Sin tope de pedidos al mes."],
-  ["100 pedidos", "Hasta 100 pedidos al mes."],
-  ["400 pedidos", "Hasta 400 pedidos al mes."],
-  ["punto de venta", "Vende también en el mostrador."],
-  ["pos propio", "Vende también en el mostrador."],
-  ["bodega", "Insumos, compras y costos."],
-  ["inventario", "Insumos, compras y costos."],
-  ["membres", "Fidelidad digital en la billetera."],
-  ["cumpleaños", "Saludo automático de cumpleaños."],
-  ["notificaciones", "Avisos directos a tus clientes."],
-  ["carta qr", "Carta digital siempre al día."],
-  ["valoracion", "Reseñas de tus platos."],
-  ["valoración", "Reseñas de tus platos."],
-  ["multilenguaje", "Carta en varios idiomas."],
-  ["garz", "El cliente llama con un toque."],
-  ["imprimible", "Versión imprimible de tu carta."],
-  ["fila", "Turnos sin aglomeración."],
-  ["loyalty", "Fidelización incluida."],
-];
-const blurbFor = (f: string) => {
-  const l = f.toLowerCase();
-  for (const [k, v] of RULES) if (l.includes(k)) return v;
-  return "";
-};
 const taglineFor = (name: string) => {
   const l = name.toLowerCase();
   if (l.includes("futuro")) return "Tu operación completa: delivery, POS e inventario.";
@@ -66,10 +23,221 @@ const taglineFor = (name: string) => {
   return "Plan de QuieroComer.";
 };
 
-type Slide =
-  | { type: "cover" } | { type: "intro" } | { type: "panorama" }
-  | { type: "plan"; plan: PricePlan; i: number; total: number }
-  | { type: "addons" } | { type: "costos" } | { type: "cierre" };
+/* ───────────────── Escenas animadas (una por característica) ───────────────── */
+const Dot = ({ c }: { c: string }) => <span style={{ width: 11, height: 11, borderRadius: "50%", background: c, display: "inline-block" }} />;
+
+function SceneBrowser() {
+  return (
+    <div style={{ width: 360, maxWidth: "100%" }}>
+      <div style={{ background: PAPER, border: "1px solid #E6D9BF", borderRadius: 14, boxShadow: "0 16px 32px -18px rgba(80,55,15,.5)", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "#F0E6D2" }}>
+          <Dot c="#E06A5A" /><Dot c="#E8B84a" /><Dot c="#63B36a" />
+          <div style={{ flex: 1, background: PAPER, border: "1px solid #E6D9BF", borderRadius: 20, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, fontFamily: SANS, fontSize: 13, color: INKSOFT }}>
+            <span style={{ color: "#2E8B57" }}>🔒</span> www.turestaurante.cl
+            <span style={{ width: 2, height: 14, background: INK, display: "inline-block", animation: "qcblink 1s step-end infinite" }} />
+          </div>
+        </div>
+        <div style={{ padding: 14 }}>
+          <div style={{ height: 68, borderRadius: 10, background: "linear-gradient(120deg,#E8A33A,#C9771A)", display: "flex", alignItems: "flex-end", padding: 10 }}>
+            <span style={{ fontFamily: DISP, color: PAPER, fontWeight: 600, fontSize: 18 }}>Tu Restaurante</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ animation: `qcfloat 3s ease-in-out ${i * 0.3}s infinite` }}>
+                <div style={{ height: 44, borderRadius: 8, background: "#F3E7CE" }} />
+                <div style={{ height: 7, width: "70%", borderRadius: 4, background: "#E3D4B4", marginTop: 6 }} />
+                <div style={{ height: 7, width: "45%", borderRadius: 4, background: "#EAC58A", marginTop: 4 }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, textAlign: "center" }}>
+            <span style={{ display: "inline-block", background: "#E8A33A", color: "#3a2a0e", fontFamily: SANS, fontWeight: 700, fontSize: 13, padding: "8px 22px", borderRadius: 30, animation: "qcpulse 2s ease-in-out infinite" }}>Pedir ahora</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneKanban() {
+  const cols = ["Nuevo", "Preparando", "Listo"];
+  return (
+    <div style={{ width: 360, maxWidth: "100%", position: "relative" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        {cols.map((c) => (
+          <div key={c} style={{ background: "#F3E7CE", borderRadius: 10, padding: 8, minHeight: 148 }}>
+            <div style={{ fontFamily: SANS, fontWeight: 700, fontSize: 12, color: INKSOFT, marginBottom: 8, textAlign: "center" }}>{c}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ position: "absolute", top: 34, left: 10, width: 96, animation: "qckanban 5s ease-in-out infinite" }}>
+        <div style={{ background: PAPER, border: "1px solid #E6D9BF", borderRadius: 8, padding: 8, boxShadow: "0 10px 18px -8px rgba(0,0,0,.3)" }}>
+          <div style={{ height: 7, width: "80%", background: "#E8A33A", borderRadius: 4 }} />
+          <div style={{ height: 6, width: "55%", background: "#E3D4B4", borderRadius: 4, marginTop: 5 }} />
+          <div style={{ fontFamily: SANS, fontSize: 10, color: INKSOFT, marginTop: 6 }}>#1042 · 2 ítems</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScenePayment() {
+  return (
+    <div style={{ width: 300, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+      <div style={{ width: 260, height: 150, borderRadius: 16, background: "linear-gradient(135deg,#2B2620,#4A4236)", padding: 18, position: "relative", boxShadow: "0 18px 32px -16px rgba(0,0,0,.5)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
+        <div style={{ width: 42, height: 30, borderRadius: 6, background: "linear-gradient(135deg,#E8C87a,#C99a3a)" }} />
+        <div style={{ position: "absolute", bottom: 42, left: 18, fontFamily: SANS, letterSpacing: 3, color: "#E9DFC9", fontSize: 16 }}>•••• •••• •••• 4028</div>
+        <div style={{ position: "absolute", bottom: 16, left: 18, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, letterSpacing: 1 }}>TU RESTAURANTE</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "#1F9D57", display: "flex", alignItems: "center", justifyContent: "center", color: PAPER, fontSize: 24, animation: "qcpop 2.6s ease-in-out infinite" }}>✓</div>
+        <span style={{ fontFamily: SANS, fontWeight: 700, color: INK, fontSize: 16 }}>Pago aprobado</span>
+      </div>
+    </div>
+  );
+}
+
+function SceneMap() {
+  const path = "M40 212 C 100 180, 120 118, 182 120 S 286 92, 326 54";
+  return (
+    <div style={{ width: 360, height: 262, maxWidth: "100%", position: "relative", borderRadius: 16, overflow: "hidden", background: "linear-gradient(160deg,#EFE7D6,#E2D8C1)", border: "1px solid #E0D4B8" }}>
+      <svg viewBox="0 0 360 262" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        <g stroke="#D7CBAD" strokeWidth="10" fill="none" strokeLinecap="round">
+          <line x1="0" y1="92" x2="360" y2="92" /><line x1="140" y1="0" x2="140" y2="262" />
+          <line x1="0" y1="192" x2="360" y2="192" /><line x1="262" y1="0" x2="262" y2="262" />
+        </g>
+        <path d={path} stroke="#E8A33A" strokeWidth="4" fill="none" strokeDasharray="6 8" strokeLinecap="round" />
+      </svg>
+      <div style={{ position: "absolute", left: 24, top: 196, fontSize: 22 }}>🏪</div>
+      <div style={{ position: "absolute", left: 316, top: 36, fontSize: 22 }}>🏠</div>
+      <div style={{ position: "absolute", left: 0, top: 0, fontSize: 26, animation: "qcdot 4.5s linear infinite", offsetPath: `path('${path}')`, offsetRotate: "0deg" } as React.CSSProperties}>🛵</div>
+      <div style={{ position: "absolute", right: 10, bottom: 10, background: "#211E18", color: PAPER, fontFamily: SANS, fontSize: 11, padding: "6px 10px", borderRadius: 20, display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", display: "inline-block", animation: "qcpulse 1.2s infinite" }} /> En vivo
+      </div>
+    </div>
+  );
+}
+
+function SceneWhatsApp() {
+  const msgs = [["Pedido recibido ✅", "12:01"], ["En preparación 👨‍🍳", "12:04"], ["En camino 🛵", "12:22"], ["Sigue tu pedido en el mapa", "12:22"]];
+  return (
+    <div style={{ width: 290, maxWidth: "100%" }}>
+      <div style={{ background: "#0b141a", borderRadius: 20, padding: "14px 12px", boxShadow: "0 18px 36px -18px rgba(0,0,0,.6)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 10, borderBottom: "1px solid #1f2c33" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#1F9D57", display: "flex", alignItems: "center", justifyContent: "center", color: PAPER, fontWeight: 700, fontSize: 12 }}>TR</div>
+          <div><div style={{ color: PAPER, fontFamily: SANS, fontSize: 13, fontWeight: 700 }}>Tu Restaurante</div><div style={{ color: "#8aa0a8", fontSize: 10 }}>en línea</div></div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 10, minHeight: 170 }}>
+          {msgs.map((m, i) => (
+            <div key={i} style={{ alignSelf: "flex-end", maxWidth: "86%", background: "#075E54", color: "#eaf2ee", fontFamily: SANS, fontSize: 12.5, padding: "8px 10px", borderRadius: "12px 12px 2px 12px", animation: `qcrise 6s ease-in-out ${i * 0.55}s infinite` }}>
+              {m[0]}<span style={{ display: "block", fontSize: 9, color: "#9fc3b4", textAlign: "right", marginTop: 2 }}>{m[1]} ✓✓</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScenePrinter() {
+  return (
+    <div style={{ width: 300, height: 262, position: "relative", display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "absolute", top: 72, width: 128, display: "flex", justifyContent: "center" }}>
+        <div style={{ width: 128, background: PAPER, borderRadius: "2px 2px 6px 6px", boxShadow: "0 12px 22px -10px rgba(0,0,0,.4)", padding: "12px 12px 16px", animation: "qcprint 3.2s cubic-bezier(.4,0,.2,1) infinite" }}>
+          <div style={{ textAlign: "center", fontWeight: 700, fontSize: 11, color: INK, fontFamily: SANS }}>COMANDA #1042</div>
+          <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
+          {["1x Ramen Tonkotsu", "2x Gyoza", "1x Té verde"].map((t) => <div key={t} style={{ fontSize: 10, color: INK, marginBottom: 3, fontFamily: SANS }}>{t}</div>)}
+          <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
+          <div style={{ fontSize: 9, color: INKSOFT, textAlign: "center", fontFamily: SANS }}>Delivery · 12:24</div>
+        </div>
+      </div>
+      <div style={{ position: "absolute", top: 42, width: 172, height: 72, background: "linear-gradient(180deg,#3a3630,#2B2620)", borderRadius: "12px 12px 6px 6px", boxShadow: "0 12px 26px -12px rgba(0,0,0,.5)" }}>
+        <div style={{ position: "absolute", bottom: -4, left: 22, right: 22, height: 8, background: "#14110d", borderRadius: 4 }} />
+        <div style={{ position: "absolute", top: 15, right: 16, width: 10, height: 10, borderRadius: "50%", background: "#2ecc71", animation: "qcpulse 1.4s infinite" }} />
+        <div style={{ position: "absolute", top: 16, left: 16, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>COCINA</div>
+      </div>
+    </div>
+  );
+}
+
+function SceneKds() {
+  const tickets: [string, string, string][] = [["#1042", "04:12", "#E8A33A"], ["#1043", "02:30", "#7fd1a8"], ["#1044", "00:45", "#7fd1a8"]];
+  return (
+    <div style={{ width: 340, maxWidth: "100%", background: "#14181c", borderRadius: 14, padding: 12, boxShadow: "0 18px 32px -16px rgba(0,0,0,.6)", position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontFamily: SANS, color: "#7fd1a8", fontSize: 12, fontWeight: 700 }}>COCINA · 3 activos</span>
+        <span style={{ fontFamily: SANS, color: "#6b7a82", fontSize: 11 }}>12:24</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+        {tickets.map(([n, t, c]) => (
+          <div key={n} style={{ background: "#1e242a", border: `1px solid ${c}`, borderRadius: 8, padding: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#dfe7ea", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}>{n}</span><span style={{ color: c, fontFamily: SANS, fontSize: 11 }}>{t}</span></div>
+            <div style={{ marginTop: 6 }}>{[0, 1, 2].map((j) => <div key={j} style={{ height: 5, background: "#2c353c", borderRadius: 3, marginBottom: 4, width: `${90 - j * 20}%` }} />)}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ position: "absolute", top: 0, bottom: 0, width: 70, background: "linear-gradient(90deg,transparent,rgba(127,209,168,.16),transparent)", animation: "qcsweep 3.6s linear infinite" }} />
+    </div>
+  );
+}
+
+function SceneChart() {
+  const bars = [42, 62, 50, 78, 95, 70, 88];
+  return (
+    <div style={{ width: 340, maxWidth: "100%" }}>
+      <div style={{ background: PAPER, borderRadius: 14, padding: 16, border: "1px solid #E6D9BF", boxShadow: "0 16px 30px -16px rgba(80,55,15,.4)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+          <span style={{ fontFamily: SANS, fontWeight: 700, color: INK, fontSize: 13 }}>Ventas de la semana</span>
+          <span style={{ fontFamily: SANS, color: "#1f9d57", fontSize: 12, fontWeight: 700 }}>▲ +18%</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120 }}>
+          {bars.map((h, i) => <div key={i} style={{ flex: 1, height: `${h}%`, borderRadius: "5px 5px 0 0", background: "linear-gradient(180deg,#E8A33A,#C9771A)", transformOrigin: "bottom", animation: `qcbar 3s ease-in-out ${i * 0.12}s infinite` }} />)}
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>{["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <span key={i} style={{ flex: 1, textAlign: "center", fontFamily: SANS, fontSize: 10, color: INKSOFT }}>{d}</span>)}</div>
+      </div>
+    </div>
+  );
+}
+
+function SceneLoyalty() {
+  return (
+    <div style={{ width: 230, height: 144, borderRadius: 16, background: "linear-gradient(135deg,#C9771A,#E8A33A)", padding: 16, position: "relative", boxShadow: "0 16px 30px -14px rgba(180,110,20,.6)", animation: "qcfloat 3.5s ease-in-out infinite" }}>
+      <div style={{ fontFamily: DISP, color: "#2a1c08", fontWeight: 600, fontSize: 18 }}>Tu Restaurante</div>
+      <div style={{ fontFamily: SANS, color: "#4a330f", fontSize: 11, marginTop: 2 }}>Miembro desde 2026</div>
+      <div style={{ position: "absolute", bottom: 16, left: 16, display: "flex", gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 15, height: 15, borderRadius: "50%", background: i < 3 ? "#2a1c08" : "rgba(42,28,8,.25)" }} />)}</div>
+      <div style={{ position: "absolute", top: 13, right: 14, fontSize: 20 }}>★</div>
+    </div>
+  );
+}
+
+function SceneQr() {
+  const on = new Set([0, 1, 2, 3, 4, 5, 9, 10, 14, 15, 19, 20, 21, 22, 23, 24, 7, 12, 17]);
+  return (
+    <div style={{ width: 150, height: 228, borderRadius: 22, background: "#211E18", padding: 10, boxShadow: "0 16px 30px -14px rgba(0,0,0,.5)" }}>
+      <div style={{ background: PAPER, borderRadius: 14, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 10 }}>
+        <div style={{ fontFamily: DISP, fontWeight: 600, color: INK, fontSize: 15 }}>Carta QR</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 3, width: 92 }}>
+          {Array.from({ length: 25 }).map((_, i) => <div key={i} style={{ aspectRatio: "1", background: on.has(i) ? INK : "transparent", borderRadius: 1 }} />)}
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 10, color: INKSOFT }}>Escanea y pide</div>
+      </div>
+    </div>
+  );
+}
+
+const SCENES: Record<string, () => React.JSX.Element> = { browser: SceneBrowser, kanban: SceneKanban, payment: ScenePayment, map: SceneMap, whatsapp: SceneWhatsApp, printer: ScenePrinter, kds: SceneKds, chart: SceneChart };
+
+type Feature = { id: string; scope: string; title: string; desc: string; scene: string };
+const FEATURES: Feature[] = [
+  { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión y con la relación.", scene: "browser" },
+  { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Un panel donde ves cada pedido entrar en tiempo real y lo haces avanzar con un toque: recibido, en preparación, listo y despachado. Todo tu equipo mira lo mismo y ningún pedido se pierde.", scene: "kanban" },
+  { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta (Webpay) y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
+  { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor de Uber o PedidosYa con un clic, sin tener flota propia: pagas solo el despacho. Y tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que en las apps grandes.", scene: "map" },
+  { id: "whatsapp", scope: "Incluido en todos los planes", title: "WhatsApp automático", desc: "Apenas entra el pedido, el cliente recibe por WhatsApp la confirmación, el estado y el link para seguir su despacho. Todo automático, sin que tu equipo tenga que escribir nada.", scene: "whatsapp" },
+  { id: "impresion", scope: "Incluido en todos los planes", title: "Impresión de comandas", desc: "La comanda se imprime sola en la cocina apenas entra el pedido. Tu equipo cocina sin copiar nada a mano ni mirar pantallas, con cero errores de transcripción en las horas peak.", scene: "printer" },
+  { id: "kds", scope: "Incluido en todos los planes", title: "Pantalla de cocina (KDS)", desc: "Una pantalla que ordena los pedidos por estado y tiempo de espera, con colores de alerta. Menos papeles, menos errores y una cocina que avanza más rápido cuando hay mucha demanda.", scene: "kds" },
+  { id: "datos", scope: "Incluido en todos los planes", title: "Cupones, encuestas y reportes", desc: "Crea descuentos y promociones para atraer clientes, pídeles su opinión automáticamente, y mira cuánto vendes, tus productos top y tus mejores clientes. Creces con datos, no con corazonadas.", scene: "chart" },
+];
 
 export default function PresentacionPage() {
   const { isSuper } = useAdminSession();
@@ -78,12 +246,13 @@ export default function PresentacionPage() {
   const [idx, setIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCfg(d)).catch(() => {});
-  }, []);
+  useEffect(() => { fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCfg(d)).catch(() => {}); }, []);
 
+  type Slide = { type: "cover" } | { type: "intro" } | { type: "feature"; f: Feature } | { type: "panorama" } | { type: "plan"; plan: PricePlan; i: number; total: number } | { type: "addons" } | { type: "costos" } | { type: "cierre" };
   const slides: Slide[] = cfg ? [
-    { type: "cover" }, { type: "intro" }, { type: "panorama" },
+    { type: "cover" }, { type: "intro" },
+    ...FEATURES.map((f): Slide => ({ type: "feature", f })),
+    { type: "panorama" },
     ...cfg.plans.map((plan, i): Slide => ({ type: "plan", plan, i, total: cfg.plans.length })),
     ...(cfg.addons.length ? [{ type: "addons" } as Slide] : []),
     ...(cfg.extras.length || cfg.implementation.length ? [{ type: "costos" } as Slide] : []),
@@ -91,7 +260,6 @@ export default function PresentacionPage() {
   ] : [];
 
   const go = useCallback((d: number) => setIdx((i) => Math.max(0, Math.min(slides.length - 1, i + d))), [slides.length]);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); go(1); }
@@ -101,47 +269,30 @@ export default function PresentacionPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [go, router]);
-
-  const toggleFull = () => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    else containerRef.current?.requestFullscreen().catch(() => {});
-  };
+  const toggleFull = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else containerRef.current?.requestFullscreen().catch(() => {}); };
 
   if (!isSuper) return <div style={{ padding: 32, color: "#888" }}>Solo superadmin</div>;
 
   const slide = slides[idx];
+  const onDark = slide && (slide.type === "cover" || slide.type === "cierre");
   const bg = slide && (slide.type === "cover" || slide.type === "cierre") ? INK : slide && (slide.type === "panorama" || slide.type === "addons") ? CREAM2 : CREAM;
-
-  const eyebrow = (t: string, dark = false) => <p style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1.2vw,1.1rem)", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, color: dark ? GOLDB : GOLDT, margin: 0 }}>{t}</p>;
-
-  const featureCard = (f: string, star = false) => {
-    const b = blurbFor(f);
-    return (
-      <div key={f} style={{ background: star ? "#FBF2DF" : CARD, border: `1px solid ${star ? "#E7C98A" : CARDB}`, borderRadius: 14, padding: "clamp(12px,1.4vw,20px)", display: "flex", flexDirection: "column", gap: 5, boxShadow: CARDSHADOW }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1rem,1.3vw,1.3rem)", flexShrink: 0 }}>{star ? "★" : "✓"}</span>
-          <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.25vw,1.35rem)", fontWeight: 700, color: INK, margin: 0, lineHeight: 1.15 }}>{f}</h3>
-        </div>
-        {b && <p style={{ fontFamily: SANS, fontSize: "clamp(0.82rem,1.05vw,1.1rem)", color: INKSOFT, margin: 0, lineHeight: 1.3, paddingLeft: 28 }}>{b}</p>}
-      </div>
-    );
-  };
+  const wrap: React.CSSProperties = { width: "100%", maxWidth: 1320, display: "flex", flexDirection: "column" };
+  const eyebrow = (t: string, dark = false) => <p style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1.1vw,1.05rem)", letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700, color: dark ? GOLDB : GOLDT, margin: 0 }}>{t}</p>;
 
   const renderSlide = () => {
     if (!cfg || !slide) return null;
-    const pad = "clamp(32px,6vw,110px)";
-    const wrap: React.CSSProperties = { width: "100%", maxWidth: 1320, display: "flex", flexDirection: "column" };
 
     if (slide.type === "cover") return (
       <div style={{ ...wrap, gap: "clamp(20px,3vh,40px)" }}>
         {eyebrow("QuieroComer · Planes 2026", true)}
         <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.6rem,7vw,6.5rem)", fontWeight: 600, lineHeight: 1.03, color: CREAM, margin: 0 }}>Tu restaurante,<br /><span style={{ color: GOLDB }}>en una sola plataforma</span></h1>
         <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,2vw,2rem)", color: "#CFC6B4", margin: 0, lineHeight: 1.35, maxWidth: 1050 }}>Sitio propio, pedidos online, delivery con seguimiento en vivo, fidelización y punto de venta. Todo con tu marca.</p>
+        <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.1rem)", color: "#8F8575", margin: "clamp(8px,2vh,20px) 0 0" }}>Usa las flechas del teclado ← → para avanzar</p>
       </div>
     );
 
     if (slide.type === "intro") {
-      const items = [["★", "Tu propia marca", "Tu sitio y tu carta, con tus colores y tu dominio. No un marketplace."], ["♥", "Más margen", "Cobras online directo a tu cuenta, sin las altas comisiones de las apps."], ["⚡", "Todo en un lugar", "Pedidos, delivery, cocina, fidelización y punto de venta juntos."]];
+      const items = [["★", "Tu propia marca", "Tu sitio y tu carta, con tus colores y tu dominio. No un marketplace."], ["♥", "Más margen", "Cobras online directo a tu cuenta, sin las altas comisiones de las apps."], ["⚡", "Todo en un lugar", "Pedidos, delivery, cocina, fidelización y punto de venta, juntos."]];
       return (
         <div style={{ ...wrap, gap: "clamp(28px,4vh,52px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Qué es QuieroComer")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,5vw,4.5rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Una plataforma hecha para que tu local venda más</h2></div>
@@ -153,6 +304,25 @@ export default function PresentacionPage() {
                 <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0, lineHeight: 1.4 }}>{d}</p>
               </div>
             ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (slide.type === "feature") {
+      const { f } = slide;
+      const Scene = SCENES[f.scene];
+      return (
+        <div style={{ ...wrap, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: "clamp(28px,4vw,64px)", justifyContent: "center" }}>
+          <div style={{ flex: "1 1 320px", maxWidth: 580, minWidth: 280, display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "100%", maxWidth: 560, aspectRatio: "4 / 3", borderRadius: 24, background: "linear-gradient(160deg,#FDF4E3,#F4E6C9)", border: `1px solid ${CARDB}`, boxShadow: CARDSHADOW, position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(16px,2.5vw,36px)" }}>
+              {Scene && <Scene />}
+            </div>
+          </div>
+          <div style={{ flex: "1 1 360px", minWidth: 300, display: "flex", flexDirection: "column", gap: "clamp(14px,2vh,24px)" }}>
+            {eyebrow(f.scope)}
+            <h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.2vw,3.8rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>{f.title}</h2>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,1.6vw,1.65rem)", color: INKSOFT, margin: 0, lineHeight: 1.5, maxWidth: 620 }}>{f.desc}</p>
           </div>
         </div>
       );
@@ -180,9 +350,9 @@ export default function PresentacionPage() {
     if (slide.type === "plan") {
       const { plan, i, total } = slide;
       const impl = cfg.implementation.find((l) => l.label.trim().toLowerCase() === plan.name.trim().toLowerCase())?.price ?? null;
-      const starNew = (f: string) => /pos|bodega|inventario|ilimitado/i.test(f);
+      const isNew = (f: string) => /ilimitad|pos |pos$|bodega|inventario/i.test(f);
       return (
-        <div style={{ ...wrap, gap: "clamp(18px,2.6vh,32px)" }}>
+        <div style={{ ...wrap, gap: "clamp(20px,3vh,36px)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20, flexWrap: "wrap" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {eyebrow(`Plan ${i + 1} de ${total} · Ecommerce`)}
@@ -190,12 +360,23 @@ export default function PresentacionPage() {
               <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0 }}>{taglineFor(plan.name)}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <p style={{ fontFamily: DISP, fontSize: "clamp(2rem,4vw,3.6rem)", fontWeight: 600, color: GOLD, margin: 0, lineHeight: 1 }}>{fmt(plan.price)}</p>
+              <p style={{ fontFamily: DISP, fontSize: "clamp(2.2rem,4.5vw,4rem)", fontWeight: 600, color: GOLD, margin: 0, lineHeight: 1 }}>{fmt(plan.price)}</p>
               <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.15rem)", color: INKSOFT, margin: "4px 0 0" }}>por mes{impl != null ? ` · + ${fmt(impl)} implementación` : ""}</p>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: "clamp(10px,1vw,16px)" }}>
-            {plan.features.map((f) => featureCard(f, starNew(f)))}
+          <div style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(22px,2.6vw,38px)", boxShadow: CARDSHADOW }}>
+            <p style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1rem)", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, color: GOLDT, margin: "0 0 18px" }}>Qué incluye</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "clamp(10px,1.4vh,16px) clamp(24px,3vw,48px)" }}>
+              {plan.features.map((f) => {
+                const nw = isNew(f);
+                return (
+                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1.1rem,1.4vw,1.4rem)", flexShrink: 0, lineHeight: 1.2 }}>{nw ? "★" : "✓"}</span>
+                    <span style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.3vw,1.5rem)", color: INK, fontWeight: nw ? 700 : 500, lineHeight: 1.25 }}>{f}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -204,18 +385,19 @@ export default function PresentacionPage() {
     if (slide.type === "addons") return (
       <div style={{ ...wrap, gap: "clamp(24px,3.5vh,40px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
-          {cfg.addons.map((p) => (
-            <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,40px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,22px)", boxShadow: CARDSHADOW }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(360px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
+          {cfg.addons.map((p, i) => (
+            <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,36px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,20px)", boxShadow: CARDSHADOW }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>{i === 0 ? <SceneLoyalty /> : <SceneQr />}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.6rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.2vw,2.4rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
+                <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(8px,1vw,14px) clamp(16px,2vw,28px)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
                 {p.features.map((f) => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1rem,1.3vw,1.3rem)" }}>✓</span>
-                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.25vw,1.4rem)", color: INK, margin: 0 }}>{f}</p>
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>✓</span>
+                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0 }}>{f}</p>
                   </div>
                 ))}
               </div>
@@ -264,7 +446,7 @@ export default function PresentacionPage() {
         {eyebrow("El siguiente paso", true)}
         <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.4rem,6vw,5.5rem)", fontWeight: 600, lineHeight: 1.04, color: CREAM, margin: 0 }}>Hagamos crecer<br />tu restaurante</h1>
         <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,1.8vw,1.9rem)", color: "#CFC6B4", margin: 0, lineHeight: 1.4, maxWidth: 1000 }}>Tu marca, tus clientes, tus datos y toda tu operación en una sola plataforma. Elige el plan, nosotros lo dejamos andando.</p>
-        <div style={{ display: "flex", gap: 16, alignItems: "center", marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "center", marginTop: 8, flexWrap: "wrap" }}>
           <span style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", fontWeight: 700, color: INK, background: GOLDB, padding: "14px 30px", borderRadius: 50 }}>Conversemos hoy</span>
           <span style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.2vw,1.3rem)", color: "#8F8575" }}>quierocomer.com</span>
         </div>
@@ -272,35 +454,42 @@ export default function PresentacionPage() {
     );
   };
 
-  const navBtn: React.CSSProperties = { width: 46, height: 46, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.12)", background: "rgba(255,255,255,0.7)", color: INK, fontSize: "1.3rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" };
-  const topBtn: React.CSSProperties = { border: "1px solid rgba(0,0,0,0.12)", background: "rgba(255,255,255,0.7)", color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "0.82rem", borderRadius: 10, padding: "8px 14px", cursor: "pointer", backdropFilter: "blur(6px)" };
-  const onDark = slide && (slide.type === "cover" || slide.type === "cierre");
+  const navBtn: React.CSSProperties = { width: 46, height: 46, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.12)", background: "rgba(250,247,239,0.75)", color: INK, fontSize: "1.3rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" };
+  const topBtn: React.CSSProperties = { border: "1px solid rgba(0,0,0,0.12)", background: "rgba(250,247,239,0.75)", color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "0.82rem", borderRadius: 10, padding: "8px 14px", cursor: "pointer", backdropFilter: "blur(6px)" };
+  const darkBtn = onDark ? { background: "rgba(255,253,247,0.14)", color: CREAM, border: "1px solid rgba(255,253,247,0.25)" } : {};
 
   return (
     <div ref={containerRef} style={{ position: "fixed", inset: 0, zIndex: 9999, background: bg, transition: "background 0.35s ease", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=DM+Sans:wght@400;500;700&display=swap');@keyframes qcslide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=DM+Sans:wght@400;500;700&display=swap');
+@keyframes qcslide{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes qcfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes qcblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes qcrise{0%{opacity:0;transform:translateY(18px) scale(.98)}14%{opacity:1;transform:none}88%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+@keyframes qcbar{0%{transform:scaleY(.12)}55%{transform:scaleY(1)}100%{transform:scaleY(1)}}
+@keyframes qcpop{0%{transform:scale(0);opacity:0}55%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes qcpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes qcdot{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes qckanban{0%,12%{transform:translateX(0)}44%,56%{transform:translateX(120px)}88%,100%{transform:translateX(240px)}}
+@keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}`}</style>
 
-      {/* Barra superior */}
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
-        <button onClick={toggleFull} style={{ ...topBtn, ...(onDark ? { background: "rgba(255,255,255,0.14)", color: CREAM, border: "1px solid rgba(255,255,255,0.25)" } : {}) }}>⤢ Pantalla completa</button>
-        <button onClick={() => router.push("/admin/planes")} style={{ ...topBtn, ...(onDark ? { background: "rgba(255,255,255,0.14)", color: CREAM, border: "1px solid rgba(255,255,255,0.25)" } : {}) }}>✕ Cerrar</button>
+        <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>
+        <button onClick={() => router.push("/admin/planes")} style={{ ...topBtn, ...darkBtn }}>✕ Cerrar</button>
       </div>
 
-      {/* Contenido */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(40px,6vw,110px)" }}>
-        <div key={idx} style={{ width: "100%", display: "flex", justifyContent: "center", animation: "qcslide 0.4s ease" }}>{renderSlide()}</div>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(44px,6vw,96px) clamp(28px,5vw,96px)" }}>
+        <div key={idx} style={{ width: "100%", display: "flex", justifyContent: "center", animation: "qcslide 0.45s ease" }}>{cfg ? renderSlide() : <span style={{ fontFamily: DISP, color: GOLD }}>Cargando…</span>}</div>
       </div>
 
-      {/* Navegación inferior */}
       <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 18, zIndex: 2 }}>
-        <button onClick={() => go(-1)} disabled={idx === 0} style={{ ...navBtn, opacity: idx === 0 ? 0.35 : 1, ...(onDark ? { background: "rgba(255,255,255,0.14)", color: CREAM, border: "1px solid rgba(255,255,255,0.25)" } : {}) }}>‹</button>
-        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+        <button onClick={() => go(-1)} disabled={idx === 0} style={{ ...navBtn, ...darkBtn, opacity: idx === 0 ? 0.35 : 1 }}>‹</button>
+        <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap", justifyContent: "center", maxWidth: "60vw" }}>
           {slides.map((_, i) => (
-            <button key={i} onClick={() => setIdx(i)} aria-label={`Slide ${i + 1}`} style={{ width: i === idx ? 26 : 9, height: 9, borderRadius: 50, border: "none", cursor: "pointer", background: i === idx ? GOLD : (onDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.18)"), transition: "width 0.25s ease" }} />
+            <button key={i} onClick={() => setIdx(i)} aria-label={`Slide ${i + 1}`} style={{ width: i === idx ? 24 : 9, height: 9, borderRadius: 50, border: "none", cursor: "pointer", background: i === idx ? GOLD : (onDark ? "rgba(255,253,247,0.3)" : "rgba(0,0,0,0.18)"), transition: "width 0.25s ease", padding: 0 }} />
           ))}
         </div>
-        <button onClick={() => go(1)} disabled={idx === slides.length - 1} style={{ ...navBtn, opacity: idx === slides.length - 1 ? 0.35 : 1, ...(onDark ? { background: "rgba(255,255,255,0.14)", color: CREAM, border: "1px solid rgba(255,255,255,0.25)" } : {}) }}>›</button>
-        <span style={{ position: "absolute", right: "clamp(20px,4vw,48px)", fontFamily: SANS, fontSize: "0.85rem", fontWeight: 700, color: onDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)" }}>{idx + 1} / {slides.length}</span>
+        <button onClick={() => go(1)} disabled={idx === slides.length - 1} style={{ ...navBtn, ...darkBtn, opacity: idx === slides.length - 1 ? 0.35 : 1 }}>›</button>
+        <span style={{ position: "absolute", right: "clamp(20px,4vw,48px)", fontFamily: SANS, fontSize: "0.85rem", fontWeight: 700, color: onDark ? "rgba(255,253,247,0.55)" : "rgba(0,0,0,0.45)" }}>{idx + 1} / {slides.length}</span>
       </div>
     </div>
   );
