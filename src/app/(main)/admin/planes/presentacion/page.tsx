@@ -196,7 +196,7 @@ function SceneKds() {
       {/* pared del fondo con azulejos */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "56%", backgroundImage: "linear-gradient(rgba(120,95,45,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(120,95,45,0.09) 1px,transparent 1px)", backgroundSize: "34px 34px" }} />
       {/* piso de acero inoxidable en perspectiva (cuadrícula que converge al punto de fuga) */}
-      <div style={{ position: "absolute", left: 0, right: 0, top: "50%", bottom: 0, transform: "rotateX(62deg)", transformOrigin: "top center", backgroundColor: "#B4B9C1", backgroundImage: "linear-gradient(180deg,rgba(250,251,253,0.5),rgba(250,251,253,0) 42%,rgba(55,60,68,0.22)),linear-gradient(90deg,rgba(60,66,74,0.4) 1px,transparent 1px),linear-gradient(rgba(60,66,74,0.4) 1px,transparent 1px)", backgroundSize: "auto,44px 44px,44px 44px" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: "50%", bottom: 0, transform: "rotateX(62deg)", transformOrigin: "top center", backgroundColor: "#B4B9C1", backgroundImage: "linear-gradient(180deg,rgba(250,251,253,0.55),rgba(250,251,253,0) 45%,rgba(55,60,68,0.24))" }} />
       {/* sombra/junta donde la pared toca el piso */}
       <div style={{ position: "absolute", left: 0, right: 0, top: "calc(50% - 4px)", height: 8, background: "linear-gradient(180deg,rgba(40,44,50,0.22),transparent)" }} />
 
