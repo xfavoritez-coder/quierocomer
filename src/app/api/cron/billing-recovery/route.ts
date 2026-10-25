@@ -128,17 +128,42 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Migración puntual: recuperar flowCustomerId faltantes en BD para clientes que
+    // ya existen en Flow (ej: cuando se limpió la BD pero no Flow).
+    // Se ejecuta en cada cron pero solo toca registros sin flowCustomerId.
+    const withoutCid = await prisma.restaurant.findMany({
+      where: { flowCustomerId: null, isDemo: false, lastPaymentAt: { not: null } },
+      select: { id: true, name: true, owner: { select: { email: true } } },
+    });
+    const recovered: string[] = [];
+    for (const r of withoutCid) {
+      const email = r.owner?.email;
+      if (!email) continue;
+      try {
+        const list = await flowGet<{ data: { customerId: string; externalId: string }[] }>(
+          "/customer/getList", { filter: email, start: 0, limit: 50 }
+        );
+        const match = list.data?.find((c) => c.externalId === r.id);
+        if (match) {
+          await prisma.restaurant.update({ where: { id: r.id }, data: { flowCustomerId: match.customerId } });
+          recovered.push(r.name);
+          console.log(`[billing-recovery] flowCustomerId recuperado: ${r.name} → ${match.customerId}`);
+        }
+        await new Promise(res => setTimeout(res, 300));
+      } catch { /* silencioso: no crítico */ }
+    }
+
     const durationMs = Date.now() - start;
     await prisma.cronLog.create({
       data: {
         jobName: "billing-recovery",
         status: "success",
         durationMs,
-        details: { checked: candidates.length, results } as any,
+        details: { checked: candidates.length, results, flowCustomerIdsRecovered: recovered } as any,
       },
     });
 
-    return NextResponse.json({ ok: true, checked: candidates.length, results, durationMs });
+    return NextResponse.json({ ok: true, checked: candidates.length, results, flowCustomerIdsRecovered: recovered, durationMs });
   } catch (error) {
     const durationMs = Date.now() - start;
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
