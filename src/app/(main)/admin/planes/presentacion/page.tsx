@@ -354,7 +354,6 @@ export default function PresentacionPage() {
         {eyebrow("QuieroComer · Planes 2026", true)}
         <h1 style={{ fontFamily: DISP, fontSize: "clamp(2.6rem,7vw,6.5rem)", fontWeight: 600, lineHeight: 1.03, color: CREAM, margin: 0 }}>Tu restaurante,<br /><span style={{ color: GOLDB }}>en una sola plataforma</span></h1>
         <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,2vw,2rem)", color: "#CFC6B4", margin: 0, lineHeight: 1.35, maxWidth: 1050 }}>Sitio propio, pedidos online, delivery con seguimiento en vivo, fidelización y punto de venta. Todo con tu marca.</p>
-        <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.1rem)", color: "#8F8575", margin: "clamp(8px,2vh,20px) 0 0" }}>Usa las flechas del teclado ← → para avanzar</p>
       </div>
     );
 
