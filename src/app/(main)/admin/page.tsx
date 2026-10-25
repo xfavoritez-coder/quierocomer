@@ -237,8 +237,12 @@ function BillingSection({ data }: { data: BillingData }) {
 function EngagementSection({ data }: { data: EngagementData }) {
   function fmtRelative(iso: string | null) {
     if (!iso) return null;
-    const diff = Date.now() - new Date(iso).getTime();
-    const days = Math.max(0, Math.floor(diff / 86400000));
+    // Diferencia en DÍAS DE CALENDARIO en hora de Chile (no en períodos de 24h),
+    // para que un sello de ayer 22:43 no aparezca como "hoy".
+    const chileYmd = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
+    const a = new Date(`${chileYmd(new Date(iso))}T00:00:00Z`).getTime();
+    const b = new Date(`${chileYmd(new Date())}T00:00:00Z`).getTime();
+    const days = Math.max(0, Math.round((b - a) / 86400000));
     if (days === 0) return "hoy";
     if (days === 1) return "ayer";
     return `hace ${days} días`;
