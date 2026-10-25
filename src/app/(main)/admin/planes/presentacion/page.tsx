@@ -7,7 +7,8 @@ import type { PricingConfig, PricePlan } from "@/lib/pricing";
 // Paleta de la presentación (independiente del tema oscuro del admin).
 const CREAM = "#FBF7EF", CREAM2 = "#F3EBDB", INK = "#211E18", INKSOFT = "#6B6153";
 const GOLD = "#D98A1F", GOLDB = "#E8A33A", GOLDT = "#9A5E12";
-const CARD = "#FFFDF7", CARDB = "#EADFC9";
+const CARD = "#FEFBF3", CARDB = "#EADFC9";
+const CARDSHADOW = "0 10px 26px -16px rgba(90,65,20,0.35)";
 const DISP = "'Fraunces', Georgia, serif";
 const SANS = "'DM Sans', system-ui, -apple-system, sans-serif";
 
@@ -116,7 +117,7 @@ export default function PresentacionPage() {
   const featureCard = (f: string, star = false) => {
     const b = blurbFor(f);
     return (
-      <div key={f} style={{ background: star ? "#FBF2DF" : CARD, border: `1px solid ${star ? "#E7C98A" : CARDB}`, borderRadius: 14, padding: "clamp(12px,1.4vw,20px)", display: "flex", flexDirection: "column", gap: 5 }}>
+      <div key={f} style={{ background: star ? "#FBF2DF" : CARD, border: `1px solid ${star ? "#E7C98A" : CARDB}`, borderRadius: 14, padding: "clamp(12px,1.4vw,20px)", display: "flex", flexDirection: "column", gap: 5, boxShadow: CARDSHADOW }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(1rem,1.3vw,1.3rem)", flexShrink: 0 }}>{star ? "★" : "✓"}</span>
           <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.25vw,1.35rem)", fontWeight: 700, color: INK, margin: 0, lineHeight: 1.15 }}>{f}</h3>
@@ -146,7 +147,7 @@ export default function PresentacionPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Qué es QuieroComer")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,5vw,4.5rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Una plataforma hecha para que tu local venda más</h2></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
             {items.map(([ic, t, d]) => (
-              <div key={t} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(24px,2.6vw,40px)", display: "flex", flexDirection: "column", gap: 14 }}>
+              <div key={t} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 20, padding: "clamp(24px,2.6vw,40px)", display: "flex", flexDirection: "column", gap: 14, boxShadow: CARDSHADOW }}>
                 <span style={{ color: GOLD, fontSize: "clamp(1.8rem,3vw,3rem)" }}>{ic}</span>
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.4rem)", fontWeight: 600, color: INK, margin: 0 }}>{t}</h3>
                 <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0, lineHeight: 1.4 }}>{d}</p>
@@ -164,7 +165,7 @@ export default function PresentacionPage() {
           {cfg.plans.map((p) => {
             const hi = /premium/i.test(p.name) && !/futuro/i.test(p.name);
             return (
-              <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 20, padding: "clamp(20px,2vw,34px) clamp(16px,1.6vw,28px)", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 20, padding: "clamp(20px,2vw,34px) clamp(16px,1.6vw,28px)", display: "flex", flexDirection: "column", gap: 10, boxShadow: CARDSHADOW }}>
                 {hi && eyebrow("Recomendado", true)}
                 <h3 style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.5vw,1.5rem)", fontWeight: 700, color: hi ? CREAM : INK, margin: 0 }}>{p.name}</h3>
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.7rem,2.8vw,2.6rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{fmt(p.price)}</p>
@@ -205,7 +206,7 @@ export default function PresentacionPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
           {cfg.addons.map((p) => (
-            <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,40px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,22px)" }}>
+            <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,40px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,22px)", boxShadow: CARDSHADOW }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.6rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.2vw,2.4rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
