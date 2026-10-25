@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { flowPost, flowGet } from "@/lib/billing/flow";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
@@ -54,8 +54,32 @@ export async function POST(req: NextRequest) {
       await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
       console.log(`[subscribe] Cliente Flow creado: ${flowCustomerId}`);
     } catch (createErr: any) {
-      console.error(`[subscribe] Error creando cliente Flow: ${createErr?.message}`);
-      return NextResponse.json({ error: `Error al crear cliente en Flow: ${createErr?.message}` }, { status: 500 });
+      const msg: string = createErr?.message || "";
+      // Flow ya tiene un cliente con este externalId (puede ocurrir si se limpió flowCustomerId
+      // en la BD pero no en Flow). Recuperar el customerId existente buscando por email.
+      if (msg.includes("externalId")) {
+        try {
+          const list = await flowGet<{ data: { customerId: string; externalId: string }[] }>(
+            "/customer/getList",
+            { filter: owner.email, start: 0, limit: 50 }
+          );
+          const match = list.data?.find((c) => c.externalId === restaurantId);
+          if (match) {
+            flowCustomerId = match.customerId;
+            await prisma.restaurant.update({ where: { id: restaurantId }, data: { flowCustomerId } });
+            console.log(`[subscribe] Cliente Flow recuperado: ${flowCustomerId}`);
+          } else {
+            console.error("[subscribe] No se encontró el cliente Flow por externalId tras el conflicto");
+            return NextResponse.json({ error: "Error al recuperar cliente en Flow" }, { status: 500 });
+          }
+        } catch (recoverErr: any) {
+          console.error(`[subscribe] Error recuperando cliente Flow: ${recoverErr?.message}`);
+          return NextResponse.json({ error: "Error al recuperar cliente en Flow" }, { status: 500 });
+        }
+      } else {
+        console.error(`[subscribe] Error creando cliente Flow: ${msg}`);
+        return NextResponse.json({ error: `Error al crear cliente en Flow: ${msg}` }, { status: 500 });
+      }
     }
   }
 
