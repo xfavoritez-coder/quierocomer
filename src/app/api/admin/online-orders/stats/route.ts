@@ -11,6 +11,11 @@ export async function GET(req: NextRequest) {
 
   const where: any = { status: { not: "CANCELLED" } };
   if (restaurantId) where.restaurantId = restaurantId;
+  const month = searchParams.get("month"); // YYYY-MM
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split("-").map(Number);
+    where.createdAt = { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) };
+  }
 
   const allOrders = await prisma.onlineOrder.findMany({
     where,

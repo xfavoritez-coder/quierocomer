@@ -1,9 +1,18 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const ACCENT = "#F4A623";
 const F = "var(--font-display, system-ui)";
+
+// Select con chevron propio (deja espacio a la derecha; evita la flecha pegada al borde).
+const CHEVRON = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='12'%20height='12'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23999'%20stroke-width='2.5'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpolyline%20points='6%209%2012%2015%2018%209'/%3E%3C/svg%3E";
+const SELECT_STYLE: React.CSSProperties = {
+  padding: "9px 38px 9px 14px", borderRadius: 10, border: "1px solid #333", background: "#1a1a1a",
+  color: "#f0f0f0", fontSize: 14, outline: "none", cursor: "pointer",
+  appearance: "none", WebkitAppearance: "none",
+  backgroundImage: `url("${CHEVRON}")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 13px center", backgroundSize: "12px",
+};
 
 interface OrderItem { dishName: string; quantity: number; unitTotal: number; selectedOptions: { optionName: string }[]; notes?: string; }
 interface Order {
@@ -88,6 +97,7 @@ export default function PedidosOnlinePage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [restaurantFilter, setRestaurantFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState(""); // "" = todos; "YYYY-MM"
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -97,6 +107,7 @@ export default function PedidosOnlinePage() {
     const params = new URLSearchParams({ page: String(p) });
     if (s) params.set("status", s);
     if (rid) params.set("restaurantId", rid);
+    if (monthFilter) params.set("month", monthFilter);
     const res = await fetch(`/api/admin/online-orders?${params}`);
     if (res.ok) {
       const data = await res.json();
@@ -106,32 +117,46 @@ export default function PedidosOnlinePage() {
       setPage(p);
     }
     setLoading(false);
-  }, [statusFilter, restaurantFilter]);
+  }, [statusFilter, restaurantFilter, monthFilter]);
 
   const fetchStats = useCallback(async (rid = restaurantFilter) => {
     setStatsLoading(true);
     const params = new URLSearchParams();
     if (rid) params.set("restaurantId", rid);
+    if (monthFilter) params.set("month", monthFilter);
     const res = await fetch(`/api/admin/online-orders/stats?${params}`);
     if (res.ok) {
       const data = await res.json();
       setStats(data);
     }
     setStatsLoading(false);
-  }, [restaurantFilter]);
+  }, [restaurantFilter, monthFilter]);
 
   useEffect(() => {
     if (!authLoading) {
       fetchOrders(1, statusFilter, restaurantFilter);
       fetchStats(restaurantFilter);
     }
-  }, [authLoading, statusFilter, restaurantFilter]);
+  }, [authLoading, statusFilter, restaurantFilter, monthFilter]);
 
   const updateStatus = async (id: string, status: string) => {
     await fetch("/api/admin/online-orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
     fetchOrders(page, statusFilter, restaurantFilter);
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
   };
+
+  const monthOptions = useMemo(() => {
+    const out: { val: string; label: string }[] = [];
+    const now = new Date();
+    for (let i = 0; i < 18; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      let label = d.toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+      out.push({ val, label });
+    }
+    return out;
+  }, []);
 
   const filtered = search.trim()
     ? orders.filter(o => o.customerName.toLowerCase().includes(search.toLowerCase()) || o.restaurant.name.toLowerCase().includes(search.toLowerCase()) || o.customerPhone.includes(search))
@@ -153,20 +178,16 @@ export default function PedidosOnlinePage() {
       {/* Filtro por local + acciones */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         {(isSuper && adminRestaurants.length > 1) && (
-          <select
-            value={restaurantFilter}
-            onChange={e => setRestaurantFilter(e.target.value)}
-            style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid #333", background: "#1a1a1a", color: "#f0f0f0", fontSize: 14, outline: "none", cursor: "pointer" }}
-          >
+          <select value={restaurantFilter} onChange={e => setRestaurantFilter(e.target.value)} style={SELECT_STYLE}>
             <option value="">Todos los locales</option>
             {adminRestaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid #333", background: "#1a1a1a", color: "#f0f0f0", fontSize: 14, outline: "none", cursor: "pointer" }}
-        >
+        <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)} style={SELECT_STYLE}>
+          <option value="">Todos los meses</option>
+          {monthOptions.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+        </select>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={SELECT_STYLE}>
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
@@ -296,7 +317,7 @@ export default function PedidosOnlinePage() {
                     <select
                       value={order.status}
                       onChange={e => updateStatus(order.id, e.target.value)}
-                      style={{ fontSize: 12, fontWeight: 600, color: STATUS_COLORS[order.status] || "#aaa", background: "#111", border: `1px solid ${STATUS_COLORS[order.status] || "#333"}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer", outline: "none" }}
+                      style={{ fontSize: 12, fontWeight: 600, color: STATUS_COLORS[order.status] || "#aaa", background: "#111", border: `1px solid ${STATUS_COLORS[order.status] || "#333"}`, borderRadius: 6, padding: "3px 26px 3px 8px", cursor: "pointer", outline: "none", appearance: "none", WebkitAppearance: "none", backgroundImage: `url("${CHEVRON}")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 7px center", backgroundSize: "11px" }}
                     >
                       {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>

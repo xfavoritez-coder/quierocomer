@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
   const where: any = {};
   if (resId) where.restaurantId = resId;
   if (status) where.status = status;
+  const month = searchParams.get("month"); // YYYY-MM
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split("-").map(Number);
+    where.createdAt = { gte: new Date(Date.UTC(y, m - 1, 1)), lt: new Date(Date.UTC(y, m, 1)) };
+  }
 
   const [orders, total] = await Promise.all([
     prisma.onlineOrder.findMany({
