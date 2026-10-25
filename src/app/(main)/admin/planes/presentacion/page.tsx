@@ -296,7 +296,6 @@ export default function PresentacionPage() {
     { type: "cover" }, { type: "intro" },
     ...FEATURES.map((f): Slide => ({ type: "feature", f })),
     { type: "panorama" },
-    ...cfg.plans.map((plan, i): Slide => ({ type: "plan", plan, i, total: cfg.plans.length })),
     ...(cfg.addons.length ? [{ type: "addons" } as Slide] : []),
     ...(cfg.extras.length || cfg.implementation.length ? [{ type: "costos" } as Slide] : []),
     { type: "cierre" },
