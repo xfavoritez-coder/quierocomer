@@ -326,6 +326,11 @@ export default function PresentacionPage() {
   }, [go, router]);
   const toggleFull = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else containerRef.current?.requestFullscreen().catch(() => {}); };
 
+  // Deslizar con el dedo en móvil (swipe horizontal).
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; touchStart.current = { x: t.clientX, y: t.clientY }; };
+  const onTouchEnd = (e: React.TouchEvent) => { const s = touchStart.current; touchStart.current = null; if (!s) return; const t = e.changedTouches[0]; const dx = t.clientX - s.x, dy = t.clientY - s.y; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1); };
+
   if (!isSuper) return <div style={{ padding: 32, color: "#888" }}>Solo superadmin</div>;
 
   const slide = slides[idx];
@@ -550,12 +555,11 @@ export default function PresentacionPage() {
     );
   };
 
-  const navBtn: React.CSSProperties = { width: 46, height: 46, borderRadius: "50%", border: "1px solid rgba(0,0,0,0.12)", background: "rgba(250,247,239,0.75)", color: INK, fontSize: "1.3rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" };
   const topBtn: React.CSSProperties = { border: "1px solid rgba(0,0,0,0.12)", background: "rgba(250,247,239,0.75)", color: INK, fontFamily: SANS, fontWeight: 700, fontSize: "0.82rem", borderRadius: 10, padding: "8px 14px", cursor: "pointer", backdropFilter: "blur(6px)" };
   const darkBtn = onDark ? { background: "rgba(255,253,247,0.14)", color: CREAM, border: "1px solid rgba(255,253,247,0.25)" } : {};
 
   return (
-    <div ref={containerRef} style={{ position: "fixed", inset: 0, zIndex: 9999, background: bg, transition: "background 0.35s ease", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div ref={containerRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ position: "fixed", inset: 0, zIndex: 9999, background: bg, transition: "background 0.35s ease", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=DM+Sans:wght@400;500;700&display=swap');
 @keyframes qcslide{from{opacity:0}to{opacity:1}}
 .qc-scroll{scrollbar-width:none;-ms-overflow-style:none}
@@ -581,13 +585,11 @@ export default function PresentacionPage() {
       </div>
 
       <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 18, zIndex: 2 }}>
-        <button onClick={() => go(-1)} disabled={idx === 0} style={{ ...navBtn, ...darkBtn, opacity: idx === 0 ? 0.35 : 1 }}>‹</button>
-        <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap", justifyContent: "center", maxWidth: "60vw" }}>
+        <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap", justifyContent: "center", maxWidth: "70vw" }}>
           {slides.map((_, i) => (
             <button key={i} onClick={() => setIdx(i)} aria-label={`Slide ${i + 1}`} style={{ width: i === idx ? 24 : 9, height: 9, borderRadius: 50, border: "none", cursor: "pointer", background: i === idx ? GOLD : (onDark ? "rgba(255,253,247,0.3)" : "rgba(0,0,0,0.18)"), transition: "width 0.25s ease", padding: 0 }} />
           ))}
         </div>
-        <button onClick={() => go(1)} disabled={idx === slides.length - 1} style={{ ...navBtn, ...darkBtn, opacity: idx === slides.length - 1 ? 0.35 : 1 }}>›</button>
         <span style={{ position: "absolute", right: "clamp(20px,4vw,48px)", fontFamily: SANS, fontSize: "0.85rem", fontWeight: 700, color: onDark ? "rgba(255,253,247,0.55)" : "rgba(0,0,0,0.45)" }}>{idx + 1} / {slides.length}</span>
       </div>
     </div>
