@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
+import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
+import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 
@@ -31,10 +33,11 @@ export async function POST(req: NextRequest) {
 
   if (!(await verifyAccess(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceDeliveryConfig: true, ecommerceConfig: true, address: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceDeliveryConfig: true, ecommerceConfig: true, address: true, centroPedidosConfig: true } });
   if (!r) return NextResponse.json({ error: "Restaurante no encontrado" }, { status: 404 });
 
   const dcfg = parseDeliveryConfig(r.ecommerceDeliveryConfig);
+  const absorbsSurcharge = parseCentroPedidosConfig(r.centroPedidosConfig).customerAbsorbsSurcharge === true;
 
   // Cotiza el fee según las coordenadas del destino y el modo configurado.
   async function quoteFor(lat: number, lng: number, formatted: string) {
@@ -50,7 +53,9 @@ export async function POST(req: NextRequest) {
         dropoffLng: lng,
       });
       if (!q.ok) return NextResponse.json({ available: false, reason: uberQuoteErrorEs(q.error) });
-      return NextResponse.json({ available: true, fee: q.fee, formatted, lat, lng, source: "uber" });
+      // Si el cliente paga el cargo de servicio, se suma el recargo al despacho.
+      const surcharge = absorbsSurcharge ? computeSurcharge(await getSurchargeTiers(), q.fee ?? 0) : 0;
+      return NextResponse.json({ available: true, fee: (q.fee ?? 0) + surcharge, courierFee: q.fee, surcharge, formatted, lat, lng, source: "uber" });
     }
     const res = computeDistanceFee(dcfg, { lat, lng });
     if (!res.available) return NextResponse.json({ available: false, reason: res.reason || "Fuera de la zona de reparto." });

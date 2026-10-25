@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
+import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
+import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Falta la dirección de entrega" }, { status: 400 });
     }
 
-    const sel = { id: true, ecommerceConfig: true, ecommerceDeliveryConfig: true, address: true } as const;
+    const sel = { id: true, ecommerceConfig: true, ecommerceDeliveryConfig: true, address: true, centroPedidosConfig: true } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug }, select: sel }));
@@ -48,7 +50,10 @@ export async function POST(req: NextRequest) {
     if (!q.ok || q.fee == null) {
       return NextResponse.json({ ok: false, error: uberQuoteErrorEs(q.error) }, { status: 422 });
     }
-    return NextResponse.json({ ok: true, fee: q.fee, durationMin: q.durationMin ?? null });
+    // Si el restaurante traslada el cargo de servicio al cliente, se suma al despacho.
+    const absorbs = parseCentroPedidosConfig(restaurant.centroPedidosConfig).customerAbsorbsSurcharge === true;
+    const surcharge = absorbs ? computeSurcharge(await getSurchargeTiers(), q.fee) : 0;
+    return NextResponse.json({ ok: true, fee: q.fee + surcharge, durationMin: q.durationMin ?? null });
   } catch {
     return NextResponse.json({ ok: false, error: "Error al cotizar el despacho" }, { status: 500 });
   }

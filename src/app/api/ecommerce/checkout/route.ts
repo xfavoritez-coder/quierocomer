@@ -8,6 +8,8 @@ import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
+import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
+import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolver restaurante + validar que el pilar esté activo y el método permitido.
-    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, isActive: true } } } as const;
+    const sel = { id: true, address: true, ecommerceEnabled: true, ecommerceConfig: true, orderingPaymentMethods: true, orderingMinAmount: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, centroPedidosConfig: true, cartaAccentColor: true, ecommerceCoupons: true, ecommerceHours: true, happyHours: { where: { isActive: true }, select: { id: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, isActive: true } } } as const;
     const restaurant = await (restaurantId
       ? prisma.restaurant.findUnique({ where: { id: restaurantId }, select: sel })
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: sel }));
@@ -178,7 +180,9 @@ export async function POST(req: NextRequest) {
           dropoffLng: Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         });
         if (!q.ok || q.fee == null) return NextResponse.json({ error: uberQuoteErrorEs(q.error) }, { status: 400 });
-        deliveryFee = q.fee;
+        // Si el restaurante traslada el cargo de servicio al cliente, se suma al despacho.
+        const absorbs = parseCentroPedidosConfig(restaurant.centroPedidosConfig).customerAbsorbsSurcharge === true;
+        deliveryFee = q.fee + (absorbs ? computeSurcharge(await getSurchargeTiers(), q.fee) : 0);
       } else {
         const zones = parseDeliveryZones(restaurant.ecommerceDeliveryZones).filter((z) => z.active);
         const zone = zones.find((z) => z.name === deliveryZone);
