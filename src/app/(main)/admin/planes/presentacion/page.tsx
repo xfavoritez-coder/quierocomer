@@ -192,20 +192,40 @@ function ScenePrinter() {
 function SceneKds() {
   const tickets: [string, string, string][] = [["#1042", "04:12", "#E8A33A"], ["#1043", "02:30", "#7fd1a8"], ["#1044", "00:45", "#7fd1a8"]];
   return (
-    <div style={{ width: 340, maxWidth: "100%", background: "#14181c", borderRadius: 14, padding: 12, boxShadow: "0 18px 32px -16px rgba(0,0,0,.6)", position: "relative", overflow: "hidden" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <span style={{ fontFamily: SANS, color: "#7fd1a8", fontSize: 12, fontWeight: 700 }}>COCINA · 3 activos</span>
-        <span style={{ fontFamily: SANS, color: "#6b7a82", fontSize: 11 }}>12:24</span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        {tickets.map(([n, t, c]) => (
-          <div key={n} style={{ background: "#1e242a", border: `1px solid ${c}`, borderRadius: 8, padding: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#dfe7ea", fontFamily: SANS, fontSize: 11, fontWeight: 700 }}>{n}</span><span style={{ color: c, fontFamily: SANS, fontSize: 11 }}>{t}</span></div>
-            <div style={{ marginTop: 6 }}>{[0, 1, 2].map((j) => <div key={j} style={{ height: 5, background: "#2c353c", borderRadius: 3, marginBottom: 4, width: `${90 - j * 20}%` }} />)}</div>
+    <div style={{
+      width: "100%", maxWidth: 440, aspectRatio: "4 / 3", position: "relative", borderRadius: 14, overflow: "hidden",
+      background: "repeating-linear-gradient(0deg,#F5EAD3,#F5EAD3 30px,#E7DBC1 30px,#E7DBC1 31px),repeating-linear-gradient(90deg,#F7EDD8,#F7EDD8 30px,#E7DBC1 30px,#E7DBC1 31px)",
+    }}>
+      {/* mesón de acero */}
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "24%", background: "linear-gradient(180deg,#DAD4C8,#BEB7A8)", borderTop: "2px solid #ABA394" }} />
+      {/* cocinero + olla con vapor */}
+      <div style={{ position: "absolute", left: "7%", bottom: "4%", fontSize: "clamp(24px,5vw,38px)" }}>👨‍🍳</div>
+      <div style={{ position: "absolute", right: "11%", bottom: "5%", fontSize: "clamp(20px,4vw,30px)" }}>🍳</div>
+      {[0, 1].map((i) => <div key={i} style={{ position: "absolute", right: i ? "13%" : "17%", bottom: "22%", width: 7, height: 7, borderRadius: "50%", background: "rgba(250,245,235,0.7)", animation: `qcsteam 2.6s ease-in-out ${i * 0.7}s infinite` }} />)}
+
+      {/* monitor montado en la pared */}
+      <div style={{ position: "absolute", left: "50%", top: "11%", transform: "translateX(-50%)", width: "80%" }}>
+        <div style={{ background: "#0d0f12", borderRadius: 12, padding: 7, border: "3px solid #2a2d33", boxShadow: "0 18px 28px -16px rgba(0,0,0,.6)" }}>
+          <div style={{ background: "#14181c", borderRadius: 6, padding: 9, position: "relative", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontFamily: SANS, color: "#7fd1a8", fontSize: 10, fontWeight: 700 }}>COCINA · 3 activos</span>
+              <span style={{ fontFamily: SANS, color: "#6b7a82", fontSize: 9 }}>12:24</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+              {tickets.map(([n, t, c]) => (
+                <div key={n} style={{ background: "#1e242a", border: `1px solid ${c}`, borderRadius: 6, padding: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#dfe7ea", fontFamily: SANS, fontSize: 9, fontWeight: 700 }}>{n}</span><span style={{ color: c, fontFamily: SANS, fontSize: 9 }}>{t}</span></div>
+                  <div style={{ marginTop: 5 }}>{[0, 1, 2].map((j) => <div key={j} style={{ height: 4, background: "#2c353c", borderRadius: 3, marginBottom: 3, width: `${90 - j * 20}%` }} />)}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ position: "absolute", top: 0, bottom: 0, width: 60, background: "linear-gradient(90deg,transparent,rgba(127,209,168,.16),transparent)", animation: "qcsweep 3.6s linear infinite" }} />
           </div>
-        ))}
+        </div>
+        {/* brazo / soporte del monitor */}
+        <div style={{ width: 9, height: 14, background: "#3a3d42", margin: "0 auto" }} />
+        <div style={{ width: 46, height: 5, background: "#3a3d42", borderRadius: 3, margin: "0 auto" }} />
       </div>
-      <div style={{ position: "absolute", top: 0, bottom: 0, width: 70, background: "linear-gradient(90deg,transparent,rgba(127,209,168,.16),transparent)", animation: "qcsweep 3.6s linear infinite" }} />
     </div>
   );
 }
@@ -540,7 +560,8 @@ export default function PresentacionPage() {
 @keyframes qcpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes qcdot{from{offset-distance:0%}to{offset-distance:100%}}
 @keyframes qcfeed{0%{transform:translateY(-100%);opacity:1}45%{transform:translateY(0);opacity:1}80%{transform:translateY(0);opacity:1}92%{transform:translateY(8%);opacity:0}100%{transform:translateY(-100%);opacity:0}}
-@keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}`}</style>
+@keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}
+@keyframes qcsteam{0%{transform:translateY(0) scale(.8);opacity:0}30%{opacity:.7}100%{transform:translateY(-22px) scale(1.3);opacity:0}}`}</style>
 
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
         <button onClick={toggleFull} style={{ ...topBtn, ...darkBtn }}>⤢ Pantalla completa</button>
