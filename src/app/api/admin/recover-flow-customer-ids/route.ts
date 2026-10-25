@@ -3,17 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { flowGet } from "@/lib/billing/flow";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || process.env.CRON_SECRET;
+const SEED_SECRET = process.env.SEED_SECRET;
 
 /**
  * POST /api/admin/recover-flow-customer-ids
- * Authorization: Bearer <ADMIN_SECRET>
+ * Authorization: Bearer <ADMIN_SECRET|CRON_SECRET>  OR  ?key=<SEED_SECRET>
  *
  * Para cada restaurante con lastPaymentAt pero sin flowCustomerId,
  * busca en Flow si existe un cliente con ese externalId y lo guarda en BD.
  */
 export async function POST(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  if (!ADMIN_SECRET || auth !== `Bearer ${ADMIN_SECRET}`) {
+  const keyParam = req.nextUrl.searchParams.get("key");
+  const validBearer = ADMIN_SECRET && auth === `Bearer ${ADMIN_SECRET}`;
+  const validKey = SEED_SECRET && keyParam === SEED_SECRET;
+  if (!validBearer && !validKey) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
