@@ -164,19 +164,24 @@ function SceneWhatsApp() {
 }
 
 function ScenePrinter() {
+  const ticket = (
+    <div style={{ width: 130, background: PAPER, borderRadius: "0 0 6px 6px", boxShadow: "0 14px 22px -12px rgba(0,0,0,.35)", padding: "12px 12px 16px" }}>
+      <div style={{ textAlign: "center", fontWeight: 700, fontSize: 11, color: INK, fontFamily: SANS }}>COMANDA #1042</div>
+      <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
+      {["1x Ramen Tonkotsu", "2x Gyoza", "1x Té verde"].map((t) => <div key={t} style={{ fontSize: 10, color: INK, marginBottom: 3, fontFamily: SANS }}>{t}</div>)}
+      <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
+      <div style={{ fontSize: 9, color: INKSOFT, textAlign: "center", fontFamily: SANS }}>Delivery · 12:24</div>
+    </div>
+  );
   return (
     <div style={{ width: 300, height: 262, position: "relative", display: "flex", justifyContent: "center" }}>
-      <div style={{ position: "absolute", top: 72, width: 128, display: "flex", justifyContent: "center" }}>
-        <div style={{ width: 128, background: PAPER, borderRadius: "2px 2px 6px 6px", boxShadow: "0 12px 22px -10px rgba(0,0,0,.4)", padding: "12px 12px 16px", animation: "qcprint 3.2s cubic-bezier(.4,0,.2,1) infinite" }}>
-          <div style={{ textAlign: "center", fontWeight: 700, fontSize: 11, color: INK, fontFamily: SANS }}>COMANDA #1042</div>
-          <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
-          {["1x Ramen Tonkotsu", "2x Gyoza", "1x Té verde"].map((t) => <div key={t} style={{ fontSize: 10, color: INK, marginBottom: 3, fontFamily: SANS }}>{t}</div>)}
-          <div style={{ borderTop: "1px dashed #CBB68C", margin: "6px 0" }} />
-          <div style={{ fontSize: 9, color: INKSOFT, textAlign: "center", fontFamily: SANS }}>Delivery · 12:24</div>
-        </div>
+      {/* La comanda sale por la ranura (recortada por la máscara → aparece línea por línea) */}
+      <div style={{ position: "absolute", top: 102, width: 130, height: 148, overflow: "hidden", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: 130, animation: "qcfeed 3.6s cubic-bezier(.45,0,.55,1) infinite" }}>{ticket}</div>
       </div>
-      <div style={{ position: "absolute", top: 42, width: 172, height: 72, background: "linear-gradient(180deg,#3a3630,#2B2620)", borderRadius: "12px 12px 6px 6px", boxShadow: "0 12px 26px -12px rgba(0,0,0,.5)" }}>
-        <div style={{ position: "absolute", bottom: -4, left: 22, right: 22, height: 8, background: "#14110d", borderRadius: 4 }} />
+      {/* Cuerpo de la impresora (tapa la parte de arriba de la ranura) */}
+      <div style={{ position: "absolute", top: 42, width: 174, height: 74, background: "linear-gradient(180deg,#3a3630,#2B2620)", borderRadius: "14px 14px 8px 8px", boxShadow: "0 14px 28px -12px rgba(0,0,0,.5)" }}>
+        <div style={{ position: "absolute", bottom: 6, left: 16, right: 16, height: 7, background: "#14110d", borderRadius: 4 }} />
         <div style={{ position: "absolute", top: 15, right: 16, width: 10, height: 10, borderRadius: "50%", background: "#2ecc71", animation: "qcpulse 1.4s infinite" }} />
         <div style={{ position: "absolute", top: 16, left: 16, fontFamily: SANS, color: "#B8AE9C", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>COCINA</div>
       </div>
@@ -251,14 +256,14 @@ function SceneQr() {
 
 const SCENES: Record<string, () => React.JSX.Element> = { browser: SceneBrowser, comandador: SceneComandador, payment: ScenePayment, map: SceneMap, whatsapp: SceneWhatsApp, printer: ScenePrinter, kds: SceneKds, chart: SceneChart };
 
-type Feature = { id: string; scope: string; title: string; desc: string; scene: string };
+type Feature = { id: string; scope: string; title: string; desc: string; scene: string; note?: string };
 const FEATURES: Feature[] = [
   { id: "sitio", scope: "Incluido en todos los planes", title: "Sitio Web Propio", desc: "Tu propia tienda online en tu dominio —por ejemplo www.turestaurante.cl— con tus colores, tus fotos y tu logo. Tus clientes te compran directamente a ti, no a un marketplace que se queda con la comisión y con la relación.", scene: "browser" },
   { id: "comandador", scope: "Incluido en todos los planes", title: "Comandador de pedidos", desc: "Toma y gestiona cada pedido en un solo lugar: elige productos del menú, aplica descuentos, cobra y despacha. Todo tu equipo trabaja sobre la misma pantalla, en tiempo real, y ningún pedido se pierde.", scene: "comandador" },
   { id: "pagos", scope: "Incluido en todos los planes", title: "Pasarela de Pago", desc: "Cobras online con tarjeta a través de Webpay, MercadoPago o Flow, y el dinero llega directo a tu cuenta. El cliente paga antes de que prepares el pedido: sin manejo de efectivo, sin vueltos y sin cuentas por cobrar.", scene: "payment" },
   { id: "delivery", scope: "Incluido en todos los planes", title: "Delivery con seguimiento en vivo", desc: "Pide un repartidor externo de QuieroComer Delivery con un clic, o despacha con tu propia flota usando la app de repartidores propios. En ambos casos tu cliente sigue al repartidor en un mapa en tiempo real, con tu marca, igual que en las apps grandes.", scene: "map" },
   { id: "whatsapp", scope: "Incluido en todos los planes", title: "WhatsApp automático", desc: "Apenas entra el pedido, el cliente recibe por WhatsApp la confirmación, el estado y el link para seguir su despacho. Todo automático, sin que tu equipo tenga que escribir nada.", scene: "whatsapp" },
-  { id: "impresion", scope: "Incluido en todos los planes", title: "Impresión de comandas", desc: "La comanda se imprime sola en la cocina apenas entra el pedido. Tu equipo cocina sin copiar nada a mano ni mirar pantallas, con cero errores de transcripción en las horas peak.", scene: "printer" },
+  { id: "impresion", scope: "Incluido en todos los planes", title: "Impresión de comandas", desc: "La comanda se imprime sola en la cocina apenas entra el pedido. Tu equipo cocina sin copiar nada a mano ni mirar pantallas, con cero errores de transcripción en las horas peak.", scene: "printer", note: "Requiere una impresora térmica: puedes usar la que ya tienes o adquirir una." },
   { id: "kds", scope: "Incluido en todos los planes", title: "Pantalla de cocina (KDS)", desc: "Una pantalla que ordena los pedidos por estado y tiempo de espera, con colores de alerta. Menos papeles, menos errores y una cocina que avanza más rápido cuando hay mucha demanda.", scene: "kds" },
   { id: "datos", scope: "Incluido en todos los planes", title: "Cupones, encuestas y reportes", desc: "Crea descuentos y promociones para atraer clientes, pídeles su opinión automáticamente, y mira cuánto vendes, tus productos top y tus mejores clientes. Creces con datos, no con corazonadas.", scene: "chart" },
 ];
@@ -347,6 +352,12 @@ export default function PresentacionPage() {
             {eyebrow(f.scope)}
             <h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.2vw,3.8rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>{f.title}</h2>
             <p style={{ fontFamily: SANS, fontSize: "clamp(1.1rem,1.6vw,1.65rem)", color: INKSOFT, margin: 0, lineHeight: 1.5, maxWidth: 620 }}>{f.desc}</p>
+            {f.note && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#FBF2DF", border: "1px solid #E7C98A", borderRadius: 14, padding: "clamp(12px,1.4vw,16px) clamp(16px,1.8vw,22px)", maxWidth: 620 }}>
+                <span style={{ fontSize: "clamp(1.2rem,1.6vw,1.6rem)" }}>🖨️</span>
+                <p style={{ fontFamily: SANS, fontSize: "clamp(0.92rem,1.15vw,1.2rem)", color: INK, margin: 0, lineHeight: 1.4, fontWeight: 600 }}>{f.note}</p>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -493,7 +504,7 @@ export default function PresentacionPage() {
 @keyframes qcpop{0%{transform:scale(0);opacity:0}55%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
 @keyframes qcpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes qcdot{from{offset-distance:0%}to{offset-distance:100%}}
-@keyframes qckanban{0%,12%{transform:translateX(0)}44%,56%{transform:translateX(120px)}88%,100%{transform:translateX(240px)}}
+@keyframes qcfeed{0%{transform:translateY(-100%);opacity:1}45%{transform:translateY(0);opacity:1}80%{transform:translateY(0);opacity:1}92%{transform:translateY(8%);opacity:0}100%{transform:translateY(-100%);opacity:0}}
 @keyframes qcsweep{0%{transform:translateX(-120%)}100%{transform:translateX(560%)}}`}</style>
 
       <div style={{ position: "absolute", top: 18, right: 18, display: "flex", gap: 10, zIndex: 2 }}>
