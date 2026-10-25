@@ -133,7 +133,7 @@ export default function ReportesPage() {
             {data.totalSales === 0 ? (
               <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
             ) : (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2, paddingRight: 52 }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2, paddingLeft: 12, paddingRight: 52 }}>
                 {data.byDay.map((d) => {
                   const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
                   const isToday = d.ymd === data.today;
