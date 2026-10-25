@@ -100,9 +100,16 @@ export async function GET(req: NextRequest) {
     } as unknown as (typeof mapped)[number]);
   }
 
+  // Copias por comanda: si el local configuró 2 copias, duplicamos cada pedido
+  // REAL en la cola (el agente imprime cada entrada una vez → 2 copias). No
+  // duplicamos el ticket de prueba. Así no hay que reinstalar el agente.
+  const out = cfg.printCopies === 2
+    ? mapped.flatMap((o) => (typeof o.id === "string" && o.id.startsWith("test-") ? [o] : [o, o]))
+    : mapped;
+
   // Config de impresora (el agente la aplica en caliente, sin reinstalar):
   //  default = predeterminada de Windows | name = por nombre | ip = ESC/POS directo a IP:9100
   const printer = { target: cfg.printTarget, name: cfg.printerName, ip: cfg.printerIp };
 
-  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, printer, orders: mapped });
+  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, printer, orders: out });
 }

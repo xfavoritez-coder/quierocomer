@@ -39,6 +39,7 @@ export interface EcommerceStoreConfig {
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
   printMode: "off" | "manual" | "auto"; // impresión de comandas: off | botón manual | automática al llegar
   printPaperWidth: 58 | 80; // ancho del papel térmico en mm
+  printCopies: 1 | 2; // cuántas copias de la comanda imprimir por pedido (1 o 2)
   printToken: string | null; // token del agente de impresión local (ESC/POS); null = sin agente
   printTokenAt: string | null; // ISO: cuándo se generó el token (el agente solo imprime pedidos posteriores)
   printTestAt: string | null; // ISO: solicitud de impresión de prueba pendiente (el agente la imprime en su próximo sondeo)
@@ -169,6 +170,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     survey: parseSurvey(o.survey),
     printMode: o.printMode === "auto" ? "auto" : o.printMode === "off" ? "off" : "manual",
     printPaperWidth: Number(o.printPaperWidth) === 58 ? 58 : 80,
+    printCopies: Number(o.printCopies) === 2 ? 2 : 1,
     printToken: typeof o.printToken === "string" && o.printToken.trim() ? o.printToken.trim() : null,
     printTokenAt: typeof o.printTokenAt === "string" && o.printTokenAt.trim() ? o.printTokenAt.trim() : null,
     printTestAt: typeof o.printTestAt === "string" && o.printTestAt.trim() ? o.printTestAt.trim() : null,

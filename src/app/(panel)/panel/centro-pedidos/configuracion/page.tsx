@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike, ConciergeBell, Receipt } from "lucide-react";
+import { ArrowLeft, Settings, ShoppingBag, Link2, Send, Copy, ChevronDown, ChevronUp, Database, Bike, ConciergeBell, Receipt, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
+import ImpresionConfig from "@/components/ecommerce/ImpresionConfig";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -30,6 +31,8 @@ export default function CentroPedidosConfigPage() {
   const [token, setToken] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [tab, setTab] = useState<"pedidos" | "impresion">("pedidos");
+  const storeName = session?.restaurants?.find((r) => r.id === restaurantId)?.name || "";
 
   const load = useCallback(() => {
     if (!restaurantId) return;
@@ -127,6 +130,15 @@ export default function CentroPedidosConfigPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+        <TabChip active={tab === "pedidos"} onClick={() => setTab("pedidos")} icon={Settings} label="Pedidos" />
+        <TabChip active={tab === "impresion"} onClick={() => setTab("impresion")} icon={Printer} label="Impresión" />
+      </div>
+
+      {tab === "impresion" && <ImpresionConfig restaurantId={restaurantId ?? undefined} storeName={storeName} />}
+
+      {tab === "pedidos" && (<>
       {/* Conexión con Toteat */}
       <section style={{ background: "var(--adm-card)", border: `1px solid ${token ? "var(--adm-card-border)" : ACCENT}`, borderRadius: 14, marginBottom: 16, overflow: "hidden" }}>
         <button onClick={() => setSetupOpen((v) => !v)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "transparent", border: "none", cursor: "pointer", color: "var(--adm-text)" }}>
@@ -218,7 +230,16 @@ export default function CentroPedidosConfigPage() {
           />
         </div>
       )}
+      </>)}
     </div>
+  );
+}
+
+function TabChip({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
+  return (
+    <button onClick={onClick} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 15px", borderRadius: 50, border: `1px solid ${active ? ACCENT : "var(--adm-card-border)"}`, background: active ? `${ACCENT}1a` : "transparent", color: active ? ACCENT : "var(--adm-text2)", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: "pointer" }}>
+      <Icon size={15} /> {label}
+    </button>
   );
 }
 
