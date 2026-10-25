@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pyaSettingsFor, pyaCreateShipping, pyaCancelShipping } from "@/lib/ecommerce/pedidosya";
 import { chargeWallet, refundWallet } from "@/lib/ecommerce/deliveryWallet";
+import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,14 +65,20 @@ export async function POST(req: NextRequest) {
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { pyaShippingId: res.courier.deliveryId, courier: res.courier as unknown as object, assignedTo: "PedidosYa" } });
 
-  // Cobra el costo real del despacho al saldo prepago.
+  // Cobra el costo real del despacho + el recargo de plataforma al saldo prepago.
   const fee = (res.courier as { fee?: number | null }).fee ?? 0;
+  const surcharge = computeSurcharge(await getSurchargeTiers(), fee);
+  const ref = order.orderReference || order.id.slice(-6);
   let newBalance = balance;
   if (fee > 0) {
-    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `PedidosYa · despacho pedido ${order.orderReference || order.id.slice(-6)}`, orderId: order.id, createdBy: "pedidosya" });
+    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `PedidosYa · despacho pedido ${ref}`, orderId: order.id, createdBy: "pedidosya" });
     newBalance = charge.balance;
   }
-  return NextResponse.json({ ok: true, courier: res.courier, balance: newBalance });
+  if (surcharge > 0) {
+    const charge = await chargeWallet(restaurantId, surcharge, { type: "surcharge", description: `Recargo por repartidor externo · pedido ${ref}`, orderId: order.id, createdBy: "pedidosya" });
+    newBalance = charge.balance;
+  }
+  return NextResponse.json({ ok: true, courier: res.courier, balance: newBalance, surcharge });
 }
 
 /** DELETE → cancela el envío PedidosYa. ?restaurantId=&id= */

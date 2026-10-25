@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uberSettingsFor, uberCreateDelivery, uberCancelDelivery, uberCreateQuote, uberQuoteErrorEs, type CreateDeliveryParams } from "@/lib/ecommerce/uberDirect";
 import { chargeWallet, refundWallet } from "@/lib/ecommerce/deliveryWallet";
+import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,9 @@ export async function GET(req: NextRequest) {
   });
   if (!res.ok) return NextResponse.json({ error: uberQuoteErrorEs(res.error) }, { status: 502 });
   const balance = order.restaurant.deliveryBalance ?? 0;
-  return NextResponse.json({ ok: true, fee: res.fee, durationMin: res.durationMin ?? null, quoteId: res.quoteId ?? null, balance, sufficient: res.fee == null || balance >= res.fee });
+  const surcharge = computeSurcharge(await getSurchargeTiers(), res.fee ?? 0); // recargo plataforma
+  const total = (res.fee ?? 0) + surcharge;
+  return NextResponse.json({ ok: true, fee: res.fee, surcharge, total, durationMin: res.durationMin ?? null, quoteId: res.quoteId ?? null, balance, sufficient: res.fee == null || balance >= total });
 }
 
 /** POST → solicita repartidor Uber Direct para un PosOrder. Body { restaurantId, id, quoteId? } */
@@ -61,10 +64,12 @@ export async function POST(req: NextRequest) {
   if (order.uberDeliveryId) return NextResponse.json({ ok: true, alreadyRequested: true, courier: order.courier });
   if (order.pyaShippingId) return NextResponse.json({ error: "Este pedido ya tiene PedidosYa" }, { status: 409 });
 
-  // Billetera prepaga: debe haber saldo suficiente para cubrir el despacho.
+  // Billetera prepaga: debe haber saldo suficiente para cubrir el despacho + el recargo.
+  const tiers = await getSurchargeTiers();
   const balance = order.restaurant.deliveryBalance ?? 0;
+  const expectedTotal = expectedFee > 0 ? expectedFee + computeSurcharge(tiers, expectedFee) : 0;
   if (balance <= 0) return NextResponse.json({ error: "Sin saldo para delivery. Recarga tu saldo para solicitar repartidores externos." }, { status: 402 });
-  if (expectedFee > 0 && balance < expectedFee) return NextResponse.json({ error: `Saldo insuficiente. El despacho cuesta ${expectedFee.toLocaleString("es-CL")} y tu saldo es ${balance.toLocaleString("es-CL")}.` }, { status: 402 });
+  if (expectedTotal > 0 && balance < expectedTotal) return NextResponse.json({ error: `Saldo insuficiente. El despacho + recargo cuesta ${expectedTotal.toLocaleString("es-CL")} y tu saldo es ${balance.toLocaleString("es-CL")}.` }, { status: 402 });
 
   // ── Claim atómico: evita que varios clics rápidos creen varias entregas Uber.
   //    Solo UN request logra pasar uberDeliveryId de null → "PENDING" y crea.
@@ -111,14 +116,20 @@ export async function POST(req: NextRequest) {
 
   await prisma.posOrder.update({ where: { id: order.id }, data: { uberDeliveryId: res.delivery.deliveryId, courier: res.delivery as unknown as object, assignedTo: "Uber Direct" } });
 
-  // Cobra el costo real del despacho al saldo prepago.
+  // Cobra el costo real del despacho + el recargo de plataforma al saldo prepago.
   const fee = res.delivery.fee ?? expectedFee;
+  const surcharge = computeSurcharge(tiers, fee);
+  const ref = order.orderReference || order.id.slice(-6);
   let newBalance = balance;
   if (fee > 0) {
-    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `Uber · despacho pedido ${order.orderReference || order.id.slice(-6)}`, orderId: order.id, createdBy: "uber" });
+    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `Uber · despacho pedido ${ref}`, orderId: order.id, createdBy: "uber" });
     newBalance = charge.balance;
   }
-  return NextResponse.json({ ok: true, courier: res.delivery, balance: newBalance });
+  if (surcharge > 0) {
+    const charge = await chargeWallet(restaurantId, surcharge, { type: "surcharge", description: `Recargo por repartidor externo · pedido ${ref}`, orderId: order.id, createdBy: "uber" });
+    newBalance = charge.balance;
+  }
+  return NextResponse.json({ ok: true, courier: res.delivery, balance: newBalance, surcharge });
 }
 
 /** DELETE → cancela el courier Uber. ?restaurantId=&id= */

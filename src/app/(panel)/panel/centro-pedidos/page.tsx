@@ -125,7 +125,7 @@ export default function CentroPedidosPage() {
   const [local, setLocal] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [leafletReady, setLeafletReady] = useState(false);
   // Cotización Uber pendiente de confirmación (modal).
-  const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; durationMin: number | null; quoteId: string | null; balance: number; sufficient: boolean } | null>(null);
+  const [uberQuote, setUberQuote] = useState<{ order: PosOrder; fee: number | null; surcharge: number; total: number; durationMin: number | null; quoteId: string | null; balance: number; sufficient: boolean } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showWalletBalance, setShowWalletBalance] = useState(false);
@@ -265,7 +265,7 @@ export default function CentroPedidosPage() {
       const d = await r.json();
       if (!r.ok) { toast.error(d.error || "No se pudo cotizar"); return; }
       if (typeof d.balance === "number") setWalletBalance(d.balance);
-      setUberQuote({ order: o, fee: d.fee ?? null, durationMin: d.durationMin ?? null, quoteId: d.quoteId ?? null, balance: d.balance ?? 0, sufficient: d.sufficient !== false });
+      setUberQuote({ order: o, fee: d.fee ?? null, surcharge: d.surcharge ?? 0, total: d.total ?? (d.fee ?? 0), durationMin: d.durationMin ?? null, quoteId: d.quoteId ?? null, balance: d.balance ?? 0, sufficient: d.sufficient !== false });
     } catch { toast.error("Error de conexión"); }
     finally { setQuoteLoading(null); }
   }
@@ -420,9 +420,15 @@ export default function CentroPedidosPage() {
               <div style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)" }}>Repartidor de Uber</div>
             </div>
             <div style={{ background: "var(--adm-hover)", borderRadius: 12, padding: 16, textAlign: "center", marginBottom: 6 }}>
-              <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", marginBottom: 4 }}>Costo del despacho</div>
-              <div style={{ fontFamily: F, fontSize: "1.9rem", fontWeight: 900, color: "var(--adm-text)" }}>{uberQuote.fee != null ? clp(uberQuote.fee) : "—"}</div>
-              {uberQuote.durationMin != null && <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", marginTop: 4 }}>🏍️ Llega al local en ~{uberQuote.durationMin} min</div>}
+              <div style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", marginBottom: 4 }}>{uberQuote.surcharge > 0 ? "Total a descontar" : "Costo del despacho"}</div>
+              <div style={{ fontFamily: F, fontSize: "1.9rem", fontWeight: 900, color: "var(--adm-text)" }}>{uberQuote.fee != null ? clp(uberQuote.total) : "—"}</div>
+              {uberQuote.surcharge > 0 && uberQuote.fee != null && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 8, fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>Despacho (courier)</span><span>{clp(uberQuote.fee)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>Recargo plataforma</span><span>{clp(uberQuote.surcharge)}</span></div>
+                </div>
+              )}
+              {uberQuote.durationMin != null && <div style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", marginTop: 8 }}>🏍️ Llega al local en ~{uberQuote.durationMin} min</div>}
             </div>
             <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginBottom: 12 }}>Pedido {uberQuote.order.orderReference ? `#${uberQuote.order.orderReference}` : uberQuote.order.customerName}</div>
             {/* Saldo prepago */}

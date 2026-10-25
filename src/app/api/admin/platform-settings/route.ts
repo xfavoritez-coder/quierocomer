@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { getPlatformSetting, setPlatformSetting } from "@/lib/platformSettings";
 import { getWalletBank, setWalletBank, type WalletBank } from "@/lib/ecommerce/deliveryWallet";
+import { getSurchargeTiers, setSurchargeTiers, type SurchargeTier } from "@/lib/ecommerce/deliverySurcharge";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest) {
 
   const googleApiKey = (await getPlatformSetting("google_api_key")) || "";
   const deliveryWalletBank = await getWalletBank();
-  return NextResponse.json({ googleApiKey, deliveryWalletBank });
+  const deliverySurchargeTiers = await getSurchargeTiers();
+  return NextResponse.json({ googleApiKey, deliveryWalletBank, deliverySurchargeTiers });
 }
 
 export async function PUT(req: NextRequest) {
@@ -37,6 +39,9 @@ export async function PUT(req: NextRequest) {
       rut: clean(b.rut), holder: clean(b.holder), email: clean(b.email), instructions: clean(b.instructions),
     };
     await setWalletBank(bank);
+  }
+  if (body?.deliverySurchargeTiers !== undefined && Array.isArray(body.deliverySurchargeTiers)) {
+    await setSurchargeTiers(body.deliverySurchargeTiers as SurchargeTier[]);
   }
   return NextResponse.json({ ok: true });
 }

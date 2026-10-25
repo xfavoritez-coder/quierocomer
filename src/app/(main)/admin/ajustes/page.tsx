@@ -43,6 +43,8 @@ export default function AjustesPage() {
   const [keySaving, setKeySaving] = useState(false);
   const [bank, setBank] = useState({ bankName: "", accountType: "", accountNumber: "", rut: "", holder: "", email: "", instructions: "" });
   const [bankSaving, setBankSaving] = useState(false);
+  const [tiers, setTiers] = useState<{ min: number; max: number; surcharge: number }[]>([]);
+  const [tiersSaving, setTiersSaving] = useState(false);
   const [texts, setTexts] = useState<TrackingTexts>(DEFAULT_TRACKING_TEXTS);
   const [textsLoaded, setTextsLoaded] = useState(false);
   const [textsSaving, setTextsSaving] = useState(false);
@@ -56,7 +58,7 @@ export default function AjustesPage() {
   useEffect(() => {
     fetch("/api/admin/platform-settings")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setGoogleKey(d.googleApiKey || ""); if (d.deliveryWalletBank) setBank((p) => ({ ...p, ...d.deliveryWalletBank })); } })
+      .then((d) => { if (d) { setGoogleKey(d.googleApiKey || ""); if (d.deliveryWalletBank) setBank((p) => ({ ...p, ...d.deliveryWalletBank })); if (Array.isArray(d.deliverySurchargeTiers)) setTiers(d.deliverySurchargeTiers); } })
       .catch(() => {})
       .finally(() => setKeyLoaded(true));
   }, []);
@@ -70,6 +72,30 @@ export default function AjustesPage() {
     } catch { toast.error("Error de conexión"); }
     setBankSaving(false);
   };
+
+  const saveTiers = async () => {
+    const clean = tiers
+      .map((t) => ({ min: Math.max(0, Math.round(Number(t.min) || 0)), max: Math.max(0, Math.round(Number(t.max) || 0)), surcharge: Math.max(0, Math.round(Number(t.surcharge) || 0)) }))
+      .filter((t) => t.max >= t.min)
+      .sort((a, b) => a.min - b.min);
+    setTiersSaving(true);
+    try {
+      const res = await fetch("/api/admin/platform-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deliverySurchargeTiers: clean }) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setTiersSaving(false); return; }
+      setTiers(clean);
+      toast.success("Tramos de recargo guardados");
+    } catch { toast.error("Error de conexión"); }
+    setTiersSaving(false);
+  };
+  const addTier = () => {
+    const last = tiers[tiers.length - 1];
+    const min = last ? last.max + 1 : 1000;
+    setTiers((p) => [...p, { min, max: min + 999, surcharge: 0 }]);
+  };
+  const updateTier = (i: number, field: "min" | "max" | "surcharge", value: number) => {
+    setTiers((p) => p.map((t, idx) => (idx === i ? { ...t, [field]: value } : t)));
+  };
+  const removeTier = (i: number) => setTiers((p) => p.filter((_, idx) => idx !== i));
 
   useEffect(() => {
     fetch("/api/admin/tracking-texts")
@@ -220,6 +246,38 @@ export default function AjustesPage() {
         }}>
           {bankSaving ? "Guardando…" : "Guardar datos de transferencia"}
         </button>
+      </div>
+
+      {/* Recargo por repartidores externos (tramos) */}
+      <div style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 14, padding: 22, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 6px" }}>Recargo por repartidores externos</h2>
+        <p style={{ fontSize: "0.85rem", color: "#999", lineHeight: 1.5, margin: "0 0 16px" }}>
+          Recargo que la plataforma cobra a los restaurantes cuando piden un repartidor externo (Uber / PedidosYa), según el <strong style={{ color: "#ddd" }}>costo del reparto</strong>. Se les muestra al cotizar y se descuenta junto con el despacho.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 70px 40px", gap: 8, alignItems: "center", marginBottom: 6, fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>
+          <span>Desde ($)</span><span>Hasta ($)</span><span>Recargo ($)</span><span style={{ textAlign: "right" }}>%</span><span />
+        </div>
+        {tiers.length === 0 && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#666", margin: "4px 0 10px" }}>Sin tramos. Agrega el primero abajo.</p>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {tiers.map((t, i) => {
+            const pct = t.min > 0 ? Math.round((t.surcharge / t.min) * 1000) / 10 : 0;
+            const tierInput: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: F, fontSize: "0.85rem", outline: "none" };
+            return (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 70px 40px", gap: 8, alignItems: "center" }}>
+                <input type="number" value={t.min} onChange={(e) => updateTier(i, "min", Number(e.target.value))} style={tierInput} />
+                <input type="number" value={t.max} onChange={(e) => updateTier(i, "max", Number(e.target.value))} style={tierInput} />
+                <input type="number" value={t.surcharge} onChange={(e) => updateTier(i, "surcharge", Number(e.target.value))} style={tierInput} />
+                <span style={{ textAlign: "right", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "#F4A623" }}>{pct}%</span>
+                <button onClick={() => removeTier(i)} title="Quitar tramo" style={{ border: "none", background: "transparent", color: "#ff6b6b", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center" }}>
+          <button onClick={addTier} style={{ padding: "9px 14px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#eee", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Agregar tramo</button>
+          <button onClick={saveTiers} disabled={tiersSaving} style={{ padding: "10px 18px", background: GOLD, color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: tiersSaving ? "wait" : "pointer", opacity: tiersSaving ? 0.6 : 1 }}>{tiersSaving ? "Guardando…" : "Guardar tramos"}</button>
+        </div>
+        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", margin: "8px 0 0" }}>El % es el recargo sobre el monto base del tramo (recargo ÷ Desde). Si el costo supera el último tramo, se aplica el recargo del tramo más alto.</p>
       </div>
 
       {/* App de repartidores (QuieroComer Delivery) */}
