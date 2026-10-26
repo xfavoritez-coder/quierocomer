@@ -67,7 +67,7 @@ export function middleware(req: NextRequest) {
   }
 
   // ── Dominio de ECOMMERCE ──────────────────────────────────
-  const isStorePage = pathname === "/" || pathname === "/checkout" || pathname.startsWith("/checkout/");
+  const isStorePage = pathname === "/" || pathname === "/checkout" || pathname.startsWith("/checkout/") || pathname === "/privacidad";
   if (!isStorePage) return NextResponse.next();
 
   const url = req.nextUrl.clone();
