@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import MetaPixel from "@/components/MetaPixel";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://quierocomer.com"),
@@ -26,22 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('js', new Date());
           gtag('config', 'G-GRX2MV6SDD');
         `}</Script>
-        <Script id="meta-pixel" strategy="afterInteractive">{`
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1532906358481871');
-          fbq('track', 'PageView');
-        `}</Script>
-        <noscript><img height="1" width="1" style={{ display: "none" }} src="https://www.facebook.com/tr?id=1532906358481871&ev=PageView&noscript=1" /></noscript>
+        {/* Meta Pixel: solo en quierocomer.com (marketing); NO en las tiendas de los locales. */}
         <script dangerouslySetInnerHTML={{ __html: `(function(c,l,a,r,i,t,y){var x=['alleria-pizza','alleria-delivery','hand-roll','horusvegan','el-menu-de-la-esquina','guffsushi','nascosto-pizzeria','la-oveja-negra-restaurante','cuartel-50-restaurante'];if(x.indexOf(window.location.pathname.split('/')[1])!==-1)return;c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","ykbsgbbc68");` }} />
       </head>
       <body>
+        <MetaPixel />
         {children}
       </body>
     </html>
