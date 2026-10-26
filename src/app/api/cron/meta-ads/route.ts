@@ -44,11 +44,10 @@ async function metaPost(campaignId: string, payload: Record<string, any>) {
   return data;
 }
 
-function getChileDay(): number {
-  // Retorna el día de la semana en horario Chile (0=dom, 1=lun, ..., 6=sáb)
+function getChileTime(): { day: number; hour: number } {
   const now = new Date();
   const chile = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
-  return chile.getDay();
+  return { day: chile.getDay(), hour: chile.getHours() };
 }
 
 export async function GET(req: NextRequest) {
@@ -66,25 +65,31 @@ export async function GET(req: NextRequest) {
   if (!campaignId) return NextResponse.json({ error: "META_CAMPAIGN_ID no configurado" }, { status: 500 });
 
   try {
-    const results: Record<string, any> = {};
+    const { day, hour } = getChileTime();
+    const dayName = ["dom","lun","mar","mié","jue","vie","sáb"][day];
+    const results: Record<string, any> = { chileHour: hour, chileDay: dayName };
+
+    // Verificar que estamos en la hora correcta en Chile (±1h de tolerancia)
+    const expectedHour = action === "activate" ? 16 : 22;
+    if (Math.abs(hour - expectedHour) > 1) {
+      console.log(`[meta-ads] Skip — hora Chile actual: ${hour}:xx, esperada: ${expectedHour}:xx`);
+      return NextResponse.json({ ok: true, skipped: true, reason: "wrong_hour", chileHour: hour, expectedHour });
+    }
 
     if (action === "activate") {
       // 1. Activar campaña
       results.status = await metaPost(campaignId, { status: "ACTIVE" });
 
-      // 2. Ajustar presupuesto según día de la semana en Chile
-      const day = getChileDay(); // 0=dom,1=lun,2=mar,3=mie,4=jue,5=vie,6=sáb
-      const isWeekend = day === 5 || day === 6; // vie o sáb
+      // 2. Presupuesto según día: vie(5) o sáb(6) = $15.000, resto = $10.000
+      const isWeekend = day === 5 || day === 6;
       const budget = isWeekend ? BUDGET_WEEKEND : BUDGET_WEEKDAY;
       results.budget = await metaPost(campaignId, { daily_budget: budget });
       results.budgetSet = budget;
-      results.dayOfWeek = ["dom","lun","mar","mié","jue","vie","sáb"][day];
 
-      console.log(`[meta-ads] Activada + presupuesto $${budget.toLocaleString("es-CL")} (${results.dayOfWeek})`);
+      console.log(`[meta-ads] Activada + presupuesto $${budget.toLocaleString("es-CL")} (${dayName})`);
     } else {
-      // Solo pausar
       results.status = await metaPost(campaignId, { status: "PAUSED" });
-      console.log("[meta-ads] Campaña pausada");
+      console.log(`[meta-ads] Pausada (${dayName})`);
     }
 
     return NextResponse.json({ ok: true, action, ...results });
