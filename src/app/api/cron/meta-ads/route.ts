@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Cron — meta-ads
@@ -52,7 +53,10 @@ function getChileTime(): { day: number; hour: number } {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const keyParam = req.nextUrl.searchParams.get("key");
+  const validCron = !process.env.CRON_SECRET || authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  const validKey = process.env.SEED_SECRET && keyParam === process.env.SEED_SECRET;
+  if (!validCron && !validKey) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,6 +68,7 @@ export async function GET(req: NextRequest) {
   const campaignId = process.env.META_CAMPAIGN_ID;
   if (!campaignId) return NextResponse.json({ error: "META_CAMPAIGN_ID no configurado" }, { status: 500 });
 
+  const start = Date.now();
   try {
     const { day, hour } = getChileTime();
     const dayName = ["dom","lun","mar","mié","jue","vie","sáb"][day];
@@ -73,6 +78,9 @@ export async function GET(req: NextRequest) {
     const expectedHour = action === "activate" ? 16 : 22;
     if (Math.abs(hour - expectedHour) > 1) {
       console.log(`[meta-ads] Skip — hora Chile actual: ${hour}:xx, esperada: ${expectedHour}:xx`);
+      await prisma.cronLog.create({
+        data: { jobName: `meta-ads-${action}`, status: "success", durationMs: Date.now() - start, details: { skipped: true, reason: "wrong_hour", chileHour: hour, expectedHour } as any },
+      }).catch(() => {});
       return NextResponse.json({ ok: true, skipped: true, reason: "wrong_hour", chileHour: hour, expectedHour });
     }
 
@@ -92,9 +100,16 @@ export async function GET(req: NextRequest) {
       console.log(`[meta-ads] Pausada (${dayName})`);
     }
 
+    await prisma.cronLog.create({
+      data: { jobName: `meta-ads-${action}`, status: "success", durationMs: Date.now() - start, details: results as any },
+    }).catch(() => {});
+
     return NextResponse.json({ ok: true, action, ...results });
   } catch (err: any) {
     console.error(`[meta-ads] Error:`, err.message);
+    await prisma.cronLog.create({
+      data: { jobName: `meta-ads-${action}`, status: "error", durationMs: Date.now() - start, error: err.message },
+    }).catch(() => {});
     return NextResponse.json({ ok: false, action, error: err.message }, { status: 500 });
   }
 }
