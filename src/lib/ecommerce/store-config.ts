@@ -35,6 +35,10 @@ export interface EcommerceStoreConfig {
   branchName: string | null; // nombre de esta sucursal dentro de la marca (ej: "Providencia")
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
+  // Contacto que muestra la página de Política de Privacidad (/privacidad). null = usa el del local.
+  privacyEmail: string | null;
+  privacyPhone: string | null;
+  privacyAddress: string | null;
   orderNotifyEmail: string | null; // correo del local que recibe aviso de cada pedido nuevo
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
   printMode: "off" | "manual" | "auto"; // impresión de comandas: off | botón manual | automática al llegar
@@ -166,6 +170,9 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     branchName: typeof o.branchName === "string" && o.branchName.trim() ? o.branchName.trim().slice(0, 60) : null,
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
     gtmId: normalizeGtmId(o.gtmId),
+    privacyEmail: typeof o.privacyEmail === "string" && o.privacyEmail.trim() ? o.privacyEmail.trim() : null,
+    privacyPhone: typeof o.privacyPhone === "string" && o.privacyPhone.trim() ? o.privacyPhone.trim() : null,
+    privacyAddress: typeof o.privacyAddress === "string" && o.privacyAddress.trim() ? o.privacyAddress.trim() : null,
     orderNotifyEmail: normalizeEmail(o.orderNotifyEmail),
     survey: parseSurvey(o.survey),
     printMode: o.printMode === "auto" ? "auto" : o.printMode === "off" ? "off" : "manual",

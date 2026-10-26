@@ -369,6 +369,33 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Política de privacidad */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={Globe} title="Política de privacidad" sub="Datos de contacto que aparecen en la página de privacidad de tu tienda (tudominio/privacidad). Si los dejas vacíos, se usan los del local." />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Correo de contacto</span>
+                <input type="email" value={cfg.privacyEmail || ""} onChange={(e) => patch({ privacyEmail: e.target.value || null })} placeholder="correo@tulocal.cl (opcional)"
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }} />
+              </label>
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Teléfono / WhatsApp</span>
+                <input type="text" value={cfg.privacyPhone || ""} onChange={(e) => patch({ privacyPhone: e.target.value || null })} placeholder="+56 9 1234 5678 (opcional)"
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }} />
+              </label>
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 6 }}>Dirección</span>
+                <input type="text" value={cfg.privacyAddress || ""} onChange={(e) => patch({ privacyAddress: e.target.value || null })} placeholder="Dirección del local (opcional)"
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }} />
+              </label>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                Tras guardar, revisa tu página en <strong>{cfg.customDomain ? `${cfg.customDomain}/privacidad` : "quierocomer.com/ecommerce/<tu-tienda>/privacidad"}</strong>.
+              </p>
+            </div>
+          </section>
+          )}
+
           {/* Horario de atención */}
           {tab === "horario" && (
           <section style={card}>

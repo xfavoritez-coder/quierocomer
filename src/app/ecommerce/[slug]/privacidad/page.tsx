@@ -23,8 +23,10 @@ export default async function PrivacidadPage({ params }: { params: Promise<{ slu
   if (!t) notFound();
 
   const name = t.name;
-  const contactEmail = t.contactEmail || null;
-  const contactPhone = t.whatsapp || t.phone || null;
+  // Prioriza los datos configurados para la privacidad; si no hay, usa los del local.
+  const contactEmail = t.privacyEmail || t.contactEmail || null;
+  const contactPhone = t.privacyPhone || t.whatsapp || t.phone || null;
+  const contactAddress = t.privacyAddress || t.address || null;
   const contactParts: string[] = [];
   if (contactEmail) contactParts.push(`correo ${contactEmail}`);
   if (contactPhone) contactParts.push(`WhatsApp/teléfono ${contactPhone}`);
@@ -97,7 +99,7 @@ export default async function PrivacidadPage({ params }: { params: Promise<{ slu
       <h2 style={H2}>8. Contacto</h2>
       <p style={P}>
         Ante cualquier duda sobre tu privacidad, contáctanos a {contactLine}
-        {t.address ? ` · ${t.address}` : ""}.
+        {contactAddress ? ` · ${contactAddress}` : ""}.
       </p>
 
       <p style={{ fontSize: "0.78rem", color: "#aaa", marginTop: 40, borderTop: "1px solid #eee", paddingTop: 16 }}>
