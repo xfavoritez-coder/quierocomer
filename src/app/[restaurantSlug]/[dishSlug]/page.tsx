@@ -72,6 +72,7 @@ async function getCommuneDishesByCategory(communeSlug: string, categorySlug: str
     where: {
       isActive: true,
       hiddenFromFeed: false,
+      appOnly: false,
       deletedAt: null,
       OR: [
         { txCuisine: { has: categorySlug } },
@@ -95,6 +96,7 @@ async function getCommuneDishesFiltered(communeSlug: string, dietFilter?: 'VEGAN
     where: {
       isActive: true,
       hiddenFromFeed: false,
+      appOnly: false,
       deletedAt: null,
       ...(dietFilter ? { dishDiet: dietFilter } : {}),
       restaurant: { communeSlug, isActive: true, isDemo: false },
@@ -113,6 +115,7 @@ async function getRestaurantDishes(restaurantSlug: string) {
     where: {
       isActive: true,
       hiddenFromFeed: false,
+      appOnly: false,
       deletedAt: null,
       restaurant: { slug: restaurantSlug, isActive: true, isDemo: false },
     },
@@ -483,7 +486,7 @@ async function RestaurantInCommunePage({
 const findDishCached = unstable_cache(
   async (restaurantSlug: string, dishSlug: string) => {
     const dishes = await prisma.dish.findMany({
-      where: { restaurant: { slug: restaurantSlug }, isActive: true },
+      where: { restaurant: { slug: restaurantSlug }, isActive: true, appOnly: false },
       select: {
         id: true, name: true, description: true, price: true, photos: true,
         restaurant: { select: { name: true, address: true, logoUrl: true } },

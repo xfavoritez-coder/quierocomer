@@ -1447,10 +1447,10 @@ export default function AdminMenus() {
                 <div style={{ marginBottom: 16, padding: 14, borderRadius: 12, border: `1px solid ${selectedDish.appOnly ? "rgba(99,102,241,0.4)" : "var(--adm-card-border)"}`, background: selectedDish.appOnly ? "rgba(99,102,241,0.08)" : "transparent" }}>
                   <button onClick={() => toggleDishAppOnly(selectedDish)} style={{ padding: "14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, background: selectedDish.appOnly ? "#6366f1" : "rgba(99,102,241,0.12)", color: selectedDish.appOnly ? "white" : "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
                     <Smartphone size={17} />
-                    {selectedDish.appOnly ? "✓ Solo en la app — toca para volver a la web" : "📲 Disponible solo en la app"}
+                    {selectedDish.appOnly ? "✓ Solo en la app — toca para mostrarlo en todos lados" : "📲 Disponible solo en la app"}
                   </button>
                   <p style={{ margin: "8px 2px 0", fontSize: "0.76rem", color: "var(--adm-text3)", lineHeight: 1.45 }}>
-                    {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. En la web del Ecommerce queda oculto." : "Si lo activas, el producto será exclusivo de la app (oculto en la web del Ecommerce). Se guarda al instante."}
+                    {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. Queda oculto en todos lados: web del Ecommerce, carta QR y Pedidos online." : "Si lo activas, el producto será exclusivo de la app: oculto en la web del Ecommerce, la carta QR y Pedidos online. Se guarda al instante."}
                   </p>
                 </div>
               )}

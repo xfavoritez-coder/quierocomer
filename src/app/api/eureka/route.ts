@@ -113,6 +113,7 @@ async function getEurekaCandidatesFromDB(p: {
     WHERE d."isActive" = true
       AND d."deletedAt" IS NULL
       AND d."hiddenFromFeed" = false
+      AND d."appOnly" = false
       AND array_length(d.photos, 1) > 0
       AND d.price > 0
       AND c."dishType" != 'drink'

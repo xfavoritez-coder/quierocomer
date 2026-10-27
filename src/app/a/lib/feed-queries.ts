@@ -180,6 +180,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
       WHERE d."isActive" = true
         AND d."deletedAt" IS NULL
         AND d."hiddenFromFeed" = false
+        AND d."appOnly" = false
         AND array_length(d.photos, 1) > 0
         AND (d.price > 0 OR r."isShowcase" = true)
         AND c."dishType" != 'drink'
@@ -307,6 +308,7 @@ export const getCachedCategoryCountMap = unstable_cache(
       WHERE d."isActive" = true
         AND d."deletedAt" IS NULL
         AND d."hiddenFromFeed" = false
+        AND d."appOnly" = false
         AND array_length(d.photos, 1) > 0
         AND d.price > 0
         AND c."dishType" != 'drink'

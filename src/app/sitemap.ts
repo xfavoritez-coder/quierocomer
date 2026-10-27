@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: 'desc' },
     }),
     prisma.dish.findMany({
-      where: { isActive: true, hiddenFromFeed: false, photos: { isEmpty: false } },
+      where: { isActive: true, hiddenFromFeed: false, appOnly: false, photos: { isEmpty: false } },
       select: {
         name: true,
         updatedAt: true,

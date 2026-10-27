@@ -29,6 +29,7 @@ async function searchViaDB(params: {
     Prisma.sql`d."isActive" = true`,
     Prisma.sql`d."deletedAt" IS NULL`,
     Prisma.sql`d."hiddenFromFeed" = false`,
+    Prisma.sql`d."appOnly" = false`,
     Prisma.sql`array_length(d.photos, 1) > 0`,
     Prisma.sql`(d.price > 0 OR r."isShowcase" = true)`,
     Prisma.sql`c."dishType" != 'drink'`,

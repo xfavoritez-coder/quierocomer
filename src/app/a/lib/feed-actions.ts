@@ -435,7 +435,7 @@ export async function getDishesByIds(ids: string[]): Promise<import('../types').
       LEFT JOIN "FeedDishStats" fs ON fs."dishId" = d.id
       WHERE d.id = ANY($1::text[])
         AND d."isActive" = true AND d."deletedAt" IS NULL
-        AND d."hiddenFromFeed" = false AND array_length(d.photos, 1) > 0
+        AND d."hiddenFromFeed" = false AND d."appOnly" = false AND array_length(d.photos, 1) > 0
         AND r."isActive" = true AND r."isDemo" = false
     `, ids)
     return rows.map(d => {

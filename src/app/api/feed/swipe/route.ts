@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       isActive: true,
       deletedAt: null,
       hiddenFromFeed: false,
+      appOnly: false,
       photos: { isEmpty: false },
       price: { gt: 0 },
       ...(seen.length > 0 ? { id: { notIn: seen } } : {}),

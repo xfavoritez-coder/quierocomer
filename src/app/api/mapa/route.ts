@@ -23,6 +23,7 @@ export async function GET() {
         where: {
           isActive: true,
           hiddenFromFeed: false,
+          appOnly: false,
           deletedAt: null,
           price: { gt: 0 },
         },

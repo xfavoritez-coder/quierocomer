@@ -55,7 +55,7 @@ async function getRestaurantLanding(slug: string) {
       updatedAt: true,
       categories: { select: { id: true, name: true }, orderBy: { position: 'asc' } },
       dishes: {
-        where: { deletedAt: null, isActive: true },
+        where: { deletedAt: null, isActive: true, appOnly: false },
         select: { id: true, name: true, description: true, photos: true, price: true, categoryId: true },
         orderBy: { position: 'asc' },
       },
@@ -327,6 +327,7 @@ async function getCommuneDishes(communeSlug: string) {
     where: {
       isActive: true,
       hiddenFromFeed: false,
+      appOnly: false,
       deletedAt: null,
       restaurant: { communeSlug, isActive: true, isDemo: false },
     },
@@ -357,6 +358,7 @@ async function getGlobalCategoryDishes(category: string, categoryLabel: string) 
     where: {
       isActive: true,
       hiddenFromFeed: false,
+      appOnly: false,
       deletedAt: null,
       OR: [
         { txCuisine: { has: category } },

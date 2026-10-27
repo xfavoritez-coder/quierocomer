@@ -10,6 +10,7 @@ async function getInitialDishes() {
       isActive: true,
       deletedAt: null,
       hiddenFromFeed: false,
+      appOnly: false,
       photos: { isEmpty: false },
       price: { gt: 0 },
       restaurant: {
