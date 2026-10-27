@@ -6,6 +6,7 @@ import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { computeDiscount } from "@/lib/ecommerce/coupons";
+import { isInApp } from "@/lib/ecommerce/isInApp";
 import { clp } from "@/lib/ecommerce/format";
 import StoreLink from "./StoreLink";
 
@@ -136,7 +137,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       try {
         const res = await fetch("/api/ecommerce/coupons/validate", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
+          body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
         });
         const data = await res.json().catch(() => ({}));
         if (!data.valid) { setCoupon(null); setCouponCode(""); setCouponMsg("El cupón guardado ya no está disponible"); return; }
@@ -305,7 +306,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     try {
       const res = await fetch("/api/ecommerce/coupons/validate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null }),
+        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.valid) {
@@ -348,6 +349,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           paymentMethod: payment,
           couponCode: coupon?.code || null,
           scheduledFor: scheduleMode === "scheduled" && scheduledIso ? scheduledIso : null,
+          fromApp: isInApp(),
         }),
       });
       const data = await res.json().catch(() => ({}));

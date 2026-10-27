@@ -44,9 +44,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor, fromApp } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string;
+      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string; fromApp?: boolean;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
       if (!found) {
         couponError = "El cupón ya no existe";
       } else {
-        const v = validateCoupon(found, { subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP" });
+        const v = validateCoupon(found, { subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP", fromApp: fromApp === true });
         if (!v.valid) {
           couponError = v.error || "El cupón no es válido";
         } else {

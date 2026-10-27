@@ -16,7 +16,7 @@ const chileTodayYmd = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Americ
 type Dish = { id: string; name: string };
 
 function newCoupon(): Coupon {
-  return { id: Math.random().toString(36).slice(2, 9), code: "", label: "", isEnabled: true, type: "discount", discountType: "fixed", discountValue: 0, maxDiscountAmount: null, discountIncludesDelivery: false, startDate: null, endDate: null, startTime: null, endTime: null, daysOfWeek: [], appliesDelivery: true, appliesPickup: true, minOrderAmount: null, maxUses: null, maxUsesPerUser: null, freeProductId: null };
+  return { id: Math.random().toString(36).slice(2, 9), code: "", label: "", isEnabled: true, type: "discount", discountType: "fixed", discountValue: 0, maxDiscountAmount: null, discountIncludesDelivery: false, startDate: null, endDate: null, startTime: null, endTime: null, daysOfWeek: [], appliesDelivery: true, appliesPickup: true, appOnly: false, minOrderAmount: null, maxUses: null, maxUsesPerUser: null, freeProductId: null };
 }
 
 export default function CouponsPage() {
@@ -88,7 +88,7 @@ export default function CouponsPage() {
               <div key={c.id} style={card}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setExpanded(open ? null : c.id)}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: 0.5 }}>{c.code || "(sin código)"} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", letterSpacing: 0 }}>· {summary}</span></p>
+                    <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, letterSpacing: 0.5 }}>{c.code || "(sin código)"} <span style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text3)", letterSpacing: 0 }}>· {summary}</span>{c.appOnly && <span style={{ fontFamily: FB, fontSize: "0.62rem", fontWeight: 800, letterSpacing: 0.3, marginLeft: 6, padding: "2px 7px", borderRadius: 999, background: `${ACCENT}22`, color: ACCENT, verticalAlign: "middle" }}>📲 SOLO APP</span>}</p>
                     <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{expired ? <span style={{ color: "#ef4444", fontWeight: 700 }}>Vencido</span> : (c.isEnabled ? "Activo" : "Inactivo")}{used > 0 ? ` · ${used} uso${used !== 1 ? "s" : ""}` : ""}{expired && c.endDate ? ` · venció el ${c.endDate.split("-").reverse().join("-")}` : ""}</p>
                   </div>
                   <Toggle on={c.isEnabled && !expired} disabled={expired} onClick={(e) => { e.stopPropagation(); if (!expired) upd(c.id, { isEnabled: !c.isEnabled }); }} />
@@ -130,6 +130,13 @@ export default function CouponsPage() {
                         <Check label="Retiro" on={c.appliesPickup} onClick={() => upd(c.id, { appliesPickup: !c.appliesPickup })} />
                       </div>
                     </Field>
+
+                    <div style={{ marginTop: 4 }}>
+                      <Check label="📲 Solo canjeable desde la app" on={c.appOnly} onClick={() => upd(c.id, { appOnly: !c.appOnly })} />
+                      <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+                        {c.appOnly ? "Este cupón solo funciona dentro de la app. En la web se rechaza — ideal para incentivar la descarga." : "El cupón funciona en la web y en la app."}
+                      </p>
+                    </div>
 
                     <Field label="Días válidos (vacío = todos)">
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

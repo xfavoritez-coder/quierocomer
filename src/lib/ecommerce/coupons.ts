@@ -30,6 +30,9 @@ export interface Coupon {
   daysOfWeek: string[]; // subconjunto de DAY_CODES; vacío = todos
   appliesDelivery: boolean;
   appliesPickup: boolean;
+  // Si es true, el cupón solo se puede canjear desde la app nativa (WebView de
+  // Capacitor). En la web normal se rechaza. Sirve para incentivar la descarga.
+  appOnly: boolean;
   minOrderAmount?: number | null;
   maxUses?: number | null; // total
   maxUsesPerUser?: number | null;
@@ -65,6 +68,7 @@ export function parseCoupons(raw: unknown): Coupon[] {
         daysOfWeek: Array.isArray(o.daysOfWeek) ? (o.daysOfWeek as unknown[]).map(String).filter((d) => (DAY_CODES as readonly string[]).includes(d)) : [],
         appliesDelivery: o.appliesDelivery !== false,
         appliesPickup: o.appliesPickup !== false,
+        appOnly: o.appOnly === true, // default false (sirve en web y app)
         minOrderAmount: num(o.minOrderAmount),
         maxUses: num(o.maxUses),
         maxUsesPerUser: num(o.maxUsesPerUser),
@@ -85,11 +89,13 @@ export function nowInChile(): { dateStr: string; timeStr: string; dayCode: strin
 export interface CouponContext {
   subtotal: number;
   orderType: "DELIVERY" | "PICKUP";
+  fromApp?: boolean; // true si el pedido viene desde la app nativa (WebView)
 }
 
 /** Valida un cupón (sin contar usos — eso lo hace el servidor con la tabla). */
 export function validateCoupon(c: Coupon, ctx: CouponContext): { valid: boolean; error?: string } {
   if (!c.isEnabled) return { valid: false, error: "Este cupón no está activo" };
+  if (c.appOnly && !ctx.fromApp) return { valid: false, error: "Este cupón solo se puede usar desde la app 📲" };
 
   const { dateStr, timeStr, dayCode } = nowInChile();
   if (c.startDate && dateStr < c.startDate) return { valid: false, error: `Cupón válido desde ${c.startDate}` };

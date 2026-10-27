@@ -12,8 +12,8 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, code, subtotal, deliveryFee, orderType, phone } = body as {
-      restaurantSlug?: string; restaurantId?: string; code?: string; subtotal?: number; deliveryFee?: number; orderType?: string; phone?: string;
+    const { restaurantSlug, restaurantId, code, subtotal, deliveryFee, orderType, phone, fromApp } = body as {
+      restaurantSlug?: string; restaurantId?: string; code?: string; subtotal?: number; deliveryFee?: number; orderType?: string; phone?: string; fromApp?: boolean;
     };
     if ((!restaurantSlug && !restaurantId) || !code) return NextResponse.json({ valid: false, error: "Datos incompletos" });
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!coupon) return NextResponse.json({ valid: false, error: "Cupón no encontrado" });
 
     const oType = orderType === "DELIVERY" ? "DELIVERY" : "PICKUP";
-    const base = validateCoupon(coupon, { subtotal: Number(subtotal) || 0, orderType: oType });
+    const base = validateCoupon(coupon, { subtotal: Number(subtotal) || 0, orderType: oType, fromApp: fromApp === true });
     if (!base.valid) return NextResponse.json({ valid: false, error: base.error });
 
     // Usos totales
