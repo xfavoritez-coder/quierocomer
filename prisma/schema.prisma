@@ -904,6 +904,7 @@ model Dish {
   txEstilo              String[]
   hideFromOrdering      Boolean                @default(false)
   ecommerceOnly         Boolean                @default(false)
+  appOnly               Boolean                @default(false)
   detailedDescription   String?
   toteatProductId       String?
   toteatMappedAt        DateTime?

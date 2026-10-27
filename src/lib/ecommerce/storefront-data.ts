@@ -151,12 +151,16 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
  * Carga los datos del storefront para un restaurante con Ecommerce activado.
  * Devuelve null si el local no existe o no tiene el pilar habilitado.
  */
-export async function loadEcommerceStorefront(slug: string, opts?: { includeHidden?: boolean }): Promise<StorefrontData | null> {
+export async function loadEcommerceStorefront(slug: string, opts?: { includeHidden?: boolean; fromApp?: boolean }): Promise<StorefrontData | null> {
   // includeHidden: incluye categorías/productos/modificadores inactivos u ocultos
   // (para la gestión de carta en el panel: p. ej. asignar códigos Toteat a
   // productos que aún no están activos o son ofertas de otro día). El storefront
   // público llama sin esto → sigue mostrando solo lo activo.
+  // fromApp: la request viene desde la app nativa (cookie qc_app). Solo entonces
+  // se muestran los platos marcados como appOnly (ver Dish.appOnly) — en la web
+  // normal quedan ocultos para que sean exclusivos de la app.
   const includeHidden = opts?.includeHidden === true;
+  const fromApp = opts?.fromApp === true;
   const restaurant = await prisma.restaurant.findFirst({
     where: restaurantByKey(slug),
     select: {
@@ -183,7 +187,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       dishes: {
         // hideFromOrdering: platos ocultos de "Pedidos online" no se muestran en la tienda.
         // includeHidden (gestión de carta) sí los trae, pero nunca los borrados.
-        where: includeHidden ? { deletedAt: null } : { isActive: true, deletedAt: null, hideFromOrdering: false },
+        where: includeHidden ? { deletedAt: null } : { isActive: true, deletedAt: null, hideFromOrdering: false, ...(fromApp ? {} : { appOnly: false }) },
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,

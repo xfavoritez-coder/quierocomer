@@ -116,10 +116,16 @@ export async function POST(req: NextRequest) {
     const dishes = await prisma.dish.findMany({
       where: { id: { in: productIds }, restaurantId: restaurant.id, isActive: true, deletedAt: null },
       select: {
-        id: true, categoryId: true, price: true, discountPrice: true,
+        id: true, categoryId: true, price: true, discountPrice: true, appOnly: true, name: true,
         modifierTemplates: { select: { groups: { select: { options: { select: { id: true, priceAdjustment: true } } } } } },
       },
     });
+
+    // Platos exclusivos de la app: no se pueden pedir desde la web (solo con fromApp).
+    if (fromApp !== true) {
+      const appOnlyDish = dishes.find((d) => d.appOnly === true);
+      if (appOnlyDish) return NextResponse.json({ error: `"${appOnlyDish.name}" solo se puede pedir desde la app 📲`, appOnlyBlocked: true }, { status: 400 });
+    }
     // Happy hours activos ahora (canal ecommerce): pueden ser varios; cada
     // producto toma el mejor precio. Compiten con la oferta; se cobra el menor.
     const activeHHs = activeHappyHours((restaurant.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));

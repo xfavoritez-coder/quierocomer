@@ -11,7 +11,7 @@ import MenuGroupsManager from "@/components/admin/MenuGroupsManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
-import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp, ShoppingCart } from "lucide-react";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp, ShoppingCart, Smartphone } from "lucide-react";
 
 // Carrito con línea diagonal cuando el producto está bloqueado de Pedidos online.
 function OrderingCartIcon({ blocked, size = 16 }: { blocked: boolean; size?: number }) {
@@ -33,7 +33,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
   id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null;
-  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; ingredients: string | null;
+  photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; appOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
   category: { id: string; name: string };
 }
@@ -737,6 +737,26 @@ export default function AdminMenus() {
     }
   };
 
+  // "Solo app": el plato solo se muestra y se puede pedir desde la app nativa
+  // (oculto en la web del Ecommerce). Útil para productos exclusivos de la app.
+  const toggleDishAppOnly = async (dish: Dish) => {
+    const newVal = !dish.appOnly;
+    setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, appOnly: newVal } : d));
+    if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, appOnly: newVal } : prev);
+    try {
+      const res = await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appOnly: newVal }) });
+      if (!res.ok) {
+        setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, appOnly: dish.appOnly } : d));
+        if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, appOnly: dish.appOnly } : prev);
+        console.error("Toggle appOnly failed:", await res.text());
+      }
+    } catch (e) {
+      setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, appOnly: dish.appOnly } : d));
+      if (selectedDish?.id === dish.id) setSelectedDish(prev => prev ? { ...prev, appOnly: dish.appOnly } : prev);
+      console.error("Toggle appOnly error:", e);
+    }
+  };
+
   const toggleBulk = (id: string) => {
     setBulkSelected(prev => {
       const next = new Set(prev);
@@ -1185,6 +1205,17 @@ export default function AdminMenus() {
                     <Globe size={17} />
                     {selectedDish.ecommerceOnly ? "Solo en Ecommerce · volver a la carta QR" : "Mostrar solo en Ecommerce"}
                   </button>
+                )}
+                {ecommerceEnabled && (
+                  <>
+                    <button onClick={() => toggleDishAppOnly(selectedDish)} style={{ marginTop: 8, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.appOnly ? "rgba(99,102,241,0.14)" : "rgba(120,120,120,0.1)", color: selectedDish.appOnly ? "#6366f1" : "var(--adm-text2)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+                      <Smartphone size={17} />
+                      {selectedDish.appOnly ? "Solo en la app · volver a mostrar en la web" : "Disponible solo en la app"}
+                    </button>
+                    <p style={{ margin: "6px 2px 0", fontSize: "0.76rem", color: "var(--adm-text3)", lineHeight: 1.45 }}>
+                      {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. En la web del Ecommerce queda oculto." : "Si lo activas, el producto será exclusivo de la app (oculto en la web)."}
+                    </p>
+                  </>
                 )}
               </div>
 

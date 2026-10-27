@@ -14,7 +14,7 @@ const DISH_FIELDS = [
   "isHero", "isActive", "stockCountdown", "soldOut", "ingredients", "allergens", "position",
   "dishDiet", "isSpicy", "flavorTags", "isHighMargin", "isPhotoReferential",
   "isGlutenFree", "isLactoseFree", "isSoyFree", "containsNuts", "hiddenFromFeed",
-  "hideFromOrdering", "ecommerceOnly", "photoCredits",
+  "hideFromOrdering", "ecommerceOnly", "appOnly", "photoCredits",
   "txDishType", "txCuisine", "txMealSlot", "txIngredient", "txEstilo",
 ] as const;
 
