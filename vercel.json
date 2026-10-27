@@ -53,6 +53,14 @@
       "schedule": "0 19,20 * * 1-6"
     },
     {
+      "path": "/api/cron/meta-ads?action=activate&cid=120210681463440467",
+      "schedule": "0 19,20 * * 2"
+    },
+    {
+      "path": "/api/cron/meta-ads?action=deactivate&cid=120210681463440467",
+      "schedule": "20 0,1 * * 3"
+    },
+    {
       "path": "/api/cron/meta-ads?action=deactivate",
       "schedule": "0 1,2 * * 1"
     },
