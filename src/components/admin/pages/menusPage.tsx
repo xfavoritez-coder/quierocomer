@@ -1206,17 +1206,6 @@ export default function AdminMenus() {
                     {selectedDish.ecommerceOnly ? "Solo en Ecommerce · volver a la carta QR" : "Mostrar solo en Ecommerce"}
                   </button>
                 )}
-                {ecommerceEnabled && (
-                  <>
-                    <button onClick={() => toggleDishAppOnly(selectedDish)} style={{ marginTop: 8, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.appOnly ? "rgba(99,102,241,0.14)" : "rgba(120,120,120,0.1)", color: selectedDish.appOnly ? "#6366f1" : "var(--adm-text2)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
-                      <Smartphone size={17} />
-                      {selectedDish.appOnly ? "Solo en la app · volver a mostrar en la web" : "Disponible solo en la app"}
-                    </button>
-                    <p style={{ margin: "6px 2px 0", fontSize: "0.76rem", color: "var(--adm-text3)", lineHeight: 1.45 }}>
-                      {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. En la web del Ecommerce queda oculto." : "Si lo activas, el producto será exclusivo de la app (oculto en la web)."}
-                    </p>
-                  </>
-                )}
               </div>
 
 
@@ -1454,6 +1443,17 @@ export default function AdminMenus() {
                 </PlanGate>
               )}
 
+              {ecommerceEnabled && (
+                <div style={{ marginBottom: 16, padding: 14, borderRadius: 12, border: `1px solid ${selectedDish.appOnly ? "rgba(99,102,241,0.4)" : "var(--adm-card-border)"}`, background: selectedDish.appOnly ? "rgba(99,102,241,0.08)" : "transparent" }}>
+                  <button onClick={() => toggleDishAppOnly(selectedDish)} style={{ padding: "14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.9rem", fontWeight: 700, background: selectedDish.appOnly ? "#6366f1" : "rgba(99,102,241,0.12)", color: selectedDish.appOnly ? "white" : "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+                    <Smartphone size={17} />
+                    {selectedDish.appOnly ? "✓ Solo en la app — toca para volver a la web" : "📲 Disponible solo en la app"}
+                  </button>
+                  <p style={{ margin: "8px 2px 0", fontSize: "0.76rem", color: "var(--adm-text3)", lineHeight: 1.45 }}>
+                    {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. En la web del Ecommerce queda oculto." : "Si lo activas, el producto será exclusivo de la app (oculto en la web del Ecommerce). Se guarda al instante."}
+                  </p>
+                </div>
+              )}
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? t("saving") : t("save")}</button>
                 <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
