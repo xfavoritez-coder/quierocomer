@@ -17,7 +17,7 @@ import {
   migrateLocalStaffToEvents,
   deduplicateStaff,
 } from '@/lib/pos'
-import type { Account, PosStaff } from '@/lib/pos'
+import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant } from './lib/usePosRestaurant'
@@ -347,6 +347,40 @@ export default function PosHomePage() {
     ? accounts.find(a => a.id === activePanelAccountId)?.table_id ?? null
     : null
 
+  // Render de una tarjeta de mesa (reutilizado en vista plana y agrupada por sector)
+  const renderMesaButton = (table: PosTable) => {
+    const { status, accountId } = getTableStatus(table.id, accounts)
+    const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
+    const isCuentaPedida = status === 'cuenta_pedida'
+    const isActivePanel = isDesktop && activePanelTableId === table.id
+    return (
+      <button
+        key={table.id}
+        className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
+        onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
+      >
+        <span className="mn">{table.label || table.number}</span>
+        <div className="pos-mesa-center">
+          {status === 'libre' ? (
+            <span className="ms">Libre</span>
+          ) : isCuentaPedida ? (
+            <>
+              {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
+              <span className="ms">Pidió cuenta</span>
+            </>
+          ) : acc ? (
+            acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
+          ) : null}
+        </div>
+        {acc && (
+          <div className="pos-mesa-bottom">
+            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+          </div>
+        )}
+      </button>
+    )
+  }
+
   // Guard de acceso: si el local tiene el POS deshabilitado (posEnabled === false
   // vía sesión de panel) no se muestra. null = desconocido (sin sesión) → se permite.
   if (posEnabled === false) {
@@ -448,46 +482,39 @@ export default function PosHomePage() {
                     )}
                   </div>
                 )}
-                <div className="pos-mesa-grid">
-                  {filteredTables.map(table => {
-                    const { status, accountId } = getTableStatus(table.id, accounts)
-                    const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
-                    const itemCount = acc ? acc.items.filter(i => !i.voided).length : 0
-                    const isCuentaPedida = status === 'cuenta_pedida'
-                    const isActivePanel = isDesktop && activePanelTableId === table.id
-                    return (
-                      <button
-                        key={table.id}
-                        className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
-                        onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
-                      >
-                        <span className="mn">{table.label || table.number}</span>
-                        <div className="pos-mesa-center">
-                          {status === 'libre' ? (
-                            <span className="ms">Libre</span>
-                          ) : isCuentaPedida ? (
-                            <>
-                              {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
-                              <span className="ms">Pidió cuenta</span>
-                            </>
-                          ) : acc ? (
-                            acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
-                          ) : null}
+                {sectorFilter === 'all' && sectors.length > 0 ? (
+                  <>
+                    {sectors.map(s => {
+                      const group = tables.filter(t => t.sector_id === s.id)
+                      if (group.length === 0) return null
+                      return (
+                        <div key={s.id} className="pos-sector-group">
+                          <div className="pos-sector-head">{s.name}<span className="pos-sector-count">{group.length}</span></div>
+                          <div className="pos-mesa-grid">{group.map(renderMesaButton)}</div>
                         </div>
-                        {acc && (
-                          <div className="pos-mesa-bottom">
-                            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                  {filteredTables.length === 0 && (
-                    <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13, padding: '20px 0' }}>
-                      Sin mesas en este sector
-                    </p>
-                  )}
-                </div>
+                      )
+                    })}
+                    {(() => {
+                      const sinSector = tables.filter(t => !t.sector_id)
+                      if (sinSector.length === 0) return null
+                      return (
+                        <div className="pos-sector-group">
+                          <div className="pos-sector-head">Sin sector<span className="pos-sector-count">{sinSector.length}</span></div>
+                          <div className="pos-mesa-grid">{sinSector.map(renderMesaButton)}</div>
+                        </div>
+                      )
+                    })()}
+                  </>
+                ) : (
+                  <div className="pos-mesa-grid">
+                    {filteredTables.map(renderMesaButton)}
+                    {filteredTables.length === 0 && (
+                      <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13, padding: '20px 0' }}>
+                        Sin mesas en este sector
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <div className="pos-empty" style={{ minHeight: 200 }}>
