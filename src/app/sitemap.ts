@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
+import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/slugify'
+import { currentHost, isMainHost } from '@/lib/seo/requestHost'
 
 const BASE = 'https://quierocomer.com'
 
@@ -9,10 +11,40 @@ const CATEGORY_SLUGS = [
   'empanadas', 'mariscos', 'pollo', 'vegano', 'vegetariano',
 ]
 
-// Cached 24h — Google doesn't need real-time sitemaps
-export const revalidate = 86400
+// Sensible al host: en un dominio propio (handroll.cl) devuelve el sitemap de
+// esa tienda; en el dominio principal, el sitemap completo del sitio.
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const host = await currentHost()
+  if (host && !isMainHost(host)) return buildCustomDomainSitemap(host)
+  return buildMainSitemap()
+}
+
+// ── Sitemap de un dominio propio ──────────────────────────────
+// Lista solo las URLs de esa tienda, en su propio dominio. Su canónica apunta
+// aquí, por eso se excluyen del sitemap de quierocomer.com.
+async function buildCustomDomainSitemap(host: string): Promise<MetadataRoute.Sitemap> {
+  const origin = `https://${host}`
+  const now = new Date()
+  const store = await prisma.restaurant.findFirst({
+    where: { isActive: true, ecommerceEnabled: true, ecommerceStoreConfig: { path: ['customDomain'], equals: host } },
+    select: { updatedAt: true },
+  })
+  if (store) {
+    return [
+      { url: `${origin}/`, lastModified: store.updatedAt, changeFrequency: 'daily', priority: 1.0 },
+      { url: `${origin}/checkout`, lastModified: store.updatedAt, changeFrequency: 'monthly', priority: 0.4 },
+      { url: `${origin}/privacidad`, lastModified: store.updatedAt, changeFrequency: 'yearly', priority: 0.2 },
+    ]
+  }
+  // Dominio propio de carta (u otro no reconocido): al menos su raíz.
+  return [{ url: `${origin}/`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 }]
+}
+
+// ── Sitemap del dominio principal (cacheado 24h) ──────────────
+// Google no necesita sitemaps en tiempo real; el contenido no depende del host.
+const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap> => {
   const [restaurants, dishes, communeRestaurants, demoRestaurants, ecommerceStores] = await Promise.all([
     prisma.restaurant.findMany({
       where: { isActive: true, isDemo: false },
@@ -163,4 +195,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...dishPages,
     ...ecommercePages,
   ]
-}
+}, ['sitemap-main'], { revalidate: 86400 })
