@@ -13,7 +13,7 @@ const CATEGORY_SLUGS = [
 export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [restaurants, dishes, communeRestaurants, demoRestaurants] = await Promise.all([
+  const [restaurants, dishes, communeRestaurants, demoRestaurants, ecommerceStores] = await Promise.all([
     prisma.restaurant.findMany({
       where: { isActive: true, isDemo: false },
       select: { slug: true, updatedAt: true },
@@ -39,6 +39,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.restaurant.findMany({
       where: { isDemo: true, isActive: true },
       select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+    }),
+    // Tiendas ecommerce (pilar activo): su storefront es público e indexable.
+    // Las de dominio propio van en el sitemap de su propio dominio, no aquí.
+    prisma.restaurant.findMany({
+      where: { ecommerceEnabled: true, isActive: true, isDemo: false },
+      select: { slug: true, updatedAt: true, ecommerceStoreConfig: true },
       orderBy: { updatedAt: 'desc' },
     }),
   ])
@@ -93,6 +100,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // Tiendas ecommerce en el dominio principal. Las que tienen dominio propio
+  // (handroll.cl) se excluyen: su canónica apunta a ese dominio y deben listarse
+  // en el sitemap de su propio dominio, no en el de quierocomer.com.
+  const ecommercePages: MetadataRoute.Sitemap = ecommerceStores
+    .filter(r => !((r.ecommerceStoreConfig as { customDomain?: string | null } | null)?.customDomain))
+    .map(r => ({
+      url: `${BASE}/ecommerce/${r.slug}`,
+      lastModified: r.updatedAt,
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    }))
+
   // SEO commune pages
   const distinctCommunes = [
     ...new Map(communeRestaurants.map(r => [r.communeSlug, r])).values(),
@@ -142,5 +161,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...communePages,
     ...communeRestaurantPages,
     ...dishPages,
+    ...ecommercePages,
   ]
 }
