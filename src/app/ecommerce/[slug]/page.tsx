@@ -7,6 +7,7 @@ import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
 import AppFlagSync from "@/components/ecommerce/AppFlagSync";
+import StoreJsonLd from "@/components/ecommerce/StoreJsonLd";
 import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return {};
   const { tenant } = data;
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
+  // Fotos de productos para el preview al compartir (OpenGraph): varias, no solo el logo.
+  const ogImages = [
+    ...data.products
+      .map((p) => p.image_url)
+      .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
+      .slice(0, 4)
+      .map((url) => ({ url })),
+    ...(tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : []),
+  ];
   // PWA: manifest por local. base "" en dominio propio, "/ecommerce/<slug>" en el principal.
   const base = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
   const manifestUrl = `/api/ecommerce/manifest/${tenant.slug}?base=${encodeURIComponent(base)}`;
@@ -29,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: tenant.name,
       description: `Haz tu pedido en ${tenant.name}.`,
-      images: tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : [],
+      images: ogImages,
       type: "website",
     },
   };
@@ -54,8 +64,10 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // Sincroniza la cookie qc_app: si corre dentro de la app, la activa (y refresca
   // una vez) para que aparezcan los platos exclusivos; si no, no hace nada.
   const appSync = <AppFlagSync active={fromApp} />;
+  // Datos estructurados para que Google muestre las fotos de los productos.
+  const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
   if (data.tenant.theme === "impact") {
-    return <>{gtm}{pwa}{hit}{appSync}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+    return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
   }
-  return <>{gtm}{pwa}{hit}{appSync}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+  return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
 }
