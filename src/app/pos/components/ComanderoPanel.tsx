@@ -184,7 +184,7 @@ export default function ComanderoPanel({
         </div>
       ) : (
         <>
-          <div className="pos-cmd">
+          <div className={`pos-cmd${isPanel ? ' as-panel' : ''}`}>
             {/* Categories */}
             <div className="pos-cats">
               <button

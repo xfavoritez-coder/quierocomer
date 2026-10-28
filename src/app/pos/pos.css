@@ -363,6 +363,17 @@
 /* Mesa seleccionada actualmente en el panel */
 .pos-mesa.panel-active{outline:2px solid var(--amber);outline-offset:2px}
 
+/* Comandero embebido en el panel desktop (~420px): apilar categorías arriba,
+   productos al medio (ancho completo) y pedido abajo. Sin esto, las columnas
+   fijas 158px+300px ahogan el grid 1fr y no se ven productos. Es por isPanel,
+   no por viewport, porque el panel es angosto aunque la pantalla sea ancha. */
+.pos-cmd.as-panel{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}
+.pos-cmd.as-panel .pos-cats{flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;scrollbar-width:none}
+.pos-cmd.as-panel .pos-cats::-webkit-scrollbar{display:none}
+.pos-cmd.as-panel .pos-cat.on::before{display:none}
+.pos-cmd.as-panel .pos-grid{grid-template-columns:1fr 1fr}
+.pos-cmd.as-panel .pos-order{border-left:0;border-top:1px solid var(--line);max-height:42%}
+
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){
   .pos-cmd{display:block;overflow-y:auto;overflow-x:hidden}
