@@ -369,11 +369,25 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       statusLabel: liveLabel(order.status, order.orderType),
       etaText: liveEta(order.status, order.estimatedTime),
     };
-    const isFinal = order.status === "DONE" || order.status === "CANCELLED";
+    // La isla solo tiene sentido para pedidos CONFIRMADOS y en curso. PENDING
+    // (pago/confirmación pendiente) no debe tener isla; DONE/CANCELLED la cierran.
+    const ACTIVE_STATES = ["ACCEPTED", "PREPARING", "READY", "IN_DELIVERY"];
+    const isActive = ACTIVE_STATES.includes(order.status);
+
+    if (!isActive) {
+      // No activo: cierra cualquier isla de ESTE pedido, incluida una colgada de
+      // una sesión anterior (ActivityKit enumera las actividades entre
+      // lanzamientos). Antes, un pedido PENDING iniciaba una isla que nunca
+      // avanzaba ni terminaba → quedaba pegada en 1/5; y un pedido ya finalizado
+      // solo hacía `return` sin cerrar la isla huérfana.
+      LA.end(base).catch(() => {});
+      const isFinal = order.status === "DONE" || order.status === "CANCELLED";
+      setLaInfo(isFinal ? "isla: pedido finalizado — cerrada" : "isla: pedido no activo — sin isla");
+      return;
+    }
 
     if (!liveStartedRef.current) {
       liveStartedRef.current = true;
-      if (isFinal) { setLaInfo("isla: pedido ya finalizado, no se inicia"); return; }
       // ¿Soporta Live Activities / están habilitadas?
       LA.isSupported().then((s: any) => {
         if (s && s.supported === false) setLaInfo("isla: Live Activities deshabilitadas en Ajustes");
@@ -395,8 +409,6 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       }).then((r: any) => {
         setLaInfo("isla: " + (r?.started ? "iniciada ✓" : ("no iniciada — " + (r?.reason || "?"))));
       }).catch((e: any) => setLaInfo("isla: error al iniciar — " + (e?.message || e)));
-    } else if (isFinal) {
-      LA.end(base).catch(() => {});
     } else {
       LA.update(base).catch(() => {});
     }
