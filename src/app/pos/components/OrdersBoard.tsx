@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { setRestaurantId, setUserId, registerExternalPayment } from '@/lib/pos'
+import { setRestaurantId, setUserId, registerExternalPayment, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
+import { usePosNav } from '../lib/usePosNav'
 
 type OrderType = 'retiro' | 'delivery'
 
@@ -59,7 +60,11 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [loading, setLoading] = useState(true)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
+  const [needCaja, setNeedCaja] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const navigate = usePosNav()
+  const cashSession = useOpenCashSession()
+  const cajaOpen = !!cashSession
 
   useEffect(() => {
     if (restaurantId) { setRestaurantId(restaurantId); setUserId(TEST_USER_ID) }
@@ -105,6 +110,15 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         </button>
       </div>
 
+      {!cajaOpen && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', background: 'rgba(222,124,0,.08)', border: '1px solid #f0e0c0', borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
+          <span style={{ fontSize: 13, color: 'var(--amber-press)', fontWeight: 600 }}>
+            Caja cerrada · abre la caja para poder cobrar y que el pago entre al arqueo.
+          </span>
+          <button onClick={() => navigate('/pos/caja')} style={{ flexShrink: 0, border: 0, background: 'var(--amber)', color: '#fff', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}>Abrir caja</button>
+        </div>
+      )}
+
       {loading && orders.length === 0 ? (
         <div className="pos-empty" style={{ minHeight: 200 }}>
           <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '3px solid var(--line)', borderTopColor: 'var(--amber)' }} />
@@ -125,7 +139,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             return (
               <button
                 key={o.id}
-                onClick={() => setCobro(o)}
+                onClick={() => { if (!paid && !cajaOpen) { setNeedCaja(true); return } setCobro(o) }}
                 style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--line)', borderLeft: `3px solid ${accent}`, borderRadius: 14, padding: 14, cursor: 'pointer', boxShadow: 'var(--sh-1)', display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'var(--sans)' }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
@@ -152,6 +166,21 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
 
       {cobro && (
         <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+      )}
+
+      {needCaja && (
+        <div className="pos-modal-overlay" onClick={() => setNeedCaja(false)}>
+          <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: '100%' }}>
+            <div className="pos-modal-title">Caja cerrada</div>
+            <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>
+              Para cobrar un pedido necesitas tener la caja abierta. Así el pago queda registrado en el arqueo del turno.
+            </p>
+            <div className="pos-modal-actions">
+              <button className="pos-modal-cancel" onClick={() => setNeedCaja(false)}>Cancelar</button>
+              <button className="pos-modal-ok" onClick={() => { setNeedCaja(false); navigate('/pos/caja') }}>Abrir caja</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
