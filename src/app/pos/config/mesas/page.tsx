@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
-import { saveTables, saveSectors, updateTableSector, updateTableLabel } from '@/lib/pos'
+import { saveSectors, updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, saveTables, nextTableNumber } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
 import { usePosNav } from '../../lib/usePosNav'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
 
 const TEST_USER_ID = 'pos-garzon'
-
-type TableInput = { number: number; label?: string; sector_id?: string }
 
 export default function MesasConfigPage() {
   const navigate = usePosNav()
@@ -18,10 +16,9 @@ export default function MesasConfigPage() {
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
 
-  // Creación por cantidad (aditiva)
+  // Crear mesas (aditivo)
   const [bulkCount, setBulkCount] = useState('10')
   const [bulkPrefix, setBulkPrefix] = useState('')
-  const [bulkFrom, setBulkFrom] = useState('')
   const [bulkSector, setBulkSector] = useState('')
   // Alta individual con nombre propio
   const [customLabel, setCustomLabel] = useState('')
@@ -35,30 +32,6 @@ export default function MesasConfigPage() {
     setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
-
-  // Identificador visible de una mesa (label o su número)
-  const idOf = (t: { label?: string; number: number }) => t.label || String(t.number)
-
-  // Snapshot actual de mesas en el formato que espera saveTables
-  const snapshot = (): TableInput[] => tables.map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id }))
-
-  // Siguiente número sugerido para un prefijo dado (continúa la numeración existente)
-  const nextFrom = (prefix: string): number => {
-    const p = prefix.trim()
-    let max = 0
-    for (const t of tables) {
-      const id = idOf(t)
-      if (p) {
-        if (id.startsWith(p)) {
-          const num = parseInt(id.slice(p.length), 10)
-          if (!isNaN(num)) max = Math.max(max, num)
-        }
-      } else if (/^\d+$/.test(id)) {
-        max = Math.max(max, parseInt(id, 10))
-      }
-    }
-    return max + 1
-  }
 
   // ── Sectores ───────────────────────────────────────────────
   const handleAddSector = async () => {
@@ -82,57 +55,31 @@ export default function MesasConfigPage() {
     if (customSector === sectorId) setCustomSector('')
   }
 
-  // ── Creación por cantidad (aditiva) ────────────────────────
-  const effFrom = bulkFrom.trim() ? parseInt(bulkFrom, 10) : nextFrom(bulkPrefix)
-  const effCount = parseInt(bulkCount, 10) || 0
-  const bulkPrefixTrim = bulkPrefix.trim()
-  const bulkRange = effCount > 0 && !isNaN(effFrom)
-    ? `${bulkPrefixTrim}${effFrom}…${bulkPrefixTrim}${effFrom + effCount - 1}`
-    : ''
+  // ── Crear mesas (aditivo, lee la BD fresca) ────────────────
+  const prefix = bulkPrefix.trim()
+  const count = parseInt(bulkCount, 10) || 0
+  const startNum = nextTableNumber(tables, prefix)
+  const firstId = `${prefix}${startNum}`
+  const lastId = `${prefix}${startNum + Math.max(count, 1) - 1}`
+  const sectorName = (id: string) => sectors.find(s => s.id === id)?.name
 
   const handleBulkAdd = async () => {
-    const n = effCount
-    if (!n || n < 1 || n > 99 || isNaN(effFrom) || effFrom < 0) return
+    if (count < 1 || count > 99) return
     setSaving(true)
-    const existing = new Set(tables.map(idOf))
-    let maxNum = tables.reduce((m, t) => Math.max(m, t.number), 0)
-    const additions: TableInput[] = []
-    for (let k = 0; k < n; k++) {
-      const idx = effFrom + k
-      const id = bulkPrefixTrim ? `${bulkPrefixTrim}${idx}` : String(idx)
-      if (existing.has(id)) continue
-      existing.add(id)
-      if (bulkPrefixTrim) {
-        maxNum++
-        additions.push({ number: maxNum, label: id, sector_id: bulkSector || undefined })
-      } else {
-        additions.push({ number: idx, label: undefined, sector_id: bulkSector || undefined })
-      }
-    }
-    if (additions.length > 0) {
-      await saveTables(restaurantId, [...snapshot(), ...additions])
-      setBulkFrom('')
-    }
+    await addTables(restaurantId, { count, prefix: bulkPrefix, sectorId: bulkSector || null })
     setSaving(false)
   }
 
-  // ── Alta individual (nombre propio: VIP, Barra…) ───────────
+  // ── Alta individual (nombre propio) ────────────────────────
   const handleAddCustom = async () => {
-    const label = customLabel.trim()
-    if (!label) return
-    if (tables.some(t => idOf(t) === label)) { setCustomLabel(''); return }
-    const isNum = /^\d+$/.test(label)
-    const maxNum = tables.reduce((m, t) => Math.max(m, t.number), 0)
-    const addition: TableInput = isNum
-      ? { number: parseInt(label, 10), label: undefined, sector_id: customSector || undefined }
-      : { number: maxNum + 1, label, sector_id: customSector || undefined }
-    await saveTables(restaurantId, [...snapshot(), addition].sort((a, b) => a.number - b.number))
+    if (!customLabel.trim()) return
+    await addCustomTable(restaurantId, customLabel, customSector || null)
     setCustomLabel('')
   }
 
   // ── Edición / borrado ──────────────────────────────────────
   const handleDelete = async (tableId: string) => {
-    await saveTables(restaurantId, tables.filter(t => t.id !== tableId).map(t => ({ number: t.number, label: t.label, sector_id: t.sector_id })))
+    await removeTable(restaurantId, tableId)
   }
 
   const handleClearAll = async () => {
@@ -187,7 +134,10 @@ export default function MesasConfigPage() {
 
           {/* ── Sectores ─────────────────────────────────────── */}
           <div style={card}>
-            <div style={eyebrow}>Sectores</div>
+            <div style={eyebrow}>1 · Sectores</div>
+            <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: -6, marginBottom: 12 }}>
+              Zonas del local (Salón, Terraza…). Créalas primero para asignarles mesas.
+            </p>
             {sectors.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                 {sectors.map(s => (
@@ -205,48 +155,51 @@ export default function MesasConfigPage() {
               <input placeholder="Ej: Salón, Terraza, Bar..." value={newSectorName} onChange={e => setNewSectorName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddSector()} style={{ ...inp, flex: 1 }} />
               <button onClick={handleAddSector} disabled={!newSectorName.trim()} style={{ ...btn(true), opacity: !newSectorName.trim() ? 0.5 : 1 }}>Agregar</button>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 10, marginBottom: 0 }}>
-              Crea los sectores primero; luego asigna las mesas al crearlas.
-            </p>
           </div>
 
           {/* ── Crear mesas (por cantidad, aditivo) ──────────── */}
           <div style={card}>
-            <div style={eyebrow}>Crear mesas</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div style={eyebrow}>2 · Crear mesas</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
               <div>
-                <label style={fieldLabel}>Cantidad</label>
+                <label style={fieldLabel}>¿Cuántas?</label>
                 <input type="number" min={1} max={99} value={bulkCount} onChange={e => setBulkCount(e.target.value)} style={{ ...inp, width: '100%', fontFamily: 'var(--mono)' }} />
               </div>
               <div>
-                <label style={fieldLabel}>Prefijo</label>
-                <input placeholder="T, Mesa, S… (vacío = n.º)" value={bulkPrefix} onChange={e => setBulkPrefix(e.target.value)} style={{ ...inp, width: '100%' }} />
-              </div>
-              <div>
-                <label style={fieldLabel}>Desde el n.º</label>
-                <input type="number" min={0} max={999} placeholder={String(nextFrom(bulkPrefix))} value={bulkFrom} onChange={e => setBulkFrom(e.target.value)} style={{ ...inp, width: '100%', fontFamily: 'var(--mono)' }} />
-              </div>
-              <div>
-                <label style={fieldLabel}>Sector</label>
+                <label style={fieldLabel}>¿En qué sector?</label>
                 <select value={bulkSector} onChange={e => setBulkSector(e.target.value)} style={{ ...sel, width: '100%' }}>
                   <option value="">Sin sector</option>
                   {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={fieldLabel}>Prefijo del nombre (opcional)</label>
+                <input placeholder="Ej: T, Mesa, S — vacío = números 1, 2, 3…" value={bulkPrefix} onChange={e => setBulkPrefix(e.target.value)} style={{ ...inp, width: '100%' }} />
+              </div>
             </div>
-            <button onClick={handleBulkAdd} disabled={saving || effCount < 1} style={{ ...btn(true), width: '100%', opacity: saving || effCount < 1 ? 0.6 : 1 }}>
-              {saving ? 'Guardando…' : bulkRange ? `Agregar mesas ${bulkRange}` : 'Agregar mesas'}
+
+            {/* Vista previa */}
+            {count > 0 && (
+              <div style={{ background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontSize: 13, color: 'var(--ink-2)' }}>
+                Se agregarán <strong>{count}</strong> mesa{count !== 1 ? 's' : ''}:{' '}
+                <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--ink)' }}>{count === 1 ? firstId : `${firstId} – ${lastId}`}</span>
+                {bulkSector ? <> en <strong>{sectorName(bulkSector)}</strong></> : ' sin sector'}.
+              </div>
+            )}
+
+            <button onClick={handleBulkAdd} disabled={saving || count < 1} style={{ ...btn(true), width: '100%', opacity: saving || count < 1 ? 0.6 : 1 }}>
+              {saving ? 'Guardando…' : 'Agregar mesas'}
             </button>
             <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 10, marginBottom: 0 }}>
-              Se <strong>suman</strong> a las mesas actuales. Se omiten los identificadores repetidos.
+              Se <strong>suman</strong> a las que ya tienes (no borra nada). La numeración continúa sola y se omiten nombres repetidos.
             </p>
           </div>
 
           {/* ── Agregar una mesa con nombre propio ───────────── */}
           <div style={card}>
-            <div style={eyebrow}>Agregar una mesa</div>
-            <p style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 10 }}>
-              Para nombres sueltos: un número (12) o texto (VIP, Barra, T-3).
+            <div style={eyebrow}>Agregar una suelta</div>
+            <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: -6, marginBottom: 10 }}>
+              Para nombres puntuales: un número (12) o texto (VIP, Barra, T-3).
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input
