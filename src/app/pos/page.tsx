@@ -495,7 +495,8 @@ export default function PosHomePage() {
                       )
                     })}
                     {(() => {
-                      const sinSector = tables.filter(t => !t.sector_id)
+                      // Incluye mesas huérfanas (sector_id que ya no existe) para no ocultarlas.
+                      const sinSector = tables.filter(t => !t.sector_id || !sectors.some(s => s.id === t.sector_id))
                       if (sinSector.length === 0) return null
                       return (
                         <div className="pos-sector-group">

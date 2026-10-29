@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
-import { saveSectors, updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, saveTables, nextTableNumber } from '@/lib/pos'
+import { updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, saveTables, nextTableNumber, addSector, removeSector } from '@/lib/pos'
 import PosHeader from '../../components/PosHeader'
 import { usePosNav } from '../../lib/usePosNav'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
@@ -35,22 +35,12 @@ export default function MesasConfigPage() {
 
   // ── Sectores ───────────────────────────────────────────────
   const handleAddSector = async () => {
-    const name = newSectorName.trim()
-    if (!name || sectors.some(s => s.name.toLowerCase() === name.toLowerCase())) return
-    await saveSectors(restaurantId, [
-      ...sectors.map((s, i) => ({ name: s.name, position: i })),
-      { name, position: sectors.length },
-    ])
-    setNewSectorName('')
+    const ok = await addSector(restaurantId, newSectorName)
+    if (ok) setNewSectorName('')
   }
 
   const handleDeleteSector = async (sectorId: string) => {
-    const tablesInSector = tables.filter(t => t.sector_id === sectorId)
-    await Promise.all(tablesInSector.map(t => updateTableSector(t.id, null)))
-    await saveSectors(
-      restaurantId,
-      sectors.filter(s => s.id !== sectorId).map((s, i) => ({ name: s.name, position: i }))
-    )
+    await removeSector(restaurantId, sectorId)
     if (bulkSector === sectorId) setBulkSector('')
     if (customSector === sectorId) setCustomSector('')
   }
@@ -105,7 +95,9 @@ export default function MesasConfigPage() {
       name: s.name,
       tables: tables.filter(t => t.sector_id === s.id),
     })),
-    { id: '', name: 'Sin sector', tables: tables.filter(t => !t.sector_id) },
+    // "Sin sector" incluye también las mesas huérfanas (sector_id que ya no
+    // corresponde a ningún sector), para que nunca queden invisibles.
+    { id: '', name: 'Sin sector', tables: tables.filter(t => !t.sector_id || !sectors.some(s => s.id === t.sector_id)) },
   ].filter(g => g.tables.length > 0 || (g.id === '' && sectors.length === 0))
 
   const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: 20, marginBottom: 20, boxShadow: 'var(--sh-1)' }

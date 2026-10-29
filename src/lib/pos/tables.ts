@@ -128,6 +128,43 @@ export async function updateTableLabel(tableId: string, label: string): Promise<
   await configureTables({ tables: updated })
 }
 
+/**
+ * Agrega un sector CONSERVANDO los ids de los sectores existentes. Antes
+ * (saveSectors) se regeneraban todos los ids con uuid nuevo, lo que dejaba
+ * huérfanas las mesas de los sectores previos (su sector_id apuntaba a un id
+ * que ya no existía). false si el nombre está vacío o repetido.
+ */
+export async function addSector(restaurantId: string, name: string): Promise<boolean> {
+  const n = name.trim()
+  if (!n) return false
+  const current = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
+  if (current.some(s => s.name.toLowerCase() === n.toLowerCase())) return false
+  const sorted = [...current].sort((a, b) => a.position - b.position)
+  const rows: PosSector[] = [
+    ...sorted.map((s, i) => ({ ...s, position: i })),
+    { id: uuidv4(), restaurant_id: restaurantId, name: n, position: sorted.length },
+  ]
+  await configureSectors({ sectors: rows })
+  return true
+}
+
+/**
+ * Elimina un sector conservando los ids de los demás, y reasigna sus mesas a
+ * "sin sector" (conservando los ids de las mesas, no las borra).
+ */
+export async function removeSector(restaurantId: string, sectorId: string): Promise<void> {
+  const tbls = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
+  if (tbls.some(t => t.sector_id === sectorId)) {
+    await configureTables({ tables: tbls.map(t => t.sector_id === sectorId ? { ...t, sector_id: undefined } : t) })
+  }
+  const current = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
+  const rows = current
+    .filter(s => s.id !== sectorId)
+    .sort((a, b) => a.position - b.position)
+    .map((s, i) => ({ ...s, position: i }))
+  await configureSectors({ sectors: rows })
+}
+
 export async function saveSectors(restaurantId: string, sectors: { name: string; position: number }[]): Promise<void> {
   const rows: PosSector[] = sectors.map(s => ({
     id: uuidv4(),
