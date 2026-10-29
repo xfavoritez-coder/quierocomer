@@ -354,30 +354,39 @@ export default function PosHomePage() {
     const isCuentaPedida = status === 'cuenta_pedida'
     const isActivePanel = isDesktop && activePanelTableId === table.id
     return (
-      <button
-        key={table.id}
-        className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
-        onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
-      >
-        <span className="mn">{table.label || table.number}</span>
-        <div className="pos-mesa-center">
-          {status === 'libre' ? (
-            <span className="ms">Libre</span>
-          ) : isCuentaPedida ? (
-            <>
-              {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
-              <span className="ms">Pidió cuenta</span>
-            </>
-          ) : acc ? (
-            acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
-          ) : null}
-        </div>
-        {acc && (
-          <div className="pos-mesa-bottom">
-            <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+      <div key={table.id} className={`pos-mesa-cell ${status}`}>
+        {/* Nombre de la mesa, ARRIBA del cuadrado */}
+        <span className="pos-mesa-name">{table.label || table.number}</span>
+        <button
+          className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
+          onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
+        >
+          <div className="pos-mesa-center">
+            {status === 'libre' ? (
+              <span className="ms">Libre</span>
+            ) : isCuentaPedida ? (
+              <>
+                {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
+                <span className="ms">Pidió cuenta</span>
+              </>
+            ) : acc ? (
+              acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
+            ) : null}
           </div>
+          {acc && (
+            <div className="pos-mesa-bottom">
+              <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+            </div>
+          )}
+        </button>
+        {/* Nombre del garzón que abrió la mesa, DEBAJO del cuadrado */}
+        {acc?.opened_by_name && (
+          <span className="pos-mesa-garzon" title={acc.opened_by_name}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
+            {acc.opened_by_name}
+          </span>
         )}
-      </button>
+      </div>
     )
   }
 

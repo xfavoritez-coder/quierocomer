@@ -291,6 +291,13 @@
 .pos-mesa.cuenta_pedida .mn{color:var(--ink)}
 .pos-mesa.cuenta_pedida .ms{color:#2563eb}
 .pos-mesa.cuenta_pedida .mt{color:#2563eb}
+/* Nombre de la mesa arriba del cuadrado, garzón debajo */
+.pos-mesa-cell{display:flex;flex-direction:column;align-items:center;gap:5px}
+.pos-mesa-cell .pos-mesa{width:100%;min-height:118px}
+.pos-mesa-name{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1;color:var(--ink)}
+.pos-mesa-cell.libre .pos-mesa-name{color:var(--ink-3)}
+.pos-mesa-garzon{display:inline-flex;align-items:center;gap:4px;max-width:100%;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--ink-2);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-mesa-garzon svg{flex-shrink:0;opacity:.7}
 
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
