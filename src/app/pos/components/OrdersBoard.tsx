@@ -30,6 +30,7 @@ interface PosOrderLite {
   tipAmount: number
   changeAmount: number
   deliveryFee: number
+  vendorName?: string | null
   items: unknown
   createdAt: string
   rawPayload?: unknown
@@ -148,6 +149,9 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                     {paid ? 'Pagado' : 'Por cobrar'}
                   </span>
                 </div>
+                {o.vendorName && (
+                  <span style={{ alignSelf: 'flex-start', fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 7px' }}>{o.vendorName}</span>
+                )}
                 {o.customerPhone && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{o.customerPhone}</div>}
                 {type === 'delivery' && o.addressLine && <div style={{ fontSize: 12, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.addressLine}</div>}
                 <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
