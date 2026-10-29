@@ -406,3 +406,10 @@
 @media(min-width:841px){
   .pos-mobile{display:none!important}
 }
+/* Móvil: mínimo 3 mesas por fila */
+@media(max-width:480px){
+  .pos-mesa-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .pos-mesa-cell .pos-mesa{min-height:96px;padding:8px 6px}
+  .pos-mesa-name{font-size:16px}
+  .pos-mesa-garzon{font-size:10px}
+}
