@@ -106,7 +106,7 @@ export async function PATCH(req: NextRequest) {
   // el schema): paidAmount/tipAmount/changeAmount + el método en rawPayload.
   if (body?.action === "pay") {
     const method = String(body?.method || "").toLowerCase();
-    if (!["efectivo", "tarjeta", "transferencia"].includes(method)) {
+    if (!["efectivo", "debito", "credito", "transferencia"].includes(method)) {
       return NextResponse.json({ error: "Método inválido" }, { status: 400 });
     }
     const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, rawPayload: true } });

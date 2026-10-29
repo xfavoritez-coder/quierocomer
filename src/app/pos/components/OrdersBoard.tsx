@@ -1,8 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { setRestaurantId, setUserId, registerExternalPayment } from '@/lib/pos'
+import type { PaymentMethod } from '@/lib/pos'
 
 type OrderType = 'retiro' | 'delivery'
+
+const TEST_USER_ID = 'pos-garzon'
+
+// Métodos de pago del POS (para que el arqueo cuadre por método)
+const METHODS: { id: PaymentMethod; label: string }[] = [
+  { id: 'efectivo', label: 'Efectivo' },
+  { id: 'debito', label: 'Débito' },
+  { id: 'credito', label: 'Crédito' },
+  { id: 'transferencia', label: 'Transferencia' },
+]
 
 interface PosOrderLite {
   id: string
@@ -48,6 +60,10 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [loading, setLoading] = useState(true)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (restaurantId) { setRestaurantId(restaurantId); setUserId(TEST_USER_ID) }
+  }, [restaurantId])
 
   const fetchOrders = useCallback(async () => {
     if (!restaurantId) return
@@ -135,16 +151,17 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       )}
 
       {cobro && (
-        <CobroModal order={cobro} restaurantId={restaurantId} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+        <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
       )}
     </div>
   )
 }
 
 // ── Modal de cobro (completo: método, recibido, vuelto, propina) ──────
-function CobroModal({ order, restaurantId, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; onClose: () => void; onPaid: () => void }) {
+function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; onClose: () => void; onPaid: () => void }) {
   const total = order.totalAmount || 0
-  const [method, setMethod] = useState<'efectivo' | 'tarjeta' | 'transferencia'>('efectivo')
+  const paid = isPaid(order)
+  const [method, setMethod] = useState<PaymentMethod>('efectivo')
   const [received, setReceived] = useState<string>('')
   const [tip, setTip] = useState<string>('')
   const [sending, setSending] = useState(false)
@@ -163,13 +180,42 @@ function CobroModal({ order, restaurantId, onClose, onPaid }: { order: PosOrderL
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, action: 'pay', method, received: receivedNum, tip: tipNum }),
       })
-      if (r.ok) onPaid()
+      if (r.ok) {
+        // Registrar en la caja del POS (cuenta cerrada con el pago) para el arqueo.
+        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: tipNum, method }).catch(() => {})
+        onPaid()
+      }
     } catch { /* noop */ }
     setSending(false)
   }
 
   const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }
   const num: React.CSSProperties = { fontFamily: 'var(--mono)', fontVariantNumeric: 'tabular-nums' }
+
+  // Pedido ya pagado (p.ej. online): solo lectura, no se re-cobra ni se duplica en caja.
+  if (paid) {
+    const pp = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload))
+      ? ((order.rawPayload as Record<string, unknown>).posPayment as { method?: string } | undefined) : undefined
+    return (
+      <div className="pos-modal-overlay" onClick={onClose}>
+        <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
+          <div className="pos-modal-title">{order.customerName || 'Cliente'}</div>
+          <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 10 }}>
+            <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
+            <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#16a34a', fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Pagado{pp?.method ? ` · ${pp.method}` : ''}
+          </div>
+          {order.tipAmount > 0 && <div style={{ ...row }}><span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Propina</span><span style={num}>{clp(order.tipAmount)}</span></div>}
+          <div className="pos-modal-actions" style={{ marginTop: 16 }}>
+            <button className="pos-modal-ok" style={{ flex: 1 }} onClick={onClose}>Cerrar</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
@@ -183,14 +229,14 @@ function CobroModal({ order, restaurantId, onClose, onPaid }: { order: PosOrderL
 
         {/* Método */}
         <label className="pos-modal-label">Método de pago</label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-          {(['efectivo', 'tarjeta', 'transferencia'] as const).map((m) => (
-            <button key={m} onClick={() => setMethod(m)} style={{
-              padding: '10px 6px', borderRadius: 10, cursor: 'pointer', fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 13, textTransform: 'capitalize',
-              border: method === m ? '2px solid var(--amber)' : '1px solid var(--line)',
-              background: method === m ? 'var(--amber-tint)' : 'var(--sunk)',
-              color: method === m ? 'var(--amber-press)' : 'var(--ink-2)',
-            }}>{m}</button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+          {METHODS.map((m) => (
+            <button key={m.id} onClick={() => setMethod(m.id)} style={{
+              padding: '10px 6px', borderRadius: 10, cursor: 'pointer', fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 13,
+              border: method === m.id ? '2px solid var(--amber)' : '1px solid var(--line)',
+              background: method === m.id ? 'var(--amber-tint)' : 'var(--sunk)',
+              color: method === m.id ? 'var(--amber-press)' : 'var(--ink-2)',
+            }}>{m.label}</button>
           ))}
         </div>
 

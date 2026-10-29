@@ -17,6 +17,8 @@ import type {
   SectorsConfiguredPayload,
   StaffSavedPayload,
   StaffDeletedPayload,
+  PaymentMethod,
+  AccountType,
 } from './types'
 
 // ── Device & user context ────────────────────────────────────────
@@ -115,6 +117,30 @@ export async function openCashSession(payload: CashSessionOpenedPayload) {
 
 export async function closeCashSession(payload: CashSessionClosedPayload) {
   return createEvent('cash_session_closed', payload as unknown as Record<string, unknown>)
+}
+
+/**
+ * Registra en la caja del POS el cobro de un pedido externo del Centro de
+ * pedidos (chips Retiro/Delivery), creando una cuenta cerrada con su pago para
+ * que entre al arqueo (useSessionSummary). Id determinístico `po_<orderId>`
+ * para no duplicar si se reintenta. Devuelve false si ya estaba registrado.
+ */
+export async function registerExternalPayment(opts: {
+  orderId: string
+  type: 'retiro' | 'delivery'
+  customerName?: string
+  amount: number
+  tip: number
+  method: PaymentMethod
+}): Promise<boolean> {
+  const accountId = `po_${opts.orderId}`
+  const existing = await posDb.accounts.get(accountId)
+  if (existing) return false
+  const account_type: AccountType = opts.type === 'delivery' ? 'delivery' : 'retiro'
+  await openAccount({ account_id: accountId, account_type, customer_name: opts.customerName })
+  await recordPayment({ payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method })
+  await closeAccount({ account_id: accountId })
+  return true
 }
 
 export async function configureTables(payload: TablesConfiguredPayload) {

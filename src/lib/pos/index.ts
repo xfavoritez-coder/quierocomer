@@ -16,6 +16,7 @@ export {
   voidItem,
   recordPayment,
   closeAccount,
+  registerExternalPayment,
   voidAccount,
   openCashSession,
   closeCashSession,
