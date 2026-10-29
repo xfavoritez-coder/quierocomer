@@ -15,18 +15,22 @@ interface StoredItem { name?: string; dishName?: string; quantity?: number }
 
 /** Espeja un OnlineOrder (ecommerce/manual) al Centro de pedidos como PosOrder,
  *  solo si el local NO está en modo POS. Idempotente por externalId "oo-<id>". */
-export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" | "manual"): Promise<void> {
+export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" | "manual", opts?: { force?: boolean }): Promise<void> {
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
     include: { restaurant: { select: { name: true, centroPedidosConfig: true, ecommerceConfig: true } } },
   });
   if (!order) return;
 
-  const posMode = effectivePosMode(
-    parseCentroPedidosConfig(order.restaurant.centroPedidosConfig),
-    parseEcommerceConfig(order.restaurant.ecommerceConfig),
-  );
-  if (posMode) return; // el POS gestiona estos pedidos; no espejar
+  // force=true: espejar SIEMPRE (pedido tomado en el POS nativo, que reemplaza a
+  // Toteat; no se envía a Toteat, así que el PosOrder debe crearse acá).
+  if (!opts?.force) {
+    const posMode = effectivePosMode(
+      parseCentroPedidosConfig(order.restaurant.centroPedidosConfig),
+      parseEcommerceConfig(order.restaurant.ecommerceConfig),
+    );
+    if (posMode) return; // el POS (Toteat) gestiona estos pedidos; no espejar
+  }
 
   const restaurantId = order.restaurantId;
   const externalId = `oo-${order.id}`;

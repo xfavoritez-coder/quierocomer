@@ -12,7 +12,9 @@ export default function PosTomarPedidoPage() {
   return (
     <div className="pos-tomar-wrap">
       <style>{`.pos-tomar-wrap{padding:24px 32px;min-height:100dvh;background:#f8fafc}@media(max-width:767px){.pos-tomar-wrap{padding:16px}}`}</style>
-      <TomarPedidos restaurantId={restaurantId} backHref="/pos" backLabel="Mesas" />
+      {/* En el POS NO se envía a Toteat: este POS reemplaza a Toteat. El pedido
+          igual queda en el Centro de pedidos (mirror) y en los chips del POS. */}
+      <TomarPedidos restaurantId={restaurantId} backHref="/pos" backLabel="Mesas" disableToteat />
     </div>
   )
 }

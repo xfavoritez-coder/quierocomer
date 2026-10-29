@@ -40,11 +40,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       restaurantId, customerName, customerPhone, orderType, deliveryAddress,
-      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos,
+      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative,
     } = body as {
       restaurantId?: string; customerName?: string; customerPhone?: string; orderType?: string;
       deliveryAddress?: string; deliveryLat?: number; deliveryLng?: number; items?: ManualItem[];
-      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean;
+      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean;
     };
 
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
@@ -123,10 +123,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Tomado en el POS nativo (reemplaza a Toteat): nunca se despacha a Toteat.
     let pos: { ok: boolean; message: string; skipped?: boolean } | null = null;
-    if (sendToPos) pos = await dispatchOrderToPos(order.id, { channel: "manual" }).catch((e) => ({ ok: false, message: String(e) }));
-    // Si el local no gestiona por POS, el pedido manual se espeja al Centro de pedidos.
-    void mirrorOnlineOrderToCentro(order.id, "manual").catch(() => {});
+    if (sendToPos && !posNative) pos = await dispatchOrderToPos(order.id, { channel: "manual" }).catch((e) => ({ ok: false, message: String(e) }));
+    // Espeja el pedido al Centro de pedidos (PosOrder). Normalmente solo cuando el
+    // local NO gestiona por POS; con posNative se fuerza (el POS nativo no envía a
+    // Toteat, así que el PosOrder debe crearse acá para verse en el board y chips).
+    void mirrorOnlineOrderToCentro(order.id, "manual", { force: !!posNative }).catch(() => {});
 
     return NextResponse.json({ ok: true, orderId: order.id, orderNumber, pos });
   } catch (e) {

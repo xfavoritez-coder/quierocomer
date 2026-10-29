@@ -41,7 +41,7 @@ const C = {
 // Componente reutilizable: recibe el restaurantId por prop (el panel lo toma de
 // la sesión; el POS lo toma de usePosRestaurant). `backHref`/`backLabel` definen
 // el enlace "atrás" según dónde se embeba.
-export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos" }: { restaurantId?: string | null; backHref?: string; backLabel?: string }) {
+export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean }) {
   const [data, setData] = useState<StorefrontData | null>(null);
   const [posAvailable, setPosAvailable] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       <CollapseSidebar />
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} />}
     </>
   );
 }
@@ -87,7 +87,7 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; mapsKey: string | null; backHref: string; backLabel: string }) {
+function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string }) {
   const { tenant, categories, products } = data;
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
@@ -264,7 +264,7 @@ function POS({ data, restaurantId, posAvailable, mapsKey, backHref, backLabel }:
           deliveryAddress: deliveryType === "DELIVERY" ? addressFull : null,
           deliveryLat: geo.lat ?? null, deliveryLng: geo.lng ?? null,
           paymentMethod, notes: [accomNote, notes.trim()].filter(Boolean).join(" | ") || null,
-          discount, deliveryFee: fee, sendToPos: posAvailable && sendToPos,
+          discount, deliveryFee: fee, sendToPos: posAvailable && sendToPos, posNative: disableToteat,
           items: cart.map((i) => ({
             product_id: i.product_id, name: i.name, unit_price: i.courtesy ? 0 : i.unit_price, quantity: i.quantity,
             toteat_code: i.toteat_code, comment: i.comment, courtesy: i.courtesy, courtesyReason: i.courtesyReason, options: i.options,
