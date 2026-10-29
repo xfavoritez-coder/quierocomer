@@ -25,10 +25,11 @@ import type { PosRestaurant } from './lib/usePosRestaurant'
 import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
+import OrdersBoard from './components/OrdersBoard'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas'
+type Tab = 'mesas' | 'retiro' | 'delivery'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -47,6 +48,8 @@ const statusLabel: Record<TableStatus, string> = {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
+  { id: 'retiro', label: 'Retiro' },
+  { id: 'delivery', label: 'Delivery' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -442,7 +445,15 @@ export default function PosHomePage() {
         }
       />
 
+      {/* ── Retiro / Delivery: pedidos del Centro de pedidos, con cobro ── */}
+      {tab !== 'mesas' && (
+        <div className="pos-scroll">
+          <OrdersBoard restaurantId={restaurantId} type={tab} />
+        </div>
+      )}
+
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
+      {tab === 'mesas' && (
       <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '420px 1fr', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* ── Content (mesas: columna DERECHA en desktop; el panel va a la izquierda) ──────────── */}
@@ -581,7 +592,8 @@ export default function PosHomePage() {
         </div>
       )}
 
-      </div>{/* /pos-split-wrapper */}
+      </div>
+      )}{/* /pos-split-wrapper */}
 
       {/* ── Modals ──────────────────────────────────────────── */}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}

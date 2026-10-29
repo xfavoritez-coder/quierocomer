@@ -98,9 +98,35 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const restaurantId = (body?.restaurantId || "").toString();
   const id = (body?.id || "").toString();
-  const opsStage = (body?.opsStage || "").toString();
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  // ── Cobro desde el POS (chips Delivery/Retiro) ──────────────────────
+  // Registra el pago sobre el PosOrder usando los campos existentes (sin tocar
+  // el schema): paidAmount/tipAmount/changeAmount + el método en rawPayload.
+  if (body?.action === "pay") {
+    const method = String(body?.method || "").toLowerCase();
+    if (!["efectivo", "tarjeta", "transferencia"].includes(method)) {
+      return NextResponse.json({ error: "Método inválido" }, { status: 400 });
+    }
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, rawPayload: true } });
+    if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    const total = order.totalAmount || 0;
+    const tip = Math.max(0, Math.round(Number(body?.tip) || 0));
+    const received = method === "efectivo" ? Math.max(0, Math.round(Number(body?.received) || 0)) : total;
+    const change = Math.max(0, received - total);
+    const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
+      ? (order.rawPayload as Record<string, unknown>) : {};
+    const rawPayload = { ...prevRaw, posPayment: { method, received, tip, at: new Date().toISOString() } };
+    const updated = await prisma.posOrder.update({
+      where: { id },
+      data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },
+    });
+    void syncOnlineOrderFromPos(updated).catch(() => {});
+    return NextResponse.json({ order: updated });
+  }
+
+  const opsStage = (body?.opsStage || "").toString();
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
   const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, deliveryFee: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
