@@ -21,7 +21,13 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_SIZE) return NextResponse.json({ error: "El archivo es muy grande. Máximo 10MB." }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const optimized = await optimizeImage(buffer);
+    // Los banners/hero se ven a ancho completo: permiten más resolución que el
+    // tope por defecto (1200) para que no se vean borrosos en escritorio.
+    const maxDimParam = Number(formData.get("maxDimension"));
+    const maxDimension = Number.isFinite(maxDimParam) && maxDimParam > 0
+      ? maxDimParam
+      : folder === "banners" ? 2000 : undefined;
+    const optimized = await optimizeImage(buffer, maxDimension ? { maxDimension } : {});
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
 
     const { error } = await supabase.storage

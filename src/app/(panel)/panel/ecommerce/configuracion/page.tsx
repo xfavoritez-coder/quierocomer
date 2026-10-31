@@ -388,7 +388,7 @@ export default function EcommerceConfiguracionPage() {
           {/* Banner de la tienda (tema base) */}
           {tab === "web" && (
           <section style={card}>
-            <SectionTitle icon={ImageIcon} title="Banner de la tienda" sub="Imagen grande (hero) que se muestra arriba en tu tienda con el tema Base. Ideal: imagen horizontal/panorámica (JPG, PNG o WebP), aprox. 1600×500." />
+            <SectionTitle icon={ImageIcon} title="Banner de la tienda" sub="Imagen grande (hero) que se muestra COMPLETA arriba en tu tienda con el tema Base (no se recorta). Ideal: imagen horizontal/panorámica, ancho ~2000px (JPG, PNG o WebP). Para que se vea nítida en escritorio, súbela lo más ancha posible." />
             <div style={{ marginTop: 12 }}>
               <div style={{ width: "100%", height: 96, borderRadius: 12, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                 {cfg.bannerUrl ? (

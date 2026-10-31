@@ -254,11 +254,10 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
         </div>
       </header>
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
+      {/* ── Hero: banner completo, sin recorte ni capa oscura ────── */}
       {tenant.bannerUrl && (
-        <div className="relative h-44 sm:h-64 overflow-hidden">
-          <img src={tenant.bannerUrl} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.25)" }} />
+        <div className="w-full overflow-hidden">
+          <img src={tenant.bannerUrl} alt="" className="block w-full h-auto" />
         </div>
       )}
 
