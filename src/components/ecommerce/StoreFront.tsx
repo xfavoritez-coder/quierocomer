@@ -374,8 +374,10 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             )}
           </div>
 
-          {/* Carrito lateral — sm+ (tablets y pantalla interna del iPhone Duo, 669pt). Más angosto en pantallas chicas. */}
-          <div className="hidden sm:block w-64 lg:w-80 shrink-0 sticky top-[72px]">
+          {/* Carrito lateral — sm+ (tablets y pantalla interna del iPhone Duo). En el
+              rango del iPhone Duo ocupa la mitad (alineado al pliegue); desde lg
+              vuelve a ancho fijo para que no quede muy ancho en escritorio. */}
+          <div className="hidden sm:block w-1/2 lg:w-80 shrink-0 sticky top-[72px]">
             <CartPanel
               tenant={tenant}
               primaryColor={primaryColor}
