@@ -248,7 +248,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             )}
           </div>
           {/* Acceso a cuenta/menú — solo desktop (en móvil está el menú flotante) */}
-          <button onClick={() => openMenu("root")} aria-label="Menú" className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition">
+          <button onClick={() => openMenu("root")} aria-label="Menú" className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition">
             <MenuIcon className="w-6 h-6" />
           </button>
         </div>
@@ -293,8 +293,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
         </div>
       )}
 
-      {/* ── Selector de entrega — solo mobile ─── */}
-      <div className="lg:hidden bg-white border-b border-gray-100 px-4 py-3">
+      {/* ── Selector de entrega — solo mobile (en md+ va en el carrito lateral) ─── */}
+      <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3">
         <MobileDeliveryBar tenant={tenant} primaryColor={primaryColor} onOpen={() => setDeliveryModalOpen(true)} />
       </div>
 
@@ -357,7 +357,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               return (
                 <section key={cat.id} id={`cat-${cat.id}`}>
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
                       <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
                     ))}
@@ -374,8 +374,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
             )}
           </div>
 
-          {/* Carrito lateral — solo desktop */}
-          <div className="hidden lg:block w-80 shrink-0 sticky top-[72px]">
+          {/* Carrito lateral — md+ (tablets y pantalla interna del iPhone Duo) */}
+          <div className="hidden md:block w-80 shrink-0 sticky top-[72px]">
             <CartPanel
               tenant={tenant}
               primaryColor={primaryColor}
@@ -390,7 +390,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
 
       {/* ── Footer ───────────────────────────────────────────────── */}
       {/* pb extra en móvil para que el texto quede por encima del menú flotante */}
-      <footer className="border-t border-gray-100 bg-white pt-12 pb-32 lg:pt-14 lg:pb-14">
+      <footer className="border-t border-gray-100 bg-white pt-12 pb-32 md:pt-14 md:pb-14">
         <p className="text-center text-xs text-gray-400">powered by QuieroComer · 2026</p>
       </footer>
 
@@ -411,7 +411,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
       {/* El carrito va absoluto y sobresale por encima del borde plano de la
           barra → silueta de "tiara". El hueco central (span) le reserva sitio. */}
-      <nav className="lg:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
+      <nav className="md:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
         <div className="pointer-events-auto relative flex items-center gap-3 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-4 h-16">
           <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
           <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
