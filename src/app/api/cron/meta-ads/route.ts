@@ -69,6 +69,10 @@ export async function GET(req: NextRequest) {
   const campaignId = req.nextUrl.searchParams.get("cid") || process.env.META_CAMPAIGN_ID;
   if (!campaignId) return NextResponse.json({ error: "META_CAMPAIGN_ID no configurado" }, { status: 500 });
 
+  // hour/budget en query param permiten overrides para campañas con horario distinto al default
+  const hourParam = req.nextUrl.searchParams.get("hour");
+  const budgetParam = req.nextUrl.searchParams.get("budget");
+
   const start = Date.now();
   const jobName = `meta-ads-${action}-${campaignId}`;
   try {
@@ -77,7 +81,8 @@ export async function GET(req: NextRequest) {
     const results: Record<string, any> = { chileHour: hour, chileDay: dayName, campaignId };
 
     // Verificar que estamos en la hora correcta en Chile (±1h de tolerancia)
-    const expectedHour = action === "activate" ? 16 : 22;
+    const defaultHour = action === "activate" ? 16 : 22;
+    const expectedHour = hourParam ? parseInt(hourParam, 10) : defaultHour;
     if (Math.abs(hour - expectedHour) > 1) {
       console.log(`[meta-ads] Skip — hora Chile actual: ${hour}:xx, esperada: ${expectedHour}:xx`);
       await prisma.cronLog.create({
@@ -90,9 +95,9 @@ export async function GET(req: NextRequest) {
       // 1. Activar campaña
       results.status = await metaPost(campaignId, { status: "ACTIVE" });
 
-      // 2. Presupuesto según día: vie(5) o sáb(6) = $15.000, resto = $10.000
+      // 2. Presupuesto: usa el param ?budget si viene, si no calcula según día
       const isWeekend = day === 5 || day === 6;
-      const budget = isWeekend ? BUDGET_WEEKEND : BUDGET_WEEKDAY;
+      const budget = budgetParam ? parseInt(budgetParam, 10) : (isWeekend ? BUDGET_WEEKEND : BUDGET_WEEKDAY);
       results.budget = await metaPost(campaignId, { daily_budget: budget });
       results.budgetSet = budget;
 
