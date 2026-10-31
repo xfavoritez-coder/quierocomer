@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
-import { Bell, Send, MapPin, Users, Cake } from "lucide-react";
+import { Bell, Send, MapPin, Users, Cake, History } from "lucide-react";
 import AddressPicker from "@/components/admin/AddressPicker";
 import type { MemberFilter } from "@/lib/loyalty/memberFilter";
 
@@ -59,6 +59,12 @@ const FILTER_LABEL: Record<MemberFilter, string> = Object.fromEntries(
   FILTER_OPTIONS.map((o) => [o.value, o.label])
 ) as Record<MemberFilter, string>;
 
+interface BirthdayMember {
+  id: string;
+  name: string | null;
+  birthDate: string | null;
+}
+
 interface Broadcast {
   id: string;
   title: string;
@@ -66,11 +72,12 @@ interface Broadcast {
   recipients: number;
   filter: string;
   createdAt: string;
+  birthdayMembers?: BirthdayMember[] | null;
 }
 
 export default function LoyaltyNotifyPage() {
   const { selectedRestaurantId, loading } = usePanelSession();
-  const [tab, setTab] = useState<"send" | "birthday" | "proximity">("send");
+  const [tab, setTab] = useState<"send" | "birthday" | "proximity" | "history">("send");
 
   // ── Enviar notificación ──
   const [title, setTitle] = useState("");
@@ -291,6 +298,7 @@ export default function LoyaltyNotifyPage() {
           { key: "send", label: "Enviar" },
           { key: "birthday", label: "Cumpleaños" },
           { key: "proximity", label: "Cercanía" },
+          { key: "history", label: "Historial" },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
@@ -443,34 +451,25 @@ export default function LoyaltyNotifyPage() {
             </div>
           </div>
 
-          {/* Historial */}
           {history.length > 0 && (
-            <div style={{ marginTop: 26 }}>
-              <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text2)", margin: "0 0 10px" }}>Enviadas</p>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {history.map((b) => {
-                  const filterOpt = FILTER_OPTIONS.find((o) => o.value === b.filter);
-                  return (
-                    <li key={b.id} style={{ padding: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-                      {b.title && <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>{b.title}</p>}
-                      <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "1px 0 0", lineHeight: 1.4 }}>{b.body}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        {new Date(b.createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                        {" · "}
-                        {b.recipients} destinatario{b.recipients !== 1 ? "s" : ""}
-                        {filterOpt && filterOpt.value !== "all" && (
-                          <span style={{ padding: "1px 7px", borderRadius: 10, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>
-                            {filterOpt.emoji} {filterOpt.label}
-                          </span>
-                        )}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
+            <div style={{ marginTop: 20, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              <History size={14} color="var(--adm-text3)" />
+              <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>
+                Último envío: {new Date(history[0].createdAt).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {history[0].recipients} destinatario{history[0].recipients !== 1 ? "s" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => setTab("history")}
+                style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: GOLD, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                Ver historial completo →
+              </button>
             </div>
           )}
         </>
+      ) : tab === "history" ? (
+        /* ── Tab Historial ── */
+        <HistoryTab history={history} loadHistory={loadHistory} />
       ) : tab === "birthday" ? (
         /* ── Tab Cumpleaños ── */
         loadingBirthday ? (
@@ -633,6 +632,200 @@ export default function LoyaltyNotifyPage() {
           </div>
         )
       )}
+    </div>
+  );
+}
+
+// ── Componente HistoryTab ─────────────────────────────────────────────────────
+
+const FILTER_BADGE: Record<string, { label: string; emoji: string; color: string }> = {
+  all:            { label: "Todos",           emoji: "📣", color: "#6366f1" },
+  birthday_today: { label: "Cumpleaños",      emoji: "🎂", color: "#ec4899" },
+  birthday_week:  { label: "Cumpleaños · semana", emoji: "🎁", color: "#f97316" },
+  loyal:          { label: "Frecuentes",      emoji: "⭐", color: "#eab308" },
+  active:         { label: "Activos",         emoji: "🔥", color: "#22c55e" },
+  inactive:       { label: "Inactivos",       emoji: "😴", color: "#94a3b8" },
+  no_stamps:      { label: "Sin sellos",      emoji: "👋", color: "#64748b" },
+  auto_birthday:  { label: "Cumpleaños auto", emoji: "🎂", color: "#ec4899" },
+};
+
+function HistoryTab({
+  history,
+  loadHistory,
+}: {
+  history: Broadcast[];
+  loadHistory: () => void;
+}) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  if (history.length === 0) {
+    return (
+      <div style={{ padding: "32px 0", textAlign: "center" }}>
+        <History size={32} color="var(--adm-text3)" style={{ margin: "0 auto 10px" }} />
+        <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text3)", margin: 0 }}>
+          Aún no hay mensajes enviados.
+        </p>
+        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+          Los envíos manuales y los automáticos de cumpleaños aparecerán aquí.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <p style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text2)", margin: 0 }}>
+          {history.length} mensaje{history.length !== 1 ? "s" : ""} enviado{history.length !== 1 ? "s" : ""}
+        </p>
+        <button
+          type="button"
+          onClick={loadHistory}
+          style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          Actualizar
+        </button>
+      </div>
+
+      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+        {history.map((b) => {
+          const badge = FILTER_BADGE[b.filter] ?? { label: b.filter, emoji: "📨", color: "var(--adm-text3)" };
+          const isBirthday = b.filter === "birthday_today" || b.filter === "auto_birthday";
+          const isOpen = expanded === b.id;
+          const hasMemberList = isBirthday && b.birthdayMembers && b.birthdayMembers.length > 0;
+
+          return (
+            <li
+              key={b.id}
+              style={{
+                background: "var(--adm-card)",
+                border: "1px solid var(--adm-card-border)",
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              {/* Cabecera */}
+              <div style={{ padding: "12px 14px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    {b.title && (
+                      <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>
+                        {b.title}
+                      </p>
+                    )}
+                    <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.45 }}>
+                      {b.body}
+                    </p>
+                  </div>
+                  {/* Badge tipo */}
+                  <span style={{
+                    flexShrink: 0,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    fontSize: "0.72rem",
+                    fontFamily: F,
+                    fontWeight: 600,
+                    background: `${badge.color}22`,
+                    color: badge.color,
+                    border: `1px solid ${badge.color}44`,
+                  }}>
+                    {badge.emoji} {badge.label}
+                  </span>
+                </div>
+
+                {/* Metadatos */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
+                    {new Date(b.createdAt).toLocaleString("es-CL", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>·</span>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
+                    {b.recipients} destinatario{b.recipients !== 1 ? "s" : ""}
+                  </span>
+
+                  {hasMemberList && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : b.id)}
+                      style={{
+                        marginLeft: "auto",
+                        fontFamily: F,
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        color: "#ec4899",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      {isOpen ? "Ocultar" : `Ver quién recibió (${b.birthdayMembers!.length})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Lista de miembros de cumpleaños */}
+              {hasMemberList && isOpen && (
+                <div style={{ borderTop: "1px solid var(--adm-card-border)", padding: "10px 14px 12px" }}>
+                  <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Recibieron este mensaje
+                  </p>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {b.birthdayMembers!.map((m) => {
+                      const bd = m.birthDate ? new Date(m.birthDate) : null;
+                      return (
+                        <li key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            background: "rgba(236,72,153,0.15)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "0.82rem", flexShrink: 0,
+                          }}>
+                            🎂
+                          </span>
+                          <div>
+                            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>
+                              {m.name || "Sin nombre"}
+                            </p>
+                            {bd && (
+                              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
+                                {bd.toLocaleDateString("es-CL", { day: "numeric", month: "long" })}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {/* Cumpleaños sin lista detallada (solo count) */}
+              {isBirthday && !hasMemberList && b.recipients > 0 && (
+                <div style={{ borderTop: "1px solid var(--adm-card-border)", padding: "8px 14px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Cake size={13} color="#ec4899" />
+                  <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)" }}>
+                    {b.recipients} miembro{b.recipients !== 1 ? "s" : ""} recibió este mensaje de cumpleaños
+                  </span>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

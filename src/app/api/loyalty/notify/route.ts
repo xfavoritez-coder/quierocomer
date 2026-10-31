@@ -85,9 +85,47 @@ export async function GET(req: NextRequest) {
     const history = await prisma.loyaltyBroadcast.findMany({
       where: { restaurantId },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 60,
     });
-    return NextResponse.json({ history });
+
+    // Para broadcasts de cumpleaños, buscar los miembros que lo recibieron ese día
+    const birthdayBroadcasts = history.filter((b) => b.filter === "birthday_today");
+    let birthdayMembersMap: Record<string, { id: string; name: string | null; birthDate: Date | null }[]> = {};
+
+    if (birthdayBroadcasts.length > 0) {
+      // Buscar todos los miembros con lastBirthdayNotifAt; luego asignar a su broadcast más cercano
+      const allBirthdayMembers = await prisma.loyaltyMember.findMany({
+        where: {
+          restaurantId,
+          lastBirthdayNotifAt: { not: null },
+        },
+        select: { id: true, name: true, birthDate: true, lastBirthdayNotifAt: true },
+      });
+
+      for (const broadcast of birthdayBroadcasts) {
+        const bTime = new Date(broadcast.createdAt).getTime();
+        // Asociar miembros cuyo lastBirthdayNotifAt esté a ≤12 h del broadcast
+        const members = allBirthdayMembers.filter((m) => {
+          if (!m.lastBirthdayNotifAt) return false;
+          const diff = Math.abs(new Date(m.lastBirthdayNotifAt).getTime() - bTime);
+          return diff <= 12 * 60 * 60 * 1000;
+        });
+        if (members.length > 0) {
+          birthdayMembersMap[broadcast.id] = members.map((m) => ({
+            id: m.id,
+            name: m.name,
+            birthDate: m.birthDate,
+          }));
+        }
+      }
+    }
+
+    const historyWithMembers = history.map((b) => ({
+      ...b,
+      birthdayMembers: birthdayMembersMap[b.id] ?? null,
+    }));
+
+    return NextResponse.json({ history: historyWithMembers });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
     console.error("[Loyalty notify GET]", e);
