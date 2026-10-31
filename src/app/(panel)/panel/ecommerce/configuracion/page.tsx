@@ -31,6 +31,7 @@ export default function EcommerceConfiguracionPage() {
   const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "web">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
   const [uploadingFav, setUploadingFav] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   // Estado inicial de las notificaciones push (suscripción del dispositivo).
   useEffect(() => {
@@ -93,6 +94,21 @@ export default function EcommerceConfiguracionPage() {
       toast.success("Favicon subido — recuerda Guardar");
     } catch { toast.error("Error de conexión"); }
     setUploadingFav(false);
+  }
+
+  async function uploadBanner(file: File) {
+    setUploadingBanner(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "banners");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.url) { toast.error(d.error || "No se pudo subir el banner"); setUploadingBanner(false); return; }
+      patch({ bannerUrl: d.url });
+      toast.success("Banner subido — recuerda Guardar");
+    } catch { toast.error("Error de conexión"); }
+    setUploadingBanner(false);
   }
   const togglePay = (m: string) => setCfg((c) => ({ ...c, paymentMethods: c.paymentMethods.includes(m) ? c.paymentMethods.filter((x) => x !== m) : [...c.paymentMethods, m] }));
 
@@ -365,6 +381,38 @@ export default function EcommerceConfiguracionPage() {
                   </button>
                 )}
               </div>
+            </div>
+          </section>
+          )}
+
+          {/* Banner de la tienda (tema base) */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={ImageIcon} title="Banner de la tienda" sub="Imagen grande (hero) que se muestra arriba en tu tienda con el tema Base. Ideal: imagen horizontal/panorámica (JPG, PNG o WebP), aprox. 1600×500." />
+            <div style={{ marginTop: 12 }}>
+              <div style={{ width: "100%", height: 96, borderRadius: 12, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                {cfg.bannerUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cfg.bannerUrl} alt="Banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "var(--adm-text3)", fontFamily: FB, fontSize: "0.8rem" }}><ImageIcon size={20} /> Sin banner</span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: uploadingBanner ? "wait" : "pointer" }}>
+                  <Upload size={15} /> {uploadingBanner ? "Subiendo…" : cfg.bannerUrl ? "Cambiar banner" : "Subir banner"}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} disabled={uploadingBanner}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBanner(f); e.currentTarget.value = ""; }} />
+                </label>
+                {cfg.bannerUrl && (
+                  <button onClick={() => patch({ bannerUrl: null })} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                    <XIcon size={15} /> Quitar
+                  </button>
+                )}
+              </div>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                Se muestra con el tema <b>Base</b>. En el tema <b>Impact</b> el banner son los productos destacados (los eliges en <b>Carta</b> con la ⭐). Recuerda <b>Guardar</b>.
+              </p>
             </div>
           </section>
           )}

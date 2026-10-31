@@ -34,6 +34,7 @@ export interface EcommerceStoreConfig {
   brandSlug: string | null; // marca multisucursal: varias tiendas con el mismo brandSlug son sucursales de una misma marca (entrada /ecommerce/marca/<brandSlug>)
   branchName: string | null; // nombre de esta sucursal dentro de la marca (ej: "Providencia")
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
+  bannerUrl: string | null; // imagen de banner/hero de la tienda (tema base); null = sin banner
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
   // Contacto que muestra la página de Política de Privacidad (/privacidad). null = usa el del local.
   privacyEmail: string | null;
@@ -169,6 +170,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     brandSlug: typeof o.brandSlug === "string" && o.brandSlug.trim() ? o.brandSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || null : null,
     branchName: typeof o.branchName === "string" && o.branchName.trim() ? o.branchName.trim().slice(0, 60) : null,
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
+    bannerUrl: typeof o.bannerUrl === "string" && o.bannerUrl.trim() ? o.bannerUrl.trim() : null,
     gtmId: normalizeGtmId(o.gtmId),
     privacyEmail: typeof o.privacyEmail === "string" && o.privacyEmail.trim() ? o.privacyEmail.trim() : null,
     privacyPhone: typeof o.privacyPhone === "string" && o.privacyPhone.trim() ? o.privacyPhone.trim() : null,
