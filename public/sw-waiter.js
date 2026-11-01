@@ -5,9 +5,11 @@ self.addEventListener("push", (event) => {
     body: data.body || "Llamada de cliente",
     icon: "/favicon.svg",
     badge: "/favicon.svg",
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [300, 150, 300, 150, 300],
+    silent: false, // explícito: nunca en silencio (debe sonar/vibrar)
+    requireInteraction: true, // que no desaparezca sola hasta que el garzón la vea
     tag: "waiter-call-" + data.tableId,
-    renotify: true,
+    renotify: true, // vuelve a alertar aunque haya una notificación con el mismo tag
     data: { url, ...data },
   };
   event.waitUntil(self.registration.showNotification(data.title || "Llamada", options));

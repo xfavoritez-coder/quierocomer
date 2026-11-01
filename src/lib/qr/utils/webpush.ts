@@ -31,7 +31,11 @@ export async function sendWaiterNotification(
     slug,
     calledAt: new Date().toISOString(),
   });
-  await webpush.sendNotification(subscription, payload);
+  // urgency "high" → el push service (FCM/APNs) lo entrega de inmediato y despierta
+  // el teléfono aunque esté en reposo, disparando sonido y vibración. Sin esto queda
+  // en prioridad normal y Android/iOS pueden mostrarlo en silencio o diferido.
+  // TTL corto: una llamada vieja no sirve si el teléfono estuvo apagado un rato.
+  await webpush.sendNotification(subscription, payload, { urgency: "high", TTL: 120 });
 }
 
 export { webpush };

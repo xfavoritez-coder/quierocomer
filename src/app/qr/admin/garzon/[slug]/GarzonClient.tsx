@@ -39,7 +39,10 @@ function initAudio() {
 }
 
 function playBeep() {
-  // Try AudioContext first
+  // Vibrar SIEMPRE que se pueda (app abierta en el teléfono del garzón), además del
+  // sonido — antes solo vibraba si fallaba el AudioContext.
+  try { navigator.vibrate?.([300, 150, 300, 150, 300]); } catch {}
+  // Sonido con AudioContext (requiere audio desbloqueado por un gesto previo).
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const osc = ctx.createOscillator();
@@ -51,8 +54,7 @@ function playBeep() {
     osc.start();
     setTimeout(() => { osc.stop(); ctx.close(); }, 300);
   } catch {
-    // Fallback: vibrate
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    // noop: al menos ya intentamos vibrar arriba
   }
 }
 
