@@ -13,11 +13,23 @@ import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
 
+// Controles de "marca" (multisucursal): la tienda se muestra directo en
+// /ecommerce/marca/<brand> con el menú compartido, pero la sucursal se elige recién
+// al querer agregar algo (dirección → delivery / retiro). Cuando se pasan estos
+// controles, StoreFront no liga el carrito por sí mismo (lo hace el contenedor de
+// marca vía adoptRestaurant) e intercepta agregar/checkout hasta que haya sucursal.
+export interface BrandControls {
+  hasBranch: boolean;
+  branchLabel: string | null;
+  onRequireBranch: (product?: StoreProduct | null) => void;
+}
+
 interface Props {
   tenant: StoreTenant;
   categories: StoreCategory[];
   products: StoreProduct[];
   basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
+  brandControls?: BrandControls;
 }
 
 // Muestra solo hasta la primera coma de la dirección
@@ -38,8 +50,10 @@ export const storeFontVars: React.CSSProperties = {
   ["--font-product-detail" as string]: STORE_SANS,
 } as React.CSSProperties;
 
-export default function StoreFront({ tenant, categories, products, basePath }: Props) {
+export default function StoreFront({ tenant, categories, products, basePath, brandControls }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  const brandMode = !!brandControls;
+  const hasBranch = brandControls?.hasBranch ?? false;
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
@@ -89,7 +103,23 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
   const itemCount = useCartStore((s) => s.itemCount());
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { setRestaurantId(tenant.id); repriceItems(products); }, [tenant.id, products, setRestaurantId, repriceItems]);
+  // En modo marca el contenedor liga el carrito a la sucursal elegida (adoptRestaurant),
+  // así que aquí NO lo hacemos (evita que setRestaurantId vacíe el carrito al cambiar
+  // el catálogo representante → sucursal). En modo normal, se liga a este tenant.
+  useEffect(() => { if (brandMode) return; setRestaurantId(tenant.id); repriceItems(products); }, [tenant.id, products, setRestaurantId, repriceItems, brandMode]);
+
+  // Clic en el selector de entrega: sin sucursal elegida (modo marca) abre la
+  // elección de sucursal; si ya hay sucursal (o es tienda normal) abre el modal normal.
+  const openDelivery = useCallback(() => {
+    if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
+    setDeliveryModalOpen(true);
+  }, [brandMode, hasBranch, brandControls]);
+
+  // Ir al checkout: en modo marca sin sucursal, primero se elige sucursal.
+  const goCheckout = useCallback(() => {
+    if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
+    window.location.href = `${storeBase}/checkout`;
+  }, [brandMode, hasBranch, brandControls, storeBase]);
 
   // Si se llega con ?menu=<vista> (p.ej. desde la página de seguimiento del
   // pedido), abrir el menú en esa vista y limpiar la URL para que no reabra al
@@ -254,6 +284,21 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
         </div>
       </header>
 
+      {/* ── Barra de marca: elegir / cambiar sucursal (solo /ecommerce/marca) ── */}
+      {brandMode && (
+        <button
+          onClick={() => brandControls!.onRequireBranch(null)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-95"
+          style={{ background: primaryColor }}
+        >
+          {hasBranch ? (
+            <><Store className="w-4 h-4 shrink-0" /> Pidiendo en {brandControls!.branchLabel || "tu sucursal"} · <span className="underline">Cambiar</span></>
+          ) : (
+            <><MapPin className="w-4 h-4 shrink-0" /> Elige tu sucursal para pedir</>
+          )}
+        </button>
+      )}
+
       {/* ── Hero: banner completo, sin recorte ni capa oscura ────── */}
       {tenant.bannerUrl && (
         <div className="w-full overflow-hidden">
@@ -295,7 +340,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
 
       {/* ── Selector de entrega — solo mobile (en sm+ va en el carrito lateral) ─── */}
       <div className="sm:hidden bg-white border-b border-gray-100 px-4 py-3">
-        <MobileDeliveryBar tenant={tenant} primaryColor={primaryColor} onOpen={() => setDeliveryModalOpen(true)} />
+        <MobileDeliveryBar tenant={tenant} primaryColor={primaryColor} onOpen={openDelivery} />
       </div>
 
       {/* ── Barra de categorías — sticky al top (el header se scrollea) ── */}
@@ -384,7 +429,8 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               cartBump={cartBump}
               mounted={mounted}
               storeBase={storeBase}
-              onOpenDeliveryModal={() => setDeliveryModalOpen(true)}
+              onOpenDeliveryModal={openDelivery}
+              onCheckout={goCheckout}
             />
           </div>
         </div>
@@ -398,7 +444,14 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
 
       {/* Modal producto */}
       {selectedProduct && (
-        <ProductModal product={selectedProduct} primaryColor={primaryColor} onClose={() => setSelectedProduct(null)} scrollImage />
+        <ProductModal
+          product={selectedProduct}
+          primaryColor={primaryColor}
+          onClose={() => setSelectedProduct(null)}
+          scrollImage
+          intercept={brandMode && !hasBranch}
+          onIntercept={() => { const p = selectedProduct; setSelectedProduct(null); brandControls!.onRequireBranch(p); }}
+        />
       )}
 
       {/* Modal delivery/retiro */}
@@ -424,7 +477,7 @@ export default function StoreFront({ tenant, categories, products, basePath }: P
               para que la animación cart-bump (scale) no descentre el botón. */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-6">
             <button
-              onClick={() => (window.location.href = `${storeBase}/checkout`)}
+              onClick={goCheckout}
               aria-label="Ver carrito"
               className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white ${cartBump ? "cart-bump" : ""}`}
               style={{ background: primaryColor }}
@@ -571,8 +624,8 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
 }
 
 // ── Panel carrito (desktop) ──────────────────────────────────────
-function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModal, storeBase }: {
-  tenant: StoreTenant; primaryColor: string; cartBump: boolean; mounted: boolean; onOpenDeliveryModal: () => void; storeBase: string;
+function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModal, storeBase, onCheckout }: {
+  tenant: StoreTenant; primaryColor: string; cartBump: boolean; mounted: boolean; onOpenDeliveryModal: () => void; storeBase: string; onCheckout?: () => void;
 }) {
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
@@ -669,7 +722,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             ) : belowMin ? (
               <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">Monto mínimo: {clp(minReq!)}</div>
             ) : (
-              <button onClick={() => (window.location.href = `${storeBase}/checkout`)} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
+              <button onClick={() => (onCheckout ? onCheckout() : (window.location.href = `${storeBase}/checkout`))} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
                 Continuar con mi pedido →
               </button>
             )}

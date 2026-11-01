@@ -13,6 +13,10 @@ interface Props {
   onClose: () => void;
   // Tema base: la foto se scrollea junto con la descripción y sin degradado.
   scrollImage?: boolean;
+  // Modo marca: aún no se eligió sucursal. En vez de agregar, se intercepta el
+  // botón para que el cliente elija primero dónde pedir (dirección / retiro).
+  intercept?: boolean;
+  onIntercept?: () => void;
 }
 
 // Convierte la "descripción detallada" (una línea por ítem) en una lista tipo "Incluye".
@@ -28,7 +32,7 @@ function parseIncludes(text: string | null): { title: string; detail: string }[]
   }).filter((x) => x.title).slice(0, 40);
 }
 
-export default function ProductModal({ product, primaryColor, onClose, scrollImage }: Props) {
+export default function ProductModal({ product, primaryColor, onClose, scrollImage, intercept, onIntercept }: Props) {
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [errorGroupId, setErrorGroupId] = useState<string | null>(null);
@@ -75,6 +79,10 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
   const unitPrice = product.price + optionsDelta;
 
   function handleAdd() {
+    // Modo marca sin sucursal elegida: no agregamos; disparamos la elección de
+    // sucursal (dirección / retiro). El catálogo cambiará al de esa sucursal y el
+    // cliente volverá a agregar con los ids correctos.
+    if (intercept) { onIntercept?.(); return; }
     for (const g of groups) {
       const count = (selectedOptions[g.id] ?? "").split(",").filter(Boolean).length;
       const needed = Math.max(g.is_required ? 1 : 0, g.min_select);
