@@ -38,20 +38,4 @@ export async function sendWaiterNotification(
   await webpush.sendNotification(subscription, payload, { urgency: "high", TTL: 120 });
 }
 
-// Push de PRUEBA para que el garzón verifique en su propio teléfono que las
-// notificaciones llegan y suenan (botón "Probar notificación" en el panel).
-export async function sendWaiterTestNotification(
-  subscription: webpush.PushSubscription,
-  slug?: string | null,
-) {
-  ensureConfigured();
-  const payload = JSON.stringify({
-    title: "🔔 Prueba de notificación",
-    body: "Si ves esto, las notificaciones funcionan ✅",
-    tableId: "test-" + Date.now(),
-    slug,
-  });
-  await webpush.sendNotification(subscription, payload, { urgency: "high", TTL: 60 });
-}
-
 export { webpush };

@@ -148,69 +148,9 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
   }, [restaurantId]);
 
   const [needsPermission, setNeedsPermission] = useState(false);
-  const [testMsg, setTestMsg] = useState<string | null>(null);
-  const [testing, setTesting] = useState(false);
   // En iPhone + Safari (no app instalada) el push no funciona: avisamos.
   const [iosNotStandalone, setIosNotStandalone] = useState(false);
   useEffect(() => { setIosNotStandalone(isIOS() && !isStandalonePWA()); }, []);
-
-  // Botón "Probar notificación": re-crea una suscripción FRESCA (iOS invalida las
-  // viejas en silencio y sigue aceptando envíos, por eso "llega" pero no aparece) y
-  // envía un push de prueba a ESTE teléfono. Aísla si el problema es entrega o ajustes.
-  const testNotification = useCallback(async () => {
-    setTesting(true);
-    setTestMsg(null);
-    unlockAudio();
-    playBeep(); // feedback inmediato en-app (audio/vibración con la app abierta)
-    try {
-      // iPhone en Safari (no app instalada): el push NO funciona ahí. Hay que
-      // abrir la app desde el ícono de la pantalla de inicio.
-      if (isIOS() && !isStandalonePWA()) {
-        setTestMsg("⚠️ Estás en Safari. En iPhone las notificaciones solo funcionan abriendo la app desde el ÍCONO de la pantalla de inicio. Si ya la instalaste, ábrela desde ahí. Si no: toca Compartir (↑) → “Agregar a inicio”, y abre la app desde ese ícono.");
-        return;
-      }
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        setTestMsg("Este teléfono/navegador no soporta notificaciones push. En iPhone, abre la app desde el ícono de la pantalla de inicio (no en Safari).");
-        return;
-      }
-      if (Notification.permission !== "granted") {
-        const p = await Notification.requestPermission();
-        if (p !== "granted") { setTestMsg("No diste permiso de notificaciones. Actívalo y vuelve a probar."); return; }
-      }
-      const reg = await navigator.serviceWorker.register("/sw-waiter.js");
-      await navigator.serviceWorker.ready;
-      // Re-suscribir fresco: desecha el endpoint viejo (posiblemente muerto) y crea uno nuevo.
-      const old = await reg.pushManager.getSubscription();
-      const oldEndpoint = old?.endpoint;
-      try { await old?.unsubscribe(); } catch {}
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-      });
-      await fetch("/api/qr/waiter/subscribe", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, subscription: sub.toJSON() }),
-      });
-      if (oldEndpoint && oldEndpoint !== sub.endpoint) {
-        fetch("/api/qr/waiter/subscribe", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: oldEndpoint }) }).catch(() => {});
-      }
-      setPushActive(true);
-      const res = await fetch("/api/qr/waiter/test-notify", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, endpoint: sub.endpoint }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (res.ok && d.sent > 0) {
-        setTestMsg("✅ Prueba enviada a este teléfono. Bloquéalo o sal de la app ahora: debería aparecer la notificación en 1–2 seg. Si no suena, revisa Ajustes → Notificaciones → (la app del garzón): Permitir, Sonidos, y Entrega inmediata (no en Resumen programado).");
-      } else {
-        setTestMsg("No se pudo enviar la prueba. " + (d.error || "Reintenta."));
-      }
-    } catch (e: any) {
-      setTestMsg("Error: " + (e?.message || String(e)));
-    } finally {
-      setTesting(false);
-    }
-  }, [restaurantId]);
 
   const [shiftEnded, setShiftEnded] = useState(() =>
     typeof window !== "undefined" && sessionStorage.getItem("garzon_shift_ended") === "1"
@@ -365,7 +305,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
       {/* Aviso iPhone+Safari: el push no funciona fuera de la app instalada */}
       {iosNotStandalone && !shiftEnded && (
         <div style={{ padding: "12px 20px", background: "rgba(244,166,35,0.12)", borderBottom: "1px solid rgba(244,166,35,0.3)", color: "#F4A623", fontSize: "0.82rem", lineHeight: 1.5 }}>
-          📲 Estás en <b>Safari</b>. En iPhone las notificaciones solo llegan desde la <b>app instalada</b>. Ábrela desde el ícono de la pantalla de inicio. Si no la tienes: toca <b>Compartir (↑)</b> → <b>“Agregar a inicio”</b> y ábrela desde ese ícono.
+          📲 Para recibir notificaciones, abre esta app desde el <b>ícono de la pantalla de inicio</b> (no en Safari).
         </div>
       )}
 
@@ -431,22 +371,6 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
       {error && !shiftEnded && (
         <div style={{ padding: "12px 20px", background: "rgba(220,38,38,0.15)", color: "#dc2626", fontSize: "0.85rem" }}>
           {error}
-        </div>
-      )}
-
-      {/* Probar notificación (verifica entrega + sonido en el propio teléfono) */}
-      {!shiftEnded && (
-        <div style={{ padding: "14px 20px 0" }}>
-          <button
-            onClick={testNotification}
-            disabled={testing}
-            style={{ width: "100%", padding: "12px 16px", borderRadius: 10, background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.35)", color: "#F4A623", fontSize: "0.9rem", fontWeight: 700, cursor: testing ? "default" : "pointer", opacity: testing ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-          >
-            <Bell size={16} /> {testing ? "Enviando prueba…" : "Probar notificación"}
-          </button>
-          {testMsg && (
-            <p style={{ marginTop: 8, fontSize: "0.8rem", lineHeight: 1.45, color: "rgba(255,255,255,0.6)" }}>{testMsg}</p>
-          )}
         </div>
       )}
 
