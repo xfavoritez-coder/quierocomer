@@ -26,16 +26,15 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const originMarker = useRef<any>(null);
-  const includedPoly = useRef<any>(null);
-  const excludedPoly = useRef<any>(null);
+  // Polígonos EDITABLES ya cerrados: el de reparto (uno) y las zonas excluidas (varias).
+  // Son la fuente de verdad en el mapa; al arrastrar un vértice se re-escribe el config.
+  const includedPolyRef = useRef<any>(null);
+  const excludedPolysRef = useRef<any[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const [drawing, setDrawing] = useState<DrawTarget>(null);
   const [ptCount, setPtCount] = useState(0);
-  const [mapReady, setMapReady] = useState(false);
 
-  // Refs a los valores actuales (para usarlos dentro de listeners del mapa).
-  const cfgRef = useRef(config);
-  cfgRef.current = config;
+  // onChange siempre actual, para usarlo dentro de listeners del mapa (bound una vez).
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -53,7 +52,6 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     // esto, dibujar sobre zonas con muchos POIs "comía" clics y no marcaba puntos.
     const map = new g.maps.Map(mapDiv.current, { center, zoom: 12, mapTypeControl: false, streetViewControl: false, fullscreenControl: false, clickableIcons: false });
     mapRef.current = map;
-    setMapReady(true);
 
     // Marcador de origen (arrastrable)
     if (config.origin) placeOrigin(config.origin);
@@ -93,17 +91,22 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     }
 
     // Dibujo manual (el DrawingManager de Google fue removido en v3.65):
-    // clic = agrega un vértice; doble clic = cierra la figura (mín. 3 puntos).
+    // clic = agrega un vértice; doble clic (o clic en el 1er punto) = cierra la figura.
     map.addListener("click", (e: any) => { if (drawRef.current.active) addDrawPoint(e.latLng); });
     map.addListener("dblclick", (e: any) => { if (drawRef.current.active) finishDrawing(); });
+
+    // Cargar las zonas ya guardadas como polígonos EDITABLES (vértices arrastrables).
+    if (config.polygonIncluded.length >= 3) createIncluded(config.polygonIncluded);
+    config.polygonExcluded.forEach((ring) => { if (ring.length >= 3) createExcluded(ring); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
-  // ── Dibujo manual: línea por línea, doble clic para cerrar ──────────────────
+  // ── Dibujo manual: línea por línea, cierre por 1er-punto o doble clic ────────
   function startDrawing(isExcluded: boolean) {
     const g = (window as any).google;
     if (!mapRef.current) return;
     cancelDrawing(); // descarta cualquier dibujo en curso
+    setPolysEditable(false); // no editar polígonos existentes mientras dibujo uno nuevo
     const line = new g.maps.Polyline({ map: mapRef.current, path: [], strokeColor: isExcluded ? "#ef4444" : "#22c55e", strokeWeight: 2, clickable: false });
     drawRef.current = { active: true, isExcluded, points: [], markers: [], line };
     mapRef.current.setOptions({ draggableCursor: "crosshair", disableDoubleClickZoom: true });
@@ -114,8 +117,19 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
   function addDrawPoint(latLng: any) {
     const g = (window as any).google;
     const d = drawRef.current;
+    const isFirst = d.points.length === 0;
+    const color = d.isExcluded ? "#ef4444" : "#16a34a";
     d.points.push(latLng);
-    d.markers.push(new g.maps.Marker({ position: latLng, map: mapRef.current, clickable: false, icon: { path: g.maps.SymbolPath.CIRCLE, scale: 4, fillColor: "#fff", fillOpacity: 1, strokeColor: d.isExcluded ? "#ef4444" : "#16a34a", strokeWeight: 2 } }));
+    // El PRIMER vértice es más grande y clickeable: tocarlo cierra la figura (además
+    // del doble clic). Los demás son puntitos blancos no clickeables.
+    const mk = new g.maps.Marker({
+      position: latLng, map: mapRef.current, clickable: isFirst,
+      cursor: isFirst ? "pointer" : undefined,
+      title: isFirst ? "Toca aquí para cerrar la zona" : undefined,
+      icon: { path: g.maps.SymbolPath.CIRCLE, scale: isFirst ? 6 : 4, fillColor: isFirst ? color : "#fff", fillOpacity: 1, strokeColor: color, strokeWeight: 2 },
+    });
+    if (isFirst) mk.addListener("click", () => { if (drawRef.current.active) finishDrawing(); });
+    d.markers.push(mk);
     d.line.setPath(d.points);
     setPtCount(d.points.length);
   }
@@ -127,8 +141,8 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     const paths = d.points.map((p: any) => ({ lat: p.lat(), lng: p.lng() }));
     const isExcluded = d.isExcluded;
     cancelDrawing();
-    if (isExcluded) onChangeRef.current({ polygonExcluded: [...cfgRef.current.polygonExcluded, paths] });
-    else onChangeRef.current({ polygonIncluded: paths });
+    if (isExcluded) { createExcluded(paths); onChangeRef.current({ polygonExcluded: excludedPolysRef.current.map(polygonToCoords) }); }
+    else { createIncluded(paths); onChangeRef.current({ polygonIncluded: paths }); }
   }
 
   function cancelDrawing() {
@@ -137,8 +151,42 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     if (d.line) d.line.setMap(null);
     drawRef.current = { active: false, isExcluded: false, points: [], markers: [], line: null };
     mapRef.current?.setOptions?.({ draggableCursor: null, disableDoubleClickZoom: false });
+    setPolysEditable(true); // vuelven a ser editables al salir del modo dibujo
     setDrawing(null);
     setPtCount(0);
+  }
+
+  // ── Polígonos cerrados y EDITABLES (vértices arrastrables + puntos medios) ───
+  function polygonToCoords(poly: any): LatLng[] {
+    const path = poly.getPath();
+    const out: LatLng[] = [];
+    for (let i = 0; i < path.getLength(); i++) { const p = path.getAt(i); out.push({ lat: p.lat(), lng: p.lng() }); }
+    return out;
+  }
+  function setPolysEditable(on: boolean) {
+    includedPolyRef.current?.setOptions?.({ editable: on });
+    excludedPolysRef.current.forEach((p) => p.setOptions?.({ editable: on }));
+  }
+  function createIncluded(paths: LatLng[]) {
+    const g = (window as any).google;
+    if (includedPolyRef.current) includedPolyRef.current.setMap(null);
+    const poly = new g.maps.Polygon({ paths, map: mapRef.current, editable: true, strokeColor: "#22c55e", fillColor: "#22c55e", fillOpacity: 0.12, strokeWeight: 2 });
+    const push = () => onChangeRef.current({ polygonIncluded: polygonToCoords(poly) });
+    const path = poly.getPath();
+    path.addListener("set_at", push);    // vértice movido
+    path.addListener("insert_at", push); // vértice agregado (punto medio)
+    path.addListener("remove_at", push); // vértice eliminado (clic derecho)
+    includedPolyRef.current = poly;
+  }
+  function createExcluded(paths: LatLng[]) {
+    const g = (window as any).google;
+    const poly = new g.maps.Polygon({ paths, map: mapRef.current, editable: true, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
+    excludedPolysRef.current.push(poly);
+    const push = () => onChangeRef.current({ polygonExcluded: excludedPolysRef.current.map(polygonToCoords) });
+    const path = poly.getPath();
+    path.addListener("set_at", push);
+    path.addListener("insert_at", push);
+    path.addListener("remove_at", push);
   }
 
   // Escape cancela el dibujo en curso.
@@ -155,20 +203,6 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     originMarker.current.addListener("dragend", (e: any) => onChange({ origin: { lat: e.latLng.lat(), lng: e.latLng.lng() } }));
   }
 
-  // ── Redibujar polígonos cuando cambian (o cuando el mapa está listo) ──
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    const g = (window as any).google;
-    if (includedPoly.current) includedPoly.current.setMap(null);
-    if (config.polygonIncluded.length >= 2) {
-      includedPoly.current = new g.maps.Polygon({ paths: config.polygonIncluded, map: mapRef.current, strokeColor: "#22c55e", fillColor: "#22c55e", fillOpacity: 0.12, strokeWeight: 2 });
-    }
-    if (excludedPoly.current) excludedPoly.current.setMap(null);
-    const excludedRings = config.polygonExcluded.filter((r) => r.length >= 2);
-    if (excludedRings.length) {
-      excludedPoly.current = new g.maps.Polygon({ paths: excludedRings, map: mapRef.current, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
-    }
-  }, [mapReady, config.polygonIncluded, config.polygonExcluded]);
 
   if (!gmapsKey) {
     return <div style={{ padding: 16, borderRadius: 12, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>Falta la API Key de Google Maps. Pídela al equipo de QuieroComer para configurar el mapa.</div>;
@@ -191,21 +225,25 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
         <button onClick={() => (drawing === "included" ? cancelDrawing() : startDrawing(false))} style={btn(drawing === "included", "#22c55e")}>
           <Pencil size={14} /> {drawing === "included" ? "Cancelar dibujo" : "Dibujar zona de reparto"}
         </button>
-        <button onClick={() => { cancelDrawing(); onChange({ polygonIncluded: [] }); }} style={btnGhost}>
+        <button onClick={() => { cancelDrawing(); includedPolyRef.current?.setMap(null); includedPolyRef.current = null; onChange({ polygonIncluded: [] }); }} style={btnGhost}>
           <Trash2 size={14} /> Limpiar zona
         </button>
         <button onClick={() => (drawing === "excluded" ? cancelDrawing() : startDrawing(true))} style={btn(drawing === "excluded", "#ef4444")}>
           <Ban size={14} /> {drawing === "excluded" ? "Cancelar dibujo" : "Agregar zona excluida"}
         </button>
         {config.polygonExcluded.length > 0 && (
-          <button onClick={() => { cancelDrawing(); onChange({ polygonExcluded: [] }); }} style={btnGhost}><Trash2 size={14} /> Limpiar excluida</button>
+          <button onClick={() => { cancelDrawing(); excludedPolysRef.current.forEach((p) => p.setMap(null)); excludedPolysRef.current = []; onChange({ polygonExcluded: [] }); }} style={btnGhost}><Trash2 size={14} /> Limpiar excluida</button>
         )}
       </div>
-      {drawing && (
+      {drawing ? (
         <p style={{ fontFamily: FB, fontSize: "0.76rem", color: ACCENT, margin: 0 }}>
-          Haz clic en el mapa para marcar cada esquina de la {drawing === "included" ? "zona de reparto" : "zona excluida"}. <b>Doble clic para cerrar</b> la figura (mínimo 3 puntos) · <b>Esc</b> para cancelar. ({ptCount} {ptCount === 1 ? "punto" : "puntos"})
+          Haz clic en el mapa para marcar cada esquina de la {drawing === "included" ? "zona de reparto" : "zona excluida"}. Para <b>cerrar</b>: haz clic en el <b>primer punto</b> (el grande) o <b>doble clic</b> · mínimo 3 puntos · <b>Esc</b> cancela. ({ptCount} {ptCount === 1 ? "punto" : "puntos"})
         </p>
-      )}
+      ) : (config.polygonIncluded.length >= 3 || config.polygonExcluded.length > 0) ? (
+        <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0 }}>
+          Arrastra los vértices para ajustar la zona. Arrastra un punto medio (más claro) para agregar un vértice · clic derecho en un vértice para quitarlo.
+        </p>
+      ) : null}
 
       {/* Tarifas */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
