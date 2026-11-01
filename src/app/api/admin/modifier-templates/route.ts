@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 const INCLUDE_FULL = {
   groups: {
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
     });
 
     logActivity(restaurantId, "modifier_create", { templateId: template.id, name });
+    revalidateEcommerceCache({ id: restaurantId });
     return NextResponse.json(template);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
@@ -93,6 +95,7 @@ export async function PUT(req: NextRequest) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true } });
       if (!template) return NextResponse.json({ error: "Template no encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
 
       await prisma.modifierTemplate.update({
         where: { id: body.templateId },
@@ -106,6 +109,7 @@ export async function PUT(req: NextRequest) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true } });
       if (!template) return NextResponse.json({ error: "Template no encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
 
       await prisma.modifierTemplate.update({
         where: { id: body.templateId },
@@ -119,6 +123,7 @@ export async function PUT(req: NextRequest) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true } });
       if (!template) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
 
       const updated = await prisma.modifierTemplate.update({
         where: { id: body.templateId },
@@ -137,6 +142,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!template) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
 
       const group = await prisma.modifierTemplateGroup.create({
         data: {
@@ -161,6 +167,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!group) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, group.template.restaurantId);
+      revalidateEcommerceCache({ id: group.template.restaurantId });
 
       const data: Record<string, any> = {};
       if (body.name !== undefined) data.name = body.name;
@@ -183,6 +190,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!group) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, group.template.restaurantId);
+      revalidateEcommerceCache({ id: group.template.restaurantId });
 
       const option = await prisma.modifierTemplateOption.create({
         data: {
@@ -204,6 +212,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!option) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, option.group.template.restaurantId);
+      revalidateEcommerceCache({ id: option.group.template.restaurantId });
 
       const data: Record<string, any> = {};
       if (body.name !== undefined) data.name = body.name;
@@ -228,6 +237,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!group) return NextResponse.json({ error: "Grupo no encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, group.template.restaurantId);
+      revalidateEcommerceCache({ id: group.template.restaurantId });
 
       let nextPos = (group.options[0]?.position ?? -1) + 1;
       const created = [];
@@ -255,6 +265,7 @@ export async function PUT(req: NextRequest) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.reorderGroups.templateId }, select: { restaurantId: true } });
       if (!template) return NextResponse.json({ error: "Template no encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
 
       await prisma.$transaction(
         body.reorderGroups.ids.map((id: string, position: number) =>
@@ -272,6 +283,7 @@ export async function PUT(req: NextRequest) {
       });
       if (!group) return NextResponse.json({ error: "Grupo no encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, group.template.restaurantId);
+      revalidateEcommerceCache({ id: group.template.restaurantId });
 
       await prisma.$transaction(
         body.reorderOptions.ids.map((id: string, position: number) =>
@@ -304,6 +316,7 @@ export async function DELETE(req: NextRequest) {
       });
       if (!option) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, option.group.template.restaurantId);
+      revalidateEcommerceCache({ id: option.group.template.restaurantId });
       await prisma.modifierTemplateOption.delete({ where: { id: body.optionId } });
       return NextResponse.json({ success: true });
     }
@@ -315,6 +328,7 @@ export async function DELETE(req: NextRequest) {
       });
       if (!group) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, group.template.restaurantId);
+      revalidateEcommerceCache({ id: group.template.restaurantId });
       await prisma.modifierTemplateGroup.delete({ where: { id: body.groupId } });
       return NextResponse.json({ success: true });
     }
@@ -323,6 +337,7 @@ export async function DELETE(req: NextRequest) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.templateId }, select: { restaurantId: true, name: true } });
       if (!template) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
       await requireRestaurantForOwner(req, template.restaurantId);
+      revalidateEcommerceCache({ id: template.restaurantId });
       await prisma.modifierTemplate.delete({ where: { id: body.templateId } });
       logActivity(template.restaurantId, "modifier_delete", { templateId: body.templateId, name: template.name });
       return NextResponse.json({ success: true });

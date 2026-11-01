@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, getOwnedRestaurantIds, isSuperAdmin } from "@/lib/adminAuth";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 /**
  * POST /api/admin/toteat/import-apply
@@ -104,5 +105,6 @@ export async function POST(req: NextRequest) {
     data: { toteatImportDone: true },
   });
 
+  revalidateEcommerceCache({ id: restaurantId });
   return NextResponse.json({ ok: true, summary: { mapped, created, skipped } });
 }

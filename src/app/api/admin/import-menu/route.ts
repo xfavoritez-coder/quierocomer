@@ -5,6 +5,7 @@ import { extractWithScraper } from "@/lib/extractors/scrape";
 import { extractFromDocument } from "@/lib/extractors/document";
 import { extractGoogleDrive } from "@/lib/extractors/googledrive";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 import type { ExtractionResult } from "@/lib/extractors/types";
 
 export const maxDuration = 300;
@@ -218,6 +219,7 @@ export async function POST(req: NextRequest) {
     syncRestaurantToMeilisearch(restaurantId).catch(() => {});
   }).catch(() => {});
 
+  revalidateEcommerceCache({ id: restaurantId });
   return NextResponse.json({
     ok: true,
     dishes: totalDishes,

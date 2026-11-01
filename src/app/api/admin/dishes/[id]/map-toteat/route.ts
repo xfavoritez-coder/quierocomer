@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 /**
  * Manually set or clear a Dish's Toteat product mapping.
@@ -48,5 +49,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   await prisma.dish.update({ where: { id }, data });
+  revalidateEcommerceCache({ id: dish.restaurantId });
   return NextResponse.json({ ok: true });
 }
