@@ -42,12 +42,26 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
     if (!ready || !mapDiv.current || mapRef.current) return;
     const g = (window as any).google;
     const center = config.origin ?? SANTIAGO;
-    const map = new g.maps.Map(mapDiv.current, { center, zoom: 12, mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
+    // clickableIcons:false → un clic sobre un ícono de lugar (POI) también cuenta como
+    // clic en el mapa (agrega vértice) en vez de abrir el info-window de Google; sin
+    // esto, dibujar sobre zonas con muchos POIs "comía" clics y no marcaba puntos.
+    const map = new g.maps.Map(mapDiv.current, { center, zoom: 12, mapTypeControl: false, streetViewControl: false, fullscreenControl: false, clickableIcons: false });
     mapRef.current = map;
     setMapReady(true);
 
     // Marcador de origen (arrastrable)
     if (config.origin) placeOrigin(config.origin);
+
+    // Encuadrar UNA sola vez a la cobertura existente al cargar (si la hay). Antes
+    // esto vivía en un efecto reactivo y se re-disparaba al agregar el 2º punto,
+    // moviendo el mapa bajo los clics del usuario mientras dibujaba.
+    const initPts: LatLng[] = [...config.polygonIncluded, ...config.polygonExcluded.flat()];
+    if (config.origin) initPts.push(config.origin);
+    if (initPts.length >= 2) {
+      const b = new g.maps.LatLngBounds();
+      initPts.forEach((p) => b.extend(p));
+      map.fitBounds(b);
+    }
 
     // Autocomplete de búsqueda del origen
     if (searchRef.current && g.maps.places?.Autocomplete) {
@@ -111,20 +125,6 @@ export default function DeliveryPolygonEditor({ config, gmapsKey, restaurantAddr
       excludedPoly.current = new g.maps.Polygon({ paths: excludedRings, map: mapRef.current, strokeColor: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.12, strokeWeight: 2 });
     }
   }, [mapReady, config.polygonIncluded, config.polygonExcluded]);
-
-  // Al tener mapa + cobertura, encuadrar la vista a la zona de reparto.
-  const fittedRef = useRef(false);
-  useEffect(() => {
-    if (!mapReady || !mapRef.current || fittedRef.current) return;
-    const g = (window as any).google;
-    const pts = [...config.polygonIncluded, ...config.polygonExcluded.flat()];
-    if (config.origin) pts.push(config.origin);
-    if (pts.length < 2) return;
-    const bounds = new g.maps.LatLngBounds();
-    pts.forEach((p) => bounds.extend(p));
-    mapRef.current.fitBounds(bounds);
-    fittedRef.current = true;
-  }, [mapReady, config.polygonIncluded, config.polygonExcluded, config.origin]);
 
   if (!gmapsKey) {
     return <div style={{ padding: 16, borderRadius: 12, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)" }}>Falta la API Key de Google Maps. Pídela al equipo de QuieroComer para configurar el mapa.</div>;
