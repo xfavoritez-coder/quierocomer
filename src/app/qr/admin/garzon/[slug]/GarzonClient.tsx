@@ -25,6 +25,19 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
+// ¿Corre como app instalada (standalone) o en una pestaña de Safari? En iPhone el
+// Web Push SOLO funciona desde la app instalada en la pantalla de inicio.
+function isStandalonePWA() {
+  try {
+    return (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || (window.navigator as any).standalone === true;
+  } catch { return false; }
+}
+function isIOS() {
+  try {
+    return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  } catch { return false; }
+}
+
 // Audio element for iOS compatibility
 let audioUnlocked = false;
 let beepAudio: HTMLAudioElement | null = null;
@@ -137,6 +150,9 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
   const [needsPermission, setNeedsPermission] = useState(false);
   const [testMsg, setTestMsg] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  // En iPhone + Safari (no app instalada) el push no funciona: avisamos.
+  const [iosNotStandalone, setIosNotStandalone] = useState(false);
+  useEffect(() => { setIosNotStandalone(isIOS() && !isStandalonePWA()); }, []);
 
   // Botón "Probar notificación": re-crea una suscripción FRESCA (iOS invalida las
   // viejas en silencio y sigue aceptando envíos, por eso "llega" pero no aparece) y
@@ -147,6 +163,12 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     unlockAudio();
     playBeep(); // feedback inmediato en-app (audio/vibración con la app abierta)
     try {
+      // iPhone en Safari (no app instalada): el push NO funciona ahí. Hay que
+      // abrir la app desde el ícono de la pantalla de inicio.
+      if (isIOS() && !isStandalonePWA()) {
+        setTestMsg("⚠️ Estás en Safari. En iPhone las notificaciones solo funcionan abriendo la app desde el ÍCONO de la pantalla de inicio. Si ya la instalaste, ábrela desde ahí. Si no: toca Compartir (↑) → “Agregar a inicio”, y abre la app desde ese ícono.");
+        return;
+      }
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         setTestMsg("Este teléfono/navegador no soporta notificaciones push. En iPhone, abre la app desde el ícono de la pantalla de inicio (no en Safari).");
         return;
@@ -339,6 +361,13 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
           </button>
         )}
       </div>
+
+      {/* Aviso iPhone+Safari: el push no funciona fuera de la app instalada */}
+      {iosNotStandalone && !shiftEnded && (
+        <div style={{ padding: "12px 20px", background: "rgba(244,166,35,0.12)", borderBottom: "1px solid rgba(244,166,35,0.3)", color: "#F4A623", fontSize: "0.82rem", lineHeight: 1.5 }}>
+          📲 Estás en <b>Safari</b>. En iPhone las notificaciones solo llegan desde la <b>app instalada</b>. Ábrela desde el ícono de la pantalla de inicio. Si no la tienes: toca <b>Compartir (↑)</b> → <b>“Agregar a inicio”</b> y ábrela desde ese ícono.
+        </div>
+      )}
 
       {/* Shift ended screen */}
       {shiftEnded && (
