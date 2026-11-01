@@ -508,3 +508,21 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
     branches,
   };
 }
+
+/**
+ * Resuelve una MARCA por su dominio propio (ecommerceStoreConfig.brandDomain).
+ * Lo usa el storefront cuando la request llega por un dominio de marca (ej. kojo.cl):
+ * en vez de una tienda de un solo local, sirve la página de marca (elige sucursal).
+ */
+export async function loadEcommerceBrandByDomain(domain: string): Promise<BrandData | null> {
+  const key = (domain || "").trim().toLowerCase().replace(/^www\./, "");
+  if (!key || !key.includes(".")) return null; // solo hosts reales, no slugs
+  const r = await prisma.restaurant.findFirst({
+    where: { ecommerceEnabled: true, ecommerceStoreConfig: { path: ["brandDomain"], equals: key } },
+    select: { ecommerceStoreConfig: true },
+  });
+  if (!r) return null;
+  const brandSlug = parseStoreConfig(r.ecommerceStoreConfig).brandSlug;
+  if (!brandSlug) return null;
+  return loadEcommerceBrand(brandSlug);
+}

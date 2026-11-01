@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { getEcommerceStorefront, getEcommerceStorefrontBaseCached } from "@/lib/ecommerce/storefront-data";
+import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
+import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
@@ -14,6 +15,17 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  // Dominio de marca (ej. kojo.cl): metadata de la marca.
+  if (slug.includes(".")) {
+    const brand = await loadEcommerceBrandByDomain(slug);
+    if (brand) {
+      return {
+        title: `${brand.brandName} · Pedir online`,
+        description: `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
+        ...(brand.logoUrl ? { icons: { icon: brand.logoUrl, shortcut: brand.logoUrl, apple: brand.logoUrl } } : {}),
+      };
+    }
+  }
   // Metadata: basta el catálogo cacheado (no necesita la capa en vivo).
   const data = await getEcommerceStorefrontBaseCached(slug);
   if (!data) return {};
@@ -51,6 +63,27 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // ¿La request viene desde la app nativa? La cookie qc_app la setea <AppFlagSync/>
   // cuando detecta la WebView de Capacitor. Solo entonces se cargan los platos appOnly.
   const fromApp = (await cookies()).get("qc_app")?.value === "1";
+
+  // ── Dominio de MARCA (ej. kojo.cl) ──────────────────────────────────────────
+  // Si la request llega por el dominio propio de una marca, servimos la página de
+  // marca (menú compartido; el cliente elige sucursal al agregar al carrito), igual
+  // que /ecommerce/marca/<brandSlug>, pero en el dominio propio.
+  if (slug.includes(".")) {
+    const brand = await loadEcommerceBrandByDomain(slug);
+    if (brand && brand.branches.length > 0) {
+      const representative = await getEcommerceStorefront(brand.branches[0].slug, { fromApp });
+      if (representative) {
+        return (
+          <>
+            <GtmScript id={representative.tenant.gtmId} />
+            <PageHitTracker restaurantId={representative.tenant.id} page="ecommerce" />
+            <BrandStore brand={brand} representative={representative} />
+          </>
+        );
+      }
+    }
+  }
+
   // Catálogo cacheado + disponibilidad/horario en vivo mezclados.
   const data = await getEcommerceStorefront(slug, { fromApp });
   if (!data) return notFound();
