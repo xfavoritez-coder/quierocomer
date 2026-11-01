@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
     );
     await prisma.$transaction(updates);
 
+    revalidateEcommerceCache({ id: restaurantId });
     return NextResponse.json({ success: true });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

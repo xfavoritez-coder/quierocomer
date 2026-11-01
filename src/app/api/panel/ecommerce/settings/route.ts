@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig, ALL_PAYMENT_METHODS } from "@/lib/ecommerce/store-config";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -45,5 +46,6 @@ export async function PUT(req: NextRequest) {
 
   const config = parseStoreConfig(body?.config, fallbackFor(r));
   await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceStoreConfig: config as unknown as object } });
+  revalidateEcommerceCache({ id: restaurantId });
   return NextResponse.json({ ok: true, config });
 }

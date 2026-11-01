@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 export const runtime = "nodejs";
 
@@ -115,5 +116,7 @@ export async function POST(req: NextRequest) {
     }, { timeout: 120000, maxWait: 15000 });
   }
 
+  // Copió el catálogo a varias sucursales → invalida todos los storefronts cacheados.
+  revalidateEcommerceCache();
   return NextResponse.json({ ok: true, branches: targets.length, branchNames: targets.map((t) => t.name), dishesPerBranch: srcDishes.length });
 }

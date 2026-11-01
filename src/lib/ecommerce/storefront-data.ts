@@ -3,6 +3,7 @@
 //  restaurante (Restaurant / Category / Dish) al shape que
 //  usa el diseño clásico 1.0 (portado de Servio).
 // ═══════════════════════════════════════════════════════════
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
@@ -105,6 +106,25 @@ export interface StorefrontData {
   products: StoreProduct[];
 }
 
+
+// ── Precio y disponibilidad vigentes de un plato ───────────────────────────
+// Extraído para compartir la MISMA lógica entre la carga completa del catálogo
+// (cacheada) y la capa "en vivo" (loadEcommerceLive), y que no diverjan.
+type ActiveHHs = ReturnType<typeof activeHappyHours>;
+export function dishEffectivePricing(
+  d: { id: string; categoryId: string; price: number; discountPrice: number | null },
+  activeHHs: ActiveHHs,
+): { price: number; original_price: number | null; is_happy_hour: boolean } {
+  // discountPrice = oferta (menor). Happy hour (si activo) compite: gana el menor.
+  const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
+  const hhPrice = activeHHs.length ? bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHHs) : null;
+  const effective = Math.min(offer ?? d.price, hhPrice ?? d.price);
+  const hasOffer = effective < d.price;
+  return { price: hasOffer ? effective : d.price, original_price: hasOffer ? d.price : null, is_happy_hour: hhPrice != null };
+}
+export function dishSoldOut(d: { soldOut: boolean | null; stockCountdown: number | null }): boolean {
+  return d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0);
+}
 
 // Resuelve el restaurante por su `slug` (dominio principal) o por su dominio propio
 // guardado en ecommerceStoreConfig.customDomain (cuando el request llega por haruna.cl).
@@ -220,13 +240,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     if (!cat.dishes.length) continue;
     storeCategories.push({ id: cat.id, name: cat.name, position: cat.position });
     for (const d of cat.dishes) {
-      // discountPrice es el precio de oferta (menor). Si existe y es menor,
-      // el precio actual es la oferta y el original queda tachado.
-      // Happy hour (si activo) compite con la oferta: gana el menor.
-      const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
-      const hhPrice = activeHHs.length ? bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHHs) : null;
-      const effective = Math.min(offer ?? d.price, hhPrice ?? d.price);
-      const hasOffer = effective < d.price;
+      // Precio/oferta/happy hour vigentes (lógica compartida con loadEcommerceLive).
+      const pricing = dishEffectivePricing(d, activeHHs);
 
       // Aplanar los grupos de modificadores de todas las plantillas del plato.
       const optionGroups: StoreOptionGroup[] = [];
@@ -256,11 +271,11 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         name: d.name,
         description: d.description,
         detailed_description: d.detailedDescription ?? null,
-        price: hasOffer ? effective : d.price,
-        original_price: hasOffer ? d.price : null,
-        is_happy_hour: hhPrice != null,
+        price: pricing.price,
+        original_price: pricing.original_price,
+        is_happy_hour: pricing.is_happy_hour,
         image_url: d.photos?.[0] ?? null,
-        is_sold_out: d.soldOut === true || (d.stockCountdown != null && d.stockCountdown <= 0),
+        is_sold_out: dishSoldOut(d),
         is_hero: d.isHero === true,
         toteat_code: d.toteatProductId ?? null,
         // Oculto para el cliente: categoría inactiva, plato inactivo u oculto de
@@ -324,6 +339,111 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     categories: storeCategories,
     products,
   };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Storefront cacheado (menú estático) + capa "en vivo" (agotados/horario/HH)
+//  ───────────────────────────────────────────────────────────
+//  Patrón espejo de la carta QR (getRestaurantBySlug + revalidateQrCache):
+//  - El catálogo PESADO (categorías+platos+modificadores) se cachea con
+//    unstable_cache por restaurante; se invalida al instante al editar el menú
+//    (revalidateEcommerceCache) y, como red de seguridad, revalida cada 10 min.
+//  - Lo VOLÁTIL (abierto/cerrado, agotados, precio de happy hour por horario) se
+//    recalcula fresco con una consulta liviana (loadEcommerceLive) y se mezcla en
+//    cada request → el storefront muestra disponibilidad al día sin recalcularla
+//    dentro de la lectura del menú (equivalente al "/disableds" de Mercat).
+// ═══════════════════════════════════════════════════════════
+
+// Resuelve (cacheado) la clave (slug o dominio propio) → id del restaurante, para
+// cachear el catálogo por id (una sola entrada aunque se entre por slug o por
+// dominio propio) e invalidar por id desde el panel.
+function resolveEcommerceTenant(key: string): Promise<{ id: string; slug: string } | null> {
+  return unstable_cache(
+    async () => {
+      const r = await prisma.restaurant.findFirst({ where: restaurantByKey(key), select: { id: true, slug: true, ecommerceEnabled: true } });
+      if (!r || !r.ecommerceEnabled) throw new Error("ecom not found: " + key);
+      return { id: r.id, slug: r.slug };
+    },
+    ["ecom-resolve", key],
+    { tags: ["ecom-resolve", `ecom-resolve-${key}`], revalidate: 600 },
+  )().catch(() => null);
+}
+
+/**
+ * Catálogo del storefront CACHEADO (menú "estático"). Devuelve el mismo shape que
+ * loadEcommerceStorefront, pero servido desde la Data Cache (sin pegarle a la BD
+ * en cada visita). La disponibilidad/precio por horario puede estar hasta 10 min
+ * vieja aquí — getEcommerceStorefront() la refresca con la capa en vivo.
+ */
+export async function getEcommerceStorefrontBaseCached(key: string, opts?: { fromApp?: boolean }): Promise<StorefrontData | null> {
+  const fromApp = opts?.fromApp === true;
+  const resolved = await resolveEcommerceTenant(key);
+  if (!resolved) return null;
+  return unstable_cache(
+    async () => {
+      const r = await loadEcommerceStorefront(key, { fromApp });
+      if (!r) throw new Error("ecom storefront not found: " + key); // no cachear "no existe"
+      return r;
+    },
+    ["ecom-storefront", resolved.id, String(fromApp)],
+    // Taggeado por id (invalidación directa del panel) y por slug (para que el mismo
+    // revalidateQrCache(slug) que ya corre al editar el menú también lo invalide).
+    { tags: ["ecom-storefront", `ecom-storefront-id-${resolved.id}`, `ecom-storefront-slug-${resolved.slug}`], revalidate: 600 },
+  )().catch(() => null);
+}
+
+export interface StorefrontLive {
+  openStatus: OpenStatus;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  // id de plato → precio/disponibilidad vigentes (solo los que difieren se mezclan)
+  products: Record<string, { price: number; original_price: number | null; is_happy_hour: boolean; is_sold_out: boolean }>;
+}
+
+/**
+ * Capa EN VIVO (liviana, sin cachear): estado abierto/cerrado, métodos
+ * disponibles, agotados y precio de happy hour por horario. Consulta mínima
+ * (sin modificadores) para no recalcular todo el menú en cada lectura.
+ */
+export async function loadEcommerceLive(key: string): Promise<StorefrontLive | null> {
+  const r = await prisma.restaurant.findFirst({
+    where: restaurantByKey(key),
+    select: {
+      id: true, cartaAccentColor: true, ecommerceEnabled: true, ecommerceStoreConfig: true, ecommerceHours: true,
+      happyHours: { where: { isActive: true }, select: { id: true, name: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, bannerText: true, bannerColor: true, isActive: true } },
+      categories: {
+        where: { isActive: true },
+        select: { dishes: { where: { isActive: true, deletedAt: null, hideFromOrdering: false }, select: { id: true, categoryId: true, price: true, discountPrice: true, soldOut: true, stockCountdown: true } } },
+      },
+    },
+  });
+  if (!r || !r.ecommerceEnabled) return null;
+  const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor });
+  const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
+  const activeHHs = activeHappyHours((r.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
+  const products: StorefrontLive["products"] = {};
+  for (const c of r.categories) for (const d of c.dishes) {
+    products[d.id] = { ...dishEffectivePricing(d, activeHHs), is_sold_out: dishSoldOut(d) };
+  }
+  return { openStatus: avail.openStatus, deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled, products };
+}
+
+/**
+ * Storefront para la página pública: catálogo cacheado + capa en vivo mezclada.
+ * Si la capa en vivo falla, devuelve el catálogo cacheado tal cual (nunca rompe).
+ */
+export async function getEcommerceStorefront(key: string, opts?: { fromApp?: boolean }): Promise<StorefrontData | null> {
+  const base = await getEcommerceStorefrontBaseCached(key, opts);
+  if (!base) return null;
+  let live: StorefrontLive | null = null;
+  try { live = await loadEcommerceLive(key); } catch { live = null; }
+  if (!live) return base;
+  const tenant: StoreTenant = { ...base.tenant, openStatus: live.openStatus, deliveryEnabled: live.deliveryEnabled, pickupEnabled: live.pickupEnabled };
+  const products = base.products.map((p) => {
+    const o = live!.products[p.id];
+    return o ? { ...p, price: o.price, original_price: o.original_price, is_happy_hour: o.is_happy_hour, is_sold_out: o.is_sold_out } : p;
+  });
+  return { tenant, categories: base.categories, products };
 }
 
 // ═══════════════════════════════════════════════════════════

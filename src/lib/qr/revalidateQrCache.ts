@@ -6,8 +6,12 @@ import { revalidateTag, revalidatePath } from "next/cache";
  */
 export function revalidateQrCache(slug?: string) {
   revalidateTag("qr-restaurant", "max");
+  // El menú del ecommerce (storefront) se cachea aparte pero cambia con las mismas
+  // ediciones de carta → lo invalidamos aquí también (por slug, o global sin slug).
+  revalidateTag("ecom-storefront", "max");
   if (slug) {
     revalidateTag(`qr-restaurant-${slug}`, "max");
+    revalidateTag(`ecom-storefront-slug-${slug}`, "max");
     // Also revalidate the restaurant landing page (/[restaurantSlug]) which has its own
     // page-level cache (revalidate = 3600) and doesn't use unstable_cache tags.
     revalidatePath(`/${slug}`);

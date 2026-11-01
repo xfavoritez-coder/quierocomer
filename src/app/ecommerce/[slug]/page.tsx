@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { loadEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
+import { getEcommerceStorefront, getEcommerceStorefrontBaseCached } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const data = await loadEcommerceStorefront(slug);
+  // Metadata: basta el catálogo cacheado (no necesita la capa en vivo).
+  const data = await getEcommerceStorefrontBaseCached(slug);
   if (!data) return {};
   const { tenant } = data;
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
@@ -50,7 +51,8 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // ¿La request viene desde la app nativa? La cookie qc_app la setea <AppFlagSync/>
   // cuando detecta la WebView de Capacitor. Solo entonces se cargan los platos appOnly.
   const fromApp = (await cookies()).get("qc_app")?.value === "1";
-  const data = await loadEcommerceStorefront(slug, { fromApp });
+  // Catálogo cacheado + disponibilidad/horario en vivo mezclados.
+  const data = await getEcommerceStorefront(slug, { fromApp });
   if (!data) return notFound();
 
   // Si el request llegó por el dominio propio, el `slug` param es el host (= customDomain):

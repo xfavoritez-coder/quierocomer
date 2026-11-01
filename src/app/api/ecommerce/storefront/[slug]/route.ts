@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { loadEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
+import { getEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const data = await loadEcommerceStorefront(slug);
+  const data = await getEcommerceStorefront(slug);
   if (!data) return NextResponse.json({ error: "no encontrado" }, { status: 404 });
   return NextResponse.json(data);
 }

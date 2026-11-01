@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseDeliveryZones, parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { uberSettingsFor, uberConfigured } from "@/lib/ecommerce/uberDirect";
+import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
 /** Verifica que el panel logueado sea dueño (o miembro) del restaurante. */
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
@@ -55,5 +56,6 @@ export async function PUT(req: NextRequest) {
     data,
     select: { ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true },
   });
+  revalidateEcommerceCache({ id: restaurantId });
   return NextResponse.json({ ok: true, zones: parseDeliveryZones(updated.ecommerceDeliveryZones), config: parseDeliveryConfig(updated.ecommerceDeliveryConfig) });
 }
