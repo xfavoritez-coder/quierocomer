@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand } from "@/lib/ecommerce/storefront-data";
+import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand, loadBrandSlugForSlug } from "@/lib/ecommerce/storefront-data";
 import type { BrandBranch } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
@@ -96,9 +96,11 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   const basePath = data.tenant.customDomain && slug === data.tenant.customDomain ? "" : `/ecommerce/${data.tenant.slug}`;
 
   // Para tiendas multisucursal: cargamos las otras sucursales de la marca para mostrarlas en pickup.
+  // Usamos loadBrandSlugForSlug como fallback porque el cache puede no tener brandSlug aún.
   let siblings: BrandBranch[] = [];
-  if (data.tenant.brandSlug) {
-    const brand = await loadEcommerceBrand(data.tenant.brandSlug);
+  const brandSlug = data.tenant.brandSlug || await loadBrandSlugForSlug(slug);
+  if (brandSlug) {
+    const brand = await loadEcommerceBrand(brandSlug);
     if (brand) siblings = brand.branches.filter((b) => b.id !== data.tenant.id);
   }
 

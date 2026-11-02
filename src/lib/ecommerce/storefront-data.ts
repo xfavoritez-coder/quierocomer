@@ -137,6 +137,12 @@ function restaurantByKey(key: string): Prisma.RestaurantWhereInput {
   return { OR: [{ slug: key }, { ecommerceStoreConfig: { path: ["customDomain"], equals: key } }] };
 }
 
+/** Devuelve el brandSlug de un local sin tocar el cache (para page.tsx como fallback). */
+export async function loadBrandSlugForSlug(key: string): Promise<string | null> {
+  const r = await prisma.restaurant.findFirst({ where: restaurantByKey(key), select: { ecommerceStoreConfig: true } });
+  return parseStoreConfig(r?.ecommerceStoreConfig).brandSlug;
+}
+
 /** Solo el tenant (para el checkout), sin cargar el catálogo. */
 export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | null> {
   const r = await prisma.restaurant.findFirst({
