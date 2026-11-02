@@ -6,6 +6,7 @@ const FALLBACK_ID = 'cmo22e53z0000l404vsw2cksk'
 const PANEL_KEY = 'panel_selected_restaurant'
 
 export interface PosRestaurant {
+  branchName?: string | null
   id: string
   name: string
   slug: string
@@ -52,7 +53,7 @@ function init() {
           const id = _restaurantId
           const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
           if (r?.id) {
-            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null }, loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
+            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
             notify()
             return
           }
@@ -69,7 +70,7 @@ function init() {
       _restaurantId = id
       _state = {
         restaurantId: id,
-        restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null } : null,
+        restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null, branchName: (rest as any).branchName ?? null } : null,
         loading: false,
         posEnabled: rest && typeof rest.posEnabled === "boolean" ? rest.posEnabled : null,
       }

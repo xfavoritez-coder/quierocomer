@@ -443,6 +443,8 @@ export default function PosHomePage() {
     <div className="pos-shell">
       <PosHeader
         mode="brand"
+        storeName={restaurant?.name}
+        branchName={restaurant?.branchName ?? null}
         syncing={syncing}
         onMenu={() => setMenuOpen(true)}
         onPendingClick={() => setPendingModal(true)}

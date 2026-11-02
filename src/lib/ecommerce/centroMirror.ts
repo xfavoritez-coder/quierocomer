@@ -49,6 +49,12 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
     ? (order.items as unknown as StoredItem[]).map((it) => ({ productName: it.name || it.dishName || "Ítem", quantity: Number(it.quantity) || 1 }))
     : [];
 
+  // Pedido ya pagado por la web (webpay/mercadopago/flow): llega PAGADO al POS,
+  // así solo hay que cerrarlo (no cobrarlo). Se registra el monto y el medio.
+  const total = order.total || 0;
+  const alreadyPaid = order.paymentStatus === "paid";
+  const payMethod = (order.paymentMethod || order.paymentGateway || "").toString().toLowerCase();
+
   try {
     const created = await prisma.posOrder.create({
       data: {
@@ -63,7 +69,9 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         customerPhone: order.customerPhone || "",
         addressLine: isDelivery ? (order.deliveryAddress || "") : "",
         addressParts: isDelivery && order.deliveryAddressParts ? (order.deliveryAddressParts as object) : undefined,
-        totalAmount: order.total || 0,
+        totalAmount: total,
+        paidAmount: alreadyPaid ? total : 0,
+        rawPayload: alreadyPaid ? ({ webPayment: { method: payMethod || "online", at: new Date().toISOString() } } as object) : undefined,
         deliveryFee: order.deliveryFee || 0,
         discountAmount: order.discount || 0,
         currency: "CLP",

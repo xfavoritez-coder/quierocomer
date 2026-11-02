@@ -160,7 +160,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                   <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 19, color: 'var(--ink)' }}>{clp(o.totalAmount)}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: paid ? 'var(--ink-3)' : accent }}>{paid ? 'Ver' : 'Cobrar →'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: paid ? '#16a34a' : accent }}>{paid ? 'Cerrar →' : 'Cobrar →'}</span>
                 </div>
               </button>
             )
@@ -214,6 +214,21 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
     setCanceling(false)
   }
 
+  const [finalizing, setFinalizing] = useState(false)
+  // Cerrar el pedido = marcarlo como entregado (sale de activos y pasa al historial).
+  // Cobrar ≠ cerrar: cobrar registra el pago; cerrar finaliza el pedido.
+  const handleFinalize = async () => {
+    setFinalizing(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, opsStage: 'delivered' }),
+      })
+      if (r.ok) onPaid() // refresca la lista y cierra el modal
+    } catch { /* noop */ }
+    setFinalizing(false)
+  }
+
   const receivedNum = parseInt(received, 10) || 0
   const tipNum = parseInt(tip, 10) || 0
   const change = method === 'efectivo' ? Math.max(0, receivedNum - total) : 0
@@ -242,8 +257,10 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
 
   // Pedido ya pagado (p.ej. online): solo lectura, no se re-cobra ni se duplica en caja.
   if (paid) {
-    const pp = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload))
-      ? ((order.rawPayload as Record<string, unknown>).posPayment as { method?: string } | undefined) : undefined
+    const rp = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload)) ? (order.rawPayload as Record<string, unknown>) : {}
+    const pp = (rp.posPayment as { method?: string } | undefined) || undefined
+    const wp = (rp.webPayment as { method?: string } | undefined) || undefined
+    const payLabel = pp?.method || wp?.method || ''
     return (
       <div className="pos-modal-overlay" onClick={onClose}>
         <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
@@ -254,11 +271,15 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#16a34a', fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-            Pagado{pp?.method ? ` · ${pp.method}` : ''}
+            Pagado{payLabel ? ` · ${payLabel}` : ''}
           </div>
           {order.tipAmount > 0 && <div style={{ ...row }}><span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Propina</span><span style={num}>{clp(order.tipAmount)}</span></div>}
-          <div className="pos-modal-actions" style={{ marginTop: 16 }}>
-            <button className="pos-modal-ok" style={{ flex: 1 }} onClick={onClose}>Cerrar</button>
+          <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.5 }}>Este pedido ya está pagado. Al cerrarlo se marca como entregado y sale de los activos.</p>
+          <div className="pos-modal-actions" style={{ marginTop: 14 }}>
+            <button className="pos-modal-cancel" onClick={onClose}>Volver</button>
+            <button className="pos-modal-ok" disabled={finalizing} style={{ opacity: finalizing ? 0.6 : 1 }} onClick={handleFinalize}>
+              {finalizing ? 'Cerrando…' : 'Cerrar pedido'}
+            </button>
           </div>
           <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
         </div>

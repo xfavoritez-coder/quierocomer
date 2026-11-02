@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
@@ -7,8 +8,10 @@ export async function GET(req: NextRequest) {
 
   const r = await prisma.restaurant.findUnique({
     where: { id },
-    select: { id: true, name: true, slug: true, logoUrl: true, posEnabled: true },
+    select: { id: true, name: true, slug: true, logoUrl: true, posEnabled: true, ecommerceStoreConfig: true },
   });
   if (!r) return NextResponse.json({ error: "not found" }, { status: 404 });
-  return NextResponse.json(r);
+  const { ecommerceStoreConfig, ...rest } = r;
+  const branchName = parseStoreConfig(ecommerceStoreConfig).branchName;
+  return NextResponse.json({ ...rest, branchName });
 }
