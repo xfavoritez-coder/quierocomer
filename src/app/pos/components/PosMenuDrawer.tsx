@@ -1,26 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import type { PosRestaurant } from '../lib/usePosRestaurant'
-import { isOrderSoundEnabled, setOrderSoundEnabled, primeOrderSound, playOrderAlert, getOrderSoundType, setOrderSoundType, SOUND_OPTIONS, type SoundType } from '../lib/orderSound'
+import PosTiemposInline from './PosTiemposInline'
 
 // Drawer de Ajustes del POS (caja, mesas, garzones, impresora). Compartido por
 // todas las pantallas del POS para que el menú del header sea idéntico.
 export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate }: { cashSession: boolean; restaurant: PosRestaurant | null; onClose: () => void; onNavigate: (url: string) => void }) {
-  const [soundOn, setSoundOn] = useState(isOrderSoundEnabled())
-  const [soundType, setSoundTypeState] = useState<SoundType>(getOrderSoundType())
-  const toggleSound = () => {
-    const next = !soundOn
-    setSoundOn(next)
-    setOrderSoundEnabled(next)
-    if (next) { primeOrderSound(); playOrderAlert() } // gesto del usuario → desbloquea audio + prueba
-  }
-  const pickSound = (t: SoundType) => {
-    setSoundTypeState(t)
-    setOrderSoundType(t)
-    primeOrderSound(); playOrderAlert(t) // preview
-  }
-
   const items = [
     {
       label: cashSession ? 'Ver caja' : 'Abrir caja',
@@ -43,9 +28,9 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       href: '/pos/config',
     },
     {
-      label: 'Tiempos de entrega',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>,
-      href: '/pos/config/tiempos',
+      label: 'Sonido de pedidos',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>,
+      href: '/pos/config/sonido',
     },
   ]
 
@@ -76,46 +61,6 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
           </button>
         </div>
         <div className="pos-drawer-items">
-          {/* Sonido de pedidos (ecommerce) */}
-          <div className="pos-drawer-item" style={{ cursor: 'default' }}>
-            <span className="pos-drawer-ic">
-              {soundOn
-                ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>}
-            </span>
-            <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span>Sonido de pedidos</span>
-              <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Suena fuerte al entrar un pedido</span>
-            </span>
-            <button
-              onClick={toggleSound}
-              role="switch"
-              aria-checked={soundOn}
-              aria-label="Sonido de pedidos"
-              style={{ marginLeft: 'auto', flexShrink: 0, width: 46, height: 26, borderRadius: 999, border: 'none', cursor: 'pointer', background: soundOn ? 'var(--amber)' : 'var(--line-strong)', position: 'relative', transition: 'background .2s' }}
-            >
-              <span style={{ position: 'absolute', top: 3, left: soundOn ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
-            </button>
-          </div>
-          {/* Selector de sonido — toca uno para elegirlo y escucharlo */}
-          {soundOn && (
-            <div style={{ padding: '2px 14px 10px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {SOUND_OPTIONS.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => pickSound(s.id)}
-                  style={{
-                    padding: '7px 11px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: 'var(--sans)',
-                    border: `1px solid ${soundType === s.id ? 'var(--amber)' : 'var(--line-strong)'}`,
-                    background: soundType === s.id ? 'var(--amber-tint)' : 'var(--sunk)',
-                    color: soundType === s.id ? 'var(--amber-press)' : 'var(--ink-2)',
-                  }}
-                >
-                  {soundType === s.id ? '🔊 ' : ''}{s.label}
-                </button>
-              ))}
-            </div>
-          )}
           {items.map(item => (
             <button
               key={item.label}
@@ -129,6 +74,8 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
               </svg>
             </button>
           ))}
+          {/* Tiempos de entrega — editables inline (como pidió el usuario) */}
+          {restaurant?.id && <PosTiemposInline restaurantId={restaurant.id} />}
         </div>
       </div>
     </>
