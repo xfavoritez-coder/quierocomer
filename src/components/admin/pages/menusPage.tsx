@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
 import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
@@ -1472,7 +1471,6 @@ export default function AdminMenus() {
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color="var(--adm-text3)" /> {t("menu_my_menu")}</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{filtered.length} productos · {categories.length} categorías</p>
         </div>
-        <RestaurantPicker />
       </div>
 
       {/* Tabs — pill style */}
