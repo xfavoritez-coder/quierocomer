@@ -44,9 +44,9 @@ interface CartItemIn {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor, fromApp } = body as {
+    const { restaurantSlug, restaurantId, customerName, customerPhone, customerEmail, orderType, deliveryAddress, deliveryAddressParts, deliveryZone, deliveryLat, deliveryLng, items, notes, paymentMethod, couponCode, scheduledFor, fromApp } = body as {
       restaurantSlug?: string; restaurantId?: string; customerName?: string; customerPhone?: string; customerEmail?: string;
-      orderType?: string; deliveryAddress?: string; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string; fromApp?: boolean;
+      orderType?: string; deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryZone?: string; deliveryLat?: number; deliveryLng?: number; items?: CartItemIn[]; notes?: string; paymentMethod?: string; couponCode?: string; scheduledFor?: string; fromApp?: boolean;
     };
 
     if (!restaurantId && !restaurantSlug) return NextResponse.json({ error: "restaurante requerido" }, { status: 400 });
@@ -264,6 +264,7 @@ export async function POST(req: NextRequest) {
         customerEmail: customerEmail?.trim() || null,
         orderType: orderType === "DELIVERY" ? "DELIVERY" : "PICKUP",
         deliveryAddress: deliveryAddress?.trim() || null,
+        deliveryAddressParts: isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
         deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
         deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         paymentMethod,

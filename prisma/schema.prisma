@@ -443,6 +443,7 @@ model OnlineOrder {
   customerPhone      String
   orderType          String
   deliveryAddress    String?
+  deliveryAddressParts Json?   // partes separadas (calle, comuna, ciudad, región, país) de la dirección de delivery
   paymentMethod      String
   items              Json
   total              Int

@@ -37,6 +37,7 @@ export interface DeliveryAddress {
   fee: number;
   zoneName?: string | null;
   minOrder?: number | null;
+  parts?: import("@/lib/ecommerce/address").AddressParts | null; // partes separadas (calle, comuna, ciudad, región, país)
 }
 
 interface CartState {

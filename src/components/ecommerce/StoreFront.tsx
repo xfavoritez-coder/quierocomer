@@ -8,7 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
-import { formatPlaceAddress } from "@/lib/ecommerce/address";
+import { formatPlaceAddress, placeAddressParts, type AddressParts } from "@/lib/ecommerce/address";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
@@ -861,7 +861,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
   // Modo distancia (Google Maps autocomplete)
   const gmapsReady = useGoogleMaps(mapMode ? tenant.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dest, setDest] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts?: AddressParts } | null>(null);
   const [feeResult, setFeeResult] = useState<DistanceFeeResult | null>(null);
   const [feeLoading, setFeeLoading] = useState(false);
 
@@ -902,7 +902,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
       // Dirección armada desde los componentes (calle número, comuna, ciudad, región, país)
       // con comas; quita el código postal chileno de 7 dígitos.
       const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
-      const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr };
+      const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value) };
       setDest(d);
       computeFeeFor(d);
     });
@@ -921,12 +921,12 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
     if (tab === "pickup") { confirmPickup(); requestClose(); return; }
     if (mapMode) {
       if (!feeResult?.available || !dest) return;
-      setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null });
+      setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null, parts: dest.parts ?? null });
       requestClose();
       return;
     }
     if (!selectedZone || !address.trim()) return;
-    setDeliveryAddress({ address: `${address.trim()}, ${selectedZone.name}`, details: details.trim(), lat: null, lng: null, fee: selectedZone.fee, zoneName: selectedZone.name, minOrder: selectedZone.minOrder ?? null });
+    setDeliveryAddress({ address: `${address.trim()}, ${selectedZone.name}`, details: details.trim(), lat: null, lng: null, fee: selectedZone.fee, zoneName: selectedZone.name, minOrder: selectedZone.minOrder ?? null, parts: { street: address.trim(), comuna: selectedZone.name, city: "", region: "", country: "Chile" } });
     requestClose();
   }
 

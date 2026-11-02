@@ -6,13 +6,22 @@
 export interface GAddressComponent { long_name: string; short_name: string; types: string[] }
 export interface GPlaceLike { formatted_address?: string; address_components?: GAddressComponent[] }
 
-export interface ParsedAddress {
+export interface AddressParts {
   street: string;    // "Sta. Elena 1278"
   comuna: string;    // "Santiago"
   city: string;      // provincia/ciudad
   region: string;    // "Región Metropolitana"
   country: string;   // "Chile"
+}
+
+export interface ParsedAddress extends AddressParts {
   formatted: string; // todo junto, separado por comas
+}
+
+/** Solo las partes (sin el string `formatted`), para guardar en el pedido. */
+export function placeAddressParts(place: GPlaceLike | null | undefined, fallback = ""): AddressParts {
+  const { street, comuna, city, region, country } = parsePlaceAddress(place, fallback);
+  return { street, comuna, city, region, country };
 }
 
 /** Limpia un string de dirección (quita códigos postales de 7 dígitos y comas dobles). */

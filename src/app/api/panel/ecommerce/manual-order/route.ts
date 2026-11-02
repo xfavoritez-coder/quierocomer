@@ -39,11 +39,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      restaurantId, customerName, customerPhone, orderType, deliveryAddress,
+      restaurantId, customerName, customerPhone, orderType, deliveryAddress, deliveryAddressParts,
       deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative,
     } = body as {
       restaurantId?: string; customerName?: string; customerPhone?: string; orderType?: string;
-      deliveryAddress?: string; deliveryLat?: number; deliveryLng?: number; items?: ManualItem[];
+      deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryLat?: number; deliveryLng?: number; items?: ManualItem[];
       notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean;
     };
 
@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
         customerEmail: null,
         orderType: isDelivery ? "DELIVERY" : "PICKUP",
         deliveryAddress: isDelivery ? (deliveryAddress?.trim() || null) : null,
+        deliveryAddressParts: isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
         deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
         deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         paymentMethod,

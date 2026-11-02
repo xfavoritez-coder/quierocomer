@@ -17,7 +17,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { clp } from "@/lib/ecommerce/format";
-import { formatPlaceAddress } from "@/lib/ecommerce/address";
+import { formatPlaceAddress, placeAddressParts, type AddressParts } from "@/lib/ecommerce/address";
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
@@ -89,7 +89,7 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
   }, []);
 
   // Confirmar una sucursal: carga su catálogo, re-liga el carrito y fija la entrega.
-  const choose = useCallback(async (branch: BrandBranch, mode: "delivery" | "pickup", addr?: { address: string; details: string; lat: number | null; lng: number | null; fee: number }) => {
+  const choose = useCallback(async (branch: BrandBranch, mode: "delivery" | "pickup", addr?: { address: string; details: string; lat: number | null; lng: number | null; fee: number; parts?: AddressParts | null }) => {
     setSwitching(true);
     try {
       const bd = branch.slug === data.tenant.slug ? data : await fetchStorefront(branch.slug);
@@ -147,7 +147,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   currentSlug: string | null;
   switching: boolean;
   fetchStorefront: (slug: string) => Promise<StorefrontData | null>;
-  onChoose: (branch: BrandBranch, mode: "delivery" | "pickup", addr?: { address: string; details: string; lat: number | null; lng: number | null; fee: number }) => void;
+  onChoose: (branch: BrandBranch, mode: "delivery" | "pickup", addr?: { address: string; details: string; lat: number | null; lng: number | null; fee: number; parts?: AddressParts | null }) => void;
   onClose: () => void;
 }) {
   const accent = brand.branches[0]?.primaryColor || "#F4A623";
@@ -156,7 +156,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const [tab, setTab] = useState<"delivery" | "pickup">(hasDelivery ? "delivery" : "pickup");
   const gmapsReady = useGoogleMaps(tab === "delivery" ? brand.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dest, setDest] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts } | null>(null);
   const [details, setDetails] = useState("");
 
   // Evalúa TODAS las sucursales con delivery para la dirección escrita y determina
@@ -219,7 +219,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
       const loc = place?.geometry?.location;
       if (!loc) return;
       const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
-      setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr });
+      setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value) });
     });
     inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
     return () => { g.maps.event?.removeListener?.(listener); };
@@ -237,7 +237,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
     // queda sin seleccionar hasta ese paso). onChoose en modo delivery SIN dirección
     // adopta la sucursal pero no fija la entrega (el selector normal la pedirá).
     if (chosen.mode === "zones") { onChoose(chosen.branch, "delivery"); return; }
-    onChoose(chosen.branch, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: chosen.fee });
+    onChoose(chosen.branch, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: chosen.fee, parts: dest.parts });
   }
 
   const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });

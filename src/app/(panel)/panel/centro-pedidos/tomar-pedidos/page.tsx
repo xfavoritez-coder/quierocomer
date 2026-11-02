@@ -10,7 +10,7 @@ import { useSessionContext } from "@/lib/admin/SessionContext";
 import StoreStyles from "@/components/ecommerce/StoreStyles";
 import AccompanimentsSection from "@/components/ecommerce/AccompanimentsSection";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
-import { formatPlaceAddress } from "@/lib/ecommerce/address";
+import { formatPlaceAddress, placeAddressParts } from "@/lib/ecommerce/address";
 import type { StorefrontData, StoreProduct, StoreOptionGroup } from "@/lib/ecommerce/storefront-data";
 import type { AccompConfig } from "@/lib/ecommerce/accompaniments";
 
@@ -133,6 +133,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   // Dirección elegida con Autocomplete de Google (coordenadas precisas): evita
   // que el server geocodifique un texto ambiguo y caiga en un punto equivocado.
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
+  const [addrParts, setAddrParts] = useState<import("@/lib/ecommerce/address").AddressParts | null>(null);
   const addrRef = useRef<HTMLInputElement>(null);
   const gmapsReady = useGoogleMaps(deliveryType === "DELIVERY" && geoMode ? mapsKey : null);
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -201,6 +202,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
       const loc = place?.geometry?.location;
       if (!loc) return;
       setAddress(formatPlaceAddress(place, addrRef.current!.value));
+      setAddrParts(placeAddressParts(place, addrRef.current!.value));
       setPicked({ lat: loc.lat(), lng: loc.lng() });
     });
     const el = addrRef.current;
@@ -263,6 +265,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           customerPhone: customerPhone.trim(),
           orderType: deliveryType,
           deliveryAddress: deliveryType === "DELIVERY" ? addressFull : null,
+          deliveryAddressParts: deliveryType === "DELIVERY" ? addrParts : null,
           deliveryLat: geo.lat ?? null, deliveryLng: geo.lng ?? null,
           paymentMethod, notes: [accomNote, notes.trim()].filter(Boolean).join(" | ") || null,
           discount, deliveryFee: fee, sendToPos: posAvailable && sendToPos, posNative: disableToteat,
@@ -283,7 +286,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   }
 
   function reset() {
-    setCart([]); setCustomerName(""); setCustomerPhone(""); setAddress(""); setApt(""); setZoneName(""); setDeliveryFee(0);
+    setCart([]); setCustomerName(""); setCustomerPhone(""); setAddress(""); setAddrParts(null); setApt(""); setZoneName(""); setDeliveryFee(0);
     setGeo({ status: "idle", msg: "" }); setPaymentMethod(""); setNotes(""); setDiscountInput(""); setDiscountType("percent");
     setDeliveryType("PICKUP"); setAccomNote(""); setSuccess(null); setOpenNoteKey(null); setMobileTab("menu");
   }
