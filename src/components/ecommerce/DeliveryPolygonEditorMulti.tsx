@@ -356,7 +356,7 @@ export default function DeliveryPolygonEditorMulti({
                 <span style={{ width: 14, height: 14, borderRadius: "50%", background: color, flexShrink: 0, border: isActive ? `2px solid var(--adm-text)` : "2px solid transparent", boxSizing: "border-box" }} />
                 <span style={{ fontFamily: isActive ? F : FB, fontWeight: isActive ? 700 : 400, fontSize: "0.78rem", color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>
                   {b.branchName || b.name}
-                  {isActive && <span style={{ marginLeft: 5, fontSize: "0.68rem", color: ACCENT }}>(editando)</span>}
+                  {isActive && <span style={{ marginLeft: 5, fontSize: "0.68rem", color: color }}>(editando)</span>}
                 </span>
               </div>
             );
