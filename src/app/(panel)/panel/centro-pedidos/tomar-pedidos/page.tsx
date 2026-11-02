@@ -114,7 +114,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const [courtesyKey, setCourtesyKey] = useState<string | null>(null);
 
   // Formulario
-  const [deliveryType, setDeliveryType] = useState<"PICKUP" | "DELIVERY">(tenant.pickupEnabled === false && tenant.deliveryEnabled ? "DELIVERY" : "PICKUP");
+  const [deliveryType, setDeliveryType] = useState<"PICKUP" | "DELIVERY" | "QUICK">(tenant.pickupEnabled === false && tenant.deliveryEnabled ? "DELIVERY" : "PICKUP");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
@@ -143,7 +143,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState<number | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const showToast = (m: string) => { clearTimeout(toastTimer.current); setToast(m); toastTimer.current = setTimeout(() => setToast(null), 1800); };
@@ -242,7 +242,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   // Validación
   const invalid = useMemo(() => {
     if (!cart.length) return "Agrega productos";
-    if (!customerName.trim()) return "Falta el nombre del cliente";
+    if (deliveryType !== "QUICK" && !customerName.trim()) return "Falta el nombre del cliente";
     if (deliveryType === "DELIVERY") {
       if (deliveryMode === "zones") { if (!selectedZone) return "Selecciona la zona de reparto"; if (selectedZone.minOrder && subtotal < selectedZone.minOrder) return `Mínimo en ${selectedZone.name}: ${fmt(selectedZone.minOrder)}`; }
       else if (geo.status !== "ok") return "Ingresa una dirección válida";
@@ -273,7 +273,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
       });
       const d = await res.json();
       if (!res.ok || !d.ok) throw new Error(d.error || "No se pudo registrar");
-      setSuccess(d.orderNumber);
+      // Venta rápida: muestra el correlativo del día (lo que se le canta al cliente).
+      setSuccess(d.isQuick && d.displayName ? d.displayName : `#${d.orderNumber}`);
       // La comanda de cocina (si está activada) la imprime el agente desde la cola
       // junto con la comanda normal — igual que para los pedidos del ecommerce.
     } catch (e) { showToast(`❌ ${e instanceof Error ? e.message : "Error"}`); }
@@ -331,21 +332,22 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const cartPanel = (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.card, overflow: "hidden" }}>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {/* Tipo de entrega */}
-        {tenant.deliveryEnabled && tenant.pickupEnabled && (
-          <div style={{ display: "flex", gap: 8, padding: 14, borderBottom: `1px solid ${C.border2}` }}>
-            <TypeBtn active={deliveryType === "PICKUP"} onClick={() => setDeliveryType("PICKUP")} icon={<Package size={15} />} label="Retiro" activeBg={C.text} />
-            <TypeBtn active={deliveryType === "DELIVERY"} onClick={() => setDeliveryType("DELIVERY")} icon={<Bike size={15} />} label="Delivery" activeBg={accent} />
-          </div>
-        )}
+        {/* Tipo de venta (Retiro / Delivery / Venta rápida) */}
+        <div style={{ display: "flex", gap: 8, padding: 14, borderBottom: `1px solid ${C.border2}`, flexWrap: "wrap" }}>
+          {tenant.pickupEnabled && <TypeBtn active={deliveryType === "PICKUP"} onClick={() => setDeliveryType("PICKUP")} icon={<Package size={15} />} label="Retiro" activeBg={C.text} />}
+          {tenant.deliveryEnabled && <TypeBtn active={deliveryType === "DELIVERY"} onClick={() => setDeliveryType("DELIVERY")} icon={<Bike size={15} />} label="Delivery" activeBg={accent} />}
+          <TypeBtn active={deliveryType === "QUICK"} onClick={() => setDeliveryType("QUICK")} icon={<Package size={15} />} label="Venta rápida" activeBg={C.text} />
+        </div>
 
-        {/* Cliente */}
-        <Section icon={<User size={13} />} title="Cliente">
-          <div style={{ display: "flex", gap: 8 }}>
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre *" style={{ ...inp, flex: 1, minWidth: 0 }} />
-            <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Teléfono" type="tel" style={{ ...inp, flex: 1, minWidth: 0 }} />
-          </div>
-        </Section>
+        {/* Cliente — no se pide en venta rápida (el nombre es un correlativo diario) */}
+        {deliveryType !== "QUICK" && (
+          <Section icon={<User size={13} />} title="Cliente">
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre *" style={{ ...inp, flex: 1, minWidth: 0 }} />
+              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Teléfono" type="tel" style={{ ...inp, flex: 1, minWidth: 0 }} />
+            </div>
+          </Section>
+        )}
 
         {/* Dirección / zona */}
         {deliveryType === "DELIVERY" && (
@@ -522,7 +524,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}><CheckCircle2 size={30} color={C.green} /></div>
             <div>
               <h2 style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 800, color: C.text, margin: 0 }}>¡Pedido tomado!</h2>
-              <p style={{ fontFamily: FB, fontSize: "0.86rem", color: C.text2, margin: "4px 0 0" }}>Pedido #{success} registrado. Aparece en Pedidos.</p>
+              <p style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: C.text, margin: "6px 0 0" }}>{success}</p>
+              <p style={{ fontFamily: FB, fontSize: "0.86rem", color: C.text2, margin: "4px 0 0" }}>Registrado. Aparece en Pedidos.</p>
             </div>
             <button onClick={reset} style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: C.text, color: "#fff", fontFamily: F, fontWeight: 700, cursor: "pointer" }}>Nuevo pedido</button>
             <Link href="/panel/centro-pedidos" style={{ fontFamily: FB, fontSize: "0.8rem", color: C.text2, textDecoration: "none" }}>Ver pedidos →</Link>
@@ -693,7 +696,7 @@ function CourtesyModal({ onConfirm, onClose }: { onConfirm: (reason: string) => 
 }
 
 function ConfirmModal({ cart, customerName, customerPhone, deliveryType, addressFull, paymentMethod, notes, subtotal, discount, fee, total, sending, accent, onClose, onConfirm }: {
-  cart: CartItem[]; customerName: string; customerPhone: string; deliveryType: "PICKUP" | "DELIVERY"; addressFull: string;
+  cart: CartItem[]; customerName: string; customerPhone: string; deliveryType: "PICKUP" | "DELIVERY" | "QUICK"; addressFull: string;
   paymentMethod: string; notes: string; subtotal: number; discount: number; fee: number; total: number; sending: boolean; accent: string; onClose: () => void; onConfirm: () => void;
 }) {
   const payLabel = PAY_METHODS.find((p) => p.id === paymentMethod)?.label ?? paymentMethod;
@@ -705,8 +708,10 @@ function ConfirmModal({ cart, customerName, customerPhone, deliveryType, address
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: C.text3 }}><X size={18} /></button>
         </div>
         <div style={{ overflowY: "auto", flex: 1, padding: 18, display: "flex", flexDirection: "column", gap: 10, fontFamily: FB, fontSize: "0.84rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, color: C.text }}>{deliveryType === "DELIVERY" ? <><Bike size={15} color={accent} /> Delivery</> : <><Package size={15} /> Retiro en local</>}</div>
-          <div><span style={{ fontWeight: 700, color: C.text }}>{customerName}</span>{customerPhone && <span style={{ color: C.text2 }}> · {customerPhone}</span>}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, color: C.text }}>{deliveryType === "DELIVERY" ? <><Bike size={15} color={accent} /> Delivery</> : deliveryType === "QUICK" ? <><Package size={15} /> Venta rápida</> : <><Package size={15} /> Retiro en local</>}</div>
+          {deliveryType === "QUICK"
+            ? <div style={{ color: C.text2, fontSize: "0.8rem" }}>Sin nombre · se asigna un número correlativo del día</div>
+            : <div><span style={{ fontWeight: 700, color: C.text }}>{customerName}</span>{customerPhone && <span style={{ color: C.text2 }}> · {customerPhone}</span>}</div>}
           {deliveryType === "DELIVERY" && addressFull && <p style={{ color: C.text2, fontSize: "0.78rem", margin: 0 }}>{addressFull}</p>}
           <div style={{ alignSelf: "flex-start", background: C.text, color: "#fff", fontFamily: F, fontSize: "0.7rem", fontWeight: 700, padding: "3px 10px", borderRadius: 999 }}>POR PAGAR: {payLabel}</div>
           {notes && <p style={{ color: C.text3, fontSize: "0.78rem", fontStyle: "italic", margin: 0 }}>&quot;{notes}&quot;</p>}

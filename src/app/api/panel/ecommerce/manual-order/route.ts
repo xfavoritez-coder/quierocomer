@@ -47,9 +47,13 @@ export async function POST(req: NextRequest) {
       notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean;
     };
 
+    // Venta rápida: no requiere nombre del cliente; el nombre es un correlativo
+    // diario ("Rápida #N") que se reinicia cada día. Se guarda como retiro.
+    const isQuick = orderType === "QUICK";
+
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
     if (!(await verifyAccess(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    if (!customerName?.trim()) return NextResponse.json({ error: "Falta el nombre del cliente" }, { status: 400 });
+    if (!isQuick && !customerName?.trim()) return NextResponse.json({ error: "Falta el nombre del cliente" }, { status: 400 });
     if (!Array.isArray(items) || !items.length) return NextResponse.json({ error: "El pedido no tiene productos" }, { status: 400 });
     if (!paymentMethod) return NextResponse.json({ error: "Falta el medio de pago" }, { status: 400 });
 
@@ -61,6 +65,21 @@ export async function POST(req: NextRequest) {
     }
 
     const isDelivery = orderType === "DELIVERY";
+
+    // Venta rápida: nombre = correlativo diario "Rápida #N" (se reinicia cada día,
+    // hora de Chile). N = cuántas ventas rápidas van hoy + 1.
+    let effectiveName = String(customerName ?? "").trim();
+    if (isQuick) {
+      const now = new Date();
+      const chileWall = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+      const offsetMs = now.getTime() - chileWall.getTime();
+      const startWall = new Date(chileWall); startWall.setHours(0, 0, 0, 0);
+      const startUtc = new Date(startWall.getTime() + offsetMs);
+      const todayCount = await prisma.onlineOrder.count({
+        where: { restaurantId, customerName: { startsWith: "Rápida #" }, createdAt: { gte: startUtc } },
+      });
+      effectiveName = `Rápida #${todayCount + 1}`;
+    }
 
     // Subtotal server-side (nunca confiar en el total del cliente). El staff sí
     // define descuento y envío manualmente (endpoint autenticado por panel).
@@ -102,7 +121,7 @@ export async function POST(req: NextRequest) {
         restaurantId,
         source: "ecommerce",
         channel: "manual", // creado desde el tomador de pedidos (no es de la tienda pública)
-        customerName: String(customerName).trim(),
+        customerName: effectiveName,
         customerPhone: customerPhone?.trim() || "",
         customerEmail: null,
         orderType: isDelivery ? "DELIVERY" : "PICKUP",
@@ -131,7 +150,7 @@ export async function POST(req: NextRequest) {
     // Toteat, así que el PosOrder debe crearse acá para verse en el board y chips).
     void mirrorOnlineOrderToCentro(order.id, "manual", { force: !!posNative }).catch(() => {});
 
-    return NextResponse.json({ ok: true, orderId: order.id, orderNumber, pos });
+    return NextResponse.json({ ok: true, orderId: order.id, orderNumber, displayName: effectiveName, isQuick, pos });
   } catch (e) {
     console.error("[ecommerce/manual-order]", e);
     return NextResponse.json({ error: "Error al registrar el pedido" }, { status: 500 });
