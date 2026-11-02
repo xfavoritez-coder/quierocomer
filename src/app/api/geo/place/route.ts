@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleApiKey } from '@/lib/platformSettings'
+import { formatPlaceAddress } from '@/lib/ecommerce/address'
 
 /** Retorna coordenadas y dirección para un place_id de Google Places.
  *  Se llama solo cuando el usuario selecciona una sugerencia.
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       lat: String(r.geometry.location.lat),
       lon: String(r.geometry.location.lng),
-      display_name: r.formatted_address,
+      display_name: formatPlaceAddress(r, r.formatted_address),
       address: parseGoogleComponents(r.address_components),
     })
   } catch {

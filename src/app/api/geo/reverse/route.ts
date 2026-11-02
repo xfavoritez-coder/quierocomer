@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGoogleApiKey } from "@/lib/platformSettings";
+import { formatPlaceAddress } from "@/lib/ecommerce/address";
 
 /** Geocodificación inversa: coordenadas → dirección.
  *  GET /api/geo/reverse?lat=..&lng=..
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest) {
       const res = await fetch(url, { next: { revalidate: 0 } });
       const data = await res.json();
       if (data.status === "OK" && data.results?.[0]) {
-        return NextResponse.json({ display_name: data.results[0].formatted_address });
+        // Arma la dirección desde los componentes (con comas: calle, comuna, ciudad, región, país).
+        return NextResponse.json({ display_name: formatPlaceAddress(data.results[0], data.results[0].formatted_address) });
       }
     } catch {
       /* cae a Nominatim */

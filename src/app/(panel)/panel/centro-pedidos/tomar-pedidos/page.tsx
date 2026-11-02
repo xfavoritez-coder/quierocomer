@@ -10,6 +10,7 @@ import { useSessionContext } from "@/lib/admin/SessionContext";
 import StoreStyles from "@/components/ecommerce/StoreStyles";
 import AccompanimentsSection from "@/components/ecommerce/AccompanimentsSection";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
+import { formatPlaceAddress } from "@/lib/ecommerce/address";
 import type { StorefrontData, StoreProduct, StoreOptionGroup } from "@/lib/ecommerce/storefront-data";
 import type { AccompConfig } from "@/lib/ecommerce/accompaniments";
 
@@ -193,13 +194,13 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
     const ac = new g.maps.places.Autocomplete(addrRef.current, {
       componentRestrictions: { country: ["cl"] },
       types: ["address"],
-      fields: ["formatted_address", "geometry"],
+      fields: ["formatted_address", "address_components", "geometry"],
     });
     const listener = ac.addListener("place_changed", () => {
       const place = ac.getPlace();
       const loc = place?.geometry?.location;
       if (!loc) return;
-      setAddress(place.formatted_address || addrRef.current!.value);
+      setAddress(formatPlaceAddress(place, addrRef.current!.value));
       setPicked({ lat: loc.lat(), lng: loc.lng() });
     });
     const el = addrRef.current;

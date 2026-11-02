@@ -17,6 +17,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { computeDistanceFee } from "@/lib/ecommerce/delivery";
 import { clp } from "@/lib/ecommerce/format";
+import { formatPlaceAddress } from "@/lib/ecommerce/address";
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
@@ -212,13 +213,12 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
     if (tab !== "delivery" || !gmapsReady || !inputRef.current) return;
     const g = (window as unknown as { google?: any }).google;
     if (!g?.maps?.places?.Autocomplete) return;
-    const ac = new g.maps.places.Autocomplete(inputRef.current, { componentRestrictions: { country: ["cl"] }, types: ["address"], fields: ["formatted_address", "geometry"] });
+    const ac = new g.maps.places.Autocomplete(inputRef.current, { componentRestrictions: { country: ["cl"] }, types: ["address"], fields: ["formatted_address", "address_components", "geometry"] });
     const listener = ac.addListener("place_changed", () => {
       const place = ac.getPlace();
       const loc = place?.geometry?.location;
       if (!loc) return;
-      const raw = place.formatted_address || inputRef.current!.value;
-      const cleanAddr = raw.replace(/,?\s*\d{7}\s*/g, " ").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").trim();
+      const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
       setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr });
     });
     inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });

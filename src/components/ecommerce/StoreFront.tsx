@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
+import { formatPlaceAddress } from "@/lib/ecommerce/address";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
@@ -892,15 +893,15 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
     const ac = new g.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: ["cl"] },
       types: ["address"],
-      fields: ["formatted_address", "geometry"],
+      fields: ["formatted_address", "address_components", "geometry"],
     });
     const listener = ac.addListener("place_changed", () => {
       const place = ac.getPlace();
       const loc = place?.geometry?.location;
       if (!loc) return;
-      const raw = place.formatted_address || inputRef.current!.value;
-      // Quita el código postal chileno (7 dígitos) que Google inserta: "9605, 8302068 La Florida" → "9605, La Florida"
-      const cleanAddr = raw.replace(/,?\s*\d{7}\s*/g, " ").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").trim();
+      // Dirección armada desde los componentes (calle número, comuna, ciudad, región, país)
+      // con comas; quita el código postal chileno de 7 dígitos.
+      const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
       const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr };
       setDest(d);
       computeFeeFor(d);
