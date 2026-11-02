@@ -62,6 +62,7 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         customerName: order.customerName || "",
         customerPhone: order.customerPhone || "",
         addressLine: isDelivery ? (order.deliveryAddress || "") : "",
+        addressParts: isDelivery && order.deliveryAddressParts ? (order.deliveryAddressParts as object) : undefined,
         totalAmount: order.total || 0,
         deliveryFee: order.deliveryFee || 0,
         discountAmount: order.discount || 0,

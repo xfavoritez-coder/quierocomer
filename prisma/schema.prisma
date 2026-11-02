@@ -512,6 +512,7 @@ model PosOrder {
   customerName  String @default("")
   customerPhone String @default("")
   addressLine   String @default("")
+  addressParts  Json?   // partes separadas (calle, comuna, ciudad, región, país); espejadas del OnlineOrder
 
   totalAmount    Int    @default(0)
   paidAmount     Int    @default(0)
