@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Pencil, Trash2, Ban, Save, Maximize2, Minimize2, X } from "lucide-react";
+import { MapPin, Pencil, Trash2, Ban, Save, Maximize2, Minimize2, X, HelpCircle, MinusCircle } from "lucide-react";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import type { DeliveryConfig, LatLng } from "@/lib/ecommerce/delivery";
 
@@ -41,7 +41,11 @@ export default function DeliveryPolygonEditorMulti({
   const mapRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [drawing, setDrawing] = useState<DrawTarget>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const deletingRef = useRef(false);
+  deletingRef.current = deleting;
 
   // Al entrar/salir de fullscreen, redimensiona el mapa para que encaje bien
   useEffect(() => {
@@ -79,20 +83,38 @@ export default function DeliveryPolygonEditorMulti({
     mapRef.current = map;
     setMapReady(true);
 
-    // Click: agrega vértice solo en la sucursal activa
+    // Click: dibuja vértice o borra el más cercano según el modo activo
     map.addListener("click", (e: any) => {
+      const branch = branchesRef.current.find((b) => b.id === activeIdRef.current);
+      if (!branch) return;
+      const clickPt: LatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+
+      // Modo borrar: elimina el vértice más cercano al click
+      if (deletingRef.current) {
+        const pts = branch.config.polygonIncluded;
+        if (pts.length <= 3) return; // mínimo 3 puntos
+        let minDist = Infinity, minIdx = -1;
+        pts.forEach((p, i) => {
+          const d = Math.hypot((p.lat - clickPt.lat) * 111320, (p.lng - clickPt.lng) * 92940);
+          if (d < minDist) { minDist = d; minIdx = i; }
+        });
+        if (minIdx >= 0) {
+          const next = pts.slice();
+          next.splice(minIdx, 1);
+          onChangeConfig({ polygonIncluded: next });
+        }
+        return;
+      }
+
+      // Modo dibujo
       const target = drawingRef.current;
       if (!target) return;
-      const branchId = activeIdRef.current;
-      const branch = branchesRef.current.find((b) => b.id === branchId);
-      if (!branch) return;
-      const pt: LatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
       if (target === "included") {
-        onChangeConfig({ polygonIncluded: [...branch.config.polygonIncluded, pt] });
+        onChangeConfig({ polygonIncluded: [...branch.config.polygonIncluded, clickPt] });
       } else {
         const rings = branch.config.polygonExcluded.map((r) => r.slice());
         if (!rings.length) rings.push([]);
-        rings[rings.length - 1].push(pt);
+        rings[rings.length - 1].push(clickPt);
         onChangeConfig({ polygonExcluded: rings });
       }
     });
@@ -311,33 +333,59 @@ export default function DeliveryPolygonEditorMulti({
           </div>
 
           {/* Controles de dibujo */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={() => setDrawing(drawing === "included" ? null : "included")} style={btn(drawing === "included", colorOf(activeBranchId))}>
-              <Pencil size={14} /> {drawing === "included" ? "Terminar zona" : "Dibujar zona de reparto"}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button onClick={() => { setDrawing(drawing === "included" ? null : "included"); setDeleting(false); }} style={btn(drawing === "included", colorOf(activeBranchId))}>
+              <Pencil size={14} /> {drawing === "included" ? "Terminar" : "Agregar puntos"}
+            </button>
+            <button
+              onClick={() => { setDeleting((v) => !v); setDrawing(null); }}
+              style={btn(deleting, "#ef4444")}
+              title="Clic en un vértice del mapa para eliminarlo"
+            >
+              <MinusCircle size={14} /> {deleting ? "Terminar" : "Borrar punto"}
             </button>
             <button onClick={() => { onChangeConfig({ polygonIncluded: [] }); }} style={btnGhost}>
-              <Trash2 size={14} /> Limpiar zona
+              <Trash2 size={14} /> Limpiar todo
             </button>
             <button
               onClick={() => {
                 const next = drawing === "excluded" ? null : "excluded";
-                setDrawing(next);
+                setDrawing(next); setDeleting(false);
                 if (next === "excluded") onChangeConfig({ polygonExcluded: [...activeConfig.polygonExcluded, []] });
               }}
-              style={btn(drawing === "excluded", "#ef4444")}
+              style={btn(drawing === "excluded", "#f97316")}
             >
-              <Ban size={14} /> {drawing === "excluded" ? "Terminar excluida" : "Agregar zona excluida"}
+              <Ban size={14} /> {drawing === "excluded" ? "Terminar excluida" : "Zona excluida"}
             </button>
             {activeConfig.polygonExcluded.length > 0 && (
               <button onClick={() => onChangeConfig({ polygonExcluded: [] })} style={btnGhost}>
-                <Trash2 size={14} /> Limpiar excluida
+                <Trash2 size={14} /> Quitar excluida
               </button>
             )}
+            <button onClick={() => setShowHelp((v) => !v)} style={{ ...btnGhost, marginLeft: "auto" }} title="Ayuda">
+              <HelpCircle size={14} />
+            </button>
           </div>
 
-          {drawing && (
-            <p style={{ fontFamily: FB, fontSize: "0.76rem", color: ACCENT, margin: 0 }}>
-              Haz clic en el mapa para marcar vértices de la {drawing === "included" ? "zona de reparto" : "zona excluida"}. ({drawing === "included" ? activeConfig.polygonIncluded.length : (activeConfig.polygonExcluded[activeConfig.polygonExcluded.length - 1]?.length ?? 0)} puntos)
+          {/* Panel de ayuda */}
+          {showHelp && (
+            <div style={{ padding: "10px 12px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+              <p style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 700, color: ACCENT, margin: 0 }}>Cómo editar la zona:</p>
+              <ul style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0, paddingLeft: 16, lineHeight: 1.7 }}>
+                <li><b>Mover un vértice:</b> arrastra cualquier punto blanco del polígono.</li>
+                <li><b>Agregar un punto:</b> pulsa <b>"Agregar puntos"</b> y haz clic en el mapa — o arrastra el punto semitransparente que aparece en el medio de cada lado del polígono.</li>
+                <li><b>Borrar un punto:</b> pulsa <b>"Borrar punto"</b> y haz clic cerca del vértice a eliminar — o clic derecho sobre el punto y elige "Eliminar".</li>
+                <li><b>Pantalla completa:</b> usa el botón de expandir arriba para tener más espacio.</li>
+              </ul>
+            </div>
+          )}
+
+          {(drawing || deleting) && (
+            <p style={{ fontFamily: FB, fontSize: "0.76rem", color: deleting ? "#ef4444" : ACCENT, margin: 0 }}>
+              {deleting
+                ? `Modo borrar activo — haz clic cerca del punto que quieres eliminar (${activeConfig.polygonIncluded.length} puntos).`
+                : `Modo dibujo — haz clic en el mapa para agregar vértices. (${drawing === "included" ? activeConfig.polygonIncluded.length : (activeConfig.polygonExcluded[activeConfig.polygonExcluded.length - 1]?.length ?? 0)} puntos)`
+              }
             </p>
           )}
 
