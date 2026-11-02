@@ -281,7 +281,6 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
             <input type="number" inputMode="numeric" value={received} onChange={(e) => setReceived(e.target.value)} onDoubleClick={() => setReceived(String(total))} placeholder={String(total)}
               style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 16, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              <button onClick={() => setReceived(String(total))} style={chip}>Justo</button>
               {BILLS.filter((b) => b >= total).slice(0, 4).map((b) => (
                 <button key={b} onClick={() => setReceived(String(b))} style={chip}>{clp(b)}</button>
               ))}
