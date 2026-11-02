@@ -20,6 +20,7 @@ import {
 import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
+import CentroPedidosPage from '@/app/(panel)/panel/centro-pedidos/page'
 import { supabase } from '@/lib/supabase'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant } from './lib/usePosRestaurant'
@@ -31,7 +32,7 @@ import OrdersBoard from './components/OrdersBoard'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'centro'
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -217,7 +218,7 @@ export default function PosHomePage() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== 'undefined') {
       const t = new URLSearchParams(window.location.search).get('tab')
-      if (t === 'retiro' || t === 'delivery' || t === 'mesas') return t
+      if (t === 'retiro' || t === 'delivery' || t === 'mesas' || t === 'centro') return t
     }
     return 'mesas'
   })
@@ -388,10 +389,10 @@ export default function PosHomePage() {
         centerSlot={
           <div className="pos-tabs-bar">
             <button
-              className="pos-tab pos-tab-centro"
-              onClick={() => navigate('/pos/centro-pedidos')}
+              className={`pos-tab pos-tab-centro${tab === 'centro' ? ' on' : ''}`}
+              onClick={() => setTab('centro')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              title="Ir al Centro de pedidos"
+              title="Centro de pedidos"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6M9 16h4"/></svg>
               Centro de pedidos
@@ -419,9 +420,17 @@ export default function PosHomePage() {
       />
 
       {/* ── Retiro / Delivery: pedidos del Centro de pedidos, con cobro ── */}
-      {tab !== 'mesas' && (
+      {(tab === 'retiro' || tab === 'delivery') && (
         <div className="pos-scroll">
           <OrdersBoard restaurantId={restaurantId} type={tab} />
+        </div>
+      )}
+
+      {/* ── Centro de pedidos: misma vista, como pestaña (sin recarga) ── */}
+      {tab === 'centro' && (
+        <div className="pos-centro-wrap theme-light">
+          <style>{`.pos-centro-wrap{flex:1;min-height:0;padding:14px 20px 40px;background:var(--adm-bg,#fff);overflow-y:auto}@media(max-width:767px){.pos-centro-wrap{padding:10px 12px}}`}</style>
+          <CentroPedidosPage restaurantId={restaurantId} tomarHref="/pos/tomar-pedido" kdsHref="/pos/kds" hideBack hideTitle />
         </div>
       )}
 

@@ -55,7 +55,7 @@ export default function PosTopBar({ active, mesasCount }: { active: Section; mes
           <div className="pos-tabs-bar">
             <button
               className={`pos-tab pos-tab-centro${active === 'centro' ? ' on' : ''}`}
-              onClick={() => navigate('/pos/centro-pedidos')}
+              onClick={() => navigate('/pos?tab=centro')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title="Centro de pedidos"
             >

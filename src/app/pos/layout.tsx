@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Toaster } from 'sonner'
 import PosServiceWorker from './PosServiceWorker'
+import PosOrderSound from './components/PosOrderSound'
 import './pos.css'
 
 export const metadata: Metadata = {
@@ -80,6 +81,7 @@ export default function PosLayout({ children }: { children: React.ReactNode }) {
         }
       `}</style>
       <PosServiceWorker />
+      <PosOrderSound />
       {children}
       <Toaster
         position="bottom-center"

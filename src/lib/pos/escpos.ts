@@ -10,26 +10,39 @@ const ESC = 0x1b;
 const GS = 0x1d;
 const WIDTH = 48;
 
-// Normaliza acentos/ñ a ASCII (las térmicas no comparten code page de forma fiable).
-function norm(s: string): string {
-  return (s || "")
-    .replace(/[áàä]/g, "a").replace(/[éèë]/g, "e")
-    .replace(/[íìï]/g, "i").replace(/[óòö]/g, "o")
-    .replace(/[úùü]/g, "u").replace(/[ÁÀÄ]/g, "A")
-    .replace(/[ÉÈË]/g, "E").replace(/[ÍÌÏ]/g, "I")
-    .replace(/[ÓÒÖ]/g, "O").replace(/[ÚÙÜ]/g, "U")
-    .replace(/ñ/g, "n").replace(/Ñ/g, "N")
-    .replace(/[""]/g, '"').replace(/['']/g, "'")
-    // cualquier otro no-ASCII restante se descarta (la impresora no lo entiende)
-    .replace(/[^\x00-\x7F]/g, "");
+// Acentos/ñ/signos → bytes de la tabla PC850 (code page 850), que es la que
+// selecciona el agente con `ESC t 2`. Así SÍ se imprimen los acentos (antes se
+// quitaban porque las térmicas no comparten code page, pero con PC850 funcionan).
+const CP850: Record<string, number> = {
+  "á": 0xa0, "é": 0x82, "í": 0xa1, "ó": 0xa2, "ú": 0xa3,
+  "Á": 0xb5, "É": 0x90, "Í": 0xd6, "Ó": 0xe0, "Ú": 0xe9,
+  "ñ": 0xa4, "Ñ": 0xa5, "ü": 0x81, "Ü": 0x9a,
+  "¿": 0xa8, "¡": 0xad, "ç": 0x87, "Ç": 0x80, "°": 0xf8,
+  "à": 0x85, "è": 0x8a, "ì": 0x8d, "ò": 0x95, "ù": 0x97,
+  "ä": 0x84, "ë": 0x89, "ï": 0x8b, "ö": 0x94,
+};
+
+// Normaliza comillas tipográficas; el resto de caracteres se resuelve en text().
+function normQuotes(s: string): string {
+  return (s || "").replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
 }
 
 class Enc {
   private bytes: number[] = [];
   raw(...b: number[]) { for (const x of b) this.bytes.push(x & 0xff); return this; }
-  text(s: string) { for (const ch of norm(s)) this.bytes.push(ch.charCodeAt(0) & 0x7f); return this; }
+  text(s: string) {
+    for (const ch of normQuotes(s)) {
+      const b = CP850[ch];
+      if (b !== undefined) { this.bytes.push(b); continue; }        // acento → byte PC850
+      const code = ch.charCodeAt(0);
+      if (code < 0x80) this.bytes.push(code);                       // ASCII tal cual
+      // cualquier otro no-ASCII sin mapeo se descarta (la impresora no lo entiende)
+    }
+    return this;
+  }
   line(s = "") { this.text(s); this.bytes.push(0x0a); return this; }
-  init() { return this.raw(ESC, 0x40); }
+  // ESC @ (init) + ESC t 2 (selecciona la tabla PC850 para los acentos).
+  init() { return this.raw(ESC, 0x40).raw(ESC, 0x74, 0x02); }
   alignLeft() { return this.raw(ESC, 0x61, 0x00); }
   alignCenter() { return this.raw(ESC, 0x61, 0x01); }
   boldOn() { return this.raw(ESC, 0x45, 0x01); }
