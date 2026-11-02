@@ -193,6 +193,7 @@ namespace QuieroComerAgente {
     [DataMember(Name="store")] public string store;
     [DataMember(Name="paperWidth")] public double? paperWidth;
     [DataMember(Name="printer")] public PrinterCfg printer;
+    [DataMember(Name="kitchenPrinter")] public PrinterCfg kitchenPrinter; // si viene, las comandas de cocina (con escpos) van aqui
     [DataMember(Name="orders")] public Order[] orders;
   }
 
@@ -330,8 +331,14 @@ namespace QuieroComerAgente {
 
     // Imprime segun la config vista en la cola: ip -> socket 9100 | name -> por nombre | default.
     // Devuelve en 'target' a donde se envio (para los avisos).
-    bool PrintBytes(byte[] bytes, out string target) {
-      PrinterCfg pc = localPrinter != null ? localPrinter : lastPrinter;
+    bool PrintBytes(byte[] bytes, out string target) { return PrintBytes(bytes, null, out target); }
+
+    // 'over' fuerza una impresora (ej: la de cocina); si es null se usa la de caja
+    // (localPrinter elegida en el equipo, o la de la cola).
+    bool PrintBytes(byte[] bytes, PrinterCfg over, out string target) {
+      bool overValid = over != null && !string.IsNullOrEmpty(over.target) && over.target != "same"
+        && (over.target == "ip" ? !string.IsNullOrEmpty(over.ip) : over.target == "name" ? !string.IsNullOrEmpty(over.name) : true);
+      PrinterCfg pc = overValid ? over : (localPrinter != null ? localPrinter : lastPrinter);
       if (pc != null && pc.target == "ip" && !string.IsNullOrEmpty(pc.ip)) {
         string host = pc.ip.Trim(); int port = 9100;
         int idx = host.IndexOf(':');
@@ -367,12 +374,13 @@ namespace QuieroComerAgente {
             foreach (Order o in resp.orders) {
               try {
                 // Si el pedido trae ESC/POS ya renderizado (ej: comanda de cocina),
-                // se imprime crudo; si no, se construye la comanda normal.
-                byte[] bytes;
-                if (!string.IsNullOrEmpty(o.escpos)) { bytes = Convert.FromBase64String(o.escpos); }
+                // se imprime crudo y va a la impresora de cocina (si hay); si no, se
+                // construye la comanda normal y va a la de caja.
+                byte[] bytes; PrinterCfg route = null;
+                if (!string.IsNullOrEmpty(o.escpos)) { bytes = Convert.FromBase64String(o.escpos); route = resp.kitchenPrinter; }
                 else { bytes = BuildTicket(o, resp.store, width); }
                 string target;
-                bool ok = PrintBytes(bytes, out target);
+                bool ok = PrintBytes(bytes, route, out target);
                 if (ok) { Ack(o.id); Balloon("Comanda impresa", "Pedido #" + NumStr(o.orderNumber)); }
                 else { Balloon("Error de impresion", "Revisa la impresora: " + target); }
               } catch (Exception ex) { Balloon("Error con un pedido", ex.Message); }

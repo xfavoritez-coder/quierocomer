@@ -57,6 +57,12 @@ export interface EcommerceStoreConfig {
   printTarget: "default" | "name" | "ip"; // a qué impresora imprime el agente: predeterminada de Windows | por nombre | por IP directa (:9100)
   printerName: string | null; // nombre exacto de la impresora de Windows (cuando printTarget = "name")
   printerIp: string | null; // IP (o IP:puerto) de la impresora de red para ESC/POS directo (cuando printTarget = "ip"); puerto por defecto 9100
+  // Impresora de COCINA (opcional): si el local tiene 2 impresoras, la comanda de
+  // cocina sale por esta y la comanda normal (caja) por la de arriba. "same" = usa
+  // la misma de caja (una sola impresora).
+  kitchenPrintTarget: "same" | "name" | "ip"; // a qué impresora va la comanda de cocina
+  kitchenPrinterName: string | null; // nombre exacto de la impresora de cocina (cuando kitchenPrintTarget = "name")
+  kitchenPrinterIp: string | null; // IP (o IP:puerto) de la impresora de cocina (cuando kitchenPrintTarget = "ip")
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -197,6 +203,9 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     printTarget: o.printTarget === "name" ? "name" : o.printTarget === "ip" ? "ip" : "default",
     printerName: typeof o.printerName === "string" && o.printerName.trim() ? o.printerName.trim() : null,
     printerIp: typeof o.printerIp === "string" && o.printerIp.trim() ? o.printerIp.trim() : null,
+    kitchenPrintTarget: o.kitchenPrintTarget === "name" ? "name" : o.kitchenPrintTarget === "ip" ? "ip" : "same",
+    kitchenPrinterName: typeof o.kitchenPrinterName === "string" && o.kitchenPrinterName.trim() ? o.kitchenPrinterName.trim() : null,
+    kitchenPrinterIp: typeof o.kitchenPrinterIp === "string" && o.kitchenPrinterIp.trim() ? o.kitchenPrinterIp.trim() : null,
   };
 }
 

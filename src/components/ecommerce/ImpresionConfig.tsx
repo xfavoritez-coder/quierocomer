@@ -161,6 +161,29 @@ export default function ImpresionConfig({ restaurantId, storeName }: { restauran
             )}
           </div>
 
+          {/* Impresora de cocina — solo si la comanda de cocina está activa */}
+          {cfg.kitchenComanda && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid var(--adm-card-border)", paddingTop: 12 }}>
+              <label style={{ display: "block" }}>
+                <span style={lblStyle}>Impresora de cocina</span>
+                <select value={cfg.kitchenPrintTarget} onChange={(e) => patchAndSave({ kitchenPrintTarget: e.target.value as "same" | "name" | "ip" })} style={selStyle}>
+                  <option value="same">La misma de caja (una sola impresora)</option>
+                  <option value="name">Otra impresora · por nombre exacto</option>
+                  <option value="ip">Otra impresora · por IP de red</option>
+                </select>
+                <span style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 5, lineHeight: 1.45 }}>
+                  Si el local tiene <strong>2 impresoras</strong>, elige acá la de cocina: la comanda de cocina saldrá por esta y la comanda normal (caja) por la impresora del agente de arriba. El nombre exacto lo puedes ver en el POS → <strong>Configuración → Impresora → Elegir impresora</strong>.
+                </span>
+              </label>
+              {cfg.kitchenPrintTarget === "name" && (
+                <input type="text" value={cfg.kitchenPrinterName || ""} onChange={(e) => patch({ kitchenPrinterName: e.target.value })} onBlur={saveNow} placeholder="Nombre exacto, ej: COCINA-80" style={selStyle} />
+              )}
+              {cfg.kitchenPrintTarget === "ip" && (
+                <input type="text" value={cfg.kitchenPrinterIp || ""} onChange={(e) => patch({ kitchenPrinterIp: e.target.value })} onBlur={saveNow} placeholder="IP de la impresora de cocina, ej: 192.168.1.51" style={selStyle} />
+              )}
+            </div>
+          )}
+
           {cfg.printToken ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>

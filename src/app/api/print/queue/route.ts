@@ -153,6 +153,11 @@ export async function GET(req: NextRequest) {
   // Config de impresora (el agente la aplica en caliente, sin reinstalar):
   //  default = predeterminada de Windows | name = por nombre | ip = ESC/POS directo a IP:9100
   const printer = { target: cfg.printTarget, name: cfg.printerName, ip: cfg.printerIp };
+  // Impresora de cocina (opcional): solo si el local configuró una distinta.
+  // El agente enruta las comandas de cocina (las que traen `escpos`) aquí.
+  const kitchenPrinter = cfg.kitchenPrintTarget === "same"
+    ? null
+    : { target: cfg.kitchenPrintTarget, name: cfg.kitchenPrinterName, ip: cfg.kitchenPrinterIp };
 
-  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, printer, orders: out });
+  return NextResponse.json({ ok: true, store: restaurant.name, paperWidth, printer, kitchenPrinter, orders: out });
 }
