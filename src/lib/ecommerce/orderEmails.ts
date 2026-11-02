@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail, orderAcceptedEmailHtml, orderInDeliveryEmailHtml } from "@/lib/email/sendAdminEmail";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export type OrderEmailStatus = "ACCEPTED" | "IN_DELIVERY" | "READY";
 
@@ -15,7 +16,7 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
       where: { id: orderId },
       select: {
         id: true, orderNumber: true, customerName: true, customerEmail: true, total: true, orderType: true,
-        restaurant: { select: { name: true, orderingWaitTime: true } },
+        restaurant: { select: { name: true, orderingWaitTime: true, logoUrl: true, cartaAccentColor: true, ecommerceStoreConfig: true } },
       },
     });
     if (!order?.customerEmail) return;
@@ -25,6 +26,10 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
     const orderNumber = String(order.orderNumber ?? order.id.slice(-6));
     const trackingUrl = `https://quierocomer.com/pedido/${order.id}`;
     const estimatedTime = order.restaurant?.orderingWaitTime ?? null;
+    const logoUrl = order.restaurant?.logoUrl ?? null;
+    const storeCfg = parseStoreConfig(order.restaurant?.ecommerceStoreConfig, { accent: order.restaurant?.cartaAccentColor });
+    const primaryColor = storeCfg.primaryColor ?? null;
+    const fromSender = restaurantName ? `${restaurantName} <hola@quierocomer.cl>` : undefined;
 
     const opts =
       status === "ACCEPTED"
@@ -38,6 +43,8 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
               orderNumber,
               estimatedTime,
               trackingUrl,
+              logoUrl,
+              primaryColor,
             }),
           }
         : {
@@ -52,10 +59,12 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
               orderType: order.orderType,
               orderNumber,
               estimatedTime,
+              logoUrl,
+              primaryColor,
             }),
           };
 
-    await sendAdminEmail({ to: order.customerEmail, ...opts, purpose: "order" });
+    await sendAdminEmail({ to: order.customerEmail, ...opts, from: fromSender, purpose: "order" });
   } catch (err) {
     console.error(`[orderEmails] envío falló para ${orderId}:`, err instanceof Error ? err.message : err);
   }

@@ -9,12 +9,14 @@ interface SendEmailOptions {
   subject: string;
   html: string;
   purpose?: string;
+  /** Override the "from" field (display name + address). Defaults to FROM_QC. */
+  from?: string;
   /** Skip creating an emailLog (caller already created one, e.g. cron jobs with tracking) */
   skipLog?: boolean;
   attachments?: { filename: string; content: Buffer }[];
 }
 
-export async function sendAdminEmail({ to, subject, html, purpose = "other", skipLog, attachments }: SendEmailOptions) {
+export async function sendAdminEmail({ to, subject, html, purpose = "other", from, skipLog, attachments }: SendEmailOptions) {
   // Create log first so we can inject tracking pixel
   let logId: string | undefined;
   if (!skipLog) {
@@ -34,7 +36,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other", ski
   try {
     const unsubscribeUrl = `${BASE_URL}/api/email/unsubscribe?email=${encodeURIComponent(to)}`;
     const { data, error } = await resend.emails.send({
-      from: FROM, to, subject, html: trackedHtml,
+      from: from ?? FROM, to, subject, html: trackedHtml,
       headers: {
         "Content-Type": "text/html; charset=UTF-8",
         "List-Unsubscribe": `<${unsubscribeUrl}>`,
@@ -127,6 +129,39 @@ function field(name: string, value: string): string {
   </table>`;
 }
 
+/** Wrap con header de marca del local (logo + color). Usado en emails al cliente final. */
+function wrapBranded(content: string, opts: { restaurantName: string; logoUrl?: string | null; primaryColor?: string | null }): string {
+  const accent = opts.primaryColor && /^#[0-9a-fA-F]{3,6}$/.test(opts.primaryColor) ? opts.primaryColor : GOLD;
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  const header = opts.logoUrl
+    ? `<img src="${esc(opts.logoUrl)}" alt="${esc(opts.restaurantName)}" height="52" style="max-height:52px;max-width:180px;display:block;margin:0 auto;object-fit:contain;" />`
+    : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(opts.restaurantName)}</span>`;
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+
+  <tr><td style="background:${accent};border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
+    ${header}
+  </td></tr>
+  <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:28px 28px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    ${content}
+    </table>
+  </td></tr>
+
+  <tr><td align="center" style="padding:16px 0 0;">
+    <a href="${BASE_URL}" style="font-size:11px;color:#aaa;text-decoration:none;">Powered by QuieroComer.cl</a>
+    <br/><span style="font-size:10px;color:#ccc;">&copy; ${new Date().getFullYear()}</span>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
 // ─── Order in delivery email ──────────────────────────────────────────
 export function orderInDeliveryEmailHtml(opts: {
   customerName: string;
@@ -135,6 +170,8 @@ export function orderInDeliveryEmailHtml(opts: {
   orderType: string;
   orderNumber: string;
   estimatedTime?: string | null;
+  logoUrl?: string | null;
+  primaryColor?: string | null;
 }): string {
   const isDelivery = opts.orderType === "DELIVERY";
   const emoji = isDelivery ? "🛵" : "✅";
@@ -145,19 +182,21 @@ export function orderInDeliveryEmailHtml(opts: {
     ? `${hola}tu pedido en <strong>${opts.restaurantName}</strong> ya salió con el repartidor. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.`
     : `${hola}tu pedido en <strong>${opts.restaurantName}</strong> ya está listo para retirar en el local. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.`;
 
-  return wrap(`
+  return wrapBranded(`
   <tr><td style="padding-bottom:20px;text-align:center;">
-    <div style="font-size:48px;line-height:1;margin-bottom:12px;">${emoji}</div>
-    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">${headline}</h1>
-    <p style="font-size:15px;color:#555;margin:0;">Pedido #${opts.orderNumber} · ${opts.restaurantName}</p>
+    <div style="font-size:44px;line-height:1;margin-bottom:10px;">${emoji}</div>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 6px;">${headline}</h1>
+    <p style="font-size:14px;color:#777;margin:0;">Pedido #${opts.orderNumber}</p>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
-    ${card(`
-      <div style="font-size:15px;color:#333;line-height:1.6;">${line}</div>
-      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
-    `, true)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f9f9;border-radius:10px;">
+      <tr><td style="padding:16px 18px;">
+        <div style="font-size:15px;color:#333;line-height:1.6;">${line}</div>
+        ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+      </td></tr>
+    </table>
   </td></tr>
-  `);
+  `, opts);
 }
 
 // ─── Order accepted email ─────────────────────────────────────────────
@@ -169,32 +208,39 @@ export function orderAcceptedEmailHtml(opts: {
   orderNumber: string;
   estimatedTime?: string | null;
   trackingUrl: string;
+  logoUrl?: string | null;
+  primaryColor?: string | null;
 }): string {
   const firstName = (opts.customerName || "").trim().split(" ")[0] || "";
   const hola = firstName ? `Hola ${firstName}, ` : "";
   const nextNote = opts.orderType === "DELIVERY"
     ? "Te avisaremos por aquí cuando salga a reparto."
     : "Te avisaremos por aquí cuando esté listo para retirar.";
+  const accent = opts.primaryColor && /^#[0-9a-fA-F]{3,6}$/.test(opts.primaryColor) ? opts.primaryColor : GOLD;
 
-  return wrap(`
+  return wrapBranded(`
   <tr><td style="padding-bottom:20px;text-align:center;">
-    <div style="font-size:48px;line-height:1;margin-bottom:12px;">🎉</div>
-    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 8px;">¡Pedido confirmado!</h1>
-    <p style="font-size:15px;color:#555;margin:0;">Pedido #${opts.orderNumber} · ${opts.restaurantName}</p>
+    <div style="font-size:44px;line-height:1;margin-bottom:10px;">🎉</div>
+    <h1 style="font-size:22px;font-weight:800;color:#111;margin:0 0 6px;">¡Pedido confirmado!</h1>
+    <p style="font-size:14px;color:#777;margin:0;">Pedido #${opts.orderNumber}</p>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
-    ${card(`
-      <div style="font-size:15px;color:#333;line-height:1.6;">${hola}<strong>${opts.restaurantName}</strong> ya recibió tu pedido y lo está preparando. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.</div>
-      ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
-    `, true)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9f9f9;border-radius:10px;">
+      <tr><td style="padding:16px 18px;">
+        <div style="font-size:15px;color:#333;line-height:1.6;">${hola}<strong>${opts.restaurantName}</strong> ya recibió tu pedido y lo está preparando. Total: <strong>$${opts.total.toLocaleString("es-CL")}</strong>.</div>
+        ${opts.estimatedTime ? `<div style="font-size:13px;color:#888;margin-top:8px;">⏱ Tiempo estimado: ${opts.estimatedTime}</div>` : ""}
+      </td></tr>
+    </table>
   </td></tr>
   <tr><td style="padding-bottom:16px;">
-    ${btn(opts.trackingUrl, "Seguir mi pedido en vivo")}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:4px 0;">
+      <a href="${opts.trackingUrl}" style="display:inline-block;background:${accent};color:#fff;font-size:15px;font-weight:800;padding:14px 32px;border-radius:12px;text-decoration:none;">Seguir mi pedido en vivo</a>
+    </td></tr></table>
   </td></tr>
-  <tr><td style="font-size:13px;color:#888;text-align:center;padding-bottom:4px;">
+  <tr><td style="font-size:13px;color:#aaa;text-align:center;padding-bottom:4px;">
     ${nextNote}
   </td></tr>
-  `);
+  `, opts);
 }
 
 // ─── Email templates ──────────────────────────────────────────────────
