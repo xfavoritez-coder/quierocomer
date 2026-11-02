@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const brand = await loadEcommerceBrandByDomain(slug);
     if (brand) {
       return {
-        title: `${brand.brandName} · Pedir online`,
-        description: `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
+        title: brand.pageTitle || `${brand.brandName} · Pedir online`,
+        description: brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
         ...(brand.logoUrl ? { icons: { icon: brand.logoUrl, shortcut: brand.logoUrl, apple: brand.logoUrl } } : {}),
       };
     }

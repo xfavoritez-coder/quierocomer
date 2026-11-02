@@ -489,6 +489,8 @@ export interface BrandData {
   logoUrl: string | null;
   googleMapsKey: string | null;
   branches: BrandBranch[];
+  pageTitle: string | null;
+  metaDescription: string | null;
 }
 
 /** Carga una marca y sus sucursales (locales ecommerce con el mismo brandSlug). */
@@ -519,12 +521,15 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
   }).sort((a, b) => (a.branchName || a.name).localeCompare(b.branchName || b.name));
 
   const gmaps = parseEcommerceConfig(rows[0].ecommerceConfig).googleMaps?.apiKey || null;
+  const firstCfg = parseStoreConfig(rows[0].ecommerceStoreConfig, { accent: rows[0].cartaAccentColor });
   return {
     brandSlug: key,
     brandName: branches[0]?.name || key,
     logoUrl: branches.find((b) => b.logoUrl)?.logoUrl ?? null,
     googleMapsKey: gmaps,
     branches,
+    pageTitle: firstCfg.pageTitle,
+    metaDescription: firstCfg.metaDescription,
   };
 }
 
