@@ -54,8 +54,10 @@ export default function CajaPage() {
   // ── OPEN SESSION ─────────────────────────────────────────────
 
   const handleOpen = async () => {
-    const amount = parseInt(initialAmount.replace(/\D/g, ''), 10)
-    if (!amount || amount < 0) { return }
+    // Se permite abrir con monto 0 (caja sin efectivo inicial). Solo bloquea
+    // valores inválidos; como el regex deja solo dígitos, nunca es negativo.
+    const parsed = parseInt(initialAmount.replace(/\D/g, ''), 10)
+    const amount = Number.isFinite(parsed) ? parsed : 0
     setOpening(true)
     try {
       await openCashSession({ session_id: uuidv4(), initial_amount: amount })
