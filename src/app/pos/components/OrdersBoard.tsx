@@ -15,6 +15,7 @@ const METHODS: { id: PaymentMethod; label: string }[] = [
   { id: 'debito', label: 'Débito' },
   { id: 'credito', label: 'Crédito' },
   { id: 'transferencia', label: 'Transferencia' },
+  { id: 'webpay', label: 'Webpay' },
 ]
 
 interface PosOrderLite {

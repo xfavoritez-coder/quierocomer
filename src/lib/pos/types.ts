@@ -2,7 +2,7 @@
 
 export type AccountType = 'mesa' | 'mostrador' | 'retiro' | 'delivery'
 export type AccountStatus = 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial' | 'cerrada' | 'anulada'
-export type PaymentMethod = 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'app_pago'
+export type PaymentMethod = 'efectivo' | 'debito' | 'credito' | 'transferencia' | 'app_pago' | 'webpay'
 export type StaffRole = 'admin' | 'garzon'
 
 // ── Events ───────────────────────────────────────────────────────

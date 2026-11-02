@@ -27,9 +27,10 @@ const METHOD_LABELS: Record<string, string> = {
   credito: 'Crédito',
   transferencia: 'Transferencia',
   app_pago: 'App de pago',
+  webpay: 'Webpay',
 }
 
-const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago']
+const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago', 'webpay']
 
 export default function CajaPage() {
   const navigate = usePosNav()
