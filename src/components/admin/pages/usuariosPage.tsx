@@ -627,6 +627,7 @@ const VIEWER_SECTION_OPTIONS: { key: string; label: string }[] = [
   { key: "ordering", label: "Pedidos Online" },
   { key: "ecommerce", label: "Ecommerce" },
   { key: "centro-pedidos", label: "Centro de pedidos" },
+  { key: "pos", label: "Punto de venta" },
   { key: "bodega", label: "Bodega" },
   { key: "loyalty", label: "Loyalty" },
   { key: "valoraciones", label: "Valoraciones" },
