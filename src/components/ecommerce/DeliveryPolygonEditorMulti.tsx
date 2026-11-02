@@ -60,7 +60,7 @@ export default function DeliveryPolygonEditorMulti({
   const distCirclesRef = useRef<any[]>([]);
 
   // Refs a polígonos y marcadores por sucursal
-  const polyRefs = useRef<Record<string, { included: any; excluded: any; marker: any }>>({});
+  const polyRefs = useRef<Record<string, { included: any; excluded: any; marker: any; vertexLabels: any[] }>>({});
 
   // Ref a branches/activeBranchId para usar dentro de listeners del mapa
   const branchesRef = useRef(branches);
@@ -74,18 +74,12 @@ export default function DeliveryPolygonEditorMulti({
   const activeBranch = branches.find((b) => b.id === activeBranchId);
   const activeConfig = activeBranch?.config;
 
-  // Calcula distancia km de cada vértice al origen de la sucursal activa
-  const distStats = (() => {
-    const origin = activeConfig?.origin;
-    const pts = activeConfig?.polygonIncluded ?? [];
-    if (!origin || pts.length === 0) return null;
-    const dists = pts.map((p) => {
-      const dlat = (p.lat - origin.lat) * 111.32;
-      const dlng = (p.lng - origin.lng) * 92.94;
-      return Math.sqrt(dlat * dlat + dlng * dlng);
-    });
-    return { min: Math.min(...dists), max: Math.max(...dists) };
-  })();
+  // Calcula distancia km entre dos puntos (aproximación planar)
+  function vertexDistKm(p: LatLng, origin: LatLng) {
+    const dlat = (p.lat - origin.lat) * 111.32;
+    const dlng = (p.lng - origin.lng) * 92.94;
+    return Math.sqrt(dlat * dlat + dlng * dlng);
+  }
 
   // ── Inicializar mapa una vez ──
   useEffect(() => {
@@ -213,6 +207,48 @@ export default function DeliveryPolygonEditorMulti({
         }
       }
 
+      // Etiquetas de distancia en cada vértice (solo sucursal activa)
+      if (prev.vertexLabels) prev.vertexLabels.forEach((l: any) => l.setMap(null));
+      const vertexLabels: any[] = [];
+      if (isActive && branch.config.origin && incPoly) {
+        const origin = branch.config.origin;
+        branch.config.polygonIncluded.forEach((p) => {
+          const km = vertexDistKm(p, origin);
+          const lbl = new g.maps.Marker({
+            position: p,
+            map: mapRef.current,
+            clickable: false,
+            zIndex: 6,
+            icon: { path: g.maps.SymbolPath.CIRCLE, scale: 0 },
+            label: {
+              text: `${km.toFixed(1)}`,
+              fontSize: "9px",
+              fontFamily: "sans-serif",
+              color: color,
+            },
+          });
+          vertexLabels.push(lbl);
+        });
+        // Actualiza posiciones/texto cuando se arrastra un vértice
+        const path = incPoly.getPath();
+        const updateLabels = () => {
+          const origin2 = branchesRef.current.find((b) => b.id === branch.id)?.config.origin;
+          if (!origin2) return;
+          const pts: LatLng[] = [];
+          path.forEach((ll: any) => pts.push({ lat: ll.lat(), lng: ll.lng() }));
+          // Recrear si la cantidad cambió (agregar/borrar vértice); de lo contrario mover
+          const vl = polyRefs.current[branch.id]?.vertexLabels ?? [];
+          if (vl.length !== pts.length) return; // el useEffect completo se triggerea en el siguiente render
+          pts.forEach((p, i) => {
+            if (!vl[i]) return;
+            vl[i].setPosition(p);
+            const km2 = vertexDistKm(p, origin2);
+            vl[i].setLabel({ text: `${km2.toFixed(1)}`, fontSize: "9px", fontFamily: "sans-serif", color });
+          });
+        };
+        path.addListener("set_at", updateLabels);
+      }
+
       // Marcador de origen
       if (prev.marker) prev.marker.setMap(null);
       let marker: any = null;
@@ -239,7 +275,7 @@ export default function DeliveryPolygonEditorMulti({
         }
       }
 
-      polyRefs.current[branch.id] = { included: incPoly, excluded: excPoly, marker };
+      polyRefs.current[branch.id] = { included: incPoly, excluded: excPoly, marker, vertexLabels };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, branches, activeBranchId]);
@@ -383,11 +419,6 @@ export default function DeliveryPolygonEditorMulti({
               {activeBranch.branchName || activeBranch.name}
               <span style={{ fontFamily: FB, fontWeight: 400, fontSize: "0.75rem", color: "var(--adm-text3)", marginLeft: 2 }}>— zona de reparto</span>
             </p>
-            {distStats && (
-              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>
-                📍 <b>{distStats.min.toFixed(1)}</b> – <b>{distStats.max.toFixed(1)}</b> km desde el local
-              </span>
-            )}
           </div>
 
           {/* Dirección origen */}

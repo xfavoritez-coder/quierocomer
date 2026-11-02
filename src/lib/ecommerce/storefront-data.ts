@@ -43,6 +43,7 @@ export interface StoreTenant {
   gtmId: string | null; // Google Tag Manager container id (null = sin GTM)
   pageTitle: string | null; // <title> personalizado (null = default)
   metaDescription: string | null; // meta description personalizada (null = default)
+  brandSlug: string | null; // marca multisucursal (null = tienda independiente)
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   waitTime: string | null;
@@ -156,7 +157,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
-    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, pageTitle: store.pageTitle, metaDescription: store.metaDescription,
+    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, pageTitle: store.pageTitle, metaDescription: store.metaDescription, brandSlug: store.brandSlug,
     deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled,
     waitTime: r.orderingWaitTime, waitTimePickup: store.waitTimePickup, waitTimeDelivery: store.waitTimeDelivery, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
@@ -326,6 +327,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       gtmId: store.gtmId,
       pageTitle: store.pageTitle,
       metaDescription: store.metaDescription,
+      brandSlug: store.brandSlug,
       deliveryEnabled: avail.deliveryEnabled,
       pickupEnabled: avail.pickupEnabled,
       waitTime: restaurant.orderingWaitTime,

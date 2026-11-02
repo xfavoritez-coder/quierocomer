@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain } from "@/lib/ecommerce/storefront-data";
+import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand } from "@/lib/ecommerce/storefront-data";
+import type { BrandBranch } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
@@ -94,6 +95,13 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // en ese caso las URLs internas son limpias (base ""); en el dominio principal usamos /ecommerce/<slug>.
   const basePath = data.tenant.customDomain && slug === data.tenant.customDomain ? "" : `/ecommerce/${data.tenant.slug}`;
 
+  // Para tiendas multisucursal: cargamos las otras sucursales de la marca para mostrarlas en pickup.
+  let siblings: BrandBranch[] = [];
+  if (data.tenant.brandSlug) {
+    const brand = await loadEcommerceBrand(data.tenant.brandSlug);
+    if (brand) siblings = brand.branches.filter((b) => b.id !== data.tenant.id);
+  }
+
   const gtm = <GtmScript id={data.tenant.gtmId} />;
   // PWA instalable solo en dominio propio (scope "/"); en el dominio principal la tienda sigue como web.
   const pwa = <StorePwa enabled={basePath === ""} />;
@@ -104,7 +112,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // Datos estructurados para que Google muestre las fotos de los productos.
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
   if (data.tenant.theme === "impact") {
-    return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+    return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
   }
-  return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} /></>;
+  return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
 }

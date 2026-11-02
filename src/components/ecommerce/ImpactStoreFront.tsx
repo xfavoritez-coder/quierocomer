@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight, ChevronLeft } from "lucide-react";
-import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
+import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
@@ -24,12 +24,13 @@ interface Props {
   categories: StoreCategory[];
   products: StoreProduct[];
   basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
+  siblings?: BrandBranch[];
 }
 
 const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 
-export default function ImpactStoreFront({ tenant, categories, products, basePath }: Props) {
+export default function ImpactStoreFront({ tenant, categories, products, basePath, siblings }: Props) {
   const accent = tenant.primaryColor;
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const goCheckout = () => { window.location.href = `${storeBase}/checkout`; };
@@ -402,7 +403,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
 
       {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
-      {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} />}
+      {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
     </div>
   );

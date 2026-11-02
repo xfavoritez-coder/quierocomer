@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "sonner";
 import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
-import type { StoreTenant, StoreCategory, StoreProduct } from "@/lib/ecommerce/storefront-data";
+import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
@@ -30,6 +30,7 @@ interface Props {
   products: StoreProduct[];
   basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
   brandControls?: BrandControls;
+  siblings?: BrandBranch[]; // otras sucursales de la misma marca (para mostrar en pickup)
 }
 
 // Muestra solo hasta la primera coma de la dirección
@@ -50,7 +51,7 @@ export const storeFontVars: React.CSSProperties = {
   ["--font-product-detail" as string]: STORE_SANS,
 } as React.CSSProperties;
 
-export default function StoreFront({ tenant, categories, products, basePath, brandControls }: Props) {
+export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const brandMode = !!brandControls;
   const hasBranch = brandControls?.hasBranch ?? false;
@@ -468,7 +469,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
 
       {/* Modal delivery/retiro */}
       {deliveryModalOpen && (
-        <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />
+        <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />
       )}
 
       {menuOpen && (
@@ -829,7 +830,15 @@ function AddressMiniMap({ lat, lng, onMove }: { lat: number; lng: number; onMove
 }
 
 // ── Modal selección de entrega (retiro / delivery) ──────────────
-export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: StoreTenant; primaryColor: string; onClose: () => void }) {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; siblings?: BrandBranch[] }) {
   const { closing, requestClose } = useCloseAnimation(onClose);
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
@@ -918,9 +927,9 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
   const noZones = !mapMode && zones.length === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className={`absolute inset-0 bg-black/50 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
-      <div className={`relative bg-white w-full sm:rounded-3xl sm:max-w-md shadow-2xl flex flex-col ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
+      <div className={`relative bg-white w-full rounded-3xl max-w-md shadow-2xl flex flex-col max-h-[90dvh] overflow-y-auto ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
           <h2 className="font-black text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
           <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition active:scale-90"><X className="w-5 h-5" /></button>
@@ -942,10 +951,45 @@ export function DeliveryModal({ tenant, primaryColor, onClose }: { tenant: Store
 
         <div className="px-4 pb-4 flex flex-col gap-3">
           {tab === "pickup" ? (
-            <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-              <p className="text-sm font-bold text-gray-700 mb-1">🏠 {tenant.branchName ? `Retiras en ${tenant.branchName}` : "Retiras en tienda"}</p>
-              {tenant.address ? <p className="text-sm text-gray-500">{tenant.address}</p> : <p className="text-sm text-gray-400">Dirección disponible al confirmar el pedido.</p>}
-            </div>
+            (() => {
+              // Todas las sucursales pickup-enabled: la actual + las siblings (misma marca)
+              const allBranches: Array<{ id: string; name: string; branchName: string | null; address: string | null; lat: number | null; lng: number | null; isCurrent: boolean }> = [
+                { id: tenant.id, name: tenant.name, branchName: tenant.branchName, address: tenant.address, lat: null, lng: null, isCurrent: true },
+                ...(siblings ?? []).filter((s) => s.pickupEnabled).map((s) => ({ id: s.id, name: s.name, branchName: s.branchName, address: s.address, lat: s.lat, lng: s.lng, isCurrent: false })),
+              ];
+              const refLat = dest?.lat ?? null;
+              const refLng = dest?.lng ?? null;
+              return (
+                <div className="flex flex-col gap-2">
+                  {allBranches.map((b) => {
+                    const distKm = refLat != null && refLng != null && b.lat != null && b.lng != null
+                      ? haversineKm(refLat, refLng, b.lat, b.lng)
+                      : null;
+                    return (
+                      <div key={b.id} className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-bold text-gray-700">{b.branchName ? `${b.name} — ${b.branchName}` : b.name}</p>
+                            {b.address ? <p className="text-sm text-gray-500 mt-0.5">{b.address}</p> : <p className="text-sm text-gray-400 mt-0.5">Dirección disponible al confirmar.</p>}
+                          </div>
+                          {distKm != null && (
+                            <span className="text-xs font-bold whitespace-nowrap mt-0.5" style={{ color: primaryColor }}>
+                              {distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} km`}
+                            </span>
+                          )}
+                        </div>
+                        {b.isCurrent && allBranches.length === 1 && (
+                          <p className="text-xs text-gray-400 mt-1">Retiras en tienda.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {refLat == null && allBranches.length > 1 && (
+                    <p className="text-xs text-gray-400 px-1">Ingresa tu dirección en delivery para ver la distancia a cada sucursal.</p>
+                  )}
+                </div>
+              );
+            })()
           ) : mapMode ? (
             <>
               <label className="flex flex-col gap-1">
