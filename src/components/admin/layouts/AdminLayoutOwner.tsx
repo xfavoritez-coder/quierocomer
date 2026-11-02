@@ -130,7 +130,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       key: "pos",
       label: "Punto de venta",
       icon: Receipt,
-      badge: "Beta",
       items: [
         { icon: Receipt, labelKey: "nav_pos_open", href: "/pos" },
       ],
