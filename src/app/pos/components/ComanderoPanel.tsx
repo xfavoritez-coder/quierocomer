@@ -11,7 +11,7 @@ import {
   sendRound,
   openAccount,
 } from '@/lib/pos'
-import { printComanda, getBridgeUrl } from '@/lib/pos/bridge'
+import { printComanda, printKitchenComanda, getBridgeUrl, getKitchenMode } from '@/lib/pos/bridge'
 import type { CachedProduct, RoundItem, ItemModifier } from '@/lib/pos/types'
 import PosHeader from './PosHeader'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
@@ -122,19 +122,36 @@ export default function ComanderoPanel({
       await sendRound({ round_id: roundId, account_id: targetAccountId, items: orderItems })
 
       if (getBridgeUrl()) {
-        await printComanda({
-          jobId: roundId,
-          type: 'mostrador',
-          accountId: targetAccountId,
-          roundNumber: 1,
-          sentBy: TEST_USER_ID,
-          items: orderItems.map(i => ({
-            quantity: i.quantity,
-            dish_name: i.dish_name,
-            modifiers: i.modifiers.map(m => ({ name: m.option_name, price_adjustment: m.price_adjustment })),
-            note: i.note,
-          })),
-        })
+        const itemsPayload = orderItems.map(i => ({
+          quantity: i.quantity,
+          dish_name: i.dish_name,
+          modifiers: i.modifiers.map(m => ({ name: m.option_name, price_adjustment: m.price_adjustment })),
+          note: i.note,
+        }))
+        if (getKitchenMode()) {
+          // Comanda de cocina (letra grande + datos del cliente, sin precios).
+          await printKitchenComanda({
+            jobId: roundId,
+            type: account?.type ?? 'mostrador',
+            orderLabel: '#' + targetAccountId.slice(-4).toUpperCase(),
+            tableNumber: account?.table_number != null ? String(account.table_number) : undefined,
+            customerName: account?.customer_name,
+            customerPhone: account?.customer_phone,
+            customerAddress: account?.delivery_address,
+            pickupTime: account?.pickup_time,
+            sentBy: TEST_USER_ID,
+            items: itemsPayload,
+          })
+        } else {
+          await printComanda({
+            jobId: roundId,
+            type: 'mostrador',
+            accountId: targetAccountId,
+            roundNumber: 1,
+            sentBy: TEST_USER_ID,
+            items: itemsPayload,
+          })
+        }
       }
 
       setOrderItems([])
@@ -150,7 +167,7 @@ export default function ComanderoPanel({
     } finally {
       setSending(false)
     }
-  }, [orderItems, accountId, isPanel, onBack, navigate])
+  }, [orderItems, accountId, account, isPanel, onBack, navigate])
 
   const itemCount = orderItems.reduce((sum, i) => sum + i.quantity, 0)
   const orderTotal = orderItems.reduce((sum, i) => {

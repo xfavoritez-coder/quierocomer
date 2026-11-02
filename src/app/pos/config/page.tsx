@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import PosHeader from '../components/PosHeader'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
-import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, listPrinters, setupPrinter } from '@/lib/pos/bridge'
+import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, printKitchenComanda, listPrinters, setupPrinter, getKitchenMode, setKitchenMode } from '@/lib/pos/bridge'
 import { buildPrintAgentInstaller } from '@/lib/ecommerce/printAgentScript'
 
 export default function PosConfigPage() {
@@ -17,8 +17,16 @@ export default function PosConfigPage() {
   const [printers, setPrinters] = useState<string[] | null>(null)
   const [picking, setPicking] = useState(false)
   const [dlMsg, setDlMsg] = useState('')
+  const [kitchen, setKitchen] = useState(false)
 
   useEffect(() => { autoDetect() }, [])
+  useEffect(() => { setKitchen(getKitchenMode()) }, [])
+
+  const toggleKitchen = () => {
+    const v = !kitchen
+    setKitchen(v)
+    setKitchenMode(v)
+  }
 
   const autoDetect = async () => {
     setChecking(true)
@@ -36,7 +44,21 @@ export default function PosConfigPage() {
 
   const handleTest = async () => {
     setTesting(true); setTestMsg('')
-    const r = await printTest()
+    const r = kitchen
+      ? await printKitchenComanda({
+          jobId: 'test-cocina',
+          type: 'delivery',
+          orderLabel: '#TEST',
+          customerName: 'Juan Pérez',
+          customerPhone: '+56 9 1234 5678',
+          customerAddress: 'Av. Siempre Viva 742, depto 3B',
+          sentBy: 'prueba',
+          items: [
+            { quantity: 2, dish_name: 'Roll California', modifiers: [{ name: 'Sin palta', price_adjustment: 0 }], note: 'Bien frío' },
+            { quantity: 1, dish_name: 'Gyoza de verdura', modifiers: [], note: 'Sin salsa de soya' },
+          ],
+        })
+      : await printTest()
     setTestMsg(r.ok ? '✓ Revisa la impresora' : '✗ ' + (r.error || 'Error'))
     setTesting(false)
   }
@@ -164,6 +186,27 @@ export default function PosConfigPage() {
             )}
           </div>
         )}
+
+        {/* ── Comandas de cocina (letra grande) ── */}
+        <div style={{ marginTop: 24, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 18, padding: '18px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>Comandas de cocina</div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--ink-2)', lineHeight: 1.5, margin: '4px 0 0' }}>
+                Imprime una comanda con <b>letra grande</b>: nombre del producto, modificadores y comentarios bien visibles, más el nombre del cliente, número de pedido y dirección. Sin precios.
+              </p>
+            </div>
+            <button
+              onClick={toggleKitchen}
+              role="switch"
+              aria-checked={kitchen}
+              aria-label="Comandas de cocina"
+              style={{ flexShrink: 0, width: 48, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer', background: kitchen ? 'var(--amber)' : 'var(--line)', position: 'relative', transition: 'background .2s' }}
+            >
+              <span style={{ position: 'absolute', top: 3, left: kitchen ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
+            </button>
+          </div>
+        </div>
 
       </div>
     </div>

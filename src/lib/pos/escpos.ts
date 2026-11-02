@@ -4,7 +4,7 @@
 //
 // Portado de print-bridge/src/encoder.js (mismo formato que diseñó el POS).
 
-import type { ComandaPayload, ComandaItem, CashClosePayload } from "./bridge";
+import type { ComandaPayload, ComandaItem, CashClosePayload, KitchenComandaPayload } from "./bridge";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -149,6 +149,59 @@ export function encodeCashClose(c: CashClosePayload): Uint8Array {
   if (c.note) {
     e.line("-".repeat(WIDTH));
     e.line(wrapText("Nota: " + c.note, WIDTH, 0));
+  }
+
+  e.line("-".repeat(WIDTH)).lf().lf().lf().cut();
+  return e.toBytes();
+}
+
+/** Comanda de COCINA (letra grande) → bytes ESC/POS crudos.
+ *  Pensada para cocina: nombres de producto en doble tamaño, modificadores y
+ *  notas, nombre del cliente y número de pedido grandes, dirección. SIN precios. */
+export function encodeKitchenComanda(c: KitchenComandaPayload): Uint8Array {
+  const e = new Enc();
+  const now = new Date();
+  const hora = now.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+
+  let titulo = "";
+  if (c.type === "mesa") titulo = "MESA " + (c.tableNumber || "?");
+  else if (c.type === "retiro") titulo = "RETIRO";
+  else if (c.type === "delivery") titulo = "DELIVERY";
+  else titulo = "MOSTRADOR";
+
+  // Cabecera: número de pedido GRANDE
+  e.init().alignCenter();
+  e.doubleOn().boldOn().line(c.orderLabel).boldOff().doubleOff();
+  e.boldOn().line(titulo).boldOff();
+  e.line(hora);
+
+  // Cliente GRANDE + datos de entrega
+  if (c.customerName) {
+    e.lf().doubleOn().boldOn().line(c.customerName.toUpperCase()).boldOff().doubleOff();
+  }
+  if (c.type === "delivery" && c.customerAddress) {
+    e.boldOn().line(wrapText(c.customerAddress, WIDTH, 0)).boldOff();
+  }
+  if (c.customerPhone) e.line("Tel: " + c.customerPhone);
+  if (c.type === "retiro" && c.pickupTime) e.boldOn().line("Retiro: " + c.pickupTime).boldOff();
+
+  e.alignLeft().line("=".repeat(WIDTH));
+
+  // Ítems — nombre del producto en DOBLE tamaño
+  for (const item of (c.items || []) as ComandaItem[]) {
+    const qty = String(item.quantity);
+    const name = (item.dish_name || "").toUpperCase();
+    e.doubleOn().boldOn().line(qty + "x " + name).boldOff().doubleOff();
+
+    if (item.modifiers && item.modifiers.length > 0) {
+      for (const mod of item.modifiers) {
+        e.line(wrapText("  + " + mod.name, WIDTH, 4)); // sin precio
+      }
+    }
+    if (item.note) {
+      e.boldOn().line(wrapText("  !! " + item.note.toUpperCase(), WIDTH, 5)).boldOff();
+    }
+    e.lf();
   }
 
   e.line("-".repeat(WIDTH)).lf().lf().lf().cut();

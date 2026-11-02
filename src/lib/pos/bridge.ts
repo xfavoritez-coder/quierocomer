@@ -2,7 +2,7 @@
 // El POS llama al agente local (http://localhost:7777) para imprimir comandas.
 // El POS renderiza la comanda a bytes ESC/POS y se los manda crudos (base64);
 // el agente solo los imprime. Mismo agente que el del ecommerce (unificado).
-import { encodeComanda, encodeTest, encodeCashClose, bytesToBase64 } from "./escpos";
+import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, bytesToBase64 } from "./escpos";
 
 export interface BridgeConfig {
   url: string  // ej: "http://192.168.1.10:7777" o "http://localhost:7777"
@@ -25,6 +25,20 @@ export interface ComandaItem {
   dish_name: string
   modifiers: { name: string; price_adjustment: number }[]
   note?: string
+}
+
+// Comanda de cocina (letra grande, con datos del cliente, sin precios).
+export interface KitchenComandaPayload {
+  jobId: string
+  type: 'mesa' | 'mostrador' | 'retiro' | 'delivery'
+  orderLabel: string          // "#1A2B" (número de pedido)
+  tableNumber?: string
+  customerName?: string
+  customerPhone?: string
+  customerAddress?: string
+  pickupTime?: string
+  sentBy: string
+  items: ComandaItem[]
 }
 
 export interface CashCloseMethod {
@@ -73,6 +87,19 @@ export function setBridgeUrl(url: string): void {
   localStorage.setItem(LS_KEY, url.replace(/\/$/, ''))
 }
 
+// ── Comandas de cocina (letra grande) — preferencia por equipo ────
+const LS_KITCHEN = 'pos_kitchen_comanda'
+
+export function getKitchenMode(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(LS_KITCHEN) === '1'
+}
+
+export function setKitchenMode(on: boolean): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(LS_KITCHEN, on ? '1' : '0')
+}
+
 // ── API calls ─────────────────────────────────────────────────────
 
 export async function printComanda(comanda: ComandaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
@@ -83,6 +110,24 @@ export async function printComanda(comanda: ComandaPayload): Promise<{ ok: boole
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobId: comanda.jobId, escpos }),
+      signal: AbortSignal.timeout(5000),
+    })
+    const data = await res.json()
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` }
+    return { ok: true, jobId: data.jobId }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
+  }
+}
+
+export async function printKitchenComanda(payload: KitchenComandaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  const url = getBridgeUrl()
+  try {
+    const escpos = bytesToBase64(encodeKitchenComanda(payload))
+    const res = await fetch(`${url}/print`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: payload.jobId, escpos }),
       signal: AbortSignal.timeout(5000),
     })
     const data = await res.json()
