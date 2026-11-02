@@ -107,9 +107,15 @@ function beep() {
   } catch { /* noop */ }
 }
 
-export default function CentroPedidosPage() {
+export default function CentroPedidosPage({
+  restaurantId: propRestaurantId,
+  backHref = "/panel",
+  backLabel = "Panel",
+  tomarHref = "/panel/centro-pedidos/tomar-pedidos",
+}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string } = {}) {
   const session = useSessionContext();
-  const restaurantId = session?.selectedRestaurantId;
+  // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
+  const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
   const [orders, setOrders] = useState<PosOrder[]>([]);
   // Ids recién eliminados: se filtran de cualquier lista entrante para que un refetch
   // en carrera con el DELETE (o una respuesta cacheada) no haga "reaparecer" el pedido.
@@ -301,8 +307,8 @@ export default function CentroPedidosPage() {
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 0 48px" }}>
-      <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 4 }}>
-        <ArrowLeft size={14} /> Panel
+      <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 4 }}>
+        <ArrowLeft size={14} /> {backLabel}
       </Link>
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
@@ -318,7 +324,7 @@ export default function CentroPedidosPage() {
             <Wallet size={12} /> {clp(walletBalance)}
           </Link>
         )}
-        <Link href="/panel/centro-pedidos/tomar-pedidos" title="Tomar un pedido" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
+        <Link href={tomarHref} title="Tomar un pedido" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
           <ConciergeBell size={15} /> Tomar pedidos
         </Link>
         <Link href="/panel/centro-pedidos/kds" title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>

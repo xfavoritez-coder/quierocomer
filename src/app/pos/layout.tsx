@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'QuieroComer - POS',
   description: 'Punto de venta QuieroComer',
   manifest: '/pos/manifest.json',
+  icons: {
+    icon: '/pos/icon-192.png',
+    shortcut: '/pos/icon-192.png',
+    apple: '/pos/icon-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

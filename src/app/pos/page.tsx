@@ -453,7 +453,7 @@ export default function PosHomePage() {
           <div className="pos-tabs-bar">
             <button
               className="pos-tab pos-tab-centro"
-              onClick={() => navigate('/panel/centro-pedidos')}
+              onClick={() => navigate('/pos/centro-pedidos')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title="Ir al Centro de pedidos"
             >
