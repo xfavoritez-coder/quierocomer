@@ -232,13 +232,12 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center" style={{ fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.5)" }} />
-      <div className="relative w-full sm:rounded-3xl" style={{ maxWidth: 460, background: "#fff", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18, maxHeight: "90vh", overflowY: "auto" }}>
+      <div className="relative w-full" style={{ maxWidth: 460, background: "#fff", borderRadius: 24, padding: 18, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
-            <h2 style={{ fontSize: "1.15rem", fontWeight: 900, color: "#111", margin: 0 }}>¿Dónde quieres pedir?</h2>
-            <p style={{ fontSize: "0.8rem", color: "#6b7280", margin: "2px 0 0" }}>Elige tu sucursal de {brand.brandName}</p>
+            <h2 style={{ fontSize: "1.15rem", fontWeight: 900, color: "#111", margin: 0 }}>¿Cómo quieres pedir?</h2>
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999, border: "none", background: "#f3f4f6", color: "#374151", cursor: "pointer" }}><X size={18} /></button>
         </div>

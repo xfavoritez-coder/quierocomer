@@ -284,11 +284,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         </div>
       </header>
 
-      {/* ── Barra de marca: elegir / cambiar sucursal (solo /ecommerce/marca) ── */}
+      {/* ── Barra de marca: elegir / cambiar sucursal (solo /ecommerce/marca) ──
+          Solo desktop: en móvil la entrada única es la barra "¿Cómo quieres
+          pedir?" (MobileDeliveryBar), para no duplicar el mismo botón. */}
       {brandMode && (
         <button
           onClick={() => brandControls!.onRequireBranch(null)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-95"
+          className="hidden sm:flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-95"
           style={{ background: primaryColor }}
         >
           {hasBranch ? (
@@ -516,7 +518,7 @@ function MobileDeliveryBar({ tenant, primaryColor, onOpen }: { tenant: StoreTena
         {!deliverySelected ? (
           <>
             <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</span>
+            <span className="text-sm font-semibold text-gray-500">¿Cómo quieres pedir?</span>
             <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
           </>
         ) : deliveryType === "delivery" && deliveryAddress ? (
@@ -640,7 +642,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
           </div>
           <div className="flex-1 min-w-0">
             {!deliverySelected ? (
-              <p className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</p>
+              <p className="text-sm font-semibold text-gray-500">¿Cómo quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
                 <p className="text-xs font-bold text-gray-700">🛵 Delivery</p>
