@@ -95,7 +95,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
                   {/* Panel desplegable (grid 0fr → 1fr = expansión suave) */}
                   <div className="grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: loginExpanded ? "1fr" : "0fr" }}>
                     <div className="overflow-hidden">
-                      <InlineLogin primaryColor={primaryColor} onLogged={() => { setLoginExpanded(false); loadUser(); }} />
+                      <InlineLogin primaryColor={primaryColor} tenant={tenant} onLogged={() => { setLoginExpanded(false); loadUser(); }} />
                     </div>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ function MenuRow({ icon, label, onClick, color }: { icon: React.ReactNode; label
 }
 
 // ── Login por código (OTP), en línea ────────────────────────────
-function InlineLogin({ primaryColor, onLogged }: { primaryColor: string; onLogged: () => void }) {
+function InlineLogin({ primaryColor, tenant, onLogged }: { primaryColor: string; tenant: StoreTenant; onLogged: () => void }) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -154,7 +154,7 @@ function InlineLogin({ primaryColor, onLogged }: { primaryColor: string; onLogge
     if (!emailOk || busy) return;
     setBusy(true); setMsg(null);
     try {
-      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim() }) });
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), storeName: tenant.name, logoUrl: tenant.logoUrl ?? null, primaryColor }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setMsg(d.error || "No se pudo enviar"); setBusy(false); return; }
       setStep("code"); setMsg(d.devCode ? `Código (dev): ${d.devCode}` : "Te enviamos un código a tu correo.");

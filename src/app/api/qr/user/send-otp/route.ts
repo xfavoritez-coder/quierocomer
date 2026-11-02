@@ -10,12 +10,14 @@ import { FROM_QC } from "@/lib/email/from";
  */
 export async function POST(request: Request) {
   try {
-    const { email, name, storeName } = await request.json();
+    const { email, name, storeName, logoUrl, primaryColor } = await request.json();
     const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
     // Nombre del local que solicita el código (opcional; el flujo QR no lo envía).
     const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
-    const storePlain = typeof storeName === "string" && storeName.trim() ? storeName.trim().slice(0, 60) : null; // para el asunto (texto plano)
-    const store = storePlain ? esc(storePlain) : null; // para el HTML (escapado)
+    const storePlain = typeof storeName === "string" && storeName.trim() ? storeName.trim().slice(0, 60) : null;
+    const store = storePlain ? esc(storePlain) : null;
+    const logo = typeof logoUrl === "string" && logoUrl.trim() ? logoUrl.trim() : null;
+    const accent = typeof primaryColor === "string" && /^#[0-9a-fA-F]{3,6}$/.test(primaryColor.trim()) ? primaryColor.trim() : "#F4A623";
     if (!cleanEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cleanEmail)) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
@@ -46,20 +48,26 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
         body: JSON.stringify({
-          from: FROM_QC,
+          from: storePlain ? `${storePlain} <hola@quierocomer.cl>` : FROM_QC,
           to: cleanEmail,
           subject: storePlain ? `${code} · tu código para pedir en ${storePlain}` : `${code} es tu código de acceso a QuieroComer`,
           html: `
-            <div style="font-family:'DM Sans',sans-serif;background:#faf6ee;padding:40px 20px">
-              <div style="max-width:480px;margin:0 auto;background:white;border-radius:12px;padding:32px;text-align:center">
-                <p style="font-size:18px;font-weight:700;color:#0e0e0e;margin:0 0 4px">Quiero<span style="color:#F4A623">Comer</span>.cl</p>
-                ${store ? `<p style="color:#F4A623;font-weight:700;font-size:14px;margin:6px 0 0">Pedido en ${store}</p>` : ""}
-                <h1 style="font-size:22px;font-weight:800;color:#0e0e0e;margin:24px 0 8px">Tu código de acceso</h1>
-                <p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 20px">${store ? `Úsalo para completar tu pedido en <b>${store}</b>. Vence en 10 minutos.` : "Usa este código para iniciar sesión. Vence en 10 minutos."}</p>
-                <div style="font-size:38px;font-weight:800;letter-spacing:8px;color:#0e0e0e;background:#faf6ee;border-radius:12px;padding:16px 0;margin:0 0 20px">${code}</div>
-                <p style="color:#aaa;font-size:13px;margin:0">Si no solicitaste esto, ignora este correo.</p>
+            <div style="font-family:'DM Sans',Arial,sans-serif;background:#f5f5f5;padding:40px 16px;margin:0">
+              <div style="max-width:460px;margin:0 auto">
+                <div style="background:${accent};border-radius:12px 12px 0 0;padding:28px 32px;text-align:center">
+                  ${logo
+                    ? `<img src="${esc(logo)}" alt="${store || "Logo"}" style="height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto" />`
+                    : `<p style="font-size:22px;font-weight:800;color:#fff;margin:0;letter-spacing:-0.5px">${store || "QuieroComer"}</p>`
+                  }
+                </div>
+                <div style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px;text-align:center">
+                  <h1 style="font-size:20px;font-weight:800;color:#0e0e0e;margin:0 0 8px">Tu código de acceso</h1>
+                  <p style="color:#666;font-size:14px;line-height:1.6;margin:0 0 24px">${store ? `Úsalo para completar tu pedido en <b>${store}</b>.<br>Vence en 10 minutos.` : "Usa este código para iniciar sesión.<br>Vence en 10 minutos."}</p>
+                  <div style="font-size:40px;font-weight:800;letter-spacing:10px;color:#0e0e0e;background:#f5f5f5;border-radius:10px;padding:18px 0;margin:0 0 24px">${code}</div>
+                  <p style="color:#bbb;font-size:12px;margin:0">Si no solicitaste esto, ignora este correo.</p>
+                </div>
+                <p style="text-align:center;color:#bbb;font-size:11px;margin-top:16px">Powered by QuieroComer.cl</p>
               </div>
-              <p style="text-align:center;color:#ccc;font-size:12px;margin-top:20px">© QuieroComer.cl · Santiago, Chile</p>
             </div>
           `,
         }),

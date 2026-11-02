@@ -278,7 +278,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     if (!emailOk || otpBusy) return;
     setOtpBusy(true); setOtpMsg(null);
     try {
-      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, name: name.trim() || null, storeName: tenant.name }) });
+      const res = await fetch("/api/qr/user/send-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailTrim, name: name.trim() || null, storeName: tenant.name, logoUrl: tenant.logoUrl ?? null, primaryColor }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setOtpMsg(d.error || "No se pudo enviar el código"); setOtpBusy(false); return; }
       setOtpSent(true); setOtpMsg(d.devCode ? `Código (dev): ${d.devCode}` : "Te enviamos un código a tu correo.");
