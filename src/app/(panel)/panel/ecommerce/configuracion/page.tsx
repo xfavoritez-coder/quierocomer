@@ -30,6 +30,7 @@ export default function EcommerceConfiguracionPage() {
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "web">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFav, setUploadingFav] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -80,6 +81,21 @@ export default function EcommerceConfiguracionPage() {
   }, [restaurantId]);
 
   const patch = (p: Partial<EcommerceStoreConfig>) => setCfg((c) => ({ ...c, ...p }));
+
+  async function uploadStoreLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "logos");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.url) { toast.error(d.error || "No se pudo subir el logo"); setUploadingLogo(false); return; }
+      patch({ storeLogoUrl: d.url });
+      toast.success("Logo subido — recuerda Guardar");
+    } catch { toast.error("Error de conexión"); }
+    setUploadingLogo(false);
+  }
 
   async function uploadFavicon(file: File) {
     setUploadingFav(true);
@@ -353,6 +369,36 @@ export default function EcommerceConfiguracionPage() {
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>Déjalo vacío para no recibir correos. Es independiente de las notificaciones push de arriba.</p>
             </div>
+          </section>
+          )}
+
+          {/* Logo de la tienda */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={ImageIcon} title="Logo de la tienda" sub="Logo que se muestra en tu tienda online. Si no subes uno, se usa el logo del local (el de Configuración general). Ideal: imagen cuadrada con fondo transparente (PNG)." />
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12 }}>
+              <div style={{ width: 72, height: 72, borderRadius: 14, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {cfg.storeLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cfg.storeLogoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                ) : (
+                  <ImageIcon size={26} color="var(--adm-text3)" />
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: uploadingLogo ? "wait" : "pointer" }}>
+                  <Upload size={15} /> {uploadingLogo ? "Subiendo…" : cfg.storeLogoUrl ? "Cambiar" : "Subir logo"}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} disabled={uploadingLogo}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoreLogo(f); e.currentTarget.value = ""; }} />
+                </label>
+                {cfg.storeLogoUrl && (
+                  <button onClick={() => patch({ storeLogoUrl: null })} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                    <XIcon size={15} /> Quitar
+                  </button>
+                )}
+              </div>
+            </div>
+            {!cfg.storeLogoUrl && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "10px 0 0", lineHeight: 1.5 }}>Usando el logo del local por defecto.</p>}
           </section>
           )}
 

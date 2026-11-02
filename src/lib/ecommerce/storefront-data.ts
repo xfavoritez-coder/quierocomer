@@ -153,7 +153,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const hours = parseHours(r.ecommerceHours);
   const avail = resolveAvailability(hours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
-    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl,
+    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, pageTitle: store.pageTitle, metaDescription: store.metaDescription,
@@ -302,7 +302,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       slug: restaurant.slug,
       name: restaurant.name,
       branchName: store.branchName,
-      logoUrl: restaurant.logoUrl,
+      logoUrl: store.storeLogoUrl ?? restaurant.logoUrl,
       bannerUrl: store.bannerUrl ?? restaurant.orderingBannerUrl,
       primaryColor: store.primaryColor,
       headerBgColor: store.headerBgColor,

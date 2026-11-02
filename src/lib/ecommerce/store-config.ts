@@ -34,6 +34,7 @@ export interface EcommerceStoreConfig {
   brandSlug: string | null; // marca multisucursal: varias tiendas con el mismo brandSlug son sucursales de una misma marca (entrada /ecommerce/marca/<brandSlug>)
   brandDomain: string | null; // dominio propio de la MARCA (ej: "kojo.cl"): sirve la página de marca (elige sucursal al pedir), no una sola tienda
   branchName: string | null; // nombre de esta sucursal dentro de la marca (ej: "Providencia")
+  storeLogoUrl: string | null; // logo propio de la tienda ecommerce (null = usa el logo del local en configuración)
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
   bannerUrl: string | null; // imagen de banner/hero de la tienda (tema base); null = sin banner
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
@@ -173,6 +174,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     brandSlug: typeof o.brandSlug === "string" && o.brandSlug.trim() ? o.brandSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || null : null,
     brandDomain: normalizeDomain(o.brandDomain),
     branchName: typeof o.branchName === "string" && o.branchName.trim() ? o.branchName.trim().slice(0, 60) : null,
+    storeLogoUrl: typeof o.storeLogoUrl === "string" && o.storeLogoUrl.trim() ? o.storeLogoUrl.trim() : null,
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
     bannerUrl: typeof o.bannerUrl === "string" && o.bannerUrl.trim() ? o.bannerUrl.trim() : null,
     gtmId: normalizeGtmId(o.gtmId),
