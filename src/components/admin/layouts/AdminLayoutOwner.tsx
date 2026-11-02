@@ -226,12 +226,21 @@ function BranchSwitcher({ restaurants, selectedRestaurantId, setSelectedRestaura
   }, [open]);
   const active = restaurants.find((r: any) => r.id === selectedRestaurantId) || restaurants[0];
   const ell = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const };
+
+  const BranchLogo = ({ r, size = 26 }: { r: any; size?: number }) => {
+    const initials = r.name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+    return r.logoUrl
+      ? <img src={r.logoUrl} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+      : <div style={{ width: size, height: size, borderRadius: "50%", background: "#1a5f3f", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: size * 0.38, fontWeight: 700, fontFamily: F, flexShrink: 0 }}>{initials}</div>;
+  };
+
   return (
     <div ref={ref} style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 6, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", textAlign: "left" }}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 7, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", textAlign: "left" }}
       >
+        <BranchLogo r={active} size={26} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {active?.branchName && <p style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "var(--adm-text3)", margin: 0, lineHeight: 1.1, ...ell }}>{active.name}</p>}
           <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1.2, ...ell }}>{active?.branchName || active?.name || "Local"}</p>
@@ -244,10 +253,13 @@ function BranchSwitcher({ restaurants, selectedRestaurantId, setSelectedRestaura
             <button
               key={r.id}
               onClick={() => { setSelectedRestaurant(r.id); setOpen(false); }}
-              style={{ width: "100%", display: "flex", flexDirection: "column", gap: 0, textAlign: "left", padding: "7px 9px", borderRadius: 6, border: "none", cursor: "pointer", background: r.id === active?.id ? "var(--adm-hover)" : "transparent" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, textAlign: "left", padding: "7px 9px", borderRadius: 6, border: "none", cursor: "pointer", background: r.id === active?.id ? "var(--adm-hover)" : "transparent" }}
             >
-              {r.branchName && <span style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "var(--adm-text3)", lineHeight: 1.1, ...ell, display: "block" }}>{r.name}</span>}
-              <span style={{ fontFamily: F, fontSize: "13.5px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, ...ell, display: "block" }}>{r.branchName || r.name}</span>
+              <BranchLogo r={r} size={24} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {r.branchName && <span style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "var(--adm-text3)", lineHeight: 1.1, ...ell, display: "block" }}>{r.name}</span>}
+                <span style={{ fontFamily: F, fontSize: "13.5px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.25, ...ell, display: "block" }}>{r.branchName || r.name}</span>
+              </div>
             </button>
           ))}
         </div>

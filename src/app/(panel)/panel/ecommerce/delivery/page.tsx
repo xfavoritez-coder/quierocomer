@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Truck, Save, Bike } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { defaultDeliveryConfig, type DeliveryZone, type DeliveryConfig } from "@/lib/ecommerce/delivery";
 import DeliveryPolygonEditor from "@/components/ecommerce/DeliveryPolygonEditor";
+import DeliveryPolygonEditorMulti, { type BranchDelivery } from "@/components/ecommerce/DeliveryPolygonEditorMulti";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -18,6 +19,9 @@ function newZone(): DeliveryZone {
 export default function EcommerceDeliveryPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
+  const restaurants: any[] = (session as any)?.restaurants ?? [];
+  const isMulti = restaurants.length > 1;
+
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [config, setConfig] = useState<DeliveryConfig>(defaultDeliveryConfig());
   const [gmapsKey, setGmapsKey] = useState<string | null>(null);
@@ -27,21 +31,36 @@ export default function EcommerceDeliveryPage() {
   const [deliveryEnabled, setDeliveryEnabled] = useState(true);
   const [uberOk, setUberOk] = useState(false);
 
+  // Configs de todas las sucursales (para el mapa multi-sucursal)
+  const [branchConfigs, setBranchConfigs] = useState<Record<string, DeliveryConfig>>({});
+  const [branchAddresses, setBranchAddresses] = useState<Record<string, string | null>>({});
+  const otherLoaded = useRef(false);
+
   const mode = config.mode;
   const setMode = (m: DeliveryConfig["mode"]) => setConfig((c) => ({ ...c, mode: m }));
-  const patchConfig = (patch: Partial<DeliveryConfig>) => setConfig((c) => ({ ...c, ...patch }));
+  const patchConfig = (patch: Partial<DeliveryConfig>) => {
+    setConfig((c) => ({ ...c, ...patch }));
+    // mantener en sync con branchConfigs para el mapa multi
+    if (restaurantId) setBranchConfigs((prev) => ({ ...prev, [restaurantId]: { ...prev[restaurantId], ...patch } }));
+  };
 
+  // Carga la sucursal activa
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
+    otherLoaded.current = false;
     fetch(`/api/panel/ecommerce/delivery?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d) {
           setZones(d.zones || []);
-          if (d.config) setConfig(d.config);
+          if (d.config) {
+            setConfig(d.config);
+            setBranchConfigs((prev) => ({ ...prev, [restaurantId]: d.config }));
+          }
           setGmapsKey(d.googleMapsKey || null);
           setRestaurantAddress(d.restaurantAddress || null);
+          setBranchAddresses((prev) => ({ ...prev, [restaurantId]: d.restaurantAddress || null }));
           setDeliveryEnabled(d.deliveryEnabled);
           setUberOk(!!d.uberConfigured);
         }
@@ -49,6 +68,44 @@ export default function EcommerceDeliveryPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
+
+  // Carga las otras sucursales (una sola vez por restaurantId, cuando el mapa se necesita)
+  useEffect(() => {
+    if (!isMulti || !restaurantId || otherLoaded.current) return;
+    const others = restaurants.filter((r: any) => r.id !== restaurantId);
+    if (!others.length) return;
+    otherLoaded.current = true;
+    Promise.all(
+      others.map((r: any) =>
+        fetch(`/api/panel/ecommerce/delivery?restaurantId=${r.id}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((d) => ({ id: r.id, config: d?.config ?? null, address: d?.restaurantAddress ?? null }))
+          .catch(() => ({ id: r.id, config: null, address: null }))
+      )
+    ).then((results) => {
+      setBranchConfigs((prev) => {
+        const next = { ...prev };
+        results.forEach(({ id, config: c }) => { if (c) next[id] = c; });
+        return next;
+      });
+      setBranchAddresses((prev) => {
+        const next = { ...prev };
+        results.forEach(({ id, address }) => { next[id] = address; });
+        return next;
+      });
+    });
+  }, [restaurantId, isMulti]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Construye el array de sucursales para el mapa multi
+  function buildBranches(): BranchDelivery[] {
+    return restaurants.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      branchName: r.branchName ?? null,
+      config: branchConfigs[r.id] ?? defaultDeliveryConfig(),
+      address: branchAddresses[r.id] ?? null,
+    }));
+  }
 
   function update(id: string, patch: Partial<DeliveryZone>) {
     setZones((prev) => prev.map((z) => (z.id === id ? { ...z, ...patch } : z)));
@@ -71,6 +128,28 @@ export default function EcommerceDeliveryPage() {
       setZones(data.zones);
       if (data.config) setConfig(data.config);
       toast.success("Configuración guardada");
+    } catch { toast.error("Error de conexión"); }
+    setSaving(false);
+  }
+
+  // Guarda la config de la sucursal activa (para el mapa multi)
+  async function saveActiveFromMulti() {
+    if (!restaurantId) return;
+    const activeConfig = branchConfigs[restaurantId] ?? config;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/panel/ecommerce/delivery", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, zones: zones.filter((z) => z.name.trim()), config: activeConfig }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Error al guardar"); setSaving(false); return; }
+      if (data.config) {
+        setConfig(data.config);
+        setBranchConfigs((prev) => ({ ...prev, [restaurantId]: data.config }));
+      }
+      toast.success("Zona guardada");
     } catch { toast.error("Error de conexión"); }
     setSaving(false);
   }
@@ -113,7 +192,18 @@ export default function EcommerceDeliveryPage() {
 
           {mode === "distance" ? (
             <div style={{ marginTop: 14 }}>
-              <DeliveryPolygonEditor config={config} gmapsKey={gmapsKey} restaurantAddress={restaurantAddress} onChange={patchConfig} />
+              {isMulti ? (
+                <DeliveryPolygonEditorMulti
+                  branches={buildBranches()}
+                  activeBranchId={restaurantId!}
+                  gmapsKey={gmapsKey}
+                  onChangeConfig={patchConfig}
+                  onSave={saveActiveFromMulti}
+                  saving={saving}
+                />
+              ) : (
+                <DeliveryPolygonEditor config={config} gmapsKey={gmapsKey} restaurantAddress={restaurantAddress} onChange={patchConfig} />
+              )}
             </div>
           ) : mode === "uber" ? (
             <div style={{ marginTop: 14 }}>
@@ -175,16 +265,19 @@ export default function EcommerceDeliveryPage() {
           </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-            {mode === "zones" && (
-              <button onClick={add} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                <Plus size={16} /> Agregar zona
+          {/* Botones de acción — ocultos en modo distancia + multi (lo maneja DeliveryPolygonEditorMulti) */}
+          {!(mode === "distance" && isMulti) && (
+            <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+              {mode === "zones" && (
+                <button onClick={add} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                  <Plus size={16} /> Agregar zona
+                </button>
+              )}
+              <button onClick={save} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>
+                <Save size={16} /> {saving ? "Guardando…" : "Guardar cambios"}
               </button>
-            )}
-            <button onClick={save} disabled={saving} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>
-              <Save size={16} /> {saving ? "Guardando…" : "Guardar cambios"}
-            </button>
-          </div>
+            </div>
+          )}
         </>
       )}
     </div>

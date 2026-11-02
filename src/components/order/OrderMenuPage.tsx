@@ -572,9 +572,6 @@ function ClosedBanner({ businessHours, inline, isDark, accent, innerRef }: { bus
         <span style={{ fontFamily: FB, fontSize: "0.82rem", fontWeight: 600 }}>
           Este local está cerrado ahora
         </span>
-        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "#F4A623", textDecoration: "underline", flexShrink: 0 }}>
-          Ver horarios →
-        </span>
       </div>
 
       {showModal && typeof document !== "undefined" && createPortal(
