@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Image as ImageIcon, Upload, X as XIcon, Clock, CalendarClock } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Image as ImageIcon, Upload, X as XIcon, Clock, CalendarClock, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -352,6 +352,53 @@ export default function EcommerceConfiguracionPage() {
                 style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>Déjalo vacío para no recibir correos. Es independiente de las notificaciones push de arriba.</p>
+            </div>
+          </section>
+          )}
+
+          {/* SEO en Google */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={Search} title="SEO en Google" sub="Lo que aparece en los resultados de búsqueda (título, descripción y favicon del sitio)." />
+            <div style={{ display: "grid", gap: 14, marginTop: 12 }}>
+              <div>
+                <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Título de la página</label>
+                <input
+                  value={cfg.pageTitle ?? ""}
+                  onChange={(e) => patch({ pageTitle: e.target.value || null })}
+                  placeholder={`${(session as any)?.restaurant?.name ?? "Tu Local"} · Pedir online`}
+                  maxLength={120}
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                />
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "5px 0 0", lineHeight: 1.5 }}>
+                  Máx. 60 caracteres para que no se corte en Google. Déjalo vacío para usar el valor por defecto.
+                </p>
+              </div>
+              <div>
+                <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Meta descripción</label>
+                <textarea
+                  value={cfg.metaDescription ?? ""}
+                  onChange={(e) => patch({ metaDescription: e.target.value || null })}
+                  placeholder={`Haz tu pedido en ${(session as any)?.restaurant?.name ?? "tu local"}. Rápido y fácil.`}
+                  maxLength={300}
+                  rows={3}
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem", outline: "none", boxSizing: "border-box", resize: "vertical" }}
+                />
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "5px 0 0", lineHeight: 1.5 }}>
+                  Máx. 160 caracteres recomendados. Aparece bajo el título en Google. Déjalo vacío para usar el valor por defecto.
+                </p>
+              </div>
+              {/* Preview Google */}
+              <div style={{ borderRadius: 10, border: "1px solid var(--adm-card-border)", padding: "12px 14px", background: "var(--adm-hover)" }}>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 6px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Preview Google</p>
+                <p style={{ fontFamily: FB, fontSize: "0.9rem", fontWeight: 700, color: "#1a0dab", margin: "0 0 2px", lineHeight: 1.3 }}>
+                  {cfg.pageTitle || `${(session as any)?.restaurant?.name ?? "Tu Local"} · Pedir online`}
+                </p>
+                <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "#006621", margin: "0 0 3px" }}>quierocomer.com/ecommerce/tu-local</p>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#545454", margin: 0, lineHeight: 1.5 }}>
+                  {cfg.metaDescription || `Haz tu pedido en ${(session as any)?.restaurant?.name ?? "tu local"}. Rápido y fácil.`}
+                </p>
+              </div>
             </div>
           </section>
           )}

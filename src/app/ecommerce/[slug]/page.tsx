@@ -43,15 +43,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // PWA: manifest por local. base "" en dominio propio, "/ecommerce/<slug>" en el principal.
   const base = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
   const manifestUrl = `/api/ecommerce/manifest/${tenant.slug}?base=${encodeURIComponent(base)}`;
+  const title = tenant.pageTitle || `${tenant.name} · Pedir online`;
+  const description = tenant.metaDescription || `Haz tu pedido en ${tenant.name}. Rápido y fácil.`;
   return {
-    title: `${tenant.name} · Pedir online`,
-    description: `Haz tu pedido en ${tenant.name}. Rápido y fácil.`,
+    title,
+    description,
     manifest: manifestUrl,
     appleWebApp: { capable: true, title: tenant.name, statusBarStyle: "default" },
     ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
     openGraph: {
-      title: tenant.name,
-      description: `Haz tu pedido en ${tenant.name}.`,
+      title: tenant.pageTitle || tenant.name,
+      description: tenant.metaDescription || `Haz tu pedido en ${tenant.name}.`,
       images: ogImages,
       type: "website",
     },

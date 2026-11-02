@@ -37,6 +37,8 @@ export interface EcommerceStoreConfig {
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
   bannerUrl: string | null; // imagen de banner/hero de la tienda (tema base); null = sin banner
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
+  pageTitle: string | null; // <title> personalizado en Google (null = "{Nombre} · Pedir online")
+  metaDescription: string | null; // meta description para Google (null = texto genérico)
   // Contacto que muestra la página de Política de Privacidad (/privacidad). null = usa el del local.
   privacyEmail: string | null;
   privacyPhone: string | null;
@@ -174,6 +176,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
     bannerUrl: typeof o.bannerUrl === "string" && o.bannerUrl.trim() ? o.bannerUrl.trim() : null,
     gtmId: normalizeGtmId(o.gtmId),
+    pageTitle: typeof o.pageTitle === "string" && o.pageTitle.trim() ? o.pageTitle.trim().slice(0, 120) : null,
+    metaDescription: typeof o.metaDescription === "string" && o.metaDescription.trim() ? o.metaDescription.trim().slice(0, 300) : null,
     privacyEmail: typeof o.privacyEmail === "string" && o.privacyEmail.trim() ? o.privacyEmail.trim() : null,
     privacyPhone: typeof o.privacyPhone === "string" && o.privacyPhone.trim() ? o.privacyPhone.trim() : null,
     privacyAddress: typeof o.privacyAddress === "string" && o.privacyAddress.trim() ? o.privacyAddress.trim() : null,
