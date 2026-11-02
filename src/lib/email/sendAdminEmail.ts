@@ -1,9 +1,8 @@
 import { resend } from "@/lib/resend";
 import { prisma } from "@/lib/prisma";
 
-const FROM = process.env.FROM_EMAIL
-  ? `QuieroComer <${process.env.FROM_EMAIL}>`
-  : "QuieroComer <hola@quierocomer.cl>";
+import { FROM_QC as FROM } from "@/lib/email/from";
+export { FROM_QC as FROM } from "@/lib/email/from";
 
 interface SendEmailOptions {
   to: string;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
+import { FROM_QC } from "@/lib/email/from";
 
 export const maxDuration = 120;
 
@@ -80,9 +81,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
   }
 
-  const FROM = process.env.FROM_EMAIL
-    ? `QuieroComer <${process.env.FROM_EMAIL}>`
-    : "QuieroComer <hola@quierocomer.cl>";
+  const FROM = FROM_QC;
 
   let sent = 0;
   const errors: string[] = [];

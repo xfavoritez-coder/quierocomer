@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { resend } from '@/lib/resend'
 import { prisma } from '@/lib/prisma'
+import { FROM_QC } from '@/lib/email/from'
 
 const TO = 'favoritez@gmail.com'
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     ].filter(Boolean).join('')
 
     const { error: resendError } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'QuieroComer <soporte@quierocomer.com>',
+      from: FROM_QC,
       to: TO,
       replyTo: email,
       subject: `Publicar local — ${nombreLocal} (${ciudad})`,

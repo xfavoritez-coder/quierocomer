@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { FROM_QC } from "@/lib/email/from";
 
 /**
  * Cron: process pending experience submissions.
@@ -105,7 +106,7 @@ Tono: místico, cálido, personal. Usa su nombre. NO uses markdown, solo texto p
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
+            from: FROM_QC,
             to: sub.email,
             subject: `${sub.userName}, eres ${result.name} ${template.iconEmoji}`,
             html: emailHtml,

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
 import { sendWhatsApp } from "@/lib/whatsapp";
-
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@quierocomer.com";
+import { FROM_QC } from "@/lib/email/from";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     // Send notification email to team
     await resend.emails.send({
-      from: FROM_EMAIL,
+      from: FROM_QC,
       to: "favoritez@gmail.com",
       subject: `Nuevo registro: ${nombre} — ${localName}`,
       html: `

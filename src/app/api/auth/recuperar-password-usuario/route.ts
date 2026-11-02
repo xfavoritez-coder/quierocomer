@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
+import { FROM_QC } from "@/lib/email/from";
 
 import * as crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
       const nombre = usuario.nombre.split(" ")[0];
       await resend.emails.send({
-        from: process.env.FROM_EMAIL ? `QuieroComer <${process.env.FROM_EMAIL}>` : "QuieroComer <onboarding@resend.dev>",
+        from: FROM_QC,
         to: usuario.email,
         subject: "Código de verificación · QuieroComer",
         html: `<html><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">

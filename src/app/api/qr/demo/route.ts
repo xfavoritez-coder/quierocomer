@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { FROM_QC } from "@/lib/email/from";
 
 export async function POST(request: Request) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
           },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
+            from: FROM_QC,
             to: "favoritez@gmail.com",
             subject: `🍽 Nueva solicitud de demo — ${localName}`,
             html: `

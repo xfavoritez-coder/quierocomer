@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
+import { FROM_QC } from "@/lib/email/from";
 
 const NOTIFY_TO = "favoritez@gmail.com";
 
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     await Promise.all([
       resend.emails.send({
-        from: process.env.FROM_EMAIL || "noreply@quierocomer.com",
+        from: FROM_QC,
         to: NOTIFY_TO,
         subject: mensaje ? `Contacto QuieroComer — ${nombre || email}` : `Nueva solicitud de demo — ${nombre || email}`,
         html: lines,

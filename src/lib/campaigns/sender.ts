@@ -4,6 +4,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { evaluateSegment } from "@/lib/segments/evaluator";
+import { FROM_QC } from "@/lib/email/from";
 
 const FREQUENCY_CAP_DAYS = 7;
 const BATCH_SIZE = 50; // Resend batch limit
@@ -98,7 +99,7 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
+            from: FROM_QC,
             to: user.email,
             subject: campaign.subject.replace(/\{\{name\}\}/g, user.name || "").replace(/\{\{restaurant\}\}/g, campaign.restaurant.name),
             html: personalizedHtml,

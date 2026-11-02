@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { clp } from "@/lib/ecommerce/format";
+import { FROM_QC } from "@/lib/email/from";
 
 const PAY_LABEL: Record<string, string> = {
   webpay: "Webpay", flow: "Flow", mercadopago: "MercadoPago",
@@ -90,7 +91,7 @@ export async function sendNewOrderEmailToStore(orderId: string): Promise<void> {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
-      body: JSON.stringify({ from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>", to, subject, html, text }),
+      body: JSON.stringify({ from: FROM_QC, to, subject, html, text }),
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) console.error("[new order email] Resend error:", await res.json().catch(() => ({})));

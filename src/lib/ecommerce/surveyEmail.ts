@@ -3,6 +3,7 @@
 //  Lo usan el cron (envío automático) y el "enviar prueba" del panel.
 // ═══════════════════════════════════════════════════════════
 import type { SurveyConfig } from "./store-config";
+import { FROM_QC } from "@/lib/email/from";
 
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
@@ -63,7 +64,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
       body: JSON.stringify({
-        from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
+        from: FROM_QC,
         to: args.to,
         subject,
         html,

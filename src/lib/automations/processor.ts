@@ -9,6 +9,7 @@
  * - milestone: send on Nth visit (5th, 10th, etc)
  */
 import { prisma } from "@/lib/prisma";
+import { FROM_QC } from "@/lib/email/from";
 
 const FREQUENCY_CAP_DAYS = 7;
 const TRIGGER_COOLDOWN_DAYS = 30;
@@ -70,7 +71,7 @@ export async function processAutomations(): Promise<ProcessResult[]> {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
             body: JSON.stringify({
-              from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.com>",
+              from: FROM_QC,
               to: user.email,
               subject,
               html: fullHtml,
