@@ -158,46 +158,55 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const [dest, setDest] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [details, setDetails] = useState("");
 
-  // Sucursal de delivery más cercana al destino (por distancia geográfica).
-  const nearest = useMemo<BrandBranch | null>(() => {
-    if (!dest) return null;
-    const cand = brand.branches.filter((b) => b.deliveryEnabled && b.lat != null && b.lng != null);
-    if (!cand.length) return null;
-    return cand.map((b) => ({ b, km: haversineKm(dest, { lat: b.lat!, lng: b.lng! }) })).sort((a, z) => a.km - z.km)[0].b;
-  }, [dest, brand.branches]);
-
-  // Costo de despacho de la sucursal más cercana (para mostrarlo antes de confirmar).
-  // distance → se calcula localmente; uber → se cotiza en vivo; zones → se elige la
-  // comuna después, en la tienda (no se resuelve aquí).
-  const [fee, setFee] = useState<{ available: boolean; fee: number; mode: string; reason?: string } | null>(null);
-  const [feeLoading, setFeeLoading] = useState(false);
+  // Evalúa TODAS las sucursales con delivery para la dirección escrita y determina
+  // cuáles la CUBREN (su zona de reparto la incluye), con su costo. Así no se elige
+  // la más cercana en línea recta, sino la que realmente puede repartir ahí.
+  //  distance → se verifica el polígono localmente (computeDistanceFee).
+  //  uber     → se cotiza en vivo (si cotiza, cubre).
+  //  zones    → no se puede geo-verificar por lat/lng (depende de la comuna); se trata
+  //             como candidata "por confirmar comuna" en la tienda.
+  type BranchEval = { branch: BrandBranch; available: boolean; fee: number; mode: string; reason?: string; km: number };
+  const [evals, setEvals] = useState<BranchEval[] | null>(null);
+  const [evalLoading, setEvalLoading] = useState(false);
 
   useEffect(() => {
-    if (!nearest || !dest) { setFee(null); return; }
+    if (!dest) { setEvals(null); return; }
     let cancelled = false;
     (async () => {
-      setFeeLoading(true); setFee(null);
-      const bd = await fetchStorefront(nearest.slug);
-      if (cancelled) return;
-      if (!bd) { setFee({ available: false, fee: 0, mode: "", reason: "No pudimos cargar la sucursal" }); setFeeLoading(false); return; }
-      const mode = bd.tenant.deliveryConfig.mode;
-      if (mode === "distance") {
-        const r = computeDistanceFee(bd.tenant.deliveryConfig, dest);
-        setFee({ available: r.available, fee: r.fee, mode, reason: r.reason });
-      } else if (mode === "uber") {
-        try {
-          const q = await fetch("/api/ecommerce/delivery/quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: bd.tenant.id, address: dest.address, lat: dest.lat, lng: dest.lng }) });
-          const j = await q.json().catch(() => ({}));
-          if (!cancelled) setFee(q.ok && j.ok ? { available: true, fee: j.fee, mode } : { available: false, fee: 0, mode, reason: j.error || "No se pudo cotizar el despacho" });
-        } catch { if (!cancelled) setFee({ available: false, fee: 0, mode, reason: "No se pudo cotizar el despacho" }); }
-      } else {
-        // zones: la comuna/costo se eligen en la tienda al confirmar la dirección.
-        setFee({ available: true, fee: 0, mode });
-      }
-      if (!cancelled) setFeeLoading(false);
+      setEvalLoading(true); setEvals(null);
+      const cands = brand.branches.filter((b) => b.deliveryEnabled);
+      const results = await Promise.all(cands.map(async (branch): Promise<BranchEval> => {
+        const km = branch.lat != null && branch.lng != null ? haversineKm(dest, { lat: branch.lat, lng: branch.lng }) : Number.POSITIVE_INFINITY;
+        const bd = await fetchStorefront(branch.slug);
+        if (!bd) return { branch, available: false, fee: 0, mode: "", reason: "No se pudo cargar", km };
+        const mode = bd.tenant.deliveryConfig.mode;
+        if (mode === "distance") {
+          const r = computeDistanceFee(bd.tenant.deliveryConfig, dest);
+          return { branch, available: r.available, fee: r.fee, mode, reason: r.reason, km };
+        }
+        if (mode === "uber") {
+          try {
+            const q = await fetch("/api/ecommerce/delivery/quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: bd.tenant.id, address: dest.address, lat: dest.lat, lng: dest.lng }) });
+            const j = await q.json().catch(() => ({}));
+            return q.ok && j.ok ? { branch, available: true, fee: j.fee, mode, km } : { branch, available: false, fee: 0, mode, reason: j.error || "Sin cobertura", km };
+          } catch { return { branch, available: false, fee: 0, mode, reason: "No se pudo cotizar", km }; }
+        }
+        // zones: candidata (se confirma la comuna en la tienda).
+        return { branch, available: true, fee: 0, mode, km };
+      }));
+      if (!cancelled) { setEvals(results); setEvalLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [nearest, dest, fetchStorefront]);
+  }, [dest, brand.branches, fetchStorefront]);
+
+  // Mejor sucursal: entre las que CUBREN la dirección, la de menor costo (desempata
+  // por cercanía). Si ninguna cubre, no hay opción de delivery para esa dirección.
+  const chosen = useMemo<BranchEval | null>(() => {
+    if (!evals) return null;
+    const ok = evals.filter((e) => e.available).sort((a, b) => a.fee - b.fee || a.km - b.km);
+    return ok[0] ?? null;
+  }, [evals]);
+  const noCoverage = !!evals && evals.length > 0 && !chosen;
 
   useEffect(() => {
     if (tab !== "delivery" || !gmapsReady || !inputRef.current) return;
@@ -223,12 +232,12 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   }, []);
 
   function confirmDelivery() {
-    if (!nearest || !dest || !fee?.available) return;
+    if (!chosen || !dest || !chosen.available) return;
     // zones: sin costo aquí → el cliente elige comuna en la tienda (deliveryType se
     // queda sin seleccionar hasta ese paso). onChoose en modo delivery SIN dirección
     // adopta la sucursal pero no fija la entrega (el selector normal la pedirá).
-    if (fee.mode === "zones") { onChoose(nearest, "delivery"); return; }
-    onChoose(nearest, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: fee.fee });
+    if (chosen.mode === "zones") { onChoose(chosen.branch, "delivery"); return; }
+    onChoose(chosen.branch, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: chosen.fee });
   }
 
   const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
@@ -253,25 +262,27 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
           <div>
             <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Tu dirección</label>
             <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
-            <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal más cercana.</p>
+            <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal que reparte a tu dirección.</p>
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
-            {nearest && (
+            {dest && evalLoading && <p style={{ fontSize: "0.82rem", color: "#9ca3af", margin: "12px 2px 0" }}>Buscando sucursal que reparta a tu dirección…</p>}
+            {dest && !evalLoading && noCoverage && (
+              <p style={{ fontSize: "0.85rem", color: "#ef4444", margin: "12px 2px 0", fontWeight: 600 }}>Ninguna sucursal reparte a esta dirección. Prueba con <b>Retiro</b> o con otra dirección.</p>
+            )}
+            {chosen && (
               <div style={{ marginTop: 14, padding: 14, borderRadius: 14, border: `1px solid ${accent}55`, background: `${accent}10` }}>
                 <p style={{ fontSize: "0.72rem", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: ".04em", margin: 0 }}>Tu sucursal</p>
-                <p style={{ fontSize: "1.05rem", fontWeight: 900, color: "#111", margin: "3px 0 1px" }}>{nearest.branchName || nearest.name}{!nearest.open ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#ef4444", marginLeft: 8 }}>Cerrada ahora</span> : null}</p>
-                {nearest.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "0 0 10px" }}>{nearest.address}</p>}
+                <p style={{ fontSize: "1.05rem", fontWeight: 900, color: "#111", margin: "3px 0 1px" }}>{chosen.branch.branchName || chosen.branch.name}{!chosen.branch.open ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#ef4444", marginLeft: 8 }}>Cerrada ahora</span> : null}</p>
+                {chosen.branch.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "0 0 10px" }}>{chosen.branch.address}</p>}
                 <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "9px 11px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: "0.88rem", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
-                {feeLoading && <p style={{ fontSize: "0.8rem", color: "#9ca3af", margin: "0 0 8px" }}>Cotizando despacho…</p>}
-                {fee && !fee.available && <p style={{ fontSize: "0.8rem", color: "#ef4444", margin: "0 0 8px" }}>{fee.reason || "Fuera de la zona de reparto"}</p>}
-                {fee?.available && fee.mode !== "zones" && (
+                {chosen.mode !== "zones" && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", margin: "0 2px 10px" }}>
                     <span style={{ color: "#6b7280" }}>Costo de despacho</span>
-                    <span style={{ fontWeight: 900, color: accent }}>{fee.fee > 0 ? clp(fee.fee) : "Gratis"}</span>
+                    <span style={{ fontWeight: 900, color: accent }}>{chosen.fee > 0 ? clp(chosen.fee) : "Gratis"}</span>
                   </div>
                 )}
-                <button onClick={confirmDelivery} disabled={!fee?.available || feeLoading || switching} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", opacity: !fee?.available || feeLoading || switching ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <button onClick={confirmDelivery} disabled={evalLoading || switching} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", opacity: evalLoading || switching ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   {switching ? <Loader2 size={16} className="animate-spin" /> : null}
-                  Continuar con {nearest.branchName || nearest.name} →
+                  Continuar con {chosen.branch.branchName || chosen.branch.name} →
                 </button>
               </div>
             )}

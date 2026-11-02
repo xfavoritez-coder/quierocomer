@@ -114,12 +114,14 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   // el catálogo representante → sucursal). En modo normal, se liga a este tenant.
   useEffect(() => { if (brandMode) return; setRestaurantId(tenant.id); repriceItems(products); }, [tenant.id, products, setRestaurantId, repriceItems, brandMode]);
 
-  // Clic en el selector de entrega: sin sucursal elegida (modo marca) abre la
-  // elección de sucursal; si ya hay sucursal (o es tienda normal) abre el modal normal.
+  // Clic en el selector de entrega. En modo MARCA siempre abre el selector de
+  // sucursal (BranchPicker): así, al escribir/cambiar la dirección, se re-evalúa
+  // qué sucursal cubre esa dirección (re-pivoteo). En tienda normal abre el modal
+  // de entrega de siempre.
   const openDelivery = useCallback(() => {
-    if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
+    if (brandMode) { brandControls!.onRequireBranch(null); return; }
     setDeliveryModalOpen(true);
-  }, [brandMode, hasBranch, brandControls]);
+  }, [brandMode, brandControls]);
 
   // Ir al checkout: en modo marca sin sucursal, primero se elige sucursal.
   const goCheckout = useCallback(() => {
