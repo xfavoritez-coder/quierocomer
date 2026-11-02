@@ -16,6 +16,8 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
 import type { PaymentMethod } from '@/lib/pos'
+import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
+import { toast } from 'sonner'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -31,7 +33,7 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 
 export default function CajaPage() {
   const navigate = usePosNav()
-  const { restaurantId } = usePosRestaurant()
+  const { restaurantId, restaurant } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession()
   const openAccounts = useOpenAccounts()
@@ -120,6 +122,32 @@ export default function CajaPage() {
     : difference === 0 ? 'var(--jade)'
     : difference < 0 ? '#C53030'
     : 'var(--amber-press)'
+
+  // Imprime el cierre por el MISMO agente de impresión que las comandas
+  // (bridge ESC/POS local). Usa los datos del arqueo que ya se muestran.
+  const handlePrint = async () => {
+    if (!getBridgeUrl()) { toast.error('No hay agente de impresión configurado'); return }
+    const now = new Date()
+    const r = await printCashClose({
+      jobId: 'cierre_' + (cashSession?.id ?? uuidv4()),
+      restaurantName: restaurant?.name,
+      date: now.toLocaleDateString('es-CL'),
+      openedAt,
+      closedAt: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+      closedAccounts: summary.closedAccounts,
+      methods: ALL_METHODS.map(m => ({ label: METHOD_LABELS[m], amount: summary.byMethod[m]?.amount ?? 0, count: summary.byMethod[m]?.count ?? 0 })),
+      totalTips: summary.totalTips,
+      totalSales: summary.totalSales,
+      opening: openingAmount,
+      cashSales,
+      expectedCash,
+      countedCash: hasCounted ? counted : null,
+      difference: hasCounted ? difference : null,
+      note: closingNote || undefined,
+    })
+    if (r.ok) toast.success('Cierre enviado a la impresora')
+    else toast.error(r.error || 'No se pudo imprimir')
+  }
 
   // ── NO SESSION: apertura ─────────────────────────────────────
 
@@ -341,7 +369,7 @@ export default function CajaPage() {
             </button>
             <button
               className="print"
-              onClick={() => {}}
+              onClick={handlePrint}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/>

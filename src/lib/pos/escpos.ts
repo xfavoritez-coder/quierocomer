@@ -4,7 +4,7 @@
 //
 // Portado de print-bridge/src/encoder.js (mismo formato que diseñó el POS).
 
-import type { ComandaPayload, ComandaItem } from "./bridge";
+import type { ComandaPayload, ComandaItem, CashClosePayload } from "./bridge";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -101,6 +101,54 @@ export function encodeComanda(c: ComandaPayload): Uint8Array {
     if (item.note) {
       e.boldOn().line(wrapText("  !! " + item.note.toUpperCase(), WIDTH, 5)).boldOff();
     }
+  }
+
+  e.line("-".repeat(WIDTH)).lf().lf().lf().cut();
+  return e.toBytes();
+}
+
+/** Cierre de caja (arqueo) → bytes ESC/POS crudos. Mismo agente que la comanda. */
+export function encodeCashClose(c: CashClosePayload): Uint8Array {
+  const e = new Enc();
+  const money = (n: number) => "$" + (n || 0).toLocaleString("es-CL");
+
+  // Cabecera
+  e.init().alignCenter().doubleOn().line("CIERRE DE CAJA").doubleOff();
+  if (c.restaurantName) e.boldOn().line(c.restaurantName).boldOff();
+  e.line(c.date);
+  e.line("Apertura " + c.openedAt + " - Cierre " + c.closedAt);
+  e.alignLeft().line("=".repeat(WIDTH));
+
+  // Ventas por medio de pago
+  e.boldOn().line("VENTAS DEL TURNO  (" + (c.closedAccounts || 0) + " cuentas)").boldOff();
+  for (const m of c.methods) {
+    const right = money(m.amount) + (m.count ? "  (" + m.count + ")" : "");
+    e.line(lineColumns(m.label, right));
+  }
+  e.line("-".repeat(WIDTH));
+  e.line(lineColumns("Propinas", money(c.totalTips)));
+  e.boldOn().line(lineColumns("TOTAL VENTAS", money(c.totalSales))).boldOff();
+  e.line("=".repeat(WIDTH));
+
+  // Arqueo de efectivo
+  e.boldOn().line("ARQUEO DE EFECTIVO").boldOff();
+  e.line(lineColumns("Apertura", money(c.opening)));
+  e.line(lineColumns("Ventas en efectivo", money(c.cashSales)));
+  e.line(lineColumns("Efectivo esperado", money(c.expectedCash)));
+  if (c.countedCash != null) {
+    e.line(lineColumns("Efectivo contado", money(c.countedCash)));
+    e.line("-".repeat(WIDTH));
+    const diff = c.difference ?? 0;
+    const tag = diff === 0 ? "" : diff < 0 ? "  (faltante)" : "  (sobrante)";
+    e.boldOn().line(lineColumns("DIFERENCIA", money(Math.abs(diff)) + tag)).boldOff();
+  } else {
+    e.line("-".repeat(WIDTH));
+    e.line("Efectivo no contado");
+  }
+
+  if (c.note) {
+    e.line("-".repeat(WIDTH));
+    e.line(wrapText("Nota: " + c.note, WIDTH, 0));
   }
 
   e.line("-".repeat(WIDTH)).lf().lf().lf().cut();

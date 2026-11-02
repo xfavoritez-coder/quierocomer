@@ -2,7 +2,7 @@
 // El POS llama al agente local (http://localhost:7777) para imprimir comandas.
 // El POS renderiza la comanda a bytes ESC/POS y se los manda crudos (base64);
 // el agente solo los imprime. Mismo agente que el del ecommerce (unificado).
-import { encodeComanda, encodeTest, bytesToBase64 } from "./escpos";
+import { encodeComanda, encodeTest, encodeCashClose, bytesToBase64 } from "./escpos";
 
 export interface BridgeConfig {
   url: string  // ej: "http://192.168.1.10:7777" o "http://localhost:7777"
@@ -24,6 +24,30 @@ export interface ComandaItem {
   quantity: number
   dish_name: string
   modifiers: { name: string; price_adjustment: number }[]
+  note?: string
+}
+
+export interface CashCloseMethod {
+  label: string
+  amount: number
+  count: number
+}
+
+export interface CashClosePayload {
+  jobId: string
+  restaurantName?: string
+  date: string        // "02/11/2026"
+  openedAt: string    // "12:53"
+  closedAt: string    // "12:54"
+  closedAccounts: number
+  methods: CashCloseMethod[]
+  totalTips: number
+  totalSales: number
+  opening: number
+  cashSales: number
+  expectedCash: number
+  countedCash: number | null  // null = efectivo no contado
+  difference: number | null
   note?: string
 }
 
@@ -59,6 +83,24 @@ export async function printComanda(comanda: ComandaPayload): Promise<{ ok: boole
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobId: comanda.jobId, escpos }),
+      signal: AbortSignal.timeout(5000),
+    })
+    const data = await res.json()
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` }
+    return { ok: true, jobId: data.jobId }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
+  }
+}
+
+export async function printCashClose(payload: CashClosePayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  const url = getBridgeUrl()
+  try {
+    const escpos = bytesToBase64(encodeCashClose(payload))
+    const res = await fetch(`${url}/print`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: payload.jobId, escpos }),
       signal: AbortSignal.timeout(5000),
     })
     const data = await res.json()
