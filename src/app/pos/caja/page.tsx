@@ -97,6 +97,9 @@ export default function CajaPage() {
           return acc
         }, {} as Record<PaymentMethod, number>)
 
+        // Recibo armado antes de cerrar (la sesión se limpia al proyectar el cierre).
+        const closePayload = buildClosePayload()
+
         await closeCashSession({
           session_id: cashSession.id,
           counted_amounts,
@@ -104,6 +107,12 @@ export default function CajaPage() {
           difference: hasCounted ? difference : 0,
           note: closingNote || undefined,
         })
+
+        // Impresión automática del cierre por el agente (mismo que las comandas).
+        if (getBridgeUrl()) {
+          const pr = await printCashClose(closePayload)
+          if (!pr.ok) toast.error(pr.error || 'No se pudo imprimir el cierre')
+        }
       }
       goHome()
     } catch (err) {
@@ -123,13 +132,11 @@ export default function CajaPage() {
     : difference < 0 ? '#C53030'
     : 'var(--amber-press)'
 
-  // Imprime el cierre por el MISMO agente de impresión que las comandas
-  // (bridge ESC/POS local). Usa los datos del arqueo que ya se muestran.
-  const handlePrint = async () => {
-    if (!getBridgeUrl()) { toast.error('No hay agente de impresión configurado'); return }
+  // Arma el recibo del cierre con los datos del arqueo que ya se muestran.
+  const buildClosePayload = () => {
     const now = new Date()
-    const r = await printCashClose({
-      jobId: 'cierre_' + (cashSession?.id ?? uuidv4()),
+    return {
+      jobId: 'cierre_' + uuidv4(),
       restaurantName: restaurant?.name,
       date: now.toLocaleDateString('es-CL'),
       openedAt,
@@ -144,7 +151,14 @@ export default function CajaPage() {
       countedCash: hasCounted ? counted : null,
       difference: hasCounted ? difference : null,
       note: closingNote || undefined,
-    })
+    }
+  }
+
+  // Imprime el cierre por el MISMO agente de impresión que las comandas
+  // (bridge ESC/POS local). Botón manual.
+  const handlePrint = async () => {
+    if (!getBridgeUrl()) { toast.error('No hay agente de impresión configurado'); return }
+    const r = await printCashClose(buildClosePayload())
     if (r.ok) toast.success('Cierre enviado a la impresora')
     else toast.error(r.error || 'No se pudo imprimir')
   }
