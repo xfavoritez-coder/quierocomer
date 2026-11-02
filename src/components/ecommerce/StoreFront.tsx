@@ -464,30 +464,23 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
-      {/* El carrito va absoluto y sobresale por encima del borde plano de la
-          barra → silueta de "tiara". El hueco central (span) le reserva sitio. */}
+      {/* 5 iconos planos e iguales (estilo Instagram), con nuestro color en el
+          activo. El carrito es uno más de la fila y lleva su badge de cantidad. */}
       <nav className="sm:hidden fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto relative flex items-center gap-3 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-4 h-16">
+        <div className="pointer-events-auto relative flex items-center gap-1 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-3 h-16">
           <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
           <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
-          <span className="w-16 shrink-0" aria-hidden />
-          <FabBtn label="Contacto" color={primaryColor} active={activeTab === "contact"} onClick={() => { setActiveTab("contact"); openMenu("contact"); }}><MessageCircle className="w-6 h-6" /></FabBtn>
-          <FabBtn label="Perfil" color={primaryColor} active={activeTab === "profile"} onClick={() => { setActiveTab("profile"); openMenu("root"); }}><User className="w-6 h-6" /></FabBtn>
-          {/* Carrito — central elevado (tiara). El centrado va en el contenedor
-              para que la animación cart-bump (scale) no descentre el botón. */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-            <button
-              onClick={goCheckout}
-              aria-label="Ver carrito"
-              className={`relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white ${cartBump ? "cart-bump" : ""}`}
-              style={{ background: primaryColor }}
-            >
+          {/* Carrito — plano como el resto; conserva el badge y la animación cart-bump. */}
+          <FabBtn label="Ver carrito" color={primaryColor} onClick={goCheckout}>
+            <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
               <ShoppingBag className="w-6 h-6" />
               {badge > 0 && (
-                <span className="absolute -top-1 -right-1 bg-white text-[11px] font-black rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow" style={{ color: primaryColor }}>{badge}</span>
+                <span className="absolute -top-1.5 -right-1.5 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow" style={{ background: primaryColor }}>{badge}</span>
               )}
-            </button>
-          </div>
+            </span>
+          </FabBtn>
+          <FabBtn label="Contacto" color={primaryColor} active={activeTab === "contact"} onClick={() => { setActiveTab("contact"); openMenu("contact"); }}><MessageCircle className="w-6 h-6" /></FabBtn>
+          <FabBtn label="Perfil" color={primaryColor} active={activeTab === "profile"} onClick={() => { setActiveTab("profile"); openMenu("root"); }}><User className="w-6 h-6" /></FabBtn>
         </div>
       </nav>
 
