@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Image as ImageIcon, Upload, X as XIcon, Clock } from "lucide-react";
+import { ArrowLeft, Settings, Save, Palette, CreditCard, StickyNote, ConciergeBell, Truck, UtensilsCrossed, Store, Package, Bike, Bell, Heart, Globe, BarChart3, Mail, Image as ImageIcon, Upload, X as XIcon, Clock, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig } from "@/lib/ecommerce/store-config";
@@ -503,6 +503,28 @@ export default function EcommerceConfiguracionPage() {
           )}
 
           {/* Notas */}
+          {tab === "pedidos" && (
+          <section style={card}>
+            <SectionTitle icon={CalendarClock} title="Pedidos programados" sub="Permite que el cliente pida con anticipación (incluso con el local cerrado). El pedido se envía a la cocina automáticamente a la hora justa, según tu tiempo de entrega estimado." />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
+              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)" }}>Aceptar pedidos programados</span>
+              <Toggle on={cfg.scheduledOrdersEnabled} onClick={() => patch({ scheduledOrdersEnabled: !cfg.scheduledOrdersEnabled })} />
+            </div>
+            {cfg.scheduledOrdersEnabled && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 6 }}>¿Con cuánta anticipación pueden programar?</div>
+                <select
+                  value={cfg.scheduleMaxDaysAhead}
+                  onChange={(e) => patch({ scheduleMaxDaysAhead: Number(e.target.value) })}
+                  style={{ width: "100%", maxWidth: 320, padding: "9px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none", cursor: "pointer" }}
+                >
+                  {[{ v: 0, label: "Solo el mismo día" }, { v: 1, label: "Hasta el día siguiente" }, { v: 2, label: "Hasta 2 días antes" }, { v: 3, label: "Hasta 3 días antes" }, { v: 7, label: "Hasta 7 días antes" }, { v: 14, label: "Hasta 14 días antes" }, { v: 30, label: "Hasta 30 días antes" }].map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+          </section>
+          )}
+
           {tab === "pedidos" && (
           <section style={card}>
             <SectionTitle icon={StickyNote} title="Notas del cliente" sub="Campo opcional en el checkout para instrucciones (ej: sin cebolla)." />
