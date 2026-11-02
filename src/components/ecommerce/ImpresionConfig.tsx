@@ -114,6 +114,14 @@ export default function ImpresionConfig({ restaurantId, storeName }: { restauran
           </select>
           <span style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 5, lineHeight: 1.45 }}>Útil para dejar una copia en cocina y otra para el repartidor o la boleta.</span>
         </label>
+        <label style={{ display: "block" }}>
+          <span style={lblStyle}>Comanda de cocina</span>
+          <select value={cfg.kitchenComanda ? "1" : "0"} onChange={(e) => patchAndSave({ kitchenComanda: e.target.value === "1" })} style={selStyle}>
+            <option value="0">No</option>
+            <option value="1">Sí — imprimir también comanda de cocina</option>
+          </select>
+          <span style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 5, lineHeight: 1.45 }}>Imprime, además de la comanda normal, una comanda de cocina con <strong>letra grande</strong>: producto, modificadores y comentarios bien visibles, más cliente, número de pedido y dirección. Sin precios. Aplica a pedidos del ecommerce y a los tomados en el POS. Requiere <strong>reinstalar el agente</strong> una vez.</span>
+        </label>
 
         {cfg.printMode === "auto" && (
           <div style={{ borderTop: "1px solid var(--adm-card-border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>

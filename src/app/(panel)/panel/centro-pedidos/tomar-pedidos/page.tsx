@@ -7,7 +7,6 @@ import {
   Package, Bike, Trash2, Gift, MessageSquare, Tag, PencilLine, CheckCircle2, Loader2, UtensilsCrossed, ExternalLink,
 } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
-import { getKitchenMode, printKitchenComanda } from "@/lib/pos/bridge";
 import StoreStyles from "@/components/ecommerce/StoreStyles";
 import AccompanimentsSection from "@/components/ecommerce/AccompanimentsSection";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
@@ -275,26 +274,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
       const d = await res.json();
       if (!res.ok || !d.ok) throw new Error(d.error || "No se pudo registrar");
       setSuccess(d.orderNumber);
-
-      // Comanda de COCINA (letra grande) por el agente del POS, si está activado
-      // en este equipo (toggle en /pos/config). No bloquea: si falla, se ignora.
-      if (getKitchenMode()) {
-        printKitchenComanda({
-          jobId: "kc_" + (d.orderNumber ?? Date.now()),
-          type: deliveryType === "DELIVERY" ? "delivery" : "retiro",
-          orderLabel: "#" + (d.orderNumber ?? ""),
-          customerName: customerName.trim() || undefined,
-          customerPhone: customerPhone.trim() || undefined,
-          customerAddress: deliveryType === "DELIVERY" ? addressFull : undefined,
-          sentBy: "POS",
-          items: cart.map((i) => ({
-            quantity: i.quantity,
-            dish_name: i.name,
-            modifiers: i.options.map((o) => ({ name: o.value, price_adjustment: 0 })),
-            note: i.comment || undefined,
-          })),
-        }).catch(() => {});
-      }
+      // La comanda de cocina (si está activada) la imprime el agente desde la cola
+      // junto con la comanda normal — igual que para los pedidos del ecommerce.
     } catch (e) { showToast(`❌ ${e instanceof Error ? e.message : "Error"}`); }
     finally { setSending(false); setShowConfirm(false); }
   }

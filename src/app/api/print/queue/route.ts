@@ -1,6 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { encodeKitchenComanda, bytesToBase64 } from "@/lib/pos/escpos";
+
+// Comanda de COCINA (letra grande, sin precios) a partir de un pedido de la cola.
+// Devuelve el ESC/POS ya renderizado en base64 para que el agente lo imprima crudo.
+function kitchenEscposFor(o: {
+  id: string; orderNumber: number | null; customerName: string | null; customerPhone: string | null;
+  orderType: string; deliveryAddress: string | null; items: unknown;
+}): string {
+  const rawItems = Array.isArray(o.items) ? (o.items as Record<string, unknown>[]) : [];
+  const items = rawItems.map((it) => ({
+    quantity: Number(it.quantity) || 1,
+    dish_name: String(it.dishName || it.name || "Producto"),
+    modifiers: Array.isArray(it.selectedOptions)
+      ? (it.selectedOptions as Record<string, unknown>[])
+          .filter((op) => op && op.optionName)
+          .map((op) => ({ name: String(op.optionName), price_adjustment: 0 }))
+      : [],
+    note: (typeof it.comment === "string" && it.comment) || (typeof it.notes === "string" && it.notes) || undefined,
+  }));
+  const bytes = encodeKitchenComanda({
+    jobId: "kc_" + o.id,
+    type: o.orderType === "DELIVERY" ? "delivery" : "retiro",
+    orderLabel: "#" + (o.orderNumber ?? ""),
+    customerName: o.customerName || undefined,
+    customerPhone: o.customerPhone || undefined,
+    customerAddress: o.orderType === "DELIVERY" ? (o.deliveryAddress || undefined) : undefined,
+    sentBy: "ecommerce",
+    items,
+  });
+  return bytesToBase64(bytes);
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,10 +133,22 @@ export async function GET(req: NextRequest) {
 
   // Copias por comanda: si el local configuró 2 copias, duplicamos cada pedido
   // REAL en la cola (el agente imprime cada entrada una vez → 2 copias). No
-  // duplicamos el ticket de prueba. Así no hay que reinstalar el agente.
-  const out = cfg.printCopies === 2
-    ? mapped.flatMap((o) => (typeof o.id === "string" && o.id.startsWith("test-") ? [o] : [o, o]))
-    : mapped;
+  // duplicamos el ticket de prueba.
+  // Comanda de cocina: si está activada, agregamos una entrada extra por pedido
+  // con el ESC/POS ya renderizado (campo `escpos`), que el agente imprime crudo
+  // después de la comanda normal. El id es el mismo del pedido → el ack vale igual.
+  const out = mapped.flatMap((o) => {
+    const isTest = typeof o.id === "string" && o.id.startsWith("test-");
+    if (isTest) return [o];
+    const entries: (typeof mapped)[number][] = cfg.printCopies === 2 ? [o, o] : [o];
+    if (cfg.kitchenComanda) {
+      try {
+        const escpos = kitchenEscposFor(o);
+        entries.push({ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]);
+      } catch { /* si falla el render de cocina, no rompemos la comanda normal */ }
+    }
+    return entries;
+  });
 
   // Config de impresora (el agente la aplica en caliente, sin reinstalar):
   //  default = predeterminada de Windows | name = por nombre | ip = ESC/POS directo a IP:9100

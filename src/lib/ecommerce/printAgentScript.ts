@@ -179,6 +179,7 @@ namespace QuieroComerAgente {
     [DataMember(Name="couponCode")] public string couponCode;
     [DataMember(Name="notes")] public string notes;
     [DataMember(Name="createdAt")] public string createdAt;
+    [DataMember(Name="escpos")] public string escpos;  // si viene, se imprime crudo (ej: comanda de cocina) y se ignora el render normal
   }
 
   [DataContract] public class PrinterCfg {
@@ -365,7 +366,11 @@ namespace QuieroComerAgente {
             int width = (resp.paperWidth.HasValue && (int)resp.paperWidth.Value == 58) ? 58 : 80;
             foreach (Order o in resp.orders) {
               try {
-                byte[] bytes = BuildTicket(o, resp.store, width);
+                // Si el pedido trae ESC/POS ya renderizado (ej: comanda de cocina),
+                // se imprime crudo; si no, se construye la comanda normal.
+                byte[] bytes;
+                if (!string.IsNullOrEmpty(o.escpos)) { bytes = Convert.FromBase64String(o.escpos); }
+                else { bytes = BuildTicket(o, resp.store, width); }
                 string target;
                 bool ok = PrintBytes(bytes, out target);
                 if (ok) { Ack(o.id); Balloon("Comanda impresa", "Pedido #" + NumStr(o.orderNumber)); }
