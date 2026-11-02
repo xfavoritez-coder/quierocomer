@@ -264,6 +264,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
             <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
             <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal que reparte a tu dirección.</p>
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
+            {dest && (
+              <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginTop: 10 }} />
+            )}
             {dest && evalLoading && <p style={{ fontSize: "0.82rem", color: "#9ca3af", margin: "12px 2px 0" }}>Buscando sucursal que reparta a tu dirección…</p>}
             {dest && !evalLoading && noCoverage && (
               <p style={{ fontSize: "0.85rem", color: "#ef4444", margin: "12px 2px 0", fontWeight: 600 }}>Ninguna sucursal reparte a esta dirección. Prueba con <b>Retiro</b> o con otra dirección.</p>
@@ -273,7 +276,6 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
                 <p style={{ fontSize: "0.72rem", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: ".04em", margin: 0 }}>Tu sucursal</p>
                 <p style={{ fontSize: "1.05rem", fontWeight: 900, color: "#111", margin: "3px 0 1px" }}>{chosen.branch.branchName || chosen.branch.name}{!chosen.branch.open ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#ef4444", marginLeft: 8 }}>Cerrada ahora</span> : null}</p>
                 {chosen.branch.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "0 0 10px" }}>{chosen.branch.address}</p>}
-                <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "9px 11px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: "0.88rem", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                 {chosen.mode !== "zones" && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", margin: "0 2px 10px" }}>
                     <span style={{ color: "#6b7280" }}>Costo de despacho</span>
