@@ -10,7 +10,7 @@ import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import type { Prisma } from "@prisma/client";
 import { parseAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
-import { parseHours, resolveAvailability, type OpenStatus } from "@/lib/ecommerce/hours";
+import { parseHours, resolveAvailability, DAY_KEYS, type OpenStatus, type DayHours } from "@/lib/ecommerce/hours";
 import { activeHappyHours, bestHappyHourPrice, appliesToChannel } from "@/lib/happyHour";
 
 export interface StoreTenant {
@@ -55,6 +55,7 @@ export interface StoreTenant {
   googleMapsKey: string | null; // key de navegador para autocompletar direcciones
   accompaniments: AccompConfig; // acompañamientos del checkout
   openStatus: OpenStatus; // estado abierto/cerrado según horario
+  weeklyHours: DayHours[] | null; // horario semanal (índice 0=Dom … 6=Sáb); null = siempre abierto (sin horario)
   scheduledOrdersEnabled: boolean; // el local acepta pedidos programados
   scheduleMaxDaysAhead: number; // días hacia adelante que se puede programar
   showTableMenu: boolean; // mostrar "Carta mesa" en el menú (link a /qr/<slug>)
@@ -147,7 +148,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   });
   if (!r || !r.ecommerceEnabled) return null;
   const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor, paymentMethods: (r.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean), minOrder: r.orderingMinAmount ?? null, waitTime: r.orderingWaitTime });
-  const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
+  const hours = parseHours(r.ecommerceHours);
+  const avail = resolveAvailability(hours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
     id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
@@ -161,6 +163,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     googleMapsKey: parseEcommerceConfig(r.ecommerceConfig).googleMaps?.apiKey || null,
     accompaniments: parseAccompConfig(r.ecommerceAccompaniments),
     openStatus: avail.openStatus,
+    weeklyHours: hours.enabled ? DAY_KEYS.map((k) => hours.days[k]) : null,
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,
@@ -288,7 +291,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
 
   const fallbackMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
   const store = parseStoreConfig(restaurant.ecommerceStoreConfig, { accent: restaurant.cartaAccentColor, paymentMethods: fallbackMethods, minOrder: restaurant.orderingMinAmount ?? null, waitTime: restaurant.orderingWaitTime });
-  const avail = resolveAvailability(parseHours(restaurant.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
+  const hours = parseHours(restaurant.ecommerceHours);
+  const avail = resolveAvailability(hours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
 
   return {
     tenant: {
@@ -332,6 +336,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       googleMapsKey: parseEcommerceConfig(restaurant.ecommerceConfig).googleMaps?.apiKey || null,
       accompaniments: parseAccompConfig(restaurant.ecommerceAccompaniments),
       openStatus: avail.openStatus,
+    weeklyHours: hours.enabled ? DAY_KEYS.map((k) => hours.days[k]) : null,
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,

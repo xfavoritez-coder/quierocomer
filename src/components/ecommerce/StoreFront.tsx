@@ -68,6 +68,11 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const [activeTab, setActiveTab] = useState<"home" | "favorites" | "contact" | "profile">("home");
   const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuLoginExpanded(false); setMenuOpen(true); }, []);
   const [cartBump, setCartBump] = useState(false);
+  // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
+  // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
+  const [hoursModalOpen, setHoursModalOpen] = useState(
+    () => !tenant.openStatus.open && !tenant.scheduledOrdersEnabled && !!tenant.weeklyHours
+  );
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null); // null = aún sin verificar
@@ -309,8 +314,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── Banner de tienda cerrada ─────────────────────────────── */}
+      {/* Clickeable: abre el modal con los horarios de la semana (si hay horario). */}
       {!tenant.openStatus.open && (
-        <div className="bg-gray-900 text-white text-center py-3 px-4">
+        <button
+          type="button"
+          onClick={() => tenant.weeklyHours && setHoursModalOpen(true)}
+          className={`w-full bg-gray-900 text-white text-center py-3 px-4 ${tenant.weeklyHours ? "cursor-pointer hover:bg-gray-800 transition" : "cursor-default"}`}
+        >
           {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? (
             <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
           ) : (
@@ -324,9 +334,10 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
                 else msg = "Hoy no atendemos";
                 return <span className="text-sm text-gray-300"> · {msg}</span>;
               })()}
+              {tenant.weeklyHours && <span className="block text-xs font-semibold mt-0.5 underline" style={{ color: primaryColor }}>Ver horarios</span>}
             </>
           )}
-        </div>
+        </button>
       )}
 
       {/* ── Aviso de cierre parcial (un método bloqueado, la tienda sigue abierta) ── */}
@@ -486,6 +497,68 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         </div>
       </nav>
 
+      {/* ── Modal de horarios (tienda cerrada) ───────────────────── */}
+      {hoursModalOpen && tenant.weeklyHours && (
+        <HoursModal
+          weeklyHours={tenant.weeklyHours}
+          primaryColor={primaryColor}
+          onClose={() => setHoursModalOpen(false)}
+        />
+      )}
+
+    </div>
+  );
+}
+
+// ── Modal de horarios de atención (se muestra cuando la tienda está cerrada) ──
+// Estilo referencia: ícono de reloj, título, lista Lun→Dom con rango horario.
+function HoursModal({ weeklyHours, primaryColor, onClose }: { weeklyHours: import("@/lib/ecommerce/hours").DayHours[]; primaryColor: string; onClose: () => void }) {
+  // weeklyHours viene indexado 0=Dom … 6=Sáb. Se muestra Lun→Dom (como la referencia).
+  const DISPLAY = [1, 2, 3, 4, 5, 6, 0];
+  const LABELS: Record<number, string> = { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" };
+  // Día de hoy en Chile para resaltar su fila.
+  const today = (() => { try { return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay(); } catch { return -1; } })();
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-5 py-6" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <button onClick={onClose} aria-label="Cerrar" className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+          <X className="w-5 h-5" />
+        </button>
+        <div className="flex flex-col items-center text-center mb-5">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: `${primaryColor}1a` }}>
+            <Clock className="w-8 h-8" style={{ color: primaryColor }} />
+          </div>
+          <h2 className="text-xl font-black text-gray-900 leading-tight">Estamos cerrados<br />momentáneamente</h2>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-2">Nuestros horarios de atención son:</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden mb-5">
+          {DISPLAY.map((idx) => {
+            const d = weeklyHours[idx];
+            const isToday = idx === today;
+            return (
+              <div key={idx} className={`flex items-center justify-between px-4 py-3 ${isToday ? "bg-gray-50" : ""}`}>
+                <span className={`text-sm ${isToday ? "font-black text-gray-900" : "font-semibold text-gray-700"}`}>{LABELS[idx]}</span>
+                {d?.open ? (
+                  <span className={`text-sm ${isToday ? "font-black" : "font-semibold"}`} style={{ color: isToday ? primaryColor : "#374151" }}>
+                    {d.from} - {d.to === "00:00" ? "Medianoche" : d.to}
+                  </span>
+                ) : (
+                  <span className="text-sm font-semibold text-rose-500">Cerrado</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={onClose} className="w-full py-3.5 rounded-2xl border border-gray-200 text-gray-800 font-bold hover:bg-gray-50 transition">
+          Cerrar
+        </button>
+      </div>
     </div>
   );
 }
