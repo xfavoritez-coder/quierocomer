@@ -23,6 +23,7 @@ export interface EcommerceStoreConfig {
   minOrderDelivery: number; // monto mínimo de compra para delivery (0 = sin mínimo)
   waitTimePickup: string; // tiempo estimado de retiro (ej: "20-30")
   waitTimeDelivery: string; // tiempo estimado de delivery (ej: "40-60")
+  waitTimeDriver: string; // tiempo estimado para el repartidor (ej: "15-20"); se incluye en el JSON de pedidos
   scheduledOrdersEnabled: boolean; // permitir que el cliente programe pedidos para más tarde
   scheduleMaxDaysAhead: number; // hasta cuántos días hacia adelante se puede programar (0 = solo hoy, 1 = hasta mañana, N = N días)
   showTableMenu: boolean; // mostrar "Carta mesa" en el menú del storefront (link a /qr/<slug>)
@@ -169,6 +170,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     minOrderDelivery: nonNegInt(o.minOrderDelivery, fbMin),
     waitTimePickup: typeof o.waitTimePickup === "string" ? o.waitTimePickup : (fb.waitTime ?? ""),
     waitTimeDelivery: typeof o.waitTimeDelivery === "string" ? o.waitTimeDelivery : (fb.waitTime ?? ""),
+    waitTimeDriver: typeof o.waitTimeDriver === "string" ? o.waitTimeDriver : "",
     scheduledOrdersEnabled: o.scheduledOrdersEnabled === true,
     scheduleMaxDaysAhead: nonNegInt(o.scheduleMaxDaysAhead, 0),
     showTableMenu: o.showTableMenu === true,

@@ -4,6 +4,7 @@ import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,19 +78,25 @@ export async function GET(req: NextRequest) {
   });
 
   // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
-  const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true } });
+  const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true } });
   const dCfg = parseDeliveryConfig(rLoc?.ecommerceDeliveryConfig);
   const localLat = dCfg.origin?.lat ?? rLoc?.lat ?? null;
   const localLng = dCfg.origin?.lng ?? rLoc?.lng ?? null;
+  // Tiempos configurados (incluye el del repartidor, que pedimos exponer en el JSON).
+  const storeCfg = parseStoreConfig(rLoc?.ecommerceStoreConfig);
+  const driverTime = storeCfg.waitTimeDriver || "";
+  const pickupTime = storeCfg.waitTimePickup || "";
+  const deliveryTime = storeCfg.waitTimeDelivery || "";
 
   // KDS: número de pedido corto que se reinicia cada día (para control por teclado).
   if (scope === "kds") {
     const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
-    const withNum = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null }));
-    return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng });
+    const withNum = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
+    return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
   }
 
-  return NextResponse.json({ orders, from: fromYmd, to: toYmd, today, localLat, localLng });
+  const ordersOut = orders.map((o) => ({ ...o, driverTime, pickupTime, deliveryTime }));
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

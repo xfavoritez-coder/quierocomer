@@ -60,12 +60,13 @@ function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
   const [cfg, setCfg] = useState<Record<string, unknown> | null>(null);
   const [pickup, setPickup] = useState("");
   const [delivery, setDelivery] = useState("");
+  const [driver, setDriver] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.config) { setCfg(d.config); setPickup(String(d.config.waitTimePickup ?? "")); setDelivery(String(d.config.waitTimeDelivery ?? "")); } })
+      .then((d) => { if (d?.config) { setCfg(d.config); setPickup(String(d.config.waitTimePickup ?? "")); setDelivery(String(d.config.waitTimeDelivery ?? "")); setDriver(String(d.config.waitTimeDriver ?? "")); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -73,7 +74,7 @@ function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
     if (!cfg) return;
     setSaving(true);
     try {
-      const next = { ...cfg, waitTimePickup: pickup.trim(), waitTimeDelivery: delivery.trim() };
+      const next = { ...cfg, waitTimePickup: pickup.trim(), waitTimeDelivery: delivery.trim(), waitTimeDriver: driver.trim() };
       const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
       if (!res.ok) { toast.error("No se pudo guardar"); setSaving(false); return; }
       setCfg(next);
@@ -104,6 +105,7 @@ function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
         {field(<Package size={13} />, "Retiro", pickup, setPickup)}
         {field(<Bike size={13} />, "Delivery", delivery, setDelivery)}
+        {field(<Bike size={13} />, "Repartidor", driver, setDriver)}
       </div>
       <button onClick={save} disabled={saving || !cfg} style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.83rem", fontWeight: 800, cursor: saving || !cfg ? "wait" : "pointer", opacity: saving || !cfg ? 0.6 : 1 }}>
         <Save size={15} /> {saving ? "Guardando…" : "Guardar tiempo"}
