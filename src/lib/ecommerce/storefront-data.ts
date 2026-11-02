@@ -491,6 +491,8 @@ export interface BrandData {
   branches: BrandBranch[];
   pageTitle: string | null;
   metaDescription: string | null;
+  metaPixelId: string | null;
+  gtmId: string | null;
 }
 
 /** Carga una marca y sus sucursales (locales ecommerce con el mismo brandSlug). */
@@ -521,7 +523,8 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
   }).sort((a, b) => (a.branchName || a.name).localeCompare(b.branchName || b.name));
 
   const gmaps = parseEcommerceConfig(rows[0].ecommerceConfig).googleMaps?.apiKey || null;
-  const firstCfg = parseStoreConfig(rows[0].ecommerceStoreConfig, { accent: rows[0].cartaAccentColor });
+  const allCfgs = rows.map((r) => parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor }));
+  const firstCfg = allCfgs[0];
   return {
     brandSlug: key,
     brandName: branches[0]?.name || key,
@@ -530,6 +533,8 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
     branches,
     pageTitle: firstCfg.pageTitle,
     metaDescription: firstCfg.metaDescription,
+    metaPixelId: allCfgs.find((c) => c.metaPixelId)?.metaPixelId ?? null,
+    gtmId: allCfgs.find((c) => c.gtmId)?.gtmId ?? null,
   };
 }
 

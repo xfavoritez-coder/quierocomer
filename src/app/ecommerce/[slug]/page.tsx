@@ -79,8 +79,8 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
       if (representative) {
         return (
           <>
-            <GtmScript id={representative.tenant.gtmId} />
-            <MetaPixelScript id={representative.tenant.metaPixelId} />
+            <GtmScript id={brand.gtmId ?? representative.tenant.gtmId} />
+            <MetaPixelScript id={brand.metaPixelId ?? representative.tenant.metaPixelId} />
             <PageHitTracker restaurantId={representative.tenant.id} page="ecommerce" />
             <BrandStore brand={brand} representative={representative} />
           </>
