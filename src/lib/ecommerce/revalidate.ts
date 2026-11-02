@@ -13,7 +13,9 @@ import { revalidateTag } from "next/cache";
  * ecommerce (config de tienda) que no pasan por revalidateQrCache.
  */
 export function revalidateEcommerceCache(opts?: { id?: string | null; slug?: string | null }) {
-  revalidateTag("ecom-storefront", "max");
-  if (opts?.id) revalidateTag(`ecom-storefront-id-${opts.id}`, "max");
-  if (opts?.slug) revalidateTag(`ecom-storefront-slug-${opts.slug}`, "max");
+  // { expire: 0 } = expiración inmediata: la siguiente visita recarga desde la BD.
+  // "max" usaría stale-while-revalidate (sirve viejo mientras carga en background).
+  revalidateTag("ecom-storefront", { expire: 0 });
+  if (opts?.id) revalidateTag(`ecom-storefront-id-${opts.id}`, { expire: 0 });
+  if (opts?.slug) revalidateTag(`ecom-storefront-slug-${opts.slug}`, { expire: 0 });
 }
