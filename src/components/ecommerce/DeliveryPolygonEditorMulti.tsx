@@ -56,6 +56,9 @@ export default function DeliveryPolygonEditorMulti({
   const drawingRef = useRef<DrawTarget>(null);
   drawingRef.current = drawing;
 
+  // Refs a círculos de referencia de distancia (anillos km)
+  const distCirclesRef = useRef<any[]>([]);
+
   // Refs a polígonos y marcadores por sucursal
   const polyRefs = useRef<Record<string, { included: any; excluded: any; marker: any }>>({});
 
@@ -70,6 +73,19 @@ export default function DeliveryPolygonEditorMulti({
 
   const activeBranch = branches.find((b) => b.id === activeBranchId);
   const activeConfig = activeBranch?.config;
+
+  // Calcula distancia km de cada vértice al origen de la sucursal activa
+  const distStats = (() => {
+    const origin = activeConfig?.origin;
+    const pts = activeConfig?.polygonIncluded ?? [];
+    if (!origin || pts.length === 0) return null;
+    const dists = pts.map((p) => {
+      const dlat = (p.lat - origin.lat) * 111.32;
+      const dlng = (p.lng - origin.lng) * 92.94;
+      return Math.sqrt(dlat * dlat + dlng * dlng);
+    });
+    return { min: Math.min(...dists), max: Math.max(...dists) };
+  })();
 
   // ── Inicializar mapa una vez ──
   useEffect(() => {
@@ -228,6 +244,56 @@ export default function DeliveryPolygonEditorMulti({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, branches, activeBranchId]);
 
+  // ── Anillos de distancia alrededor del origen de la sucursal activa ──
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const g = (window as any).google;
+    const origin = activeBranch?.config?.origin;
+
+    // Limpiar anillos anteriores
+    distCirclesRef.current.forEach((c) => c.setMap(null));
+    distCirclesRef.current = [];
+
+    if (!origin) return;
+    const color = colorOf(activeBranchId);
+    const RINGS_KM = [5, 10, 15, 20];
+
+    RINGS_KM.forEach((km) => {
+      const circle = new g.maps.Circle({
+        center: origin,
+        radius: km * 1000,
+        map: mapRef.current,
+        strokeColor: color,
+        strokeOpacity: 0.35,
+        strokeWeight: 1,
+        strokeDashArray: [4, 4],
+        fillOpacity: 0,
+        clickable: false,
+        zIndex: 0,
+      });
+      // Etiqueta de km: marcador invisible en el punto norte del anillo
+      const labelLat = origin.lat + km / 111.32;
+      const label = new g.maps.Marker({
+        position: { lat: labelLat, lng: origin.lng },
+        map: mapRef.current,
+        clickable: false,
+        zIndex: 0,
+        icon: {
+          path: g.maps.SymbolPath.CIRCLE,
+          scale: 0,
+        },
+        label: {
+          text: `${km} km`,
+          fontSize: "10px",
+          fontFamily: "sans-serif",
+          color: color,
+        },
+      });
+      distCirclesRef.current.push(circle, label);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, activeBranchId, activeBranch?.config?.origin]);
+
   // ── Encuadrar vista a todos los polígonos al cargar ──
   const fittedRef = useRef(false);
   useEffect(() => {
@@ -311,11 +377,18 @@ export default function DeliveryPolygonEditorMulti({
       {/* Panel de edición — solo sucursal activa */}
       {activeBranch && activeConfig && (
         <div style={{ padding: 16, background: "var(--adm-card)", border: `1.5px solid ${colorOf(activeBranchId)}55`, borderRadius: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: colorOf(activeBranchId), margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: colorOf(activeBranchId), display: "inline-block", flexShrink: 0 }} />
-            {activeBranch.branchName || activeBranch.name}
-            <span style={{ fontFamily: FB, fontWeight: 400, fontSize: "0.75rem", color: "var(--adm-text3)", marginLeft: 2 }}>— zona de reparto</span>
-          </p>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: colorOf(activeBranchId), margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: colorOf(activeBranchId), display: "inline-block", flexShrink: 0 }} />
+              {activeBranch.branchName || activeBranch.name}
+              <span style={{ fontFamily: FB, fontWeight: 400, fontSize: "0.75rem", color: "var(--adm-text3)", marginLeft: 2 }}>— zona de reparto</span>
+            </p>
+            {distStats && (
+              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>
+                📍 <b>{distStats.min.toFixed(1)}</b> – <b>{distStats.max.toFixed(1)}</b> km desde el local
+              </span>
+            )}
+          </div>
 
           {/* Dirección origen */}
           <div>
