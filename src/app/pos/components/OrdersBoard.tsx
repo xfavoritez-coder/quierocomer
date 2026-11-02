@@ -198,6 +198,21 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
   const [received, setReceived] = useState<string>('')
   const [tip, setTip] = useState<string>('')
   const [sending, setSending] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [canceling, setCanceling] = useState(false)
+
+  const handleCancel = async () => {
+    setCanceling(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, action: 'cancel', reason: cancelReason.trim() }),
+      })
+      if (r.ok) onPaid() // refresca la lista y cierra el modal
+    } catch { /* noop */ }
+    setCanceling(false)
+  }
 
   const receivedNum = parseInt(received, 10) || 0
   const tipNum = parseInt(tip, 10) || 0
@@ -245,6 +260,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
           <div className="pos-modal-actions" style={{ marginTop: 16 }}>
             <button className="pos-modal-ok" style={{ flex: 1 }} onClick={onClose}>Cerrar</button>
           </div>
+          <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
         </div>
       </div>
     )
@@ -303,6 +319,34 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
             {sending ? 'Cobrando…' : `Cobrar ${clp(total)}`}
           </button>
         </div>
+
+        <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
+      </div>
+    </div>
+  )
+}
+
+// Bloque "Anular pedido" (dos pasos: botón → confirmación con motivo).
+function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onConfirm }: {
+  confirm: boolean; setConfirm: (v: boolean) => void; reason: string; setReason: (v: string) => void; canceling: boolean; onConfirm: () => void;
+}) {
+  if (!confirm) {
+    return (
+      <button onClick={() => setConfirm(true)} style={{ marginTop: 12, width: '100%', background: 'transparent', border: 'none', color: '#C53030', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
+        Anular pedido
+      </button>
+    )
+  }
+  return (
+    <div style={{ marginTop: 12, padding: 12, borderRadius: 10, border: '1px solid #f0c0c0', background: 'rgba(197,48,48,.05)' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#C53030', marginBottom: 8 }}>¿Anular este pedido?</div>
+      <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo (opcional)"
+        style={{ width: '100%', padding: '9px 11px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: '10px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>No</button>
+        <button onClick={onConfirm} disabled={canceling} style={{ flex: 1, padding: '10px', borderRadius: 9, border: 'none', background: '#C53030', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: canceling ? 0.6 : 1 }}>
+          {canceling ? 'Anulando…' : 'Sí, anular'}
+        </button>
       </div>
     </div>
   )

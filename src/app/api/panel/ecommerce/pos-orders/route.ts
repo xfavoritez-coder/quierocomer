@@ -126,6 +126,24 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ order: updated });
   }
 
+  // ── Anular pedido desde el POS (retiro/delivery) ───────────────────
+  // Lo marca como cancelado (posStatus "canceled") → sale de los activos y pasa
+  // al historial. Guarda el motivo en rawPayload. No borra el registro.
+  if (body?.action === "cancel") {
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, rawPayload: true } });
+    if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    const reason = String(body?.reason || "").trim().slice(0, 200);
+    const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
+      ? (order.rawPayload as Record<string, unknown>) : {};
+    const rawPayload = { ...prevRaw, posCancel: { reason: reason || "Anulado en el POS", at: new Date().toISOString() } };
+    const updated = await prisma.posOrder.update({
+      where: { id },
+      data: { posStatus: "canceled", rawPayload },
+    });
+    void syncOnlineOrderFromPos(updated).catch(() => {});
+    return NextResponse.json({ order: updated });
+  }
+
   const opsStage = (body?.opsStage || "").toString();
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
