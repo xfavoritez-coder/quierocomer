@@ -112,7 +112,8 @@ export default function CentroPedidosPage({
   backHref = "/panel",
   backLabel = "Panel",
   tomarHref = "/panel/centro-pedidos/tomar-pedidos",
-}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string } = {}) {
+  hideBack = false,
+}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string; hideBack?: boolean } = {}) {
   const session = useSessionContext();
   // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
   const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
@@ -307,9 +308,11 @@ export default function CentroPedidosPage({
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 0 48px" }}>
-      <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 4 }}>
-        <ArrowLeft size={14} /> {backLabel}
-      </Link>
+      {!hideBack && (
+        <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textDecoration: "none", marginBottom: 4 }}>
+          <ArrowLeft size={14} /> {backLabel}
+        </Link>
+      )}
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>

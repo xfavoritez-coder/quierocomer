@@ -284,7 +284,13 @@ export default function PosHomePage() {
     if (!isDesktop) setDesktopPanel(null)
   }, [isDesktop])
 
-  const [tab, setTab] = useState<Tab>('mesas')
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window !== 'undefined') {
+      const t = new URLSearchParams(window.location.search).get('tab')
+      if (t === 'retiro' || t === 'delivery' || t === 'mesas') return t
+    }
+    return 'mesas'
+  })
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
