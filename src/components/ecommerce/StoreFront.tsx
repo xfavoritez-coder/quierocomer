@@ -896,7 +896,10 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
       const place = ac.getPlace();
       const loc = place?.geometry?.location;
       if (!loc) return;
-      const d = { lat: loc.lat(), lng: loc.lng(), address: place.formatted_address || inputRef.current!.value };
+      const raw = place.formatted_address || inputRef.current!.value;
+      // Quita el código postal chileno (7 dígitos) que Google inserta: "9605, 8302068 La Florida" → "9605, La Florida"
+      const cleanAddr = raw.replace(/,?\s*\d{7}\s*/g, " ").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").trim();
+      const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr };
       setDest(d);
       computeFeeFor(d);
     });

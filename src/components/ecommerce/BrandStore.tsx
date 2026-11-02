@@ -208,7 +208,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
       const place = ac.getPlace();
       const loc = place?.geometry?.location;
       if (!loc) return;
-      setDest({ lat: loc.lat(), lng: loc.lng(), address: place.formatted_address || inputRef.current!.value });
+      const raw = place.formatted_address || inputRef.current!.value;
+      const cleanAddr = raw.replace(/,?\s*\d{7}\s*/g, " ").replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").trim();
+      setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr });
     });
     inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
     return () => { g.maps.event?.removeListener?.(listener); };
