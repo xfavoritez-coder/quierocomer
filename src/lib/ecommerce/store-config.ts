@@ -162,7 +162,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     scheduleMaxDaysAhead: nonNegInt(o.scheduleMaxDaysAhead, 0),
     showTableMenu: o.showTableMenu === true,
     posRetryEnabled: o.posRetryEnabled === true,
-    favoritesEnabled: o.favoritesEnabled === true,
+    favoritesEnabled: o.favoritesEnabled !== false, // ON por defecto en todos los locales (se apaga explícitamente)
     theme: o.theme === "impact" ? "impact" : "base",
     bannerProductIds: Array.isArray(o.bannerProductIds)
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
