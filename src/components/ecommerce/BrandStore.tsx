@@ -232,9 +232,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-5 py-6" style={{ fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.5)" }} />
-      <div className="relative w-full" style={{ maxWidth: 460, background: "#fff", borderRadius: 24, padding: 18, maxHeight: "90vh", overflowY: "auto" }}>
+      <div className="relative w-full" style={{ maxWidth: 420, background: "#fff", borderRadius: 24, padding: 18, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
             <h2 style={{ fontSize: "1.15rem", fontWeight: 900, color: "#111", margin: 0 }}>¿Cómo quieres pedir?</h2>
