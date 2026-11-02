@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { loadEcommerceTenant } from "@/lib/ecommerce/storefront-data";
 import CheckoutForm from "@/components/ecommerce/CheckoutForm";
 import GtmScript from "@/components/ecommerce/GtmScript";
+import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 
 export const dynamic = "force-dynamic";
 
@@ -22,5 +23,5 @@ export default async function EcommerceCheckoutPage({ params }: { params: Promis
   const tenant = await loadEcommerceTenant(slug);
   if (!tenant) return notFound();
   const basePath = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
-  return <><GtmScript id={tenant.gtmId} /><CheckoutForm tenant={tenant} basePath={basePath} /></>;
+  return <><GtmScript id={tenant.gtmId} /><MetaPixelScript id={tenant.metaPixelId} /><CheckoutForm tenant={tenant} basePath={basePath} /></>;
 }

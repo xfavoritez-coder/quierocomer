@@ -284,6 +284,30 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Meta Pixel */}
+          {tab === "web" && (
+          <section style={card}>
+            <SectionTitle icon={BarChart3} title="Meta Pixel" sub="Conecta tu tienda con Facebook/Instagram Ads. Pega el ID de tu Pixel (solo números, ej: 1234567890123)." />
+            <div style={{ display: "grid", gap: 14, marginTop: 12 }}>
+              <div>
+                <label style={{ fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>ID del Pixel de Meta</label>
+                <input
+                  value={cfg.metaPixelId ?? ""}
+                  onChange={(e) => patch({ metaPixelId: e.target.value.replace(/\D/g, "").slice(0, 20) || null })}
+                  placeholder="1234567890123456"
+                  maxLength={20}
+                  inputMode="numeric"
+                  autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                  style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
+                />
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
+                  Solo el número del Pixel, sin texto extra. Lo encuentras en Meta Business Suite → Administrador de eventos → tu Pixel. Activa el seguimiento de visitas, agregar al carrito, checkout y compras. Déjalo vacío para desactivarlo.
+                </p>
+              </div>
+            </div>
+          </section>
+          )}
+
           {/* Colores de marca */}
           {tab === "tienda" && (
           <section style={card}>

@@ -52,6 +52,10 @@ export const storeFontVars: React.CSSProperties = {
   ["--font-product-detail" as string]: STORE_SANS,
 } as React.CSSProperties;
 
+function fbTrack(event: string, params?: Record<string, unknown>) {
+  try { (window as any).fbq?.("track", event, params); } catch {}
+}
+
 export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const brandMode = !!brandControls;
@@ -63,12 +67,18 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
+  const selectedProductRef = useRef<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<CustomerMenuView>("root");
   const [menuLoginExpanded, setMenuLoginExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"home" | "favorites" | "contact" | "profile">("home");
   const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuLoginExpanded(false); setMenuOpen(true); }, []);
+  const openProduct = useCallback((p: StoreProduct) => {
+    selectedProductRef.current = p;
+    setSelectedProduct(p);
+    fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
+  }, []);
   const [cartBump, setCartBump] = useState(false);
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
@@ -197,6 +207,8 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     function handleAdded() {
       setCartBump(true);
       setTimeout(() => setCartBump(false), 450);
+      const p = selectedProductRef.current;
+      if (p) fbTrack("AddToCart", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
     }
     window.addEventListener("cart:item-added", handleAdded);
     return () => window.removeEventListener("cart:item-added", handleAdded);
@@ -420,7 +432,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
-                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled && loggedIn === true} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
+                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => openProduct(p)} showFav={tenant.favoritesEnabled && loggedIn === true} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
                     ))}
                   </div>
                 </section>

@@ -33,6 +33,10 @@ const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?
   tarjeta: { label: "Tarjeta", hint: "Pagas con tarjeta al recibir", Icon: CreditCard },
 };
 
+function fbTrack(event: string, params?: Record<string, unknown>) {
+  try { (window as any).fbq?.("track", event, params); } catch {}
+}
+
 export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant; basePath?: string }) {
   const storeHref = (basePath ?? `/ecommerce/${tenant.slug}`) || "/";
   const primaryColor = tenant.primaryColor;
@@ -78,7 +82,11 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const [scheduleDayYmd, setScheduleDayYmd] = useState<string | null>(null);
   const [slotDays, setSlotDays] = useState<SlotDay[]>([]);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    if (items.length > 0) fbTrack("InitiateCheckout", { value: subtotal, currency: "CLP", num_items: items.length });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persistir los datos del cliente (nombre/teléfono/correo) en el navegador para
   // que al salir y volver a entrar al checkout queden rellenados y no haya que
@@ -181,6 +189,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       try { sessionStorage.removeItem(PENDING_KEY); } catch {}
       // Pedido completado: limpiar cupón/comentario/acompañamientos guardados.
       try { localStorage.removeItem(`qc-checkout-extra:${tenant.id}`); localStorage.removeItem(`qc-accom:${tenant.id}`); } catch {}
+      fbTrack("Purchase", { value: subtotal, currency: "CLP" });
       clearCart();
       if (orderParam) window.location.replace(`/pedido/${orderParam}`);
       return;

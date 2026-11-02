@@ -7,6 +7,7 @@ import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
+import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
 import AppFlagSync from "@/components/ecommerce/AppFlagSync";
 import StoreJsonLd from "@/components/ecommerce/StoreJsonLd";
@@ -79,6 +80,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
         return (
           <>
             <GtmScript id={representative.tenant.gtmId} />
+            <MetaPixelScript id={representative.tenant.metaPixelId} />
             <PageHitTracker restaurantId={representative.tenant.id} page="ecommerce" />
             <BrandStore brand={brand} representative={representative} />
           </>
@@ -105,6 +107,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   }
 
   const gtm = <GtmScript id={data.tenant.gtmId} />;
+  const metaPixel = <MetaPixelScript id={data.tenant.metaPixelId} />;
   // PWA instalable solo en dominio propio (scope "/"); en el dominio principal la tienda sigue como web.
   const pwa = <StorePwa enabled={basePath === ""} />;
   const hit = <PageHitTracker restaurantId={data.tenant.id} page="ecommerce" />;
@@ -114,7 +117,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   // Datos estructurados para que Google muestre las fotos de los productos.
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
   if (data.tenant.theme === "impact") {
-    return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
+    return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
   }
-  return <>{gtm}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
+  return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
 }
