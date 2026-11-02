@@ -334,7 +334,6 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
                 else msg = "Hoy no atendemos";
                 return <span className="text-sm text-gray-300"> · {msg}</span>;
               })()}
-              {tenant.weeklyHours && <span className="block text-xs font-semibold mt-0.5 underline" style={{ color: primaryColor }}>Ver horarios</span>}
             </>
           )}
         </button>
