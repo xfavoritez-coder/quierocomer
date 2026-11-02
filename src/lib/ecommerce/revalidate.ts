@@ -13,7 +13,7 @@ import { revalidateTag } from "next/cache";
  * ecommerce (config de tienda) que no pasan por revalidateQrCache.
  */
 export function revalidateEcommerceCache(opts?: { id?: string | null; slug?: string | null }) {
-  revalidateTag("ecom-storefront", "max");
-  if (opts?.id) revalidateTag(`ecom-storefront-id-${opts.id}`, "max");
-  if (opts?.slug) revalidateTag(`ecom-storefront-slug-${opts.slug}`, "max");
+  revalidateTag("ecom-storefront");
+  if (opts?.id) revalidateTag(`ecom-storefront-id-${opts.id}`);
+  if (opts?.slug) revalidateTag(`ecom-storefront-slug-${opts.slug}`);
 }
