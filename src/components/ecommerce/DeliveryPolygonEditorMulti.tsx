@@ -114,7 +114,21 @@ export default function DeliveryPolygonEditorMulti({
           strokeWeight: isActive ? 2.5 : 1.5,
           strokeOpacity: isActive ? 1 : 0.55,
           zIndex: isActive ? 2 : 1,
+          editable: isActive,   // muestra los vértices arrastrables en la sucursal activa
+          draggable: false,
         });
+        // Sincroniza los cambios de vértices al estado React
+        if (isActive) {
+          const path = incPoly.getPath();
+          const syncPath = () => {
+            const pts: LatLng[] = [];
+            path.forEach((ll: any) => pts.push({ lat: ll.lat(), lng: ll.lng() }));
+            onChangeConfig({ polygonIncluded: pts });
+          };
+          path.addListener("set_at", syncPath);
+          path.addListener("insert_at", syncPath);
+          path.addListener("remove_at", syncPath);
+        }
       }
 
       // Polígonos excluidos
@@ -131,7 +145,26 @@ export default function DeliveryPolygonEditorMulti({
           strokeWeight: 1.5,
           strokeOpacity: isActive ? 0.8 : 0.4,
           zIndex: isActive ? 2 : 1,
+          editable: isActive,
+          draggable: false,
         });
+        if (isActive) {
+          const outerPath = excPoly.getPaths();
+          const syncExc = () => {
+            const rings: LatLng[][] = [];
+            outerPath.forEach((ring: any) => {
+              const pts: LatLng[] = [];
+              ring.forEach((ll: any) => pts.push({ lat: ll.lat(), lng: ll.lng() }));
+              rings.push(pts);
+            });
+            onChangeConfig({ polygonExcluded: rings });
+          };
+          outerPath.forEach((ring: any) => {
+            ring.addListener("set_at", syncExc);
+            ring.addListener("insert_at", syncExc);
+            ring.addListener("remove_at", syncExc);
+          });
+        }
       }
 
       // Marcador de origen
