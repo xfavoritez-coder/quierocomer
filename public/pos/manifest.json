@@ -1,6 +1,6 @@
 {
-  "name": "POS QuieroComer",
-  "short_name": "POS QC",
+  "name": "QuieroComer POS",
+  "short_name": "QuieroComer",
   "description": "Punto de venta QuieroComer",
   "start_url": "/pos",
   "scope": "/pos",

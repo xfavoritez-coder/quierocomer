@@ -19,6 +19,7 @@ import {
 } from '@/lib/pos'
 import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
+import { supabase } from '@/lib/supabase'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant } from './lib/usePosRestaurant'
 import type { PosRestaurant } from './lib/usePosRestaurant'
@@ -303,8 +304,33 @@ export default function PosHomePage() {
     return status !== 'libre'
   }).length
 
+  const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
+  useEffect(() => {
+    if (!restaurantId) return
+    const fetchCounts = async () => {
+      try {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+        const d = await r.json()
+        if (r.ok && Array.isArray(d.orders)) {
+          const delivery = d.orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
+          const retiro = d.orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
+          setOrderCounts({ retiro, delivery })
+        }
+      } catch { /* noop */ }
+    }
+    fetchCounts()
+    if (!supabase) return
+    const channel = supabase
+      .channel(`pos-order-counts-${restaurantId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'PosOrder', filter: `restaurantId=eq.${restaurantId}` }, fetchCounts)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [restaurantId])
+
   const tabCounts: Partial<Record<Tab, number>> = {
     ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
+    ...(orderCounts.retiro > 0 ? { retiro: orderCounts.retiro } : {}),
+    ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
   }
 
   // Handlers

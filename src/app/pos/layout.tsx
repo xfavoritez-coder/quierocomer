@@ -4,13 +4,13 @@ import PosServiceWorker from './PosServiceWorker'
 import './pos.css'
 
 export const metadata: Metadata = {
-  title: 'POS | QuieroComer',
+  title: 'QuieroComer - POS',
   description: 'Punto de venta QuieroComer',
   manifest: '/pos/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'POS QuieroComer',
+    title: 'QuieroComer POS',
   },
 }
 
