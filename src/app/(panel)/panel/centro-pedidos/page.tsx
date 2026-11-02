@@ -114,7 +114,8 @@ export default function CentroPedidosPage({
   tomarHref = "/panel/centro-pedidos/tomar-pedidos",
   kdsHref = "/panel/centro-pedidos/kds",
   hideBack = false,
-}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string; kdsHref?: string; hideBack?: boolean } = {}) {
+  hideTitle = false,
+}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string; kdsHref?: string; hideBack?: boolean; hideTitle?: boolean } = {}) {
   const session = useSessionContext();
   // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
   const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
@@ -317,8 +318,8 @@ export default function CentroPedidosPage({
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, letterSpacing: "-0.02em", color: "var(--adm-text)", margin: 0, lineHeight: 1.1 }}>Centro de pedidos</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Gestiona tus pedidos en tiempo real</p>
+          {!hideTitle && <h1 style={{ fontFamily: F, fontSize: "1.35rem", fontWeight: 900, letterSpacing: "-0.02em", color: "var(--adm-text)", margin: 0, lineHeight: 1.1 }}>Centro de pedidos</h1>}
+          {!hideTitle && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Gestiona tus pedidos en tiempo real</p>}
         </div>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontFamily: F, fontSize: "0.66rem", fontWeight: 700, background: live ? "rgba(34,197,94,0.12)" : "var(--adm-hover)", color: live ? GREEN : "var(--adm-text3)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 2 }}>
           <Radio size={11} /> {live ? "En vivo" : "Conectando…"}

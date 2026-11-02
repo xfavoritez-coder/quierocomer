@@ -192,7 +192,8 @@ function Card({ o, now, canComplete, selected, onReady }: { o: PosOrder; now: nu
 export default function KdsPage({
   restaurantId: propRestaurantId,
   backHref = "/panel/centro-pedidos",
-}: { restaurantId?: string; backHref?: string } = {}) {
+  embedded = false,
+}: { restaurantId?: string; backHref?: string; embedded?: boolean } = {}) {
   const session = useSessionContext();
   // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
   const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
@@ -417,7 +418,7 @@ export default function KdsPage({
   }
 
   return (
-    <div className="kds-root">
+    <div className={`kds-root${embedded ? " embedded" : ""}`}>
       <style>{KDS_CSS}</style>
 
       <div className="topbar">
@@ -521,6 +522,7 @@ export default function KdsPage({
 const KDS_CSS = `
   @media (min-width:768px){ .owl-sidebar{ display:none !important } .owl-main{ margin-left:0 !important } }
   .owl-main{ padding:0 !important; zoom:1 !important; }
+  .kds-root.embedded{ position:relative; inset:auto; z-index:auto; height:auto; min-height:0; }
   .kds-root{
     position:fixed; inset:0; z-index:40; overflow-y:auto;
     background:#fff; color:#0d1526;
