@@ -406,7 +406,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
                   <h2 className="text-base font-black uppercase tracking-widest mb-3" style={{ color: categoryColor }}>{cat.name}</h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {catProducts.map((p) => (
-                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
+                      <ProductCard key={p.id} product={p} primaryColor={primaryColor} onClick={() => setSelectedProduct(p)} showFav={tenant.favoritesEnabled && loggedIn === true} isFav={favIds.has(p.id)} onToggleFav={() => toggleFav(p.id)} favNeedsLogin={loggedIn === false} onRequireLogin={promptLogin} />
                     ))}
                   </div>
                 </section>
@@ -471,7 +471,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       <nav className="sm:hidden fixed bottom-3 inset-x-4 z-40 flex justify-center pointer-events-none">
         <div className="pointer-events-auto relative flex items-center justify-around w-full max-w-md mx-auto bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-2 h-16">
           <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
-          <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
+          <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { if (loggedIn === false) { promptLogin(""); return; } setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
           {/* Carrito — plano como el resto; conserva el badge y la animación cart-bump. */}
           <FabBtn label="Ver carrito" color={primaryColor} onClick={goCheckout}>
             <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
