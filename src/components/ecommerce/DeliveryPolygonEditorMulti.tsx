@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Pencil, Trash2, Ban, Save } from "lucide-react";
+import { MapPin, Pencil, Trash2, Ban, Save, Maximize2, Minimize2, X } from "lucide-react";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import type { DeliveryConfig, LatLng } from "@/lib/ecommerce/delivery";
 
@@ -41,6 +41,14 @@ export default function DeliveryPolygonEditorMulti({
   const mapRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [drawing, setDrawing] = useState<DrawTarget>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // Al entrar/salir de fullscreen, redimensiona el mapa para que encaje bien
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const g = (window as any).google;
+    setTimeout(() => g?.maps?.event?.trigger(mapRef.current, "resize"), 50);
+  }, [fullscreen]);
   const drawingRef = useRef<DrawTarget>(null);
   drawingRef.current = drawing;
 
@@ -246,28 +254,37 @@ export default function DeliveryPolygonEditorMulti({
     );
   }
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+  const inner = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, height: fullscreen ? "100%" : undefined }}>
 
-      {/* Leyenda de sucursales */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "8px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-        {branches.map((b, idx) => {
-          const color = BRANCH_COLORS[idx % BRANCH_COLORS.length];
-          const isActive = b.id === activeBranchId;
-          return (
-            <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 14, height: 14, borderRadius: "50%", background: color, flexShrink: 0, border: isActive ? `2px solid var(--adm-text)` : "2px solid transparent", boxSizing: "border-box" }} />
-              <span style={{ fontFamily: isActive ? F : FB, fontWeight: isActive ? 700 : 400, fontSize: "0.78rem", color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>
-                {b.branchName || b.name}
-                {isActive && <span style={{ marginLeft: 5, fontSize: "0.68rem", color: ACCENT }}>(editando)</span>}
-              </span>
-            </div>
-          );
-        })}
+      {/* Leyenda de sucursales + botón fullscreen */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
+          {branches.map((b, idx) => {
+            const color = BRANCH_COLORS[idx % BRANCH_COLORS.length];
+            const isActive = b.id === activeBranchId;
+            return (
+              <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 14, height: 14, borderRadius: "50%", background: color, flexShrink: 0, border: isActive ? `2px solid var(--adm-text)` : "2px solid transparent", boxSizing: "border-box" }} />
+                <span style={{ fontFamily: isActive ? F : FB, fontWeight: isActive ? 700 : 400, fontSize: "0.78rem", color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>
+                  {b.branchName || b.name}
+                  {isActive && <span style={{ marginLeft: 5, fontSize: "0.68rem", color: ACCENT }}>(editando)</span>}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => setFullscreen((v) => !v)}
+          title={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: fullscreen ? ACCENT : "var(--adm-hover)", color: fullscreen ? "#1a1a1a" : "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          {fullscreen ? <><Minimize2 size={13} /> Salir</> : <><Maximize2 size={13} /> Pantalla completa</>}
+        </button>
       </div>
 
       {/* Mapa */}
-      <div ref={mapDiv} style={{ width: "100%", height: 400, borderRadius: 14, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)" }} />
+      <div ref={mapDiv} style={{ width: "100%", height: fullscreen ? "calc(100vh - 340px)" : 400, minHeight: 280, borderRadius: 14, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", flexShrink: 0 }} />
 
       {/* Panel de edición — solo sucursal activa */}
       {activeBranch && activeConfig && (
@@ -374,6 +391,25 @@ export default function DeliveryPolygonEditorMulti({
       )}
     </div>
   );
+
+  return fullscreen ? (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "var(--adm-bg, #f5f5f5)",
+      display: "flex", flexDirection: "column",
+      padding: "12px 16px 16px",
+      overflowY: "auto",
+    }}>
+      {/* Botón X para cerrar fullscreen */}
+      <button
+        onClick={() => setFullscreen(false)}
+        style={{ position: "absolute", top: 12, right: 16, zIndex: 1, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+      >
+        <X size={14} /> Cerrar
+      </button>
+      {inner}
+    </div>
+  ) : inner;
 }
 
 const lbl: React.CSSProperties = {
