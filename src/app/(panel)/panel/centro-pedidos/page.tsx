@@ -112,8 +112,9 @@ export default function CentroPedidosPage({
   backHref = "/panel",
   backLabel = "Panel",
   tomarHref = "/panel/centro-pedidos/tomar-pedidos",
+  kdsHref = "/panel/centro-pedidos/kds",
   hideBack = false,
-}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string; hideBack?: boolean } = {}) {
+}: { restaurantId?: string; backHref?: string; backLabel?: string; tomarHref?: string; kdsHref?: string; hideBack?: boolean } = {}) {
   const session = useSessionContext();
   // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
   const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
@@ -330,7 +331,7 @@ export default function CentroPedidosPage({
         <Link href={tomarHref} title="Tomar un pedido" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: ACCENT, color: "#1a1a1a", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
           <ConciergeBell size={15} /> Tomar pedidos
         </Link>
-        <Link href="/panel/centro-pedidos/kds" title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
+        <Link href={kdsHref} title="Pantalla KDS de cocina" style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 8, border: "none", background: "#111827", color: "#fff", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, textDecoration: "none", cursor: "pointer", flexShrink: 0 }}>
           <MonitorPlay size={15} /> KDS
         </Link>
         <button onClick={() => fetchOrders()} title="Refrescar" style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "transparent", color: "var(--adm-text2)", cursor: "pointer", flexShrink: 0 }}><RefreshCw size={14} /></button>

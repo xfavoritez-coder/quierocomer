@@ -52,6 +52,7 @@ export default function PosCentroPedidosPage() {
         <CentroPedidosPage
           restaurantId={restaurantId}
           tomarHref="/pos/tomar-pedido"
+          kdsHref="/pos/kds"
           hideBack
         />
       </div>

@@ -189,9 +189,13 @@ function Card({ o, now, canComplete, selected, onReady }: { o: PosOrder; now: nu
   );
 }
 
-export default function KdsPage() {
+export default function KdsPage({
+  restaurantId: propRestaurantId,
+  backHref = "/panel/centro-pedidos",
+}: { restaurantId?: string; backHref?: string } = {}) {
   const session = useSessionContext();
-  const restaurantId = session?.selectedRestaurantId;
+  // En el POS se pasa el restaurantId por prop (no hay sesión de panel ahí).
+  const restaurantId = propRestaurantId ?? session?.selectedRestaurantId;
   const [orders, setOrders] = useState<PosOrder[]>([]);
   const [date, setDate] = useState<string>(() => chileTodayLocal());
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
@@ -422,7 +426,7 @@ export default function KdsPage() {
           <span className="kpi" title="Completados en menos de 10 minutos">Pedidos preparados en buen tiempo: <b>{greenCount}</b></span>
           <button type="button" className="nav-toggle" aria-label="Menú" aria-expanded={menuOpen} onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>☰</button>
           <div className={`nav-links${menuOpen ? " open" : ""}`}>
-            <Link href="/panel/centro-pedidos" className="ghost" onClick={() => setMenuOpen(false)}>↩️ Volver</Link>
+            <Link href={backHref} className="ghost" onClick={() => setMenuOpen(false)}>↩️ Volver</Link>
             <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Activa un botón verde 'Marcar listo' en cada pedido pendiente">{completeMode ? "✓ Botón Listo: ON" : "Botón Listo: OFF"}</button>
             <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
             <button type="button" className="ghost" onClick={genPair}>📺 Vincular tablet</button>
