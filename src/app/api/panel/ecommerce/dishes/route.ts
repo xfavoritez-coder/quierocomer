@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     where: { restaurantId, deletedAt: null },
     select: {
       id: true, name: true, price: true, isActive: true, soldOut: true,
-      ecommerceOnly: true, appOnly: true,
+      ecommerceOnly: true, appOnly: true, photos: true,
       category: { select: { id: true, name: true } },
     },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],

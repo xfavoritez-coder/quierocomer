@@ -10,6 +10,7 @@ interface DishLite {
   soldOut: boolean
   ecommerceOnly: boolean
   appOnly: boolean
+  photos: string[]
   category: { id: string; name: string } | null
 }
 
@@ -127,6 +128,15 @@ export default function PosCartaPanel({ restaurantId, title, onDone }: { restaur
                       opacity: isHidden ? 0.65 : 1,
                       transition: 'opacity .15s, background .15s',
                     }}>
+                      {/* Foto */}
+                      <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: 'var(--sunk)', overflow: 'hidden' }}>
+                        {dish.photos?.[0]
+                          ? <img src={dish.photos[0]} alt={dish.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--ink-3)' }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            </div>
+                        }
+                      </div>
                       {/* Name + price */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
