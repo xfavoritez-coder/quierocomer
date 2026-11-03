@@ -26,10 +26,10 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
     const orderNumber = String(order.orderNumber ?? order.id.slice(-6));
     const trackingUrl = `https://quierocomer.com/pedido/${order.id}`;
     const estimatedTime = order.restaurant?.orderingWaitTime ?? null;
-    const logoUrl = order.restaurant?.logoUrl ?? null;
     const storeCfg = parseStoreConfig(order.restaurant?.ecommerceStoreConfig, { accent: order.restaurant?.cartaAccentColor });
     // Si el local desactivó el correo de seguimiento, no se envía.
     if (!storeCfg.trackingEmailEnabled) return;
+    const logoUrl = storeCfg.storeLogoUrl ?? order.restaurant?.logoUrl ?? null;
     const primaryColor = storeCfg.primaryColor ?? null;
     const fromSender = restaurantName ? `${restaurantName} <hola@quierocomer.cl>` : undefined;
 
