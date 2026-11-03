@@ -56,12 +56,25 @@ function fbTrack(event: string, params?: Record<string, unknown>) {
   try { (window as any).fbq?.("track", event, params); } catch {}
 }
 
+// ¿El color (hex) es oscuro? Fórmula YIQ de brillo percibido.
+function isDarkHex(hex?: string): boolean {
+  if (!hex) return false;
+  const m = hex.replace("#", "").trim();
+  const s = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  if (s.length < 6) return false;
+  const r = parseInt(s.slice(0, 2), 16), g = parseInt(s.slice(2, 4), 16), b = parseInt(s.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return false;
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140;
+}
+
 export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const brandMode = !!brandControls;
   const hasBranch = brandControls?.hasBranch ?? false;
   const primaryColor = tenant.primaryColor;
   const categoryColor = tenant.categoryColor;
+  // Si el fondo del header es oscuro, los íconos sobre él (menú) deben ir en blanco.
+  const headerDark = isDarkHex(tenant.headerBgColor);
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -299,7 +312,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
             )}
           </div>
           {/* Acceso a cuenta/menú — solo desktop (en móvil está el menú flotante) */}
-          <button onClick={() => openMenu("root")} aria-label="Menú" className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-xl text-gray-700 hover:bg-black/5 transition">
+          <button onClick={() => openMenu("root")} aria-label="Menú" className={`hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-xl transition ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
             <MenuIcon className="w-6 h-6" />
           </button>
         </div>
