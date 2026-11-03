@@ -129,10 +129,13 @@ export function useOpenCashSession(restaurantId?: string): CashSession | undefin
     async () => {
       const open = await posDb.cashSessions.filter(s => s.is_open).toArray()
       if (open.length === 0) return undefined
+      // Solo cajas del restaurante actual (o viejas sin restaurant_id). Nunca se
+      // devuelve la caja abierta de OTRO local (p.ej. una de Hand Roll que quedó
+      // sin cerrar), que dejaría la caja de este local sin poder abrirse.
       const mine = open.filter(s => !s.restaurant_id || s.restaurant_id === rid)
-      const pool = mine.length ? mine : open
-      pool.sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''))
-      return pool[0]
+      if (mine.length === 0) return undefined
+      mine.sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''))
+      return mine[0]
     },
     [rid],
     undefined
