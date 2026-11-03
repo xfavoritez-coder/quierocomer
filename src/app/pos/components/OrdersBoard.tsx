@@ -42,6 +42,17 @@ interface PosOrderLite {
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 
+function cleanAddr(addr: string): string {
+  return addr
+    .replace(/,?\s*chile\b/gi, '')
+    .replace(/,?\s*región metropolitana\b/gi, '')
+    .replace(/,\s*\d{7}\b/g, '')   // códigos postales tipo 8301674
+    .replace(/\s{2,}/g, ' ')
+    .replace(/,(\s*,)+/g, ',')
+    .replace(/,\s*$/g, '')
+    .trim()
+}
+
 const STAGE_LABEL: Record<string, string> = {
   preparing: 'En preparación',
   ready: 'Listo',
@@ -144,7 +155,7 @@ function OrderCard({
             <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
               {(isDelivery && order.addressLine) ? (
-                <span>{isDesktop ? '· ' : ''}{order.addressLine.replace(/,?\s*chile$/i, '')}</span>
+                <span>{isDesktop ? '· ' : ''}{cleanAddr(order.addressLine)}</span>
               ) : isDineIn && order.tableLabel ? (
                 <span>{order.tableLabel}</span>
               ) : !isDelivery && !isDineIn ? (
@@ -286,7 +297,7 @@ function OrderDetailPanel({
             {isDelivery && order.addressLine && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {order.addressLine.replace(/,?\s*chile$/i, '')}
+                {cleanAddr(order.addressLine)}
               </div>
             )}
           </div>
