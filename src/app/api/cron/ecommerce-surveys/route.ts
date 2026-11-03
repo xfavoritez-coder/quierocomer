@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
-      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: o.restaurant.logoUrl,
+      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
     });
     if (ok) {
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
 
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
-      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: o.restaurant.logoUrl,
+      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: s,
     });
     if (ok) {

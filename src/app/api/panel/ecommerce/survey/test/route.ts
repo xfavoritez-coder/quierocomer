@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/preview_${restaurantId}`;
   const ok = await sendSurveyEmail({
-    to: email, link, storeName: r.name, logoUrl: r.logoUrl, accent: cfg.primaryColor,
+    to: email, link, storeName: r.name, logoUrl: cfg.storeLogoUrl ?? r.logoUrl, accent: cfg.primaryColor,
     customerName: null, survey: cfg.survey,
   });
   if (!ok) return NextResponse.json({ error: "No se pudo enviar el correo de prueba" }, { status: 502 });
