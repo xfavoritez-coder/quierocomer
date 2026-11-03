@@ -61,6 +61,8 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
           </button>
         </div>
         <div className="pos-drawer-items">
+          {/* Tiempos de entrega — editables inline, arriba del menú */}
+          {restaurant?.id && <PosTiemposInline restaurantId={restaurant.id} />}
           {items.map(item => (
             <button
               key={item.label}
@@ -74,8 +76,6 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
               </svg>
             </button>
           ))}
-          {/* Tiempos de entrega — editables inline (como pidió el usuario) */}
-          {restaurant?.id && <PosTiemposInline restaurantId={restaurant.id} />}
         </div>
       </div>
     </>
