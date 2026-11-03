@@ -69,10 +69,8 @@ export default function CajaPage() {
         const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(yesterday)}&to=${fmt(today)}`)
         if (!res.ok) return
         const data = await res.json()
-        const openedAt = new Date(cashSession.opened_at).getTime()
         for (const o of (data.orders ?? [])) {
           if (cancelled) break
-          if (new Date(o.createdAt).getTime() < openedAt) continue
           const total = Number(o.totalAmount) || 0
           if (total <= 0 || (Number(o.paidAmount) || 0) < total) continue
           const type: 'retiro' | 'delivery' = o.isDelivery && (Number(o.deliveryFee) || 0) > 0 ? 'delivery' : 'retiro'
@@ -80,7 +78,9 @@ export default function CajaPage() {
           const pp = rp.posPayment as { method?: string } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
           const method = toPaymentMethod(pp?.method || wp?.method)
-          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method }).catch(() => {})
+          // Se fecha el pago con la hora del pedido: el arqueo lo ubica en el
+          // turno correcto aunque la caja se haya abierto después.
+          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method, at: o.createdAt }).catch(() => {})
         }
       } catch { /* noop */ }
     })()

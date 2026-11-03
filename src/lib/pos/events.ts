@@ -51,14 +51,17 @@ export function getDeviceId(): string {
 
 export async function createEvent(
   type: PosEventType,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  atIso?: string,
 ): Promise<PosEvent> {
   const event: PosEvent = {
     event_id: uuidv4(),
     device_id: getDeviceId(),
     user_id: _userId,
     restaurant_id: _restaurantId,
-    created_at_local: new Date().toISOString(),
+    // `atIso` permite fechar el evento con la hora real del pedido (p.ej. al
+    // reconciliar pagos web en la caja) para que caiga en el turno correcto.
+    created_at_local: atIso || new Date().toISOString(),
     type,
     payload,
     synced: 0,
@@ -145,14 +148,18 @@ export async function registerExternalPayment(opts: {
   amount: number
   tip: number
   method: PaymentMethod
+  /** Hora real del pedido (ISO o epoch). Si se pasa, la cuenta se abre/cierra con
+   *  esa fecha, de modo que el arqueo la ubica en el turno que corresponde. */
+  at?: string | number
 }): Promise<boolean> {
   const accountId = `po_${opts.orderId}`
   const existing = await posDb.accounts.get(accountId)
   if (existing) return false
   const account_type: AccountType = opts.type === 'delivery' ? 'delivery' : 'retiro'
-  await openAccount({ account_id: accountId, account_type, customer_name: opts.customerName })
-  await recordPayment({ payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method })
-  await closeAccount({ account_id: accountId })
+  const atIso = opts.at != null ? new Date(opts.at).toISOString() : undefined
+  await createEvent('account_opened', { account_id: accountId, account_type, customer_name: opts.customerName }, atIso)
+  await createEvent('payment_recorded', { payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method }, atIso)
+  await createEvent('account_closed', { account_id: accountId }, atIso)
   return true
 }
 
