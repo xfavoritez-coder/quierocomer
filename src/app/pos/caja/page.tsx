@@ -40,7 +40,7 @@ export default function CajaPage() {
   const { syncing } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
   const openAccounts = useOpenAccounts()
-  const summary = useSessionSummary(cashSession, restaurantId)
+  const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
   const [initialAmount, setInitialAmount] = useState('50000')
   const [countedCash, setCountedCash] = useState('')
