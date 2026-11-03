@@ -69,6 +69,21 @@ function hm(ts?: string | null): string | null {
   return m ? `${m[1].padStart(2, '0')}:${m[2]}` : null
 }
 
+// Contenedor estable (a NIVEL DE MÓDULO): si se define dentro del componente,
+// React lo ve como un tipo nuevo en cada render y re-monta el subárbol — eso
+// reiniciaba el mapa Leaflet cada pocos segundos y perdía el marcador.
+function TrackingBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg>
+        <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>Reparto Delifast</span>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 export default function DelifastTracking({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
@@ -95,19 +110,9 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
   // No mostrar nada si Delifast no está configurado para el local.
   if (state === 'off') return null
 
-  const Box = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg>
-        <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>Reparto Delifast</span>
-      </div>
-      {children}
-    </div>
-  )
-
-  if (state === 'loading') return <Box><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Cargando seguimiento…</span></Box>
-  if (state === 'pending') return <Box><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></Box>
-  if (state === 'error' || !t) return <Box><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></Box>
+  if (state === 'loading') return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Cargando seguimiento…</span></TrackingBox>
+  if (state === 'pending') return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></TrackingBox>
+  if (state === 'error' || !t) return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></TrackingBox>
 
   const sc = statusColor(t.status)
   // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
@@ -123,7 +128,7 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
   if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
 
   return (
-    <Box>
+    <TrackingBox>
       {/* Estado + ETA */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: sc + '18', color: sc, border: `1px solid ${sc}40`, fontWeight: 700, fontSize: 12.5, borderRadius: 20, padding: '3px 10px' }}>
@@ -164,11 +169,13 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
         </div>
       )}
 
-      {/* Mapa en vivo */}
+      {/* Mapa en vivo (el repartidor 🛵 aparece cuando Delifast reporta su
+          ubicación; tienda 🏪 y cliente 🏠 siempre que haya coordenadas). */}
       {(t.location || t.store || t.customer) && (
-        <div style={{ height: 180, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)' }}>
-          <OrderTrackingMap driver={t.location} customer={t.customer} store={t.store} />
-        </div>
+        <OrderTrackingMap driver={t.location} customer={t.customer} store={t.store} />
+      )}
+      {!t.location && (t.store || t.customer) && (
+        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Ubicación del repartidor aún no disponible.</span>
       )}
 
       {/* Timeline */}
@@ -192,6 +199,6 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
           Ver seguimiento en vivo ↗
         </a>
       )}
-    </Box>
+    </TrackingBox>
   )
 }
