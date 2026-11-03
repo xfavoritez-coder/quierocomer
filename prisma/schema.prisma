@@ -539,6 +539,7 @@ model PosOrder {
 
   vendorName     String?
   orderReference String?
+  delifastVentaId String?  // id_venta de Delifast, para mapear sus cambios de estado
 
   items      Json? // líneas normalizadas del pedido
   rawPayload Json? // payload crudo de Toteat (para depurar/reprocesar)
@@ -580,6 +581,7 @@ model PosOrder {
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
   @@index([restaurantId, opsStage])
+  @@index([restaurantId, delifastVentaId])
   @@index([assignedDriverId])
 }
 
