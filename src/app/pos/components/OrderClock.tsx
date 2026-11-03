@@ -13,14 +13,6 @@ export function fmtElapsed(ms: number): string {
   return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`
 }
 
-// Color por urgencia según minutos transcurridos (para pedidos activos).
-export function elapsedColor(ms: number): string {
-  const min = ms / 60000
-  if (min >= 30) return '#dc2626' // rojo
-  if (min >= 15) return '#d97706' // ámbar
-  return 'var(--ink-3)'
-}
-
 const ClockIcon = ({ color }: { color: string }) => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" style={{ flexShrink: 0 }}>
     <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
@@ -28,9 +20,8 @@ const ClockIcon = ({ color }: { color: string }) => (
 )
 
 /** Cronómetro en vivo: cuenta desde `since` hasta ahora, refrescando cada segundo. */
-export function LiveClock({ since, colorize = false, icon = true, style }: {
+export function LiveClock({ since, icon = true, style }: {
   since: string | number | Date
-  colorize?: boolean
   icon?: boolean
   style?: React.CSSProperties
 }) {
@@ -42,11 +33,10 @@ export function LiveClock({ since, colorize = false, icon = true, style }: {
   }, [])
 
   const ms = Number.isFinite(start) ? now - start : 0
-  const color = colorize ? elapsedColor(ms) : 'var(--ink-3)'
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color, ...style }}>
-      {icon && <ClockIcon color={color} />}
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-3)', ...style }}>
+      {icon && <ClockIcon color="var(--ink-3)" />}
       {fmtElapsed(ms)}
     </span>
   )
