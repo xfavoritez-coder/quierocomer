@@ -155,12 +155,13 @@ export default function PosCartaPanel({ restaurantId, title, onDone }: { restaur
                         title={isHidden ? 'Mostrar en carta' : 'Ocultar de carta'}
                         style={{
                           flexShrink: 0, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)',
-                          background: isHidden ? 'var(--sunk)' : '#374151',
-                          color: isHidden ? 'var(--ink-2)' : '#fff',
+                          background: isHidden ? '#16a34a' : 'transparent',
+                          color: isHidden ? '#fff' : 'var(--ink-3)',
+                          border: isHidden ? '1px solid #16a34a' : '1px solid var(--line)',
                           fontSize: 11, fontWeight: 700, fontFamily: 'var(--sans)',
                           cursor: activeBusy ? 'default' : 'pointer',
                           opacity: activeBusy ? 0.5 : 1,
-                          transition: 'background .15s, color .15s',
+                          transition: 'background .15s, color .15s, border-color .15s',
                           whiteSpace: 'nowrap',
                         }}
                       >
