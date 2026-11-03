@@ -33,12 +33,12 @@ export default function PosTiemposInline({ restaurantId }: { restaurantId: strin
     } catch { toast.error('Error de conexión') }
   }
 
-  const sel: React.CSSProperties = { appearance: 'auto', width: 96, flexShrink: 0, boxSizing: 'border-box', padding: '7px 10px', borderRadius: 9, border: '1px solid var(--line-strong)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }
+  const sel: React.CSSProperties = { appearance: 'auto', width: 84, flexShrink: 0, boxSizing: 'border-box', padding: '6px 6px 6px 9px', borderRadius: 9, border: '1px solid var(--line-strong)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }
 
   const row = (icon: React.ReactNode, label: string, value: string, setValue: (v: string) => void, key: string) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
       <span style={{ color: 'var(--ink-3)', display: 'flex', flexShrink: 0 }}>{icon}</span>
-      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.15 }}>{label}</span>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
       <select value={value} onChange={(e) => { setValue(e.target.value); save({ [key]: e.target.value }) }} style={sel} disabled={!ready}>
         {value && !PRESETS.includes(value) && <option value={value}>{value} min</option>}
         {PRESETS.map(p => <option key={p} value={p}>{p ? `${p} min` : '—'}</option>)}
@@ -47,13 +47,13 @@ export default function PosTiemposInline({ restaurantId }: { restaurantId: strin
   )
 
   return (
-    <div style={{ margin: '4px 14px 10px', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)' }}>
+    <div style={{ margin: '4px 14px 10px', padding: '10px 12px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--sunk)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
         <span style={{ fontSize: 11, color: 'var(--ink-3)', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Tiempos de entrega</span>
       </div>
       {row(<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h3l2 6M5.5 17.5 9 7h5l2 5"/></svg>, 'Delivery', delivery, setDelivery, 'waitTimeDelivery')}
-      {row(<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/></svg>, 'Retiro en local', pickup, setPickup, 'waitTimePickup')}
+      {row(<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4z"/><path d="M4 6h16M9 10a3 3 0 0 0 6 0"/></svg>, 'Retiro', pickup, setPickup, 'waitTimePickup')}
       {row(<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/></svg>, 'Repartidor', driver, setDriver, 'waitTimeDriver')}
     </div>
   )
