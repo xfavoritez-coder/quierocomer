@@ -5,7 +5,7 @@ import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import { LiveClock } from './OrderClock'
+import { LiveClock, FrozenClock } from './OrderClock'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -30,6 +30,7 @@ interface PosOrderLite {
   saleType: string
   isDelivery: boolean
   opsStage: string
+  opsReadyForDeliveryAt?: string | null
   totalAmount: number
   paidAmount: number
   tipAmount: number
@@ -92,6 +93,15 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
   })
 }
 
+// Cronómetro del pedido: en retiro, una vez "listo" el tiempo se CONGELA (hora
+// de listo − creación); en el resto cuenta en vivo hasta que se finaliza.
+function OrderTimer({ order, isRetiro, icon = true, style }: { order: PosOrderLite; isRetiro: boolean; icon?: boolean; style?: React.CSSProperties }) {
+  if (isRetiro && order.opsStage === 'ready' && order.opsReadyForDeliveryAt) {
+    return <FrozenClock from={order.createdAt} to={order.opsReadyForDeliveryAt} icon={icon} style={style} />
+  }
+  return <LiveClock since={order.createdAt} icon={icon} style={style} />
+}
+
 // ── Order card ──────────────────────────────────────────────────────
 
 function OrderCard({
@@ -111,6 +121,7 @@ function OrderCard({
   const qty = lines.reduce((s, l) => s + l.qty, 0)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
   const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
+  const isRetiro = !isDelivery && !isDineIn
   const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
   const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
   const next = nextAction(order.opsStage, isDelivery)
@@ -184,7 +195,7 @@ function OrderCard({
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
             {STAGE_LABEL[order.opsStage] ?? order.opsStage}
           </span>
-          <LiveClock since={order.createdAt} style={{ fontSize: 13 }} />
+          <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13 }} />
         </span>
         {next && (
           <button
@@ -223,6 +234,7 @@ function OrderDetailPanel({
   const paid = isPaid(order)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
   const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
+  const isRetiro = !isDelivery && !isDineIn
   const next = nextAction(order.opsStage, isDelivery)
   const lines = itemLines(order.items)
   const busy = stageBusy === order.id
@@ -267,7 +279,7 @@ function OrderDetailPanel({
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} ·
-              <LiveClock since={order.createdAt} />
+              <OrderTimer order={order} isRetiro={isRetiro} />
             </span>
             {paid && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>

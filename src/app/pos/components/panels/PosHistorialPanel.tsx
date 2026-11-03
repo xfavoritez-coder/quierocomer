@@ -20,16 +20,23 @@ interface HistorialOrder {
   deliveryFee: number
   items: unknown
   createdAt: string
+  opsReadyForDeliveryAt?: string | null
   opsDeliveredAt?: string | null
   completedAt?: string | null
   updatedAt?: string | null
   rawPayload?: unknown
 }
 
-// Tiempo total (congelado) que tomó el pedido: desde que entró hasta que se
-// finalizó (entregado) o canceló. null si no hay un cierre válido.
+// Tiempo total (congelado) que tomó el pedido. En retiro el tiempo se detiene
+// cuando queda "listo" (el cliente lo pasa a buscar cuando quiere); en el resto,
+// cuando se entrega/finaliza. null si no hay un cierre válido.
 function frozenElapsedMs(o: HistorialOrder): number | null {
-  const end = o.opsDeliveredAt || o.completedAt || o.updatedAt
+  const isDelivery = o.isDelivery || o.saleType === 'delivery'
+  const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+  const isRetiro = !isDelivery && !isDineIn
+  const end = isRetiro
+    ? (o.opsReadyForDeliveryAt || o.opsDeliveredAt || o.completedAt || o.updatedAt)
+    : (o.opsDeliveredAt || o.completedAt || o.updatedAt)
   if (!end) return null
   const ms = new Date(end).getTime() - new Date(o.createdAt).getTime()
   return ms >= 0 ? ms : null
