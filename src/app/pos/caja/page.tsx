@@ -65,14 +65,17 @@ export default function CajaPage() {
     let cancelled = false
     const load = async () => {
       try {
-        const d = new Date()
-        const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${ymd}&to=${ymd}`)
+        // Ventas DESDE que se abrió la caja (el turno), no del día calendario: una
+        // caja que cruza la medianoche debe seguir mostrando lo vendido anoche.
+        const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+        const openedMs = new Date(cashSession.opened_at).getTime()
+        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(new Date(cashSession.opened_at))}&to=${fmt(new Date())}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
         let total = 0, tips = 0, count = 0
         for (const o of (data.orders ?? [])) {
+          if (new Date(o.createdAt).getTime() < openedMs) continue // solo del turno actual
           const amount = Number(o.totalAmount) || 0
           if (amount <= 0 || (Number(o.paidAmount) || 0) < amount) continue
           const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
