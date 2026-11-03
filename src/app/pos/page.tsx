@@ -38,10 +38,11 @@ import PosHistorialPanel from './components/panels/PosHistorialPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos' | 'historial'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
 
 const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
+  historial: { title: 'Historial de pedidos', component: PosHistorialPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
   impresora: { title: 'Impresora', component: PosImpressoraPanel },
   sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
@@ -69,7 +70,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
-  { id: 'historial', label: 'Historial' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -456,11 +456,6 @@ export default function PosHomePage() {
         <OrdersBoard restaurantId={restaurantId} type={tab} />
       )}
 
-      {/* ── Historial ── */}
-      {tab === 'historial' && (
-        <PosHistorialPanel restaurantId={restaurantId} />
-      )}
-
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
       {tab === 'mesas' && (
       <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -617,7 +612,7 @@ export default function PosHomePage() {
       </>}{/* /!innerPage */}
 
       {/* ── Drawer ── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={(id) => { if (id === 'historial') { setTab('historial'); setInnerPage(null) } else { setInnerPage(id) } }} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={setInnerPage} />}
     </div>
   )
 }
