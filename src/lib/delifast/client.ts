@@ -192,3 +192,39 @@ export async function getDelifastTracking(
     throw e;
   }
 }
+
+/** Resuelve el id_venta de Delifast a partir de nuestro orderNumber (= codigo_origen),
+ *  buscándolo en el listado (texto_buscado). Independiente del worker/Pusher: sirve
+ *  cuando el pedido todavía no avanzó de estado y no tenemos el id guardado. */
+export async function resolveDelifastVentaId(
+  restaurantId: string,
+  creds: DelifastCreds,
+  orderNumber: string | number,
+): Promise<string | null> {
+  const key = (creds.email || restaurantId).toLowerCase();
+  const plataforma = creds.plataforma || "";
+  const num = String(orderNumber).trim();
+  if (!num) return null;
+
+  const run = async (cookie: string): Promise<string | null> => {
+    const url = `${BASE}/listado_ventas.php?plataforma=${encodeURIComponent(plataforma)}&texto_buscado=${encodeURIComponent(num)}`;
+    const res = await fetch(url, { headers: { Cookie: cookie } });
+    const html = await res.text();
+    // Página de login => sesión expirada.
+    if (/name=["']pass["']/.test(html) && /name=["']email["']/.test(html)) throw new SessionExpired();
+    // Candidatos: ids de abrirDetalle(<id>, '<dominio>') que aparecen en las tarjetas.
+    const ids = [...new Set([...html.matchAll(/abrirDetalle\((\d+)/g)].map((m) => m[1]))].slice(0, 8);
+    for (const id of ids) {
+      const v = (await callFuncion(cookie, "getVentaDetalle", { id_venta: id, plataforma })) as Record<string, unknown>;
+      if (v && String(v.codigo_origen) === num) return id;
+    }
+    return null;
+  };
+
+  try {
+    return await run(await getSession(key, creds));
+  } catch (e) {
+    if (e instanceof SessionExpired) return await run(await getSession(key, creds, true));
+    throw e;
+  }
+}

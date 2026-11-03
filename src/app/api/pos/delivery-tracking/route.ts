@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
-import { getDelifastTracking, type DelifastTracking } from "@/lib/delifast/client";
+import { getDelifastTracking, resolveDelifastVentaId, type DelifastTracking } from "@/lib/delifast/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +30,10 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
 // Cache en memoria por id de venta Delifast (clave = restaurantId:idVenta).
 const cache = new Map<string, { at: number; data: DelifastTracking | null }>();
 const CACHE_MS = 8000;
+// Cache negativo de resolución (pedido aún no visible en Delifast): evita re-bajar
+// el listado completo en cada poll mientras no aparece.
+const resolveNeg = new Map<string, number>();
+const RESOLVE_NEG_MS = 25000;
 
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
@@ -39,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   const order = await prisma.posOrder.findFirst({
     where: { id: posOrderId, restaurantId },
-    select: { delifastVentaId: true, isDelivery: true },
+    select: { delifastVentaId: true, isDelivery: true, orderReference: true },
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
 
@@ -50,17 +54,33 @@ export async function GET(req: NextRequest) {
   const configured = !!(creds?.enabled && creds.email && creds.password && creds.plataforma);
   if (!configured) return NextResponse.json({ ok: true, configured: false });
 
-  // Sin id de venta Delifast todavía (el worker aún no recibió un cambio-estado).
-  if (!order.delifastVentaId) return NextResponse.json({ ok: true, configured: true, pending: true });
+  // Resolver el id_venta de Delifast. Si el worker ya lo guardó, se usa; si no,
+  // se busca en Delifast por nuestro orderNumber (codigo_origen) y se persiste, así
+  // el seguimiento aparece aunque el pedido no haya avanzado de estado todavía.
+  let idVenta = order.delifastVentaId;
+  if (!idVenta && order.orderReference) {
+    const negKey = `${restaurantId}:${order.orderReference}`;
+    const lastNeg = resolveNeg.get(negKey);
+    if (!lastNeg || Date.now() - lastNeg > RESOLVE_NEG_MS) {
+      idVenta = await resolveDelifastVentaId(restaurantId, creds!, order.orderReference).catch(() => null);
+      if (idVenta) {
+        resolveNeg.delete(negKey);
+        await prisma.posOrder.update({ where: { id: posOrderId }, data: { delifastVentaId: idVenta } }).catch(() => {});
+      } else {
+        resolveNeg.set(negKey, Date.now());
+      }
+    }
+  }
+  if (!idVenta) return NextResponse.json({ ok: true, configured: true, pending: true });
 
-  const ckey = `${restaurantId}:${order.delifastVentaId}`;
+  const ckey = `${restaurantId}:${idVenta}`;
   const hit = cache.get(ckey);
   if (hit && Date.now() - hit.at < CACHE_MS) {
     return NextResponse.json({ ok: true, configured: true, tracking: hit.data });
   }
 
   try {
-    const tracking = await getDelifastTracking(restaurantId, creds!, order.delifastVentaId);
+    const tracking = await getDelifastTracking(restaurantId, creds!, idVenta);
     cache.set(ckey, { at: Date.now(), data: tracking });
     return NextResponse.json({ ok: true, configured: true, tracking });
   } catch (e) {
