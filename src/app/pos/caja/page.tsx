@@ -54,19 +54,19 @@ export default function CajaPage() {
     setUserId(TEST_USER_ID)
   })
 
-  // Reconcilia el arqueo: registra en la caja TODOS los pedidos pagados del turno
-  // (pagos web —webpay/mercadopago/flow— o cobros del POS), estén o no entregados,
-  // sin depender de cerrarlos a mano. Idempotente por orderId (po_<id>): no duplica
-  // con los cobros ya registrados. Solo cuenta los creados desde la apertura.
+  // Reconcilia el arqueo: registra en la caja abierta TODOS los pedidos pagados
+  // de HOY (pagos web —webpay/mercadopago/flow— o cobros del POS), estén o no
+  // entregados. Idempotente por orderId (po_<id>): no duplica con cobros ya
+  // registrados. Se registran con la hora actual para que entren en el turno
+  // abierto aunque el pedido se haya pagado antes de abrir la caja.
   useEffect(() => {
     if (!restaurantId || !cashSession) return
     let cancelled = false
     ;(async () => {
       try {
-        const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        const today = new Date()
-        const yesterday = new Date(today.getTime() - 86400000) // turnos que cruzan medianoche
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(yesterday)}&to=${fmt(today)}`)
+        const d = new Date()
+        const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${ymd}&to=${ymd}`)
         if (!res.ok) return
         const data = await res.json()
         for (const o of (data.orders ?? [])) {
@@ -78,9 +78,7 @@ export default function CajaPage() {
           const pp = rp.posPayment as { method?: string } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
           const method = toPaymentMethod(pp?.method || wp?.method)
-          // Se fecha el pago con la hora del pedido: el arqueo lo ubica en el
-          // turno correcto aunque la caja se haya abierto después.
-          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method, at: o.createdAt }).catch(() => {})
+          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method }).catch(() => {})
         }
       } catch { /* noop */ }
     })()
