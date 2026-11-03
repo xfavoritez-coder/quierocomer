@@ -78,6 +78,19 @@ export interface DeliveryHandrollCreds {
   vendorName?: string;
 }
 
+/** Integración directa con Uber Eats (Marketplace/Orders API) por local, para
+ *  recibir los pedidos de Uber Eats en el POS sin pasar por Toteat. La app de
+ *  integración es UNA sola a nivel plataforma (env UBEREATS_CLIENT_ID /
+ *  UBEREATS_CLIENT_SECRET); cada local solo aporta su `storeId` (id de su tienda
+ *  en Uber Eats = store_id del webhook). Requiere partner aprobado + tienda
+ *  vinculada a la app. */
+export interface UberEatsCreds {
+  enabled?: boolean;
+  storeId?: string;
+  /** Aceptar automáticamente los pedidos al recibirlos (default true). */
+  autoAccept?: boolean;
+}
+
 /** Credenciales del panel de Delifast del local, para enriquecer el seguimiento
  *  del reparto en el POS (repartidor, estado en vivo, ETA, PIN, ubicación y
  *  timeline). Se consulta admin.delifast.cl con esta sesión (login por email/clave).
@@ -100,6 +113,7 @@ export interface EcommerceConfig {
   pos?: PosConfig;
   deliveryHandroll?: DeliveryHandrollCreds;
   delifast?: DelifastCreds;
+  ubereats?: UberEatsCreds;
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
 
@@ -161,6 +175,9 @@ export function integrationStatus(cfg: EcommerceConfig) {
     pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
     // Delifast: seguimiento enriquecido del reparto (requiere login del panel).
     delifast: !!(cfg.delifast?.enabled && cfg.delifast?.email && cfg.delifast?.password && cfg.delifast?.plataforma),
+    // Uber Eats: integración directa de pedidos (el local activa + su storeId;
+    // las credenciales de la app son globales por env).
+    ubereats: !!(cfg.ubereats?.enabled && cfg.ubereats?.storeId),
   };
 }
 

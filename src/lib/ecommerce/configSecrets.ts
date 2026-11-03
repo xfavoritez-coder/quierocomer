@@ -5,17 +5,19 @@ import { encryptSecret, decryptSecret } from "@/lib/crypto/secret";
 
 /** Devuelve una copia del config con los secretos cifrados (para guardar en BD). */
 export function encryptEcommerceSecrets(cfg: EcommerceConfig): EcommerceConfig {
-  if (cfg?.delifast?.password) {
-    return { ...cfg, delifast: { ...cfg.delifast, password: encryptSecret(cfg.delifast.password) } };
+  let out = cfg;
+  if (out?.delifast?.password) {
+    out = { ...out, delifast: { ...out.delifast, password: encryptSecret(out.delifast.password) } };
   }
-  return cfg;
+  return out;
 }
 
 /** Devuelve una copia del config con los secretos en claro (para usar/mostrar). */
 export function decryptEcommerceSecrets<T extends EcommerceConfig | null | undefined>(cfg: T): T {
-  if (cfg && typeof cfg === "object" && (cfg as EcommerceConfig).delifast?.password) {
-    const c = cfg as EcommerceConfig;
-    return { ...c, delifast: { ...c.delifast, password: decryptSecret(c.delifast!.password) } } as T;
+  if (!cfg || typeof cfg !== "object") return cfg;
+  let out = cfg as EcommerceConfig;
+  if (out.delifast?.password) {
+    out = { ...out, delifast: { ...out.delifast, password: decryptSecret(out.delifast.password) } };
   }
-  return cfg;
+  return out as T;
 }

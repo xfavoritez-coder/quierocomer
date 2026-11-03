@@ -7,6 +7,7 @@ import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
+import { markUberOrderReady } from "@/lib/ubereats/client";
 
 // Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
 // reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
@@ -195,7 +196,7 @@ export async function PATCH(req: NextRequest) {
   const opsStage = (body?.opsStage || "").toString();
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
-  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, deliveryFee: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
+  const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, isDelivery: true, deliveryFee: true, provider: true, externalId: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, restaurant: { select: { centroPedidosConfig: true } } } });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   // Un pedido con dirección pero sin monto de delivery se toma como retiro.
@@ -225,6 +226,13 @@ export async function PATCH(req: NextRequest) {
 
   const updated = await prisma.posOrder.update({ where: { id }, data });
   void syncOnlineOrderFromPos(updated).catch(() => {});
+
+  // Pedido de Uber Eats: al marcarlo "Listo" se avisa a Uber (markReady) para que
+  // asigne el despacho. El id de Uber es el externalId sin el prefijo "ue-".
+  if (stage === "ready" && order.provider === "ubereats" && order.externalId?.startsWith("ue-")) {
+    void markUberOrderReady(order.externalId.slice(3)).catch((e) => console.error("[ubereats] ready:", (e as Error).message));
+  }
+
   return NextResponse.json({ order: updated });
 }
 

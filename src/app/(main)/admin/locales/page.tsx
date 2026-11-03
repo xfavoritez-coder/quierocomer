@@ -1531,6 +1531,10 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [dfEmail, setDfEmail] = useState("");
   const [dfPass, setDfPass] = useState("");
   const [dfPlataforma, setDfPlataforma] = useState("");
+  // Uber Eats (integración directa de pedidos al POS)
+  const [ueEnabled, setUeEnabled] = useState(false);
+  const [ueStoreId, setUeStoreId] = useState("");
+  const [ueAutoAccept, setUeAutoAccept] = useState(true);
   const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
@@ -1546,6 +1550,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
     setDfEnabled(c.delifast?.enabled === true); setDfEmail(c.delifast?.email || ""); setDfPass(c.delifast?.password || ""); setDfPlataforma(c.delifast?.plataforma || "");
+    setUeEnabled(c.ubereats?.enabled === true); setUeStoreId(c.ubereats?.storeId || ""); setUeAutoAccept(c.ubereats?.autoAccept !== false);
     setShowToken(c.showWebpayToken === true);
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
     setZonesCopied(false);
@@ -1571,6 +1576,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         : { provider: "none" },
       deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
       delifast: { enabled: dfEnabled, email: dfEmail.trim() || undefined, password: dfPass.trim() || undefined, plataforma: dfPlataforma.trim() || undefined },
+      ubereats: { enabled: ueEnabled, storeId: ueStoreId.trim() || undefined, autoAccept: ueAutoAccept },
       showWebpayToken: showToken,
     };
     // Zonas de reparto: si el textarea trae JSON válido, se guardan junto con las credenciales.
@@ -1708,6 +1714,14 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
               <Input label="Email (login Delifast)" value={dfEmail} onChange={setDfEmail} placeholder="correo@local.cl" />
               <Input label="Clave (login Delifast)" value={dfPass} onChange={setDfPass} placeholder="••••••••" type="password" />
               <Input label="Plataforma (dominio)" value={dfPlataforma} onChange={setDfPlataforma} placeholder="quierosushi.cl" />
+            </>}
+          </IntegrationGroup>
+
+          <IntegrationGroup title="Uber Eats" sub="Recibe los pedidos de Uber Eats directo en el POS (sin Toteat). Requiere el alta de integración con Uber; la app es global, aquí solo se activa y se pone el Store ID del local." ok={st.ubereats}>
+            <EnvSelect label="Pedidos Uber Eats" value={ueEnabled ? "on" : "off"} onChange={(v) => setUeEnabled(v === "on")} options={[{ value: "off", label: "Desactivado" }, { value: "on", label: "Activado" }]} />
+            {ueEnabled && <>
+              <Input label="Store ID (tienda en Uber Eats)" value={ueStoreId} onChange={setUeStoreId} placeholder="uuid de la tienda" />
+              <EnvSelect label="Aceptar automáticamente" value={ueAutoAccept ? "on" : "off"} onChange={(v) => setUeAutoAccept(v === "on")} options={[{ value: "on", label: "Sí (recomendado)" }, { value: "off", label: "No" }]} />
             </>}
           </IntegrationGroup>
 
