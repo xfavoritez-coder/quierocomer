@@ -79,7 +79,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Bell, labelKey: "nav_waiter", href: `${base}/garzon` },
         { icon: ListChecks, labelKey: "nav_queue", href: `${base}/gestion-fila` },
         { icon: Star, labelKey: "nav_reviews", href: `${base}/valoraciones` },
-        { icon: Star, labelKey: "nav_reviews_list", href: `${base}/valoraciones/resenas` },
         { icon: QrCode, labelKey: "nav_generate_qr", href: `${base}/qr` },
         { icon: Settings, labelKey: "nav_settings", href: `${base}/ajustes` },
       ],
