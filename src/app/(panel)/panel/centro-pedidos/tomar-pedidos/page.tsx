@@ -638,7 +638,10 @@ function ModifiersModal({ product, accent, onAdd, onClose }: { product: StorePro
     return { group_id: g.id, group_name: g.name, value_id: vid, value: val.name, price_delta: val.price_delta, toteat_modifier_code: val.toteat_modifier_code };
   }));
   const unitPrice = product.price + optionsFlat.reduce((s, o) => s + o.price_delta, 0);
-  const canAdd = groups.every((g) => !g.is_required || (selected[g.id]?.length ?? 0) >= Math.max(1, g.min_select));
+  // Exige elegir al menos una opción en CADA grupo (aunque el grupo no esté
+  // marcado como "requerido" en el menú): no se puede agregar sin seleccionar el
+  // modificador. Respeta min_select cuando pide más de una.
+  const canAdd = groups.every((g) => (selected[g.id]?.length ?? 0) >= Math.max(1, g.min_select));
 
   return (
     <Overlay>
@@ -680,7 +683,7 @@ function ModifiersModal({ product, accent, onAdd, onClose }: { product: StorePro
             <RoundBtn onClick={() => setQty((q) => q + 1)}><Plus size={13} /></RoundBtn>
           </div>
           <button onClick={() => onAdd({ product_id: product.id, name: product.name, base_price: product.price, unit_price: unitPrice, toteat_code: product.toteat_code, options: optionsFlat }, qty)} disabled={!canAdd}
-            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: canAdd ? "pointer" : "not-allowed", background: canAdd ? accent : C.border, color: canAdd ? readableText(accent) : C.text3 }}>Agregar — {fmt(unitPrice * qty)}</button>
+            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: canAdd ? "pointer" : "not-allowed", background: canAdd ? accent : C.border, color: canAdd ? readableText(accent) : C.text3 }}>{canAdd ? `Agregar — ${fmt(unitPrice * qty)}` : "Selecciona una opción"}</button>
         </div>
       </div>
     </Overlay>
