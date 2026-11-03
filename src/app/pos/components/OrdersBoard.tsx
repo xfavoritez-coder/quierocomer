@@ -73,7 +73,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [needCaja, setNeedCaja] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
-  const cashSession = useOpenCashSession()
+  const cashSession = useOpenCashSession(restaurantId)
   const cajaOpen = !!cashSession
 
   useEffect(() => {

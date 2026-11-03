@@ -189,7 +189,7 @@ export default function PosHomePage() {
   const { restaurantId, restaurant, posEnabled } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const accounts = useOpenAccounts()
-  const cashSession = useOpenCashSession()
+  const cashSession = useOpenCashSession(restaurantId)
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
   const garzones = useStaff(restaurantId)

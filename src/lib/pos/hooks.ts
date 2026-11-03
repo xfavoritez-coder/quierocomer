@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync } from './sync'
+import { getRestaurantId } from './events'
 import type { Account, CashSession, PosTable, PosSector, PosStaff } from './types'
 import type { CachedProduct } from './types'
 import { refreshCatalog, getCachedProducts, getCachedCategories } from './catalog'
@@ -118,10 +119,22 @@ export function useStaff(restaurantId: string): PosStaff[] {
 
 // ── Cash session ─────────────────────────────────────────────────
 
-export function useOpenCashSession(): CashSession | undefined {
+// Devuelve la caja abierta DEL RESTAURANTE ACTUAL. Si hay varias abiertas (p.ej.
+// se usó el POS para otra sucursal y no se cerró), elige de forma determinista la
+// más reciente para evitar parpadeo. Los registros viejos sin restaurant_id se
+// consideran del restaurante actual (compatibilidad hacia atrás).
+export function useOpenCashSession(restaurantId?: string): CashSession | undefined {
+  const rid = restaurantId ?? getRestaurantId()
   return useDexieQuery(
-    () => posDb.cashSessions.filter(s => s.is_open).first().then(s => s ?? undefined),
-    [],
+    async () => {
+      const open = await posDb.cashSessions.filter(s => s.is_open).toArray()
+      if (open.length === 0) return undefined
+      const mine = open.filter(s => !s.restaurant_id || s.restaurant_id === rid)
+      const pool = mine.length ? mine : open
+      pool.sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''))
+      return pool[0]
+    },
+    [rid],
     undefined
   )
 }
@@ -216,15 +229,19 @@ export type SessionSummary = {
   closedAccounts: number
 }
 
-export function useSessionSummary(session: CashSession | undefined): SessionSummary {
+export function useSessionSummary(session: CashSession | undefined, restaurantId?: string): SessionSummary {
+  const rid = restaurantId ?? session?.restaurant_id ?? getRestaurantId()
   return useDexieQuery(
     async () => {
       const empty: SessionSummary = { byMethod: {}, totalSales: 0, totalTips: 0, closedAccounts: 0 }
       if (!session) return empty
 
       const allAccounts = await posDb.accounts.toArray()
+      // Solo cuentas cerradas del restaurante actual, dentro del turno. Las cuentas
+      // viejas sin restaurant_id se incluyen (compatibilidad hacia atrás).
       const sessionAccounts = allAccounts.filter(
         a => a.status === 'cerrada' && a.closed_at && a.closed_at >= session.opened_at
+          && (!a.restaurant_id || a.restaurant_id === rid)
       )
 
       const byMethod: Record<string, SessionMethodSummary> = {}
@@ -244,7 +261,7 @@ export function useSessionSummary(session: CashSession | undefined): SessionSumm
 
       return { byMethod, totalSales, totalTips, closedAccounts: sessionAccounts.length }
     },
-    [session?.id, session?.opened_at],
+    [session?.id, session?.opened_at, rid],
     { byMethod: {}, totalSales: 0, totalTips: 0, closedAccounts: 0 }
   )
 }

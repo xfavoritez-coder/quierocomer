@@ -145,6 +145,7 @@ export interface StaffDeletedPayload {
 
 export interface Account {
   id: string
+  restaurant_id?: string
   type: AccountType
   status: AccountStatus
   table_id?: string
@@ -202,6 +203,7 @@ export interface Payment {
 
 export interface CashSession {
   id: string
+  restaurant_id?: string
   opened_at: string
   opened_by: string
   initial_amount: number

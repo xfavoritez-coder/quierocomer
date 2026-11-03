@@ -15,7 +15,7 @@ type Section = 'mesas' | 'retiro' | 'delivery' | 'centro' | 'none'
 export default function PosTopBar({ active, mesasCount }: { active: Section; mesasCount?: number }) {
   const { restaurantId, restaurant } = usePosRestaurant()
   const navigate = usePosNav()
-  const cashSession = useOpenCashSession()
+  const cashSession = useOpenCashSession(restaurantId)
   const [menuOpen, setMenuOpen] = useState(false)
   const [counts, setCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
 

@@ -9,6 +9,7 @@ export {
   setDeviceId,
   setUserId,
   setRestaurantId,
+  getRestaurantId,
   getDeviceId,
   createEvent,
   openAccount,

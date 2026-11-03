@@ -30,6 +30,7 @@ let _restaurantId: string = ''
 export function setDeviceId(id: string) { _deviceId = id }
 export function setUserId(id: string) { _userId = id }
 export function setRestaurantId(id: string) { _restaurantId = id }
+export function getRestaurantId(): string { return _restaurantId }
 
 export function getDeviceId(): string {
   if (!_deviceId) {
@@ -189,6 +190,7 @@ export async function projectEvent(event: PosEvent): Promise<void> {
       const d = p as unknown as AccountOpenedPayload
       await posDb.accounts.put({
         id: d.account_id,
+        restaurant_id: event.restaurant_id,
         type: d.account_type,
         status: 'abierta',
         table_id: d.table_id,
@@ -324,6 +326,7 @@ export async function projectEvent(event: PosEvent): Promise<void> {
       const d = p as unknown as CashSessionOpenedPayload
       await posDb.cashSessions.put({
         id: d.session_id,
+        restaurant_id: event.restaurant_id,
         opened_at: event.created_at_local,
         opened_by: event.user_id,
         initial_amount: d.initial_amount,
