@@ -48,12 +48,12 @@ function deriveSession(s: CashSession) {
   }
 }
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const dayLabel = (iso?: string) => {
   if (!iso) return '—'
-  const d = new Date(iso)
-  const s = d.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' })
-  return s.charAt(0).toUpperCase() + s.slice(1)
+  return cap(new Date(iso).toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }))
 }
+const monthLabel = (d: Date) => cap(d.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }))
 const timeLabel = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '--:--')
 
 export default function HistorialCajaPage() {
@@ -89,6 +89,18 @@ export default function HistorialCajaPage() {
     else toast.error(r.error || 'No se pudo imprimir')
   }
 
+  // Agrupa por mes (las sesiones ya vienen de más reciente a más antigua, así que
+  // los grupos salen en el mismo orden). Cada grupo trae el total de ventas del mes.
+  const groups: { key: string; label: string; total: number; items: CashSession[] }[] = []
+  for (const s of sessions) {
+    const dt = new Date(s.closed_at || s.opened_at)
+    const key = `${dt.getFullYear()}-${dt.getMonth()}`
+    let g = groups.find(x => x.key === key)
+    if (!g) { g = { key, label: monthLabel(dt), total: 0, items: [] }; groups.push(g) }
+    g.items.push(s)
+    g.total += deriveSession(s).totalSales
+  }
+
   return (
     <div className="pos-shell">
       <PosHeader mode="back" eyebrow="Historial de caja" subtitle={`${sessions.length} cierre${sessions.length === 1 ? '' : 's'}`} syncing={syncing} onBack={goBack} />
@@ -107,7 +119,13 @@ export default function HistorialCajaPage() {
             </div>
           )}
 
-          {sessions.map(s => {
+          {groups.map(g => (
+            <div key={g.key} style={{ marginBottom: 8 }}>
+              <div className="pos-eyebrow" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, margin: '4px 2px 10px' }}>
+                <span>{g.label}</span>
+                <b style={{ fontFamily: 'var(--mono)', color: 'var(--ink-2)' }}>${g.total.toLocaleString('es-CL')}</b>
+              </div>
+              {g.items.map(s => {
             const d = deriveSession(s)
             const isOpen = open === s.id
             const diffColor = d.difference === 0 ? 'var(--ink-3)' : d.difference < 0 ? '#C53030' : 'var(--amber-press)'
@@ -209,7 +227,9 @@ export default function HistorialCajaPage() {
                 )}
               </div>
             )
-          })}
+              })}
+            </div>
+          ))}
 
         </div>
       </div>
