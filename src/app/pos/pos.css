@@ -400,7 +400,7 @@
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){
   .pos-brand-store{display:none}
-  .pos-bar-center{position:static;transform:none;left:auto;flex:1;justify-content:center;max-width:none;overflow:hidden}
+  .pos-bar-center{position:static;transform:none;left:auto;flex:1;justify-content:center;max-width:none;overflow:hidden;border-left:1px solid var(--line);margin-left:8px;padding-left:8px}
   .pos-tab{padding:8px 14px;font-size:14px}
   .pos-cmd{display:block;overflow-y:auto;overflow-x:hidden}
   .pos-cats{width:auto;flex-direction:row;overflow-x:auto;overflow-y:visible;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--surface)}
