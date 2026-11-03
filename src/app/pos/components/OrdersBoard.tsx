@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { setRestaurantId, setUserId, registerExternalPayment, toPaymentMethod, useOpenCashSession } from '@/lib/pos'
+import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
 
@@ -47,14 +47,6 @@ const STAGE_LABEL: Record<string, string> = {
 }
 
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
-
-// Método con el que llegó pagado el pedido (rawPayload.posPayment / webPayment).
-const paidMethodOf = (o: PosOrderLite): PaymentMethod => {
-  const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? (o.rawPayload as Record<string, unknown>) : {}
-  const pp = (rp.posPayment as { method?: string } | undefined) || undefined
-  const wp = (rp.webPayment as { method?: string } | undefined) || undefined
-  return toPaymentMethod(pp?.method || wp?.method)
-}
 
 function itemLines(items: unknown): { name: string; qty: number }[] {
   if (!Array.isArray(items)) return []
@@ -225,16 +217,10 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
 
   const [finalizing, setFinalizing] = useState(false)
   // Cerrar el pedido = marcarlo como entregado (sale de activos y pasa al historial).
-  // Cobrar ≠ cerrar: cobrar registra el pago; cerrar finaliza el pedido.
+  // El cobro (su monto ya pagado) lo suma la caja directo del servidor, no acá.
   const handleFinalize = async () => {
     setFinalizing(true)
     try {
-      // Si venía pagado desde la web (webpay/mercadopago/flow) y nunca se cobró
-      // en el POS, registrarlo en la caja al cerrarlo para que sume en el arqueo.
-      // Idempotente por orderId: no duplica si ya estaba registrado.
-      if (paid) {
-        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: order.tipAmount || 0, method: paidMethodOf(order), restaurantId }).catch(() => {})
-      }
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, opsStage: 'delivered' }),
@@ -258,11 +244,9 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, action: 'pay', method, received: receivedNum, tip: tipNum }),
       })
-      if (r.ok) {
-        // Registrar en la caja del POS (cuenta cerrada con el pago) para el arqueo.
-        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: tipNum, method, restaurantId }).catch(() => {})
-        onPaid()
-      }
+      // El pago queda en el pedido del servidor (action:'pay'); la caja lo suma
+      // directo del servidor en el arqueo, sin cuentas locales.
+      if (r.ok) onPaid()
     } catch { /* noop */ }
     setSending(false)
   }

@@ -12,7 +12,6 @@ import {
   setUserId,
   openCashSession,
   closeCashSession,
-  registerExternalPayment,
   toPaymentMethod,
 } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
@@ -57,37 +56,52 @@ export default function CajaPage() {
     setUserId(TEST_USER_ID)
   }, [restaurantId])
 
-  // Reconcilia el arqueo: registra en la caja abierta TODOS los pedidos pagados
-  // de HOY (pagos web —webpay/mercadopago/flow— o cobros del POS), estén o no
-  // entregados. Idempotente por orderId (po_<id>): no duplica con cobros ya
-  // registrados. Se registran con la hora actual para que entren en el turno
-  // abierto aunque el pedido se haya pagado antes de abrir la caja.
+  // Ventas de los pedidos del Centro (web pagadas online + cobradas en el POS) del
+  // día, calculadas DIRECTO del servidor (no por eventos locales, que generaban
+  // condiciones de carrera con el sync). Se suman al arqueo como un overlay.
+  const [webSales, setWebSales] = useState<{ byMethod: Record<string, { amount: number; tip: number; count: number }>; total: number; tips: number; count: number }>({ byMethod: {}, total: 0, tips: 0, count: 0 })
   useEffect(() => {
-    if (!restaurantId || !cashSession) return
+    if (!restaurantId || !cashSession) { setWebSales({ byMethod: {}, total: 0, tips: 0, count: 0 }); return }
     let cancelled = false
-    ;(async () => {
+    const load = async () => {
       try {
         const d = new Date()
         const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${ymd}&to=${ymd}`)
-        if (!res.ok) return
+        if (!res.ok || cancelled) return
         const data = await res.json()
+        const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
+        let total = 0, tips = 0, count = 0
         for (const o of (data.orders ?? [])) {
-          if (cancelled) break
-          const total = Number(o.totalAmount) || 0
-          if (total <= 0 || (Number(o.paidAmount) || 0) < total) continue
-          const type: 'retiro' | 'delivery' = o.isDelivery && (Number(o.deliveryFee) || 0) > 0 ? 'delivery' : 'retiro'
+          const amount = Number(o.totalAmount) || 0
+          if (amount <= 0 || (Number(o.paidAmount) || 0) < amount) continue
           const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
           const pp = rp.posPayment as { method?: string } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
           const method = toPaymentMethod(pp?.method || wp?.method)
-          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method, restaurantId }).catch(() => {})
+          const tip = Number(o.tipAmount) || 0
+          if (!byMethod[method]) byMethod[method] = { amount: 0, tip: 0, count: 0 }
+          byMethod[method].amount += amount; byMethod[method].tip += tip; byMethod[method].count++
+          total += amount; tips += tip; count++
         }
+        if (!cancelled) setWebSales({ byMethod, total, tips, count })
       } catch { /* noop */ }
-    })()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurantId, cashSession?.id, cashSession?.opened_at])
+    }
+    load()
+    const id = setInterval(load, 20000) // refresco en vivo mientras la caja está abierta
+    return () => { cancelled = true; clearInterval(id) }
+  }, [restaurantId, cashSession?.id])
+
+  // Arqueo combinado: cuentas locales del POS (mesas/mostrador/venta rápida) +
+  // ventas del Centro del servidor. Es lo que se muestra y lo que se cierra.
+  const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
+  for (const m of ALL_METHODS) {
+    const a = summary.byMethod[m]; const b = webSales.byMethod[m]
+    if (a || b) byMethod[m] = { amount: (a?.amount ?? 0) + (b?.amount ?? 0), tip: (a?.tip ?? 0) + (b?.tip ?? 0), count: (a?.count ?? 0) + (b?.count ?? 0) }
+  }
+  const totalSales = summary.totalSales + webSales.total
+  const totalTips = summary.totalTips + webSales.tips
+  const closedAccounts = summary.closedAccounts + webSales.count
 
   const goHome = () => navigate('/pos')
 
@@ -109,7 +123,7 @@ export default function CajaPage() {
 
   // ── CLOSE SESSION ────────────────────────────────────────────
 
-  const cashSales = summary.byMethod['efectivo']?.amount ?? 0
+  const cashSales = byMethod['efectivo']?.amount ?? 0
   const openingAmount = cashSession?.initial_amount ?? 0
   const expectedCash = openingAmount + cashSales
   const counted = parseInt(countedCash.replace(/\D/g, ''), 10) || 0
@@ -125,12 +139,12 @@ export default function CajaPage() {
     try {
       if (cashSession) {
         const counted_amounts = ALL_METHODS.reduce((acc, m) => {
-          acc[m] = m === 'efectivo' ? (hasCounted ? counted : expectedCash) : (summary.byMethod[m]?.amount ?? 0)
+          acc[m] = m === 'efectivo' ? (hasCounted ? counted : expectedCash) : (byMethod[m]?.amount ?? 0)
           return acc
         }, {} as Record<PaymentMethod, number>)
 
         const expected_amounts = ALL_METHODS.reduce((acc, m) => {
-          acc[m] = summary.byMethod[m]?.amount ?? 0
+          acc[m] = byMethod[m]?.amount ?? 0
           if (m === 'efectivo') acc[m] = expectedCash
           return acc
         }, {} as Record<PaymentMethod, number>)
@@ -179,10 +193,10 @@ export default function CajaPage() {
       date: now.toLocaleDateString('es-CL'),
       openedAt,
       closedAt: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-      closedAccounts: summary.closedAccounts,
-      methods: ALL_METHODS.map(m => ({ label: METHOD_LABELS[m], amount: summary.byMethod[m]?.amount ?? 0, count: summary.byMethod[m]?.count ?? 0 })),
-      totalTips: summary.totalTips,
-      totalSales: summary.totalSales,
+      closedAccounts,
+      methods: ALL_METHODS.map(m => ({ label: METHOD_LABELS[m], amount: byMethod[m]?.amount ?? 0, count: byMethod[m]?.count ?? 0 })),
+      totalTips,
+      totalSales,
       opening: openingAmount,
       cashSales,
       expectedCash,
@@ -305,12 +319,12 @@ export default function CajaPage() {
 
           {/* ── Resumen por medio ───────────────────── */}
           <div className="pos-eyebrow" style={{ marginBottom: 10 }}>
-            Ventas del turno <b>· {summary.closedAccounts} cuentas</b>
+            Ventas del turno <b>· {closedAccounts} cuentas</b>
           </div>
 
           <div className="pos-mgrid">
             {ALL_METHODS.map(m => {
-              const data = summary.byMethod[m]
+              const data = byMethod[m]
               return (
                 <div key={m} className="pos-mcard">
                   <div className="ml">{METHOD_LABELS[m]}</div>
@@ -321,7 +335,7 @@ export default function CajaPage() {
             })}
             <div className="pos-mcard" style={{ gridColumn: 'span 2' }}>
               <div className="ml">Propinas</div>
-              <div className="mv">${summary.totalTips.toLocaleString('es-CL')}</div>
+              <div className="mv">${totalTips.toLocaleString('es-CL')}</div>
               <div className="mc">Turno completo</div>
             </div>
           </div>
@@ -334,7 +348,7 @@ export default function CajaPage() {
                 <div className="co-s">Sin propinas</div>
               </div>
             </div>
-            <div className="co-v">${summary.totalSales.toLocaleString('es-CL')}</div>
+            <div className="co-v">${totalSales.toLocaleString('es-CL')}</div>
           </div>
 
           {/* ── Arqueo ───────────────────────────────── */}

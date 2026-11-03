@@ -242,9 +242,13 @@ export function useSessionSummary(session: CashSession | undefined, restaurantId
       const allAccounts = await posDb.accounts.toArray()
       // Solo cuentas cerradas del restaurante actual, dentro del turno. Las cuentas
       // viejas sin restaurant_id se incluyen (compatibilidad hacia atrás).
+      // Se excluyen las cuentas `po_` (pedidos del Centro reconciliados): esas
+      // ventas ahora se suman directo del servidor (overlay en la caja), no por
+      // eventos locales, para evitar condiciones de carrera con el sync.
       const sessionAccounts = allAccounts.filter(
         a => a.status === 'cerrada' && a.closed_at && a.closed_at >= session.opened_at
           && (!a.restaurant_id || a.restaurant_id === rid)
+          && !a.id.startsWith('po_')
       )
 
       const byMethod: Record<string, SessionMethodSummary> = {}
