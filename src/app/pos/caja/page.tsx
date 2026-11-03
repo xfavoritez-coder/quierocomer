@@ -180,6 +180,12 @@ export default function CajaPage() {
   const openedAt = cashSession?.opened_at
     ? new Date(cashSession.opened_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
     : '--:--'
+  // "Hoy" solo si la apertura fue hoy; si el turno cruzó la medianoche, mostrar la fecha.
+  const openedDayLabel = cashSession?.opened_at
+    ? (new Date(cashSession.opened_at).toDateString() === new Date().toDateString()
+        ? 'Hoy'
+        : new Date(cashSession.opened_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }))
+    : 'Hoy'
 
   const diffColor = !hasCounted
     ? 'var(--ink-3)'
@@ -314,7 +320,7 @@ export default function CajaPage() {
               </div>
               <div>
                 <div className="co-t">Apertura de caja</div>
-                <div className="co-s">Hoy · {openedAt}</div>
+                <div className="co-s">{openedDayLabel} · {openedAt}</div>
               </div>
             </div>
             <div className="co-v">${openingAmount.toLocaleString('es-CL')}</div>
