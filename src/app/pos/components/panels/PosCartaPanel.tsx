@@ -164,7 +164,7 @@ export default function PosCartaPanel({ restaurantId, title, onDone }: { restaur
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {activeBusy ? '…' : isHidden ? 'Oculto' : 'Ocultar'}
+                        {activeBusy ? '…' : isHidden ? 'Mostrar' : 'Ocultar'}
                       </button>
                     </div>
                   )
