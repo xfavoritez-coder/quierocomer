@@ -6,6 +6,34 @@ import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
+import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
+
+// Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
+// reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
+// al confirmarse el pago). Throttle por local para no correr en cada poll.
+const lastBackfill = new Map<string, number>();
+async function backfillMirror(restaurantId: string): Promise<void> {
+  if (Date.now() - (lastBackfill.get(restaurantId) ?? 0) < 25_000) return;
+  lastBackfill.set(restaurantId, Date.now());
+  const since = new Date(Date.now() - 6 * 3600_000);
+  const oos = await prisma.onlineOrder.findMany({
+    where: {
+      restaurantId, source: "ecommerce", createdAt: { gte: since },
+      status: { in: ["ACCEPTED", "PREPARING", "READY", "IN_DELIVERY"] },
+    },
+    select: { id: true },
+    take: 60,
+  });
+  if (!oos.length) return;
+  const existing = new Set(
+    (await prisma.posOrder.findMany({
+      where: { restaurantId, externalId: { in: oos.map((o) => `oo-${o.id}`) } },
+      select: { externalId: true },
+    })).map((p) => p.externalId),
+  );
+  const missing = oos.filter((o) => !existing.has(`oo-${o.id}`));
+  for (const o of missing) await mirrorOnlineOrderToCentro(o.id, "web").catch(() => {});
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +103,11 @@ export async function GET(req: NextRequest) {
     where.posStatus = { not: "canceled" };
     where.opsStage = { not: "delivered" };
   }
+
+  // Antes de listar el board de activos, auto-repara el espejo (crea los PosOrder
+  // de pedidos activos que se hayan quedado sin espejar). Se espera para que
+  // aparezcan en esta misma respuesta.
+  if (scope === "activos") await backfillMirror(restaurantId).catch(() => {});
 
   const orders = await prisma.posOrder.findMany({
     where,
