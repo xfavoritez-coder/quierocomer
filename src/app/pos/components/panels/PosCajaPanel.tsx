@@ -18,6 +18,7 @@ import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
+import PosCajaHistorial from '../PosCajaHistorial'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -45,6 +46,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   const [opening, setOpening] = useState(false)
   const [closing, setClosing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [showHistorial, setShowHistorial] = useState(false)
 
   useEffect(() => {
     if (restaurantId) setRestaurantId(restaurantId)
@@ -98,6 +100,19 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
 
   const goHome = () => onDone?.()
 
+  // Botón de acceso al historial de cierres (va arriba, en ambos estados de caja).
+  const historialBtn = (
+    <button
+      onClick={() => setShowHistorial(true)}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+      </svg>
+      Historial
+    </button>
+  )
+
   const handleOpen = async () => {
     const parsed = parseInt(initialAmount.replace(/\D/g, ''), 10)
     const amount = Number.isFinite(parsed) ? parsed : 0
@@ -144,6 +159,9 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
           expected_amounts,
           difference: hasCounted ? difference : 0,
           note: closingNote || undefined,
+          total_sales: totalSales,
+          total_tips: totalTips,
+          closed_accounts: closedAccounts,
         })
 
         if (getBridgeUrl()) {
@@ -202,6 +220,25 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     else toast.error(r.error || 'No se pudo imprimir')
   }
 
+  // ── Vista de historial de cierres ───────────────────────────
+  if (showHistorial) {
+    return (
+      <div className="pos-scroll">
+        <div className="pos-caja-wrap">
+          <button
+            onClick={() => setShowHistorial(false)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px 6px 6px', marginBottom: 14, borderRadius: 999, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 6l-6 6 6 6"/></svg>
+            Volver a la caja
+          </button>
+          <p className="pos-inner-title" style={{ marginBottom: 14 }}>Historial de cierres</p>
+          <PosCajaHistorial restaurantId={restaurantId} />
+        </div>
+      </div>
+    )
+  }
+
   if (restLoading && !cashSession) {
     return (
       <div className="pos-scroll">
@@ -218,7 +255,10 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     return (
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
-          {title && <p className="pos-inner-title">{title}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+            {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
+            {historialBtn}
+          </div>
           <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
             <div className="ring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -268,7 +308,10 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   return (
     <div className="pos-scroll">
       <div className="pos-caja-wrap">
-        {title && <p className="pos-inner-title">{title}</p>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+          {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
+          {historialBtn}
+        </div>
         {/* ── Apertura ───────────────────────────── */}
         <div className="pos-caja-open">
           <div className="co-l">
