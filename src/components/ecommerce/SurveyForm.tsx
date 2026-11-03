@@ -88,7 +88,7 @@ export default function SurveyForm(props: Props) {
 
             <div style={{ marginTop: 20 }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: "#666", margin: "0 0 6px" }}>Comentario (opcional)</p>
-              <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="Cuéntanos qué te pareció…"
+              <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="¿Algo que te gustaría comentar o mejorar?"
                 style={{ width: "100%", boxSizing: "border-box", resize: "vertical", borderRadius: 12, border: "1px solid #ddd", padding: "10px 12px", fontSize: 14, fontFamily: FB, outline: "none" }} />
             </div>
 

@@ -37,7 +37,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
   const firstName = (args.customerName || "").trim().split(/\s+/)[0] || "";
   const vars = { nombre: firstName, local: args.storeName };
   const subjectTpl = fillVars(args.survey.subject, vars);
-  const subject = subjectTpl || (firstName ? `${firstName}, ¿cómo estuvo tu pedido en ${args.storeName}?` : `¿Cómo estuvo tu pedido en ${args.storeName}?`);
+  const subject = subjectTpl || (firstName ? `${firstName}, ¿cómo estuvo tu pedido?` : `¿Cómo estuvo tu pedido?`);
   const accent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(args.accent) ? args.accent : "#e63946";
 
   const from = `${args.storeName} <hola@quierocomer.cl>`;
@@ -46,9 +46,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
   const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo todo?` : `¿Cómo estuvo todo?`;
-  const cuerpo = firstName
-    ? `Tu pedido en <strong>${esc(args.storeName)}</strong> ya está entregado. Tu opinión nos ayuda a seguir mejorando — y solo toma 30 segundos.`
-    : `Tu pedido en <strong>${esc(args.storeName)}</strong> ya está entregado. Cuéntanos cómo fue — solo toma 30 segundos.`;
+  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti. Solo toma un momento.`;
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
