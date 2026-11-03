@@ -81,7 +81,7 @@ export default function CajaPage() {
           const pp = rp.posPayment as { method?: string } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
           const method = toPaymentMethod(pp?.method || wp?.method)
-          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method }).catch(() => {})
+          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method, restaurantId }).catch(() => {})
         }
       } catch { /* noop */ }
     })()

@@ -149,13 +149,21 @@ export async function registerExternalPayment(opts: {
   amount: number
   tip: number
   method: PaymentMethod
+  /** Restaurante dueño del cobro (para la clave y la etiqueta). Por defecto el actual. */
+  restaurantId?: string
   /** Hora real del pedido (ISO o epoch). Si se pasa, la cuenta se abre/cierra con
    *  esa fecha, de modo que el arqueo la ubica en el turno que corresponde. */
   at?: string | number
 }): Promise<boolean> {
-  const accountId = `po_${opts.orderId}`
-  const existing = await posDb.accounts.get(accountId)
-  if (existing) return false
+  const rid = opts.restaurantId || _restaurantId
+  // Clave de idempotencia POR restaurante: evita que una cuenta mal etiquetada
+  // (p.ej. creada con el restaurante equivocado) bloquee el registro correcto.
+  const accountId = `po_${rid}_${opts.orderId}`
+  if (await posDb.accounts.get(accountId)) return false
+  // Compatibilidad: si existe la clave vieja `po_<orderId>` y es del MISMO
+  // restaurante, ya estaba contada (cobro manual previo) → no duplicar.
+  const legacy = await posDb.accounts.get(`po_${opts.orderId}`)
+  if (legacy && legacy.restaurant_id === rid) return false
   const account_type: AccountType = opts.type === 'delivery' ? 'delivery' : 'retiro'
   const atIso = opts.at != null ? new Date(opts.at).toISOString() : undefined
   await createEvent('account_opened', { account_id: accountId, account_type, customer_name: opts.customerName }, atIso)

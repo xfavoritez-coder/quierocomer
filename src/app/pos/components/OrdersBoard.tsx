@@ -233,7 +233,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
       // en el POS, registrarlo en la caja al cerrarlo para que sume en el arqueo.
       // Idempotente por orderId: no duplica si ya estaba registrado.
       if (paid) {
-        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: order.tipAmount || 0, method: paidMethodOf(order) }).catch(() => {})
+        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: order.tipAmount || 0, method: paidMethodOf(order), restaurantId }).catch(() => {})
       }
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -260,7 +260,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
       })
       if (r.ok) {
         // Registrar en la caja del POS (cuenta cerrada con el pago) para el arqueo.
-        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: tipNum, method }).catch(() => {})
+        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: tipNum, method, restaurantId }).catch(() => {})
         onPaid()
       }
     } catch { /* noop */ }
