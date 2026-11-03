@@ -156,19 +156,30 @@ export async function registerExternalPayment(opts: {
   at?: string | number
 }): Promise<boolean> {
   const rid = opts.restaurantId || _restaurantId
-  // Clave de idempotencia POR restaurante: evita que una cuenta mal etiquetada
-  // (p.ej. creada con el restaurante equivocado) bloquee el registro correcto.
-  const accountId = `po_${rid}_${opts.orderId}`
-  if (await posDb.accounts.get(accountId)) return false
   // Compatibilidad: si existe la clave vieja `po_<orderId>` y es del MISMO
   // restaurante, ya estaba contada (cobro manual previo) → no duplicar.
   const legacy = await posDb.accounts.get(`po_${opts.orderId}`)
   if (legacy && legacy.restaurant_id === rid) return false
   const account_type: AccountType = opts.type === 'delivery' ? 'delivery' : 'retiro'
   const atIso = opts.at != null ? new Date(opts.at).toISOString() : undefined
-  await createEvent('account_opened', { account_id: accountId, account_type, customer_name: opts.customerName }, atIso)
-  await createEvent('payment_recorded', { payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method }, atIso)
-  await createEvent('account_closed', { account_id: accountId }, atIso)
+  // Clave de idempotencia POR restaurante.
+  const accountId = `po_${rid}_${opts.orderId}`
+  const existing = await posDb.accounts.get(accountId)
+  // AUTO-REPARABLE: si la cuenta quedó a medio hacer (p.ej. la reconciliación se
+  // interrumpió entre los 3 eventos), se completan las partes faltantes en vez de
+  // dejarla sin pago o sin cerrar para siempre.
+  const hasPayment = (existing?.payments?.length ?? 0) > 0
+  const isClosed = existing?.status === 'cerrada'
+  if (existing && hasPayment && isClosed) return false // ya está completa
+  if (!existing) {
+    await createEvent('account_opened', { account_id: accountId, account_type, customer_name: opts.customerName }, atIso)
+  }
+  if (!hasPayment) {
+    await createEvent('payment_recorded', { payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method }, atIso)
+  }
+  if (!isClosed) {
+    await createEvent('account_closed', { account_id: accountId }, atIso)
+  }
   return true
 }
 
