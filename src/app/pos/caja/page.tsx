@@ -114,6 +114,21 @@ export default function CajaPage() {
 
   const goHome = () => navigate('/pos')
 
+  // Botón de acceso al historial de cierres (va en el header, en ambos estados).
+  const historialBtn = (
+    <button
+      onClick={() => navigate('/pos/caja/historial')}
+      className="pos-pending-btn"
+      title="Historial de cierres de caja"
+      style={{ background: 'var(--surface)', color: 'var(--ink-2)', border: '1px solid var(--line)' }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+      </svg>
+      Historial
+    </button>
+  )
+
   // ── OPEN SESSION ─────────────────────────────────────────────
 
   const handleOpen = async () => {
@@ -167,6 +182,9 @@ export default function CajaPage() {
           expected_amounts,
           difference: hasCounted ? difference : 0,
           note: closingNote || undefined,
+          total_sales: totalSales,
+          total_tips: totalTips,
+          closed_accounts: closedAccounts,
         })
 
         // Impresión automática del cierre por el agente (mismo que las comandas).
@@ -252,7 +270,7 @@ export default function CajaPage() {
   if (!cashSession) {
     return (
       <div className="pos-shell">
-        <PosHeader mode="back" eyebrow="Caja" subtitle="Sin sesión activa" syncing={syncing} onBack={goHome} />
+        <PosHeader mode="back" eyebrow="Caja" subtitle="Sin sesión activa" syncing={syncing} onBack={goHome} rightSlot={historialBtn} />
         <div className="pos-scroll">
           <div className="pos-caja-wrap">
             <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
@@ -311,6 +329,7 @@ export default function CajaPage() {
         subtitle={`Turno desde las ${openedAt}`}
         syncing={syncing}
         onBack={goHome}
+        rightSlot={historialBtn}
       />
 
       <div className="pos-scroll">

@@ -39,6 +39,7 @@ export {
   useOpenAccounts,
   useAccount,
   useOpenCashSession,
+  useClosedCashSessions,
   useSessionSummary,
   useRecentEvents,
   useCatalog,

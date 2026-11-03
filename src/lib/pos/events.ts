@@ -377,6 +377,9 @@ export async function projectEvent(event: PosEvent): Promise<void> {
         expected_amounts: d.expected_amounts,
         difference: d.difference,
         note: d.note,
+        total_sales: d.total_sales,
+        total_tips: d.total_tips,
+        closed_accounts: d.closed_accounts,
         is_open: false,
       })
       break

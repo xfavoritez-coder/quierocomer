@@ -124,6 +124,11 @@ export interface CashSessionClosedPayload {
   expected_amounts: Record<string, number>
   difference: number
   note?: string
+  // Snapshot del turno (para el historial y la reimpresión). Opcionales: los
+  // cierres viejos no los traen y el historial los recalcula desde los montos.
+  total_sales?: number
+  total_tips?: number
+  closed_accounts?: number
 }
 
 export interface TablesConfiguredPayload {
@@ -214,6 +219,9 @@ export interface CashSession {
   expected_amounts?: Record<string, number>
   difference?: number
   note?: string
+  total_sales?: number
+  total_tips?: number
+  closed_accounts?: number
   is_open: boolean
 }
 

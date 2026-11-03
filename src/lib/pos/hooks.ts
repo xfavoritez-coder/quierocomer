@@ -145,6 +145,23 @@ export function useOpenCashSession(restaurantId?: string): CashSession | null | 
   )
 }
 
+// Historial de cierres: sesiones de caja ya cerradas de este local, de la más
+// reciente a la más antigua. Sirve para el "Historial de ventas" en la caja.
+export function useClosedCashSessions(restaurantId?: string, limit = 90): CashSession[] {
+  const rid = restaurantId ?? getRestaurantId()
+  return useDexieQuery(
+    async () => {
+      const all = await posDb.cashSessions.filter(s => !s.is_open && !!s.closed_at).toArray()
+      // Igual que useOpenCashSession: solo este local (o sesiones viejas sin restaurant_id).
+      const mine = all.filter(s => !s.restaurant_id || s.restaurant_id === rid)
+      mine.sort((a, b) => (b.closed_at || '').localeCompare(a.closed_at || ''))
+      return mine.slice(0, limit)
+    },
+    [rid, limit],
+    []
+  )
+}
+
 // ── Catalog ──────────────────────────────────────────────────────
 
 type CatalogCategory = { id: string; name: string; position: number }
