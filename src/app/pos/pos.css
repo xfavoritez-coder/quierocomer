@@ -309,7 +309,7 @@
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
-.pos-tab{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;flex-shrink:0}
+.pos-tab{display:flex;align-items:center;gap:5px;padding:8px 16px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;flex-shrink:0}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
 .pos-tab.on{background:var(--amber-tint-2);color:var(--amber-press)}
 .pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:#1c1b19;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;padding:0 5px}
@@ -397,6 +397,7 @@
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){
   .pos-brand-store{display:none}
+  .pos-tab{padding:7px 12px;font-size:13px}
   .pos-cmd{display:block;overflow-y:auto;overflow-x:hidden}
   .pos-cats{width:auto;flex-direction:row;overflow-x:auto;overflow-y:visible;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--surface)}
   .pos-cats::-webkit-scrollbar{display:none}
