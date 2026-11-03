@@ -8,14 +8,19 @@
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
 
 /* ---------- top bar ---------- */
-.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:60px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
-.pos-bar.has-center{display:grid;grid-template-columns:auto 1fr auto;gap:12px}
-.pos-bar-center{display:flex;align-items:center;justify-content:center}
-.pos-tabs-bar{display:flex;align-items:center;gap:4px}
+.pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:60px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
+.pos-bar.has-center{display:grid;grid-template-columns:minmax(0,auto) 1fr minmax(0,auto);gap:8px;align-items:center}
+.pos-bar-center{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.pos-tabs-bar{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pos-tabs-bar::-webkit-scrollbar{display:none}
+/* Logo y hamburger nunca se comprimen */
+.pos-brand{flex-shrink:0;display:flex;align-items:center;gap:8px}
+.pos-bar-right{flex-shrink:0;display:flex;align-items:center;gap:10px}
 .pos-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .pos-brand .mk{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;box-shadow:0 2px 8px rgba(222,124,0,.35);flex-shrink:0}
 .mk-logo{width:42px;height:42px;object-fit:contain;flex-shrink:0;display:block}
 .pos-brand-text{display:flex;flex-direction:column;gap:0}
+.pos-brand-store{display:flex;flex-direction:column;lineHeight:1.1;border-left:1px solid var(--line);padding-left:10px}
 .pos-brand-text span{font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.15}
 .pos-brand small{font-family:var(--mono);font-weight:500;font-size:10px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
 .pos-bar-right{display:flex;align-items:center;gap:16px}
@@ -291,18 +296,20 @@
 .pos-mesa.cuenta_pedida .mn{color:var(--ink)}
 .pos-mesa.cuenta_pedida .ms{color:#2563eb}
 .pos-mesa.cuenta_pedida .mt{color:#2563eb}
-/* Nombre de la mesa arriba del cuadrado, garzón debajo */
-.pos-mesa-cell{display:flex;flex-direction:column;align-items:center;gap:5px}
-.pos-mesa-cell .pos-mesa{width:100%;min-height:118px}
-.pos-mesa-name{font-family:var(--mono);font-weight:700;font-size:19px;letter-spacing:-.01em;line-height:1;color:var(--ink)}
-.pos-mesa-cell.libre .pos-mesa-name{color:var(--ink-3)}
+/* Mesa cell: número dentro del cuadrado */
+.pos-mesa-cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pos-mesa-cell .pos-mesa{width:100%;min-height:110px}
+/* Número/label grande en la parte superior del cuadrado */
+.pos-mesa-num{font-family:var(--mono);font-weight:800;font-size:26px;letter-spacing:-.03em;line-height:1;color:var(--ink)}
+.pos-mesa.libre .pos-mesa-num{font-size:22px;color:#b8b0a6}
+.pos-mesa.cuenta_pedida .pos-mesa-num{color:#2563eb}
 .pos-mesa-garzon{display:inline-flex;align-items:center;gap:4px;max-width:100%;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--ink-2);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pos-mesa-garzon svg{flex-shrink:0;opacity:.7}
 
 /* ---------- tab bar ---------- */
 .pos-tabs{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
 .pos-tabs::-webkit-scrollbar{display:none}
-.pos-tab{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s}
+.pos-tab{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--ink-2);background:transparent;border:0;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:.14s;flex-shrink:0}
 .pos-tab:hover{background:var(--sunk);color:var(--ink)}
 .pos-tab.on{background:var(--amber-tint-2);color:var(--amber-press)}
 .pos-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:999px;background:#1c1b19;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;padding:0 5px}
@@ -351,7 +358,7 @@
 .pos-drawer-items{flex:1;overflow-y:auto;padding:10px}
 .pos-drawer-item{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:10px;background:transparent;border:0;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;text-align:left;transition:.14s;min-height:44px}
 .pos-drawer-item:hover{background:var(--sunk)}
-.pos-drawer-ic{width:32px;height:32px;border-radius:9px;background:var(--sunk);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.pos-drawer-ic{width:32px;height:32px;border-radius:9px;background:var(--amber-tint);display:grid;place-items:center;color:var(--amber-press);flex:none}
 
 /* ---------- modals (retiro / delivery / pending) ---------- */
 .pos-modal-overlay{position:fixed;inset:0;background:rgba(27,26,23,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -371,7 +378,7 @@
 /* ---------- desktop split layout ---------- */
 /* El grid se aplica inline via JS (useIsDesktop), estos son los estilos de cada columna */
 .pos-split-left{overflow-y:auto;overflow-x:hidden}
-.pos-split-right{border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pos-split-right{border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;position:relative}
 .pos-split-right.empty{background:var(--sunk)}
 /* Mesa seleccionada actualmente en el panel */
 .pos-mesa.panel-active{outline:2px solid var(--amber);outline-offset:2px}
@@ -389,6 +396,7 @@
 
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){
+  .pos-brand-store{display:none}
   .pos-cmd{display:block;overflow-y:auto;overflow-x:hidden}
   .pos-cats{width:auto;flex-direction:row;overflow-x:auto;overflow-y:visible;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--surface)}
   .pos-cats::-webkit-scrollbar{display:none}
@@ -409,7 +417,8 @@
 /* Móvil: mínimo 3 mesas por fila */
 @media(max-width:480px){
   .pos-mesa-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .pos-mesa-cell .pos-mesa{min-height:96px;padding:8px 6px}
-  .pos-mesa-name{font-size:16px}
+  .pos-mesa-cell .pos-mesa{min-height:90px;padding:8px 6px}
+  .pos-mesa-num{font-size:20px}
+  .pos-mesa.libre .pos-mesa-num{font-size:17px}
   .pos-mesa-garzon{font-size:10px}
 }

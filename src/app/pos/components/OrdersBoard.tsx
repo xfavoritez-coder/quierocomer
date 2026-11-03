@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
+import { useIsDesktop } from '../lib/useIsDesktop'
 
-type OrderType = 'retiro' | 'delivery'
+type OrderType = 'retiro' | 'delivery' | 'todos'
 
 const TEST_USER_ID = 'pos-garzon'
 
-// Métodos de pago del POS (para que el arqueo cuadre por método)
 const METHODS: { id: PaymentMethod; label: string }[] = [
   { id: 'efectivo', label: 'Efectivo' },
   { id: 'debito', label: 'Débito' },
@@ -46,23 +46,353 @@ const STAGE_LABEL: Record<string, string> = {
   delivered: 'Entregado',
 }
 
+const STAGE_COLOR: Record<string, string> = {
+  preparing: '#f59e0b',
+  ready: '#16a34a',
+  out_for_delivery: '#3b82f6',
+  delivered: '#6b7280',
+}
+
+function nextAction(stage: string, isDelivery: boolean): { label: string; stage: string } | null {
+  if (stage === 'preparing') return { label: 'Listo', stage: 'ready' }
+  if (stage === 'ready' && isDelivery) return { label: 'Enviar a reparto', stage: 'out_for_delivery' }
+  if (stage === 'ready' && !isDelivery) return { label: 'Entregado', stage: 'delivered' }
+  if (stage === 'out_for_delivery') return { label: 'Entregado', stage: 'delivered' }
+  return null
+}
+
+function prevAction(stage: string): { label: string; stage: string } | null {
+  if (stage === 'ready') return { label: 'Volver a preparación', stage: 'preparing' }
+  if (stage === 'out_for_delivery') return { label: 'Volver a listo', stage: 'ready' }
+  return null
+}
+
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
 
-function itemLines(items: unknown): { name: string; qty: number }[] {
+function itemLines(items: unknown): { name: string; qty: number; price: number }[] {
   if (!Array.isArray(items)) return []
   return items.map((it) => {
     const o = (it || {}) as Record<string, unknown>
     const name = String(o.name ?? o.productName ?? o.title ?? o.description ?? 'Ítem')
     const qty = Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1
-    return { name, qty }
+    const price = Number(o.price ?? o.unitPrice ?? o.unit_price ?? o.precio ?? 0) || 0
+    return { name, qty, price }
   })
 }
 
+function timeSince(iso: string) {
+  const d = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(d / 60000)
+  if (m < 1) return '< 1 min'
+  if (m < 60) return `${m} min`
+  return `${Math.floor(m / 60)}h ${m % 60}m`
+}
+
+// ── Order card ──────────────────────────────────────────────────────
+
+function OrderCard({
+  order, isSelected, showTypeChip, stageBusy, isDesktop,
+  onSelect, onStageChange,
+}: {
+  order: PosOrderLite
+  isSelected: boolean
+  showTypeChip: boolean
+  stageBusy: string | null
+  isDesktop: boolean
+  onSelect: () => void
+  onStageChange: (o: PosOrderLite, stage: string) => void
+}) {
+  const paid = isPaid(order)
+  const lines = itemLines(order.items)
+  const qty = lines.reduce((s, l) => s + l.qty, 0)
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
+  const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+  const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
+  const next = nextAction(order.opsStage, isDelivery)
+  const busy = stageBusy === order.id
+
+  return (
+    <div
+      style={{
+        background: isSelected ? 'var(--amber-tint)' : 'var(--surface)',
+        border: `1px solid ${isSelected ? 'var(--amber)' : 'var(--line)'}`,
+        borderLeft: `3px solid ${typeColor}`,
+        borderRadius: 14, padding: '12px 14px', cursor: 'pointer',
+        boxShadow: 'var(--sh-1)', fontFamily: 'var(--sans)',
+        display: 'flex', flexDirection: 'column', gap: 6,
+        transition: 'border-color .12s, background .12s',
+      }}
+      onClick={onSelect}
+    >
+      {/* Row 1: nombre + chips */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', lineHeight: 1.2 }}>
+          {order.customerName || 'Cliente'}
+        </div>
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {showTypeChip && (
+            <span style={chip(typeColor)}>{typeLabel}</span>
+          )}
+          <span style={chip(paid ? '#16a34a' : '#f59e0b')}>
+            {paid ? 'Pagado' : 'Por cobrar'}
+          </span>
+        </div>
+      </div>
+
+      {/* Vendor */}
+      {order.vendorName && (
+        <span style={{ alignSelf: 'flex-start', fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 7px' }}>
+          {order.vendorName}
+        </span>
+      )}
+
+      {/* Row 2: items + stage + total */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-2)', minWidth: 0 }}>
+          {qty > 0 ? `${qty} ítem${qty !== 1 ? 's' : ''} · ` : ''}
+          <span style={{ color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-3)', fontWeight: 600 }}>
+            {STAGE_LABEL[order.opsStage] ?? order.opsStage}
+          </span>
+        </div>
+        <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', flexShrink: 0 }}>
+          {clp(order.totalAmount)}
+        </span>
+      </div>
+
+      {/* Quick stage button — only on mobile */}
+      {next && !isDesktop && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }} onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => onStageChange(order, next.stage)}
+            disabled={busy}
+            style={{
+              fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8, border: 'none',
+              background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
+              cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
+            }}
+          >
+            {busy ? '…' : next.label + ' →'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Order detail panel ──────────────────────────────────────────────
+
+function OrderDetailPanel({
+  order, restaurantId, cajaOpen, stageBusy, onStageChange, onCobro, onClose, onPaid, navigate,
+}: {
+  order: PosOrderLite
+  restaurantId: string
+  cajaOpen: boolean
+  stageBusy: string | null
+  onStageChange: (o: PosOrderLite, stage: string) => void
+  onCobro: () => void
+  onClose: () => void
+  onPaid: () => void
+  navigate: (path: string) => void
+}) {
+  const paid = isPaid(order)
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const next = nextAction(order.opsStage, isDelivery)
+  const lines = itemLines(order.items)
+  const busy = stageBusy === order.id
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [canceling, setCanceling] = useState(false)
+  const [finalizing, setFinalizing] = useState(false)
+
+  const handleCancel = async () => {
+    setCanceling(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, action: 'cancel', reason: cancelReason.trim() }),
+      })
+      if (r.ok) onPaid()
+    } catch { }
+    setCanceling(false)
+  }
+
+  const handleFinalize = async () => {
+    setFinalizing(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, opsStage: 'delivered' }),
+      })
+      if (r.ok) onPaid()
+    } catch { }
+    setFinalizing(false)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 18px 12px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 17, color: 'var(--ink)', lineHeight: 1.2 }}>
+            {order.customerName || 'Cliente'}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
+            {isDelivery ? 'Delivery' : 'Retiro'} · hace {timeSince(order.createdAt)}
+          </div>
+        </div>
+        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Customer info */}
+        {(order.customerPhone || (isDelivery && order.addressLine)) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {order.customerPhone && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ink-2)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                {order.customerPhone}
+              </div>
+            )}
+            {isDelivery && order.addressLine && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--ink-2)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 1, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {order.addressLine}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Items */}
+        <div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 8 }}>Ítems</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {lines.length > 0 ? lines.map((l, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
+                <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 5 }}>{l.qty}×</span>
+                  {l.name}
+                </span>
+                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
+              </div>
+            )) : (
+              <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>Sin detalle de ítems</div>
+            )}
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {order.deliveryFee > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--ink-2)' }}>
+              <span>Despacho</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>
+            <span>Total</span>
+            <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
+          </div>
+          {paid && order.tipAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#16a34a' }}>
+              <span>Propina</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.tipAmount)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Stage */}
+        {(() => {
+          const prev = prevAction(order.opsStage)
+          return (
+            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 8 }}>Etapa</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (next || prev) ? 10 : 0 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
+                  {STAGE_LABEL[order.opsStage] ?? order.opsStage}
+                </span>
+              </div>
+              {next && (
+                <button
+                  onClick={() => onStageChange(order, next.stage)}
+                  disabled={busy}
+                  style={{
+                    width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none',
+                    background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
+                    fontWeight: 700, fontSize: 14, cursor: busy ? 'default' : 'pointer',
+                    opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  {busy ? 'Actualizando…' : `${next.label} →`}
+                </button>
+              )}
+              {prev && (
+                <button
+                  onClick={() => onStageChange(order, prev.stage)}
+                  disabled={busy}
+                  style={{
+                    width: '100%', marginTop: 6, padding: '8px 14px', borderRadius: 10,
+                    border: '1px solid var(--line)', background: 'transparent',
+                    color: 'var(--ink-3)', fontWeight: 600, fontSize: 13,
+                    cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                    fontFamily: 'var(--sans)',
+                  }}
+                >
+                  ← {prev.label}
+                </button>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Payment action */}
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+          {paid ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#16a34a', fontWeight: 700, fontSize: 14 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Pagado
+              </div>
+              <button
+                onClick={handleFinalize}
+                disabled={finalizing}
+                style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--ink)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: finalizing ? 0.6 : 1, fontFamily: 'var(--sans)' }}
+              >
+                {finalizing ? 'Cerrando…' : 'Cerrar pedido'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } onCobro() }}
+              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+            >
+              {cajaOpen ? 'Cobrar →' : 'Abrir caja →'}
+            </button>
+          )}
+        </div>
+
+        {/* Anular */}
+        <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ──────────────────────────────────────────────────
+
 export default function OrdersBoard({ restaurantId, type }: { restaurantId: string; type: OrderType }) {
+  const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<PosOrderLite | null>(null)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
-  const [needCaja, setNeedCaja] = useState(false)
+  const [stageBusy, setStageBusy] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
   const cashSession = useOpenCashSession(restaurantId)
@@ -77,8 +407,12 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
     try {
       const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
       const d = await r.json()
-      if (r.ok && Array.isArray(d.orders)) setOrders(d.orders)
-    } catch { /* noop */ }
+      if (r.ok && Array.isArray(d.orders)) {
+        setOrders(d.orders)
+        // Keep selected in sync
+        setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
+      }
+    } catch { }
     setLoading(false)
   }, [restaurantId])
 
@@ -91,107 +425,155 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
 
   const list = useMemo(() => {
     return orders.filter((o) => {
+      if (type === 'todos') return true
       const deliv = o.isDelivery || o.saleType === 'delivery'
       if (type === 'delivery') return deliv
-      // Retiro: pickup y todo lo que no sea delivery ni consumo en local
       return !deliv && o.saleType !== 'dine-in' && o.saleType !== 'dinein'
     })
   }, [orders, type])
 
-  const accent = type === 'delivery' ? 'var(--amber)' : 'var(--ink)'
+  const changeStage = async (order: PosOrderLite, stage: string) => {
+    setStageBusy(order.id)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, opsStage: stage }),
+      })
+      if (r.ok) {
+        if (stage === 'delivered') setSelected(null)
+        fetchOrders()
+      }
+    } catch { }
+    setStageBusy(null)
+  }
 
-  return (
-    <div className="pos-pad">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
-          {type === 'delivery' ? 'Delivery' : 'Retiro'} · {list.length}
-        </div>
-        <button onClick={fetchOrders} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
-          Actualizar
-        </button>
-      </div>
+  const newOrderLabel = type === 'delivery' ? 'Nuevo delivery' : type === 'retiro' ? 'Nuevo retiro' : 'Nuevo pedido'
 
-      {!cajaOpen && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', background: 'rgba(222,124,0,.08)', border: '1px solid #f0e0c0', borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
-          <span style={{ fontSize: 13, color: 'var(--amber-press)', fontWeight: 600 }}>
-            Caja cerrada · abre la caja para poder cobrar y que el pago entre al arqueo.
-          </span>
-          <button onClick={() => navigate('/pos/caja')} style={{ flexShrink: 0, border: 0, background: 'var(--amber)', color: '#fff', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}>Abrir caja</button>
-        </div>
-      )}
-
-      {loading && orders.length === 0 ? (
-        <div className="pos-empty" style={{ minHeight: 200 }}>
-          <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '3px solid var(--line)', borderTopColor: 'var(--amber)' }} />
-        </div>
-      ) : list.length === 0 ? (
-        <div className="pos-empty" style={{ minHeight: 200 }}>
-          <div className="ring">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
+  const listSection = (
+    <div className="pos-scroll">
+      <div className="pos-pad">
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+            {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
           </div>
-          <p>Sin pedidos de {type === 'delivery' ? 'delivery' : 'retiro'} activos.</p>
+          <button
+            onClick={() => navigate('/pos/tomar-pedido')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            {newOrderLabel}
+          </button>
         </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(270px,1fr))', gap: 12 }}>
-          {list.map((o) => {
-            const paid = isPaid(o)
-            const lines = itemLines(o.items)
-            const qty = lines.reduce((s, l) => s + l.qty, 0)
-            return (
-              <button
+
+        {/* List */}
+        {loading && orders.length === 0 ? (
+          <div className="pos-empty" style={{ minHeight: 200 }}>
+            <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '3px solid var(--line)', borderTopColor: 'var(--amber)' }} />
+          </div>
+        ) : list.length === 0 ? (
+          <div className="pos-empty" style={{ minHeight: 200 }}>
+            <div className="ring">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
+            </div>
+            <p>Sin pedidos activos.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {list.map((o) => (
+              <OrderCard
                 key={o.id}
-                onClick={() => { if (!paid && !cajaOpen) { setNeedCaja(true); return } setCobro(o) }}
-                style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--line)', borderLeft: `3px solid ${accent}`, borderRadius: 14, padding: 14, cursor: 'pointer', boxShadow: 'var(--sh-1)', display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'var(--sans)' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', lineHeight: 1.2 }}>{o.customerName || 'Cliente'}</div>
-                  <span style={{ flexShrink: 0, fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '3px 7px', borderRadius: 6, background: paid ? 'rgba(22,163,74,.12)' : 'rgba(222,124,0,.12)', color: paid ? '#16a34a' : 'var(--amber-press)' }}>
-                    {paid ? 'Pagado' : 'Por cobrar'}
-                  </span>
-                </div>
-                {o.vendorName && (
-                  <span style={{ alignSelf: 'flex-start', fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 7px' }}>{o.vendorName}</span>
-                )}
-                {o.customerPhone && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{o.customerPhone}</div>}
-                {type === 'delivery' && o.addressLine && <div style={{ fontSize: 12, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.addressLine}</div>}
-                <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-                  {lines.length > 0 ? `${qty} ítem${qty !== 1 ? 's' : ''} · ` : ''}
-                  <span style={{ color: 'var(--ink-3)' }}>{STAGE_LABEL[o.opsStage] || o.opsStage}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 19, color: 'var(--ink)' }}>{clp(o.totalAmount)}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: paid ? '#16a34a' : accent }}>{paid ? 'Cerrar →' : 'Cobrar →'}</span>
-                </div>
-              </button>
-            )
-          })}
+                order={o}
+                isSelected={selected?.id === o.id}
+                showTypeChip={type === 'todos'}
+                stageBusy={stageBusy}
+                isDesktop={isDesktop}
+                onSelect={() => {
+                  if (isDesktop) {
+                    setSelected(prev => prev?.id === o.id ? null : o)
+                  } else {
+                    setSelected(o)
+                  }
+                }}
+                onStageChange={changeStage}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  const detailSection = selected ? (
+    <OrderDetailPanel
+      order={selected}
+      restaurantId={restaurantId}
+      cajaOpen={cajaOpen}
+      stageBusy={stageBusy}
+      onStageChange={changeStage}
+      onCobro={() => setCobro(selected)}
+      onClose={() => setSelected(null)}
+      onPaid={() => { setSelected(null); fetchOrders() }}
+      navigate={navigate}
+    />
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17"/>
+        <circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/>
+      </svg>
+      <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona un pedido</span>
+    </div>
+  )
+
+  // Desktop: split layout
+  if (isDesktop) {
+    return (
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' }}>
+        {listSection}
+        <div className={`pos-split-right${selected ? '' : ' empty'}`}>
+          {detailSection}
+        </div>
+        {cobro && (
+          <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+        )}
+      </div>
+    )
+  }
+
+  // Mobile: list + modal for detail
+  return (
+    <>
+      {listSection}
+      {selected && (
+        <div className="pos-modal-overlay" onClick={() => setSelected(null)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
+          >
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+            <OrderDetailPanel
+              order={selected}
+              restaurantId={restaurantId}
+              cajaOpen={cajaOpen}
+              stageBusy={stageBusy}
+              onStageChange={changeStage}
+              onCobro={() => { setCobro(selected); setSelected(null) }}
+              onClose={() => setSelected(null)}
+              onPaid={() => { setSelected(null); fetchOrders() }}
+              navigate={navigate}
+            />
+          </div>
         </div>
       )}
-
       {cobro && (
         <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
       )}
-
-      {needCaja && (
-        <div className="pos-modal-overlay" onClick={() => setNeedCaja(false)}>
-          <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: '100%' }}>
-            <div className="pos-modal-title">Caja cerrada</div>
-            <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>
-              Para cobrar un pedido necesitas tener la caja abierta. Así el pago queda registrado en el arqueo del turno.
-            </p>
-            <div className="pos-modal-actions">
-              <button className="pos-modal-cancel" onClick={() => setNeedCaja(false)}>Cancelar</button>
-              <button className="pos-modal-ok" onClick={() => { setNeedCaja(false); navigate('/pos/caja') }}>Abrir caja</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
 
-// ── Modal de cobro (completo: método, recibido, vuelto, propina) ──────
+// ── Modal de cobro ─────────────────────────────────────────────────
 function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; onClose: () => void; onPaid: () => void }) {
   const total = order.totalAmount || 0
   const paid = isPaid(order)
@@ -202,6 +584,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [canceling, setCanceling] = useState(false)
+  const navigate = usePosNav()
 
   const handleCancel = async () => {
     setCanceling(true)
@@ -210,14 +593,12 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, action: 'cancel', reason: cancelReason.trim() }),
       })
-      if (r.ok) onPaid() // refresca la lista y cierra el modal
-    } catch { /* noop */ }
+      if (r.ok) onPaid()
+    } catch { }
     setCanceling(false)
   }
 
   const [finalizing, setFinalizing] = useState(false)
-  // Cerrar el pedido = marcarlo como entregado (sale de activos y pasa al historial).
-  // El cobro (su monto ya pagado) lo suma la caja directo del servidor, no acá.
   const handleFinalize = async () => {
     setFinalizing(true)
     try {
@@ -225,8 +606,8 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, opsStage: 'delivered' }),
       })
-      if (r.ok) onPaid() // refresca la lista y cierra el modal
-    } catch { /* noop */ }
+      if (r.ok) onPaid()
+    } catch { }
     setFinalizing(false)
   }
 
@@ -234,7 +615,6 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
   const tipNum = parseInt(tip, 10) || 0
   const change = method === 'efectivo' ? Math.max(0, receivedNum - total) : 0
   const canPay = method !== 'efectivo' || receivedNum >= total
-
   const BILLS = [1000, 2000, 5000, 10000, 20000]
 
   const handlePay = async () => {
@@ -244,17 +624,14 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, action: 'pay', method, received: receivedNum, tip: tipNum }),
       })
-      // El pago queda en el pedido del servidor (action:'pay'); la caja lo suma
-      // directo del servidor en el arqueo, sin cuentas locales.
       if (r.ok) onPaid()
-    } catch { /* noop */ }
+    } catch { }
     setSending(false)
   }
 
   const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }
   const num: React.CSSProperties = { fontFamily: 'var(--mono)', fontVariantNumeric: 'tabular-nums' }
 
-  // Pedido ya pagado (p.ej. online): solo lectura, no se re-cobra ni se duplica en caja.
   if (paid) {
     const rp = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload)) ? (order.rawPayload as Record<string, unknown>) : {}
     const pp = (rp.posPayment as { method?: string } | undefined) || undefined
@@ -296,7 +673,6 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
           <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
         </div>
 
-        {/* Método */}
         <label className="pos-modal-label">Método de pago</label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
           {METHODS.map((m) => (
@@ -309,16 +685,14 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
           ))}
         </div>
 
-        {/* Efectivo: recibido + vuelto */}
         {method === 'efectivo' && (
           <>
             <label className="pos-modal-label">Con cuánto paga</label>
-            {/* Doble clic en el campo = "Justo": carga el monto total. */}
             <input type="number" inputMode="numeric" value={received} onChange={(e) => setReceived(e.target.value)} onDoubleClick={() => setReceived(String(total))} placeholder={String(total)}
               style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 16, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
               {BILLS.filter((b) => b >= total).slice(0, 4).map((b) => (
-                <button key={b} onClick={() => setReceived(String(b))} style={chip}>{clp(b)}</button>
+                <button key={b} onClick={() => setReceived(String(b))} style={chipSmall}>{clp(b)}</button>
               ))}
             </div>
             <div style={{ ...row, marginBottom: 6 }}>
@@ -328,7 +702,6 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
           </>
         )}
 
-        {/* Propina */}
         <label className="pos-modal-label">Propina (opcional)</label>
         <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0"
           style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 16, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
@@ -346,7 +719,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
   )
 }
 
-// Bloque "Anular pedido" (dos pasos: botón → confirmación con motivo).
+// ── Anular pedido ───────────────────────────────────────────────────
 function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onConfirm }: {
   confirm: boolean; setConfirm: (v: boolean) => void; reason: string; setReason: (v: string) => void; canceling: boolean; onConfirm: () => void;
 }) {
@@ -372,7 +745,17 @@ function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onCon
   )
 }
 
-const chip: React.CSSProperties = {
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function chip(color: string): React.CSSProperties {
+  return {
+    fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, letterSpacing: '.04em',
+    textTransform: 'uppercase', padding: '3px 6px', borderRadius: 5,
+    background: color + '20', color,
+  }
+}
+
+const chipSmall: React.CSSProperties = {
   padding: '7px 11px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)',
   color: 'var(--ink-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--mono)',
 }

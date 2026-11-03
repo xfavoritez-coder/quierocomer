@@ -233,6 +233,21 @@ model TeamMember {
   @@index([inviteToken])
 }
 
+// Eventos del POS (event sourcing offline-first). Tabla compartida entre
+// dispositivos vía Supabase Realtime. server_seq es asignado por el servidor.
+model PosEvent {
+  event_id        String   @id
+  device_id       String
+  user_id         String
+  restaurant_id   String
+  created_at_local String
+  type            String
+  payload         Json
+  server_seq      Int      @default(autoincrement())
+
+  @@index([restaurant_id, server_seq])
+}
+
 model Restaurant {
   id                         String                    @id @default(cuid())
   slug                       String                    @unique

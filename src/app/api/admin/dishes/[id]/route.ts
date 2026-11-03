@@ -132,6 +132,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const changes = Object.keys(body).filter(k => k !== "restaurantId");
     logActivity(existing.restaurantId, "dish_edit", { dishId: id, dishName: dish.name, fields: changes }, undefined, req);
 
+    // Si el plato es un linkedDish de alguna promo y se actualizaron fotos,
+    // copiar la primera foto a promotion.imageUrl/thumbUrl para que el panel la muestre.
+    if (body.photos !== undefined && dish.photos.length > 0) {
+      await prisma.promotion.updateMany({
+        where: { linkedDishId: id, imageUrl: null },
+        data: { imageUrl: dish.photos[0], thumbUrl: dish.photos[0] },
+      }).catch(() => {});
+    }
+
     try { revalidateQrCache(); } catch {}
     syncDishToMeilisearch(id).catch(() => {});
     return NextResponse.json(dish);

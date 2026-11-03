@@ -25,11 +25,11 @@ export default function PosHeader({
   return (
     <header className={`pos-bar${centerSlot ? ' has-center' : ''}`}>
       {mode === 'brand' ? (
-        <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 } : { display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="QuieroComer" className="mk-logo" />
           {storeName && (
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, borderLeft: '1px solid var(--line)', paddingLeft: 10 }}>
+            <div className="pos-brand-store">
               <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{storeName}</span>
               {branchName && <span style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12, color: 'var(--ink-3)' }}>{branchName}</span>}
             </div>

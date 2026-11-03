@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -20,7 +20,6 @@ import {
 import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
-import CentroPedidosPage from '@/app/(panel)/panel/centro-pedidos/page'
 import { supabase } from '@/lib/supabase'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant } from './lib/usePosRestaurant'
@@ -29,10 +28,25 @@ import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
 import OrdersBoard from './components/OrdersBoard'
+import PosCartaPanel from './components/panels/PosCartaPanel'
+import PosCajaPanel from './components/panels/PosCajaPanel'
+import PosImpressoraPanel from './components/panels/PosImpressoraPanel'
+import PosSonidoPanel from './components/panels/PosSonidoPanel'
+import PosMesasConfigPanel from './components/panels/PosMesasConfigPanel'
+import PosGarzonesPanel from './components/panels/PosGarzonesPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'centro'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
+
+const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; onDone?: () => void }> }> = {
+  carta: { title: 'Carta', component: PosCartaPanel },
+  caja: { title: 'Caja', component: PosCajaPanel },
+  impresora: { title: 'Impresora', component: PosImpressoraPanel },
+  sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
+  mesas: { title: 'Configurar mesas', component: PosMesasConfigPanel },
+  garzones: { title: 'Garzones', component: PosGarzonesPanel },
+}
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
 function getTableStatus(tableId: string, accounts: Account[]): { status: TableStatus; accountId?: string } {
@@ -50,6 +64,7 @@ const statusLabel: Record<TableStatus, string> = {
 }
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'todos', label: 'Todos' },
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
@@ -215,17 +230,12 @@ export default function PosHomePage() {
     if (!isDesktop) setDesktopPanel(null)
   }, [isDesktop])
 
-  const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window !== 'undefined') {
-      const t = new URLSearchParams(window.location.search).get('tab')
-      if (t === 'retiro' || t === 'delivery' || t === 'mesas' || t === 'centro') return t
-    }
-    return 'mesas'
-  })
+  const [tab, setTab] = useState<Tab>('todos')
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
   const [mesaOpenModal, setMesaOpenModal] = useState<{ tableId: string; tableNumber: number; tableLabel: string } | null>(null)
+  const [innerPage, setInnerPage] = useState<string | null>(null)
 
   useState(() => {
     setRestaurantId(restaurantId)
@@ -264,10 +274,12 @@ export default function PosHomePage() {
     return () => { supabase.removeChannel(channel) }
   }, [restaurantId])
 
+  const totalOnline = orderCounts.retiro + orderCounts.delivery
   const tabCounts: Partial<Record<Tab, number>> = {
     ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
     ...(orderCounts.retiro > 0 ? { retiro: orderCounts.retiro } : {}),
     ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
+    ...(totalOnline > 0 ? { todos: totalOnline } : {}),
   }
 
   // Handlers
@@ -319,33 +331,35 @@ export default function PosHomePage() {
     const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
     const isCuentaPedida = status === 'cuenta_pedida'
     const isActivePanel = isDesktop && activePanelTableId === table.id
+    const tableLabel = table.label || String(table.number)
     return (
       <div key={table.id} className={`pos-mesa-cell ${status}`}>
-        {/* Nombre de la mesa, ARRIBA del cuadrado */}
-        <span className="pos-mesa-name">{table.label || table.number}</span>
         <button
           className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
           onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
         >
+          {/* Número/label de la mesa — siempre visible, grande, dentro del cuadrado */}
+          <span className="pos-mesa-num">{tableLabel}</span>
           <div className="pos-mesa-center">
-            {status === 'libre' ? (
-              <span className="ms">Libre</span>
-            ) : isCuentaPedida ? (
+            {status === 'libre' ? null : isCuentaPedida ? (
               <>
-                {acc?.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
-                <span className="ms">Pidió cuenta</span>
+                {acc?.covers ? <span className="pos-mesa-covers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
+                <span className="ms">Cuenta</span>
               </>
             ) : acc ? (
-              acc.covers ? <span className="pos-mesa-covers"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : <span className="ms">Tomada</span>
+              acc.covers ? <span className="pos-mesa-covers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null
             ) : null}
           </div>
-          {acc && (
+          {acc ? (
             <div className="pos-mesa-bottom">
-              <span className="pos-mesa-time" style={{width:'100%',textAlign:'center'}}>{timeSince(acc.opened_at)}</span>
+              <span className="pos-mesa-time" style={{ width: '100%', textAlign: 'center' }}>{timeSince(acc.opened_at)}</span>
+            </div>
+          ) : (
+            <div className="pos-mesa-bottom">
+              <span className="pos-mesa-time" style={{ width: '100%', textAlign: 'center', opacity: 0.5 }}>Libre</span>
             </div>
           )}
         </button>
-        {/* Nombre del garzón que abrió la mesa, DEBAJO del cuadrado */}
         {acc?.opened_by_name && (
           <span className="pos-mesa-garzon" title={acc.opened_by_name}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
@@ -378,68 +392,80 @@ export default function PosHomePage() {
 
   return (
     <div className="pos-shell">
-      <PosHeader
-        mode="brand"
-        storeName={restaurant?.name}
-        branchName={restaurant?.branchName ?? null}
-        syncing={syncing}
-        onMenu={() => setMenuOpen(true)}
-        onPendingClick={() => setPendingModal(true)}
-        onBrandClick={() => setTab('mesas')}
-        centerSlot={
-          <div className="pos-tabs-bar">
-            <button
-              className={`pos-tab pos-tab-centro${tab === 'centro' ? ' on' : ''}`}
-              onClick={() => setTab('centro')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              title="Centro de pedidos"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6M9 16h4"/></svg>
-              Centro de pedidos
-            </button>
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                className={`pos-tab${tab === t.id ? ' on' : ''}`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-                {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
-              </button>
-            ))}
-            <button
-              className="pos-tab pos-tab-order"
-              onClick={() => navigate('/pos/tomar-pedido')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--amber)', color: '#fff', fontWeight: 700 }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-              Tomar Pedido
-            </button>
-          </div>
-        }
-      />
+      {innerPage && INNER_PAGES[innerPage] ? (
+        <PosHeader
+          mode="back"
+          eyebrow={INNER_PAGES[innerPage].title}
+          syncing={syncing}
+          onBack={() => setInnerPage(null)}
+        />
+      ) : (
+        <PosHeader
+          mode="brand"
+          storeName={restaurant?.name}
+          branchName={restaurant?.branchName ?? null}
+          syncing={syncing}
+          onMenu={() => setMenuOpen(true)}
+          onPendingClick={() => setPendingModal(true)}
+          onBrandClick={() => setTab('todos')}
+          centerSlot={
+            <div className="pos-tabs-bar">
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  className={`pos-tab${tab === t.id ? ' on' : ''}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                  {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+                </button>
+              ))}
+            </div>
+          }
+        />
+      )}
 
-      {/* ── Retiro / Delivery: pedidos del Centro de pedidos, con cobro ── */}
-      {(tab === 'retiro' || tab === 'delivery') && (
-        <div className="pos-scroll">
-          <OrdersBoard restaurantId={restaurantId} type={tab} />
+      {/* ── Inner page (carta, caja, impresora, etc.) ── */}
+      {innerPage && INNER_PAGES[innerPage] && (
+        React.createElement(INNER_PAGES[innerPage].component, { restaurantId, onDone: () => setInnerPage(null) })
+      )}
+
+      {/* ── Main content (only when no inner page) ── */}
+      {!innerPage && <>
+
+      {/* ── Caja cerrada — ribbon full-width ── */}
+      {!cashSession && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 12, flexWrap: 'wrap',
+          background: 'var(--amber-tint)',
+          borderBottom: '1px solid var(--amber-tint)',
+          padding: '9px 18px', flexShrink: 0,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/>
+          </svg>
+          <span style={{ color: 'var(--amber-press)', fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)' }}>Caja cerrada — abre la caja para poder cobrar.</span>
+          <button
+            onClick={() => setInnerPage('caja')}
+            style={{ border: 'none', background: 'var(--amber)', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+          >
+            Abrir caja →
+          </button>
         </div>
       )}
 
-      {/* ── Centro de pedidos: misma vista, como pestaña (sin recarga) ── */}
-      {tab === 'centro' && (
-        <div className="pos-centro-wrap theme-light">
-          <style>{`.pos-centro-wrap{flex:1;min-height:0;padding:14px 20px 40px;background:var(--adm-bg,#fff);overflow-y:auto}@media(max-width:767px){.pos-centro-wrap{padding:10px 12px}}`}</style>
-          <CentroPedidosPage restaurantId={restaurantId} tomarHref="/pos/tomar-pedido" kdsHref="/pos/kds" hideBack hideTitle />
-        </div>
+      {/* ── Retiro / Delivery / Todos ── */}
+      {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
+        <OrdersBoard restaurantId={restaurantId} type={tab} />
       )}
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
       {tab === 'mesas' && (
-      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '420px 1fr', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-      {/* ── Content (mesas: columna DERECHA en desktop; el panel va a la izquierda) ──────────── */}
-      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} style={isDesktop ? { order: 2 } : undefined} onClick={isDesktop ? () => setDesktopPanel(null) : undefined}>
+      {/* ── Lista de mesas (columna izquierda en desktop) ──────────── */}
+      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setDesktopPanel(null) : undefined}>
         <div className="pos-pad">
 
             {/* MESAS */}
@@ -452,8 +478,8 @@ export default function PosHomePage() {
 
             return tables.length > 0 ? (
               <>
-                {/* Sector pills */}
-                {sectors.length > 0 && (
+                {/* Sector pills — solo cuando hay 2+ sectores */}
+                {sectors.length > 1 && (
                   <div className="pos-sector-pills">
                     <button
                       className={`pos-sector-pill${sectorFilter === 'all' ? ' on' : ''}`}
@@ -484,7 +510,7 @@ export default function PosHomePage() {
                     )}
                   </div>
                 )}
-                {sectorFilter === 'all' && sectors.length > 0 ? (
+                {sectorFilter === 'all' && sectors.length > 1 ? (
                   <>
                     {sectors.map(s => {
                       const group = tables.filter(t => t.sector_id === s.id)
@@ -497,7 +523,6 @@ export default function PosHomePage() {
                       )
                     })}
                     {(() => {
-                      // Incluye mesas huérfanas (sector_id que ya no existe) para no ocultarlas.
                       const sinSector = tables.filter(t => !t.sector_id || !sectors.some(s => s.id === t.sector_id))
                       if (sinSector.length === 0) return null
                       return (
@@ -540,9 +565,9 @@ export default function PosHomePage() {
         </div>
       </div>
 
-      {/* ── Panel derecho (solo desktop) ────────────────────── */}
+      {/* ── Panel detalle (columna derecha en desktop) ────────────────────── */}
       {isDesktop && (
-        <div className={`pos-split-right${activePanel ? '' : ' empty'}`} style={{ order: 1 }}>
+        <div className={`pos-split-right${activePanel ? '' : ' empty'}`}>
           {activePanel?.type === 'cuenta' && (
             <CuentaPanel
               accountId={activePanel.accountId}
@@ -588,8 +613,10 @@ export default function PosHomePage() {
         />
       )}
 
+      </>}{/* /!innerPage */}
+
       {/* ── Drawer ──────────────────────────────────────────── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={setInnerPage} />}
     </div>
   )
 }
