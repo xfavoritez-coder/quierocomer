@@ -5,6 +5,7 @@ import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,7 +83,9 @@ export async function GET(req: NextRequest) {
   });
 
   // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
-  const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true } });
+  const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, ecommerceConfig: true } });
+  // ¿El local usa Delifast? Si no, el POS no consulta el seguimiento al entregar.
+  const delifastEnabled = integrationStatus(parseEcommerceConfig(rLoc?.ecommerceConfig)).delifast;
   const dCfg = parseDeliveryConfig(rLoc?.ecommerceDeliveryConfig);
   const localLat = dCfg.origin?.lat ?? rLoc?.lat ?? null;
   const localLng = dCfg.origin?.lng ?? rLoc?.lng ?? null;
@@ -101,7 +104,7 @@ export async function GET(req: NextRequest) {
 
   const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
   const ordersOut = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
-  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

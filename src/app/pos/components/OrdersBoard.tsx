@@ -95,10 +95,11 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
 }
 
 // Guarda compartida: antes de marcar "Entregado" un pedido de delivery, verifica
-// con Delifast que realmente se entregó. Si Delifast está configurado y aún no lo
-// reporta entregado, pide confirmación. Devuelve true si se puede continuar.
-// Fail-open: si no se puede verificar (no configurado, sin data, error), permite.
-async function confirmDeliveredIfNeeded(restaurantId: string, order: PosOrderLite): Promise<boolean> {
+// con Delifast que realmente se entregó. SOLO corre en locales con Delifast
+// integrado (delifastEnabled); los demás marcan entregado sin fricción. Si
+// Delifast aún no lo reporta entregado, pide confirmación. Fail-open ante errores.
+async function confirmDeliveredIfNeeded(restaurantId: string, order: PosOrderLite, delifastEnabled: boolean): Promise<boolean> {
+  if (!delifastEnabled) return true
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
   if (!isDelivery) return true
   try {
@@ -238,12 +239,13 @@ function OrderCard({
 // ── Order detail panel ──────────────────────────────────────────────
 
 function OrderDetailPanel({
-  order, restaurantId, cajaOpen, stageBusy, onStageChange, onCobro, onClose, onPaid, navigate,
+  order, restaurantId, cajaOpen, stageBusy, delifastEnabled, onStageChange, onCobro, onClose, onPaid, navigate,
 }: {
   order: PosOrderLite
   restaurantId: string
   cajaOpen: boolean
   stageBusy: string | null
+  delifastEnabled: boolean
   onStageChange: (o: PosOrderLite, stage: string) => void
   onCobro: () => void
   onClose: () => void
@@ -275,7 +277,7 @@ function OrderDetailPanel({
   }
 
   const handleFinalize = async () => {
-    if (!(await confirmDeliveredIfNeeded(restaurantId, order))) return
+    if (!(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
     setFinalizing(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
@@ -446,6 +448,7 @@ function OrderDetailPanel({
 export default function OrdersBoard({ restaurantId, type }: { restaurantId: string; type: OrderType }) {
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
+  const [delifastEnabled, setDelifastEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<PosOrderLite | null>(null)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
@@ -466,6 +469,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       const d = await r.json()
       if (r.ok && Array.isArray(d.orders)) {
         setOrders(d.orders)
+        setDelifastEnabled(!!d.delifastEnabled)
         // Keep selected in sync
         setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
       }
@@ -490,7 +494,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [orders, type])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
-    if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order))) return
+    if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
     setStageBusy(order.id)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
@@ -567,6 +571,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       restaurantId={restaurantId}
       cajaOpen={cajaOpen}
       stageBusy={stageBusy}
+      delifastEnabled={delifastEnabled}
       onStageChange={changeStage}
       onCobro={() => setCobro(selected)}
       onClose={() => setSelected(null)}
@@ -592,7 +597,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
           {detailSection}
         </div>
         {cobro && (
-          <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+          <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
         )}
       </div>
     )
@@ -614,6 +619,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
               restaurantId={restaurantId}
               cajaOpen={cajaOpen}
               stageBusy={stageBusy}
+              delifastEnabled={delifastEnabled}
               onStageChange={changeStage}
               onCobro={() => { setCobro(selected); setSelected(null) }}
               onClose={() => setSelected(null)}
@@ -624,14 +630,14 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         </div>
       )}
       {cobro && (
-        <CobroModal order={cobro} restaurantId={restaurantId} type={type} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+        <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
       )}
     </>
   )
 }
 
 // ── Modal de cobro ─────────────────────────────────────────────────
-function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; onClose: () => void; onPaid: () => void }) {
+function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; delifastEnabled: boolean; onClose: () => void; onPaid: () => void }) {
   const total = order.totalAmount || 0
   const paid = isPaid(order)
   const [method, setMethod] = useState<PaymentMethod>('efectivo')
@@ -657,7 +663,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
 
   const [finalizing, setFinalizing] = useState(false)
   const handleFinalize = async () => {
-    if (!(await confirmDeliveredIfNeeded(restaurantId, order))) return
+    if (!(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
     setFinalizing(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
