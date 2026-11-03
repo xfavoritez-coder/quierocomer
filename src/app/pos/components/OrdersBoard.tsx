@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { setRestaurantId, setUserId, registerExternalPayment, useOpenCashSession } from '@/lib/pos'
+import { setRestaurantId, setUserId, registerExternalPayment, toPaymentMethod, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
 
@@ -47,20 +47,6 @@ const STAGE_LABEL: Record<string, string> = {
 }
 
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
-
-// Mapea el método de pago (venga del POS o del pago online: webpay, mercadopago,
-// flow, etc.) a una de las categorías del arqueo de caja. Los pagos online que no
-// tienen bucket propio caen en "App de pago".
-const toPaymentMethod = (raw?: string | null): PaymentMethod => {
-  const m = (raw || '').toLowerCase()
-  if (m.includes('efect') || m.includes('cash')) return 'efectivo'
-  if (m.includes('debit')) return 'debito'
-  if (m.includes('cred')) return 'credito'
-  if (m.includes('transf')) return 'transferencia'
-  if (m.includes('webpay')) return 'webpay'
-  // mercadopago, flow, u otros pagos online
-  return 'app_pago'
-}
 
 // Método con el que llegó pagado el pedido (rawPayload.posPayment / webPayment).
 const paidMethodOf = (o: PosOrderLite): PaymentMethod => {

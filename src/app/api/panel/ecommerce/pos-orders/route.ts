@@ -61,6 +61,12 @@ export async function GET(req: NextRequest) {
     // Historial: entregados/cancelados creados dentro del rango.
     where.createdAt = dateRange;
     where.OR = [{ opsStage: "delivered" }, { posStatus: "canceled" }];
+  } else if (scope === "pagados") {
+    // Pagados: todos los pedidos con pago (web o POS), sin importar la etapa.
+    // Lo usa la caja del POS para reconciliar el arqueo del turno.
+    where.createdAt = dateRange;
+    where.posStatus = { not: "canceled" };
+    where.paidAmount = { gt: 0 };
   } else {
     // Activos: los pedidos en curso (preparación/listo/reparto). Al cerrar un
     // pedido pasa a "delivered" y debe salir de esta lista; los entregados y

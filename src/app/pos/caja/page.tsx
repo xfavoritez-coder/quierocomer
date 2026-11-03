@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePosNav } from '../lib/usePosNav'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import {
@@ -12,6 +12,8 @@ import {
   setUserId,
   openCashSession,
   closeCashSession,
+  registerExternalPayment,
+  toPaymentMethod,
 } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
@@ -51,6 +53,40 @@ export default function CajaPage() {
     setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
   })
+
+  // Reconcilia el arqueo: registra en la caja TODOS los pedidos pagados del turno
+  // (pagos web —webpay/mercadopago/flow— o cobros del POS), estén o no entregados,
+  // sin depender de cerrarlos a mano. Idempotente por orderId (po_<id>): no duplica
+  // con los cobros ya registrados. Solo cuenta los creados desde la apertura.
+  useEffect(() => {
+    if (!restaurantId || !cashSession) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+        const today = new Date()
+        const yesterday = new Date(today.getTime() - 86400000) // turnos que cruzan medianoche
+        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(yesterday)}&to=${fmt(today)}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const openedAt = new Date(cashSession.opened_at).getTime()
+        for (const o of (data.orders ?? [])) {
+          if (cancelled) break
+          if (new Date(o.createdAt).getTime() < openedAt) continue
+          const total = Number(o.totalAmount) || 0
+          if (total <= 0 || (Number(o.paidAmount) || 0) < total) continue
+          const type: 'retiro' | 'delivery' = o.isDelivery && (Number(o.deliveryFee) || 0) > 0 ? 'delivery' : 'retiro'
+          const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
+          const pp = rp.posPayment as { method?: string } | undefined
+          const wp = rp.webPayment as { method?: string } | undefined
+          const method = toPaymentMethod(pp?.method || wp?.method)
+          await registerExternalPayment({ orderId: o.id, type, customerName: o.customerName, amount: total, tip: Number(o.tipAmount) || 0, method }).catch(() => {})
+        }
+      } catch { /* noop */ }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId, cashSession?.id, cashSession?.opened_at])
 
   const goHome = () => navigate('/pos')
 

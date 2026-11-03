@@ -125,6 +125,19 @@ export async function closeCashSession(payload: CashSessionClosedPayload) {
  * que entre al arqueo (useSessionSummary). Id determinístico `po_<orderId>`
  * para no duplicar si se reintenta. Devuelve false si ya estaba registrado.
  */
+// Mapea un método de pago (del POS o de un pago online: webpay, mercadopago,
+// flow, etc.) a una de las categorías del arqueo de caja. Los pagos online sin
+// bucket propio caen en "App de pago".
+export function toPaymentMethod(raw?: string | null): PaymentMethod {
+  const m = (raw || "").toLowerCase()
+  if (m.includes("efect") || m.includes("cash")) return "efectivo"
+  if (m.includes("debit")) return "debito"
+  if (m.includes("cred")) return "credito"
+  if (m.includes("transf")) return "transferencia"
+  if (m.includes("webpay")) return "webpay"
+  return "app_pago"
+}
+
 export async function registerExternalPayment(opts: {
   orderId: string
   type: 'retiro' | 'delivery'

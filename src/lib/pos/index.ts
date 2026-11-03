@@ -17,6 +17,7 @@ export {
   recordPayment,
   closeAccount,
   registerExternalPayment,
+  toPaymentMethod,
   voidAccount,
   openCashSession,
   closeCashSession,
