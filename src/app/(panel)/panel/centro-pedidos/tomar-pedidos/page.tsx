@@ -18,6 +18,17 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
 const fmt = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
+
+// Texto legible sobre un color de fondo (blanco si el fondo es oscuro, oscuro si
+// es claro). Evita texto oscuro sobre un accent oscuro (ej. verde) en los botones.
+function readableText(hex: string): string {
+  const h = (hex || "").replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return "#1a1a1a";
+  const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255; // luminancia perceptual
+  return L > 0.6 ? "#1a1a1a" : "#fff";
+}
 const uid = () => Math.random().toString(36).slice(2);
 
 const PAY_METHODS = [
@@ -468,7 +479,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           </label>
         )}
         <button onClick={() => { if (!invalid) setShowConfirm(true); }} disabled={!!invalid} title={invalid || undefined}
-          style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: invalid ? "not-allowed" : "pointer", background: invalid ? C.border : accent, color: invalid ? C.text3 : "#1a1a1a" }}>
+          style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: invalid ? "not-allowed" : "pointer", background: invalid ? C.border : accent, color: invalid ? C.text3 : readableText(accent) }}>
           {invalid || `Tomar pedido — ${fmt(total)}`}
         </button>
       </div>
@@ -590,7 +601,7 @@ function TypeBtn({ active, onClick, icon, label, activeBg }: { active: boolean; 
 }
 
 function TabBtn({ active, onClick, icon, label, accent }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; accent: string }) {
-  return <button onClick={onClick} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px", borderRadius: 12, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", border: `1px solid ${active ? accent : C.border}`, background: active ? accent : C.card, color: active ? "#1a1a1a" : C.text2 }}>{icon}{label}</button>;
+  return <button onClick={onClick} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px", borderRadius: 12, fontFamily: F, fontSize: "0.84rem", fontWeight: 700, cursor: "pointer", border: `1px solid ${active ? accent : C.border}`, background: active ? accent : C.card, color: active ? readableText(accent) : C.text2 }}>{icon}{label}</button>;
 }
 
 function RoundBtn({ children, onClick, active, danger, accent }: { children: React.ReactNode; onClick: () => void; active?: boolean; danger?: boolean; accent?: string }) {
@@ -669,7 +680,7 @@ function ModifiersModal({ product, accent, onAdd, onClose }: { product: StorePro
             <RoundBtn onClick={() => setQty((q) => q + 1)}><Plus size={13} /></RoundBtn>
           </div>
           <button onClick={() => onAdd({ product_id: product.id, name: product.name, base_price: product.price, unit_price: unitPrice, toteat_code: product.toteat_code, options: optionsFlat }, qty)} disabled={!canAdd}
-            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: canAdd ? "pointer" : "not-allowed", background: canAdd ? accent : C.border, color: canAdd ? "#1a1a1a" : C.text3 }}>Agregar — {fmt(unitPrice * qty)}</button>
+            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: canAdd ? "pointer" : "not-allowed", background: canAdd ? accent : C.border, color: canAdd ? readableText(accent) : C.text3 }}>Agregar — {fmt(unitPrice * qty)}</button>
         </div>
       </div>
     </Overlay>
@@ -740,7 +751,7 @@ function ConfirmModal({ cart, customerName, customerPhone, deliveryType, address
         </div>
         <div style={{ display: "flex", gap: 8, padding: 18, borderTop: `1px solid ${C.border2}` }}>
           <button onClick={onClose} style={{ flex: 1, padding: 11, borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, fontFamily: F, fontSize: "0.84rem", fontWeight: 600, color: C.text2, cursor: "pointer" }}>Cancelar</button>
-          <button onClick={onConfirm} disabled={sending} style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", background: accent, color: "#1a1a1a", fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: sending ? "wait" : "pointer", opacity: sending ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>{sending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}{sending ? "Registrando…" : "Confirmar"}</button>
+          <button onClick={onConfirm} disabled={sending} style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", background: accent, color: readableText(accent), fontFamily: F, fontSize: "0.84rem", fontWeight: 800, cursor: sending ? "wait" : "pointer", opacity: sending ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>{sending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}{sending ? "Registrando…" : "Confirmar"}</button>
         </div>
       </div>
     </Overlay>
