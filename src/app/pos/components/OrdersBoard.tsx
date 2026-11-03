@@ -143,11 +143,11 @@ function OrderCard({
             <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
               {(isDelivery && order.addressLine) ? (
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {order.addressLine.replace(/,?\s*chile$/i, '')}</span>
+                <span>{order.addressLine.replace(/,?\s*chile$/i, '')}</span>
               ) : isDineIn && order.tableLabel ? (
-                <span>· {order.tableLabel}</span>
+                <span>{order.tableLabel}</span>
               ) : !isDelivery && !isDineIn ? (
-                <span>· Retiro en local</span>
+                <span>Retiro en local</span>
               ) : null}
             </div>
           </div>
