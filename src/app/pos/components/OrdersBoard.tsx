@@ -45,10 +45,7 @@ const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 function cleanAddr(addr: string): string {
   return addr
     .replace(/,?\s*chile\b/gi, '')
-    .replace(/,?\s*región metropolitana\b/gi, '')
-    .replace(/,\s*\d{7}\b/g, '')   // códigos postales tipo 8301674
     .replace(/\s{2,}/g, ' ')
-    .replace(/,(\s*,)+/g, ',')
     .replace(/,\s*$/g, '')
     .trim()
 }
@@ -146,13 +143,13 @@ function OrderCard({
       }}>
         {/* Nombre (izq) + total y chips (der) */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
               {order.customerName || 'Cliente'}
               {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
             </div>
-            <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
               {(isDelivery && order.addressLine) ? (
                 <span>{isDesktop ? '· ' : ''}{cleanAddr(order.addressLine)}</span>
