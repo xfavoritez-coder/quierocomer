@@ -142,6 +142,20 @@ export function toPaymentMethod(raw?: string | null): PaymentMethod {
   return "app_pago"
 }
 
+// Si el pedido viene de una plataforma de delivery (Uber Eats, PedidosYa, Rappi…),
+// devuelve su nombre EXACTO para mostrarlo tal cual en el arqueo (el pago lo cobra
+// la plataforma). Se detecta por el vendorName del pedido. null si no aplica.
+export function deliveryPlatformLabel(vendorName?: string | null): string | null {
+  const v = (vendorName || "").toLowerCase().replace(/[^a-z]/g, "")
+  if (!v) return null
+  if (v.includes("ubereats") || v === "uber") return "Uber Eats"
+  if (v.includes("pedidosya") || v.includes("peya")) return "PedidosYa"
+  if (v.includes("rappi")) return "Rappi"
+  if (v.includes("didi")) return "Didi Food"
+  if (v.includes("justo")) return "Justo"
+  return null
+}
+
 export async function registerExternalPayment(opts: {
   orderId: string
   type: 'retiro' | 'delivery'

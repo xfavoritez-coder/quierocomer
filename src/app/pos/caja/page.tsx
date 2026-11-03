@@ -13,6 +13,7 @@ import {
   openCashSession,
   closeCashSession,
   toPaymentMethod,
+  deliveryPlatformLabel,
 } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
@@ -81,7 +82,9 @@ export default function CajaPage() {
           const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
           const pp = rp.posPayment as { method?: string } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
-          const method = toPaymentMethod(pp?.method || wp?.method)
+          // Si viene de una plataforma de delivery (Uber Eats, PedidosYa…), se
+          // muestra con su nombre exacto; si no, la categoría de pago normal.
+          const method = deliveryPlatformLabel(o.vendorName) ?? toPaymentMethod(pp?.method || wp?.method)
           const tip = Number(o.tipAmount) || 0
           if (!byMethod[method]) byMethod[method] = { amount: 0, tip: 0, count: 0 }
           byMethod[method].amount += amount; byMethod[method].tip += tip; byMethod[method].count++
@@ -96,12 +99,15 @@ export default function CajaPage() {
   }, [restaurantId, cashSession?.id])
 
   // Arqueo combinado: cuentas locales del POS (mesas/mostrador/venta rápida) +
-  // ventas del Centro del servidor. Es lo que se muestra y lo que se cierra.
+  // ventas del Centro del servidor. Incluye claves de plataforma (Uber Eats, etc.).
   const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
-  for (const m of ALL_METHODS) {
+  const allKeys = new Set<string>([...ALL_METHODS, ...Object.keys(summary.byMethod), ...Object.keys(webSales.byMethod)])
+  for (const m of allKeys) {
     const a = summary.byMethod[m]; const b = webSales.byMethod[m]
     if (a || b) byMethod[m] = { amount: (a?.amount ?? 0) + (b?.amount ?? 0), tip: (a?.tip ?? 0) + (b?.tip ?? 0), count: (a?.count ?? 0) + (b?.count ?? 0) }
   }
+  // Métodos extra presentes (plataformas de delivery) que no están en la lista fija.
+  const extraMethods = Object.keys(byMethod).filter(m => !(ALL_METHODS as string[]).includes(m))
   const totalSales = summary.totalSales + webSales.total
   const totalTips = summary.totalTips + webSales.tips
   const closedAccounts = summary.closedAccounts + webSales.count
@@ -141,16 +147,16 @@ export default function CajaPage() {
     setClosing(true)
     try {
       if (cashSession) {
-        const counted_amounts = ALL_METHODS.reduce((acc, m) => {
+        const counted_amounts = [...ALL_METHODS, ...extraMethods].reduce((acc, m) => {
           acc[m] = m === 'efectivo' ? (hasCounted ? counted : expectedCash) : (byMethod[m]?.amount ?? 0)
           return acc
-        }, {} as Record<PaymentMethod, number>)
+        }, {} as Record<string, number>)
 
-        const expected_amounts = ALL_METHODS.reduce((acc, m) => {
+        const expected_amounts = [...ALL_METHODS, ...extraMethods].reduce((acc, m) => {
           acc[m] = byMethod[m]?.amount ?? 0
           if (m === 'efectivo') acc[m] = expectedCash
           return acc
-        }, {} as Record<PaymentMethod, number>)
+        }, {} as Record<string, number>)
 
         // Recibo armado antes de cerrar (la sesión se limpia al proyectar el cierre).
         const closePayload = buildClosePayload()
@@ -203,7 +209,7 @@ export default function CajaPage() {
       openedAt,
       closedAt: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       closedAccounts,
-      methods: ALL_METHODS.map(m => ({ label: METHOD_LABELS[m], amount: byMethod[m]?.amount ?? 0, count: byMethod[m]?.count ?? 0 })),
+      methods: [...ALL_METHODS, ...extraMethods].map(m => ({ label: METHOD_LABELS[m] ?? m, amount: byMethod[m]?.amount ?? 0, count: byMethod[m]?.count ?? 0 })),
       totalTips,
       totalSales,
       opening: openingAmount,
@@ -332,11 +338,11 @@ export default function CajaPage() {
           </div>
 
           <div className="pos-mgrid">
-            {ALL_METHODS.map(m => {
+            {[...ALL_METHODS, ...extraMethods].map(m => {
               const data = byMethod[m]
               return (
                 <div key={m} className="pos-mcard">
-                  <div className="ml">{METHOD_LABELS[m]}</div>
+                  <div className="ml">{METHOD_LABELS[m] ?? m}</div>
                   <div className="mv">${(data?.amount ?? 0).toLocaleString('es-CL')}</div>
                   <div className="mc">{data?.count ?? 0} cobros</div>
                 </div>

@@ -19,6 +19,7 @@ export {
   closeAccount,
   registerExternalPayment,
   toPaymentMethod,
+  deliveryPlatformLabel,
   voidAccount,
   openCashSession,
   closeCashSession,

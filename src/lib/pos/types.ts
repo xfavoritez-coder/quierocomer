@@ -119,8 +119,9 @@ export interface CashSessionOpenedPayload {
 
 export interface CashSessionClosedPayload {
   session_id: string
-  counted_amounts: Record<PaymentMethod, number>
-  expected_amounts: Record<PaymentMethod, number>
+  // Incluye métodos fijos y claves de plataforma de delivery (p.ej. "Uber Eats").
+  counted_amounts: Record<string, number>
+  expected_amounts: Record<string, number>
   difference: number
   note?: string
 }
@@ -209,8 +210,8 @@ export interface CashSession {
   initial_amount: number
   closed_at?: string
   closed_by?: string
-  counted_amounts?: Record<PaymentMethod, number>
-  expected_amounts?: Record<PaymentMethod, number>
+  counted_amounts?: Record<string, number>
+  expected_amounts?: Record<string, number>
   difference?: number
   note?: string
   is_open: boolean
