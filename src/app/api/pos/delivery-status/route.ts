@@ -62,10 +62,11 @@ export async function POST(req: NextRequest) {
   const orderNumber = orderNumberRaw != null && String(orderNumberRaw).trim() !== "" ? Number(orderNumberRaw) : null;
   const cliente = (body.cliente ?? body.customerName) as string | undefined;
 
+  // Nota: resolvemos el pedido SIEMPRE (incluso en estados que no avanzan el
+  // opsStage, como "Confirmada"/"Asignado") para guardar el delifastVentaId
+  // temprano — así el POS puede traer el seguimiento enriquecido apenas Delifast
+  // confirma, sin esperar al "En Camino".
   const nextStage = toOpsStage(estado);
-  if (!nextStage) {
-    return NextResponse.json({ ok: true, ignored: true, estado }, { status: 200 });
-  }
 
   // ── Resolver el PosOrder ──────────────────────────────────
   type PO = { id: string; restaurantId: string; externalId: string; opsStage: string; delifastVentaId: string | null };
@@ -118,18 +119,22 @@ export async function POST(req: NextRequest) {
   const patch: Record<string, unknown> = {};
   if (idVenta && po.delifastVentaId !== idVenta) patch.delifastVentaId = idVenta;
 
-  // Solo avanzar hacia adelante (nunca retroceder un estado).
+  // Solo avanzar hacia adelante (nunca retroceder un estado). nextStage puede ser
+  // null en estados que no mapean (Confirmada/Asignado): ahí no se toca opsStage,
+  // pero sí se guarda el delifastVentaId de arriba.
   const cur = STAGE_ORDER[po.opsStage] ?? 0;
-  const nxt = STAGE_ORDER[nextStage] ?? 0;
+  const nxt = nextStage ? (STAGE_ORDER[nextStage] ?? 0) : 0;
   const now = new Date();
-  if (nxt > cur) {
+  let stageChanged = false;
+  if (nextStage && nxt > cur) {
     patch.opsStage = nextStage;
+    stageChanged = true;
     if (nextStage === "out_for_delivery") patch.opsDispatchedAt = now;
     if (nextStage === "delivered") patch.opsDeliveredAt = now;
   }
 
   if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ ok: true, matched: true, orderId: po.id, noChange: true, opsStage: po.opsStage }, { status: 200 });
+    return NextResponse.json({ ok: true, matched: true, orderId: po.id, noChange: true, opsStage: po.opsStage, estado }, { status: 200 });
   }
 
   const updated = await prisma.posOrder.update({
@@ -138,11 +143,12 @@ export async function POST(req: NextRequest) {
     select: { restaurantId: true, externalId: true, opsStage: true, posStatus: true },
   });
 
-  // Sincroniza OnlineOrder.status + push al cliente (mismo flujo que el POS manual).
-  void syncOnlineOrderFromPos(updated).catch(() => {});
+  // Sincroniza OnlineOrder.status + push al cliente SOLO si cambió el estado
+  // (no cuando solo guardamos el delifastVentaId).
+  if (stageChanged) void syncOnlineOrderFromPos(updated).catch(() => {});
 
   return NextResponse.json(
-    { ok: true, matched: true, orderId: po.id, opsStage: updated.opsStage, estado },
+    { ok: true, matched: true, orderId: po.id, opsStage: updated.opsStage, savedVentaId: !!patch.delifastVentaId, estado },
     { status: 200 },
   );
 }

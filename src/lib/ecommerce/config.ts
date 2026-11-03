@@ -78,6 +78,17 @@ export interface DeliveryHandrollCreds {
   vendorName?: string;
 }
 
+/** Credenciales del panel de Delifast del local, para enriquecer el seguimiento
+ *  del reparto en el POS (repartidor, estado en vivo, ETA, PIN, ubicación y
+ *  timeline). Se consulta admin.delifast.cl con esta sesión (login por email/clave).
+ *  `plataforma` es el dominio de la plataforma Delifast del local (ej "quierosushi.cl"). */
+export interface DelifastCreds {
+  enabled?: boolean;
+  email?: string;
+  password?: string;
+  plataforma?: string;
+}
+
 export interface EcommerceConfig {
   webpay?: WebpayCreds;
   flow?: FlowCreds;
@@ -88,6 +99,7 @@ export interface EcommerceConfig {
   twilio?: TwilioCreds;
   pos?: PosConfig;
   deliveryHandroll?: DeliveryHandrollCreds;
+  delifast?: DelifastCreds;
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
 
@@ -147,6 +159,8 @@ export function integrationStatus(cfg: EcommerceConfig) {
     twilio: !!(cfg.twilio?.enabled && cfg.twilio?.accountSid && cfg.twilio?.authToken && (cfg.twilio?.from || cfg.twilio?.messagingServiceSid) && cfg.twilio?.contentSid),
     // POS: configurado si hay un proveedor seleccionado con sus credenciales mínimas.
     pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
+    // Delifast: seguimiento enriquecido del reparto (requiere login del panel).
+    delifast: !!(cfg.delifast?.enabled && cfg.delifast?.email && cfg.delifast?.password && cfg.delifast?.plataforma),
   };
 }
 

@@ -1526,6 +1526,11 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   // deliveryhandroll (sincronización de estado + ubicación del repartidor)
   const [dhEnabled, setDhEnabled] = useState(false);
   const [dhVendor, setDhVendor] = useState("");
+  // Delifast (seguimiento enriquecido del reparto en el POS)
+  const [dfEnabled, setDfEnabled] = useState(false);
+  const [dfEmail, setDfEmail] = useState("");
+  const [dfPass, setDfPass] = useState("");
+  const [dfPlataforma, setDfPlataforma] = useState("");
   const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
@@ -1540,6 +1545,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setPosProvider(c.pos?.provider || "none");
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
+    setDfEnabled(c.delifast?.enabled === true); setDfEmail(c.delifast?.email || ""); setDfPass(c.delifast?.password || ""); setDfPlataforma(c.delifast?.plataforma || "");
     setShowToken(c.showWebpayToken === true);
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
     setZonesCopied(false);
@@ -1564,6 +1570,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         ? { provider: "toteat", toteat: { apiUrl: posApiUrl.trim() || undefined, xir: posXir.trim() || undefined, xil: posXil.trim() || undefined, xiu: posXiu.trim() || undefined, token: posToken.trim() || undefined } }
         : { provider: "none" },
       deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
+      delifast: { enabled: dfEnabled, email: dfEmail.trim() || undefined, password: dfPass.trim() || undefined, plataforma: dfPlataforma.trim() || undefined },
       showWebpayToken: showToken,
     };
     // Zonas de reparto: si el textarea trae JSON válido, se guardan junto con las credenciales.
@@ -1693,6 +1700,15 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
           <IntegrationGroup title="deliveryhandroll" sub="Sincroniza estado + ubicación del repartidor en vivo desde deliveryhandroll.cl" ok={dhEnabled && !!dhVendor.trim()}>
             <EnvSelect label="Sincronización de estado" value={dhEnabled ? "on" : "off"} onChange={(v) => setDhEnabled(v === "on")} options={[{ value: "off", label: "Desactivada" }, { value: "on", label: "Activada" }]} />
             {dhEnabled && <Input label="Vendor name" value={dhVendor} onChange={setDhVendor} placeholder="Haruna (se consulta como QC-Haruna)" />}
+          </IntegrationGroup>
+
+          <IntegrationGroup title="Delifast" sub="Seguimiento del reparto en el POS: repartidor, estado, ETA, PIN, ubicación en vivo y timeline (login del panel de Delifast del local)" ok={st.delifast}>
+            <EnvSelect label="Seguimiento Delifast" value={dfEnabled ? "on" : "off"} onChange={(v) => setDfEnabled(v === "on")} options={[{ value: "off", label: "Desactivado" }, { value: "on", label: "Activado" }]} />
+            {dfEnabled && <>
+              <Input label="Email (login Delifast)" value={dfEmail} onChange={setDfEmail} placeholder="correo@local.cl" />
+              <Input label="Clave (login Delifast)" value={dfPass} onChange={setDfPass} placeholder="••••••••" type="password" />
+              <Input label="Plataforma (dominio)" value={dfPlataforma} onChange={setDfPlataforma} placeholder="quierosushi.cl" />
+            </>}
           </IntegrationGroup>
 
           {msg && (

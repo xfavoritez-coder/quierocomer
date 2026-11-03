@@ -6,6 +6,7 @@ import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
+import DelifastTracking from './DelifastTracking'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -296,6 +297,9 @@ function OrderDetailPanel({
 
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Seguimiento del reparto (Delifast) — solo delivery */}
+        {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} />}
 
         {/* Customer info */}
         {(order.customerPhone || (isDelivery && order.addressLine)) && (
