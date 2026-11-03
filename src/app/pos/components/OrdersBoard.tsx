@@ -104,6 +104,7 @@ function OrderCard({
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
 }) {
+  const isDesktop = useIsDesktop()
   const paid = isPaid(order)
   const lines = itemLines(order.items)
   const qty = lines.reduce((s, l) => s + l.qty, 0)
@@ -143,7 +144,7 @@ function OrderCard({
             <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
               {(isDelivery && order.addressLine) ? (
-                <span>· {order.addressLine.replace(/,?\s*chile$/i, '')}</span>
+                <span>{isDesktop ? '· ' : ''}{order.addressLine.replace(/,?\s*chile$/i, '')}</span>
               ) : isDineIn && order.tableLabel ? (
                 <span>{order.tableLabel}</span>
               ) : !isDelivery && !isDineIn ? (
