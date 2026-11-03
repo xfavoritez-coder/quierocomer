@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useClosedCashSessions } from '@/lib/pos'
+import { useClosedCashSessions, deleteCashSession } from '@/lib/pos'
 import type { CashSession } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
@@ -56,6 +56,18 @@ export default function PosCajaHistorial({ restaurantId }: { restaurantId: strin
   const { restaurant } = usePosRestaurant()
   const sessions = useClosedCashSessions(restaurantId)
   const [open, setOpen] = useState<string | null>(null)
+  const [confirmDel, setConfirmDel] = useState<string | null>(null)
+
+  const handleDelete = async (s: CashSession) => {
+    try {
+      await deleteCashSession({ session_id: s.id, reason: 'borrado desde historial' })
+      toast.success('Cierre eliminado del historial')
+    } catch {
+      toast.error('No se pudo eliminar')
+    } finally {
+      setConfirmDel(null)
+    }
+  }
 
   const reprint = async (s: CashSession) => {
     if (!getBridgeUrl()) { toast.error('No hay agente de impresión configurado'); return }
@@ -201,16 +213,39 @@ export default function PosCajaHistorial({ restaurantId }: { restaurantId: strin
                       </div>
                     )}
 
-                    <button
-                      onClick={() => reprint(s)}
-                      style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                        <rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/>
-                        <path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/>
-                      </svg>
-                      Reimprimir cierre
-                    </button>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                      <button
+                        onClick={() => reprint(s)}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <rect x="6" y="3" width="12" height="6"/><rect x="6" y="14" width="12" height="7"/>
+                          <path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/>
+                        </svg>
+                        Reimprimir
+                      </button>
+                      <button
+                        onClick={() => setConfirmDel(confirmDel === s.id ? null : s.id)}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px 14px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--surface)', color: '#C53030', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        </svg>
+                        Eliminar
+                      </button>
+                    </div>
+
+                    {confirmDel === s.id && (
+                      <div style={{ marginTop: 10, padding: '12px', borderRadius: 10, border: '1px solid #C53030', background: 'var(--sunk)' }}>
+                        <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 10 }}>
+                          ¿Eliminar este cierre del historial? No afecta ventas ni pedidos, solo quita el registro del arqueo. Se aplica en todos los equipos.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => handleDelete(s)} style={{ flex: 1, padding: '10px', borderRadius: 'var(--r-btn)', border: 0, background: '#C53030', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Sí, eliminar</button>
+                          <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: '10px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Cancelar</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

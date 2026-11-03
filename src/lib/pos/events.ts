@@ -12,6 +12,7 @@ import type {
   AccountVoidedPayload,
   CashSessionOpenedPayload,
   CashSessionClosedPayload,
+  CashSessionDeletedPayload,
   BillRequestedPayload,
   TablesConfiguredPayload,
   SectorsConfiguredPayload,
@@ -121,6 +122,10 @@ export async function openCashSession(payload: CashSessionOpenedPayload) {
 
 export async function closeCashSession(payload: CashSessionClosedPayload) {
   return createEvent('cash_session_closed', payload as unknown as Record<string, unknown>)
+}
+
+export async function deleteCashSession(payload: CashSessionDeletedPayload) {
+  return createEvent('cash_session_deleted', payload as unknown as Record<string, unknown>)
 }
 
 /**
@@ -382,6 +387,12 @@ export async function projectEvent(event: PosEvent): Promise<void> {
         closed_accounts: d.closed_accounts,
         is_open: false,
       })
+      break
+    }
+
+    case 'cash_session_deleted': {
+      const d = p as unknown as CashSessionDeletedPayload
+      await posDb.cashSessions.delete(d.session_id)
       break
     }
 

@@ -23,6 +23,7 @@ export {
   voidAccount,
   openCashSession,
   closeCashSession,
+  deleteCashSession,
   requestBill,
   projectEvent,
   rebuildFromEvents,

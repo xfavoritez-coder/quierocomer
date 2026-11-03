@@ -17,6 +17,7 @@ export type PosEventType =
   | 'account_voided'
   | 'cash_session_opened'
   | 'cash_session_closed'
+  | 'cash_session_deleted'
   | 'bill_requested'
   | 'tables_configured'
   | 'sectors_configured'
@@ -129,6 +130,13 @@ export interface CashSessionClosedPayload {
   total_sales?: number
   total_tips?: number
   closed_accounts?: number
+}
+
+// Tombstone: borra una sesión de caja del historial (en todos los equipos vía
+// sync). Event-sourcing no tiene borrado nativo; este evento lo provee.
+export interface CashSessionDeletedPayload {
+  session_id: string
+  reason?: string
 }
 
 export interface TablesConfiguredPayload {
