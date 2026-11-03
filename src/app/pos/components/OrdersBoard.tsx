@@ -94,6 +94,24 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
   })
 }
 
+// Guarda compartida: antes de marcar "Entregado" un pedido de delivery, verifica
+// con Delifast que realmente se entregó. Si Delifast está configurado y aún no lo
+// reporta entregado, pide confirmación. Devuelve true si se puede continuar.
+// Fail-open: si no se puede verificar (no configurado, sin data, error), permite.
+async function confirmDeliveredIfNeeded(restaurantId: string, order: PosOrderLite): Promise<boolean> {
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  if (!isDelivery) return true
+  try {
+    const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${restaurantId}&posOrderId=${order.id}`, { cache: 'no-store' })
+    const d = await res.json()
+    const tr = d?.tracking
+    if (d?.configured && tr && !tr.timeline?.entregado) {
+      return window.confirm('El repartidor aún no ha entregado este pedido según Delifast. ¿Marcar entregado de todas formas?')
+    }
+  } catch { /* sin verificación → se permite */ }
+  return true
+}
+
 // Cronómetro del pedido: en retiro, una vez "listo" el tiempo se CONGELA (hora
 // de listo − creación); en el resto cuenta en vivo hasta que se finaliza.
 function OrderTimer({ order, isRetiro, icon = true, style }: { order: PosOrderLite; isRetiro: boolean; icon?: boolean; style?: React.CSSProperties }) {
@@ -257,6 +275,7 @@ function OrderDetailPanel({
   }
 
   const handleFinalize = async () => {
+    if (!(await confirmDeliveredIfNeeded(restaurantId, order))) return
     setFinalizing(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
@@ -471,6 +490,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [orders, type])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
+    if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order))) return
     setStageBusy(order.id)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
@@ -637,6 +657,7 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
 
   const [finalizing, setFinalizing] = useState(false)
   const handleFinalize = async () => {
+    if (!(await confirmDeliveredIfNeeded(restaurantId, order))) return
     setFinalizing(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
