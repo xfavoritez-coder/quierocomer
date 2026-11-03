@@ -149,32 +149,40 @@ const PAY_LABELS: Record<string, string> = {
   tarjeta: "Tarjeta",
 };
 
-const STATUS_STEP: Record<string, number> = {
-  PENDING: 0,
-  ACCEPTED: 1,
-  PREPARING: 2,
-  IN_DELIVERY: 3,
-  READY: 3,
-  DONE: 4,
-  CANCELLED: -1,
+// Para retiro: 5 pasos (Recibido/Aceptado/Preparando/Listo/Entregado)
+// Para delivery: 6 pasos (Recibido/Aceptado/Preparando/Listo/En reparto/Entregado)
+// READY y IN_DELIVERY son pasos distintos para que "Listo" no muestre "En reparto".
+const STATUS_STEP_PICKUP: Record<string, number> = {
+  PENDING: 0, ACCEPTED: 1, PREPARING: 2, READY: 3, IN_DELIVERY: 3, DONE: 4, CANCELLED: -1,
+};
+const STATUS_STEP_DELIVERY: Record<string, number> = {
+  PENDING: 0, ACCEPTED: 1, PREPARING: 2, READY: 3, IN_DELIVERY: 4, DONE: 5, CANCELLED: -1,
 };
 
-const STEP_STATUSES: string[][] = [
-  ["PENDING"],
-  ["ACCEPTED"],
-  ["PREPARING"],
-  ["IN_DELIVERY", "READY"],
-  ["DONE"],
+// Qué statuses de la historia corresponden a cada step index
+const STEP_STATUSES_PICKUP: string[][] = [
+  ["PENDING"], ["ACCEPTED"], ["PREPARING"], ["READY", "IN_DELIVERY"], ["DONE"],
+];
+const STEP_STATUSES_DELIVERY: string[][] = [
+  ["PENDING"], ["ACCEPTED"], ["PREPARING"], ["READY"], ["IN_DELIVERY"], ["DONE"],
 ];
 
 function getSteps(orderType: "PICKUP" | "DELIVERY", t: TrackingTexts) {
+  if (orderType === "DELIVERY") {
+    return [
+      { icon: "📋", label: t.stepReceived },
+      { icon: "✅", label: t.stepAccepted },
+      { icon: "👨‍🍳", label: t.stepPreparing },
+      { icon: "🏁", label: t.stepReady },
+      { icon: "🛵", label: t.stepInDelivery },
+      { icon: "🎉", label: t.stepDone },
+    ];
+  }
   return [
     { icon: "📋", label: t.stepReceived },
     { icon: "✅", label: t.stepAccepted },
     { icon: "👨‍🍳", label: t.stepPreparing },
-    orderType === "DELIVERY"
-      ? { icon: "🛵", label: t.stepInDelivery }
-      : { icon: "🏁", label: t.stepReady },
+    { icon: "🏁", label: t.stepReady },
     { icon: "🎉", label: t.stepDone },
   ];
 }
@@ -183,9 +191,9 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 }
 
-function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt: string): string | null {
+function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt: string, stepStatuses: string[][]): string | null {
   if (stepIndex === 0) return fmtTime(createdAt);
-  const statuses = STEP_STATUSES[stepIndex];
+  const statuses = stepStatuses[stepIndex];
   if (!statuses) return null;
   const entry = statusHistory.find(e => statuses.includes(e.status));
   return entry ? fmtTime(entry.ts) : null;
@@ -200,7 +208,9 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme, texts }: 
   texts: TrackingTexts;
 }) {
   const steps = getSteps(orderType, texts);
-  const currentStep = STATUS_STEP[status] ?? 0;
+  const stepMap = orderType === "DELIVERY" ? STATUS_STEP_DELIVERY : STATUS_STEP_PICKUP;
+  const stepStatuses = orderType === "DELIVERY" ? STEP_STATUSES_DELIVERY : STEP_STATUSES_PICKUP;
+  const currentStep = stepMap[status] ?? 0;
 
   return (
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 0, width: "100%", overflowX: "auto", padding: "8px 0" }}>
@@ -210,7 +220,7 @@ function Stepper({ status, orderType, statusHistory, createdAt, theme, texts }: 
         const active = i === currentStep;
         const color = reached ? GREEN : theme.text3;
         const circleBg = reached ? GREEN : theme.isDark ? "#242424" : "#f3f4f6";
-        const timeLabel = reached ? getStepTime(i, statusHistory, createdAt) : null;
+        const timeLabel = reached ? getStepTime(i, statusHistory, createdAt, stepStatuses) : null;
 
         return (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", flex: i < steps.length - 1 ? 1 : "none" }}>

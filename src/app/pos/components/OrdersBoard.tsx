@@ -20,9 +20,12 @@ const METHODS: { id: PaymentMethod; label: string }[] = [
 
 interface PosOrderLite {
   id: string
+  dailyNumber?: number | null
+  orderReference?: string | null
   customerName: string
   customerPhone: string
   addressLine: string
+  tableLabel?: string | null
   saleType: string
   isDelivery: boolean
   opsStage: string
@@ -91,14 +94,13 @@ function timeSince(iso: string) {
 // ── Order card ──────────────────────────────────────────────────────
 
 function OrderCard({
-  order, isSelected, showTypeChip, stageBusy, isDesktop,
+  order, isSelected, showTypeChip, stageBusy,
   onSelect, onStageChange,
 }: {
   order: PosOrderLite
   isSelected: boolean
   showTypeChip: boolean
   stageBusy: string | null
-  isDesktop: boolean
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
 }) {
@@ -115,67 +117,81 @@ function OrderCard({
   return (
     <div
       style={{
-        background: isSelected ? 'var(--amber-tint)' : 'var(--surface)',
-        border: `1px solid ${isSelected ? 'var(--amber)' : 'var(--line)'}`,
-        borderLeft: `3px solid ${typeColor}`,
-        borderRadius: 14, padding: '12px 14px', cursor: 'pointer',
-        boxShadow: 'var(--sh-1)', fontFamily: 'var(--sans)',
-        display: 'flex', flexDirection: 'column', gap: 6,
-        transition: 'border-color .12s, background .12s',
+        border: `1.5px solid ${isSelected ? 'var(--ink-2)' : 'var(--line)'}`,
+        borderLeft: `4px solid ${typeColor}`,
+        borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
+        boxShadow: isSelected ? 'var(--sh-2)' : 'var(--sh-1)',
+        fontFamily: 'var(--sans)',
+        transition: 'border-color .12s, box-shadow .12s',
       }}
       onClick={onSelect}
     >
-      {/* Row 1: nombre + chips */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', lineHeight: 1.2 }}>
-          {order.customerName || 'Cliente'}
-        </div>
-        <div style={{ display: 'flex', gap: 5, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {showTypeChip && (
-            <span style={chip(typeColor)}>{typeLabel}</span>
-          )}
-          <span style={chip(paid ? '#16a34a' : '#f59e0b')}>
-            {paid ? 'Pagado' : 'Por cobrar'}
-          </span>
+      {/* Body: nombre + info secundaria */}
+      <div style={{
+        padding: '16px 18px 14px',
+        background: isSelected ? 'var(--sunk)' : 'var(--surface)',
+        display: 'flex', flexDirection: 'column', gap: 6,
+      }}>
+        {/* Nombre (izq) + total y chips (der) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+              {order.customerName || 'Cliente'}
+              {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
+            </div>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+              {(isDelivery && order.addressLine) ? (
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {order.addressLine.replace(/,?\s*chile$/i, '')}</span>
+              ) : isDineIn && order.tableLabel ? (
+                <span>· {order.tableLabel}</span>
+              ) : !isDelivery && !isDineIn ? (
+                <span>· Retiro en local</span>
+              ) : null}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>
+              {clp(order.totalAmount)}
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
+              <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Por cobrar'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Vendor */}
-      {order.vendorName && (
-        <span style={{ alignSelf: 'flex-start', fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 7px' }}>
-          {order.vendorName}
+      {/* Footer coloreado: estado + botón acción */}
+      <div
+        style={{
+          padding: '11px 18px',
+          background: (STAGE_COLOR[order.opsStage] ?? '#aaa') + '14',
+          borderTop: `1px solid ${(STAGE_COLOR[order.opsStage] ?? '#aaa')}28`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
+          {STAGE_LABEL[order.opsStage] ?? order.opsStage}
         </span>
-      )}
-
-      {/* Row 2: items + stage + total */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ fontSize: 12, color: 'var(--ink-2)', minWidth: 0 }}>
-          {qty > 0 ? `${qty} ítem${qty !== 1 ? 's' : ''} · ` : ''}
-          <span style={{ color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-3)', fontWeight: 600 }}>
-            {STAGE_LABEL[order.opsStage] ?? order.opsStage}
-          </span>
-        </div>
-        <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 16, color: 'var(--ink)', flexShrink: 0 }}>
-          {clp(order.totalAmount)}
-        </span>
-      </div>
-
-      {/* Quick stage button — only on mobile */}
-      {next && !isDesktop && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }} onClick={e => e.stopPropagation()}>
+        {next && (
           <button
             onClick={() => onStageChange(order, next.stage)}
             disabled={busy}
             style={{
-              fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8, border: 'none',
+              fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
               background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
-              cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
+              cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+              fontFamily: 'var(--sans)', flexShrink: 0,
             }}
           >
             {busy ? '…' : next.label + ' →'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -197,6 +213,7 @@ function OrderDetailPanel({
 }) {
   const paid = isPaid(order)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
   const next = nextAction(order.opsStage, isDelivery)
   const lines = itemLines(order.items)
   const busy = stageBusy === order.id
@@ -232,36 +249,43 @@ function OrderDetailPanel({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 18px 12px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 22px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 17, color: 'var(--ink)', lineHeight: 1.2 }}>
+          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
+            {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
             {order.customerName || 'Cliente'}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
-            {isDelivery ? 'Delivery' : 'Retiro'} · hace {timeSince(order.createdAt)}
+          <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>{isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} · hace {timeSince(order.createdAt)}</span>
+            {paid && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Pagado
+              </span>
+            )}
           </div>
         </div>
-        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
 
       {/* Scrollable body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Customer info */}
         {(order.customerPhone || (isDelivery && order.addressLine)) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {order.customerPhone && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ink-2)' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 {order.customerPhone}
               </div>
             )}
             {isDelivery && order.addressLine && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--ink-2)' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 1, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {order.addressLine}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {order.addressLine.replace(/,?\s*chile$/i, '')}
               </div>
             )}
           </div>
@@ -269,36 +293,36 @@ function OrderDetailPanel({
 
         {/* Items */}
         <div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 8 }}>Ítems</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Ítems</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {lines.length > 0 ? lines.map((l, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, fontSize: 15 }}>
                 <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 5 }}>{l.qty}×</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 6 }}>{l.qty}×</span>
                   {l.name}
                 </span>
-                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
+                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
               </div>
             )) : (
-              <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>Sin detalle de ítems</div>
+              <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>Sin detalle de ítems</div>
             )}
           </div>
         </div>
 
         {/* Totals */}
-        <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {order.deliveryFee > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--ink-2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
               <span>Despacho</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
             <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
           </div>
           {paid && order.tipAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#16a34a' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a' }}>
               <span>Propina</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.tipAmount)}</span>
             </div>
@@ -309,11 +333,11 @@ function OrderDetailPanel({
         {(() => {
           const prev = prevAction(order.opsStage)
           return (
-            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 8 }}>Etapa</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (next || prev) ? 10 : 0 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
+            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Etapa</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (next || prev) ? 12 : 0 }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
+                <span style={{ fontSize: 16, fontWeight: 700, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
                   {STAGE_LABEL[order.opsStage] ?? order.opsStage}
                 </span>
               </div>
@@ -322,9 +346,9 @@ function OrderDetailPanel({
                   onClick={() => onStageChange(order, next.stage)}
                   disabled={busy}
                   style={{
-                    width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none',
+                    width: '100%', padding: '14px', borderRadius: 12, border: 'none',
                     background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
-                    fontWeight: 700, fontSize: 14, cursor: busy ? 'default' : 'pointer',
+                    fontWeight: 700, fontSize: 16, cursor: busy ? 'default' : 'pointer',
                     opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
@@ -337,9 +361,9 @@ function OrderDetailPanel({
                   onClick={() => onStageChange(order, prev.stage)}
                   disabled={busy}
                   style={{
-                    width: '100%', marginTop: 6, padding: '8px 14px', borderRadius: 10,
+                    width: '100%', marginTop: 8, padding: '10px 14px', borderRadius: 12,
                     border: '1px solid var(--line)', background: 'transparent',
-                    color: 'var(--ink-3)', fontWeight: 600, fontSize: 13,
+                    color: 'var(--ink-3)', fontWeight: 600, fontSize: 14,
                     cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                     fontFamily: 'var(--sans)',
                   }}
@@ -351,31 +375,17 @@ function OrderDetailPanel({
           )
         })()}
 
-        {/* Payment action */}
-        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-          {paid ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#16a34a', fontWeight: 700, fontSize: 14 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                Pagado
-              </div>
-              <button
-                onClick={handleFinalize}
-                disabled={finalizing}
-                style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--ink)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: finalizing ? 0.6 : 1, fontFamily: 'var(--sans)' }}
-              >
-                {finalizing ? 'Cerrando…' : 'Cerrar pedido'}
-              </button>
-            </div>
-          ) : (
+        {/* Cobrar — solo si no está pagado */}
+        {!paid && (
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
             <button
               onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } onCobro() }}
-              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+              style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', fontFamily: 'var(--sans)' }}
             >
               {cajaOpen ? 'Cobrar →' : 'Abrir caja →'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Anular */}
         <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
@@ -487,7 +497,6 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 isSelected={selected?.id === o.id}
                 showTypeChip={type === 'todos'}
                 stageBusy={stageBusy}
-                isDesktop={isDesktop}
                 onSelect={() => {
                   if (isDesktop) {
                     setSelected(prev => prev?.id === o.id ? null : o)
@@ -725,20 +734,27 @@ function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onCon
 }) {
   if (!confirm) {
     return (
-      <button onClick={() => setConfirm(true)} style={{ marginTop: 12, width: '100%', background: 'transparent', border: 'none', color: '#C53030', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
-        Anular pedido
-      </button>
+      <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4 }}>
+        <button
+          onClick={() => setConfirm(true)}
+          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 14px', width: '100%', color: 'var(--ink-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+        >
+          Anular pedido
+        </button>
+      </div>
     )
   }
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 10, border: '1px solid #f0c0c0', background: 'rgba(197,48,48,.05)' }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#C53030', marginBottom: 8 }}>¿Anular este pedido?</div>
-      <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo (opcional)"
-        style={{ width: '100%', padding: '9px 11px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+    <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>¿Anular este pedido?</div>
+      <input
+        value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo (opcional)"
+        style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 14, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }}
+      />
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: '10px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>No</button>
-        <button onClick={onConfirm} disabled={canceling} style={{ flex: 1, padding: '10px', borderRadius: 9, border: 'none', background: '#C53030', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: canceling ? 0.6 : 1 }}>
-          {canceling ? 'Anulando…' : 'Sí, anular'}
+        <button onClick={() => setConfirm(false)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}>Cancelar</button>
+        <button onClick={onConfirm} disabled={canceling} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: '#C53030', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: canceling ? 0.6 : 1, fontFamily: 'var(--sans)' }}>
+          {canceling ? 'Anulando…' : 'Confirmar'}
         </button>
       </div>
     </div>
@@ -752,6 +768,15 @@ function chip(color: string): React.CSSProperties {
     fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, letterSpacing: '.04em',
     textTransform: 'uppercase', padding: '3px 6px', borderRadius: 5,
     background: color + '20', color,
+  }
+}
+
+function stagePill(color: string): React.CSSProperties {
+  return {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '5px 10px', borderRadius: 20,
+    background: color + '18', border: `1px solid ${color}40`,
+    color, fontWeight: 700, fontSize: 13, fontFamily: 'var(--sans)',
   }
 }
 

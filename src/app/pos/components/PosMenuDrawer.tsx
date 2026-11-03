@@ -25,12 +25,12 @@ const INLINE_FALLBACK_URLS: Record<string, string> = {
 export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate, onInline }: { cashSession: boolean; restaurant: PosRestaurant | null; onClose: () => void; onNavigate: (url: string) => void; onInline?: (id: string) => void }) {
   const items: DrawerItem[] = [
     {
-      label: 'Carta · agotar / ocultar',
+      label: 'Carta',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>,
       inline: 'carta',
     },
     {
-      label: cashSession ? 'Ver caja' : 'Abrir caja',
+      label: 'Caja',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/></svg>,
       inline: 'caja',
     },

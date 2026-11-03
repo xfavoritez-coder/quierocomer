@@ -99,7 +99,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
   }
 
-  const ordersOut = orders.map((o) => ({ ...o, driverTime, pickupTime, deliveryTime }));
+  const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
+  const ordersOut = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
   return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
 }
 
