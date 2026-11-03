@@ -53,6 +53,7 @@ export interface EcommerceStoreConfig {
   printCopies: 1 | 2; // cuántas copias de la comanda imprimir por pedido (1 o 2)
   kitchenComanda: boolean; // imprimir además una comanda de cocina (letra grande, sin precios) por pedido
   autoPreparingOnTrack: boolean; // al abrir el seguimiento, el pedido pasa solo de ACCEPTED a PREPARING
+  trackingEmailEnabled: boolean; // enviar al cliente el correo de seguimiento del pedido (ON por defecto)
   printToken: string | null; // token del agente de impresión local (ESC/POS); null = sin agente
   printTokenAt: string | null; // ISO: cuándo se generó el token (el agente solo imprime pedidos posteriores)
   printTestAt: string | null; // ISO: solicitud de impresión de prueba pendiente (el agente la imprime en su próximo sondeo)
@@ -202,6 +203,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     printCopies: Number(o.printCopies) === 2 ? 2 : 1,
     kitchenComanda: o.kitchenComanda === true,
     autoPreparingOnTrack: o.autoPreparingOnTrack === true,
+    trackingEmailEnabled: o.trackingEmailEnabled !== false, // ON por defecto
     printToken: typeof o.printToken === "string" && o.printToken.trim() ? o.printToken.trim() : null,
     printTokenAt: typeof o.printTokenAt === "string" && o.printTokenAt.trim() ? o.printTokenAt.trim() : null,
     printTestAt: typeof o.printTestAt === "string" && o.printTestAt.trim() ? o.printTestAt.trim() : null,

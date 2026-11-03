@@ -28,6 +28,8 @@ export async function sendOrderStatusEmail(orderId: string, status: OrderEmailSt
     const estimatedTime = order.restaurant?.orderingWaitTime ?? null;
     const logoUrl = order.restaurant?.logoUrl ?? null;
     const storeCfg = parseStoreConfig(order.restaurant?.ecommerceStoreConfig, { accent: order.restaurant?.cartaAccentColor });
+    // Si el local desactivó el correo de seguimiento, no se envía.
+    if (!storeCfg.trackingEmailEnabled) return;
     const primaryColor = storeCfg.primaryColor ?? null;
     const fromSender = restaurantName ? `${restaurantName} <hola@quierocomer.cl>` : undefined;
 
