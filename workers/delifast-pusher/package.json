@@ -1,0 +1,18 @@
+{
+  "name": "delifast-pusher-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Escucha el Pusher de Delifast y reenvía los cambios de estado al POS de QuieroComer",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pusher-js": "8.4.0",
+    "ws": "8.18.0"
+  }
+}
