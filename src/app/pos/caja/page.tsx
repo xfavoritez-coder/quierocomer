@@ -36,7 +36,7 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 
 export default function CajaPage() {
   const navigate = usePosNav()
-  const { restaurantId, restaurant } = usePosRestaurant()
+  const { restaurantId, restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
   const openAccounts = useOpenAccounts()
@@ -199,6 +199,23 @@ export default function CajaPage() {
     const r = await printCashClose(buildClosePayload())
     if (r.ok) toast.success('Cierre enviado a la impresora')
     else toast.error(r.error || 'No se pudo imprimir')
+  }
+
+  // Mientras no se resuelve el restaurante, no mostramos ni caja ni "abrir caja"
+  // (evita el parpadeo con datos de otro local).
+  if (restLoading && !cashSession) {
+    return (
+      <div className="pos-shell">
+        <PosHeader mode="back" eyebrow="Caja" subtitle="Cargando…" syncing={syncing} onBack={goHome} />
+        <div className="pos-scroll">
+          <div className="pos-caja-wrap">
+            <div className="pos-empty" style={{ minHeight: 200 }}>
+              <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '3px solid var(--line)', borderTopColor: 'var(--amber)' }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── NO SESSION: apertura ─────────────────────────────────────

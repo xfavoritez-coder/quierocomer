@@ -22,9 +22,11 @@ interface State {
   posEnabled: boolean | null
 }
 
-// Global singleton — fetched once for the lifetime of the SPA session
-let _restaurantId = FALLBACK_ID
-let _state: State = { restaurantId: FALLBACK_ID, restaurant: null, loading: true, posEnabled: null }
+// Global singleton — fetched once for the lifetime of the SPA session.
+// Arranca VACÍO (no con el FALLBACK): así ninguna pantalla muestra datos de un
+// restaurante equivocado mientras resuelve el real (evita el flash de otra caja).
+let _restaurantId = ''
+let _state: State = { restaurantId: '', restaurant: null, loading: true, posEnabled: null }
 let _listeners = new Set<() => void>()
 let _fetched = false
 
