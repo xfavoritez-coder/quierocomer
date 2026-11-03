@@ -5,6 +5,7 @@ import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import { LiveClock } from './OrderClock'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -89,14 +90,6 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
     const price = Number(o.price ?? o.unitPrice ?? o.unit_price ?? o.precio ?? 0) || 0
     return { name, qty, price }
   })
-}
-
-function timeSince(iso: string) {
-  const d = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(d / 60000)
-  if (m < 1) return '< 1 min'
-  if (m < 60) return `${m} min`
-  return `${Math.floor(m / 60)}h ${m % 60}m`
 }
 
 // ── Order card ──────────────────────────────────────────────────────
@@ -186,9 +179,12 @@ function OrderCard({
         }}
         onClick={e => e.stopPropagation()}
       >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
-          {STAGE_LABEL[order.opsStage] ?? order.opsStage}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
+            {STAGE_LABEL[order.opsStage] ?? order.opsStage}
+          </span>
+          <LiveClock since={order.createdAt} colorize style={{ fontSize: 13 }} />
         </span>
         {next && (
           <button
@@ -269,7 +265,10 @@ function OrderDetailPanel({
             {order.customerName || 'Cliente'}
           </div>
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span>{isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} · hace {timeSince(order.createdAt)}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} ·
+              <LiveClock since={order.createdAt} colorize />
+            </span>
             {paid && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>

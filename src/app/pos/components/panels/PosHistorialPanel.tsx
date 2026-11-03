@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
+import { fmtElapsed } from '../OrderClock'
 
 interface HistorialOrder {
   id: string
@@ -19,7 +20,19 @@ interface HistorialOrder {
   deliveryFee: number
   items: unknown
   createdAt: string
+  opsDeliveredAt?: string | null
+  completedAt?: string | null
+  updatedAt?: string | null
   rawPayload?: unknown
+}
+
+// Tiempo total (congelado) que tomó el pedido: desde que entró hasta que se
+// finalizó (entregado) o canceló. null si no hay un cierre válido.
+function frozenElapsedMs(o: HistorialOrder): number | null {
+  const end = o.opsDeliveredAt || o.completedAt || o.updatedAt
+  if (!end) return null
+  const ms = new Date(end).getTime() - new Date(o.createdAt).getTime()
+  return ms >= 0 ? ms : null
 }
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
@@ -81,8 +94,14 @@ function HistorialDetailPanel({ order, onClose }: { order: HistorialOrder; onClo
           </div>
           {order.customerPhone && <div style={{ fontSize: 15, color: 'var(--ink-2)', marginBottom: 2 }}>{order.customerPhone}</div>}
           {isDelivery && order.addressLine && <div style={{ fontSize: 15, color: 'var(--ink-2)' }}>{order.addressLine}</div>}
-          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6 }}>
-            {new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>{new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            {(() => { const ms = frozenElapsedMs(order); return ms != null ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700 }} title="Tiempo total del pedido">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                {fmtElapsed(ms)}
+              </span>
+            ) : null })()}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', flexShrink: 0 }}>
@@ -150,6 +169,7 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
   const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
   const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
   const statusLabel = canceled ? 'Anulado' : 'Entregado'
+  const frozenMs = frozenElapsedMs(order)
 
   return (
     <div
@@ -205,10 +225,18 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
         padding: '11px 18px',
         background: 'var(--sunk)',
         borderTop: '1px solid var(--line)',
-        display: 'flex', alignItems: 'center', gap: 6,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
       }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-3)', flexShrink: 0 }} />
-        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-3)' }}>{statusLabel}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-3)', flexShrink: 0 }} />
+          <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-3)' }}>{statusLabel}</span>
+        </span>
+        {frozenMs != null && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12.5, color: 'var(--ink-3)' }} title="Tiempo total del pedido">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            {fmtElapsed(frozenMs)}
+          </span>
+        )}
       </div>
     </div>
   )

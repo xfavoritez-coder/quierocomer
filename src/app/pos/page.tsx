@@ -28,6 +28,7 @@ import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
 import OrdersBoard from './components/OrdersBoard'
+import { LiveClock } from './components/OrderClock'
 import PosCartaPanel from './components/panels/PosCartaPanel'
 import PosCajaPanel from './components/panels/PosCajaPanel'
 import PosImpressoraPanel from './components/panels/PosImpressoraPanel'
@@ -354,7 +355,7 @@ export default function PosHomePage() {
           </div>
           {acc ? (
             <div className="pos-mesa-bottom">
-              <span className="pos-mesa-time" style={{ width: '100%', textAlign: 'center' }}>{timeSince(acc.opened_at)}</span>
+              <span className="pos-mesa-time" style={{ width: '100%', display: 'inline-flex', justifyContent: 'center' }}><LiveClock since={acc.opened_at} icon={false} style={{ fontWeight: 'inherit', color: 'inherit' }} /></span>
             </div>
           ) : (
             <div className="pos-mesa-bottom">
@@ -617,13 +618,3 @@ export default function PosHomePage() {
   )
 }
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
-
-function timeSince(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '< 1 min'
-  if (mins < 60) return `${mins} min`
-  const hrs = Math.floor(mins / 60)
-  return `${hrs}h ${mins % 60}m`
-}
