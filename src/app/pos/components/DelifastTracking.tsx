@@ -29,12 +29,37 @@ interface Tracking {
 // Color del estado del reparto.
 function statusColor(s?: string | null): string {
   const e = (s || '').toLowerCase()
-  if (/entregad/.test(e)) return '#16a34a'
+  if (/entregad|delivered/.test(e)) return '#16a34a'
   if (/cancel|anul/.test(e)) return '#dc2626'
-  if (/camino|reparto|ruta|dropoff/.test(e)) return '#3b82f6'
+  if (/camino|reparto|ruta|dropoff|transit/.test(e)) return '#3b82f6'
   if (/local|pickup|retir/.test(e)) return '#8b5cf6'
-  if (/asignad|confirmad|buscando/.test(e)) return '#f59e0b'
+  if (/asignad|assigned|confirmad|buscando|accept/.test(e)) return '#f59e0b'
   return '#64748b'
+}
+
+// Etiqueta en español del estado (Delifast a veces lo manda en inglés).
+function statusLabel(s?: string | null): string {
+  const e = (s || '').toLowerCase().trim()
+  if (!e) return 'Reparto'
+  if (/entregad|delivered/.test(e)) return 'Entregado'
+  if (/cancel|anul/.test(e)) return 'Cancelado'
+  if (/dropoff|transit|camino|ruta/.test(e)) return 'En camino'
+  if (/arriving_pickup|at_pickup|pickup|en.?local|llegó.*local/.test(e)) return 'En el local'
+  if (/assigned|asignad/.test(e)) return 'Asignado'
+  if (/accept|confirmad/.test(e)) return 'Confirmado'
+  if (/buscando|searching|pending/.test(e)) return 'Buscando repartidor'
+  return e.charAt(0).toUpperCase() + e.slice(1)
+}
+
+// pickup_eta puede venir como minutos ("4") o como timestamp ("2026-11-03 18:13:33").
+// Devuelve minutos hasta la hora estimada (0 si ya pasó), o null.
+function etaMinutes(eta?: string | null): number | null {
+  if (!eta) return null
+  const s = String(eta).trim()
+  if (/^\d+$/.test(s)) return Number(s)
+  const t = Date.parse(s.replace(' ', 'T'))
+  if (!Number.isFinite(t)) return null
+  return Math.max(0, Math.round((t - Date.now()) / 60000))
 }
 
 // "YYYY-MM-DD HH:MM:SS" → "HH:MM"
@@ -85,6 +110,8 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
   if (state === 'error' || !t) return <Box><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></Box>
 
   const sc = statusColor(t.status)
+  // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
+  const etaMin = !t.timeline.llegadaLocal ? etaMinutes(t.eta) : null
   const steps: { label: string; ts: string | null }[] = [
     { label: 'Confirmada', ts: t.timeline.confirmacion },
     { label: 'Pickup iniciado', ts: t.timeline.inicioPickup },
@@ -101,9 +128,9 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: sc + '18', color: sc, border: `1px solid ${sc}40`, fontWeight: 700, fontSize: 12.5, borderRadius: 20, padding: '3px 10px' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: sc }} />
-          {t.status || 'Reparto'}
+          {statusLabel(t.status)}
         </span>
-        {t.eta && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>ETA local: <b>{t.eta} min</b></span>}
+        {etaMin != null && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Llega al local en <b>{etaMin} min</b></span>}
         {(t.provider || t.vehicle) && <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>{[t.provider, t.vehicle].filter(Boolean).join(' · ')}</span>}
       </div>
 
