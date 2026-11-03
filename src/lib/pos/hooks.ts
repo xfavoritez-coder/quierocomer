@@ -123,22 +123,23 @@ export function useStaff(restaurantId: string): PosStaff[] {
 // se usó el POS para otra sucursal y no se cerró), elige de forma determinista la
 // más reciente para evitar parpadeo. Los registros viejos sin restaurant_id se
 // consideran del restaurante actual (compatibilidad hacia atrás).
-export function useOpenCashSession(restaurantId?: string): CashSession | undefined {
+// undefined = todavía cargando, null = confirmado sin caja abierta, CashSession = hay caja
+export function useOpenCashSession(restaurantId?: string): CashSession | null | undefined {
   const rid = restaurantId ?? getRestaurantId()
   return useDexieQuery(
     async () => {
       const open = await posDb.cashSessions.filter(s => s.is_open).toArray()
-      if (open.length === 0) return undefined
+      if (open.length === 0) return null
       // Solo cajas del restaurante actual (o viejas sin restaurant_id). Nunca se
       // devuelve la caja abierta de OTRO local (p.ej. una de Hand Roll que quedó
       // sin cerrar), que dejaría la caja de este local sin poder abrirse.
       const mine = open.filter(s => !s.restaurant_id || s.restaurant_id === rid)
-      if (mine.length === 0) return undefined
+      if (mine.length === 0) return null
       mine.sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''))
       return mine[0]
     },
     [rid],
-    undefined
+    undefined  // loading sentinel — nunca renderizar UI dependiente de cashSession hasta que salga de undefined
   )
 }
 

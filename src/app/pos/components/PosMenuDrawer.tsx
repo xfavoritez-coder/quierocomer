@@ -13,6 +13,7 @@ type DrawerItem = {
 // Fallback URLs for inline items when onInline is not provided (e.g. from PosTopBar)
 const INLINE_FALLBACK_URLS: Record<string, string> = {
   carta: '/pos/carta',
+  historial: '/pos/historial',
   caja: '/pos/caja',
   mesas: '/pos/config/mesas',
   garzones: '/pos/config/garzones',
@@ -28,6 +29,11 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       label: 'Carta',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>,
       inline: 'carta',
+    },
+    {
+      label: 'Historial de pedidos',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>,
+      inline: 'historial',
     },
     {
       label: 'Caja',

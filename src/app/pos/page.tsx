@@ -34,6 +34,7 @@ import PosImpressoraPanel from './components/panels/PosImpressoraPanel'
 import PosSonidoPanel from './components/panels/PosSonidoPanel'
 import PosMesasConfigPanel from './components/panels/PosMesasConfigPanel'
 import PosGarzonesPanel from './components/panels/PosGarzonesPanel'
+import PosHistorialPanel from './components/panels/PosHistorialPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -41,6 +42,7 @@ type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
 
 const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
+  historial: { title: 'Historial de pedidos', component: PosHistorialPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
   impresora: { title: 'Impresora', component: PosImpressoraPanel },
   sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
@@ -418,7 +420,7 @@ export default function PosHomePage() {
       />
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
-      {!cashSession && (
+      {cashSession === null && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',
