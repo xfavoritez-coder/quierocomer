@@ -59,17 +59,173 @@ function ymd(offset: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// ── Detail panel (read-only) ─────────────────────────────────────────
+function HistorialDetailPanel({ order, onClose }: { order: HistorialOrder; onClose: () => void }) {
+  const canceled = order.posStatus === 'canceled'
+  const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const lines = itemLines(order.items)
+  const payMethod = order.rawPayload && typeof order.rawPayload === 'object' ? (order.rawPayload as any)?.posPayment?.method : null
+  const cancelReason = canceled && order.rawPayload && typeof order.rawPayload === 'object' ? (order.rawPayload as any)?.posCancel?.reason : null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexShrink: 0 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, marginBottom: 4 }}>
+            {(order.orderReference || order.dailyNumber != null) && (
+              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference ?? order.dailyNumber}</span>
+            )}
+            {order.customerName || 'Cliente'}
+          </div>
+          {order.customerPhone && <div style={{ fontSize: 15, color: 'var(--ink-2)', marginBottom: 2 }}>{order.customerPhone}</div>}
+          {isDelivery && order.addressLine && <div style={{ fontSize: 15, color: 'var(--ink-2)' }}>{order.addressLine}</div>}
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6 }}>
+            {new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Items */}
+        {lines.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {lines.map((l, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, color: 'var(--ink)' }}>
+                <span>{l.qty > 1 && <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, marginRight: 6, color: 'var(--ink-2)' }}>{l.qty}×</span>}{l.name}</span>
+                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-2)', flexShrink: 0, marginLeft: 12 }}>{clp(l.price * l.qty)}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Total + despacho */}
+        <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {order.deliveryFee > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
+              <span>Despacho</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+            <span>Total</span>
+            <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
+          </div>
+        </div>
+
+        {/* Estado pago / motivo anulación */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, color: 'var(--ink-2)' }}>
+          {payMethod && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span style={{ color: 'var(--ink-3)' }}>Método:</span>
+              <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{payMethod}</span>
+            </div>
+          )}
+          <div style={{ fontWeight: 700, color: canceled ? '#6b7280' : paid ? '#16a34a' : '#f59e0b', fontSize: 15 }}>
+            {canceled ? 'Anulado' : paid ? `Cobrado ${clp(order.paidAmount)}` : 'Sin cobro registrado'}
+          </div>
+          {canceled && cancelReason && (
+            <div style={{ fontSize: 13, color: 'var(--ink-3)', fontStyle: 'italic' }}>Motivo: {cancelReason}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Order card ────────────────────────────────────────────────────────
+function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder; isSelected: boolean; onSelect: () => void }) {
+  const isDesktop = useIsDesktop()
+  const canceled = order.posStatus === 'canceled'
+  const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
+  const lines = itemLines(order.items)
+  const qty = lines.reduce((s, l) => s + l.qty, 0)
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
+  const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+  const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
+  const statusLabel = canceled ? 'Anulado' : 'Entregado'
+
+  return (
+    <div
+      style={{
+        border: `1.5px solid ${isSelected ? 'var(--ink-2)' : 'var(--line)'}`,
+        borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
+        boxShadow: isSelected ? 'var(--sh-2)' : 'var(--sh-1)',
+        fontFamily: 'var(--sans)',
+        transition: 'border-color .12s, box-shadow .12s',
+        opacity: canceled ? 0.8 : 1,
+      }}
+      onClick={onSelect}
+    >
+      {/* Body */}
+      <div style={{ padding: '16px 18px 14px', background: isSelected ? 'var(--sunk)' : 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+              {order.customerName || 'Cliente'}
+              {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
+            </div>
+            <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+              {(isDelivery && order.addressLine) ? (
+                <>
+                  {isDesktop && <span style={{ color: 'var(--ink-4)' }}>·</span>}
+                  <span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>{cleanAddr(order.addressLine)}
+                  </span>
+                </>
+              ) : isDineIn ? (
+                <span>Salón</span>
+              ) : (
+                <span>Retiro en local</span>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+              {clp(order.totalAmount)}
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <span style={chip(typeColor)}>{typeLabel}</span>
+              <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Sin cobro'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer neutral */}
+      <div style={{
+        padding: '11px 18px',
+        background: 'var(--sunk)',
+        borderTop: '1px solid var(--line)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-3)', flexShrink: 0 }} />
+        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-3)' }}>{statusLabel}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────
 export default function PosHistorialPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const isDesktop = useIsDesktop()
   const [date, setDate] = useState(todayYmd())
   const [orders, setOrders] = useState<HistorialOrder[]>([])
   const [loading, setLoading] = useState(false)
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [selected, setSelected] = useState<HistorialOrder | null>(null)
 
   useEffect(() => {
     if (!restaurantId) return
     setLoading(true)
-    setExpanded(null)
+    setSelected(null)
     fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=historial&from=${date}&to=${date}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => { if (Array.isArray(d.orders)) setOrders(d.orders) })
@@ -77,7 +233,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
       .finally(() => setLoading(false))
   }, [restaurantId, date])
 
-  return (
+  const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
         {title && <p className="pos-inner-title">{title}</p>}
@@ -116,115 +272,58 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {orders.map(o => {
-              const canceled = o.posStatus === 'canceled'
-              const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
-              const lines = itemLines(o.items)
-              const qty = lines.reduce((s, l) => s + l.qty, 0)
-              const isDelivery = o.isDelivery || o.saleType === 'delivery'
-              const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
-              const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-              const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
-              const statusColor = canceled ? '#6b7280' : '#16a34a'
-              const statusLabel = canceled ? 'Anulado' : 'Entregado'
-              const isOpen = expanded === o.id
-              const payMethod = o.rawPayload && typeof o.rawPayload === 'object' ? (o.rawPayload as any)?.posPayment?.method : null
-              const cancelReason = canceled && o.rawPayload && typeof o.rawPayload === 'object' ? (o.rawPayload as any)?.posCancel?.reason : null
-
-              return (
-                <div key={o.id} style={{
-                  border: '1.5px solid var(--line)', borderRadius: 14, overflow: 'hidden',
-                  boxShadow: 'var(--sh-1)', fontFamily: 'var(--sans)',
-                  opacity: canceled ? 0.8 : 1,
-                }}>
-                  {/* Body — igual que OrderCard */}
-                  <div
-                    style={{ padding: '16px 18px 14px', background: isOpen ? 'var(--sunk)' : 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}
-                    onClick={() => setExpanded(isOpen ? null : o.id)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {(o.orderReference || o.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{o.orderReference ?? o.dailyNumber}</span>}
-                          {o.customerName || 'Cliente'}
-                          {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
-                        </div>
-                        <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span>{new Date(o.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-                          {(isDelivery && o.addressLine) ? (
-                            <>
-                              {isDesktop && <span style={{ color: 'var(--ink-4)' }}>·</span>}
-                              <span>
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>{cleanAddr(o.addressLine)}
-                              </span>
-                            </>
-                          ) : isDineIn ? (
-                            <span>{o.addressLine || 'Salón'}</span>
-                          ) : (
-                            <span>Retiro en local</span>
-                          )}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
-                          {clp(o.totalAmount)}
-                        </span>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <span style={chip(typeColor)}>{typeLabel}</span>
-                          <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Sin cobro'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer coloreado — igual que OrderCard */}
-                  <div style={{
-                    padding: '11px 18px',
-                    background: statusColor + '14',
-                    borderTop: `1px solid ${statusColor}28`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                    cursor: 'pointer',
-                  }} onClick={() => setExpanded(isOpen ? null : o.id)}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: statusColor }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
-                      {statusLabel}
-                    </span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--ink-3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
-                  </div>
-
-                  {/* Detalle expandido */}
-                  {isOpen && (
-                    <div style={{ padding: '14px 18px 16px', borderTop: '1px solid var(--line)', background: 'var(--sunk)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {lines.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          {lines.map((l, i) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink)' }}>
-                              <span>{l.qty > 1 && <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, marginRight: 5, color: 'var(--ink-2)' }}>{l.qty}×</span>}{l.name}</span>
-                              {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-2)', flexShrink: 0, marginLeft: 10 }}>{clp(l.price * l.qty)}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 5, fontSize: 13.5, color: 'var(--ink-2)' }}>
-                        {o.customerPhone && <span>{o.customerPhone}</span>}
-                        {isDelivery && o.addressLine && <span>{o.addressLine}</span>}
-                        {o.deliveryFee > 0 && <span>Despacho: {clp(o.deliveryFee)}</span>}
-                        {payMethod && <span style={{ textTransform: 'capitalize' }}>Pago: {payMethod}</span>}
-                        {canceled && cancelReason && <span style={{ color: '#ef4444' }}>Motivo anulación: {cancelReason}</span>}
-                        <span style={{ fontWeight: 700, color: paid ? '#16a34a' : '#f59e0b' }}>
-                          {paid ? `Cobrado ${clp(o.paidAmount)}` : 'Sin cobro registrado'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {orders.map(o => (
+              <HistorialCard
+                key={o.id}
+                order={o}
+                isSelected={selected?.id === o.id}
+                onSelect={() => setSelected(prev => prev?.id === o.id && isDesktop ? null : o)}
+              />
+            ))}
           </div>
         )}
       </div>
     </div>
+  )
+
+  const detailSection = selected ? (
+    <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} />
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+        <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+      </svg>
+      <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona un pedido</span>
+    </div>
+  )
+
+  // Desktop: split layout
+  if (isDesktop) {
+    return (
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' }}>
+        {listSection}
+        <div className={`pos-split-right${selected ? '' : ' empty'}`}>
+          {detailSection}
+        </div>
+      </div>
+    )
+  }
+
+  // Mobile: list + bottom sheet
+  return (
+    <>
+      {listSection}
+      {selected && (
+        <div className="pos-modal-overlay" onClick={() => setSelected(null)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
+          >
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+            <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} />
+          </div>
+        </div>
+      )}
+    </>
   )
 }
