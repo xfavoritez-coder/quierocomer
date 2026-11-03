@@ -652,6 +652,20 @@ export default function EcommerceConfiguracionPage() {
           </section>
           )}
 
+          {/* Seguimiento del pedido — auto avanzar a Preparando */}
+          {tab === "pedidos" && (
+          <section style={card}>
+            <SectionTitle icon={Clock} title="Seguimiento del pedido" sub="Lo que ve el cliente en el enlace de seguimiento de su pedido." />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
+              <div style={{ maxWidth: 380 }}>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Pasar a &quot;Preparando&quot; automáticamente</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Cuando el cliente abre el seguimiento de su pedido, pasa solo de &quot;Aceptado&quot; a &quot;Preparando&quot; (así no queda en Aceptado esperando que lo muevas a mano).</p>
+              </div>
+              <Toggle on={cfg.autoPreparingOnTrack} onClick={() => patch({ autoPreparingOnTrack: !cfg.autoPreparingOnTrack })} />
+            </div>
+          </section>
+          )}
+
           {/* Envío al POS (Toteat) — reintento automático */}
           {tab === "pedidos" && (
           <section style={card}>

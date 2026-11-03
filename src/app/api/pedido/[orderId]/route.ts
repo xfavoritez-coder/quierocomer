@@ -48,6 +48,19 @@ export async function GET(
 
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
 
+  // Auto-avance: si el local lo activó, al abrir el seguimiento el pedido pasa
+  // de ACCEPTED a PREPARING (solo una vez; después queda en PREPARING).
+  let status = order.status;
+  let statusHistory = Array.isArray(order.statusHistory) ? (order.statusHistory as unknown[]) : [];
+  try {
+    const cfg = parseStoreConfig(order.restaurant.ecommerceStoreConfig);
+    if (cfg.autoPreparingOnTrack && order.status === "ACCEPTED") {
+      status = "PREPARING";
+      statusHistory = [...statusHistory, { status: "PREPARING", ts: new Date().toISOString(), auto: "track" }];
+      await prisma.onlineOrder.update({ where: { id: order.id }, data: { status, statusHistory: statusHistory as unknown as object } });
+    }
+  } catch { /* noop: no bloquear el seguimiento por esto */ }
+
   // Textos configurables del seguimiento (superadmin en /admin/ajustes)
   let trackingTexts;
   try {
@@ -73,8 +86,8 @@ export async function GET(
     paymentStatus: order.paymentStatus ?? null,
     paymentGateway: order.paymentGateway ?? null,
     restaurantSlug: order.restaurant.slug,
-    status: order.status,
-    statusHistory: Array.isArray(order.statusHistory) ? order.statusHistory : [],
+    status,
+    statusHistory,
     notes: order.notes ?? null,
     cancellationReason: order.cancellationReason ?? null,
     estimatedTime: order.restaurant.orderingWaitTime ?? null,
