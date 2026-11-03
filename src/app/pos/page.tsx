@@ -617,7 +617,7 @@ export default function PosHomePage() {
       </>}{/* /!innerPage */}
 
       {/* ── Drawer ── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={setInnerPage} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={(id) => { if (id === 'historial') { setTab('historial'); setInnerPage(null) } else { setInnerPage(id) } }} />}
     </div>
   )
 }
