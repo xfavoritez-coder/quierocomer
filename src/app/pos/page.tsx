@@ -392,48 +392,32 @@ export default function PosHomePage() {
 
   return (
     <div className="pos-shell">
-      {innerPage && INNER_PAGES[innerPage] ? (
-        <PosHeader
-          mode="back"
-          eyebrow={INNER_PAGES[innerPage].title}
-          syncing={syncing}
-          onBack={() => setInnerPage(null)}
-        />
-      ) : (
-        <PosHeader
-          mode="brand"
-          storeName={restaurant?.name}
-          branchName={restaurant?.branchName ?? null}
-          syncing={syncing}
-          onMenu={() => setMenuOpen(true)}
-          onPendingClick={() => setPendingModal(true)}
-          onBrandClick={() => setTab('todos')}
-          centerSlot={
-            <div className="pos-tabs-bar">
-              {TABS.map(t => (
-                <button
-                  key={t.id}
-                  className={`pos-tab${tab === t.id ? ' on' : ''}`}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                  {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
-                </button>
-              ))}
-            </div>
-          }
-        />
-      )}
+      {/* ── Header — siempre visible con tabs ── */}
+      <PosHeader
+        mode="brand"
+        storeName={restaurant?.name}
+        branchName={restaurant?.branchName ?? null}
+        syncing={syncing}
+        onMenu={() => setMenuOpen(true)}
+        onPendingClick={() => setPendingModal(true)}
+        onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
+        centerSlot={
+          <div className="pos-tabs-bar">
+            {TABS.map(t => (
+              <button
+                key={t.id}
+                className={`pos-tab${tab === t.id && !innerPage ? ' on' : ''}`}
+                onClick={() => { setTab(t.id); setInnerPage(null) }}
+              >
+                {t.label}
+                {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
-      {/* ── Inner page (carta, caja, impresora, etc.) ── */}
-      {innerPage && INNER_PAGES[innerPage] && (
-        React.createElement(INNER_PAGES[innerPage].component, { restaurantId, onDone: () => setInnerPage(null) })
-      )}
-
-      {/* ── Main content (only when no inner page) ── */}
-      {!innerPage && <>
-
-      {/* ── Caja cerrada — ribbon full-width ── */}
+      {/* ── Caja cerrada — ribbon siempre visible ── */}
       {!cashSession && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -454,6 +438,31 @@ export default function PosHomePage() {
           </button>
         </div>
       )}
+
+      {/* ── Inner page (carta, caja, impresora, etc.) ── */}
+      {innerPage && INNER_PAGES[innerPage] && (
+        <>
+          {/* Sub-barra con título + botón volver */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '10px 16px', borderBottom: '1px solid var(--line)',
+            background: 'var(--surface)', flexShrink: 0,
+          }}>
+            <button
+              onClick={() => setInnerPage(null)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, border: 0, background: 'none', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 600, padding: '4px 8px', borderRadius: 8 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 6l-6 6 6 6"/></svg>
+              Volver
+            </button>
+            <span style={{ fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{INNER_PAGES[innerPage].title}</span>
+          </div>
+          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, onDone: () => setInnerPage(null) })}
+        </>
+      )}
+
+      {/* ── Main content (solo cuando no hay inner page) ── */}
+      {!innerPage && <>
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
