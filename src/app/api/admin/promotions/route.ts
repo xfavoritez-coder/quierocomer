@@ -171,6 +171,7 @@ export async function PUT(req: NextRequest) {
         ...(data.validFrom !== undefined && { validFrom: data.validFrom ? new Date(data.validFrom) : null }),
         ...(data.validUntil !== undefined && { validUntil: data.validUntil ? new Date(data.validUntil) : null }),
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
+        ...(data.hideOriginalWhenActive !== undefined && { hideOriginalWhenActive: !!data.hideOriginalWhenActive }),
         ...(data.position !== undefined && { position: data.position }),
         ...(data.featured !== undefined && { featured: data.featured }),
         ...(Array.isArray(modifierTemplateIds) && { modifierTemplates: { set: modifierTemplateIds.map((mid: string) => ({ id: mid })) } }),

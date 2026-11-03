@@ -27,7 +27,7 @@ interface Promo {
   originalPrice: number | null; promoPrice: number | null; discountPct: number | null;
   validFrom: string | null; validUntil: string | null; status: string;
   generatedBy: string; aiJustification: string | null; metrics: any;
-  promoType?: string; imageUrl?: string | null; thumbUrl?: string | null; linkedDishId?: string | null;
+  promoType?: string; imageUrl?: string | null; thumbUrl?: string | null; linkedDishId?: string | null; hideOriginalWhenActive?: boolean;
   createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
   restaurant?: { name: string; logoUrl?: string | null } | null;
   daysOfWeek?: number[];
@@ -100,6 +100,7 @@ export default function AdminPromociones() {
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
   const [cModifierTemplateIds, setCModifierTemplateIds] = useState<string[]>([]);
   const [editModifierTemplateIds, setEditModifierTemplateIds] = useState<string[]>([]);
+  const [editHideOriginal, setEditHideOriginal] = useState(false);
   const editRef = React.useRef<HTMLDivElement>(null);
 
   // Tab state
@@ -272,6 +273,7 @@ export default function AdminPromociones() {
     setEditValidFrom(p.validFrom ? p.validFrom.slice(0, 10) : "");
     setEditValidUntil(p.validUntil ? p.validUntil.slice(0, 10) : "");
     setEditModifierTemplateIds((p.modifierTemplates || []).map(t => t.id));
+    setEditHideOriginal(p.hideOriginalWhenActive ?? false);
     setTimeout(() => editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
@@ -308,6 +310,7 @@ export default function AdminPromociones() {
       validFrom: editValidFrom || null,
       validUntil: editValidUntil || null,
       modifierTemplateIds: editModifierTemplateIds,
+      hideOriginalWhenActive: editHideOriginal,
     };
     const res = await fetch("/api/admin/promotions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
@@ -934,6 +937,17 @@ export default function AdminPromociones() {
             </div>
           </div>
 
+          {/* Ocultar plato original */}
+          {editing && editing.dishIds.length > 0 && editing.linkedDishId && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 10, padding: "10px 12px", background: editHideOriginal ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: `1px solid ${editHideOriginal ? "#F4A623" : "var(--adm-card-border)"}`, borderRadius: 10, cursor: "pointer" }}>
+              <input type="checkbox" checked={editHideOriginal} onChange={e => setEditHideOriginal(e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer" }} />
+              <span style={{ flex: 1 }}>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>Ocultar plato original cuando la promo esté activa</span>
+                <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2, lineHeight: 1.4 }}>El plato original se ocultará de la carta los días que la promo esté activa y reaparecerá el resto de los días.</span>
+              </span>
+            </label>
+          )}
+
           {/* Date range edit */}
           <div style={{ marginTop: 10 }}>
             <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
@@ -1106,6 +1120,15 @@ export default function AdminPromociones() {
                       {p.promoType === "graphic" && p.status !== "SUGGESTED" && (
                         <button onClick={() => toggleSellInStore(p)} disabled={storeBusy === p.id} style={btnStyle(p.linkedDishId ? "#4ade80" : "#F4A623")}>
                           {storeBusy === p.id ? "…" : p.linkedDishId ? "✓ En la tienda" : "🛒 Vender en tienda"}
+                        </button>
+                      )}
+                      {p.linkedDishId && p.dishIds.length > 0 && p.status !== "SUGGESTED" && (
+                        <button onClick={async () => {
+                          const next = !p.hideOriginalWhenActive;
+                          await fetch("/api/admin/promotions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: p.id, hideOriginalWhenActive: next }) });
+                          setPromos(prev => prev.map(x => x.id === p.id ? { ...x, hideOriginalWhenActive: next } : x));
+                        }} style={btnStyle(p.hideOriginalWhenActive ? "#4ade80" : "#888")}>
+                          {p.hideOriginalWhenActive ? "✓ Oculta original" : "Ocultar original"}
                         </button>
                       )}
                     </div>

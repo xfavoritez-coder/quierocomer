@@ -86,7 +86,7 @@ export async function ensurePromoDish(promoId: string): Promise<string | null> {
 export async function syncPromoStoreProductsActive(restaurantId: string): Promise<void> {
   const promos = await prisma.promotion.findMany({
     where: { restaurantId, linkedDishId: { not: null } },
-    select: { linkedDishId: true, status: true, daysOfWeek: true, validFrom: true, validUntil: true },
+    select: { linkedDishId: true, dishIds: true, status: true, daysOfWeek: true, validFrom: true, validUntil: true, originalPrice: true, promoPrice: true, hideOriginalWhenActive: true },
   });
   if (!promos.length) return;
 
@@ -94,23 +94,45 @@ export async function syncPromoStoreProductsActive(restaurantId: string): Promis
   const today = cl.getDay(); // 0=Dom .. 6=Sáb
   const nowMs = Date.now();
 
-  const activate: string[] = [];
-  const deactivate: string[] = [];
+  // Platos originales a ocultar/mostrar cuando su promo tiene linkedDish activo
+  const hideOriginals: string[] = [];
+  const showOriginals: string[] = [];
+
+  type LinkedUpdate = { id: string; price: number; discountPrice: number | null };
+  const toActivate: LinkedUpdate[] = [];
+  const toDeactivate: string[] = [];
+
   for (const p of promos) {
     if (!p.linkedDishId) continue;
     let on = p.status === "ACTIVE";
     if (on && p.daysOfWeek?.length && !p.daysOfWeek.includes(today)) on = false;
     if (on && p.validFrom && p.validFrom.getTime() > nowMs) on = false;
     if (on && p.validUntil && p.validUntil.getTime() < nowMs) on = false;
-    (on ? activate : deactivate).push(p.linkedDishId);
+
+    if (on) {
+      // Precio del linked dish: original tachado / promo como precio activo
+      const orig = p.originalPrice ?? null;
+      const promo = p.promoPrice ?? null;
+      const price = (orig != null && promo != null && promo < orig) ? orig : (promo ?? orig ?? 0);
+      const discountPrice = (orig != null && promo != null && promo < orig) ? promo : null;
+      toActivate.push({ id: p.linkedDishId, price, discountPrice });
+      if (p.hideOriginalWhenActive && p.dishIds.length) hideOriginals.push(...p.dishIds);
+    } else {
+      toDeactivate.push(p.linkedDishId);
+      if (p.hideOriginalWhenActive && p.dishIds.length) showOriginals.push(...p.dishIds);
+    }
   }
 
-  const ops = [];
-  // Al reactivar no tocamos deletedAt (si estaba soft-deleted por "quitar de tienda",
-  // su promo ya no tiene linkedDishId, así que no entra aquí).
-  if (activate.length) ops.push(prisma.dish.updateMany({ where: { id: { in: activate }, deletedAt: null }, data: { isActive: true } }));
-  if (deactivate.length) ops.push(prisma.dish.updateMany({ where: { id: { in: deactivate } }, data: { isActive: false } }));
-  if (ops.length) await prisma.$transaction(ops);
+  const ops: Promise<unknown>[] = [];
+  // Activar linked dishes con precio correcto (al reactivar no tocamos deletedAt)
+  for (const u of toActivate) {
+    ops.push(prisma.dish.updateMany({ where: { id: u.id, deletedAt: null }, data: { isActive: true, price: u.price, discountPrice: u.discountPrice } }));
+  }
+  if (toDeactivate.length) ops.push(prisma.dish.updateMany({ where: { id: { in: toDeactivate } }, data: { isActive: false } }));
+  // Ocultar/mostrar platos originales reemplazados por el linked dish
+  if (hideOriginals.length) ops.push(prisma.dish.updateMany({ where: { id: { in: hideOriginals }, deletedAt: null }, data: { isActive: false } }));
+  if (showOriginals.length) ops.push(prisma.dish.updateMany({ where: { id: { in: showOriginals }, deletedAt: null }, data: { isActive: true } }));
+  if (ops.length) await Promise.all(ops);
 }
 
 /** Desactiva (soft-delete) el Dish vinculado y limpia el vínculo. */

@@ -1,88 +1,127 @@
 /**
- * Establece los polígonos de delivery de Kojo Recoleta y Kojo La Florida
- * para que coincidan con las zonas del mapa de referencia.
+ * Calcula y guarda zonas de delivery de Kojo Recoleta y Kojo La Florida:
+ * - Radio exacto de 13 km desde cada local
+ * - Cortadas en la bisectriz perpendicular entre los dos centros → sin solapamiento
  */
 import { prisma } from "@/lib/prisma";
-import { revalidateEcommerceCache } from "@/lib/ecommerce/revalidate";
 
-// ── Zona azul (Recoleta) ────────────────────────────────────────────────────
-// Cubre desde Quilicura/Huechuraba al norte hasta Cerrillos al sur,
-// desde Pudahuel al oeste hasta Las Condes al este.
+const LAT_KM = 111.32;
+const LNG_KM = 92.94; // cos(33.5°) * 111.32
+
+const R = { lat: -33.4337032, lng: -70.6378453 }; // Kojo Recoleta
+const F = { lat: -33.5225335, lng: -70.5969318 }; // Kojo La Florida
+const RADIUS = 13; // km
+
+// ── Distancia entre los dos centros ─────────────────────────────────────────
+const dLat = (F.lat - R.lat) * LAT_KM; // km
+const dLng = (F.lng - R.lng) * LNG_KM; // km
+const dist = Math.sqrt(dLat ** 2 + dLng ** 2); // ≈ 10.59 km
+
+// ── Punto medio (bisectriz pasa por aquí) ────────────────────────────────────
+const M = { lat: (R.lat + F.lat) / 2, lng: (R.lng + F.lng) / 2 };
+
+// ── Dirección perpendicular a R→F (unitaria, en km) ──────────────────────────
+// Vector R→F: (dLng, dLat). Perpendicular (rotado 90° CCW): (-dLat, dLng)
+const perpX = -dLat / dist; // componente este
+const perpY = dLng / dist;  // componente norte
+
+// ── Puntos de intersección de los dos círculos ────────────────────────────────
+// h = distancia desde el punto medio hasta las intersecciones
+const h = Math.sqrt(RADIUS ** 2 - (dist / 2) ** 2); // ≈ 11.87 km
+
+const INT1 = {
+  lat: M.lat + (perpY * h) / LAT_KM,
+  lng: M.lng + (perpX * h) / LNG_KM,
+}; // NE (~-33.440, -70.498)
+
+const INT2 = {
+  lat: M.lat - (perpY * h) / LAT_KM,
+  lng: M.lng - (perpX * h) / LNG_KM,
+}; // SW (~-33.516, -70.737)
+
+// ── Genera un punto en el círculo de un centro dado ──────────────────────────
+// θ en grados: 0=este, 90=norte, va CCW
+function pt(center: typeof R, deg: number) {
+  const rad = (deg * Math.PI) / 180;
+  return {
+    lat: parseFloat((center.lat + (RADIUS * Math.sin(rad)) / LAT_KM).toFixed(6)),
+    lng: parseFloat((center.lng + (RADIUS * Math.cos(rad)) / LNG_KM).toFixed(6)),
+  };
+}
+
+function round(p: { lat: number; lng: number }) {
+  return { lat: parseFloat(p.lat.toFixed(6)), lng: parseFloat(p.lng.toFixed(6)) };
+}
+
+// ── RECOLETA ─────────────────────────────────────────────────────────────────
+// INT1 está a ~-3° de R (casi due-east). INT2 está a ~225° (suroeste).
+// El arco de Recoleta va CCW de -3° hasta 225° (pasando por N, O, SO).
+// Generamos puntos cada 20° desde 0° hasta 220°, enmarcados por INT1 e INT2.
 const RECOLETA_POLYGON = [
-  { lat: -33.340, lng: -70.645 }, // Norte (Huechuraba N)
-  { lat: -33.355, lng: -70.565 }, // Noreste
-  { lat: -33.390, lng: -70.528 }, // Este norte (Barrio Golf)
-  { lat: -33.430, lng: -70.520 }, // Este
-  { lat: -33.468, lng: -70.545 }, // Sureste
-  { lat: -33.500, lng: -70.590 }, // Sur-sureste
-  { lat: -33.520, lng: -70.655 }, // Sur (Cerrillos)
-  { lat: -33.505, lng: -70.725 }, // Sur-suroeste
-  { lat: -33.465, lng: -70.770 }, // Oeste (Pudahuel)
-  { lat: -33.412, lng: -70.782 }, // Oeste
-  { lat: -33.362, lng: -70.752 }, // Noroeste (Quilicura)
-  { lat: -33.340, lng: -70.700 }, // Norte-noroeste
+  round(INT1),    // -3° (límite NE compartido)
+  pt(R, 20),
+  pt(R, 40),
+  pt(R, 60),
+  pt(R, 80),
+  pt(R, 90),      // norte
+  pt(R, 100),
+  pt(R, 120),
+  pt(R, 140),
+  pt(R, 160),
+  pt(R, 180),     // oeste
+  pt(R, 200),
+  pt(R, 220),
+  round(INT2),    // 225° (límite SO compartido)
+  // cierre recto → INT1 = borde compartido con La Florida
 ];
 
-// ── Zona amarilla (La Florida) ──────────────────────────────────────────────
-// Cubre desde Lo Hermida al norte hasta Puente Alto al sur,
-// desde El Bosque/La Pintana al oeste hasta Las Pircas al este.
+// ── LA FLORIDA ───────────────────────────────────────────────────────────────
+// INT1 está a ~45° de F (noreste). INT2 está a ~177° (casi due-west).
+// El arco de La Florida va CW de 45° hasta 177° (pasando por E, S, O).
+// Generamos puntos cada 20° desde 25° bajando hasta -165°, enmarcados por INT1 e INT2.
 const LA_FLORIDA_POLYGON = [
-  { lat: -33.478, lng: -70.600 }, // Norte (Lo Hermida)
-  { lat: -33.490, lng: -70.548 }, // Noreste
-  { lat: -33.520, lng: -70.520 }, // Este-noreste
-  { lat: -33.558, lng: -70.518 }, // Este (Las Pircas)
-  { lat: -33.590, lng: -70.543 }, // Sur-sureste
-  { lat: -33.622, lng: -70.578 }, // Sur (Puente Alto N)
-  { lat: -33.618, lng: -70.625 }, // Sur-suroeste
-  { lat: -33.585, lng: -70.665 }, // Suroeste (La Pintana)
-  { lat: -33.540, lng: -70.675 }, // Oeste (El Bosque)
-  { lat: -33.504, lng: -70.652 }, // Noroeste
-  { lat: -33.482, lng: -70.620 }, // Norte-noroeste
+  round(INT1),    // 45° (límite NE compartido)
+  pt(F, 25),
+  pt(F, 5),
+  pt(F, -15),
+  pt(F, -35),
+  pt(F, -55),
+  pt(F, -75),
+  pt(F, -90),     // sur
+  pt(F, -105),
+  pt(F, -120),
+  pt(F, -135),
+  pt(F, -150),
+  pt(F, -165),
+  round(INT2),    // 177° (límite SO compartido)
+  // cierre recto → INT1 = borde compartido con Recoleta
 ];
+
+console.log("INT1:", INT1);
+console.log("INT2:", INT2);
+console.log("Distancia entre centros:", dist.toFixed(2), "km");
+console.log("Recoleta puntos:", RECOLETA_POLYGON.length);
+console.log("La Florida puntos:", LA_FLORIDA_POLYGON.length);
 
 const RECOLETA_ID = "cmvcjbx090001jn074i0eg9zu";
 const LA_FLORIDA_ID = "cmubc0yoq0001jv041si8zicn";
 
 async function main() {
-  // Recoleta
-  const recol = await prisma.restaurant.findUnique({
-    where: { id: RECOLETA_ID },
-    select: { ecommerceDeliveryConfig: true },
-  });
+  const recol = await prisma.restaurant.findUnique({ where: { id: RECOLETA_ID }, select: { ecommerceDeliveryConfig: true } });
   const recolConfig = (recol?.ecommerceDeliveryConfig ?? {}) as Record<string, unknown>;
   await prisma.restaurant.update({
     where: { id: RECOLETA_ID },
-    data: {
-      ecommerceDeliveryConfig: {
-        ...recolConfig,
-        polygonIncluded: RECOLETA_POLYGON,
-        polygonExcluded: [],
-      } as unknown as object,
-    },
+    data: { ecommerceDeliveryConfig: { ...recolConfig, polygonIncluded: RECOLETA_POLYGON, polygonExcluded: [] } as unknown as object },
   });
   console.log("✅ Recoleta actualizado");
 
-  // La Florida
-  const flor = await prisma.restaurant.findUnique({
-    where: { id: LA_FLORIDA_ID },
-    select: { ecommerceDeliveryConfig: true },
-  });
+  const flor = await prisma.restaurant.findUnique({ where: { id: LA_FLORIDA_ID }, select: { ecommerceDeliveryConfig: true } });
   const florConfig = (flor?.ecommerceDeliveryConfig ?? {}) as Record<string, unknown>;
   await prisma.restaurant.update({
     where: { id: LA_FLORIDA_ID },
-    data: {
-      ecommerceDeliveryConfig: {
-        ...florConfig,
-        polygonIncluded: LA_FLORIDA_POLYGON,
-        polygonExcluded: [],
-      } as unknown as object,
-    },
+    data: { ecommerceDeliveryConfig: { ...florConfig, polygonIncluded: LA_FLORIDA_POLYGON, polygonExcluded: [] } as unknown as object },
   });
   console.log("✅ La Florida actualizado");
-
-  revalidateEcommerceCache({ id: RECOLETA_ID });
-  revalidateEcommerceCache({ id: LA_FLORIDA_ID });
-  console.log("🔄 Cache invalidado");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
