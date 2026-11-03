@@ -62,13 +62,11 @@ export async function GET(req: NextRequest) {
     where.createdAt = dateRange;
     where.OR = [{ opsStage: "delivered" }, { posStatus: "canceled" }];
   } else {
-    // Activos: los pedidos en curso (preparación/listo/reparto) se muestran SIEMPRE,
-    // sin importar el día; los entregados solo dentro del rango seleccionado.
+    // Activos: los pedidos en curso (preparación/listo/reparto). Al cerrar un
+    // pedido pasa a "delivered" y debe salir de esta lista; los entregados y
+    // cancelados viven en el historial, no acá.
     where.posStatus = { not: "canceled" };
-    where.OR = [
-      { opsStage: { not: "delivered" } },
-      { opsStage: "delivered", createdAt: dateRange },
-    ];
+    where.opsStage = { not: "delivered" };
   }
 
   const orders = await prisma.posOrder.findMany({
