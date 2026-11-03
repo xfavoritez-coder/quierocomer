@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastTracking, type DelifastTracking } from "@/lib/delifast/client";
 
 export const runtime = "nodejs";
@@ -42,9 +43,9 @@ export async function GET(req: NextRequest) {
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
 
-  const cfg = parseEcommerceConfig(
+  const cfg = decryptEcommerceSecrets(parseEcommerceConfig(
     (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } }))?.ecommerceConfig,
-  );
+  ));
   const creds = cfg.delifast;
   const configured = !!(creds?.enabled && creds.email && creds.password && creds.plataforma);
   if (!configured) return NextResponse.json({ ok: true, configured: false });

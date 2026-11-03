@@ -5,6 +5,8 @@ import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin }
 import { ensureOwnBodega, makeOwnBodega, shareBodegaWith } from "@/lib/bodega/provision";
 import crypto from "crypto";
 import { extractCommune } from "@/lib/communeUtils";
+import { encryptEcommerceSecrets, decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
+import type { EcommerceConfig } from "@/lib/ecommerce/config";
 
 const OWNER_EDITABLE_FIELDS = [
   "name", "description", "logoUrl", "bannerUrl",
@@ -66,7 +68,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   });
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-  return NextResponse.json(restaurant);
+  // Secretos (ej. clave de Delifast) viajan en claro al admin para edición, pero
+  // se guardan cifrados en la BD.
+  return NextResponse.json({ ...restaurant, ecommerceConfig: decryptEcommerceSecrets(restaurant.ecommerceConfig as EcommerceConfig | null) });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -132,7 +136,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.posEnabled !== undefined && { posEnabled: body.posEnabled }),
         // Visibilidad en el sidebar del módulo legacy "Pedidos Online" (default visible)
         ...(body.orderingNavHidden !== undefined && { orderingNavHidden: body.orderingNavHidden }),
-        ...(body.ecommerceConfig !== undefined && { ecommerceConfig: body.ecommerceConfig }),
+        ...(body.ecommerceConfig !== undefined && { ecommerceConfig: encryptEcommerceSecrets(body.ecommerceConfig as EcommerceConfig) }),
         ...(body.ecommerceDeliveryZones !== undefined && { ecommerceDeliveryZones: body.ecommerceDeliveryZones }),
         ...(body.ecommerceDeliveryConfig !== undefined && { ecommerceDeliveryConfig: body.ecommerceDeliveryConfig }),
         ...(body.filterBarEnabled !== undefined && { filterBarEnabled: body.filterBarEnabled }),

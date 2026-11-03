@@ -3,6 +3,8 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import { extractCommune } from "@/lib/communeUtils";
+import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
+import type { EcommerceConfig } from "@/lib/ecommerce/config";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -15,7 +17,9 @@ export async function GET(req: NextRequest) {
         _count: { select: { dishes: true, categories: true, statEvents: true, sessions: true } },
       },
     });
-    return NextResponse.json(restaurants);
+    // Secretos cifrados en BD → se devuelven en claro al admin para edición.
+    const out = restaurants.map((r) => ({ ...r, ecommerceConfig: decryptEcommerceSecrets(r.ecommerceConfig as EcommerceConfig | null) }));
+    return NextResponse.json(out);
   } catch (error) {
     console.error("[Admin locales]", error);
     return NextResponse.json([], { status: 500 });
