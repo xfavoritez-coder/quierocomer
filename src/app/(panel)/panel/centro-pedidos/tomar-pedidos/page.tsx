@@ -240,7 +240,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const applyCourtesy = (key: string, reason: string) => { setCart((prev) => prev.map((c) => (c.key === key ? { ...c, courtesy: true, courtesyReason: reason } : c))); setCourtesyKey(null); };
   const removeCourtesy = (key: string) => setCart((prev) => prev.map((c) => (c.key === key ? { ...c, courtesy: false, courtesyReason: "" } : c)));
 
-  const addressFull = [address.trim(), apt.trim()].filter(Boolean).join(", ");
+  const addressFull = address.trim() + (apt.trim() ? ` · Dpto/casa: ${apt.trim()}` : "");
 
   // Validación
   const invalid = useMemo(() => {

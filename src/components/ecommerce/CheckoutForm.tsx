@@ -349,7 +349,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           customerPhone: phone.trim(),
           customerEmail: email.trim() || null,
           orderType: isDelivery ? "DELIVERY" : "PICKUP",
-          deliveryAddress: isDelivery ? [deliveryAddress?.address, deliveryAddress?.details].filter(Boolean).join(" · ") : null,
+          deliveryAddress: isDelivery ? [deliveryAddress?.address, deliveryAddress?.details ? `Dpto/casa: ${deliveryAddress.details}` : null].filter(Boolean).join(" · ") : null,
           deliveryAddressParts: isDelivery ? (deliveryAddress?.parts ?? null) : null,
           deliveryZone: isDelivery ? deliveryAddress?.zoneName : null,
           deliveryLat: isDelivery ? deliveryAddress?.lat : null,
