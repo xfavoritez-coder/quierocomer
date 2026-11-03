@@ -381,7 +381,7 @@ namespace QuieroComerAgente {
                 else { bytes = BuildTicket(o, resp.store, width); }
                 string target;
                 bool ok = PrintBytes(bytes, route, out target);
-                if (ok) { Ack(o.id); Balloon("Comanda impresa", "Pedido #" + NumStr(o.orderNumber)); }
+                if (ok) { Ack(o.id); } // sin notificacion de Windows por cada impresion
                 else { Balloon("Error de impresion", "Revisa la impresora: " + target); }
               } catch (Exception ex) { Balloon("Error con un pedido", ex.Message); }
             }
@@ -582,7 +582,7 @@ namespace QuieroComerAgente {
         try {
           byte[] bytes = Convert.FromBase64String(pr.escpos);
           string target; bool ok = PrintBytes(bytes, out target);
-          if (ok) { Balloon("Comanda impresa", "POS - " + target); return "{\"ok\":true,\"jobId\":\"" + JsonEsc(pr.jobId) + "\"}"; }
+          if (ok) { return "{\"ok\":true,\"jobId\":\"" + JsonEsc(pr.jobId) + "\"}"; } // sin notificacion por impresion
           code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc("No se pudo imprimir: " + target) + "\"}";
         } catch (Exception ex) { code = 500; return "{\"ok\":false,\"error\":\"" + JsonEsc(ex.Message) + "\"}"; }
       }

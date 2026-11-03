@@ -33,13 +33,13 @@ export default function PosTiemposInline({ restaurantId }: { restaurantId: strin
     } catch { toast.error('Error de conexión') }
   }
 
-  const sel: React.CSSProperties = { appearance: 'auto', padding: '7px 10px', borderRadius: 9, border: '1px solid var(--line-strong)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', minWidth: 92 }
+  const sel: React.CSSProperties = { appearance: 'auto', width: 96, flexShrink: 0, boxSizing: 'border-box', padding: '7px 10px', borderRadius: 9, border: '1px solid var(--line-strong)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }
 
   const row = (icon: React.ReactNode, label: string, value: string, setValue: (v: string) => void, key: string) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-      <span style={{ color: 'var(--ink-3)', display: 'flex' }}>{icon}</span>
-      <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink)' }}>{label}</span>
-      <select value={PRESETS.includes(value) ? value : value} onChange={(e) => { setValue(e.target.value); save({ [key]: e.target.value }) }} style={sel} disabled={!ready}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0' }}>
+      <span style={{ color: 'var(--ink-3)', display: 'flex', flexShrink: 0 }}>{icon}</span>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.15 }}>{label}</span>
+      <select value={value} onChange={(e) => { setValue(e.target.value); save({ [key]: e.target.value }) }} style={sel} disabled={!ready}>
         {value && !PRESETS.includes(value) && <option value={value}>{value} min</option>}
         {PRESETS.map(p => <option key={p} value={p}>{p ? `${p} min` : '—'}</option>)}
       </select>
