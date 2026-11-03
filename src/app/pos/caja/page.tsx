@@ -49,10 +49,13 @@ export default function CajaPage() {
   const [closing, setClosing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  useState(() => {
-    setRestaurantId(restaurantId)
+  // Debe re-ejecutarse cuando el restaurante resuelve (al montar, restaurantId aún
+  // puede ser el FALLBACK). Si no, los eventos de caja se etiquetan con el local
+  // equivocado. (Antes era un useState que solo corría una vez → bug.)
+  useEffect(() => {
+    if (restaurantId) setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
-  })
+  }, [restaurantId])
 
   // Reconcilia el arqueo: registra en la caja abierta TODOS los pedidos pagados
   // de HOY (pagos web —webpay/mercadopago/flow— o cobros del POS), estén o no

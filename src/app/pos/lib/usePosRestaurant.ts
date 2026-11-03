@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { setRestaurantId as setEventsRestaurantId } from '@/lib/pos'
 
 const FALLBACK_ID = 'cmo22e53z0000l404vsw2cksk'
 const PANEL_KEY = 'panel_selected_restaurant'
@@ -29,6 +30,11 @@ let _fetched = false
 
 function notify() { _listeners.forEach(l => l()) }
 
+// Mantiene sincronizado el restaurante del módulo de eventos del POS (el que
+// etiqueta cash_session/accounts). CRÍTICO: evita que los eventos se graben con
+// el FALLBACK cuando una página se monta antes de resolver el restaurante real.
+function syncEventsRestaurant(id: string) { if (id) setEventsRestaurantId(id) }
+
 function init() {
   if (_fetched) return
   _fetched = true
@@ -38,6 +44,7 @@ function init() {
     const saved = localStorage.getItem(PANEL_KEY)
     if (saved) {
       _restaurantId = saved
+      syncEventsRestaurant(saved)
       _state = { ..._state, restaurantId: saved }
       notify()
     }
@@ -53,6 +60,7 @@ function init() {
           const id = _restaurantId
           const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
           if (r?.id) {
+            syncEventsRestaurant(id)
             _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
             notify()
             return
@@ -68,6 +76,7 @@ function init() {
         : data.selectedRestaurantId || data.restaurants[0]?.id || FALLBACK_ID
       const rest = data.restaurants.find((r: any) => r.id === id) ?? null
       _restaurantId = id
+      syncEventsRestaurant(id)
       _state = {
         restaurantId: id,
         restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null, branchName: (rest as any).branchName ?? null } : null,
