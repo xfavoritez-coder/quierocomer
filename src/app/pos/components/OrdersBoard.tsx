@@ -127,7 +127,6 @@ function OrderCard({
     <div
       style={{
         border: `1.5px solid ${isSelected ? 'var(--ink-2)' : 'var(--line)'}`,
-        borderLeft: `4px solid ${typeColor}`,
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
         boxShadow: isSelected ? 'var(--sh-2)' : 'var(--sh-1)',
         fontFamily: 'var(--sans)',
@@ -498,7 +497,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <p>Sin pedidos activos.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {list.map((o) => (
               <OrderCard
                 key={o.id}
