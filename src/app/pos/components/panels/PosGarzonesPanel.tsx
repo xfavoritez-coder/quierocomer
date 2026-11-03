@@ -5,7 +5,7 @@ import { usePosSync, useStaff, setRestaurantId, setUserId, saveGarzon, deleteGar
 
 const TEST_USER_ID = 'pos-garzon'
 
-export default function PosGarzonesPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosGarzonesPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const { syncing } = usePosSync(restaurantId)
   const garzones = useStaff(restaurantId)
   const [newName, setNewName] = useState('')
@@ -37,7 +37,7 @@ export default function PosGarzonesPanel({ restaurantId }: { restaurantId: strin
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 20px 60px', maxWidth: 480, margin: '0 auto' }}>
-
+        {title && <p className="pos-inner-title">{title}</p>}
         <div style={card}>
           <div style={eyebrow}>Agregar garzón</div>
           <div style={{ display: 'flex', gap: 8 }}>

@@ -60,26 +60,26 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
     <>
       <div className="pos-drawer-overlay" onClick={onClose} />
       <div className="pos-drawer">
-        <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          {restaurant && (
+        <div className="pos-drawer-header" style={{ borderBottom: '1px solid var(--line)', gap: 10 }}>
+          {restaurant ? (
             <>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' }}>
                 {restaurant.logoUrl
                   ? <img src={restaurant.logoUrl} alt={restaurant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 14, color: 'var(--amber-press)' }}>{restaurant.name.charAt(0).toUpperCase()}</span>
+                  : <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 13, color: 'var(--amber-press)' }}>{restaurant.name.charAt(0).toUpperCase()}</span>
                 }
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{restaurant.name}</div>
+                {restaurant.branchName && <div style={{ fontSize: 12, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{restaurant.branchName}</div>}
               </div>
             </>
+          ) : (
+            <span style={{ flex: 1 }} />
           )}
-          <button onClick={onClose} className="pos-drawer-close" style={{ marginLeft: 'auto', flexShrink: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <button onClick={onClose} className="pos-drawer-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
-        </div>
-        <div className="pos-drawer-header" style={{ borderBottom: 0, paddingTop: 12, paddingBottom: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--ink-3)', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Ajustes</span>
         </div>
         <div className="pos-drawer-items">
           {/* Tiempos de entrega — editables inline, arriba del menú */}

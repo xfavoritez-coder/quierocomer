@@ -39,7 +39,7 @@ const TEST_USER_ID = 'pos-garzon'
 
 type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
 
-const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; onDone?: () => void }> }> = {
+const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
   impresora: { title: 'Impresora', component: PosImpressoraPanel },
@@ -398,7 +398,7 @@ export default function PosHomePage() {
         storeName={restaurant?.name}
         branchName={restaurant?.branchName ?? null}
         syncing={syncing}
-        onMenu={() => setMenuOpen(true)}
+        onMenu={() => setMenuOpen(m => !m)}
         onPendingClick={() => setPendingModal(true)}
         onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
         centerSlot={
@@ -442,22 +442,7 @@ export default function PosHomePage() {
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
       {innerPage && INNER_PAGES[innerPage] && (
         <>
-          {/* Sub-barra con título + botón volver */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 16px', borderBottom: '1px solid var(--line)',
-            background: 'var(--surface)', flexShrink: 0,
-          }}>
-            <button
-              onClick={() => setInnerPage(null)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, border: 0, background: 'none', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 600, padding: '4px 8px', borderRadius: 8 }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 6l-6 6 6 6"/></svg>
-              Volver
-            </button>
-            <span style={{ fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{INNER_PAGES[innerPage].title}</span>
-          </div>
-          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, onDone: () => setInnerPage(null) })}
+          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, title: INNER_PAGES[innerPage].title, onDone: () => setInnerPage(null) })}
         </>
       )}
 
@@ -624,7 +609,7 @@ export default function PosHomePage() {
 
       </>}{/* /!innerPage */}
 
-      {/* ── Drawer ──────────────────────────────────────────── */}
+      {/* ── Drawer ── */}
       {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={setInnerPage} />}
     </div>
   )

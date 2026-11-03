@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, printKitchenComanda, listPrinters, setupPrinter, getKitchenMode, setKitchenMode } from '@/lib/pos/bridge'
 import { buildPrintAgentInstaller } from '@/lib/ecommerce/printAgentScript'
 
-export default function PosImpressoraPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosImpressoraPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const [status, setStatus] = useState<any>(null)
   const [checking, setChecking] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -98,7 +98,7 @@ export default function PosImpressoraPanel({ restaurantId }: { restaurantId: str
   return (
     <div className="pos-scroll">
       <div style={{ flex: 1, padding: '32px 16px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
-
+        {title && <p className="pos-inner-title">{title}</p>}
         {checking ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, paddingTop: 40 }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: 'var(--amber)', animation: 'spin 1s linear infinite' }} />

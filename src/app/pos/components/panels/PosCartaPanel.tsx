@@ -21,7 +21,7 @@ interface CategoryGroup {
 
 const clp = (n: number) => '$' + Math.round(n).toLocaleString('es-CL')
 
-export default function PosCartaPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosCartaPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const [groups, setGroups] = useState<CategoryGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<Record<string, boolean>>({})
@@ -84,6 +84,7 @@ export default function PosCartaPanel({ restaurantId }: { restaurantId: string }
   return (
     <div className="pos-scroll">
       <div className="pos-pad">
+        {title && <p className="pos-inner-title">{title}</p>}
         {/* Search */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ position: 'relative' }}>

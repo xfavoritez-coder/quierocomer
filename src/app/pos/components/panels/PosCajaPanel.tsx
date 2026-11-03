@@ -32,7 +32,7 @@ const METHOD_LABELS: Record<string, string> = {
 
 const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago', 'webpay']
 
-export default function PosCajaPanel({ restaurantId, onDone }: { restaurantId: string; onDone?: () => void }) {
+export default function PosCajaPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const { restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
@@ -218,6 +218,7 @@ export default function PosCajaPanel({ restaurantId, onDone }: { restaurantId: s
     return (
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
+          {title && <p className="pos-inner-title">{title}</p>}
           <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
             <div className="ring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -267,7 +268,7 @@ export default function PosCajaPanel({ restaurantId, onDone }: { restaurantId: s
   return (
     <div className="pos-scroll">
       <div className="pos-caja-wrap">
-
+        {title && <p className="pos-inner-title">{title}</p>}
         {/* ── Apertura ───────────────────────────── */}
         <div className="pos-caja-open">
           <div className="co-l">

@@ -6,7 +6,7 @@ import { updateTableSector, updateTableLabel, addTables, addCustomTable, removeT
 
 const TEST_USER_ID = 'pos-garzon'
 
-export default function PosMesasConfigPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosMesasConfigPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const { syncing } = usePosSync(restaurantId)
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
@@ -107,7 +107,7 @@ export default function PosMesasConfigPanel({ restaurantId }: { restaurantId: st
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 20px 60px', maxWidth: 560, margin: '0 auto' }}>
-
+        {title && <p className="pos-inner-title">{title}</p>}
         {/* ── Sectores ─────────────────────────────────────── */}
         <div style={card}>
           <div style={eyebrow}>1 · Sectores</div>

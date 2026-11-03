@@ -7,7 +7,7 @@ import {
   getOrderSoundType, setOrderSoundType, SOUND_OPTIONS, type SoundType,
 } from '../../lib/orderSound'
 
-export default function PosSonidoPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosSonidoPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const [soundOn, setSoundOn] = useState(isOrderSoundEnabled())
   const [soundType, setSoundTypeState] = useState<SoundType>(getOrderSoundType())
 
@@ -26,6 +26,7 @@ export default function PosSonidoPanel({ restaurantId }: { restaurantId: string 
   return (
     <div className="pos-scroll">
       <div style={{ flex: 1, padding: '24px 16px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+        {title && <p className="pos-inner-title">{title}</p>}
         <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 18 }}>
           Suena fuerte cada vez que entra un pedido de la tienda online. Elige el sonido y pruébalo.
         </p>

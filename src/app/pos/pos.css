@@ -6,11 +6,14 @@
 /* ---------- shell ---------- */
 .pos-shell{height:100dvh;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;position:relative}
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
+.pos-inner-title{font-family:var(--sans);font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-.03em;margin:0 0 20px;line-height:1.1}
 
 /* ---------- top bar ---------- */
 .pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:60px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
-.pos-bar.has-center{display:grid;grid-template-columns:minmax(0,auto) 1fr minmax(0,auto);gap:8px;align-items:center}
-.pos-bar-center{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.pos-bar.has-center{display:flex;align-items:center;justify-content:space-between}
+.pos-bar-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;pointer-events:none;max-width:55%}
+.pos-bar-center>*{pointer-events:auto;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.pos-bar-center>*::-webkit-scrollbar{display:none}
 .pos-tabs-bar{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .pos-tabs-bar::-webkit-scrollbar{display:none}
 /* Logo y hamburger nunca se comprimen */
@@ -351,7 +354,7 @@
 
 /* ---------- drawer (hamburger menu) ---------- */
 .pos-drawer-overlay{position:fixed;inset:0;background:rgba(27,26,23,.4);z-index:40}
-.pos-drawer{position:fixed;top:0;right:0;bottom:0;width:260px;max-width:80vw;background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.08)}
+.pos-drawer{position:fixed;top:0;left:0;bottom:0;width:260px;max-width:80vw;background:var(--surface);border-right:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,.08)}
 .pos-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:15px}
 .pos-drawer-close{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--sunk);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.14s;min-width:44px;min-height:44px}
 .pos-drawer-close:hover{background:var(--surface);border-color:var(--line-strong)}
@@ -397,7 +400,8 @@
 /* ---------- responsive: 840px ---------- */
 @media(max-width:840px){
   .pos-brand-store{display:none}
-  .pos-tab{padding:7px 12px;font-size:13px}
+  .pos-bar-center{position:static;transform:none;left:auto;flex:1;justify-content:center;max-width:none;overflow:hidden}
+  .pos-tab{padding:8px 14px;font-size:14px}
   .pos-cmd{display:block;overflow-y:auto;overflow-x:hidden}
   .pos-cats{width:auto;flex-direction:row;overflow-x:auto;overflow-y:visible;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--surface)}
   .pos-cats::-webkit-scrollbar{display:none}
@@ -412,7 +416,11 @@
   .pos-desktop{display:none!important}
   .pos-new-btn{width:100%}
 }
+@media(max-width:380px){
+  .pos-tab{padding:7px 11px;font-size:13px}
+}
 @media(min-width:841px){
+  .pos-tab{font-size:15px;padding:8px 16px}
   .pos-mobile{display:none!important}
 }
 /* Móvil: mínimo 3 mesas por fila */

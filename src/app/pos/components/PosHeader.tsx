@@ -24,32 +24,41 @@ export default function PosHeader({
 
   return (
     <header className={`pos-bar${centerSlot ? ' has-center' : ''}`}>
-      {mode === 'brand' ? (
-        <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="QuieroComer" className="mk-logo" />
-          {storeName && (
-            <div className="pos-brand-store">
-              <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{storeName}</span>
-              {branchName && <span style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12, color: 'var(--ink-3)' }}>{branchName}</span>}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="pos-back">
-          {onBack && (
-            <button className="bk" onClick={onBack}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 6l-6 6 6 6" />
-              </svg>
-            </button>
-          )}
-          <div>
-            {eyebrow && <div className="pos-back-title">{eyebrow}</div>}
-            {subtitle && <div className="pos-back-sub">{subtitle}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        {onMenu && (
+          <button className="pos-hamburger" onClick={onMenu} aria-label="Menú">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M3 12h18M3 18h18"/>
+            </svg>
+          </button>
+        )}
+        {mode === 'brand' ? (
+          <div className="pos-brand" onClick={onBrandClick} style={onBrandClick ? { cursor: 'pointer' } : undefined}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="QuieroComer" className="mk-logo" />
+            {storeName && (
+              <div className="pos-brand-store">
+                <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{storeName}</span>
+                {branchName && <span style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12, color: 'var(--ink-3)' }}>{branchName}</span>}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="pos-back">
+            {onBack && (
+              <button className="bk" onClick={onBack}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 6l-6 6 6 6" />
+                </svg>
+              </button>
+            )}
+            <div>
+              {eyebrow && <div className="pos-back-title">{eyebrow}</div>}
+              {subtitle && <div className="pos-back-sub">{subtitle}</div>}
+            </div>
+          </div>
+        )}
+      </div>
 
       {centerSlot && <div className="pos-bar-center">{centerSlot}</div>}
 
@@ -68,13 +77,6 @@ export default function PosHeader({
           </button>
         )}
         {rightSlot}
-        {onMenu && (
-          <button className="pos-hamburger" onClick={onMenu} aria-label="Menú">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M3 12h18M3 18h18"/>
-            </svg>
-          </button>
-        )}
       </div>
     </header>
   )
