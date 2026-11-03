@@ -16,6 +16,7 @@ interface Tracking {
   driver: { name: string | null; photo: string | null; phone: string | null } | null
   pin: string | null
   statusUrl: string | null
+  packagePhoto: string | null
   codigoOrigen: string | null
   location: { lat: number; lng: number; at: string | null } | null
   store: Pt
@@ -84,7 +85,7 @@ function TrackingBox({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function DelifastTracking({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
+export default function DelifastTracking({ restaurantId, posOrderId, live = true }: { restaurantId: string; posOrderId: string; live?: boolean }) {
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -103,15 +104,18 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
       } catch { if (!cancelled) setState(prev => prev === 'ok' ? 'ok' : 'error') }
     }
     load()
-    timer.current = setInterval(load, 15000) // refresco en vivo mientras el panel está abierto
+    // En historial (live=false) el pedido ya está entregado: no tiene sentido pollear.
+    if (live) timer.current = setInterval(load, 15000)
     return () => { cancelled = true; if (timer.current) clearInterval(timer.current) }
-  }, [restaurantId, posOrderId])
+  }, [restaurantId, posOrderId, live])
 
   // No mostrar nada si Delifast no está configurado para el local.
   if (state === 'off') return null
 
   if (state === 'loading') return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Cargando seguimiento…</span></TrackingBox>
-  if (state === 'pending') return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></TrackingBox>
+  // En historial (live=false) sin data de Delifast no se muestra nada (el pedido
+  // pudo no pasar por Delifast). En vivo sí avisamos que aún no hay repartidor.
+  if (state === 'pending') return live ? <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></TrackingBox> : null
   if (state === 'error' || !t) return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></TrackingBox>
 
   const sc = statusColor(t.status)
@@ -166,6 +170,17 @@ export default function DelifastTracking({ restaurantId, posOrderId }: { restaur
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>PIN de entrega</span>
           <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, letterSpacing: '.08em', color: 'var(--ink)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 8, padding: '2px 10px' }}>{t.pin}</span>
+        </div>
+      )}
+
+      {/* Foto del pedido (empaque/entrega), si Delifast la tiene */}
+      {t.packagePhoto && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto del pedido</span>
+          <a href={t.packagePhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={t.packagePhoto} alt="Foto del pedido entregado" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
+          </a>
         </div>
       )}
 

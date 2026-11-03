@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import { fmtElapsed } from '../OrderClock'
+import DelifastTracking from '../DelifastTracking'
 
 interface HistorialOrder {
   id: string
@@ -80,7 +81,7 @@ function ymd(offset: number): string {
 }
 
 // ── Detail panel (read-only) ─────────────────────────────────────────
-function HistorialDetailPanel({ order, onClose }: { order: HistorialOrder; onClose: () => void }) {
+function HistorialDetailPanel({ order, onClose, restaurantId }: { order: HistorialOrder; onClose: () => void; restaurantId: string }) {
   const canceled = order.posStatus === 'canceled'
   const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
@@ -118,6 +119,9 @@ function HistorialDetailPanel({ order, onClose }: { order: HistorialOrder; onClo
 
       {/* Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Seguimiento Delifast del pedido entregado (repartidor, timeline, foto). */}
+        {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} />}
+
         {/* Items */}
         {lines.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -322,7 +326,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
   )
 
   const detailSection = selected ? (
-    <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} />
+    <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} restaurantId={restaurantId} />
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
@@ -355,7 +359,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
             style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
           >
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
-            <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} />
+            <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} restaurantId={restaurantId} />
           </div>
         </div>
       )}
