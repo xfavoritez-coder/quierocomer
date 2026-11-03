@@ -128,6 +128,8 @@ export function useOpenCashSession(restaurantId?: string): CashSession | null | 
   const rid = restaurantId ?? getRestaurantId()
   return useDexieQuery(
     async () => {
+      // Sin restaurantId aún no podemos filtrar correctamente — seguir en loading.
+      if (!rid) return undefined
       const open = await posDb.cashSessions.filter(s => s.is_open).toArray()
       if (open.length === 0) return null
       // Solo cajas del restaurante actual (o viejas sin restaurant_id). Nunca se
