@@ -68,8 +68,8 @@ export default function SurveyForm(props: Props) {
           <div style={{ textAlign: "center", padding: "24px 8px", color: "#777" }}>Esta encuesta no tiene preguntas activas.</div>
         ) : (
           <>
-            <h1 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 4px", textAlign: "center" }}>{firstName ? `Hola ${firstName} 👋` : "Tu opinión nos importa"}</h1>
-            <p style={{ color: "#666", fontSize: 14, lineHeight: 1.5, textAlign: "center", margin: "0 0 22px" }}>{props.intro}</p>
+            <h1 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px", textAlign: "center" }}>Queremos conocer tu opinión</h1>
+            {firstName && <p style={{ color: "#666", fontSize: 14, lineHeight: 1.5, textAlign: "center", margin: "0 0 22px" }}>Hola {firstName}, cuéntanos cómo estuvo tu pedido.</p>}
 
             {props.preview && (
               <div style={{ background: `${accent}12`, border: `1px solid ${accent}44`, color: "#555", borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 600, textAlign: "center", marginBottom: 18 }}>
@@ -87,7 +87,7 @@ export default function SurveyForm(props: Props) {
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#666", margin: "0 0 6px" }}>Comentario (opcional)</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#666", margin: "0 0 6px" }}>¿Algo que te gustaría comentar?</p>
               <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="¿Algo que te gustaría comentar o mejorar?"
                 style={{ width: "100%", boxSizing: "border-box", resize: "vertical", borderRadius: 12, border: "1px solid #ddd", padding: "10px 12px", fontSize: 14, fontFamily: FB, outline: "none" }} />
             </div>

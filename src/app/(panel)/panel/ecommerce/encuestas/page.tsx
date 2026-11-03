@@ -152,10 +152,8 @@ export default function EncuestasPage() {
               </div>
 
               <div style={{ marginTop: 16 }}>
-                <FieldLabel>Texto de introducción</FieldLabel>
-                <textarea value={survey.intro} onChange={(e) => setSurvey({ intro: e.target.value })} rows={3} style={{ ...input, resize: "vertical" }} />
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "6px 0 0", lineHeight: 1.5 }}>
-                  Variables disponibles en el asunto y los textos: <code>{"{nombre}"}</code> (primer nombre del cliente) · <code>{"{local}"}</code> (nombre del local).
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 0", lineHeight: 1.5 }}>
+                  Variables disponibles en el asunto: <code>{"{nombre}"}</code> (primer nombre del cliente) · <code>{"{local}"}</code> (nombre del local).
                 </p>
               </div>
 
