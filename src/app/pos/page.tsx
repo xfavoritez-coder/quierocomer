@@ -38,11 +38,10 @@ import PosHistorialPanel from './components/panels/PosHistorialPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos' | 'historial'
 
 const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
-  historial: { title: 'Historial de pedidos', component: PosHistorialPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
   impresora: { title: 'Impresora', component: PosImpressoraPanel },
   sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
@@ -70,6 +69,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
+  { id: 'historial', label: 'Historial' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -454,6 +454,11 @@ export default function PosHomePage() {
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
         <OrdersBoard restaurantId={restaurantId} type={tab} />
+      )}
+
+      {/* ── Historial ── */}
+      {tab === 'historial' && (
+        <PosHistorialPanel restaurantId={restaurantId} />
       )}
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
