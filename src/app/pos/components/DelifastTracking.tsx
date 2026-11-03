@@ -16,7 +16,7 @@ interface Tracking {
   driver: { name: string | null; photo: string | null; phone: string | null } | null
   pin: string | null
   statusUrl: string | null
-  packagePhoto: string | null
+  deliveryPhoto: string | null
   codigoOrigen: string | null
   location: { lat: number; lng: number; at: string | null } | null
   store: Pt
@@ -173,13 +173,13 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         </div>
       )}
 
-      {/* Foto del pedido (empaque/entrega), si Delifast la tiene */}
-      {t.packagePhoto && (
+      {/* Foto de la entrega en casa del cliente (prueba de entrega de Delifast) */}
+      {t.deliveryPhoto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto del pedido</span>
-          <a href={t.packagePhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto de entrega</span>
+          <a href={t.deliveryPhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={t.packagePhoto} alt="Foto del pedido entregado" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
+            <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
           </a>
         </div>
       )}

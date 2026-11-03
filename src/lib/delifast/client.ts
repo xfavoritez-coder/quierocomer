@@ -25,7 +25,7 @@ export interface DelifastTracking {
   driver: { name: string | null; photo: string | null; phone: string | null } | null;
   pin: string | null;             // PIN de entrega
   statusUrl: string | null;       // link público de seguimiento
-  packagePhoto: string | null;    // foto del empaque/entrega (si se tomó)
+  deliveryPhoto: string | null;   // foto de la ENTREGA en casa del cliente (dropoff)
   codigoOrigen: string | null;    // = nuestro orderNumber
   location: { lat: number; lng: number; at: string | null } | null; // ubicación del repartidor
   store: { lat: number; lng: number } | null;
@@ -161,8 +161,8 @@ export async function getDelifastTracking(
       },
       pin: str(viaje.pincode),
       statusUrl: str(venta.url_status),
-      // foto_empaque viene como URL de la imagen cuando se tomó (null si no).
-      packagePhoto: absUrl(venta.foto_empaque),
+      // Foto que saca el repartidor al entregar en la casa del cliente (Uber POD).
+      deliveryPhoto: str(viaje.dropoff_imagen),
       codigoOrigen: str(venta.codigo_origen),
       location: pt(loc.lat, loc.lng) ? { ...pt(loc.lat, loc.lng)!, at: str(viaje.timestamp_last_location) } : null,
       store: pt(venta.lat_local, venta.lng_local),
