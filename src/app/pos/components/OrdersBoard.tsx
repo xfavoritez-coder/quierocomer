@@ -48,6 +48,28 @@ const STAGE_LABEL: Record<string, string> = {
 
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
 
+// Mapea el método de pago (venga del POS o del pago online: webpay, mercadopago,
+// flow, etc.) a una de las categorías del arqueo de caja. Los pagos online que no
+// tienen bucket propio caen en "App de pago".
+const toPaymentMethod = (raw?: string | null): PaymentMethod => {
+  const m = (raw || '').toLowerCase()
+  if (m.includes('efect') || m.includes('cash')) return 'efectivo'
+  if (m.includes('debit')) return 'debito'
+  if (m.includes('cred')) return 'credito'
+  if (m.includes('transf')) return 'transferencia'
+  if (m.includes('webpay')) return 'webpay'
+  // mercadopago, flow, u otros pagos online
+  return 'app_pago'
+}
+
+// Método con el que llegó pagado el pedido (rawPayload.posPayment / webPayment).
+const paidMethodOf = (o: PosOrderLite): PaymentMethod => {
+  const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? (o.rawPayload as Record<string, unknown>) : {}
+  const pp = (rp.posPayment as { method?: string } | undefined) || undefined
+  const wp = (rp.webPayment as { method?: string } | undefined) || undefined
+  return toPaymentMethod(pp?.method || wp?.method)
+}
+
 function itemLines(items: unknown): { name: string; qty: number }[] {
   if (!Array.isArray(items)) return []
   return items.map((it) => {
@@ -221,6 +243,12 @@ function CobroModal({ order, restaurantId, type, onClose, onPaid }: { order: Pos
   const handleFinalize = async () => {
     setFinalizing(true)
     try {
+      // Si venía pagado desde la web (webpay/mercadopago/flow) y nunca se cobró
+      // en el POS, registrarlo en la caja al cerrarlo para que sume en el arqueo.
+      // Idempotente por orderId: no duplica si ya estaba registrado.
+      if (paid) {
+        await registerExternalPayment({ orderId: order.id, type, customerName: order.customerName, amount: total, tip: order.tipAmount || 0, method: paidMethodOf(order) }).catch(() => {})
+      }
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurantId, id: order.id, opsStage: 'delivered' }),
