@@ -11,7 +11,12 @@ import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig, parseCentroPedidosConfig, effectivePosMode } from "@/lib/ecommerce/config";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
 
-interface StoredItem { name?: string; dishName?: string; quantity?: number }
+interface StoredItemOpt { value?: string; optionName?: string }
+interface StoredItem {
+  name?: string; dishName?: string; quantity?: number;
+  options?: StoredItemOpt[]; selectedOptions?: StoredItemOpt[];
+  comment?: string; note?: string;
+}
 
 /** Espeja un OnlineOrder (ecommerce/manual) al Centro de pedidos como PosOrder,
  *  solo si el local NO está en modo POS. Idempotente por externalId "oo-<id>". */
@@ -46,7 +51,14 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
   const vendorName = channel === "web" ? `${base}-Web` : base;
 
   const items = Array.isArray(order.items)
-    ? (order.items as unknown as StoredItem[]).map((it) => ({ productName: it.name || it.dishName || "Ítem", quantity: Number(it.quantity) || 1 }))
+    ? (order.items as unknown as StoredItem[]).map((it) => ({
+        productName: it.name || it.dishName || "Ítem",
+        quantity: Number(it.quantity) || 1,
+        // Conservar las opciones/modificadores elegidos (antes se descartaban, por
+        // eso no salían en el Centro de pedidos ni en la comanda).
+        options: (it.options ?? it.selectedOptions ?? []).map((o) => o?.value || o?.optionName).filter(Boolean),
+        note: it.comment || it.note || undefined,
+      }))
     : [];
 
   // Pedido ya pagado por la web (webpay/mercadopago/flow): llega PAGADO al POS,

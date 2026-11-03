@@ -83,14 +83,27 @@ function prevAction(stage: string): { label: string; stage: string } | null {
 
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
 
-function itemLines(items: unknown): { name: string; qty: number; price: number }[] {
+// Extrae los nombres de las opciones/modificadores elegidos de un ítem, soportando
+// las dos formas en que se guardan (array de strings del espejo, o de objetos
+// {value}/{optionName}/{name} del OnlineOrder).
+function itemOptions(o: Record<string, unknown>): string[] {
+  const raw = (o.options ?? o.selectedOptions ?? o.modifiers) as unknown
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((x) => (typeof x === 'string' ? x : String((x as Record<string, unknown>)?.value ?? (x as Record<string, unknown>)?.optionName ?? (x as Record<string, unknown>)?.name ?? '')))
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function itemLines(items: unknown): { name: string; qty: number; price: number; options: string[]; note: string }[] {
   if (!Array.isArray(items)) return []
   return items.map((it) => {
     const o = (it || {}) as Record<string, unknown>
     const name = String(o.name ?? o.productName ?? o.title ?? o.description ?? 'Ítem')
     const qty = Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1
     const price = Number(o.price ?? o.unitPrice ?? o.unit_price ?? o.precio ?? 0) || 0
-    return { name, qty, price }
+    const note = String(o.note ?? o.comment ?? '').trim()
+    return { name, qty, price, options: itemOptions(o), note }
   })
 }
 
@@ -345,12 +358,20 @@ function OrderDetailPanel({
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Ítems</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {lines.length > 0 ? lines.map((l, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, fontSize: 15 }}>
-                <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 6 }}>{l.qty}×</span>
-                  {l.name}
-                </span>
-                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, fontSize: 15 }}>
+                  <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 6 }}>{l.qty}×</span>
+                    {l.name}
+                  </span>
+                  {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
+                </div>
+                {l.options.length > 0 && (
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-3)', paddingLeft: 22 }}>{l.options.join(' · ')}</div>
+                )}
+                {l.note && (
+                  <div style={{ fontSize: 13, color: 'var(--ink-3)', fontStyle: 'italic', paddingLeft: 22 }}>“{l.note}”</div>
+                )}
               </div>
             )) : (
               <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>Sin detalle de ítems</div>
