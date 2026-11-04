@@ -18,6 +18,8 @@ const RED = '#dc2626'
 
 const TEST_USER_ID = 'pos-garzon'
 
+interface BranchInfo { id: string; name: string; branchName?: string | null }
+
 const METHODS: { id: PaymentMethod; label: string }[] = [
   { id: 'efectivo', label: 'Efectivo' },
   { id: 'debito', label: 'Débito' },
@@ -47,6 +49,7 @@ interface PosOrderLite {
   items: unknown
   createdAt: string
   rawPayload?: unknown
+  _branchId?: string  // set internally in multi-branch mode
 }
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
@@ -145,7 +148,7 @@ function OrderTimer({ order, isRetiro, icon = true, style }: { order: PosOrderLi
 // ── Order card ──────────────────────────────────────────────────────
 
 function OrderCard({
-  order, isSelected, showTypeChip, stageBusy, blocked,
+  order, isSelected, showTypeChip, stageBusy, blocked, branchLabel,
   onSelect, onStageChange, onCobro, onBlock, onDismissBlock,
 }: {
   order: PosOrderLite
@@ -153,6 +156,7 @@ function OrderCard({
   showTypeChip: boolean
   stageBusy: string | null
   blocked: boolean
+  branchLabel?: string
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
   onCobro: (o: PosOrderLite) => void
@@ -219,6 +223,7 @@ function OrderCard({
               {toName(order.customerName || 'Cliente')}
             </div>
             {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
+            {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
@@ -711,7 +716,7 @@ function SortIcon({ dir }: { dir: 'asc' | 'desc' }) {
 
 // ── Main component ──────────────────────────────────────────────────
 
-export default function OrdersBoard({ restaurantId, type }: { restaurantId: string; type: OrderType }) {
+export default function OrdersBoard({ restaurantId, type, allBranches }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[] }) {
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
@@ -726,8 +731,11 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [viewCols, setViewCols] = useState<1 | 2 | 3>(1)
   useEffect(() => {
     try {
-      const v = parseInt(localStorage.getItem('pos:boardCols') || '', 10)
+      // v2: nuevo default = 2 columnas en desktop. Clave distinta para ignorar
+      // la preferencia anterior (que arrancaba en 1).
+      const v = parseInt(localStorage.getItem('pos:boardCols:v2') || '', 10)
       if (v === 1 || v === 2 || v === 3) setViewCols(v)
+      else setViewCols(window.innerWidth >= 600 ? 2 : 1)
     } catch { }
   }, [])
   // Máximo de columnas que caben bien según el ancho del dispositivo: teléfono
@@ -746,7 +754,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const cycleView = useCallback(() => {
     setViewCols(prev => {
       const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3
-      try { localStorage.setItem('pos:boardCols', String(next)) } catch { }
+      try { localStorage.setItem('pos:boardCols:v2', String(next)) } catch { }
       return next
     })
   }, [maxCols])
@@ -790,19 +798,34 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [restaurantId])
 
   const fetchOrders = useCallback(async () => {
-    if (!restaurantId) return
+    const isMulti = allBranches && allBranches.length > 1
+    if (!isMulti && !restaurantId) return
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
-      const d = await r.json()
-      if (r.ok && Array.isArray(d.orders)) {
-        setOrders(d.orders)
-        setDelifastEnabled(!!d.delifastEnabled)
-        // Keep selected in sync
-        setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
+      if (isMulti) {
+        const results = await Promise.all(
+          allBranches!.map(b =>
+            fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${b.id}&scope=activos`, { cache: 'no-store' })
+              .then(r => r.ok ? r.json() : null)
+              .then(d => Array.isArray(d?.orders) ? (d.orders as PosOrderLite[]).map(o => ({ ...o, _branchId: b.id })) : [])
+              .catch(() => [])
+          )
+        )
+        const merged = results.flat()
+        setOrders(merged)
+        setDelifastEnabled(false)
+        setSelected(prev => prev ? (merged.find(o => o.id === prev.id) ?? null) : null)
+      } else {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+        const d = await r.json()
+        if (r.ok && Array.isArray(d.orders)) {
+          setOrders(d.orders)
+          setDelifastEnabled(!!d.delifastEnabled)
+          setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
+        }
       }
     } catch { }
     setLoading(false)
-  }, [restaurantId])
+  }, [restaurantId, allBranches])
 
   useEffect(() => {
     setLoading(true)
@@ -826,13 +849,14 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [orders, type, sortDir])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
-    if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
+    const rid = order._branchId || restaurantId
+    if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(rid, order, delifastEnabled))) return
     setStageBusy(order.id)
     setBlockedId(null)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId, id: order.id, opsStage: stage }),
+        body: JSON.stringify({ restaurantId: rid, id: order.id, opsStage: stage }),
       })
       if (r.ok) {
         if (stage === 'delivered') setSelected(null)
@@ -871,13 +895,15 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 <ViewIcon cols={cols} />
               </button>
             )}
-            <button
-              onClick={() => navigate('/pos/tomar-pedido')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              {newOrderLabel}
-            </button>
+            {!allBranches && (
+              <button
+                onClick={() => navigate('/pos/tomar-pedido')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                {newOrderLabel}
+              </button>
+            )}
           </div>
         </div>
 
@@ -903,6 +929,9 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 showTypeChip={type === 'todos'}
                 stageBusy={stageBusy}
                 blocked={blockedId === o.id}
+                branchLabel={allBranches && allBranches.length > 1 && o._branchId
+                  ? (allBranches.find(b => b.id === o._branchId)?.branchName || allBranches.find(b => b.id === o._branchId)?.name)
+                  : undefined}
                 onSelect={() => {
                   if (isDesktop) {
                     setSelected(prev => prev?.id === o.id ? null : o)
@@ -925,7 +954,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const detailSection = selected ? (
     <OrderDetailPanel
       order={selected}
-      restaurantId={restaurantId}
+      restaurantId={selected._branchId || restaurantId}
       cajaOpen={cajaOpen}
       stageBusy={stageBusy}
       delifastEnabled={delifastEnabled}
@@ -957,7 +986,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
           {detailSection}
         </div>
         {cobro && (
-          <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
+          <CobroModal order={cobro} restaurantId={cobro._branchId || restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
         )}
 
       </div>
@@ -994,7 +1023,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         </div>
       )}
       {cobro && (
-        <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
+        <CobroModal order={cobro} restaurantId={cobro._branchId || restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
       )}
 
     </>

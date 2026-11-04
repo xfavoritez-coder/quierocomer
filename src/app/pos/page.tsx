@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -22,7 +22,7 @@ import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
 import { supabase } from '@/lib/supabase'
 import { usePosNav } from './lib/usePosNav'
-import { usePosRestaurant } from './lib/usePosRestaurant'
+import { usePosRestaurant, switchPosBranch } from './lib/usePosRestaurant'
 import type { PosRestaurant } from './lib/usePosRestaurant'
 import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
@@ -40,7 +40,7 @@ const TEST_USER_ID = 'pos-garzon'
 
 type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
 
-const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
+const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<any> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
   historial: { title: 'Historial de pedidos', component: PosHistorialPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
@@ -201,7 +201,36 @@ type DesktopPanel =
 export default function PosHomePage() {
   const navigate = usePosNav()
   const isDesktop = useIsDesktop()
-  const { restaurantId, restaurant, posEnabled } = usePosRestaurant()
+  const { restaurantId, restaurant, restaurants, posEnabled } = usePosRestaurant()
+
+  // ── Multi-branch mode ────────────────────────────────────────────
+  // branchMode: restaurantId (single branch) | 'todas' | '' (defaults to current)
+  const [branchMode, setBranchMode] = useState<string>(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('pos:branchMode') || ''
+  })
+  const effectiveBranchMode = branchMode || restaurantId
+  // allBranches: only populated when "todas" is active and there are 2+ branches
+  const allBranches = useMemo(
+    () => effectiveBranchMode === 'todas' && restaurants.length > 1 ? restaurants : undefined,
+    [effectiveBranchMode, restaurants]
+  )
+
+  function handleBranchSelect(id: string) {
+    if (id === 'todas') {
+      localStorage.setItem('pos:branchMode', 'todas')
+      setBranchMode('todas')
+    } else if (id !== restaurantId) {
+      // Different branch → update and reload
+      localStorage.setItem('pos:branchMode', id)
+      switchPosBranch(id)
+    } else {
+      // Same as current → just exit "todas" mode
+      localStorage.setItem('pos:branchMode', id)
+      setBranchMode(id)
+    }
+  }
+
   const { syncing } = usePosSync(restaurantId)
   const accounts = useOpenAccounts(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
@@ -430,6 +459,27 @@ export default function PosHomePage() {
         }
       />
 
+      {/* ── Selector de sucursal (solo cuando hay 2+ locales) ── */}
+      {restaurants.length > 1 && (
+        <div className="pos-branch-bar">
+          {restaurants.map(r => (
+            <button
+              key={r.id}
+              className={`pos-branch-pill${effectiveBranchMode === r.id ? ' on' : ''}`}
+              onClick={() => handleBranchSelect(r.id)}
+            >
+              {r.branchName || r.name}
+            </button>
+          ))}
+          <button
+            className={`pos-branch-pill${effectiveBranchMode === 'todas' ? ' on' : ''}`}
+            onClick={() => handleBranchSelect('todas')}
+          >
+            Todas
+          </button>
+        </div>
+      )}
+
       {/* ── Caja cerrada — ribbon siempre visible ── */}
       {cashSession === null && !syncing && (
         <div style={{
@@ -455,7 +505,7 @@ export default function PosHomePage() {
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
       {innerPage && INNER_PAGES[innerPage] && (
         <>
-          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, title: INNER_PAGES[innerPage].title, onDone: () => setInnerPage(null) })}
+          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, title: INNER_PAGES[innerPage].title, onDone: () => setInnerPage(null), allBranches })}
         </>
       )}
 
@@ -464,11 +514,21 @@ export default function PosHomePage() {
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
-        <OrdersBoard restaurantId={restaurantId} type={tab} />
+        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} />
+      )}
+
+      {/* ── Mesas en modo Todas: mensaje para seleccionar sucursal ── */}
+      {tab === 'mesas' && effectiveBranchMode === 'todas' && (
+        <div className="pos-empty" style={{ flex: 1, minHeight: 200 }}>
+          <div className="ring">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </div>
+          <p>Selecciona una sucursal para ver las mesas.</p>
+        </div>
       )}
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
-      {tab === 'mesas' && (
+      {tab === 'mesas' && effectiveBranchMode !== 'todas' && (
       <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* ── Lista de mesas (columna izquierda en desktop) ──────────── */}

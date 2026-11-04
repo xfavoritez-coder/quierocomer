@@ -289,8 +289,23 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
   )
 }
 
+// ── Merge arrays by key, summing numeric fields ───────────────────
+function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]): any[] {
+  const map = new Map<string | number, Record<string, any>>()
+  for (const item of items) {
+    const k = item[key]
+    if (map.has(k)) {
+      const ex = map.get(k)!
+      for (const sk of sumKeys) ex[sk] = (ex[sk] || 0) + (item[sk] || 0)
+    } else { map.set(k, { ...item }) }
+  }
+  return Array.from(map.values())
+}
+
 // ── Main panel ────────────────────────────────────────────────────────
-export default function PosReportesPanel({ restaurantId }: { restaurantId: string; title?: string; onDone?: () => void }) {
+interface BranchInfo { id: string; name: string; branchName?: string | null }
+
+export default function PosReportesPanel({ restaurantId, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const today = chileTodayLocal()
@@ -299,14 +314,38 @@ export default function PosReportesPanel({ restaurantId }: { restaurantId: strin
 
   const fetchReport = useCallback(async () => {
     if (!restaurantId) return
-    setLoading(true)
+    setLoading(true); setData(null)
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${fromDate}&to=${toDate}`)
-      const d = await r.json()
-      if (r.ok) setData(d)
+      if (allBranches && allBranches.length > 1) {
+        const results = await Promise.all(
+          allBranches.map(b =>
+            fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${fromDate}&to=${toDate}`)
+              .then(r => r.ok ? r.json() : null).catch(() => null)
+          )
+        )
+        const valid = results.filter(Boolean) as Report[]
+        if (valid.length > 0) {
+          setData({
+            ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
+            productSales: valid.reduce((s, r) => s + r.productSales, 0),
+            deliveryTotal: valid.reduce((s, r) => s + r.deliveryTotal, 0),
+            tipsTotal: valid.reduce((s, r) => s + r.tipsTotal, 0),
+            grossTotal: valid.reduce((s, r) => s + r.grossTotal, 0),
+            hourly: mergeByKey(valid.flatMap(r => r.hourly), 'hour', ['sales', 'orders']).sort((a, b) => a.hour - b.hour),
+            channels: mergeByKey(valid.flatMap(r => r.channels), 'name', ['sales', 'orders']),
+            products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.revenue - a.revenue),
+            byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
+            monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
+          })
+        }
+      } else {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${fromDate}&to=${toDate}`)
+        const d = await r.json()
+        if (r.ok) setData(d)
+      }
     } catch { /* noop */ }
     setLoading(false)
-  }, [restaurantId, fromDate, toDate])
+  }, [restaurantId, fromDate, toDate, allBranches])
 
   useEffect(() => { fetchReport() }, [fetchReport])
 
@@ -354,6 +393,14 @@ export default function PosReportesPanel({ restaurantId }: { restaurantId: strin
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
         </div>
+
+        {allBranches && allBranches.length > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <span style={{ padding: '4px 12px', borderRadius: 999, background: 'var(--amber-tint-2)', border: '1px solid var(--amber)', color: 'var(--amber-press)', fontSize: 12, fontWeight: 700, fontFamily: F }}>
+              Todas las sucursales · {allBranches.length}
+            </span>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>

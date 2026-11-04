@@ -17,6 +17,7 @@ export interface PosRestaurant {
 interface State {
   restaurantId: string
   restaurant: PosRestaurant | null
+  restaurants: PosRestaurant[]
   loading: boolean
   // null = desconocido (sin sesión de panel); true/false = habilitado por el local.
   posEnabled: boolean | null
@@ -26,7 +27,7 @@ interface State {
 // Arranca VACÍO (no con el FALLBACK): así ninguna pantalla muestra datos de un
 // restaurante equivocado mientras resuelve el real (evita el flash de otra caja).
 let _restaurantId = ''
-let _state: State = { restaurantId: '', restaurant: null, loading: true, posEnabled: null }
+let _state: State = { restaurantId: '', restaurant: null, restaurants: [], loading: true, posEnabled: null }
 let _listeners = new Set<() => void>()
 let _fetched = false
 
@@ -63,7 +64,7 @@ function init() {
           const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
           if (r?.id) {
             syncEventsRestaurant(id)
-            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
+            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, restaurants: [], loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
             notify()
             return
           }
@@ -82,6 +83,7 @@ function init() {
       _state = {
         restaurantId: id,
         restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null, branchName: (rest as any).branchName ?? null } : null,
+        restaurants: (data.restaurants as any[]).map((r: any) => ({ id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null })),
         loading: false,
         posEnabled: rest && typeof rest.posEnabled === "boolean" ? rest.posEnabled : null,
       }
@@ -104,6 +106,14 @@ export function usePosRestaurant(): State {
   }, [])
 
   return state
+}
+
+/** Cambia a otra sucursal: actualiza localStorage y recarga la página para reinicializar el POS. */
+export function switchPosBranch(id: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(PANEL_KEY, id)
+  _fetched = false
+  window.location.reload()
 }
 
 /** Get the restaurant ID synchronously (from module-level cache, no re-render) */
