@@ -30,7 +30,7 @@ function ToggleRow({ title, desc, checked, disabled, onChange }: { title: string
   )
 }
 
-export default function PosConfigPedidosPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosConfigPedidosPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const [pedidos,   setPedidos]   = useState<PedidosCfg>({})
   const [posMode,   setPosMode]   = useState(false)
   const [showDesc,  setShowDesc]  = useState(false)
@@ -80,6 +80,7 @@ export default function PosConfigPedidosPanel({ restaurantId }: { restaurantId: 
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
+        {title && <p className="pos-inner-title">{title}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           <ToggleRow title="Gestionar todos los pedidos del POS" desc="Activado: el tablero se alimenta SOLO de pedidos que envía tu POS (Toteat) y NO trae los de ecommerce ni manuales (evita duplicados)." checked={posMode} disabled={savingPed} onChange={() => updatePedidos({ posMode: !posMode })} />

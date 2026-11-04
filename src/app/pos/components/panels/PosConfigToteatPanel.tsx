@@ -15,7 +15,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-export default function PosConfigToteatPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosConfigToteatPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const [toteatToken,   setToteatToken]   = useState<string | null>(null)
   const [testingToteat, setTestingToteat] = useState(false)
   const [toteatMsg,     setToteatMsg]     = useState('')
@@ -69,6 +69,7 @@ export default function PosConfigToteatPanel({ restaurantId }: { restaurantId: s
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
+        {title && <p className="pos-inner-title">{title}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           <p style={{ fontSize: '0.82rem', color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>

@@ -60,7 +60,7 @@ function ToggleRow({ title, desc, checked, disabled, onChange }: { title: string
   )
 }
 
-export default function PosConfigImpresionPanel({ restaurantId }: { restaurantId: string }) {
+export default function PosConfigImpresionPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   // Bridge state
   const [status,   setStatus]   = useState<any>(null)
   const [checking, setChecking] = useState(false)
@@ -199,6 +199,7 @@ export default function PosConfigImpresionPanel({ restaurantId }: { restaurantId
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
+        {title && <p className="pos-inner-title">{title}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Agente */}
