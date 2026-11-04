@@ -97,23 +97,17 @@ export async function GET(req: NextRequest) {
     where.createdAt = dateRange;
     where.posStatus = { not: "canceled" };
     where.paidAmount = { gt: 0 };
-  } else if (scope === "cobros") {
-    // Cobros pendientes: pedidos cerrados operativamente (entregados) pero que
-    // todavía tienen saldo por cobrar. Son los que "caen" del board de activos
-    // sin haberse cobrado (p. ej. Delifast los marcó entregados). No deben
-    // perderse: acá siguen gestionables hasta que se cobren. El filtro final
-    // paidAmount < totalAmount se hace en JS (Prisma no compara columnas).
-    // Ventana amplia (30 días) para no perder rezagados de días anteriores.
-    where.posStatus = { not: "canceled" };
-    where.opsStage = "delivered";
-    where.totalAmount = { gt: 0 };
-    where.createdAt = { gte: new Date(Date.now() - 30 * 86400_000) };
   } else {
-    // Activos: los pedidos en curso (preparación/listo/reparto). Al cerrar un
-    // pedido pasa a "delivered" y debe salir de esta lista; los entregados y
-    // cancelados viven en el historial, no acá.
+    // Activos: los pedidos en curso (preparación/listo/reparto) + los que ya
+    // fueron entregados pero siguen IMPAGOS. Estos últimos no se pierden: quedan
+    // en su pestaña normal (Todos/Retiro/Delivery) con el aviso de cobro, hasta
+    // que se cobren. Los entregados YA pagados viven en el historial. El filtro
+    // final paidAmount < totalAmount se hace en JS (Prisma no compara columnas).
     where.posStatus = { not: "canceled" };
-    where.opsStage = { not: "delivered" };
+    where.OR = [
+      { opsStage: { not: "delivered" } },
+      { opsStage: "delivered", totalAmount: { gt: 0 }, createdAt: { gte: new Date(Date.now() - 30 * 86400_000) } },
+    ];
   }
 
   // Antes de listar el board de activos, auto-repara el espejo (crea los PosOrder
@@ -147,8 +141,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
   }
 
-  // Cobros pendientes: solo los que realmente tienen saldo (paidAmount < total).
-  const visible = scope === "cobros" ? orders.filter((o) => (o.paidAmount || 0) < (o.totalAmount || 0)) : orders;
+  // Activos: deja fuera los entregados que YA están pagados (esos van al
+  // historial); conserva los entregados impagos (cobro pendiente) y todo lo demás.
+  const visible = scope === "activos"
+    ? orders.filter((o) => o.opsStage !== "delivered" || (o.paidAmount || 0) < (o.totalAmount || 0))
+    : orders;
   const nums = await dailyOrderNumbers(restaurantId, visible.map((o) => ({ id: o.id, createdAt: o.createdAt })));
   const ordersOut = visible.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
   return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled });

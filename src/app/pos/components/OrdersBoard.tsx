@@ -8,7 +8,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking from './DelifastTracking'
 
-type OrderType = 'retiro' | 'delivery' | 'todos' | 'cobros'
+type OrderType = 'retiro' | 'delivery' | 'todos'
 
 // Paleta de cobro: ámbar = pendiente (estado normal), rojo = advertencia al
 // intentar avanzar sin cobrar. El rojo es transitorio y descartable.
@@ -600,7 +600,6 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const navigate = usePosNav()
   const cashSession = useOpenCashSession(restaurantId)
   const cajaOpen = !!cashSession
-  const isCobros = type === 'cobros'
 
   // Cobrar: si la caja está cerrada se redirige a abrirla; si no, abre el modal.
   const handleCobro = useCallback((o: PosOrderLite) => {
@@ -621,7 +620,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const fetchOrders = useCallback(async () => {
     if (!restaurantId) return
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${isCobros ? 'cobros' : 'activos'}`, { cache: 'no-store' })
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
       const d = await r.json()
       if (r.ok && Array.isArray(d.orders)) {
         setOrders(d.orders)
@@ -631,7 +630,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       }
     } catch { }
     setLoading(false)
-  }, [restaurantId, isCobros])
+  }, [restaurantId])
 
   useEffect(() => {
     setLoading(true)
@@ -641,16 +640,13 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [fetchOrders])
 
   const list = useMemo(() => {
-    // "Por cobrar" ya viene filtrado del servidor (entregados impagos); no se
-    // subdivide por tipo. El resto se filtra por la pestaña activa.
-    if (isCobros) return orders
     return orders.filter((o) => {
       if (type === 'todos') return true
       const deliv = o.isDelivery || o.saleType === 'delivery'
       if (type === 'delivery') return deliv
       return !deliv && o.saleType !== 'dine-in' && o.saleType !== 'dinein'
     })
-  }, [orders, type, isCobros])
+  }, [orders, type])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
@@ -677,17 +673,15 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
-            {isCobros ? 'Por cobrar' : type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
+            {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
           </div>
-          {!isCobros && (
-            <button
-              onClick={() => navigate('/pos/tomar-pedido')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              {newOrderLabel}
-            </button>
-          )}
+          <button
+            onClick={() => navigate('/pos/tomar-pedido')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            {newOrderLabel}
+          </button>
         </div>
 
         {/* List */}
@@ -700,7 +694,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <div className="ring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
             </div>
-            <p>{isCobros ? 'Sin cobros pendientes.' : 'Sin pedidos activos.'}</p>
+            <p>Sin pedidos activos.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -709,7 +703,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 key={o.id}
                 order={o}
                 isSelected={selected?.id === o.id}
-                showTypeChip={type === 'todos' || isCobros}
+                showTypeChip={type === 'todos'}
                 stageBusy={stageBusy}
                 blocked={blockedId === o.id}
                 onSelect={() => {
