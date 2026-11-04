@@ -169,7 +169,9 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">(showPickup ? "PICKUP" : "DELIVERY");
   const [clientAddress, setClientAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "transferencia" | "tarjeta" | null>(
+    (paymentMethods[0] as "efectivo" | "transferencia" | "tarjeta") ?? null
+  );
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const belowMin = orderType === "DELIVERY" && minAmount != null && total < minAmount;
