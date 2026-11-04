@@ -24,7 +24,7 @@ interface Tracking {
 }
 
 // Color del estado del reparto.
-function statusColor(s?: string | null): string {
+export function statusColor(s?: string | null): string {
   const e = (s || '').toLowerCase()
   if (/entregad|delivered/.test(e)) return '#16a34a'
   if (/cancel|anul/.test(e)) return '#dc2626'
@@ -35,7 +35,7 @@ function statusColor(s?: string | null): string {
 }
 
 // Etiqueta en español del estado (Delifast a veces lo manda en inglés).
-function statusLabel(s?: string | null): string {
+export function statusLabel(s?: string | null): string {
   const e = (s || '').toLowerCase().trim()
   if (!e) return 'Reparto'
   if (/entregad|delivered/.test(e)) return 'Entregado'
@@ -202,5 +202,45 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         </a>
       )}
     </TrackingBox>
+  )
+}
+
+/** Pill compacto del estado Delifast para embeber en la tarjeta del board.
+ *  Solo renderiza algo cuando Delifast está configurado y hay estado disponible. */
+export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
+  const [status, setStatus] = useState<string | null>(null)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${restaurantId}&posOrderId=${posOrderId}`, { cache: 'no-store' })
+        const d = await res.json()
+        if (cancelled) return
+        if (!d.configured || d.pending || !d.tracking) return
+        setStatus(d.tracking.status ?? null)
+      } catch { /* fail-silent */ }
+    }
+    load()
+    timer.current = setInterval(load, 15000)
+    return () => { cancelled = true; if (timer.current) clearInterval(timer.current) }
+  }, [restaurantId, posOrderId])
+
+  if (!status) return null
+
+  const sc = statusColor(status)
+  const label = statusLabel(status)
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: sc + '18', color: sc, border: `1px solid ${sc}40`,
+      fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '4px 10px',
+      flexShrink: 0, whiteSpace: 'nowrap',
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc, flexShrink: 0 }} />
+      {label}
+    </span>
   )
 }

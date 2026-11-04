@@ -7,7 +7,7 @@ import { getBridgeStatus, printComanda, printKitchenComanda } from '@/lib/pos/br
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
-import DelifastTracking from './DelifastTracking'
+import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
 import { supabase } from '@/lib/supabase'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
@@ -148,10 +148,11 @@ function OrderTimer({ order, isRetiro: _isRetiro, icon = true, style }: { order:
 // ── Order card ──────────────────────────────────────────────────────
 
 function OrderCard({
-  order, isSelected, showTypeChip, stageBusy, blocked, branchLabel,
+  order, restaurantId, isSelected, showTypeChip, stageBusy, blocked, branchLabel,
   onSelect, onStageChange, onCobro, onBlock, onDismissBlock,
 }: {
   order: PosOrderLite
+  restaurantId: string
   isSelected: boolean
   showTypeChip: boolean
   stageBusy: string | null
@@ -287,6 +288,9 @@ function OrderCard({
           >
             {busy ? '…' : next.label + ' →'}
           </button>
+        )}
+        {paid && !next && order.delifastVentaId && (
+          <DelifastStatusPill restaurantId={order._branchId ?? restaurantId} posOrderId={order.id} />
         )}
       </div>
 
@@ -944,6 +948,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
               <OrderCard
                 key={o.id}
                 order={o}
+                restaurantId={o._branchId ?? restaurantId}
                 isSelected={selected?.id === o.id}
                 showTypeChip={type === 'todos'}
                 stageBusy={stageBusy}
