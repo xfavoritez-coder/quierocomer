@@ -19,6 +19,7 @@ import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
 import PosCajaHistorial from '../PosCajaHistorial'
+import StaleAccountsCleanup from '../StaleAccountsCleanup'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -442,6 +443,9 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
             />
           </div>
         </div>
+
+        {/* ── Limpieza de cuentas vacías abandonadas ── */}
+        <StaleAccountsCleanup restaurantId={restaurantId} />
 
         {/* ── Cuentas abiertas — alerta ────────────── */}
         {confirmOpen && openAccounts.length > 0 && (

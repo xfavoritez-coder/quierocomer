@@ -17,6 +17,7 @@ import {
 } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
+import StaleAccountsCleanup from '../components/StaleAccountsCleanup'
 import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
@@ -455,6 +456,9 @@ export default function CajaPage() {
               />
             </div>
           </div>
+
+          {/* ── Limpieza de cuentas vacías abandonadas ── */}
+          {restaurantId && <StaleAccountsCleanup restaurantId={restaurantId} />}
 
           {/* ── Cuentas abiertas — alerta ────────────── */}
           {confirmOpen && openAccounts.length > 0 && (
