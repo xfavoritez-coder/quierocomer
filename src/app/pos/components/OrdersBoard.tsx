@@ -1003,8 +1003,12 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
 function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; delifastEnabled: boolean; onClose: () => void; onPaid: () => void }) {
   const total = order.totalAmount || 0
   const paid = isPaid(order)
-  const [method, setMethod] = useState<PaymentMethod>('efectivo')
-  const [received, setReceived] = useState<string>('')
+  // Pagos combinados: lista de partes { método, monto aplicado, recibido }. El
+  // caso de un solo método es una lista de 1 (o se arma al cobrar desde el form).
+  const [parts, setParts] = useState<{ method: PaymentMethod; amount: number; received: number }[]>([])
+  const [curMethod, setCurMethod] = useState<PaymentMethod>('efectivo')
+  const [curAmount, setCurAmount] = useState<string>('')   // monto de ESTE método (vacío = lo que resta)
+  const [curReceived, setCurReceived] = useState<string>('') // efectivo: con cuánto paga (para el vuelto)
   const [tip, setTip] = useState<string>('')
   const [sending, setSending] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
@@ -1038,18 +1042,47 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
     setFinalizing(false)
   }
 
-  const receivedNum = parseInt(received, 10) || 0
   const tipNum = parseInt(tip, 10) || 0
-  const change = method === 'efectivo' ? Math.max(0, receivedNum - total) : 0
-  const canPay = method !== 'efectivo' || receivedNum >= total
+  const mLabel = (m: PaymentMethod) => METHODS.find(x => x.id === m)?.label ?? m
   const BILLS = [1000, 2000, 5000, 10000, 20000]
 
+  const partsTotal = parts.reduce((s, p) => s + p.amount, 0)
+  const remaining = Math.max(0, total - partsTotal)
+  const committedChange = parts.reduce((s, p) => s + (p.method === 'efectivo' ? Math.max(0, p.received - p.amount) : 0), 0)
+
+  // Entrada "en curso" del formulario (lo que todavía no se agrega como parte).
+  const curAmountNum = parseInt(curAmount, 10) || 0
+  const pendingApplied = remaining > 0 ? (curAmountNum > 0 ? Math.min(curAmountNum, remaining) : remaining) : 0
+  const curReceivedNum = parseInt(curReceived, 10) || 0
+  const pendingReceived = curMethod === 'efectivo' ? (curReceivedNum > 0 ? curReceivedNum : pendingApplied) : pendingApplied
+  const pendingChange = curMethod === 'efectivo' ? Math.max(0, pendingReceived - pendingApplied) : 0
+  const totalChange = committedChange + pendingChange
+  // Se puede cobrar si las partes ya agregadas + la pendiente cubren el total.
+  const canPay = total > 0 && partsTotal + pendingApplied >= total
+  // Mostrar "Agregar" (dividir) solo cuando el monto de este método es parcial.
+  const canSplit = remaining > 0 && curAmountNum > 0 && curAmountNum < remaining
+
+  const addPart = () => {
+    if (pendingApplied <= 0) return
+    setParts(prev => [...prev, { method: curMethod, amount: pendingApplied, received: curMethod === 'efectivo' ? pendingReceived : pendingApplied }])
+    setCurAmount(''); setCurReceived('')
+  }
+  const removePart = (i: number) => setParts(prev => prev.filter((_, idx) => idx !== i))
+
   const handlePay = async () => {
+    // Al cobrar, se incluye la entrada pendiente del formulario (si cubre el resto).
+    const finalParts = remaining > 0 && pendingApplied > 0
+      ? [...parts, { method: curMethod, amount: pendingApplied, received: curMethod === 'efectivo' ? pendingReceived : pendingApplied }]
+      : parts
+    if (!finalParts.length) return
     setSending(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId, id: order.id, action: 'pay', method, received: receivedNum, tip: tipNum }),
+        body: JSON.stringify({
+          restaurantId, id: order.id, action: 'pay', tip: tipNum,
+          payments: finalParts.map(p => ({ method: p.method, amount: p.amount, received: p.received })),
+        }),
       })
       if (r.ok) onPaid()
     } catch { }
@@ -1061,13 +1094,19 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
 
   if (paid) {
     const rp = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload)) ? (order.rawPayload as Record<string, unknown>) : {}
-    const pp = (rp.posPayment as { method?: string } | undefined) || undefined
+    const pp = (rp.posPayment as { method?: string; parts?: { method?: PaymentMethod; amount?: number }[] } | undefined) || undefined
     const wp = (rp.webPayment as { method?: string } | undefined) || undefined
-    const payLabel = pp?.method || wp?.method || ''
+    const ppParts = Array.isArray(pp?.parts) ? pp!.parts!.filter(p => (Number(p.amount) || 0) > 0) : []
+    const payLabel = ppParts.length > 1
+      ? ppParts.map(p => `${METHODS.find(x => x.id === p.method)?.label ?? p.method} ${clp(Number(p.amount) || 0)}`).join(' + ')
+      : (pp?.method || wp?.method || '')
     return (
       <div className="pos-modal-overlay" onClick={onClose}>
-        <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
-          <div className="pos-modal-title">{toName(order.customerName || 'Cliente')}</div>
+        <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: '100%', position: 'relative' }}>
+          <button onClick={onClose} aria-label="Cerrar" style={closeXStyle}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+          <div className="pos-modal-title" style={{ marginBottom: 14, paddingRight: 32 }}>{toName(order.customerName || 'Cliente')}</div>
           <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 10 }}>
             <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
             <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
@@ -1090,50 +1129,99 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
     )
   }
 
+  const fieldStyle: React.CSSProperties = { width: '100%', padding: '9px 11px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }
+
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
-      <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
-        <div className="pos-modal-title">Cobrar · {toName(order.customerName || 'Cliente')}</div>
+      <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: '100%', padding: 20, position: 'relative' }}>
+        <button onClick={onClose} aria-label="Cerrar" style={closeXStyle}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <div className="pos-modal-title" style={{ marginBottom: 10, paddingRight: 32 }}>Cobrar · {toName(order.customerName || 'Cliente')}</div>
 
-        <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 6 }}>
+        <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 8, marginBottom: 8 }}>
           <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
-          <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
+          <span style={{ ...num, fontWeight: 800, fontSize: 20, color: 'var(--ink)' }}>{clp(total)}</span>
         </div>
 
-        <label className="pos-modal-label">Método de pago</label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-          {METHODS.map((m) => (
-            <button key={m.id} onClick={() => setMethod(m.id)} style={{
-              padding: '10px 6px', borderRadius: 10, cursor: 'pointer', fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 13,
-              border: method === m.id ? '2px solid var(--amber)' : '1px solid var(--line)',
-              background: method === m.id ? 'var(--amber-tint)' : 'var(--sunk)',
-              color: method === m.id ? 'var(--amber-press)' : 'var(--ink-2)',
-            }}>{m.label}</button>
-          ))}
-        </div>
+        {/* Partes ya agregadas (pago combinado) */}
+        {parts.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+            {parts.map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 9, padding: '7px 10px' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>
+                  {mLabel(p.method)}{p.method === 'efectivo' && p.received > p.amount ? <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}> · paga {clp(p.received)}</span> : null}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ ...num, fontWeight: 700, fontSize: 14 }}>{clp(p.amount)}</span>
+                  <button onClick={() => removePart(i)} aria-label="Quitar" style={{ border: 'none', background: 'none', color: 'var(--ink-3)', cursor: 'pointer', padding: 2, display: 'grid', placeItems: 'center' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </span>
+              </div>
+            ))}
+            <div style={{ ...row, padding: '2px 2px 0' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: remaining > 0 ? 'var(--amber-press)' : '#16a34a' }}>{remaining > 0 ? 'Restante' : 'Cubierto ✓'}</span>
+              {remaining > 0 && <span style={{ ...num, fontWeight: 800, fontSize: 15, color: 'var(--amber-press)' }}>{clp(remaining)}</span>}
+            </div>
+          </div>
+        )}
 
-        {method === 'efectivo' && (
+        {/* Formulario para agregar un método (mientras falte por cubrir) */}
+        {remaining > 0 && (
           <>
-            <label className="pos-modal-label">Con cuánto paga</label>
-            <input type="number" inputMode="numeric" value={received} onChange={(e) => setReceived(e.target.value)} onDoubleClick={() => setReceived(String(total))} placeholder={String(total)}
-              style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 16, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              {BILLS.filter((b) => b >= total).slice(0, 4).map((b) => (
-                <button key={b} onClick={() => setReceived(String(b))} style={chipSmall}>{clp(b)}</button>
+            <label className="pos-modal-label">{parts.length > 0 ? 'Agregar método' : 'Método de pago'}</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+              {METHODS.map((m) => (
+                <button key={m.id} onClick={() => setCurMethod(m.id)} style={{
+                  padding: '8px 4px', borderRadius: 9, cursor: 'pointer', fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12,
+                  border: curMethod === m.id ? '2px solid var(--amber)' : '1px solid var(--line)',
+                  background: curMethod === m.id ? 'var(--amber-tint)' : 'var(--sunk)',
+                  color: curMethod === m.id ? 'var(--amber-press)' : 'var(--ink-2)',
+                }}>{m.label}</button>
               ))}
             </div>
-            <div style={{ ...row, marginBottom: 6 }}>
-              <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Vuelto</span>
-              <span style={{ ...num, fontWeight: 700, fontSize: 18, color: change > 0 ? 'var(--amber-press)' : 'var(--ink-3)' }}>{clp(change)}</span>
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: curMethod === 'efectivo' ? 8 : 10 }}>
+              <div style={{ flex: 1 }}>
+                <label className="pos-modal-label" style={{ marginTop: 0 }}>Monto</label>
+                <input type="number" inputMode="numeric" value={curAmount} onChange={(e) => setCurAmount(e.target.value)} placeholder={clp(remaining)} style={fieldStyle} />
+              </div>
+              {curMethod === 'efectivo' && (
+                <div style={{ flex: 1 }}>
+                  <label className="pos-modal-label" style={{ marginTop: 0 }}>Con cuánto paga</label>
+                  <input type="number" inputMode="numeric" value={curReceived} onChange={(e) => setCurReceived(e.target.value)} placeholder={clp(pendingApplied)} style={fieldStyle} />
+                </div>
+              )}
             </div>
+
+            {curMethod === 'efectivo' && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {BILLS.filter((b) => b >= pendingApplied).slice(0, 4).map((b) => (
+                  <button key={b} onClick={() => setCurReceived(String(b))} style={chipSmall}>{clp(b)}</button>
+                ))}
+              </div>
+            )}
+
+            {canSplit && (
+              <button onClick={addPart} style={{ width: '100%', padding: '9px', borderRadius: 9, border: '1px dashed var(--amber)', background: 'var(--amber-tint)', color: 'var(--amber-press)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)', marginBottom: 6 }}>
+                + Agregar este pago y dividir ({clp(curAmountNum)}) · resta {clp(remaining - pendingApplied)}
+              </button>
+            )}
           </>
         )}
 
-        <label className="pos-modal-label">Propina (opcional)</label>
-        <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0"
-          style={{ width: '100%', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 16, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+        {totalChange > 0 && (
+          <div style={{ ...row, marginBottom: 4 }}>
+            <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Vuelto</span>
+            <span style={{ ...num, fontWeight: 700, fontSize: 18, color: 'var(--amber-press)' }}>{clp(totalChange)}</span>
+          </div>
+        )}
 
-        <div className="pos-modal-actions">
+        <label className="pos-modal-label">Propina (opcional)</label>
+        <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, marginBottom: 14 }} />
+
+        <div className="pos-modal-actions" style={{ marginTop: 0 }}>
           <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
           <button className="pos-modal-ok" disabled={!canPay || sending} onClick={handlePay} style={{ opacity: !canPay || sending ? 0.6 : 1 }}>
             {sending ? 'Cobrando…' : `Cobrar ${clp(total)}`}
@@ -1201,4 +1289,10 @@ function stagePill(color: string): React.CSSProperties {
 const chipSmall: React.CSSProperties = {
   padding: '7px 11px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)',
   color: 'var(--ink-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--mono)',
+}
+
+const closeXStyle: React.CSSProperties = {
+  position: 'absolute', top: 14, right: 14, width: 30, height: 30, borderRadius: '50%',
+  border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer',
+  display: 'grid', placeItems: 'center', zIndex: 2,
 }

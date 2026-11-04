@@ -169,10 +169,7 @@ export async function PATCH(req: NextRequest) {
   // Registra el pago sobre el PosOrder usando los campos existentes (sin tocar
   // el schema): paidAmount/tipAmount/changeAmount + el método en rawPayload.
   if (body?.action === "pay") {
-    const method = String(body?.method || "").toLowerCase();
-    if (!["efectivo", "debito", "credito", "transferencia", "webpay"].includes(method)) {
-      return NextResponse.json({ error: "Método inválido" }, { status: 400 });
-    }
+    const VALID_METHODS = ["efectivo", "debito", "credito", "transferencia", "webpay"];
     const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, rawPayload: true } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     const total = order.totalAmount || 0;
@@ -183,14 +180,45 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ order: current, alreadyPaid: true });
     }
     const tip = Math.max(0, Math.round(Number(body?.tip) || 0));
-    const received = method === "efectivo" ? Math.max(0, Math.round(Number(body?.received) || 0)) : total;
-    const change = Math.max(0, received - total);
+
+    // Pago COMBINADO: se acepta un arreglo `payments` [{method, amount, received?}].
+    // Se mantiene compatibilidad con el formato viejo (method + received únicos),
+    // normalizándolo a una lista de 1 parte.
+    const rawParts: { method: string; amount: number; received: number }[] = Array.isArray(body?.payments)
+      ? (body.payments as unknown[]).map((raw) => {
+          const p = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+          const method = String(p.method || "").toLowerCase();
+          const amount = Math.max(0, Math.round(Number(p.amount) || 0));
+          const received = method === "efectivo" ? Math.max(amount, Math.round(Number(p.received) || amount)) : amount;
+          return { method, amount, received };
+        })
+      : [(() => {
+          const method = String(body?.method || "").toLowerCase();
+          const received = method === "efectivo" ? Math.max(0, Math.round(Number(body?.received) || 0)) : total;
+          return { method, amount: total, received };
+        })()];
+
+    const partsClean = rawParts.filter((p) => p.amount > 0);
+    if (!partsClean.length || partsClean.some((p) => !VALID_METHODS.includes(p.method))) {
+      return NextResponse.json({ error: "Método inválido" }, { status: 400 });
+    }
+    const applied = partsClean.reduce((s, p) => s + p.amount, 0);
+    if (applied < total) {
+      return NextResponse.json({ error: "El pago no cubre el total" }, { status: 400 });
+    }
+    // Vuelto = total efectivo recibido por sobre lo aplicado (en las partes de efectivo).
+    const change = partsClean.reduce((s, p) => s + (p.method === "efectivo" ? Math.max(0, p.received - p.amount) : 0), 0);
+    const parts = partsClean.map((p) => ({ method: p.method, amount: p.amount, received: p.received, change: p.method === "efectivo" ? Math.max(0, p.received - p.amount) : 0 }));
+    // Método "resumen": el único método si hay 1 parte, "mixto" si hay varias.
+    const method = parts.length === 1 ? parts[0].method : "mixto";
+    const received = parts.reduce((s, p) => s + (p.method === "efectivo" ? p.received : 0), 0);
+
     const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
       ? (order.rawPayload as Record<string, unknown>) : {};
-    // Auditoría del cobro: método, montos, instante, quién lo registró (panel_id) y
+    // Auditoría del cobro: método(s), montos, instante, quién lo registró (panel_id) y
     // el origen de la confirmación. Se guarda en rawPayload (sin tocar el schema).
     const by = req.cookies.get("panel_id")?.value || "caja";
-    const rawPayload = { ...prevRaw, posPayment: { method, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 } };
+    const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 } };
     const updated = await prisma.posOrder.update({
       where: { id },
       data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },

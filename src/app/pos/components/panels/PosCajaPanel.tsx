@@ -72,12 +72,24 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
           const amount = Number(o.totalAmount) || 0
           if (amount <= 0 || (Number(o.paidAmount) || 0) < amount) continue
           const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
-          const pp = rp.posPayment as { method?: string } | undefined
+          const pp = rp.posPayment as { method?: string; parts?: { method?: string; amount?: number }[] } | undefined
           const wp = rp.webPayment as { method?: string } | undefined
-          const method = deliveryPlatformLabel(o.vendorName) ?? toPaymentMethod(pp?.method || wp?.method)
+          const platform = deliveryPlatformLabel(o.vendorName)
           const tip = Number(o.tipAmount) || 0
-          if (!byMethod[method]) byMethod[method] = { amount: 0, tip: 0, count: 0 }
-          byMethod[method].amount += amount; byMethod[method].tip += tip; byMethod[method].count++
+          const addTo = (m: string, amt: number, tp: number) => {
+            if (!byMethod[m]) byMethod[m] = { amount: 0, tip: 0, count: 0 }
+            byMethod[m].amount += amt; byMethod[m].tip += tp
+          }
+          // Pago combinado: reparte cada parte en su método; la propina va al primero.
+          const parts = Array.isArray(pp?.parts) ? pp!.parts!.filter(p => (Number(p.amount) || 0) > 0) : []
+          if (!platform && parts.length > 1) {
+            parts.forEach((p, i) => addTo(toPaymentMethod(p.method), Number(p.amount) || 0, i === 0 ? tip : 0))
+            byMethod[toPaymentMethod(parts[0].method)].count++
+          } else {
+            const method = platform ?? toPaymentMethod(parts[0]?.method || pp?.method || wp?.method)
+            addTo(method, amount, tip)
+            byMethod[method].count++
+          }
           total += amount; tips += tip; count++
         }
         if (!cancelled) setWebSales({ byMethod, total, tips, count })
