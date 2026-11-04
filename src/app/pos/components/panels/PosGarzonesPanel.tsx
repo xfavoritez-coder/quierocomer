@@ -1,14 +1,32 @@
 'use client'
 
 import { useState } from 'react'
-import { usePosSync, useStaff, setRestaurantId, setUserId, saveGarzon, deleteGarzon, seedDefaultGarzones } from '@/lib/pos'
+import { usePosSync, useStaff, setRestaurantId, setUserId, saveStaffMember, deleteGarzon, seedDefaultGarzones } from '@/lib/pos'
+import type { StaffRole } from '@/lib/pos/types'
 
 const TEST_USER_ID = 'pos-garzon'
 
+const ROLES: { value: StaffRole; label: string; color: string; bg: string }[] = [
+  { value: 'garzon',   label: 'Garzón',         color: 'var(--amber-press)', bg: 'var(--amber-tint)' },
+  { value: 'cocinero', label: 'Cocinero',        color: '#2563eb',            bg: '#eff6ff' },
+  { value: 'cajero',   label: 'Cajero',          color: '#16a34a',            bg: '#f0fdf4' },
+  { value: 'admin',    label: 'Administrador',   color: '#7c3aed',            bg: '#f5f3ff' },
+]
+
+function RoleBadge({ role }: { role: StaffRole }) {
+  const r = ROLES.find(r => r.value === role) ?? ROLES[0]
+  return (
+    <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: r.bg, color: r.color, flexShrink: 0 }}>
+      {r.label}
+    </span>
+  )
+}
+
 export default function PosGarzonesPanel({ restaurantId, title, onBack }: { restaurantId: string; title?: string; onBack?: () => void; onDone?: () => void }) {
   const { syncing } = usePosSync(restaurantId)
-  const garzones = useStaff(restaurantId)
+  const staff = useStaff(restaurantId)
   const [newName, setNewName] = useState('')
+  const [newRole, setNewRole] = useState<StaffRole>('garzon')
   const [saving, setSaving] = useState(false)
 
   useState(() => {
@@ -20,9 +38,8 @@ export default function PosGarzonesPanel({ restaurantId, title, onBack }: { rest
   const handleAdd = async () => {
     const name = newName.trim()
     if (!name) return
-    if (garzones.some(g => g.name.toLowerCase() === name.toLowerCase())) return
     setSaving(true)
-    await saveGarzon(restaurantId, name)
+    await saveStaffMember(restaurantId, name, newRole)
     setNewName('')
     setSaving(false)
   }
@@ -31,63 +48,80 @@ export default function PosGarzonesPanel({ restaurantId, title, onBack }: { rest
     await deleteGarzon(id)
   }
 
-  const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: 20, marginBottom: 20, boxShadow: 'var(--sh-1)' }
-  const eyebrow: React.CSSProperties = { fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--ink-3)', marginBottom: 14 }
+  void syncing
 
   return (
     <div className="pos-scroll">
-      <div style={{ padding: '20px 20px 60px', maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ padding: '20px 16px 60px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-            {onBack && <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            {onBack && (
+              <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+            )}
             <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
           </div>
         )}
-        <div style={card}>
-          <div style={eyebrow}>Agregar garzón</div>
-          <div style={{ display: 'flex', gap: 8 }}>
+
+        {/* Add form */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '16px', marginBottom: 24 }}>
+          <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>Agregar usuario</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input
-              autoFocus
-              placeholder="Nombre del garzón"
+              placeholder="Nombre"
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAdd()}
-              style={{ flex: 1, padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none' }}
+              style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: '0.9rem', fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
             />
-            <button
-              onClick={handleAdd}
-              disabled={!newName.trim() || saving}
-              style={{ padding: '11px 18px', borderRadius: 'var(--r-btn)', border: 0, background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)', opacity: !newName.trim() ? 0.5 : 1 }}
-            >
-              Agregar
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select
+                value={newRole}
+                onChange={e => setNewRole(e.target.value as StaffRole)}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: '0.9rem', fontFamily: 'var(--sans)', color: 'var(--ink)', outline: 'none', cursor: 'pointer' }}
+              >
+                {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+              <button
+                onClick={handleAdd}
+                disabled={!newName.trim() || saving}
+                style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', fontFamily: 'var(--sans)', opacity: !newName.trim() ? 0.5 : 1, flexShrink: 0 }}
+              >
+                Agregar
+              </button>
+            </div>
           </div>
         </div>
 
-        <div style={{ ...eyebrow, marginBottom: 12 }}>
-          Garzones · {garzones.length}
+        {/* Staff list */}
+        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>
+          Usuarios · {staff.length}
         </div>
 
-        {garzones.length === 0 ? (
+        {staff.length === 0 ? (
           <div className="pos-empty" style={{ minHeight: 120 }}>
-            <p>Sin garzones. Agrega uno arriba.</p>
+            <p>Sin usuarios. Agrega uno arriba.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {garzones.map(g => (
-              <div key={g.id} style={{ display: 'flex', alignItems: 'center', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', boxShadow: 'var(--sh-1)' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0, marginRight: 12 }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 13, color: 'var(--amber-press)' }}>
-                    {g.name.charAt(0).toUpperCase()}
+            {staff.map(s => (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: ROLES.find(r => r.value === s.role)?.bg ?? 'var(--amber-tint)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 13, color: ROLES.find(r => r.value === s.role)?.color ?? 'var(--amber-press)' }}>
+                    {s.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span style={{ flex: 1, fontWeight: 600, fontSize: 15 }}>{g.name}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                </div>
+                <RoleBadge role={s.role} />
                 <button
-                  onClick={() => handleDelete(g.id)}
-                  style={{ width: 34, height: 34, display: 'grid', placeItems: 'center', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-3)' }}
-                  title="Eliminar garzón"
+                  onClick={() => handleDelete(s.id)}
+                  style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-3)', flexShrink: 0 }}
+                  title="Eliminar"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
             ))}

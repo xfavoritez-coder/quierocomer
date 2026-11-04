@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { posDb } from './db'
 import { saveStaff, deleteStaff } from './events'
-import type { PosStaff } from './types'
+import type { PosStaff, StaffRole } from './types'
 
 // ── One-time migration: emit events for staff created before sync ──
 
@@ -29,6 +29,19 @@ export async function saveGarzon(restaurantId: string, name: string): Promise<Po
   }
   await saveStaff({ staff: { id: garzon.id, name: garzon.name, pin_hash: garzon.pin_hash, role: garzon.role, active: garzon.active } })
   return garzon
+}
+
+export async function saveStaffMember(restaurantId: string, name: string, role: StaffRole): Promise<PosStaff> {
+  const member: PosStaff = {
+    id: uuidv4(),
+    restaurant_id: restaurantId,
+    name: name.trim(),
+    pin_hash: '',
+    role,
+    active: true,
+  }
+  await saveStaff({ staff: { id: member.id, name: member.name, pin_hash: member.pin_hash, role: member.role, active: member.active } })
+  return member
 }
 
 export async function deleteGarzon(id: string): Promise<void> {

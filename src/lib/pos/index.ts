@@ -50,5 +50,5 @@ export {
   useStaff,
 } from './hooks'
 export { saveTables, saveSectors, updateTableSector, updateTableLabel, migrateLocalTablesToEvents, addTables, addCustomTable, removeTable, nextTableNumber, addSector, removeSector } from './tables'
-export { saveGarzon, deleteGarzon, seedDefaultGarzones, migrateLocalStaffToEvents, deduplicateStaff } from './staff'
+export { saveGarzon, saveStaffMember, deleteGarzon, seedDefaultGarzones, migrateLocalStaffToEvents, deduplicateStaff } from './staff'
 export { updateAccountCovers, updateAccountGarzon } from './account-meta'
