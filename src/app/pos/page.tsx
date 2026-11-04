@@ -31,10 +31,7 @@ import OrdersBoard from './components/OrdersBoard'
 import { LiveClock } from './components/OrderClock'
 import PosCartaPanel from './components/panels/PosCartaPanel'
 import PosCajaPanel from './components/panels/PosCajaPanel'
-import PosImpressoraPanel from './components/panels/PosImpressoraPanel'
-import PosSonidoPanel from './components/panels/PosSonidoPanel'
-import PosMesasConfigPanel from './components/panels/PosMesasConfigPanel'
-import PosGarzonesPanel from './components/panels/PosGarzonesPanel'
+import PosConfigPanel from './components/panels/PosConfigPanel'
 import PosHistorialPanel from './components/panels/PosHistorialPanel'
 import PosReportesPanel from './components/panels/PosReportesPanel'
 
@@ -46,10 +43,7 @@ const INNER_PAGES: Record<string, { title: string; component: React.ComponentTyp
   carta: { title: 'Carta', component: PosCartaPanel },
   historial: { title: 'Historial de pedidos', component: PosHistorialPanel },
   caja: { title: 'Caja', component: PosCajaPanel },
-  impresora: { title: 'Impresora', component: PosImpressoraPanel },
-  sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
-  mesas: { title: 'Configurar mesas', component: PosMesasConfigPanel },
-  garzones: { title: 'Garzones', component: PosGarzonesPanel },
+  config: { title: 'Configuración', component: PosConfigPanel },
   reportes: { title: 'Reportes', component: PosReportesPanel },
 }
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
