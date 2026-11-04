@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import { fmtElapsed } from '../OrderClock'
 import DelifastTracking from '../DelifastTracking'
+import { deliveryPlatformLabel } from '@/lib/pos'
+
+// Origen del pedido (por dónde entró): plataforma de delivery, Uber Eats directo,
+// Toteat, tienda ecommerce o tomado a mano en el POS.
+function sourceTag(o: { provider?: string | null; vendorName?: string | null }): { label: string; color: string } {
+  const vn = o.vendorName || ''
+  const plat = deliveryPlatformLabel(vn) // Uber Eats, PedidosYa, Rappi, Didi, Justo
+  if (plat) return { label: plat, color: plat === 'Uber Eats' ? '#0f0f0f' : plat === 'PedidosYa' ? '#e11d48' : plat === 'Rappi' ? '#ff4f00' : '#6366f1' }
+  if (o.provider === 'ubereats') return { label: 'Uber Eats', color: '#0f0f0f' }
+  if (o.provider === 'toteat') return { label: 'Toteat', color: '#ea580c' }
+  // Espejo del ecommerce: "-Web" = tienda pública; sin sufijo = tomado en el POS.
+  if (/-web$/i.test(vn)) return { label: 'Ecommerce', color: '#0d9488' }
+  return { label: 'Manual', color: '#2563eb' }
+}
 
 interface HistorialOrder {
   id: string
@@ -14,6 +28,8 @@ interface HistorialOrder {
   addressLine: string
   saleType: string
   isDelivery: boolean
+  provider?: string | null
+  vendorName?: string | null
   opsStage: string
   posStatus: string
   totalAmount: number
@@ -103,6 +119,7 @@ function HistorialDetailPanel({ order, onClose, restaurantId }: { order: Histori
           {order.customerPhone && <div style={{ fontSize: 15, color: 'var(--ink-2)', marginBottom: 2 }}>{order.customerPhone}</div>}
           {isDelivery && order.addressLine && <div style={{ fontSize: 15, color: 'var(--ink-2)' }}>{order.addressLine}</div>}
           <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {(() => { const s = sourceTag(order); return <span style={chip(s.color)}>{s.label}</span> })()}
             <span>{new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
             {(() => { const ms = frozenElapsedMs(order); return ms != null ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700 }} title="Tiempo total del pedido">
@@ -224,7 +241,8 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
             <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
               {clp(order.totalAmount)}
             </span>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {(() => { const s = sourceTag(order); return <span style={chip(s.color)}>{s.label}</span> })()}
               <span style={chip(typeColor)}>{typeLabel}</span>
               <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Sin cobro'}</span>
             </div>
