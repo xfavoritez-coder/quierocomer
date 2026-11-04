@@ -290,16 +290,21 @@ export default function PosHomePage() {
     if (!restaurantId) return
     const fetchCounts = async () => {
       try {
-        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
-        const d = await r.json()
-        if (r.ok && Array.isArray(d.orders)) {
-          const delivery = d.orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
-          const retiro = d.orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
-          setOrderCounts({ retiro, delivery })
-          setActiveOrders(d.orders)
-          if (typeof d.prepAlertMinutes === 'number') setPrepAlertMin(d.prepAlertMinutes)
-          if (typeof d.readyAlertMinutes === 'number') setReadyAlertMin(d.readyAlertMinutes)
-        }
+        const ids = allBranches && allBranches.length > 1 ? allBranches.map(b => b.id) : [restaurantId]
+        const results = await Promise.all(
+          ids.map(id =>
+            fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${id}&scope=activos`, { cache: 'no-store' })
+              .then(r => r.ok ? r.json() : null).catch(() => null)
+          )
+        )
+        const allOrders = results.flatMap(d => Array.isArray(d?.orders) ? d.orders : [])
+        const delivery = allOrders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
+        const retiro = allOrders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
+        setOrderCounts({ retiro, delivery })
+        setActiveOrders(allOrders)
+        const first = results.find(d => d != null)
+        if (first && typeof first.prepAlertMinutes === 'number') setPrepAlertMin(first.prepAlertMinutes)
+        if (first && typeof first.readyAlertMinutes === 'number') setReadyAlertMin(first.readyAlertMinutes)
       } catch { /* noop */ }
     }
     refreshOrdersRef.current = fetchCounts
@@ -310,7 +315,7 @@ export default function PosHomePage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'PosOrder', filter: `restaurantId=eq.${restaurantId}` }, fetchCounts)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [restaurantId])
+  }, [restaurantId, allBranches])
 
   const totalOnline = orderCounts.retiro + orderCounts.delivery
   const tabCounts: Partial<Record<Tab, number>> = {
