@@ -3,17 +3,20 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { StorefrontData } from '@/lib/ecommerce/storefront-data'
 
-type Product = StorefrontData['products'][number]
-interface DedupOption { id: string; name: string; code: string | null; price: number; soldOut: boolean }
-interface DedupGroup  { id: string; name: string; options: DedupOption[]; products: string[] }
+type Product  = StorefrontData['products'][number]
+type Category = StorefrontData['categories'][number]
+
+interface FullCategory { id: string; name: string; position: number; isActive: boolean; _count?: { dishes: number } }
+interface DedupOption  { id: string; name: string; code: string | null; price: number; soldOut: boolean }
+interface DedupGroup   { id: string; name: string; options: DedupOption[]; products: string[] }
 
 const F    = 'var(--sans)'
 const MONO = 'var(--mono)'
 const GREEN = '#16a34a'
+type PosTab = 'productos' | 'categorias' | 'modificadores'
 
 const clp = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-CL')
 
-// ── Shared style tokens ────────────────────────────────────────────
 const inputSt: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 34px',
   borderRadius: 10, border: '1px solid var(--line)',
@@ -21,7 +24,7 @@ const inputSt: React.CSSProperties = {
   fontSize: '0.84rem', outline: 'none',
 }
 
-// ── FilterChip ────────────────────────────────────────────────────
+// ── FilterChip ─────────────────────────────────────────────────────
 function FilterChip({ label, active, onClick, tone }: { label: string; active: boolean; onClick: () => void; tone?: 'warn' | 'hidden' }) {
   const accent = tone === 'hidden' ? '#b45309' : tone === 'warn' ? '#f97316' : 'var(--amber)'
   const bg     = active
@@ -34,17 +37,16 @@ function FilterChip({ label, active, onClick, tone }: { label: string; active: b
   )
 }
 
-// ── TabBtn ────────────────────────────────────────────────────────
-function TabBtn({ active, onClick, label, count, done }: { active: boolean; onClick: () => void; label: string; count: string; done: boolean }) {
+// ── TabBtn ─────────────────────────────────────────────────────────
+function TabBtn({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <button onClick={onClick} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px', borderRadius: 10, cursor: 'pointer', fontFamily: F, fontSize: '0.82rem', fontWeight: 700, border: `1px solid ${active ? 'var(--amber)' : 'var(--line)'}`, background: active ? 'var(--amber)' : 'var(--sunk)', color: active ? '#fff' : 'var(--ink-2)' }}>
+    <button onClick={onClick} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', fontFamily: F, fontSize: '0.82rem', fontWeight: 700, border: `1px solid ${active ? 'var(--amber)' : 'var(--line)'}`, background: active ? 'var(--amber)' : 'var(--sunk)', color: active ? '#fff' : 'var(--ink-2)' }}>
       {label}
-      <span style={{ fontSize: '0.7rem', fontWeight: 700, opacity: 0.75, color: done && !active ? GREEN : undefined }}>{count}</span>
     </button>
   )
 }
 
-// ── CodeInput ─────────────────────────────────────────────────────
+// ── CodeInput ──────────────────────────────────────────────────────
 function CodeInput({ initial, endpoint, onValue }: { initial: string | null; endpoint: string; onValue?: (v: string) => void }) {
   const [value, setValue] = useState(initial ?? '')
   const [saved, setSaved] = useState<string>(initial ?? '')
@@ -65,7 +67,7 @@ function CodeInput({ initial, endpoint, onValue }: { initial: string | null; end
 
   const dirty = value.trim() !== saved
   return (
-    <div style={{ position: 'relative', flexShrink: 0, width: 140 }}>
+    <div style={{ position: 'relative', flexShrink: 0, width: 130 }}>
       <input
         value={value}
         onChange={e => { setValue(e.target.value); onValue?.(e.target.value) }}
@@ -81,14 +83,104 @@ function CodeInput({ initial, endpoint, onValue }: { initial: string | null; end
   )
 }
 
-// ── ProductRow ────────────────────────────────────────────────────
-function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onToggleBanner }: {
+// ── ProductForm (create / edit) ────────────────────────────────────
+function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
+  restaurantId: string
+  categories: Category[]
+  initial?: { id: string; name: string; price: number; description?: string | null; category_id: string; hidden?: boolean }
+  onSave: (p: Partial<Product> & { id: string }) => void
+  onCancel: () => void
+}) {
+  const [name,   setName]   = useState(initial?.name ?? '')
+  const [price,  setPrice]  = useState(initial ? String(initial.price) : '')
+  const [desc,   setDesc]   = useState(initial?.description ?? '')
+  const [catId,  setCatId]  = useState(initial?.category_id ?? (categories[0]?.id ?? ''))
+  const [hidden, setHidden] = useState(initial?.hidden ?? false)
+  const [busy,   setBusy]   = useState(false)
+  const [err,    setErr]    = useState('')
+
+  const isEdit = !!initial
+
+  const handleSubmit = async () => {
+    const n = name.trim()
+    const p = parseFloat(price)
+    if (!n) { setErr('Nombre requerido'); return }
+    if (isNaN(p) || p < 0) { setErr('Precio inválido'); return }
+    if (!catId) { setErr('Elige una categoría'); return }
+    setBusy(true); setErr('')
+    try {
+      let res: Response
+      if (isEdit) {
+        res = await fetch(`/api/admin/dishes/${initial.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: n, price: p, description: desc || null, categoryId: catId, isActive: !hidden }),
+        })
+      } else {
+        res = await fetch('/api/admin/dishes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantId, name: n, price: p, description: desc || null, categoryId: catId }),
+        })
+      }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.error || 'Error al guardar'); setBusy(false); return }
+      const saved = await res.json()
+      onSave({ id: saved.id ?? initial?.id ?? '', name: n, price: p, description: desc || null, category_id: catId, hidden, is_sold_out: false, ...saved })
+    } catch { setErr('Error de conexión') }
+    setBusy(false)
+  }
+
+  const btn: React.CSSProperties = { padding: '10px 18px', borderRadius: 10, border: 'none', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', fontFamily: F }
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--amber)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{isEdit ? 'Editar producto' : 'Nuevo producto'}</div>
+
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre *"
+        style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.88rem', outline: 'none' }} />
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={price} onChange={e => setPrice(e.target.value)} placeholder="Precio *" type="number" min="0"
+          style={{ flex: 1, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.88rem', outline: 'none' }} />
+        <select value={catId} onChange={e => setCatId(e.target.value)}
+          style={{ flex: 2, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.88rem', outline: 'none', cursor: 'pointer' }}>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción (opcional)" rows={2}
+        style={{ padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.84rem', outline: 'none', resize: 'vertical' }} />
+
+      {isEdit && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-2)' }}>
+          <input type="checkbox" checked={hidden} onChange={e => setHidden(e.target.checked)} /> Ocultar en la tienda
+        </label>
+      )}
+
+      {err && <div style={{ color: '#ef4444', fontFamily: F, fontSize: '0.78rem' }}>{err}</div>}
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={handleSubmit} disabled={busy} style={{ ...btn, background: 'var(--amber)', color: '#fff', flex: 1, opacity: busy ? 0.6 : 1 }}>
+          {busy ? 'Guardando…' : isEdit ? 'Guardar' : 'Agregar'}
+        </button>
+        <button onClick={onCancel} style={{ ...btn, background: 'var(--sunk)', color: 'var(--ink-2)', border: '1px solid var(--line)' }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── ProductRow ─────────────────────────────────────────────────────
+function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onToggleBanner, onEdit, onDelete }: {
   p: Product
   toteatMap: Record<string, { name: string; price: number }> | null
   bannerIds: string[]
   bannerMax: number
   onToggleSoldOut: () => void
   onToggleBanner: () => void
+  onEdit: () => void
+  onDelete: () => void
 }) {
   const [code, setCode] = useState(p.toteat_code ?? '')
   const norm = code.trim().toUpperCase()
@@ -102,52 +194,53 @@ function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onTog
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* Star */}
-        <button
-          onClick={bannerFull ? undefined : onToggleBanner}
-          title={inBanner ? 'Quitar del banner' : bannerFull ? 'Máx. 5 en banner' : 'Destacar en banner'}
-          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: bannerFull ? 'not-allowed' : 'pointer', display: 'grid', placeItems: 'center', opacity: bannerFull ? 0.3 : 1, fontSize: '1rem' }}
-        >
+        <button onClick={bannerFull ? undefined : onToggleBanner} title={inBanner ? 'Quitar del banner' : bannerFull ? 'Máx. 5 en banner' : 'Destacar en banner'}
+          style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: bannerFull ? 'not-allowed' : 'pointer', display: 'grid', placeItems: 'center', opacity: bannerFull ? 0.3 : 1, fontSize: '0.95rem' }}>
           {inBanner ? '⭐' : '☆'}
         </button>
 
         {/* Name + badges */}
         <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
           <span style={{ minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: p.is_sold_out ? 'var(--ink-3)' : 'var(--ink)', textDecoration: p.is_sold_out ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-          {p.hidden && (
-            <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', background: 'rgba(245,158,11,0.16)', border: '1px solid rgba(245,158,11,0.35)', padding: '2px 6px', borderRadius: 999 }}>Oculto</span>
-          )}
+          {p.hidden && <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', background: 'rgba(245,158,11,0.16)', border: '1px solid rgba(245,158,11,0.35)', padding: '2px 6px', borderRadius: 999 }}>Oculto</span>}
         </span>
 
-        {/* Agotado btn */}
-        <button
-          onClick={onToggleSoldOut}
-          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${p.is_sold_out ? '#ef4444' : 'var(--line)'}`, background: p.is_sold_out ? 'rgba(239,68,68,0.12)' : 'transparent', color: p.is_sold_out ? '#ef4444' : 'var(--ink-2)' }}
-        >
+        {/* Agotado */}
+        <button onClick={onToggleSoldOut}
+          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${p.is_sold_out ? '#ef4444' : 'var(--line)'}`, background: p.is_sold_out ? 'rgba(239,68,68,0.12)' : 'transparent', color: p.is_sold_out ? '#ef4444' : 'var(--ink-2)' }}>
           {p.is_sold_out ? 'Agotado' : 'Agotar'}
         </button>
 
         {/* Code */}
         <CodeInput initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} onValue={setCode} />
+
+        {/* Edit */}
+        <button onClick={onEdit} title="Editar"
+          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+
+        {/* Delete */}
+        <button onClick={onDelete} title="Eliminar"
+          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        </button>
       </div>
 
       {/* Price row */}
-      <div style={{ paddingLeft: 36, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontFamily: F, fontSize: '0.72rem', lineHeight: 1.3 }}>
-        <span style={{ color: 'var(--ink-2)' }}>QuieroComer: <strong style={{ color: 'var(--ink)' }}>{clp(p.price)}</strong></span>
+      <div style={{ paddingLeft: 32, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontFamily: F, fontSize: '0.72rem', lineHeight: 1.3 }}>
+        <span style={{ color: 'var(--ink-2)' }}>Precio: <strong style={{ color: 'var(--ink)' }}>{clp(p.price)}</strong></span>
         {showToteat && tInfo != null && (
           <span style={{ color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong style={{ color: priceMismatch ? '#f97316' : 'var(--ink)' }}>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠ distinto' : ''}</span>
         )}
-        {showToteat && tInfo == null && (
-          <span style={{ color: '#f97316' }}>⚠ Código no existe en Toteat</span>
-        )}
-        {showToteat && tInfo != null && tInfo.name && (
-          <span style={{ color: GREEN }}>Toteat: <strong style={{ color: 'var(--ink)' }}>{tInfo.name}</strong></span>
-        )}
+        {showToteat && tInfo == null && <span style={{ color: '#f97316' }}>⚠ Código no existe en Toteat</span>}
+        {showToteat && tInfo?.name && <span style={{ color: GREEN }}>Toteat: <strong style={{ color: 'var(--ink)' }}>{tInfo.name}</strong></span>}
       </div>
     </div>
   )
 }
 
-// ── ModifierRow ───────────────────────────────────────────────────
+// ── ModifierRow ────────────────────────────────────────────────────
 function ModifierRow({ opt, toteatMap, onToggleSoldOut }: {
   opt: DedupOption
   toteatMap: Record<string, { name: string; price: number }> | null
@@ -163,21 +256,16 @@ function ModifierRow({ opt, toteatMap, onToggleSoldOut }: {
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: opt.soldOut ? 'var(--ink-3)' : 'var(--ink)', textDecoration: opt.soldOut ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.name}</span>
-        <button
-          onClick={onToggleSoldOut}
-          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${opt.soldOut ? '#ef4444' : 'var(--line)'}`, background: opt.soldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: opt.soldOut ? '#ef4444' : 'var(--ink-2)' }}
-        >
+        <button onClick={onToggleSoldOut}
+          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${opt.soldOut ? '#ef4444' : 'var(--line)'}`, background: opt.soldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: opt.soldOut ? '#ef4444' : 'var(--ink-2)' }}>
           {opt.soldOut ? 'Agotado' : 'Agotar'}
         </button>
         <CodeInput initial={opt.code} endpoint={`/api/admin/modifiers/${opt.id}/map-toteat`} onValue={setCode} />
       </div>
-
       {opt.price > 0 && (
         <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)' }}>
           Precio extra: <strong style={{ color: 'var(--ink)' }}>{clp(opt.price)}</strong>
-          {showToteat && tInfo != null && (
-            <span style={{ marginLeft: 12, color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠' : ''}</span>
-          )}
+          {showToteat && tInfo != null && <span style={{ marginLeft: 12, color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠' : ''}</span>}
         </div>
       )}
       {showToteat && tInfo == null && <span style={{ fontFamily: F, fontSize: '0.72rem', color: '#f97316' }}>⚠ Código no existe en Toteat</span>}
@@ -185,24 +273,84 @@ function ModifierRow({ opt, toteatMap, onToggleSoldOut }: {
   )
 }
 
-// ── Main panel ────────────────────────────────────────────────────
-export default function PosCartaPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
+// ── CategoryRow ────────────────────────────────────────────────────
+function CategoryRow({ cat, isFirst, isLast, onRename, onDelete, onMoveUp, onMoveDown }: {
+  cat: FullCategory
+  isFirst: boolean
+  isLast: boolean
+  onRename: (name: string) => void
+  onDelete: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(cat.name)
+
+  const save = () => {
+    const n = name.trim()
+    if (n && n !== cat.name) onRename(n)
+    setEditing(false)
+  }
+
+  const iconBtn: React.CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-2)', flexShrink: 0 }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px' }}>
+      {editing ? (
+        <input autoFocus value={name} onChange={e => setName(e.target.value)}
+          onBlur={save} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setName(cat.name); setEditing(false) } }}
+          style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--amber)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.88rem', fontWeight: 700, outline: 'none' }}
+        />
+      ) : (
+        <span style={{ flex: 1, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</span>
+      )}
+      {cat._count != null && (
+        <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', flexShrink: 0 }}>{cat._count.dishes} platos</span>
+      )}
+      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+        <button onClick={() => setEditing(true)} title="Renombrar" style={iconBtn}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button onClick={onMoveUp} disabled={isFirst} title="Subir" style={{ ...iconBtn, opacity: isFirst ? 0.3 : 1 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+        </button>
+        <button onClick={onMoveDown} disabled={isLast} title="Bajar" style={{ ...iconBtn, opacity: isLast ? 0.3 : 1 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button onClick={onDelete} title="Eliminar" style={{ ...iconBtn, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main panel ─────────────────────────────────────────────────────
+export default function PosCartaPanel({ restaurantId, title, onBack }: { restaurantId: string; title?: string; onBack?: () => void; onDone?: () => void }) {
   const [data,       setData]       = useState<StorefrontData | null>(null)
+  const [fullCats,   setFullCats]   = useState<FullCategory[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [tab,        setTab]        = useState<'productos' | 'modificadores'>('productos')
+  const [tab,        setTab]        = useState<PosTab>('productos')
   const [search,     setSearch]     = useState('')
   const [only,       setOnly]       = useState<'all' | 'hidden' | 'nocode'>('all')
   const [bannerIds,  setBannerIds]  = useState<string[]>([])
   const [brandSlug,  setBrandSlug]  = useState<string | null>(null)
   const [copyBusy,   setCopyBusy]   = useState(false)
   const [copyMsg,    setCopyMsg]    = useState('')
+  const [toteatMap,  setToteatMap]  = useState<Record<string, { name: string; price: number }> | null>(null)
   const cfgRef = useRef<Record<string, unknown>>({})
   const BANNER_MAX = 5
 
-  const [toteatMap, setToteatMap] = useState<Record<string, { name: string; price: number }> | null>(null)
+  // Product form state
+  const [addingProduct,  setAddingProduct]  = useState(false)
+  const [editingProdId,  setEditingProdId]  = useState<string | null>(null)
+
+  // Category form state
+  const [newCatName, setNewCatName] = useState('')
+  const [savingCat,  setSavingCat]  = useState(false)
 
   // Load menu
-  useEffect(() => {
+  const loadMenu = useCallback(() => {
     if (!restaurantId) return
     setLoading(true)
     fetch(`/api/panel/ecommerce/menu?restaurantId=${restaurantId}&includeHidden=1`)
@@ -212,7 +360,20 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
       .finally(() => setLoading(false))
   }, [restaurantId])
 
-  // Load settings (brandSlug + bannerIds)
+  useEffect(() => { loadMenu() }, [loadMenu])
+
+  // Load full categories (with counts)
+  const loadCategories = useCallback(() => {
+    if (!restaurantId) return
+    fetch(`/api/admin/categories?restaurantId=${restaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (Array.isArray(d)) setFullCats(d) })
+      .catch(() => {})
+  }, [restaurantId])
+
+  useEffect(() => { loadCategories() }, [loadCategories])
+
+  // Load settings
   useEffect(() => {
     if (!restaurantId) return
     fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
@@ -247,13 +408,7 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
     const apply = (val: boolean) => setData(d => d ? {
       ...d,
-      products: d.products.map(p => ({
-        ...p,
-        option_groups: (p.option_groups ?? []).map(g => ({
-          ...g,
-          values: g.values.map(v => v.id === id ? { ...v, is_sold_out: val } : v),
-        })),
-      })),
+      products: d.products.map(p => ({ ...p, option_groups: (p.option_groups ?? []).map(g => ({ ...g, values: g.values.map(v => v.id === id ? { ...v, is_sold_out: val } : v) })) })),
     } : d)
     apply(next)
     try {
@@ -271,6 +426,79 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
       cfgRef.current = cfg
       fetch('/api/panel/ecommerce/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: cfg }) }).catch(() => {})
       return next
+    })
+  }, [restaurantId])
+
+  const handleProductSaved = useCallback((saved: Partial<Product> & { id: string }) => {
+    setData(d => {
+      if (!d) return d
+      const exists = d.products.some(p => p.id === saved.id)
+      if (exists) {
+        return { ...d, products: d.products.map(p => p.id === saved.id ? { ...p, ...saved } : p) }
+      } else {
+        return { ...d, products: [...d.products, saved as Product] }
+      }
+    })
+    setAddingProduct(false)
+    setEditingProdId(null)
+    loadCategories()
+  }, [loadCategories])
+
+  const handleDeleteProduct = useCallback(async (id: string) => {
+    if (!confirm('¿Eliminar este producto?')) return
+    setData(d => d ? { ...d, products: d.products.filter(p => p.id !== id) } : d)
+    try {
+      await fetch(`/api/admin/dishes/${id}`, { method: 'DELETE' })
+    } catch { loadMenu() }
+    loadCategories()
+  }, [loadMenu, loadCategories])
+
+  // Category handlers
+  const handleAddCategory = async () => {
+    const n = newCatName.trim()
+    if (!n) return
+    setSavingCat(true)
+    try {
+      const res = await fetch('/api/admin/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, name: n }) })
+      if (res.ok) { setNewCatName(''); loadCategories(); loadMenu() }
+    } catch { /* noop */ }
+    setSavingCat(false)
+  }
+
+  const handleRenameCategory = useCallback(async (id: string, name: string) => {
+    setFullCats(cs => cs.map(c => c.id === id ? { ...c, name } : c))
+    try {
+      await fetch('/api/admin/categories', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name }) })
+    } catch { loadCategories() }
+    loadMenu()
+  }, [loadCategories, loadMenu])
+
+  const handleDeleteCategory = useCallback(async (id: string) => {
+    const cat = fullCats.find(c => c.id === id)
+    const count = cat?._count?.dishes ?? 0
+    if (count > 0) { alert(`Esta categoría tiene ${count} platos. Mueve o elimina los platos primero.`); return }
+    if (!confirm('¿Eliminar esta categoría?')) return
+    setFullCats(cs => cs.filter(c => c.id !== id))
+    try {
+      await fetch(`/api/admin/categories?id=${id}`, { method: 'DELETE' })
+    } catch { loadCategories() }
+  }, [fullCats, loadCategories])
+
+  const handleMoveCategory = useCallback(async (id: string, dir: 'up' | 'down') => {
+    setFullCats(cs => {
+      const idx = cs.findIndex(c => c.id === id)
+      if (idx < 0) return cs
+      const newIdx = dir === 'up' ? idx - 1 : idx + 1
+      if (newIdx < 0 || newIdx >= cs.length) return cs
+      const next = [...cs]
+      ;[next[idx], next[newIdx]] = [next[newIdx], next[idx]]
+      const updated = next.map((c, i) => ({ ...c, position: i }))
+      // persist reorder
+      fetch('/api/admin/categories/reorder', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, order: updated.map(c => c.id) }),
+      }).catch(() => {})
+      return updated
     })
   }, [restaurantId])
 
@@ -305,14 +533,13 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
   }, [products])
 
   const prodTotal    = products.length
-  const prodWithCode = products.filter(p => p.toteat_code).length
   const modOptions   = dedupGroups.flatMap(g => g.options)
   const modTotal     = modOptions.length
+  const q            = search.trim().toLowerCase()
+  const hiddenCount  = products.filter(p => p.hidden).length
+  const prodWithCode = products.filter(p => p.toteat_code).length
   const modWithCode  = modOptions.filter(o => o.code).length
-
-  const q           = search.trim().toLowerCase()
-  const hiddenCount = products.filter(p => p.hidden).length
-  const noCodeCount = tab === 'productos' ? prodTotal - prodWithCode : modTotal - modWithCode
+  const noCodeCount  = tab === 'productos' ? prodTotal - prodWithCode : modTotal - modWithCode
 
   let filteredProducts = q ? products.filter(p => p.name.toLowerCase().includes(q) || (p.toteat_code ?? '').toLowerCase().includes(q)) : products
   if (only === 'hidden')  filteredProducts = filteredProducts.filter(p => p.hidden)
@@ -323,10 +550,23 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
     : dedupGroups
   if (only === 'nocode') filteredGroups = filteredGroups.map(g => ({ ...g, options: g.options.filter(o => !o.code) })).filter(g => g.options.length)
 
+  const editingProd = editingProdId ? products.find(p => p.id === editingProdId) : null
+
   return (
     <div className="pos-scroll">
-      <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
-        {title && <p className="pos-inner-title">{title}</p>}
+      <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 60px' }}>
+
+        {/* Title row */}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            {onBack && (
+              <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: F, fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+            )}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
 
         {/* Copy to branches */}
         {brandSlug && (
@@ -339,95 +579,171 @@ export default function PosCartaPanel({ restaurantId, title }: { restaurantId: s
         )}
 
         {/* Tabs */}
-        {!loading && prodTotal > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <TabBtn active={tab === 'productos'} onClick={() => { setTab('productos'); setSearch(''); setOnly('all') }} label="Productos" count={`${prodWithCode}/${prodTotal}`} done={prodWithCode === prodTotal} />
-            <TabBtn active={tab === 'modificadores'} onClick={() => { setTab('modificadores'); setSearch(''); setOnly('all') }} label="Modificadores" count={`${modWithCode}/${modTotal}`} done={modTotal > 0 && modWithCode === modTotal} />
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <TabBtn active={tab === 'productos'}    onClick={() => { setTab('productos');    setSearch(''); setOnly('all'); setAddingProduct(false); setEditingProdId(null) }} label={`Productos${prodTotal ? ` (${prodTotal})` : ''}`} />
+          <TabBtn active={tab === 'categorias'}   onClick={() => { setTab('categorias');   setSearch(''); setOnly('all') }} label={`Categorías${fullCats.length ? ` (${fullCats.length})` : ''}`} />
+          <TabBtn active={tab === 'modificadores'} onClick={() => { setTab('modificadores'); setSearch(''); setOnly('all') }} label={`Modificadores${modTotal ? ` (${modTotal})` : ''}`} />
+        </div>
 
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '48px 0', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>
             <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2.5px solid var(--line)', borderTopColor: 'var(--amber)', animation: 'spin 1s linear infinite' }} />
-            Cargando catálogo…
+            Cargando…
           </div>
-        ) : prodTotal === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>No hay productos en la carta.</div>
         ) : (
           <>
-            {/* Search */}
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar producto o código…" style={inputSt} />
-            </div>
+            {/* ── PRODUCTOS ── */}
+            {tab === 'productos' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Filter chips */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-              <FilterChip label="Todos"    active={only === 'all'}    onClick={() => setOnly('all')} />
-              <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ''}`} active={only === 'nocode'} onClick={() => setOnly(only === 'nocode' ? 'all' : 'nocode')} tone="warn" />
-              {tab === 'productos' && <FilterChip label={`Ocultos${hiddenCount ? ` (${hiddenCount})` : ''}`} active={only === 'hidden'} onClick={() => setOnly(only === 'hidden' ? 'all' : 'hidden')} tone="hidden" />}
-            </div>
-
-            {tab === 'productos' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {/* Banner hint */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px' }}>
-                  <span>⭐</span>
-                  <span style={{ flex: 1, fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-2)' }}>Toca la ⭐ para destacar productos en el <b>banner</b> de la tienda (tema Impact).</span>
-                  <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: bannerIds.length ? 'var(--amber)' : 'var(--ink-3)' }}>{bannerIds.length}/{BANNER_MAX}</span>
-                </div>
-
-                {filteredProducts.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>
-                    {only === 'hidden' ? 'No hay productos ocultos.' : only === 'nocode' ? 'Todos los productos tienen código. 🎉' : 'No hay productos que coincidan.'}
-                  </div>
+                {/* Add product form or button */}
+                {addingProduct ? (
+                  <ProductForm restaurantId={restaurantId} categories={categories}
+                    onSave={handleProductSaved} onCancel={() => setAddingProduct(false)} />
+                ) : (
+                  <button onClick={() => { setAddingProduct(true); setEditingProdId(null) }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, border: '1px dashed var(--amber)', background: 'var(--amber-tint)', color: 'var(--amber)', fontFamily: F, fontSize: '0.84rem', fontWeight: 700, cursor: 'pointer' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                    Nuevo producto
+                  </button>
                 )}
 
-                {(q ? [{ id: '_all', name: '', position: 0 }] : categories).map(cat => {
-                  const catProds = q ? filteredProducts : filteredProducts.filter(p => p.category_id === cat.id)
-                  if (!catProds.length) return null
-                  return (
-                    <div key={cat.id}>
-                      {!q && <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{cat.name}</div>}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {catProds.map(p => (
-                          <ProductRow key={p.id} p={p} toteatMap={toteatMap} bannerIds={bannerIds} bannerMax={BANNER_MAX}
-                            onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)}
-                            onToggleBanner={() => toggleBanner(p.id)} />
-                        ))}
-                      </div>
+                {prodTotal === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>No hay productos. Crea uno arriba.</div>
+                ) : (
+                  <>
+                    {/* Search */}
+                    <div style={{ position: 'relative' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar producto o código…" style={inputSt} />
                     </div>
-                  )
-                })}
-              </div>
-            ) : modTotal === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>Los productos no tienen modificadores.</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {filteredGroups.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>
-                    {only === 'nocode' ? 'Todos los modificadores tienen código. 🎉' : 'No hay modificadores que coincidan.'}
-                  </div>
-                )}
-                {filteredGroups.map(g => (
-                  <div key={g.id}>
-                    <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{g.name}</div>
-                    {g.products.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                        {g.products.map(pn => (
-                          <span key={pn} style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 9px' }}>{pn}</span>
-                        ))}
+
+                    {/* Filter chips */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <FilterChip label="Todos"    active={only === 'all'}    onClick={() => setOnly('all')} />
+                      <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ''}`} active={only === 'nocode'} onClick={() => setOnly(only === 'nocode' ? 'all' : 'nocode')} tone="warn" />
+                      <FilterChip label={`Ocultos${hiddenCount ? ` (${hiddenCount})` : ''}`} active={only === 'hidden'} onClick={() => setOnly(only === 'hidden' ? 'all' : 'hidden')} tone="hidden" />
+                    </div>
+
+                    {/* Banner hint */}
+                    {!search && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px' }}>
+                        <span>⭐</span>
+                        <span style={{ flex: 1, fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-2)' }}>Toca la ⭐ para destacar productos en el <b>banner</b> de la tienda.</span>
+                        <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: bannerIds.length ? 'var(--amber)' : 'var(--ink-3)' }}>{bannerIds.length}/{BANNER_MAX}</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {g.options.map(o => (
-                        <ModifierRow key={o.id} opt={o} toteatMap={toteatMap}
-                          onToggleSoldOut={() => toggleModSoldOut(o.id, !o.soldOut)} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+
+                    {(q ? [{ id: '_all', name: '', position: 0 }] : categories).map(cat => {
+                      const catProds = q ? filteredProducts : filteredProducts.filter(p => p.category_id === cat.id)
+                      if (!catProds.length) return null
+                      return (
+                        <div key={cat.id}>
+                          {!q && <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{cat.name}</div>}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {catProds.map(p => (
+                              editingProdId === p.id ? (
+                                <ProductForm key={p.id} restaurantId={restaurantId} categories={categories}
+                                  initial={{ id: p.id, name: p.name, price: p.price, description: p.description, category_id: p.category_id, hidden: p.hidden }}
+                                  onSave={handleProductSaved} onCancel={() => setEditingProdId(null)} />
+                              ) : (
+                                <ProductRow key={p.id} p={p} toteatMap={toteatMap} bannerIds={bannerIds} bannerMax={BANNER_MAX}
+                                  onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)}
+                                  onToggleBanner={() => toggleBanner(p.id)}
+                                  onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
+                                  onDelete={() => handleDeleteProduct(p.id)} />
+                              )
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {filteredProducts.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>
+                        {only === 'hidden' ? 'No hay productos ocultos.' : only === 'nocode' ? 'Todos los productos tienen código. 🎉' : 'No hay productos que coincidan.'}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
+            )}
+
+            {/* ── CATEGORÍAS ── */}
+            {tab === 'categorias' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Add category */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={newCatName} onChange={e => setNewCatName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
+                    placeholder="Nueva categoría…"
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: F, fontSize: '0.88rem', outline: 'none' }}
+                  />
+                  <button onClick={handleAddCategory} disabled={!newCatName.trim() || savingCat}
+                    style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', fontFamily: F, opacity: !newCatName.trim() ? 0.5 : 1 }}>
+                    Agregar
+                  </button>
+                </div>
+
+                {fullCats.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>Sin categorías.</div>
+                ) : (
+                  fullCats.map((cat, i) => (
+                    <CategoryRow key={cat.id} cat={cat}
+                      isFirst={i === 0} isLast={i === fullCats.length - 1}
+                      onRename={name => handleRenameCategory(cat.id, name)}
+                      onDelete={() => handleDeleteCategory(cat.id)}
+                      onMoveUp={() => handleMoveCategory(cat.id, 'up')}
+                      onMoveDown={() => handleMoveCategory(cat.id, 'down')}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ── MODIFICADORES ── */}
+            {tab === 'modificadores' && (
+              modTotal === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>Los productos no tienen modificadores.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Search */}
+                  <div style={{ position: 'relative' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar modificador o código…" style={inputSt} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <FilterChip label="Todos"    active={only === 'all'}    onClick={() => setOnly('all')} />
+                    <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ''}`} active={only === 'nocode'} onClick={() => setOnly(only === 'nocode' ? 'all' : 'nocode')} tone="warn" />
+                  </div>
+
+                  {filteredGroups.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>
+                      {only === 'nocode' ? 'Todos los modificadores tienen código. 🎉' : 'No hay modificadores que coincidan.'}
+                    </div>
+                  )}
+
+                  {filteredGroups.map(g => (
+                    <div key={g.id}>
+                      <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{g.name}</div>
+                      {g.products.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                          {g.products.map(pn => (
+                            <span key={pn} style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 999, padding: '3px 9px' }}>{pn}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {g.options.map(o => (
+                          <ModifierRow key={o.id} opt={o} toteatMap={toteatMap}
+                            onToggleSoldOut={() => toggleModSoldOut(o.id, !o.soldOut)} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </>
         )}
