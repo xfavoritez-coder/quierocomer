@@ -38,7 +38,7 @@ export default function PosGarzonesPanel({ restaurantId, title, onBack }: { rest
     <div className="pos-scroll">
       <div style={{ padding: '20px 20px 60px', maxWidth: 480, margin: '0 auto' }}>
         {title && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             {onBack && <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
             <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
           </div>
