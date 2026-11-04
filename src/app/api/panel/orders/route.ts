@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest) {
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: body.orderId },
-    select: { id: true, restaurantId: true, status: true, customerName: true, customerEmail: true, total: true, orderType: true },
+    select: { id: true, restaurantId: true, status: true, customerName: true, customerEmail: true, total: true, orderType: true, deliveryFee: true },
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
 
@@ -86,36 +86,50 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Se requiere el motivo de cancelación" }, { status: 422 });
   }
 
+  // Auto-entregar retiro: si el local activó "retiro → entregado al marcar Listo"
+  // (centroPedidosConfig.autoDeliverPickup), marcar "Listo" un pedido de retiro
+  // equivale a "Entregado" — misma regla que el botón del POS (pos.ts PATCH). El
+  // entregado IMPAGO no se pierde del POS: el scope `activos` lo conserva hasta
+  // que se cobre (se gestiona por paidAmount, no por la etapa).
+  let effectiveStatus: string = body.status;
+  if (body.status === "READY") {
+    const rest = await prisma.restaurant.findUnique({ where: { id: order.restaurantId }, select: { centroPedidosConfig: true } });
+    const cfg = (rest?.centroPedidosConfig && typeof rest.centroPedidosConfig === "object" && !Array.isArray(rest.centroPedidosConfig)
+      ? rest.centroPedidosConfig : {}) as { autoDeliverPickup?: boolean };
+    const effectiveDelivery = order.orderType === "DELIVERY" && (order.deliveryFee || 0) > 0;
+    if (cfg.autoDeliverPickup && !effectiveDelivery) effectiveStatus = "DONE";
+  }
+
   // Fetch current statusHistory to append new entry
   const orderFull = await prisma.onlineOrder.findUnique({ where: { id: order.id }, select: { statusHistory: true } });
   const history: { status: string; ts: string }[] = Array.isArray(orderFull?.statusHistory) ? (orderFull!.statusHistory as any) : [];
-  history.push({ status: body.status, ts: new Date().toISOString() });
+  history.push({ status: effectiveStatus, ts: new Date().toISOString() });
 
   const updated = await prisma.onlineOrder.update({
     where: { id: order.id },
     data: {
-      status: body.status,
+      status: effectiveStatus,
       statusHistory: history,
-      ...(body.status === "CANCELLED" && cancellationReason ? { cancellationReason: cancellationReason.trim() } : {}),
+      ...(effectiveStatus === "CANCELLED" && cancellationReason ? { cancellationReason: cancellationReason.trim() } : {}),
     },
   });
 
   // Push al cliente (PWA) con el cambio de estado.
-  void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(order.id, body.status)).catch(() => {});
+  void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(order.id, effectiveStatus)).catch(() => {});
 
   // Reflejar el cambio en el espejo del POS / Centro de pedidos: así, gestione
   // quien gestione el pedido (este panel o el board del POS), el estado queda
   // igual en todas las pantallas.
-  void import("@/lib/ecommerce/syncPosFromOnline").then((m) => m.syncPosOrderFromOnline(order.id, body.status)).catch(() => {});
+  void import("@/lib/ecommerce/syncPosFromOnline").then((m) => m.syncPosOrderFromOnline(order.id, effectiveStatus)).catch(() => {});
 
   // Correo al cliente: solo al aceptar el pedido (con link de seguimiento en vivo).
   // IN_DELIVERY y READY ya no disparan correo — el cliente lo ve en el tracking.
-  if (body.status === "ACCEPTED" && order.customerEmail) {
-    void sendOrderStatusEmail(order.id, body.status);
+  if (effectiveStatus === "ACCEPTED" && order.customerEmail) {
+    void sendOrderStatusEmail(order.id, effectiveStatus);
   }
 
   // Al completarse el pedido, enviar encuesta de satisfacción si tiene email.
-  if (body.status === "DONE" && order.customerEmail) {
+  if (effectiveStatus === "DONE" && order.customerEmail) {
     const toEmail = order.customerEmail;
     void (async () => {
       try {
