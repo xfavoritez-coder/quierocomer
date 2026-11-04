@@ -22,15 +22,19 @@ export function uberAppConfigured(): boolean {
   return !!(c.clientId && c.clientSecret);
 }
 
-const TOKEN_URL = "https://login.uber.com/oauth/v2/token";
-// Endpoints de la Orders API (confirmar versión con el partner docs al activar).
+// Hosts por entorno. Sandbox (default mientras no esté en prod) usa test-api y
+// sandbox-login; en producción, api.uber.com y login.uber.com.
+const SANDBOX = (process.env.UBEREATS_ENV || "sandbox").toLowerCase() !== "production";
+const BASE = SANDBOX ? "https://test-api.uber.com" : "https://api.uber.com";
+const TOKEN_URL = SANDBOX ? "https://sandbox-login.uber.com/oauth/v2/token" : "https://login.uber.com/oauth/v2/token";
+// Endpoints de la Orders API (paths confirmados con la guía de sandbox de Uber).
 const EP = {
-  getOrder: (id: string) => `https://api.uber.com/v2/eats/order/${id}`,
-  accept: (id: string) => `https://api.uber.com/v1/eats/orders/${id}/accept_pos_order`,
-  deny: (id: string) => `https://api.uber.com/v1/eats/orders/${id}/deny_pos_order`,
-  cancel: (id: string) => `https://api.uber.com/v1/eats/orders/${id}/cancel`,
-  // Estado de preparación del pedido (listo para despacho/retiro).
-  restaurantStatus: (id: string) => `https://api.uber.com/v1/eats/orders/${id}/restaurant_status`,
+  getOrder: (id: string) => `${BASE}/v1/delivery/orders/${id}`,
+  accept: (id: string) => `${BASE}/v1/delivery/orders/${id}/accept_pos_order`,
+  deny: (id: string) => `${BASE}/v1/delivery/orders/${id}/deny_pos_order`,
+  cancel: (id: string) => `${BASE}/v1/delivery/orders/${id}/cancel`,
+  // Estado de preparación (listo). Path a confirmar con un pedido real del sandbox.
+  restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurant_status`,
 };
 const SCOPE = "eats.order";
 

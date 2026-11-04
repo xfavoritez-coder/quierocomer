@@ -62,28 +62,25 @@ export async function POST(req: NextRequest) {
 
   const eventType = str(body.event_type || body.type);
   const meta = obj(body.meta);
-  const orderId = str(meta.resource_id || body.resource_id || obj(body.resource).id);
-  const storeId = str(meta.user_id || meta.store_id || body.store_id);
-
-  // Responder rápido; el procesamiento no debe hacer fallar el 200 (Uber reintenta
-  // por status, pero evitamos timeouts).
-  const restaurantId = await restaurantForStore(storeId);
-  if (!restaurantId || !orderId) {
-    return NextResponse.json({ ok: true, ignored: true, reason: "sin local/orden", storeId, orderId }, { status: 200 });
-  }
+  // El id del pedido viene en order.id (y como fallback en meta.resource_id).
+  const orderId = str(obj(body.order).id || meta.resource_id || body.resource_id || obj(body.resource).id);
+  if (!orderId) return NextResponse.json({ ok: true, ignored: true, reason: "sin orderId" }, { status: 200 });
 
   try {
     if (/cancel|failure/i.test(eventType)) {
-      // Cancelación → anular el PosOrder si existe.
-      await prisma.posOrder.updateMany({
-        where: { restaurantId, externalId: `ue-${orderId}` },
-        data: { posStatus: "canceled" },
-      });
+      // Cancelación → anular el PosOrder si existe (en cualquier local).
+      await prisma.posOrder.updateMany({ where: { externalId: `ue-${orderId}` }, data: { posStatus: "canceled" } });
       return NextResponse.json({ ok: true, canceled: true, orderId }, { status: 200 });
     }
 
-    // Nuevo pedido (o actualización): traer detalle y crear/espejar al POS.
+    // El webhook no trae el store id; se obtiene del detalle del pedido (getOrder
+    // usa el token de la app, no depende de la tienda). De ahí se resuelve el local.
     const order = await getUberOrder(orderId);
+    const st = obj(order.store);
+    const storeId = str(st.id || st.store_id || st.merchant_store_id || order.store_id);
+    const restaurantId = await restaurantForStore(storeId);
+    if (!restaurantId) return NextResponse.json({ ok: true, ignored: true, reason: "tienda sin local", storeId, orderId }, { status: 200 });
+
     const result = await createPosOrderFromUberOrder(restaurantId, order);
     if (result?.isNew) {
       const cfg = parseEcommerceConfig(
