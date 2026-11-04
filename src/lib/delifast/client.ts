@@ -193,6 +193,30 @@ export async function getDelifastTracking(
   }
 }
 
+/** Devuelve el codigo_origen (= nuestro orderNumber) de una venta de Delifast, o
+ *  null si no lo tiene (p. ej. un despacho que no se originó en QuieroComer, donde
+ *  viene vacío/0). Sirve para emparejar eventos por id EXACTO, sin adivinar por
+ *  nombre de cliente. */
+export async function getDelifastCodigoOrigen(
+  restaurantId: string,
+  creds: DelifastCreds,
+  idVenta: string,
+): Promise<string | null> {
+  const key = (creds.email || restaurantId).toLowerCase();
+  const plataforma = creds.plataforma || "";
+  const run = async (cookie: string): Promise<string | null> => {
+    const v = (await callFuncion(cookie, "getVentaDetalle", { id_venta: idVenta, plataforma })) as Record<string, unknown>;
+    const co = str(v?.codigo_origen);
+    return co && co !== "0" ? co : null;
+  };
+  try {
+    return await run(await getSession(key, creds));
+  } catch (e) {
+    if (e instanceof SessionExpired) return await run(await getSession(key, creds, true));
+    throw e;
+  }
+}
+
 /** Resuelve el id_venta de Delifast a partir de nuestro orderNumber (= codigo_origen),
  *  buscándolo en el listado (texto_buscado). Independiente del worker/Pusher: sirve
  *  cuando el pedido todavía no avanzó de estado y no tenemos el id guardado. */

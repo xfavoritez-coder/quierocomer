@@ -14,8 +14,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
+import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
+import { getDelifastCodigoOrigen } from "@/lib/delifast/client";
 
 const STAGE_ORDER: Record<string, number> = { preparing: 0, ready: 1, out_for_delivery: 2, delivered: 3 };
+
+// Cache negativo: id_venta de Delifast que NO corresponde a un pedido nuestro
+// (codigo_origen vacío). Evita re-consultar el detalle en cada evento repetido.
+const notOursVenta = new Map<string, number>();
+const NOT_OURS_TTL = 15 * 60 * 1000;
 
 // Mapa opcional id de local Delifast → restaurantId nuestro (JSON en env).
 function restaurantFromLocal(localId?: string | null): string | null {
@@ -99,21 +107,29 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3) Último recurso: por nombre de cliente, pedido de DELIVERY activo reciente (12 h).
-  if (!po && cliente) {
-    const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-    po = await prisma.posOrder.findFirst({
-      where: {
-        restaurantId,
-        isDelivery: true,
-        createdAt: { gte: since },
-        customerName: { equals: cliente, mode: "insensitive" },
-        opsStage: { not: "delivered" },
-        posStatus: { not: "canceled" },
-      },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, restaurantId: true, externalId: true, opsStage: true, delifastVentaId: true },
-    });
+  // 3) Resolución EXACTA por codigo_origen: consultamos el detalle de la venta en
+  //    Delifast (que SÍ tiene el codigo_origen = nuestro orderNumber, aunque el
+  //    evento lo mande vacío) y emparejamos por orderNumber. Reemplaza al antiguo
+  //    match por nombre de cliente, que causaba falsos positivos.
+  const negKey = `${restaurantId}:${idVenta}`;
+  const negAt = notOursVenta.get(negKey);
+  if (!po && idVenta && !(negAt && Date.now() - negAt < NOT_OURS_TTL)) {
+    const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } });
+    const creds = decryptEcommerceSecrets(parseEcommerceConfig(r?.ecommerceConfig)).delifast;
+    if (creds?.enabled && creds.email && creds.password && creds.plataforma) {
+      const co = await getDelifastCodigoOrigen(restaurantId, creds, idVenta).catch(() => null);
+      const num = co != null && String(co).trim() !== "" ? Number(co) : null;
+      if (num != null && Number.isFinite(num)) {
+        const oo = await prisma.onlineOrder.findFirst({ where: { restaurantId, orderNumber: num }, orderBy: { createdAt: "desc" }, select: { id: true } });
+        if (oo) {
+          po = await prisma.posOrder.findFirst({
+            where: { restaurantId, externalId: `oo-${oo.id}`, isDelivery: true },
+            select: { id: true, restaurantId: true, externalId: true, opsStage: true, delifastVentaId: true },
+          });
+        }
+      }
+      if (!po) notOursVenta.set(negKey, Date.now()); // no es nuestro / no se resolvió
+    }
   }
 
   if (!po) {
