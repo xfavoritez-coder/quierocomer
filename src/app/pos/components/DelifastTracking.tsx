@@ -1,10 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
-
-// Mapa Leaflet solo en cliente (reutiliza el del seguimiento del ecommerce).
-const OrderTrackingMap = dynamic(() => import('@/components/ecommerce/OrderTrackingMap'), { ssr: false })
 
 type Pt = { lat: number; lng: number } | null
 interface Tracking {
@@ -182,15 +178,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
             <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
           </a>
         </div>
-      )}
-
-      {/* Mapa en vivo (el repartidor 🛵 aparece cuando Delifast reporta su
-          ubicación; tienda 🏪 y cliente 🏠 siempre que haya coordenadas). */}
-      {(t.location || t.store || t.customer) && (
-        <OrderTrackingMap driver={t.location} customer={t.customer} store={t.store} />
-      )}
-      {!t.location && (t.store || t.customer) && (
-        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Ubicación del repartidor aún no disponible.</span>
       )}
 
       {/* Timeline */}
