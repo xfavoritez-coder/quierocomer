@@ -261,6 +261,8 @@ function OrderCard({
       <div
         style={{
           padding: '11px 16px',
+          minHeight: 56,
+          boxSizing: 'border-box',
           background: (STAGE_COLOR[order.opsStage] ?? '#aaa') + '14',
           borderTop: `1px solid ${(STAGE_COLOR[order.opsStage] ?? '#aaa')}28`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
