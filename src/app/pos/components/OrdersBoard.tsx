@@ -8,6 +8,7 @@ import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking from './DelifastTracking'
+import { supabase } from '@/lib/supabase'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -831,8 +832,26 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
     setLoading(true)
     fetchOrders()
     timerRef.current = setInterval(fetchOrders, 15_000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [fetchOrders])
+
+    // Realtime: re-fetch inmediato cuando cambia cualquier PosOrder del restaurante.
+    const ids = allBranches && allBranches.length > 1 ? allBranches.map(b => b.id) : (restaurantId ? [restaurantId] : [])
+    const channels = ids.map(id =>
+      supabase
+        .channel(`orders-board-${id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'PosOrder', filter: `restaurantId=eq.${id}` }, fetchOrders)
+        .subscribe()
+    )
+
+    // Volver al tab después de tenerlo en background también recarga.
+    const onVis = () => { if (document.visibilityState === 'visible') fetchOrders() }
+    document.addEventListener('visibilitychange', onVis)
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      channels.forEach(ch => supabase.removeChannel(ch))
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [fetchOrders, restaurantId, allBranches])
 
   const list = useMemo(() => {
     const filtered = orders.filter((o) => {
