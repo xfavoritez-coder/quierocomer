@@ -1180,7 +1180,7 @@ function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onCon
 
 function chip(color: string): React.CSSProperties {
   return {
-    fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.04em',
+    fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.04em',
     textTransform: 'uppercase', padding: '3px 6px', borderRadius: 5,
     background: color + '20', color,
   }
