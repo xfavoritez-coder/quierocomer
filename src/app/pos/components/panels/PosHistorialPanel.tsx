@@ -275,7 +275,8 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
 // ── Main component ────────────────────────────────────────────────────
 export default function PosHistorialPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const isDesktop = useIsDesktop()
-  const [date, setDate] = useState(todayYmd())
+  const [from, setFrom] = useState(todayYmd())
+  const [to, setTo] = useState(todayYmd())
   const [orders, setOrders] = useState<HistorialOrder[]>([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<HistorialOrder | null>(null)
@@ -284,40 +285,58 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
     if (!restaurantId) return
     setLoading(true)
     setSelected(null)
-    fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=historial&from=${date}&to=${date}`, { cache: 'no-store' })
+    fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=historial&from=${from}&to=${to}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => { if (Array.isArray(d.orders)) setOrders(d.orders) })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [restaurantId, date])
+  }, [restaurantId, from, to])
+
+  const presets: { label: string; f: string; t: string }[] = [
+    { label: 'Hoy', f: ymd(0), t: ymd(0) },
+    { label: 'Ayer', f: ymd(-1), t: ymd(-1) },
+    { label: '7 días', f: ymd(-6), t: ymd(0) },
+    { label: '30 días', f: ymd(-29), t: ymd(0) },
+  ]
 
   const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
         {title && <p className="pos-inner-title">{title}</p>}
 
-        {/* Selector de fecha */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
-          {[0, -1, -2].map(offset => {
-            const d = ymd(offset)
-            const label = offset === 0 ? 'Hoy' : offset === -1 ? 'Ayer' : new Date(d + 'T12:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
-            const active = date === d
+        {/* Selector de rango de fechas */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          {presets.map(p => {
+            const active = from === p.f && to === p.t
             return (
-              <button key={d} onClick={() => setDate(d)} style={{
+              <button key={p.label} onClick={() => { setFrom(p.f); setTo(p.t) }} style={{
                 padding: '7px 14px', borderRadius: 10, border: '1px solid var(--line)',
                 background: active ? 'var(--amber)' : 'var(--sunk)',
                 color: active ? '#fff' : 'var(--ink-2)',
                 fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)', cursor: 'pointer',
               }}>
-                {label}
+                {p.label}
               </button>
             )
           })}
-          <input type="date" value={date} onChange={e => e.target.value && setDate(e.target.value)} style={{
-            padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)',
-            background: 'var(--sunk)', color: 'var(--ink)', fontSize: 13,
-            fontFamily: 'var(--sans)', cursor: 'pointer', outline: 'none',
-          }} />
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
+            Desde
+            <input type="date" value={from} max={to} onChange={e => { const v = e.target.value; if (!v) return; setFrom(v); if (v > to) setTo(v) }} style={{
+              padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)',
+              background: 'var(--sunk)', color: 'var(--ink)', fontSize: 13,
+              fontFamily: 'var(--sans)', cursor: 'pointer', outline: 'none',
+            }} />
+          </label>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
+            Hasta
+            <input type="date" value={to} min={from} onChange={e => { const v = e.target.value; if (!v) return; setTo(v); if (v < from) setFrom(v) }} style={{
+              padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)',
+              background: 'var(--sunk)', color: 'var(--ink)', fontSize: 13,
+              fontFamily: 'var(--sans)', cursor: 'pointer', outline: 'none',
+            }} />
+          </label>
         </div>
 
         {loading ? (
@@ -326,7 +345,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
           </div>
         ) : orders.length === 0 ? (
           <div className="pos-empty" style={{ minHeight: 200 }}>
-            <p>Sin pedidos para esta fecha.</p>
+            <p>Sin pedidos en este rango.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

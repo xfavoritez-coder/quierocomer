@@ -106,7 +106,12 @@ export async function GET(req: NextRequest) {
     where.posStatus = { not: "canceled" };
     where.OR = [
       { opsStage: { not: "delivered" } },
-      { opsStage: "delivered", totalAmount: { gt: 0 }, createdAt: { gte: new Date(Date.now() - 30 * 86400_000) } },
+      // Entregado pero IMPAGO = cobro pendiente: se queda en su pestaña normal
+      // hasta que se cobre, SIN caducar por antigüedad (un cobro pendiente no
+      // desaparece por ser viejo). Se filtra el impago en la BD con paidAmount=0
+      // (los pagos parciales aún no existen; cuando se implementen, revisar aquí)
+      // para que el set quede acotado y no dependa de la ventana de 400.
+      { opsStage: "delivered", totalAmount: { gt: 0 }, paidAmount: { lte: 0 } },
     ];
   }
 
