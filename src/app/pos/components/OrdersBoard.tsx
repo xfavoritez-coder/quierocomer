@@ -177,6 +177,15 @@ function OrderCard({
       ? { border: `1.5px solid ${AMBER}cc`, boxShadow: `0 0 0 1px ${AMBER}73, 0 8px 22px rgba(245,158,11,.20)` }
       : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
 
+  // Texto secundario (dirección / mesa / retiro) uniforme para todas las tarjetas.
+  const secondary = (isDelivery && order.addressLine)
+    ? cleanAddr(order.addressLine)
+    : isDineIn && order.tableLabel
+      ? order.tableLabel
+      : (!isDelivery && !isDineIn)
+        ? 'Retiro en local'
+        : ''
+
   return (
     <div
       style={{
@@ -185,58 +194,68 @@ function OrderCard({
         transform: isSelected ? 'translateY(-2px)' : 'none',
         fontFamily: 'var(--sans)',
         transition: 'box-shadow .2s ease, border-color .2s ease, transform .15s ease',
+        display: 'flex', flexDirection: 'column', height: '100%',
       }}
       onClick={onSelect}
     >
-      {/* Body: nombre + info secundaria */}
+      {/* Body: nombre + info secundaria. flex:1 para empujar el footer abajo y
+          que todas las tarjetas de una fila queden a la misma altura. */}
       <div style={{
-        padding: '16px 18px 14px',
+        padding: '14px 16px 12px',
         background: 'var(--surface)',
-        display: 'flex', flexDirection: 'column', gap: 6,
+        display: 'flex', flexDirection: 'column', gap: 8,
+        flex: 1, minWidth: 0,
       }}>
-        {/* Nombre (izq) + total y chips (der) */}
+        {/* Fila superior: nombre (izq) + total y chips (der) */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {order.customerName || 'Cliente'}
-              {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
-            </div>
-            <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-              {(isDelivery && order.addressLine) ? (
-                <>
-                  {isDesktop && <span style={{ color: 'var(--ink-4)' }}>·</span>}
-                  <span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>{cleanAddr(order.addressLine)}
-                  </span>
-                </>
-              ) : isDineIn && order.tableLabel ? (
-                <span>{order.tableLabel}</span>
-              ) : !isDelivery && !isDineIn ? (
-                <span>Retiro en local</span>
-              ) : null}
-            </div>
+          <div style={{
+            minWidth: 0, flex: 1,
+            fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+            overflow: 'hidden', minHeight: 'calc(1.3em * 2)', wordBreak: 'break-word',
+          }}>
+            {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+            {order.customerName || 'Cliente'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
               {clp(order.totalAmount)}
             </span>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
               <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
             </div>
           </div>
+        </div>
+
+        {/* Meta: hora · N ítems */}
+        <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+          {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
+        </div>
+
+        {/* Dirección / mesa / retiro — hasta 3 líneas, con alto mínimo reservado
+            para que la distribución sea igual en todas las tarjetas. */}
+        <div style={{
+          fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.4,
+          display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3,
+          overflow: 'hidden', minHeight: 'calc(1.4em * 2)', wordBreak: 'break-word',
+        }}>
+          {isDelivery && order.addressLine && (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+          )}
+          {secondary}
         </div>
       </div>
 
       {/* Footer coloreado: estado + (si está pagado) botón de avance */}
       <div
         style={{
-          padding: '11px 18px',
+          padding: '11px 16px',
           background: (STAGE_COLOR[order.opsStage] ?? '#aaa') + '14',
           borderTop: `1px solid ${(STAGE_COLOR[order.opsStage] ?? '#aaa')}28`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+          flexWrap: 'wrap', rowGap: 8,
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -257,7 +276,7 @@ function OrderCard({
               fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
               background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
               cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-              fontFamily: 'var(--sans)', flexShrink: 0,
+              fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
             }}
           >
             {busy ? '…' : next.label + ' →'}
@@ -747,7 +766,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <p>Sin pedidos activos.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${viewCols}, minmax(0, 1fr))`, gap: 14, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${viewCols}, minmax(0, 1fr))`, gap: 14, alignItems: 'stretch' }}>
             {list.map((o) => (
               <OrderCard
                 key={o.id}
