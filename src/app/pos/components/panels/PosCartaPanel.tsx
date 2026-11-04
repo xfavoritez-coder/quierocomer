@@ -187,8 +187,15 @@ function ProductRow({ p, toteatMap, onToggleHidden, onEdit, onDelete }: {
   const isHidden = !!p.hidden
 
   return (
-    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isHidden ? 'var(--line)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5, opacity: isHidden ? 0.65 : 1 }}>
+    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5, opacity: isHidden ? 0.65 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Thumb */}
+        <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
+          {p.image_url
+            ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          }
+        </div>
         {/* Name */}
         <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
 
