@@ -1185,12 +1185,12 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
             <div style={{ display: 'flex', gap: 8, marginBottom: curMethod === 'efectivo' ? 8 : 10 }}>
               <div style={{ flex: 1 }}>
                 <label className="pos-modal-label" style={{ marginTop: 0 }}>Monto</label>
-                <input type="number" inputMode="numeric" value={curAmount} onChange={(e) => setCurAmount(e.target.value)} placeholder={clp(remaining)} style={fieldStyle} />
+                <input type="number" inputMode="numeric" value={curAmount} onChange={(e) => setCurAmount(e.target.value)} onDoubleClick={() => setCurAmount(String(remaining))} placeholder={clp(remaining)} title="Doble clic: rellenar con lo que resta" style={fieldStyle} />
               </div>
               {curMethod === 'efectivo' && (
                 <div style={{ flex: 1 }}>
                   <label className="pos-modal-label" style={{ marginTop: 0 }}>Con cuánto paga</label>
-                  <input type="number" inputMode="numeric" value={curReceived} onChange={(e) => setCurReceived(e.target.value)} placeholder={clp(pendingApplied)} style={fieldStyle} />
+                  <input type="number" inputMode="numeric" value={curReceived} onChange={(e) => setCurReceived(e.target.value)} onDoubleClick={() => setCurReceived(String(pendingApplied))} placeholder={clp(pendingApplied)} title="Doble clic: paga el monto exacto" style={fieldStyle} />
                 </div>
               )}
             </div>
