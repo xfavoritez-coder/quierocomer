@@ -40,7 +40,7 @@ function FilterChip({ label, active, onClick, tone }: { label: string; active: b
 // ── TabBtn ─────────────────────────────────────────────────────────
 function TabBtn({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <button onClick={onClick} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', fontFamily: F, fontSize: '0.82rem', fontWeight: 700, border: `1px solid ${active ? 'var(--amber)' : 'var(--line)'}`, background: active ? 'var(--amber)' : 'var(--sunk)', color: active ? '#fff' : 'var(--ink-2)' }}>
+    <button onClick={onClick} style={{ flex: 1, padding: '10px 8px', borderRadius: 0, cursor: 'pointer', fontFamily: F, fontSize: '0.84rem', fontWeight: active ? 700 : 500, border: 'none', borderBottom: `2px solid ${active ? 'var(--amber)' : 'transparent'}`, background: 'transparent', color: active ? 'var(--ink)' : 'var(--ink-3)' }}>
       {label}
     </button>
   )
@@ -521,7 +521,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
         )}
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', marginBottom: 20 }}>
           <TabBtn active={tab === 'productos'}    onClick={() => { setTab('productos');    setSearch(''); setOnly('all'); setAddingProduct(false); setEditingProdId(null) }} label={`Productos${prodTotal ? ` (${prodTotal})` : ''}`} />
           <TabBtn active={tab === 'categorias'}   onClick={() => { setTab('categorias');   setSearch(''); setOnly('all') }} label={`Categorías${fullCats.length ? ` (${fullCats.length})` : ''}`} />
           <TabBtn active={tab === 'modificadores'} onClick={() => { setTab('modificadores'); setSearch(''); setOnly('all') }} label={`Modificadores${modTotal ? ` (${modTotal})` : ''}`} />
