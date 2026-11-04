@@ -38,7 +38,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   const { restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
-  const openAccounts = useOpenAccounts()
+  const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
   const [initialAmount, setInitialAmount] = useState('')

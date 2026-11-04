@@ -13,7 +13,7 @@ import { toast } from 'sonner'
  * cuenta con consumo o pago es una venta real y nunca se toca aquí.
  */
 export default function StaleAccountsCleanup({ restaurantId }: { restaurantId: string }) {
-  const openAccounts = useOpenAccounts()
+  const openAccounts = useOpenAccounts(restaurantId)
   const [cleaning, setCleaning] = useState(false)
 
   const startOfToday = new Date()

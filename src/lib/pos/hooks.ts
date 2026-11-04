@@ -71,10 +71,13 @@ export function usePendingSyncCount(): number {
 
 // ── Accounts ─────────────────────────────────────────────────────
 
-export function useOpenAccounts(): Account[] {
+export function useOpenAccounts(restaurantId?: string): Account[] {
   return useDexieQuery(
-    () => posDb.accounts.where('status').anyOf(['abierta', 'con_pedidos', 'cuenta_pedida', 'pagada_parcial']).toArray(),
-    [],
+    () => posDb.accounts
+      .where('status').anyOf(['abierta', 'con_pedidos', 'cuenta_pedida', 'pagada_parcial'])
+      .filter(a => !restaurantId || a.restaurant_id === restaurantId)
+      .toArray(),
+    [restaurantId],
     []
   )
 }
