@@ -5,7 +5,7 @@ import { usePosSync, useStaff, setRestaurantId, setUserId, saveGarzon, deleteGar
 
 const TEST_USER_ID = 'pos-garzon'
 
-export default function PosGarzonesPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosGarzonesPanel({ restaurantId, title, onBack }: { restaurantId: string; title?: string; onBack?: () => void; onDone?: () => void }) {
   const { syncing } = usePosSync(restaurantId)
   const garzones = useStaff(restaurantId)
   const [newName, setNewName] = useState('')
@@ -37,7 +37,12 @@ export default function PosGarzonesPanel({ restaurantId, title }: { restaurantId
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 20px 60px', maxWidth: 480, margin: '0 auto' }}>
-        {title && <p className="pos-inner-title">{title}</p>}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            {onBack && <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
         <div style={card}>
           <div style={eyebrow}>Agregar garzón</div>
           <div style={{ display: 'flex', gap: 8 }}>

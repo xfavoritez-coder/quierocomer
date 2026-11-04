@@ -15,7 +15,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-export default function PosConfigToteatPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosConfigToteatPanel({ restaurantId, title, onBack }: { restaurantId: string; title?: string; onBack?: () => void; onDone?: () => void }) {
   const [toteatToken,   setToteatToken]   = useState<string | null>(null)
   const [testingToteat, setTestingToteat] = useState(false)
   const [toteatMsg,     setToteatMsg]     = useState('')
@@ -69,7 +69,12 @@ export default function PosConfigToteatPanel({ restaurantId, title }: { restaura
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
-        {title && <p className="pos-inner-title">{title}</p>}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            {onBack && <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           <p style={{ fontSize: '0.82rem', color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>

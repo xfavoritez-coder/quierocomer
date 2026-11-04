@@ -30,7 +30,7 @@ function ToggleRow({ title, desc, checked, disabled, onChange }: { title: string
   )
 }
 
-export default function PosConfigPedidosPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: { restaurantId: string; title?: string; onBack?: () => void; onDone?: () => void }) {
   const [pedidos,   setPedidos]   = useState<PedidosCfg>({})
   const [posMode,   setPosMode]   = useState(false)
   const [showDesc,  setShowDesc]  = useState(false)
@@ -80,7 +80,12 @@ export default function PosConfigPedidosPanel({ restaurantId, title }: { restaur
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
-        {title && <p className="pos-inner-title">{title}</p>}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            {onBack && <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           <ToggleRow title="Gestionar todos los pedidos del POS" desc="Activado: el tablero se alimenta SOLO de pedidos que envía tu POS (Toteat) y NO trae los de ecommerce ni manuales (evita duplicados)." checked={posMode} disabled={savingPed} onChange={() => updatePedidos({ posMode: !posMode })} />
