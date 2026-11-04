@@ -60,6 +60,7 @@ function frozenElapsedMs(o: HistorialOrder): number | null {
 }
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
+const toName = (s: string) => s.trim().replace(/\S+/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase())
 
 function cleanAddr(addr: string): string {
   return addr.replace(/,?\s*chile\b/gi, '').replace(/\s{2,}/g, ' ').replace(/,\s*$/g, '').trim()
@@ -114,7 +115,7 @@ function HistorialDetailPanel({ order, onClose, restaurantId }: { order: Histori
             {(order.orderReference || order.dailyNumber != null) && (
               <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference ?? order.dailyNumber}</span>
             )}
-            {order.customerName || 'Cliente'}
+            {toName(order.customerName || 'Cliente')}
           </div>
           {order.customerPhone && <div style={{ fontSize: 15, color: 'var(--ink-2)', marginBottom: 2 }}>{order.customerPhone}</div>}
           {isDelivery && order.addressLine && <div style={{ fontSize: 15, color: 'var(--ink-2)' }}>{order.addressLine}</div>}
@@ -218,7 +219,7 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
           <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {order.customerName || 'Cliente'}
+              {toName(order.customerName || 'Cliente')}
               {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
             </div>
             <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>

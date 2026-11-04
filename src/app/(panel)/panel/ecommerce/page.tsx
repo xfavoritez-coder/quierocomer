@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Rocket, CreditCard, Wallet, Truck, Bike, ClipboardList, ShoppingBag, Settings, CheckCircle2, Circle, ChevronRight, Store, Map as MapIcon, Ticket, ConciergeBell, ExternalLink, Clock, Save, Package, Star } from "lucide-react";
-import { toast } from "sonner";
+import { Rocket, CreditCard, Wallet, Truck, Bike, CheckCircle2, Circle, Store, Map as MapIcon, ExternalLink } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -51,81 +49,6 @@ function IntegrationCard({ icon: Icon, name, kind, ok, note }: { icon: any; name
         </span>
       )}
     </div>
-  );
-}
-
-// Tiempo de entrega estimado (retiro / delivery). Edita el store config completo
-// para no pisar el resto de la configuración al guardar.
-function WaitTimeCard({ restaurantId }: { restaurantId: string }) {
-  const [cfg, setCfg] = useState<Record<string, unknown> | null>(null);
-  const [pickup, setPickup] = useState("");
-  const [delivery, setDelivery] = useState("");
-  const [driver, setDriver] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.config) { setCfg(d.config); setPickup(String(d.config.waitTimePickup ?? "")); setDelivery(String(d.config.waitTimeDelivery ?? "")); setDriver(String(d.config.waitTimeDriver ?? "")); } })
-      .catch(() => {});
-  }, [restaurantId]);
-
-  async function save() {
-    if (!cfg) return;
-    setSaving(true);
-    try {
-      const next = { ...cfg, waitTimePickup: pickup.trim(), waitTimeDelivery: delivery.trim(), waitTimeDriver: driver.trim() };
-      const res = await fetch("/api/panel/ecommerce/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, config: next }) });
-      if (!res.ok) { toast.error("No se pudo guardar"); setSaving(false); return; }
-      setCfg(next);
-      toast.success("Tiempo de entrega guardado");
-    } catch { toast.error("Error de conexión"); }
-    setSaving(false);
-  }
-
-  const field = (icon: React.ReactNode, label: string, value: string, onChange: (v: string) => void) => (
-    <div style={{ flex: 1, minWidth: 150 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 5 }}>{icon} {label}</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="ej: 20-30" style={{ flex: 1, minWidth: 0, padding: "8px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }} />
-        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>min</span>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ ...CARD, marginTop: 20 }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <Clock size={18} color={ACCENT} style={{ marginTop: 2, flexShrink: 0 }} />
-        <div>
-          <h2 style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Tiempo de entrega estimado</h2>
-          <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Lo que ve el cliente al pedir. Puedes usar un rango (ej: 20-30).</p>
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
-        {field(<Package size={13} />, "Retiro", pickup, setPickup)}
-        {field(<Bike size={13} />, "Delivery", delivery, setDelivery)}
-        {field(<Bike size={13} />, "Repartidor", driver, setDriver)}
-      </div>
-      <button onClick={save} disabled={saving || !cfg} style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: ACCENT, border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "0.83rem", fontWeight: 800, cursor: saving || !cfg ? "wait" : "pointer", opacity: saving || !cfg ? 0.6 : 1 }}>
-        <Save size={15} /> {saving ? "Guardando…" : "Guardar tiempo"}
-      </button>
-    </div>
-  );
-}
-
-function QuickLink({ href, icon: Icon, label, desc }: { href: string; icon: any; label: string; desc: string }) {
-  return (
-    <Link href={href} style={{ ...CARD, display: "flex", alignItems: "center", gap: 14, textDecoration: "none" }}>
-      <div style={{ width: 42, height: 42, borderRadius: 12, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon size={20} color={ACCENT} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>{label}</div>
-        <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{desc}</div>
-      </div>
-      <ChevronRight size={18} color="var(--adm-text3)" />
-    </Link>
   );
 }
 
@@ -178,10 +101,6 @@ export default function EcommerceHomePage() {
         </a>
       )}
 
-      {/* Tiempo de entrega estimado */}
-      {restaurantId && <WaitTimeCard restaurantId={restaurantId} />}
-      {/* Pedidos programados: se movió a Configuración → Pedidos. */}
-
       {/* Integraciones */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "26px 0 12px" }}>
         Integraciones
@@ -208,19 +127,6 @@ export default function EcommerceHomePage() {
       <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "12px 2px 0", lineHeight: 1.5 }}>
         Las credenciales las configura el equipo de QuieroComer. Escríbenos para activar una pasarela o courier en tu local.
       </p>
-
-      {/* Accesos */}
-      <h2 style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "28px 0 12px" }}>
-        Gestión
-      </h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-        <QuickLink href="/panel/centro-pedidos/tomar-pedidos" icon={ConciergeBell} label="Tomar pedidos" desc="Registra pedidos de mostrador / teléfono" />
-        <QuickLink href="/panel/ecommerce/pedidos" icon={ClipboardList} label="Pedidos" desc="Recibe y gestiona pedidos online" />
-        <QuickLink href="/panel/ecommerce/carta" icon={ShoppingBag} label="Catálogo" desc="Qué productos vender online" />
-        <QuickLink href="/panel/ecommerce/cupones" icon={Ticket} label="Cupones" desc="Códigos de descuento" />
-        <QuickLink href="/panel/ecommerce/encuestas" icon={Star} label="Encuestas" desc="Satisfacción del cliente tras la entrega" />
-        <QuickLink href="/panel/ecommerce/configuracion" icon={Settings} label="Configuración" desc="Ajustes, delivery, horario y acompañamientos" />
-      </div>
     </div>
   );
 }

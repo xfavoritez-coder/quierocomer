@@ -28,7 +28,7 @@ export default function EcommerceConfiguracionPage() {
   const [allMethods, setAllMethods] = useState<string[]>(["webpay", "efectivo", "transferencia", "tarjeta"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "web">("tienda");
+  const [tab, setTab] = useState<"tienda" | "horario" | "pagos" | "pedidos" | "avisos" | "web" | "tiempos">("tienda");
   const [pushState, setPushState] = useState<"unknown" | "unsupported" | "denied" | "inactive" | "active">("unknown");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFav, setUploadingFav] = useState(false);
@@ -162,6 +162,7 @@ export default function EcommerceConfiguracionPage() {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
           <TabChip active={tab === "tienda"} onClick={() => setTab("tienda")} icon={Store} label="Tienda" />
           <TabChip active={tab === "horario"} onClick={() => setTab("horario")} icon={Clock} label="Horario" />
+          <TabChip active={tab === "tiempos"} onClick={() => setTab("tiempos")} icon={Truck} label="Tiempos" />
           <TabChip active={tab === "pagos"} onClick={() => setTab("pagos")} icon={CreditCard} label="Pagos" />
           <TabChip active={tab === "pedidos"} onClick={() => setTab("pedidos")} icon={ConciergeBell} label="Pedidos" />
           <TabChip active={tab === "avisos"} onClick={() => setTab("avisos")} icon={Bell} label="Avisos" />
@@ -572,6 +573,35 @@ export default function EcommerceConfiguracionPage() {
           {tab === "horario" && (
           <section style={card}>
             <CierresEditor restaurantId={restaurantId} />
+          </section>
+          )}
+
+          {/* Tiempos de entrega estimados */}
+          {tab === "tiempos" && (
+          <section style={card}>
+            <SectionTitle icon={Truck} title="Tiempo de entrega estimado" sub="Lo que ve el cliente al pedir. Puedes usar un rango (ej: 20-30)." />
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 }}>
+              {[
+                { icon: <Package size={13} />, label: "Retiro", value: cfg.waitTimePickup, onChange: (v: string) => patch({ waitTimePickup: v }) },
+                { icon: <Bike size={13} />, label: "Delivery", value: cfg.waitTimeDelivery, onChange: (v: string) => patch({ waitTimeDelivery: v }) },
+                { icon: <Bike size={13} />, label: "Repartidor propio", value: cfg.waitTimeDriver, onChange: (v: string) => patch({ waitTimeDriver: v }) },
+              ].map(({ icon, label, value, onChange }) => (
+                <div key={label} style={{ flex: 1, minWidth: 150 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "var(--adm-text2)", marginBottom: 5 }}>
+                    {icon} {label}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input
+                      value={value ?? ""}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="ej: 20-30"
+                      style={{ flex: 1, minWidth: 0, padding: "8px 10px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem", outline: "none" }}
+                    />
+                    <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>min</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
           )}
 

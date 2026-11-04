@@ -482,12 +482,6 @@ function OrderDetailPanel({
               {isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} ·
               <OrderTimer order={order} isRetiro={isRetiro} style={{ fontWeight: 800, color: 'var(--ink-2)' }} />
             </span>
-            {paid && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                Pagado
-              </span>
-            )}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, position: 'relative' }}>
@@ -595,9 +589,17 @@ function OrderDetailPanel({
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
-            <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {paid && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                  Pagado
+                </span>
+              )}
+              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
+            </div>
           </div>
           {paid && order.tipAmount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a' }}>

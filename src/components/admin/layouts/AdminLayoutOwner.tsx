@@ -100,9 +100,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       label: "Ecommerce",
       icon: Rocket,
       items: [
-        { icon: Rocket, labelKey: "nav_ecommerce_home", href: `${base}/ecommerce` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
-        { icon: ShoppingBag, labelKey: "nav_ecommerce_menu", href: `${base}/ecommerce/carta` },
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
         { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
         { icon: ContactRound, labelKey: "nav_ecommerce_customers", href: `${base}/ecommerce/clientes` },
@@ -111,18 +109,13 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
       ],
     }] : []),
     ...(opts.hasCentroPedidos ? [{
-      key: "centro-pedidos",
-      label: "Centro de pedidos",
-      icon: ListChecks,
+      key: "motoristas",
+      label: "Motoristas",
+      icon: Bike,
       items: [
-        { icon: ListChecks, labelKey: "nav_centro_home", href: `${base}/centro-pedidos` },
-        { icon: MonitorPlay, labelKey: "nav_centro_kds", href: `${base}/centro-pedidos/kds` },
-        { icon: ConciergeBell, labelKey: "nav_centro_pos", href: `${base}/centro-pedidos/tomar-pedidos` },
         { icon: Navigation, labelKey: "nav_centro_tracking", href: `${base}/centro-pedidos/seguimiento` },
         { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
         { icon: Wallet, labelKey: "nav_centro_wallet", href: `${base}/centro-pedidos/saldo` },
-        { icon: BarChart3, labelKey: "nav_centro_report", href: `${base}/centro-pedidos/reporte` },
-        { icon: Settings, labelKey: "nav_centro_config", href: `${base}/centro-pedidos/configuracion` },
       ],
     }] : []),
     ...(opts.hasPos ? [{
