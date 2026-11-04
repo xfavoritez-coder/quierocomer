@@ -185,9 +185,9 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
   return (
     <div
       style={{
-        border: `1.5px solid ${isSelected ? 'var(--ink-2)' : 'var(--line)'}`,
+        border: `1.5px solid var(--line)`,
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
-        boxShadow: isSelected ? 'var(--sh-2)' : 'var(--sh-1)',
+        boxShadow: isSelected ? '0 0 0 2px var(--amber), var(--sh-2)' : 'var(--sh-1)',
         fontFamily: 'var(--sans)',
         transition: 'border-color .12s, box-shadow .12s',
         opacity: canceled ? 0.8 : 1,
@@ -195,7 +195,7 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
       onClick={onSelect}
     >
       {/* Body */}
-      <div style={{ padding: '16px 18px 14px', background: isSelected ? 'var(--sunk)' : 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ padding: '16px 18px 14px', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

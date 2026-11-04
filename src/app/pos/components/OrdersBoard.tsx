@@ -163,9 +163,9 @@ function OrderCard({
   return (
     <div
       style={{
-        border: `1.5px solid ${isSelected ? 'var(--ink-2)' : 'var(--line)'}`,
+        border: `1.5px solid var(--line)`,
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
-        boxShadow: isSelected ? 'var(--sh-2)' : 'var(--sh-1)',
+        boxShadow: isSelected ? '0 0 0 2px var(--amber), var(--sh-2)' : 'var(--sh-1)',
         fontFamily: 'var(--sans)',
         transition: 'border-color .12s, box-shadow .12s',
       }}
@@ -174,7 +174,7 @@ function OrderCard({
       {/* Body: nombre + info secundaria */}
       <div style={{
         padding: '16px 18px 14px',
-        background: isSelected ? 'var(--sunk)' : 'var(--surface)',
+        background: 'var(--surface)',
         display: 'flex', flexDirection: 'column', gap: 6,
       }}>
         {/* Nombre (izq) + total y chips (der) */}
@@ -813,7 +813,7 @@ function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onCon
       <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4 }}>
         <button
           onClick={() => setConfirm(true)}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 14px', width: '100%', color: 'var(--ink-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+          style={{ background: 'none', border: '1px solid #C53030', borderRadius: 10, padding: '10px 14px', width: '100%', color: '#C53030', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
         >
           Anular pedido
         </button>

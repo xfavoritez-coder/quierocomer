@@ -25,6 +25,7 @@ export function startSync(restaurantId: string, onStatusChange?: (syncing: boole
 
   // Full initial pull + rebuild on startup, then start incremental interval
   _isSyncing = true
+  _onSyncStatusChange?.(true)
   initialSync(restaurantId)
     .catch(err => console.error('[POS Sync] Initial sync error:', err))
     .finally(() => {

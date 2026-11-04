@@ -421,7 +421,7 @@ export default function PosHomePage() {
       />
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
-      {cashSession === null && (
+      {cashSession === null && !syncing && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',

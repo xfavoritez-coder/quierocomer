@@ -21,7 +21,7 @@
 .pos-bar-right{flex-shrink:0;display:flex;align-items:center;gap:10px}
 .pos-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .pos-brand .mk{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--amber),#F4A62A);display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;box-shadow:0 2px 8px rgba(222,124,0,.35);flex-shrink:0}
-.mk-logo{width:40px;height:40px;object-fit:contain;flex-shrink:0;display:block}
+.mk-logo{width:38px;height:38px;object-fit:contain;flex-shrink:0;display:block}
 .pos-brand-text{display:flex;flex-direction:column;gap:0}
 .pos-brand-store{display:flex;flex-direction:column;lineHeight:1.1;border-left:1px solid var(--line);padding-left:10px}
 .pos-brand-text span{font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.15}
