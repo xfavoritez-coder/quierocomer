@@ -76,7 +76,7 @@ function TrackingBox({ children }: { children: React.ReactNode }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
-        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista</span>
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista Delifast</span>
       </div>
       {children}
     </div>
