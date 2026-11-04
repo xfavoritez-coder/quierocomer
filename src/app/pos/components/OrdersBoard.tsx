@@ -207,20 +207,19 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 10,
         flex: 1, minWidth: 0,
       }}>
-        {/* Fila 1: [nombre + chip tipo] ↔ [monto + chip pago] */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* Fila 1: [nombre · chip tipo] ↔ [monto · chip pago] */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
             <div style={{
               fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
-              display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
-              overflow: 'hidden', wordBreak: 'break-word',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
             }}>
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
               {order.customerName || 'Cliente'}
             </div>
-            {showTypeChip && <span style={{ ...chip(typeColor), alignSelf: 'flex-start' }}>{typeLabel}</span>}
+            {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
               {clp(order.totalAmount)}
             </span>
