@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { StorefrontData } from '@/lib/ecommerce/storefront-data'
 
 type Product  = StorefrontData['products'][number]
@@ -10,9 +10,7 @@ interface FullCategory { id: string; name: string; position: number; isActive: b
 interface DedupOption  { id: string; name: string; code: string | null; price: number; soldOut: boolean }
 interface DedupGroup   { id: string; name: string; options: DedupOption[]; products: string[] }
 
-const F    = 'var(--sans)'
-const MONO = 'var(--mono)'
-const GREEN = '#16a34a'
+const F = 'var(--sans)'
 type PosTab = 'productos' | 'categorias' | 'modificadores'
 
 const clp = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-CL')
@@ -46,42 +44,6 @@ function TabBtn({ active, onClick, label }: { active: boolean; onClick: () => vo
   )
 }
 
-// ── CodeInput ──────────────────────────────────────────────────────
-function CodeInput({ initial, endpoint, onValue }: { initial: string | null; endpoint: string; onValue?: (v: string) => void }) {
-  const [value, setValue] = useState(initial ?? '')
-  const [saved, setSaved] = useState<string>(initial ?? '')
-  const [busy,  setBusy]  = useState(false)
-  const [ok,    setOk]    = useState(false)
-
-  const save = useCallback(async () => {
-    const v = value.trim()
-    if (v === saved) return
-    setBusy(true); setOk(false)
-    try {
-      const res = await fetch(endpoint, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toteatProductId: v || null }) })
-      if (!res.ok) { setBusy(false); return }
-      setSaved(v); setOk(true); setTimeout(() => setOk(false), 1500)
-    } catch { /* noop */ }
-    setBusy(false)
-  }, [value, saved, endpoint])
-
-  const dirty = value.trim() !== saved
-  return (
-    <div style={{ position: 'relative', flexShrink: 0, width: 130 }}>
-      <input
-        value={value}
-        onChange={e => { setValue(e.target.value); onValue?.(e.target.value) }}
-        onBlur={save}
-        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-        placeholder="Código POS"
-        style={{ width: '100%', boxSizing: 'border-box', padding: '7px 24px 7px 9px', borderRadius: 8, border: `1px solid ${dirty ? 'var(--amber)' : saved ? GREEN + '66' : 'var(--line)'}`, background: 'var(--sunk)', color: 'var(--ink)', fontFamily: MONO, fontSize: '0.78rem', outline: 'none' }}
-      />
-      <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', fontSize: '0.7rem' }}>
-        {busy ? '…' : ok ? <span style={{ color: GREEN }}>✓</span> : saved ? <span style={{ color: GREEN + '99' }}>✓</span> : null}
-      </span>
-    </div>
-  )
-}
 
 // ── ProductForm (create / edit) ────────────────────────────────────
 function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
@@ -172,97 +134,65 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
 }
 
 // ── ProductRow ─────────────────────────────────────────────────────
-function ProductRow({ p, toteatMap, onToggleHidden, onEdit, onDelete }: {
+function ProductRow({ p, onToggleHidden, onEdit, onDelete }: {
   p: Product
-  toteatMap: Record<string, { name: string; price: number }> | null
   onToggleHidden: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
-  const [code, setCode] = useState(p.toteat_code ?? '')
-  const norm = code.trim().toUpperCase()
-  const tInfo = toteatMap && norm ? toteatMap[norm] : undefined
-  const showToteat = !!toteatMap && norm.length > 0
-  const priceMismatch = tInfo != null && Math.round(tInfo.price) !== Math.round(p.price)
   const isHidden = !!p.hidden
-
   return (
-    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5, opacity: isHidden ? 0.65 : 1 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Thumb */}
-        <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
-          {p.image_url
-            ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          }
-        </div>
-        {/* Name */}
-        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-
-        {/* Ocultar / Mostrar */}
-        <button onClick={onToggleHidden}
-          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isHidden ? '#b45309' : 'var(--line)'}`, background: isHidden ? 'rgba(245,158,11,0.14)' : 'transparent', color: isHidden ? '#b45309' : 'var(--ink-2)' }}>
-          {isHidden ? 'Mostrar' : 'Ocultar'}
-        </button>
-
-        {/* Code */}
-        <CodeInput initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} onValue={setCode} />
-
-        {/* Edit */}
-        <button onClick={onEdit} title="Editar"
-          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-
-        {/* Delete */}
-        <button onClick={onDelete} title="Eliminar"
-          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-        </button>
+    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: isHidden ? 0.65 : 1 }}>
+      {/* Thumb */}
+      <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        }
       </div>
 
-      {/* Price row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontFamily: F, fontSize: '0.72rem', lineHeight: 1.3 }}>
-        <span style={{ color: 'var(--ink-2)' }}>Precio: <strong style={{ color: 'var(--ink)' }}>{clp(p.price)}</strong></span>
-        {showToteat && tInfo != null && (
-          <span style={{ color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong style={{ color: priceMismatch ? '#f97316' : 'var(--ink)' }}>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠ distinto' : ''}</span>
-        )}
-        {showToteat && tInfo == null && <span style={{ color: '#f97316' }}>⚠ Código no existe en Toteat</span>}
-        {showToteat && tInfo?.name && <span style={{ color: GREEN }}>Toteat: <strong style={{ color: 'var(--ink)' }}>{tInfo.name}</strong></span>}
+      {/* Name + price */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+        <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>{clp(p.price)}</div>
       </div>
+
+      {/* Ocultar / Mostrar */}
+      <button onClick={onToggleHidden}
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isHidden ? '#b45309' : 'var(--line)'}`, background: isHidden ? 'rgba(245,158,11,0.14)' : 'transparent', color: isHidden ? '#b45309' : 'var(--ink-2)' }}>
+        {isHidden ? 'Mostrar' : 'Ocultar'}
+      </button>
+
+      {/* Edit */}
+      <button onClick={onEdit} title="Editar"
+        style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+
+      {/* Delete */}
+      <button onClick={onDelete} title="Eliminar"
+        style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
     </div>
   )
 }
 
 // ── ModifierRow ────────────────────────────────────────────────────
-function ModifierRow({ opt, toteatMap, onToggleSoldOut }: {
+function ModifierRow({ opt, onToggleSoldOut }: {
   opt: DedupOption
-  toteatMap: Record<string, { name: string; price: number }> | null
   onToggleSoldOut: () => void
 }) {
-  const [code, setCode] = useState(opt.code ?? '')
-  const norm = code.trim().toUpperCase()
-  const tInfo = toteatMap && norm ? toteatMap[norm] : undefined
-  const showToteat = !!toteatMap && norm.length > 0
-  const priceMismatch = tInfo != null && opt.price != null && Math.round(tInfo.price) !== Math.round(opt.price)
-
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: opt.soldOut ? 'var(--ink-3)' : 'var(--ink)', textDecoration: opt.soldOut ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.name}</span>
-        <button onClick={onToggleSoldOut}
-          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${opt.soldOut ? '#ef4444' : 'var(--line)'}`, background: opt.soldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: opt.soldOut ? '#ef4444' : 'var(--ink-2)' }}>
-          {opt.soldOut ? 'Agotado' : 'Agotar'}
-        </button>
-        <CodeInput initial={opt.code} endpoint={`/api/admin/modifiers/${opt.id}/map-toteat`} onValue={setCode} />
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: opt.soldOut ? 'var(--ink-3)' : 'var(--ink)', textDecoration: opt.soldOut ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.name}</div>
+        {opt.price > 0 && <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>+{clp(opt.price)}</div>}
       </div>
-      {opt.price > 0 && (
-        <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)' }}>
-          Precio extra: <strong style={{ color: 'var(--ink)' }}>{clp(opt.price)}</strong>
-          {showToteat && tInfo != null && <span style={{ marginLeft: 12, color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠' : ''}</span>}
-        </div>
-      )}
-      {showToteat && tInfo == null && <span style={{ fontFamily: F, fontSize: '0.72rem', color: '#f97316' }}>⚠ Código no existe en Toteat</span>}
+      <button onClick={onToggleSoldOut}
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${opt.soldOut ? '#ef4444' : 'var(--line)'}`, background: opt.soldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: opt.soldOut ? '#ef4444' : 'var(--ink-2)' }}>
+        {opt.soldOut ? 'Agotado' : 'Agotar'}
+      </button>
     </div>
   )
 }
@@ -327,7 +257,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
   const [tab,        setTab]        = useState<PosTab>('productos')
   const [search,     setSearch]     = useState('')
   const [only,       setOnly]       = useState<'all' | 'hidden' | 'nocode'>('all')
-  const [toteatMap,  setToteatMap]  = useState<Record<string, { name: string; price: number }> | null>(null)
 
   // Product form state
   const [addingProduct,  setAddingProduct]  = useState(false)
@@ -362,14 +291,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
   useEffect(() => { loadCategories() }, [loadCategories])
 
 
-  // Load Toteat catalog
-  useEffect(() => {
-    if (!restaurantId) return
-    fetch(`/api/panel/ecommerce/toteat-catalog?restaurantId=${restaurantId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.map && Object.keys(d.map).length) setToteatMap(d.map); else setToteatMap(null) })
-      .catch(() => setToteatMap(null))
-  }, [restaurantId])
 
   const toggleHidden = useCallback(async (id: string, nextHidden: boolean) => {
     setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: nextHidden } : p) } : d)
@@ -489,18 +410,14 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
   const modTotal     = modOptions.length
   const q            = search.trim().toLowerCase()
   const hiddenCount  = products.filter(p => p.hidden).length
-  const prodWithCode = products.filter(p => p.toteat_code).length
-  const modWithCode  = modOptions.filter(o => o.code).length
-  const noCodeCount  = tab === 'productos' ? prodTotal - prodWithCode : modTotal - modWithCode
 
   let filteredProducts = q ? products.filter(p => p.name.toLowerCase().includes(q) || (p.toteat_code ?? '').toLowerCase().includes(q)) : products
   if (only === 'hidden')  filteredProducts = filteredProducts.filter(p => p.hidden)
   else if (only === 'nocode') filteredProducts = filteredProducts.filter(p => !p.toteat_code)
 
-  let filteredGroups = q
-    ? dedupGroups.map(g => ({ ...g, options: g.options.filter(o => o.name.toLowerCase().includes(q) || (o.code ?? '').toLowerCase().includes(q)) })).filter(g => g.options.length)
+  const filteredGroups = q
+    ? dedupGroups.map(g => ({ ...g, options: g.options.filter(o => o.name.toLowerCase().includes(q)) })).filter(g => g.options.length)
     : dedupGroups
-  if (only === 'nocode') filteredGroups = filteredGroups.map(g => ({ ...g, options: g.options.filter(o => !o.code) })).filter(g => g.options.length)
 
   const editingProd = editingProdId ? products.find(p => p.id === editingProdId) : null
 
@@ -563,8 +480,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
 
                     {/* Filter chips */}
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <FilterChip label="Todos"    active={only === 'all'}    onClick={() => setOnly('all')} />
-                      <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ''}`} active={only === 'nocode'} onClick={() => setOnly(only === 'nocode' ? 'all' : 'nocode')} tone="warn" />
+                      <FilterChip label="Todos"  active={only === 'all'}    onClick={() => setOnly('all')} />
                       <FilterChip label={`Ocultos${hiddenCount ? ` (${hiddenCount})` : ''}`} active={only === 'hidden'} onClick={() => setOnly(only === 'hidden' ? 'all' : 'hidden')} tone="hidden" />
                     </div>
 
@@ -582,7 +498,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                                   initial={{ id: p.id, name: p.name, price: p.price, description: p.description, category_id: p.category_id, hidden: p.hidden }}
                                   onSave={handleProductSaved} onCancel={() => setEditingProdId(null)} />
                               ) : (
-                                <ProductRow key={p.id} p={p} toteatMap={toteatMap}
+                                <ProductRow key={p.id} p={p}
                                   onToggleHidden={() => toggleHidden(p.id, !p.hidden)}
                                   onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
                                   onDelete={() => handleDeleteProduct(p.id)} />
@@ -647,14 +563,10 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar modificador o código…" style={inputSt} />
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <FilterChip label="Todos"    active={only === 'all'}    onClick={() => setOnly('all')} />
-                    <FilterChip label={`Sin código${noCodeCount ? ` (${noCodeCount})` : ''}`} active={only === 'nocode'} onClick={() => setOnly(only === 'nocode' ? 'all' : 'nocode')} tone="warn" />
-                  </div>
 
                   {filteredGroups.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '32px 20px', border: '1px dashed var(--line)', borderRadius: 14, fontFamily: F, color: 'var(--ink-3)' }}>
-                      {only === 'nocode' ? 'Todos los modificadores tienen código. 🎉' : 'No hay modificadores que coincidan.'}
+                      No hay modificadores que coincidan.
                     </div>
                   )}
 
@@ -670,7 +582,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                       )}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {g.options.map(o => (
-                          <ModifierRow key={o.id} opt={o} toteatMap={toteatMap}
+                          <ModifierRow key={o.id} opt={o}
                             onToggleSoldOut={() => toggleModSoldOut(o.id, !o.soldOut)} />
                         ))}
                       </div>
