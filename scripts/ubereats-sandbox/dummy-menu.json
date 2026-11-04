@@ -1,0 +1,40 @@
+{
+  "menus": [
+    {
+      "id": "menu_main",
+      "title": { "translations": { "en_us": "Menu", "es_cl": "Menú" } },
+      "service_availability": [
+        { "day_of_week": "monday",    "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "tuesday",   "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "wednesday", "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "thursday",  "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "friday",    "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "saturday",  "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] },
+        { "day_of_week": "sunday",    "time_periods": [{ "start_time": "00:00", "end_time": "23:59" }] }
+      ],
+      "category_ids": ["cat_main"]
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat_main",
+      "title": { "translations": { "en_us": "Items", "es_cl": "Productos" } },
+      "entities": [{ "id": "item_test", "type": "ITEM" }]
+    }
+  ],
+  "items": [
+    {
+      "id": "item_test",
+      "external_data": "TEST-ITEM-1",
+      "title": { "translations": { "en_us": "Test Roll", "es_cl": "Roll de prueba" } },
+      "description": { "translations": { "en_us": "Sandbox test item", "es_cl": "Ítem de prueba (sandbox)" } },
+      "price_info": { "price": 9900 },
+      "tax_info": { "tax_rate": 19.0 },
+      "quantity_info": {},
+      "suspension_info": {}
+    }
+  ],
+  "modifier_groups": [],
+  "display_options": {},
+  "__notas__": "price 9900 = $9.900 CLP si Uber usa pesos como unidad menor. Si los precios salen x100 en la app, Uber espera la unidad en centavos → multiplicar por 100 (990000). Confirmar con el primer pedido de prueba. Borrar este campo __notas__ si la API lo rechaza."
+}
