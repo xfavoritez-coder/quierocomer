@@ -207,8 +207,8 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 10,
         flex: 1, minWidth: 0,
       }}>
-        {/* Fila superior: nombre (izq) + monto y chips (der) */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        {/* Fila 1: nombre (izq) + monto (der) — misma altura */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{
             minWidth: 0, flex: 1,
             fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
@@ -218,18 +218,18 @@ function OrderCard({
             {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
             {order.customerName || 'Cliente'}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
-              {clp(order.totalAmount)}
-            </span>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
-              <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
-            </div>
-          </div>
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)', flexShrink: 0 }}>
+            {clp(order.totalAmount)}
+          </span>
         </div>
 
-        {/* Meta: hora · N ítems */}
+        {/* Fila 2: chips alineados a la derecha */}
+        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
+          <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
+        </div>
+
+        {/* Fila 3: hora · N ítems */}
         <div style={{ fontSize: 13, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
