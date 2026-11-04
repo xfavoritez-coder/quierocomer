@@ -255,6 +255,7 @@ export default function PosHomePage() {
   // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
   const [activeOrders, setActiveOrders] = useState<any[]>([])
   const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
+  const [readyAlertMin, setReadyAlertMin] = useState<number | null>(null)
   const refreshOrdersRef = useRef<() => void>(() => {})
   useEffect(() => {
     if (!restaurantId) return
@@ -268,6 +269,7 @@ export default function PosHomePage() {
           setOrderCounts({ retiro, delivery })
           setActiveOrders(d.orders)
           if (typeof d.prepAlertMinutes === 'number') setPrepAlertMin(d.prepAlertMinutes)
+          if (typeof d.readyAlertMinutes === 'number') setReadyAlertMin(d.readyAlertMinutes)
         }
       } catch { /* noop */ }
     }
@@ -401,7 +403,7 @@ export default function PosHomePage() {
     <div className="pos-shell">
       {/* Alerta global de retiro atascado en preparación (corre en todas las pestañas). */}
       {restaurantId && (
-        <PrepAlertWatcher restaurantId={restaurantId} orders={activeOrders} prepAlertMinutes={prepAlertMin} onChanged={() => refreshOrdersRef.current()} />
+        <PrepAlertWatcher restaurantId={restaurantId} orders={activeOrders} prepAlertMinutes={prepAlertMin} readyAlertMinutes={readyAlertMin} onChanged={() => refreshOrdersRef.current()} />
       )}
       {/* ── Header — siempre visible con tabs ── */}
       <PosHeader

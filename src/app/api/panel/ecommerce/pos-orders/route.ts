@@ -129,8 +129,9 @@ export async function GET(req: NextRequest) {
   // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
   const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, ecommerceConfig: true, centroPedidosConfig: true } });
   // Umbral (min) de la alerta de retiro atascado en preparación. 0 = off; sin def = 60.
-  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number };
+  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number; readyAlertMinutes?: number };
   const prepAlertMinutes = typeof cpCfg.prepAlertMinutes === "number" ? cpCfg.prepAlertMinutes : 60;
+  const readyAlertMinutes = typeof cpCfg.readyAlertMinutes === "number" ? cpCfg.readyAlertMinutes : 30;
   // ¿El local usa Delifast? Si no, el POS no consulta el seguimiento al entregar.
   const delifastEnabled = integrationStatus(parseEcommerceConfig(rLoc?.ecommerceConfig)).delifast;
   const dCfg = parseDeliveryConfig(rLoc?.ecommerceDeliveryConfig);
@@ -156,7 +157,7 @@ export async function GET(req: NextRequest) {
     : orders;
   const nums = await dailyOrderNumbers(restaurantId, visible.map((o) => ({ id: o.id, createdAt: o.createdAt })));
   const ordersOut = visible.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
-  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes });
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes, readyAlertMinutes });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

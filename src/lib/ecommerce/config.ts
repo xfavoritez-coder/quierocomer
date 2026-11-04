@@ -137,6 +137,9 @@ export interface CentroPedidosConfig {
   /** Minutos que un pedido de RETIRO puede estar "En preparación" antes de que el
    *  POS avise con un modal. 0 = desactivado. Sin definir = 60. */
   prepAlertMinutes?: number;
+  /** Minutos que un pedido de RETIRO puede estar "Listo" sin ser retirado antes de
+   *  que el POS avise (sugiere llamar al cliente). 0 = desactivado. Sin definir = 30. */
+  readyAlertMinutes?: number;
 }
 
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {

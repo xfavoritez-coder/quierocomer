@@ -10,8 +10,10 @@ export interface PrepAlertOrder {
   saleType?: string
   isDelivery?: boolean
   customerName?: string | null
+  customerPhone?: string | null
   orderReference?: string | null
   dailyNumber?: number | null
+  opsReadyForDeliveryAt?: string | null
 }
 
 // ¿Es un pedido de retiro? (ni delivery ni salón).

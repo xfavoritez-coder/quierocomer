@@ -50,6 +50,9 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.prepAlertMinutes === "number" && Number.isFinite(incoming.prepAlertMinutes)) {
     merged.prepAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.prepAlertMinutes)));
   }
+  if (typeof incoming.readyAlertMinutes === "number" && Number.isFinite(incoming.readyAlertMinutes)) {
+    merged.readyAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.readyAlertMinutes)));
+  }
 
   const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };
   // "Mostrar descripción en Tomar pedidos" vive en ecommerceStoreConfig (lo lee el tomador).

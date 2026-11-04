@@ -19,6 +19,29 @@ function PosToggle({ checked, disabled, onChange }: { checked: boolean; disabled
   )
 }
 
+function MinutesRow({ title, desc, value, disabled, onInput, onCommit }: { title: string; desc: string; value: string; disabled?: boolean; onInput: (v: string) => void; onCommit: () => void }) {
+  const active = (parseInt(value, 10) || 0) > 0
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${active ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>{title}</div>
+        <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 3 }}>{desc}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <input
+          type="number" inputMode="numeric" min={0} max={600}
+          value={value} disabled={disabled}
+          onChange={(e) => onInput(e.target.value.replace(/\D/g, ''))}
+          onBlur={onCommit}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          style={{ width: 64, textAlign: 'right', padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 15, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--ink)', outline: 'none' }}
+        />
+        <span style={{ fontSize: '0.8rem', color: 'var(--ink-2)', fontWeight: 600 }}>min</span>
+      </div>
+    </div>
+  )
+}
+
 function ToggleRow({ title, desc, checked, disabled, onChange }: { title: string; desc: string; checked: boolean; disabled?: boolean; onChange: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${checked ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
@@ -37,6 +60,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
   const [showDesc,  setShowDesc]  = useState(false)
   const [savingPed, setSavingPed] = useState(false)
   const [prepMin,   setPrepMin]   = useState('60')
+  const [readyMin,  setReadyMin]  = useState('30')
 
   const loadPedidos = useCallback(async () => {
     if (!restaurantId) return
@@ -46,6 +70,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
       if (r.ok && d.config) {
         setPedidos(d.config)
         setPrepMin(String(typeof d.config.prepAlertMinutes === 'number' ? d.config.prepAlertMinutes : 60))
+        setReadyMin(String(typeof d.config.readyAlertMinutes === 'number' ? d.config.readyAlertMinutes : 30))
         if (typeof d.posModeEffective === 'boolean') setPosMode(d.posModeEffective)
         if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions)
       }
@@ -53,16 +78,16 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
   }, [restaurantId])
   useEffect(() => { loadPedidos() }, [loadPedidos])
 
-  const savePrepMin = async () => {
+  const saveMinutes = async (field: 'prepAlertMinutes' | 'readyAlertMinutes', raw: string, setRaw: (s: string) => void) => {
     if (!restaurantId) return
-    const n = Math.min(600, Math.max(0, parseInt(prepMin, 10) || 0))
-    setPrepMin(String(n))
-    setPedidos(p => ({ ...p, prepAlertMinutes: n }))
+    const n = Math.min(600, Math.max(0, parseInt(raw, 10) || 0))
+    setRaw(String(n))
+    setPedidos(p => ({ ...p, [field]: n }))
     setSavingPed(true)
     try {
       await fetch('/api/panel/ecommerce/pos-orders/settings', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId, config: { prepAlertMinutes: n } }),
+        body: JSON.stringify({ restaurantId, config: { [field]: n } }),
       })
     } catch { /* noop */ }
     setSavingPed(false)
@@ -118,25 +143,19 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
           })}
           <ToggleRow title="Mostrar descripción de productos" desc="En «Tomar pedidos» muestra la descripción debajo del nombre de cada producto." checked={showDesc} disabled={savingPed} onChange={() => updateShowDesc(!showDesc)} />
 
-          {/* Alerta de retiro atascado en preparación */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${(parseInt(prepMin, 10) || 0) > 0 ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>Alerta de retiro en preparación</div>
-              <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 3 }}>Avisa con un modal si un pedido de retiro lleva demasiado tiempo «En preparación». 0 = desactivado.</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <input
-                type="number" inputMode="numeric" min={0} max={600}
-                value={prepMin}
-                disabled={savingPed}
-                onChange={(e) => setPrepMin(e.target.value.replace(/\D/g, ''))}
-                onBlur={savePrepMin}
-                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-                style={{ width: 64, textAlign: 'right', padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 15, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--ink)', outline: 'none' }}
-              />
-              <span style={{ fontSize: '0.8rem', color: 'var(--ink-2)', fontWeight: 600 }}>min</span>
-            </div>
-          </div>
+          {/* Alertas de retiro */}
+          <MinutesRow
+            title="Alerta de retiro en preparación"
+            desc="Avisa con un modal si un pedido de retiro lleva demasiado tiempo «En preparación». 0 = desactivado."
+            value={prepMin} disabled={savingPed}
+            onInput={setPrepMin} onCommit={() => saveMinutes('prepAlertMinutes', prepMin, setPrepMin)}
+          />
+          <MinutesRow
+            title="Alerta de retiro sin retirar"
+            desc="Avisa si un retiro lleva demasiado tiempo «Listo» sin que el cliente lo retire (sugiere llamarlo). 0 = desactivado."
+            value={readyMin} disabled={savingPed}
+            onInput={setReadyMin} onCommit={() => saveMinutes('readyAlertMinutes', readyMin, setReadyMin)}
+          />
 
         </div>
       </div>
