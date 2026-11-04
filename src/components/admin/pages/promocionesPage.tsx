@@ -1037,7 +1037,7 @@ export default function AdminPromociones() {
                     <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "1.1rem", lineHeight: 1, flexShrink: 0 }}>{p.featured ? "⭐" : "☆"}</button>
                   )}
                   {(() => {
-                    const thumb = (p.promoType === "graphic" && p.imageUrl) ? (p.thumbUrl || p.imageUrl) : p.dishes?.[0]?.photos?.[0] || null;
+                    const thumb = p.dishes?.[0]?.photos?.[0] || (p.imageUrl ? (p.thumbUrl || p.imageUrl) : null);
                     return thumb ? (
                       <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
                     ) : (
