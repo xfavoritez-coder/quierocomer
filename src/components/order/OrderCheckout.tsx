@@ -331,24 +331,24 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
         {/* Form */}
         <div style={{ flex: 1, overflowY: "auto", padding: "18px 18px 0" }}>
 
-          {/* Order type selector */}
+          {/* Order type selector — pill style compact */}
           {delivery === "BOTH" && (
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
+            <div style={{ marginBottom: 18 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
                 ¿Cómo quieres recibir tu pedido?
               </p>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 6 }}>
                 {showPickup && (
                   <button
                     onClick={() => setOrderType("PICKUP")}
                     style={{
-                      flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
+                      flex: 1, padding: "7px 10px", borderRadius: 8, cursor: "pointer",
                       border: `1.5px solid ${orderType === "PICKUP" ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: orderType === "PICKUP" ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                      background: orderType === "PICKUP" ? `color-mix(in srgb, ${ACCENT} 10%, var(--carta-bg, #fff))` : "var(--carta-surface, #fafafa)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     }}
                   >
-                    <Package size={18} color={orderType === "PICKUP" ? ACCENT : "var(--carta-text2, #999)"} />
+                    <Package size={14} color={orderType === "PICKUP" ? ACCENT : "var(--carta-text2, #999)"} />
                     <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "PICKUP" ? ACCENT : "var(--carta-text2, #777)" }}>Retiro</span>
                   </button>
                 )}
@@ -356,13 +356,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                   <button
                     onClick={() => setOrderType("DELIVERY")}
                     style={{
-                      flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
+                      flex: 1, padding: "7px 10px", borderRadius: 8, cursor: "pointer",
                       border: `1.5px solid ${orderType === "DELIVERY" ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: orderType === "DELIVERY" ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                      background: orderType === "DELIVERY" ? `color-mix(in srgb, ${ACCENT} 10%, var(--carta-bg, #fff))` : "var(--carta-surface, #fafafa)",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     }}
                   >
-                    <Truck size={18} color={orderType === "DELIVERY" ? ACCENT : "var(--carta-text2, #999)"} />
+                    <Truck size={14} color={orderType === "DELIVERY" ? ACCENT : "var(--carta-text2, #999)"} />
                     <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: orderType === "DELIVERY" ? ACCENT : "var(--carta-text2, #777)" }}>Delivery</span>
                   </button>
                 )}
@@ -372,7 +372,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
           {/* Pickup address info */}
           {orderType === "PICKUP" && address && (
-            <div style={{ background: "var(--carta-surface, #f5f5f5)", borderRadius: 10, padding: "10px 12px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <div style={{ background: "var(--carta-surface, #f5f5f5)", borderRadius: 10, padding: "10px 12px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 8 }}>
               <MapPin size={15} color={ACCENT} style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #777)", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: ".04em" }}>Retira en</p>
@@ -383,7 +383,7 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
 
           {/* Wait time */}
           {waitTime && (
-            <div style={{ background: "rgba(244,166,35,0.07)", borderRadius: 10, padding: "10px 12px", marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ background: "rgba(244,166,35,0.07)", borderRadius: 10, padding: "10px 12px", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
               <Clock size={15} color={ACCENT} />
               <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--carta-text, #111)", margin: 0 }}>
                 Tiempo estimado: <strong>{waitTime}</strong>
@@ -391,58 +391,92 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             </div>
           )}
 
-          {/* Your data */}
-          <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 10px" }}>
+          {/* Your data — with labels */}
+          <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 12px" }}>
             Tus datos
           </p>
 
+          {/* Nombre */}
           <div style={{ marginBottom: 12 }}>
+            <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #888)", display: "block", marginBottom: 4 }}>Nombre</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
               className="oc-input"
               style={inputStyle}
-              placeholder="Tu nombre *"
+              placeholder="Tu nombre completo"
               autoComplete="name"
             />
           </div>
 
-          {/* Phone with country selector */}
-          <div style={{ marginBottom: 12, display: "flex" }}>
-            <div className="oc-phone-selector" style={{ flexShrink: 0 }}>
-              <PhoneCountrySelector
-                country={dialCountry}
-                onChange={(c) => { setDialCountry(c); setClientPhone(""); }}
+          {/* Teléfono */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #888)", display: "block", marginBottom: 4 }}>Teléfono</label>
+            <div style={{ display: "flex" }}>
+              <div className="oc-phone-selector" style={{ flexShrink: 0 }}>
+                <PhoneCountrySelector
+                  country={dialCountry}
+                  onChange={(c) => { setDialCountry(c); setClientPhone(""); }}
+                />
+              </div>
+              <input
+                value={clientPhone}
+                onChange={e => setClientPhone(formatPhone(e.target.value, dialCountry))}
+                className="oc-phone-input"
+                placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder}
+                type="tel"
+                autoComplete="tel"
               />
             </div>
-            <input
-              value={clientPhone}
-              onChange={e => setClientPhone(formatPhone(e.target.value, dialCountry))}
-              className="oc-phone-input"
-              placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder + " *"}
-              type="tel"
-              autoComplete="tel"
-            />
           </div>
+
+          {/* Dirección (delivery) — justo después del teléfono */}
+          {orderType === "DELIVERY" && (
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #888)", display: "block", marginBottom: 4 }}>Dirección</label>
+              <input
+                value={clientAddress}
+                onChange={e => setClientAddress(e.target.value)}
+                className="oc-input"
+                style={inputStyle}
+                placeholder="Calle, número, depto/casa"
+                autoComplete="street-address"
+              />
+              <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--carta-text3, #888)", margin: "5px 2px 0", lineHeight: 1.4 }}>
+                Incluye referencias si ayudan (ej: "frente al parque").
+              </p>
+            </div>
+          )}
 
           {/* Email (panel mode only) */}
           {isPanelMode && (
             <div style={{ marginBottom: 12 }}>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #888)", display: "block", marginBottom: 4 }}>Email</label>
               <input
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="oc-input"
                 style={inputStyle}
-                placeholder="Tu email para recibir notificaciones *"
+                placeholder="Para recibir notificaciones"
                 type="email"
                 autoComplete="email"
               />
             </div>
           )}
 
+          {/* Min amount warning */}
+          {belowMin && minAmount != null && (
+            <div style={{ display: "flex", gap: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+              <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
+              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>
+                El monto mínimo para delivery es {formatCLP(minAmount)}. Tu pedido va en {formatCLP(total)}.
+              </p>
+            </div>
+          )}
+
           {/* Payment method */}
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
+          <div style={{ marginBottom: 12, marginTop: 4 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--carta-text2, #777)", textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px" }}>
               Forma de pago
             </p>
             <div style={{ display: "flex", gap: 8 }}>
@@ -457,13 +491,13 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
                     key={value}
                     onClick={() => setPaymentMethod(value)}
                     style={{
-                      flex: 1, padding: "11px 6px", borderRadius: 10, cursor: "pointer",
+                      flex: 1, padding: "9px 6px", borderRadius: 10, cursor: "pointer",
                       border: `1.5px solid ${active ? ACCENT : "var(--carta-border, #e5e5e5)"}`,
-                      background: active ? "var(--carta-bg, #fff)" : "var(--carta-surface, #fafafa)",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                      background: active ? `color-mix(in srgb, ${ACCENT} 10%, var(--carta-bg, #fff))` : "var(--carta-surface, #fafafa)",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
                     }}
                   >
-                    <Icon size={17} color={active ? "var(--carta-accent, #F4A623)" : "var(--carta-text2, #999)"} />
+                    <Icon size={16} color={active ? ACCENT : "var(--carta-text2, #999)"} />
                     <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: active ? 700 : 500, color: active ? ACCENT : "var(--carta-text2, #999)" }}>{label}</span>
                   </button>
                 );
@@ -471,42 +505,15 @@ export default function OrderCheckout({ restaurantName, restaurantSlug, ordering
             </div>
           </div>
 
-          {/* Address for delivery — texto plano. Las sugerencias (Nominatim/OSM, sin key de
-              Google) no daban direcciones exactas en Chile, así que el cliente la escribe completa. */}
-          {orderType === "DELIVERY" && (
-            <div style={{ marginBottom: 12 }}>
-              <input
-                value={clientAddress}
-                onChange={e => setClientAddress(e.target.value)}
-                className="oc-input"
-                style={inputStyle}
-                placeholder="Dirección exacta (calle, número, depto/casa) *"
-                autoComplete="off"
-              />
-              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--carta-text3, #888)", margin: "6px 2px 0", lineHeight: 1.4 }}>
-                Escribe tu dirección completa: calle, número y depto/casa (y referencias si ayudan).
-              </p>
-            </div>
-          )}
-
-          {/* Min amount warning */}
-          {belowMin && minAmount != null && (
-            <div style={{ display: "flex", gap: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
-              <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>
-                El monto mínimo para delivery es {formatCLP(minAmount)}. Tu pedido va en {formatCLP(total)}.
-              </p>
-            </div>
-          )}
-
           {/* Notes */}
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 18, marginTop: 4 }}>
+            <label style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-text2, #888)", display: "block", marginBottom: 4 }}>Notas del pedido <span style={{ fontWeight: 400 }}>(opcional)</span></label>
             <textarea
               value={orderNotes}
               onChange={e => setOrderNotes(e.target.value)}
               className="oc-input"
-              style={{ ...inputStyle, resize: "none", minHeight: 64 }}
-              placeholder="Notas del pedido (opcional)"
+              style={{ ...inputStyle, resize: "none", minHeight: 60 }}
+              placeholder="Alergias, preferencias, instrucciones especiales…"
             />
           </div>
 
