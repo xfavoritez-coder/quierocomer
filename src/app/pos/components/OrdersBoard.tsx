@@ -264,7 +264,7 @@ function OrderCard({
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
             {STAGE_LABEL[order.opsStage] ?? order.opsStage}
           </span>
-          <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13 }} />
+          <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
         </span>
         {/* Pagado: avanzar es la acción principal. Impago: el avance vive en la
             franja de cobro de abajo (interceptado). */}
@@ -454,7 +454,7 @@ function OrderDetailPanel({
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} ·
-              <OrderTimer order={order} isRetiro={isRetiro} />
+              <OrderTimer order={order} isRetiro={isRetiro} style={{ fontWeight: 800, color: 'var(--ink-2)' }} />
             </span>
             {paid && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
@@ -627,6 +627,18 @@ function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
   )
 }
 
+// Ícono del botón de orden: barras + flecha que apunta según la dirección.
+function SortIcon({ dir }: { dir: 'asc' | 'desc' }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h8M4 12h5M4 17h3" />
+      {dir === 'desc'
+        ? <path d="M17 7v10M14.5 14.5 17 17l2.5-2.5" />
+        : <path d="M17 17V7M14.5 9.5 17 7l2.5 2.5" />}
+    </svg>
+  )
+}
+
 // ── Main component ──────────────────────────────────────────────────
 
 export default function OrdersBoard({ restaurantId, type }: { restaurantId: string; type: OrderType }) {
@@ -652,6 +664,22 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
     setViewCols(prev => {
       const next = (prev === 1 ? 2 : prev === 2 ? 3 : 1) as 1 | 2 | 3
       try { localStorage.setItem('pos:boardCols', String(next)) } catch { }
+      return next
+    })
+  }, [])
+  // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
+  // primero. También se recuerda por dispositivo.
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('pos:boardSort')
+      if (v === 'asc' || v === 'desc') setSortDir(v)
+    } catch { }
+  }, [])
+  const toggleSort = useCallback(() => {
+    setSortDir(prev => {
+      const next = prev === 'desc' ? 'asc' : 'desc'
+      try { localStorage.setItem('pos:boardSort', next) } catch { }
       return next
     })
   }, [])
@@ -699,13 +727,18 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [fetchOrders])
 
   const list = useMemo(() => {
-    return orders.filter((o) => {
+    const filtered = orders.filter((o) => {
       if (type === 'todos') return true
       const deliv = o.isDelivery || o.saleType === 'delivery'
       if (type === 'delivery') return deliv
       return !deliv && o.saleType !== 'dine-in' && o.saleType !== 'dinein'
     })
-  }, [orders, type])
+    return filtered.sort((a, b) => {
+      const ta = new Date(a.createdAt).getTime()
+      const tb = new Date(b.createdAt).getTime()
+      return sortDir === 'asc' ? ta - tb : tb - ta
+    })
+  }, [orders, type, sortDir])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
@@ -735,6 +768,14 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
           </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={toggleSort}
+              title={`Orden: ${sortDir === 'desc' ? 'más nuevos primero' : 'más antiguos primero'} · toca para invertir`}
+              aria-label="Cambiar orden"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
+            >
+              <SortIcon dir={sortDir} />
+            </button>
             <button
               onClick={cycleView}
               title={`Vista: ${viewCols === 1 ? 'filas' : viewCols + ' columnas'} · toca para cambiar`}
