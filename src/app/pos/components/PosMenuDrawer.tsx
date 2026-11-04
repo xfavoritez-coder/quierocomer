@@ -47,7 +47,7 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
     {
       label: 'Reportes',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
-      href: '/pos/caja/historial',
+      href: '/pos/reportes',
     },
     {
       label: 'Configurar mesas',

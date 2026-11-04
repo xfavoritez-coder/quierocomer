@@ -1,11 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import PosHeader from '../components/PosHeader'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, printKitchenComanda, listPrinters, setupPrinter, getKitchenMode, setKitchenMode } from '@/lib/pos/bridge'
 import { buildPrintAgentInstaller } from '@/lib/ecommerce/printAgentScript'
+import { toast } from 'sonner'
+
+interface PedidosCfg {
+  autoDeliverPickup?: boolean
+  uberEnabled?: boolean
+  pedidosyaEnabled?: boolean
+  customerAbsorbsSurcharge?: boolean
+}
 
 export default function PosConfigPage() {
   const router = useRouter()
@@ -18,9 +26,44 @@ export default function PosConfigPage() {
   const [picking, setPicking] = useState(false)
   const [dlMsg, setDlMsg] = useState('')
   const [kitchen, setKitchen] = useState(false)
+  const [pedidos, setPedidos] = useState<PedidosCfg>({})
+  const [showDesc, setShowDesc] = useState(false)
+  const [savingPed, setSavingPed] = useState(false)
 
   useEffect(() => { autoDetect() }, [])
   useEffect(() => { setKitchen(getKitchenMode()) }, [])
+
+  const loadPedidos = useCallback(async () => {
+    if (!restaurantId) return
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
+      const d = await r.json()
+      if (r.ok && d.config) { setPedidos(d.config); if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions) }
+    } catch { /* noop */ }
+  }, [restaurantId])
+  useEffect(() => { loadPedidos() }, [loadPedidos])
+
+  const updatePedidos = async (patch: Partial<PedidosCfg>) => {
+    if (!restaurantId) return
+    setPedidos(p => ({ ...p, ...patch }))
+    setSavingPed(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: patch }) })
+      if (!r.ok) { toast.error('No se pudo guardar'); loadPedidos() }
+    } catch { toast.error('Error de conexión'); loadPedidos() }
+    setSavingPed(false)
+  }
+
+  const updateShowDesc = async (v: boolean) => {
+    if (!restaurantId) return
+    setShowDesc(v)
+    setSavingPed(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, posShowDescriptions: v }) })
+      if (!r.ok) { toast.error('No se pudo guardar'); setShowDesc(!v) }
+    } catch { toast.error('Error de conexión'); setShowDesc(!v) }
+    setSavingPed(false)
+  }
 
   const toggleKitchen = () => {
     const v = !kitchen
@@ -205,6 +248,56 @@ export default function PosConfigPage() {
             >
               <span style={{ position: 'absolute', top: 3, left: kitchen ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
             </button>
+          </div>
+        </div>
+
+        {/* ── Ajustes de pedidos ── */}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>Pedidos</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {([
+              { key: 'autoDeliverPickup' as const, title: 'Auto-entregar retiro', desc: 'Los pedidos de retiro pasan a «Entregado» al marcarlos «Listo», sin acción extra.' },
+              { key: 'uberEnabled' as const,        title: 'Solicitar Uber Direct', desc: 'Muestra el botón Uber en las tarjetas para pedir repartidor. Desactívalo si no usas Uber.' },
+              { key: 'pedidosyaEnabled' as const,   title: 'Solicitar PedidosYa',  desc: 'Muestra el botón PedidosYa en las tarjetas. Desactívalo si no usas PedidosYa.' },
+              { key: 'customerAbsorbsSurcharge' as const, title: 'Cliente paga cargo de servicio', desc: 'El cargo de la plataforma de delivery se suma al despacho que paga el cliente.' },
+            ] as { key: keyof PedidosCfg; title: string; desc: string }[]).map(({ key, title, desc }) => {
+              const checked = key === 'uberEnabled' || key === 'pedidosyaEnabled'
+                ? pedidos[key] !== false
+                : !!pedidos[key]
+              return (
+                <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${checked ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>{title}</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 3 }}>{desc}</div>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={checked}
+                    disabled={savingPed}
+                    onClick={() => updatePedidos({ [key]: !checked })}
+                    style={{ flexShrink: 0, width: 48, height: 28, borderRadius: 999, border: 'none', cursor: savingPed ? 'wait' : 'pointer', background: checked ? 'var(--amber)' : 'var(--line)', position: 'relative', transition: 'background .2s', opacity: savingPed ? 0.6 : 1 }}
+                  >
+                    <span style={{ position: 'absolute', top: 3, left: checked ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
+                  </button>
+                </div>
+              )
+            })}
+            {/* Mostrar descripciones */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${showDesc ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>Mostrar descripción de productos</div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 3 }}>En «Tomar pedidos» muestra la descripción debajo del nombre de cada producto.</div>
+              </div>
+              <button
+                role="switch"
+                aria-checked={showDesc}
+                disabled={savingPed}
+                onClick={() => updateShowDesc(!showDesc)}
+                style={{ flexShrink: 0, width: 48, height: 28, borderRadius: 999, border: 'none', cursor: savingPed ? 'wait' : 'pointer', background: showDesc ? 'var(--amber)' : 'var(--line)', position: 'relative', transition: 'background .2s', opacity: savingPed ? 0.6 : 1 }}
+              >
+                <span style={{ position: 'absolute', top: 3, left: showDesc ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
+              </button>
+            </div>
           </div>
         </div>
 
