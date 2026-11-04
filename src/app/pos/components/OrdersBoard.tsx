@@ -585,6 +585,29 @@ function OrderDetailPanel({
   )
 }
 
+// Ícono del botón de vista: refleja el modo actual (filas / 2 col / 3 col).
+function ViewIcon({ cols }: { cols: 1 | 2 | 3 }) {
+  if (cols === 1) {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3" y="5" width="18" height="4" rx="1" /><rect x="3" y="14" width="18" height="4" rx="1" />
+      </svg>
+    )
+  }
+  if (cols === 2) {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3" y="4" width="7.5" height="16" rx="1" /><rect x="13.5" y="4" width="7.5" height="16" rx="1" />
+      </svg>
+    )
+  }
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <rect x="3" y="4" width="4.5" height="16" rx="1" /><rect x="9.75" y="4" width="4.5" height="16" rx="1" /><rect x="16.5" y="4" width="4.5" height="16" rx="1" />
+    </svg>
+  )
+}
+
 // ── Main component ──────────────────────────────────────────────────
 
 export default function OrdersBoard({ restaurantId, type }: { restaurantId: string; type: OrderType }) {
@@ -596,6 +619,23 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
   const [stageBusy, setStageBusy] = useState<string | null>(null)
   const [blockedId, setBlockedId] = useState<string | null>(null)
+  // Vista del tablero: 1 = filas, 2/3 = columnas. Se recuerda POR DISPOSITIVO
+  // en localStorage. Arranca en 1 para no romper la hidratación y se carga el
+  // valor guardado tras montar.
+  const [viewCols, setViewCols] = useState<1 | 2 | 3>(1)
+  useEffect(() => {
+    try {
+      const v = parseInt(localStorage.getItem('pos:boardCols') || '', 10)
+      if (v === 1 || v === 2 || v === 3) setViewCols(v)
+    } catch { }
+  }, [])
+  const cycleView = useCallback(() => {
+    setViewCols(prev => {
+      const next = (prev === 1 ? 2 : prev === 2 ? 3 : 1) as 1 | 2 | 3
+      try { localStorage.setItem('pos:boardCols', String(next)) } catch { }
+      return next
+    })
+  }, [])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
   const cashSession = useOpenCashSession(restaurantId)
@@ -675,13 +715,23 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
             {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
           </div>
-          <button
-            onClick={() => navigate('/pos/tomar-pedido')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            {newOrderLabel}
-          </button>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={cycleView}
+              title={`Vista: ${viewCols === 1 ? 'filas' : viewCols + ' columnas'} · toca para cambiar`}
+              aria-label="Cambiar vista"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
+            >
+              <ViewIcon cols={viewCols} />
+            </button>
+            <button
+              onClick={() => navigate('/pos/tomar-pedido')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              {newOrderLabel}
+            </button>
+          </div>
         </div>
 
         {/* List */}
@@ -697,7 +747,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <p>Sin pedidos activos.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${viewCols}, minmax(0, 1fr))`, gap: 14, alignItems: 'start' }}>
             {list.map((o) => (
               <OrderCard
                 key={o.id}
