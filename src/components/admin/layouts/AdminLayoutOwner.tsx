@@ -298,11 +298,19 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
   const toggleSection = (key: string) => {
     setOpenSections(prev => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+        setTimeout(() => {
+          sectionRefs.current.get(key)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }
       return next;
     });
   };
@@ -375,7 +383,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
         const SectionIcon = section.icon;
         return (
-          <div key={section.key}>
+          <div key={section.key} ref={(el) => { if (el) sectionRefs.current.set(section.key, el); else sectionRefs.current.delete(section.key); }}>
             {/* Section header */}
             {isSingle ? (
               // Single-item: header IS the link, navigates directly
