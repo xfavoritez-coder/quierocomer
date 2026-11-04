@@ -172,13 +172,10 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
 }
 
 // ── ProductRow ─────────────────────────────────────────────────────
-function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onToggleBanner, onEdit, onDelete }: {
+function ProductRow({ p, toteatMap, onToggleHidden, onEdit, onDelete }: {
   p: Product
   toteatMap: Record<string, { name: string; price: number }> | null
-  bannerIds: string[]
-  bannerMax: number
-  onToggleSoldOut: () => void
-  onToggleBanner: () => void
+  onToggleHidden: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -187,28 +184,18 @@ function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onTog
   const tInfo = toteatMap && norm ? toteatMap[norm] : undefined
   const showToteat = !!toteatMap && norm.length > 0
   const priceMismatch = tInfo != null && Math.round(tInfo.price) !== Math.round(p.price)
-  const inBanner = bannerIds.includes(p.id)
-  const bannerFull = !inBanner && bannerIds.length >= bannerMax
+  const isHidden = !!p.hidden
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isHidden ? 'var(--line)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 5, opacity: isHidden ? 0.65 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Star */}
-        <button onClick={bannerFull ? undefined : onToggleBanner} title={inBanner ? 'Quitar del banner' : bannerFull ? 'Máx. 5 en banner' : 'Destacar en banner'}
-          style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: bannerFull ? 'not-allowed' : 'pointer', display: 'grid', placeItems: 'center', opacity: bannerFull ? 0.3 : 1, fontSize: '0.95rem' }}>
-          {inBanner ? '⭐' : '☆'}
-        </button>
+        {/* Name */}
+        <span style={{ flex: 1, minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
 
-        {/* Name + badges */}
-        <span style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-          <span style={{ minWidth: 0, fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: p.is_sold_out ? 'var(--ink-3)' : 'var(--ink)', textDecoration: p.is_sold_out ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-          {p.hidden && <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', background: 'rgba(245,158,11,0.16)', border: '1px solid rgba(245,158,11,0.35)', padding: '2px 6px', borderRadius: 999 }}>Oculto</span>}
-        </span>
-
-        {/* Agotado */}
-        <button onClick={onToggleSoldOut}
-          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${p.is_sold_out ? '#ef4444' : 'var(--line)'}`, background: p.is_sold_out ? 'rgba(239,68,68,0.12)' : 'transparent', color: p.is_sold_out ? '#ef4444' : 'var(--ink-2)' }}>
-          {p.is_sold_out ? 'Agotado' : 'Agotar'}
+        {/* Ocultar / Mostrar */}
+        <button onClick={onToggleHidden}
+          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isHidden ? '#b45309' : 'var(--line)'}`, background: isHidden ? 'rgba(245,158,11,0.14)' : 'transparent', color: isHidden ? '#b45309' : 'var(--ink-2)' }}>
+          {isHidden ? 'Mostrar' : 'Ocultar'}
         </button>
 
         {/* Code */}
@@ -228,7 +215,7 @@ function ProductRow({ p, toteatMap, bannerIds, bannerMax, onToggleSoldOut, onTog
       </div>
 
       {/* Price row */}
-      <div style={{ paddingLeft: 32, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontFamily: F, fontSize: '0.72rem', lineHeight: 1.3 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontFamily: F, fontSize: '0.72rem', lineHeight: 1.3 }}>
         <span style={{ color: 'var(--ink-2)' }}>Precio: <strong style={{ color: 'var(--ink)' }}>{clp(p.price)}</strong></span>
         {showToteat && tInfo != null && (
           <span style={{ color: priceMismatch ? '#f97316' : 'var(--ink-2)' }}>POS: <strong style={{ color: priceMismatch ? '#f97316' : 'var(--ink)' }}>{clp(tInfo.price)}</strong>{priceMismatch ? ' ⚠ distinto' : ''}</span>
@@ -333,13 +320,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
   const [tab,        setTab]        = useState<PosTab>('productos')
   const [search,     setSearch]     = useState('')
   const [only,       setOnly]       = useState<'all' | 'hidden' | 'nocode'>('all')
-  const [bannerIds,  setBannerIds]  = useState<string[]>([])
-  const [brandSlug,  setBrandSlug]  = useState<string | null>(null)
-  const [copyBusy,   setCopyBusy]   = useState(false)
-  const [copyMsg,    setCopyMsg]    = useState('')
   const [toteatMap,  setToteatMap]  = useState<Record<string, { name: string; price: number }> | null>(null)
-  const cfgRef = useRef<Record<string, unknown>>({})
-  const BANNER_MAX = 5
 
   // Product form state
   const [addingProduct,  setAddingProduct]  = useState(false)
@@ -373,20 +354,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
 
   useEffect(() => { loadCategories() }, [loadCategories])
 
-  // Load settings
-  useEffect(() => {
-    if (!restaurantId) return
-    fetch(`/api/panel/ecommerce/settings?restaurantId=${restaurantId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.config) {
-          cfgRef.current = d.config
-          setBrandSlug(d.config.brandSlug ?? null)
-          setBannerIds(Array.isArray(d.config.bannerProductIds) ? d.config.bannerProductIds : [])
-        }
-      })
-      .catch(() => {})
-  }, [restaurantId])
 
   // Load Toteat catalog
   useEffect(() => {
@@ -397,12 +364,12 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
       .catch(() => setToteatMap(null))
   }, [restaurantId])
 
-  const toggleSoldOut = useCallback(async (id: string, next: boolean) => {
-    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: next } : p) } : d)
+  const toggleHidden = useCallback(async (id: string, nextHidden: boolean) => {
+    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: nextHidden } : p) } : d)
     try {
-      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soldOut: next }) })
-      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d)
-    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d) }
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive: !nextHidden }) })
+      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: !nextHidden } : p) } : d)
+    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: !nextHidden } : p) } : d) }
   }, [])
 
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
@@ -417,17 +384,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
     } catch { apply(!next) }
   }, [])
 
-  const toggleBanner = useCallback((id: string) => {
-    setBannerIds(prev => {
-      const has = prev.includes(id)
-      if (!has && prev.length >= BANNER_MAX) return prev
-      const next = has ? prev.filter(x => x !== id) : [...prev, id]
-      const cfg = { ...cfgRef.current, bannerProductIds: next }
-      cfgRef.current = cfg
-      fetch('/api/panel/ecommerce/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: cfg }) }).catch(() => {})
-      return next
-    })
-  }, [restaurantId])
 
   const handleProductSaved = useCallback((saved: Partial<Product> & { id: string }) => {
     setData(d => {
@@ -502,17 +458,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
     })
   }, [restaurantId])
 
-  const copyToBranches = async () => {
-    if (!restaurantId || copyBusy) return
-    if (!confirm('¿Copiar esta carta a TODAS las sucursales de tu marca?\n\nSe REEMPLAZARÁ la carta actual de cada sucursal. Esta acción no se puede deshacer.')) return
-    setCopyBusy(true); setCopyMsg('')
-    try {
-      const r = await fetch('/api/panel/ecommerce/catalog/copy-to-branches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId }) })
-      const d = await r.json().catch(() => ({}))
-      setCopyMsg(r.ok ? `Copiada a ${d.branches} sucursal(es)` : d.error || 'Error al copiar')
-    } catch { setCopyMsg('Error de conexión') }
-    setCopyBusy(false)
-  }
 
   const products   = data?.products   ?? []
   const categories = data?.categories ?? []
@@ -564,17 +509,14 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg>
               </button>
             )}
-            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
-          </div>
-        )}
-
-        {/* Copy to branches */}
-        {brandSlug && (
-          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <button onClick={copyToBranches} disabled={copyBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--amber)', background: 'var(--amber-tint)', color: 'var(--amber)', fontFamily: F, fontSize: '0.8rem', fontWeight: 800, cursor: copyBusy ? 'wait' : 'pointer' }}>
-              {copyBusy ? '…' : '📋'} {copyBusy ? 'Copiando…' : 'Copiar carta a sucursales'}
-            </button>
-            {copyMsg && <span style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-2)' }}>{copyMsg}</span>}
+            <p className="pos-inner-title" style={{ margin: 0, flex: 1 }}>{title}</p>
+            {tab === 'productos' && !addingProduct && (
+              <button onClick={() => { setAddingProduct(true); setEditingProdId(null) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontFamily: F, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                Nuevo
+              </button>
+            )}
           </div>
         )}
 
@@ -596,16 +538,10 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
             {tab === 'productos' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                {/* Add product form or button */}
-                {addingProduct ? (
+                {/* Add product form */}
+                {addingProduct && (
                   <ProductForm restaurantId={restaurantId} categories={categories}
                     onSave={handleProductSaved} onCancel={() => setAddingProduct(false)} />
-                ) : (
-                  <button onClick={() => { setAddingProduct(true); setEditingProdId(null) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, border: '1px dashed var(--amber)', background: 'var(--amber-tint)', color: 'var(--amber)', fontFamily: F, fontSize: '0.84rem', fontWeight: 700, cursor: 'pointer' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                    Nuevo producto
-                  </button>
                 )}
 
                 {prodTotal === 0 ? (
@@ -625,14 +561,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                       <FilterChip label={`Ocultos${hiddenCount ? ` (${hiddenCount})` : ''}`} active={only === 'hidden'} onClick={() => setOnly(only === 'hidden' ? 'all' : 'hidden')} tone="hidden" />
                     </div>
 
-                    {/* Banner hint */}
-                    {!search && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px' }}>
-                        <span>⭐</span>
-                        <span style={{ flex: 1, fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-2)' }}>Toca la ⭐ para destacar productos en el <b>banner</b> de la tienda.</span>
-                        <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: bannerIds.length ? 'var(--amber)' : 'var(--ink-3)' }}>{bannerIds.length}/{BANNER_MAX}</span>
-                      </div>
-                    )}
 
                     {(q ? [{ id: '_all', name: '', position: 0 }] : categories).map(cat => {
                       const catProds = q ? filteredProducts : filteredProducts.filter(p => p.category_id === cat.id)
@@ -647,9 +575,8 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                                   initial={{ id: p.id, name: p.name, price: p.price, description: p.description, category_id: p.category_id, hidden: p.hidden }}
                                   onSave={handleProductSaved} onCancel={() => setEditingProdId(null)} />
                               ) : (
-                                <ProductRow key={p.id} p={p} toteatMap={toteatMap} bannerIds={bannerIds} bannerMax={BANNER_MAX}
-                                  onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)}
-                                  onToggleBanner={() => toggleBanner(p.id)}
+                                <ProductRow key={p.id} p={p} toteatMap={toteatMap}
+                                  onToggleHidden={() => toggleHidden(p.id, !p.hidden)}
                                   onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
                                   onDelete={() => handleDeleteProduct(p.id)} />
                               )
