@@ -538,8 +538,10 @@ const KDS_CSS = `
   .kds-root .topbar h1{ margin:0; font-size:17px; font-weight:700; letter-spacing:.02em; display:flex; align-items:center; gap:9px; }
   .kds-root .topbar h1::before{ content:""; width:24px; height:24px; background:url('/logo.png') center/contain no-repeat; display:inline-block; flex-shrink:0; }
   .kds-root .topbar .right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; position:relative; }
-  .kds-root .topbar .right .nav-links{ display:flex; gap:8px; align-items:center; }
-  .kds-root .topbar .right .nav-toggle{ display:none; width:40px; height:38px; padding:0; border-radius:10px; cursor:pointer; background:var(--bg-soft); color:var(--text); border:1px solid var(--line); font-size:20px; line-height:1; align-items:center; justify-content:center; font-family:inherit; }
+  .kds-root .topbar .right .nav-links{ display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:30; flex-direction:column; align-items:stretch; gap:6px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px; min-width:220px; box-shadow:0 12px 30px rgba(13,21,38,.16); }
+  .kds-root .topbar .right .nav-links.open{ display:flex; }
+  .kds-root .topbar .right .nav-links .ghost{ width:100%; text-align:left; justify-content:flex-start; }
+  .kds-root .topbar .right .nav-toggle{ display:inline-flex; width:40px; height:38px; padding:0; border-radius:10px; cursor:pointer; background:var(--bg-soft); color:var(--text); border:1px solid var(--line); font-size:20px; line-height:1; align-items:center; justify-content:center; font-family:inherit; }
   .kds-root .topbar .right .nav-toggle:hover{ background:#e2e8f2; }
   .kds-root .topbar .right .ghost{ text-decoration:none; color:var(--text); background:var(--bg-soft); padding:8px 14px; border-radius:10px; border:1px solid var(--line); font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; }
   .kds-root .topbar .right .ghost:hover{ background:#e2e8f2; }
@@ -634,10 +636,6 @@ const KDS_CSS = `
 
   @media (max-width:820px){
     .kds-root .topbar .right .kpi{ padding:7px 11px; font-size:12px; }
-    .kds-root .topbar .right .nav-toggle{ display:inline-flex; }
-    .kds-root .topbar .right .nav-links{ display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:30; flex-direction:column; align-items:stretch; gap:6px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px; min-width:220px; box-shadow:0 12px 30px rgba(13,21,38,.16); }
-    .kds-root .topbar .right .nav-links.open{ display:flex; }
-    .kds-root .topbar .right .nav-links .ghost{ width:100%; text-align:left; justify-content:flex-start; }
   }
   @media (max-width:480px){ .kds-root .topbar .right .kpi{ flex:1 1 auto; justify-content:center; font-size:11px; padding:6px 9px; } }
   @media (max-width:480px){ .kds-root .kds-customer{ font-size:20px; } .kds-root .kds-timer{ font-size:26px; padding:6px 18px; } .kds-root .kds-num{ min-width:38px; height:38px; font-size:21px; } }
