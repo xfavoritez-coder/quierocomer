@@ -202,9 +202,9 @@ function OrderCard({
       {/* Body: nombre + info secundaria. flex:1 para empujar el footer abajo y
           que todas las tarjetas de una fila queden a la misma altura. */}
       <div style={{
-        padding: '14px 16px 14px',
+        padding: '14px 16px',
         background: 'var(--surface)',
-        display: 'flex', flexDirection: 'column', gap: 10,
+        display: 'flex', flexDirection: 'column', gap: 8,
         flex: 1, minWidth: 0,
       }}>
         {/* Fila 1: [nombre · chip tipo] ↔ [monto · chip pago] */}
@@ -228,7 +228,7 @@ function OrderCard({
         </div>
 
         {/* Fila 2: hora · N ítems */}
-        <div style={{ fontSize: 13, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
         </div>
