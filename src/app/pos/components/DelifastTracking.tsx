@@ -180,16 +180,21 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         </div>
       )}
 
-      {/* Timeline */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Timeline en 2 columnas (3 por columna), llenado por columna. Cada fila:
+          hora a la izquierda, estado a la derecha. */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr',
+        gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(steps.length / 2)}, auto)`,
+        columnGap: 16, rowGap: 2,
+      }}>
         {steps.map((s, i) => {
           const done = !!s.ts
           const isCancel = s.label === 'Cancelado'
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '3px 0' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', minWidth: 0 }}>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5, color: 'var(--ink-3)', minWidth: 40, flexShrink: 0 }}>{hm(s.ts) || '—'}</span>
               <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: done ? (isCancel ? '#dc2626' : '#16a34a') : 'var(--line-strong)' }} />
-              <span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{s.label}</span>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5, color: 'var(--ink-3)' }}>{hm(s.ts) || '—'}</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{s.label}</span>
             </div>
           )
         })}
