@@ -460,15 +460,16 @@ export default function AdminPromociones() {
               <div key={p.id} style={{ background: "var(--adm-card)", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden" }}>
                 {/* Header */}
                 <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                  {(p.promoType === "graphic" && p.imageUrl) ? (
-                    <img src={p.thumbUrl || p.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                  ) : p.restaurant?.logoUrl ? (
-                    <img src={p.restaurant.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
-                      {p.restaurant?.name?.charAt(0) || "🏷️"}
-                    </div>
-                  )}
+                  {(() => {
+                    const thumb = p.dishes?.[0]?.photos?.[0] || (p.imageUrl ? (p.thumbUrl || p.imageUrl) : null) || p.restaurant?.logoUrl || null;
+                    return thumb ? (
+                      <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
+                        {p.restaurant?.name?.charAt(0) || "🏷️"}
+                      </div>
+                    );
+                  })()}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
