@@ -90,6 +90,41 @@ function prevAction(stage: string): { label: string; stage: string } | null {
 
 const isPaid = (o: PosOrderLite) => o.totalAmount > 0 && o.paidAmount >= o.totalAmount
 
+// ¿Es un pedido de retiro? (ni delivery ni salón). Misma lógica que la tarjeta.
+const isRetiroOrder = (o: PosOrderLite) => {
+  const isDelivery = o.isDelivery || o.saleType === 'delivery'
+  const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+  return !isDelivery && !isDineIn
+}
+
+// Alertas de retiro atascado en preparación.
+const PREP_ALERT_MS = 60 * 60 * 1000   // 60 min en preparación → alerta
+const PREP_SNOOZE_MS = 60 * 60 * 1000  // "Posponer 1 hora más"
+const PREP_SNOOZE_KEY = 'pos:prepAlertSnooze'
+
+function prepSnoozedUntil(id: string): number {
+  try {
+    const m = JSON.parse(localStorage.getItem(PREP_SNOOZE_KEY) || '{}')
+    return typeof m[id] === 'number' ? m[id] : 0
+  } catch { return 0 }
+}
+function prepSnooze(id: string, ms: number) {
+  try {
+    const m = JSON.parse(localStorage.getItem(PREP_SNOOZE_KEY) || '{}')
+    const now = Date.now()
+    m[id] = now + ms
+    for (const k of Object.keys(m)) if (typeof m[k] !== 'number' || m[k] < now) delete m[k] // limpia expirados
+    localStorage.setItem(PREP_SNOOZE_KEY, JSON.stringify(m))
+  } catch { }
+}
+// "1 h 05 min" / "65 min"
+function fmtElapsedMin(ms: number): string {
+  const min = Math.floor(ms / 60000)
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return h > 0 ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`
+}
+
 // Extrae los nombres de las opciones/modificadores elegidos de un ítem, soportando
 // las dos formas en que se guardan (array de strings del espejo, o de objetos
 // {value}/{optionName}/{name} del OnlineOrder).
@@ -720,6 +755,10 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
   const [stageBusy, setStageBusy] = useState<string | null>(null)
   const [blockedId, setBlockedId] = useState<string | null>(null)
+  // Alerta: pedido de retiro mucho tiempo en preparación.
+  const [prepAlertId, setPrepAlertId] = useState<string | null>(null)
+  const ordersRef = useRef<PosOrderLite[]>([])
+  ordersRef.current = orders
   // Vista del tablero: 1 = filas, 2/3 = columnas. Se recuerda POR DISPOSITIVO
   // en localStorage. Arranca en 1 para no romper la hidratación y se carga el
   // valor guardado tras montar.
@@ -824,6 +863,30 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       return sortDir === 'asc' ? ta - tb : tb - ta
     })
   }, [orders, type, sortDir])
+
+  // Alerta de retiro atascado en preparación (≥60 min). Se evalúa periódicamente
+  // sobre TODOS los pedidos activos (no solo la pestaña), de a uno a la vez.
+  const evalPrepAlerts = useCallback(() => {
+    const now = Date.now()
+    setPrepAlertId(prev => {
+      // Mantener el que ya se muestra mientras siga en preparación.
+      if (prev) {
+        const o = ordersRef.current.find(x => x.id === prev)
+        if (o && isRetiroOrder(o) && o.opsStage === 'preparing') return prev
+      }
+      const cand = ordersRef.current.find(o =>
+        isRetiroOrder(o) && o.opsStage === 'preparing' &&
+        now - new Date(o.createdAt).getTime() >= PREP_ALERT_MS &&
+        prepSnoozedUntil(o.id) < now,
+      )
+      return cand ? cand.id : null
+    })
+  }, [])
+  useEffect(() => {
+    evalPrepAlerts()
+    const t = setInterval(evalPrepAlerts, 20_000)
+    return () => clearInterval(t)
+  }, [evalPrepAlerts, orders])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
@@ -948,6 +1011,32 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
     </div>
   )
 
+  // Alerta: pedido de retiro mucho tiempo en preparación.
+  const prepAlertOrder = prepAlertId ? orders.find(o => o.id === prepAlertId) ?? null : null
+  const prepAlertModal = prepAlertOrder ? (
+    <div className="pos-modal-overlay" onClick={() => { prepSnooze(prepAlertOrder.id, PREP_SNOOZE_MS); setPrepAlertId(null) }}>
+      <div className="pos-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--amber-tint)', color: 'var(--amber-press)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </span>
+          <div className="pos-modal-title" style={{ margin: 0 }}>Pedido en preparación</div>
+        </div>
+        <p style={{ fontSize: 14.5, color: 'var(--ink-2)', lineHeight: 1.5, margin: '0 0 18px' }}>
+          El pedido <b>#{prepAlertOrder.orderReference ?? prepAlertOrder.dailyNumber ?? ''} {toName(prepAlertOrder.customerName || 'Cliente')}</b> lleva <b>{fmtElapsedMin(Date.now() - new Date(prepAlertOrder.createdAt).getTime())}</b> en preparación. ¿Marcarlo como listo?
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button className="pos-modal-ok" style={{ width: '100%' }} onClick={() => { changeStage(prepAlertOrder, 'ready'); setPrepAlertId(null) }}>
+            Marcar listo
+          </button>
+          <button className="pos-modal-cancel" style={{ width: '100%' }} onClick={() => { prepSnooze(prepAlertOrder.id, PREP_SNOOZE_MS); setPrepAlertId(null) }}>
+            Posponer 1 hora más
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
+
   // Desktop: split layout
   if (isDesktop) {
     return (
@@ -959,6 +1048,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         {cobro && (
           <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
         )}
+        {prepAlertModal}
       </div>
     )
   }
@@ -995,6 +1085,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       {cobro && (
         <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
       )}
+      {prepAlertModal}
     </>
   )
 }
