@@ -2,6 +2,63 @@
 
 import { useState, useEffect } from "react";
 
+// ── Phone selector ────────────────────────────────────────────────────────────
+const PHONE_COUNTRIES = [
+  { code: "CL", dial: "+56", placeholder: "9 1234 5678", maxDigits: 9,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg> },
+  { code: "AR", dial: "+54", placeholder: "9 11 1234 5678", maxDigits: 12,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#74ACDF"/><rect y="4.67" width="20" height="4.67" fill="#fff"/></svg> },
+  { code: "PE", dial: "+51", placeholder: "9 1234 5678", maxDigits: 9,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#D91023"/><rect x="6.67" width="6.67" height="14" fill="#fff"/></svg> },
+  { code: "CO", dial: "+57", placeholder: "301 1234567", maxDigits: 10,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#003893"/><rect width="20" height="7" fill="#FCD116"/><rect y="4.67" width="20" height="4.67" fill="#CE1126"/></svg> },
+  { code: "BO", dial: "+591", placeholder: "71234567", maxDigits: 8,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#007A3D"/><rect width="20" height="4.67" fill="#D52B1E"/><rect y="4.67" width="20" height="4.67" fill="#F4D03F"/></svg> },
+  { code: "ES", dial: "+34", placeholder: "612 345 678", maxDigits: 9,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#c60b1e"/><rect y="3.5" width="20" height="7" fill="#ffc400"/></svg> },
+  { code: "US", dial: "+1", placeholder: "555 123 4567", maxDigits: 10,
+    flag: <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="14" fill="#B22234"/><rect y="1.08" width="20" height="1.08" fill="#fff"/><rect y="3.23" width="20" height="1.08" fill="#fff"/><rect y="5.38" width="20" height="1.08" fill="#fff"/><rect y="7.54" width="20" height="1.08" fill="#fff"/><rect y="9.69" width="20" height="1.08" fill="#fff"/><rect y="11.85" width="20" height="1.08" fill="#fff"/><rect width="8" height="7.54" fill="#3C3B6E"/></svg> },
+] as const;
+type CountryCode = typeof PHONE_COUNTRIES[number]["code"];
+
+function fmtPhone(v: string, country: CountryCode) {
+  const c = PHONE_COUNTRIES.find(p => p.code === country)!;
+  return v.replace(/\D/g, "").slice(0, c.maxDigits);
+}
+function buildPhone(local: string, country: CountryCode) {
+  const dial = PHONE_COUNTRIES.find(p => p.code === country)!.dial;
+  return `${dial}${local.replace(/\D/g, "")}`;
+}
+
+function PhoneSel({ country, onChange, isLight }: { country: CountryCode; onChange: (c: CountryCode) => void; isLight: boolean }) {
+  const [open, setOpen] = useState(false);
+  const cur = PHONE_COUNTRIES.find(p => p.code === country)!;
+  const bg = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.08)";
+  const border = isLight ? "1px solid rgba(0,0,0,0.12)" : "1px solid rgba(255,255,255,0.15)";
+  const color = isLight ? "#111" : "#fff";
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", height: "100%", minHeight: 48, background: bg, border, borderRadius: "12px 0 0 12px", borderRight: "none", color, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+        {cur.flag}
+        <span>{cur.dial}</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9 }} />
+          <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 100, background: isLight ? "#fff" : "#1e1e1e", border, borderRadius: 12, overflow: "hidden", minWidth: 160, boxShadow: "0 8px 24px rgba(0,0,0,.2)" }}>
+            {PHONE_COUNTRIES.map(c => (
+              <button key={c.code} type="button" onClick={() => { onChange(c.code); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 14px", border: "none", cursor: "pointer", background: c.code === country ? (isLight ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.08)") : "transparent", color, fontSize: 14, fontWeight: c.code === country ? 700 : 400 }}>
+                {c.flag}<span>{c.dial}</span><span style={{ opacity: .5, fontSize: 12 }}>{c.code}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 interface RewardTier {
   stamp: number;
   reward: string;
@@ -52,6 +109,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [dialCountry, setDialCountry] = useState<CountryCode>("CL");
   const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -79,7 +137,7 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
       const res = await fetch("/api/loyalty/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, name, email, phone, birthDate: birthDate || undefined }),
+        body: JSON.stringify({ slug, name, email, phone: phone ? buildPhone(phone, dialCountry) : "", birthDate: birthDate || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Error");
@@ -263,7 +321,16 @@ export default function EnrollClient({ slug, restaurantName, restaurantLogo, col
 
             <label style={{ display: "block", marginBottom: 16 }}>
               <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: isLightMode ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teléfono</span>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" style={{ ...inputStyle, marginBottom: 0 }} className={inputClass} inputMode="tel" />
+              <div style={{ display: "flex" }}>
+                <PhoneSel country={dialCountry} onChange={c => { setDialCountry(c); setPhone(""); }} isLight={isLightMode} />
+                <input
+                  type="tel" inputMode="numeric" value={phone}
+                  onChange={e => setPhone(fmtPhone(e.target.value, dialCountry))}
+                  placeholder={PHONE_COUNTRIES.find(p => p.code === dialCountry)!.placeholder}
+                  style={{ ...inputStyle, marginBottom: 0, borderRadius: "0 12px 12px 0", borderLeft: "none", flex: 1 }}
+                  className={inputClass}
+                />
+              </div>
             </label>
 
             {error && <p style={{ color: "#ff6b6b", fontSize: "0.85rem", margin: "0 0 12px" }}>{error}</p>}

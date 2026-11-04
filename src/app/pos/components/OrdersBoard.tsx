@@ -165,9 +165,10 @@ function OrderCard({
       style={{
         border: `1.5px solid var(--line)`,
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
-        boxShadow: isSelected ? '0 0 0 2px var(--amber), var(--sh-2)' : 'var(--sh-1)',
+        boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)',
+        transform: isSelected ? 'translateY(-2px)' : 'none',
         fontFamily: 'var(--sans)',
-        transition: 'border-color .12s, box-shadow .12s',
+        transition: 'box-shadow .15s, transform .15s',
       }}
       onClick={onSelect}
     >
