@@ -227,14 +227,7 @@ function OrderCard({
           </div>
         </div>
 
-        {/* Fila 2: hora · N ítems */}
-        <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-          {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
-        </div>
-
-        {/* Dirección / mesa / retiro — hasta 3 líneas, con alto mínimo reservado
-            para que la distribución sea igual en todas las tarjetas. */}
+        {/* Fila 2: dirección / mesa / retiro */}
         {secondary && <div style={{
           fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.4,
           display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3,
@@ -245,6 +238,12 @@ function OrderCard({
           )}
           {secondary}
         </div>}
+
+        {/* Fila 3: hora · N ítems */}
+        <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+          {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
+        </div>
       </div>
 
       {/* Footer coloreado: estado + (si está pagado) botón de avance */}
