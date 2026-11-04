@@ -74,6 +74,13 @@ export async function GET(req: NextRequest) {
       AND: [
         { OR: availability },
         { OR: [{ scheduledFor: null }, { scheduledReleasedAt: { not: null } }] },
+        // Solo pedidos REALES: sin gateway (efectivo/transferencia) o con gateway
+        // YA pagado. Los intentos de pago online no completados (webpay
+        // failed/pending de checkouts abandonados) tienen printedAt=null para
+        // siempre; si se filtraran recién en JS (abajo), ocupaban los 20 cupos de
+        // la ventana y tapaban los pedidos pagados reales → el agente recibía una
+        // cola vacía y dejaba de imprimir. Filtrarlos aquí evita ese atasco.
+        { OR: [{ paymentGateway: null }, { paymentStatus: "paid" }] },
       ],
     },
     orderBy: { createdAt: "asc" },
