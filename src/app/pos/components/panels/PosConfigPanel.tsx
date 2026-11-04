@@ -7,9 +7,7 @@ import PosConfigToteatPanel from './PosConfigToteatPanel'
 import PosSonidoPanel from './PosSonidoPanel'
 import PosMesasConfigPanel from './PosMesasConfigPanel'
 import PosGarzonesPanel from './PosGarzonesPanel'
-import PosConfigGeneralPanel from './PosConfigGeneralPanel'
-
-type SectionId = 'impresion' | 'pedidos' | 'toteat' | 'sonido' | 'mesas' | 'usuarios' | 'general'
+type SectionId = 'impresion' | 'pedidos' | 'toteat' | 'sonido' | 'mesas' | 'usuarios'
 
 interface SectionItem {
   id: SectionId
@@ -26,7 +24,6 @@ const SECTIONS: SectionItem[] = [
   { id: 'sonido',    icon: '🔊', title: 'Sonido',              desc: 'Aviso sonoro al llegar un pedido',                        component: PosSonidoPanel },
   { id: 'mesas',     icon: '🪑', title: 'Mesas',               desc: 'Crear y configurar mesas del salón',                     component: PosMesasConfigPanel },
   { id: 'usuarios',  icon: '👤', title: 'Usuarios',            desc: 'Garzones, cajeros y permisos',                           component: PosGarzonesPanel },
-  { id: 'general',   icon: '⚡', title: 'General',             desc: 'Tiempos de entrega y ajustes del sistema',               component: PosConfigGeneralPanel },
 ]
 
 export default function PosConfigPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {

@@ -232,18 +232,9 @@ export default function PosConfigImpresionPanel({ restaurantId }: { restaurantId
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px' }}>
-                {['Descarga el instalador del agente (botón de abajo)', 'Haz doble clic en el .bat — se instala solo y queda junto al reloj', 'Vuelve aquí y toca "Buscar de nuevo", luego elige tu impresora'].map((t, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
-                    <span style={{ minWidth: 22, height: 22, borderRadius: '50%', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.74rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--ink-2)', lineHeight: 1.5, paddingTop: 2 }}>{t}</span>
-                  </div>
-                ))}
-              </div>
               <button onClick={downloadInstaller} style={amberBtn}>⬇️  Descargar agente de impresión</button>
               {dlMsg && <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-2)', margin: 0 }}>{dlMsg}</p>}
               <button onClick={autoDetect} style={ghostBtn}>Buscar de nuevo</button>
-              {status?.error && <p style={{ textAlign: 'center', fontSize: '0.74rem', color: 'var(--ink-3)', margin: 0 }}>{status.error}</p>}
             </div>
           )}
 
