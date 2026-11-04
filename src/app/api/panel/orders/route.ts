@@ -103,6 +103,11 @@ export async function PATCH(req: NextRequest) {
   // Push al cliente (PWA) con el cambio de estado.
   void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(order.id, body.status)).catch(() => {});
 
+  // Reflejar el cambio en el espejo del POS / Centro de pedidos: así, gestione
+  // quien gestione el pedido (este panel o el board del POS), el estado queda
+  // igual en todas las pantallas.
+  void import("@/lib/ecommerce/syncPosFromOnline").then((m) => m.syncPosOrderFromOnline(order.id, body.status)).catch(() => {});
+
   // Correo al cliente: solo al aceptar el pedido (con link de seguimiento en vivo).
   // IN_DELIVERY y READY ya no disparan correo — el cliente lo ve en el tracking.
   if (body.status === "ACCEPTED" && order.customerEmail) {
