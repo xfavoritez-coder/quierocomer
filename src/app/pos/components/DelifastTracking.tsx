@@ -41,7 +41,7 @@ export function statusLabel(s?: string | null): string {
   if (!e) return 'Reparto'
   if (/entregad|delivered/.test(e)) return 'Entregado'
   if (/cancel|anul/.test(e)) return 'Cancelado'
-  if (/at_pickup|arriving_pickup|en.?local|llegó.*local/.test(e)) return 'Repartidor en local'
+  if (/at_pickup|arriving_pickup|en.?local|lleg[oó].*local/.test(e)) return 'Repartidor en local'
   if (/pickup|camino.*local|retir/.test(e)) return 'Camino al local'
   if (/dropoff|transit|camino|ruta/.test(e)) return 'En camino'
   if (/assigned|asignad/.test(e)) return 'Asignado'
