@@ -41,7 +41,7 @@ export function statusLabel(s?: string | null): string {
   if (/entregad|delivered/.test(e)) return 'Entregado'
   if (/cancel|anul/.test(e)) return 'Cancelado'
   if (/dropoff|transit|camino|ruta/.test(e)) return 'En camino'
-  if (/arriving_pickup|at_pickup|pickup|en.?local|llegó.*local/.test(e)) return 'En el local'
+  if (/arriving_pickup|at_pickup|pickup|en.?local|llegó.*local/.test(e)) return 'Repartidor en local'
   if (/assigned|asignad/.test(e)) return 'Asignado'
   if (/accept|confirmad/.test(e)) return 'Confirmado'
   if (/buscando|searching|pending/.test(e)) return 'Buscando repartidor'
@@ -235,8 +235,8 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: sc + '18', color: sc, border: `1px solid ${sc}40`,
-      fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '4px 10px',
+      background: 'var(--sunk)', color: 'var(--ink-2)', border: '1px solid var(--line-strong)',
+      fontWeight: 600, fontSize: 12, borderRadius: 20, padding: '4px 10px',
       flexShrink: 0, whiteSpace: 'nowrap',
     }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc, flexShrink: 0 }} />
