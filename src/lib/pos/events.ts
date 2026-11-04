@@ -362,6 +362,31 @@ export async function projectEvent(event: PosEvent): Promise<void> {
 
     case 'cash_session_opened': {
       const d = p as unknown as CashSessionOpenedPayload
+      const existing = await posDb.cashSessions.get(d.session_id)
+      // ── Robustez ante orden invertido ──
+      // Si esta sesión YA figura cerrada, es porque su evento de cierre se
+      // proyectó antes que la apertura (el cierre quedó con un server_seq menor:
+      // equipos que sincronizan tarde, reconciliaciones, etc.). NO la reabrimos:
+      // un cierre es definitivo. Solo rellenamos los metadatos de apertura que el
+      // cierre no traía (para que el historial muestre hora/monto de apertura).
+      if (existing && existing.is_open === false) {
+        await posDb.cashSessions.update(d.session_id, {
+          opened_at: event.created_at_local,
+          opened_by: event.user_id,
+          initial_amount: d.initial_amount,
+        })
+        break
+      }
+      // ── Invariante: una sola caja abierta por local ──
+      // Al abrir, cerramos cualquier OTRA sesión abierta del mismo local. Es una
+      // decisión determinista (todos los equipos aplican la misma regla a los
+      // mismos eventos), sin closed_at → no ensucia el historial de cierres.
+      const openOthers = await posDb.cashSessions
+        .filter(s => !!s.is_open && s.restaurant_id === event.restaurant_id && s.id !== d.session_id)
+        .toArray()
+      for (const s of openOthers) {
+        await posDb.cashSessions.update(s.id, { is_open: false })
+      }
       await posDb.cashSessions.put({
         id: d.session_id,
         restaurant_id: event.restaurant_id,
@@ -375,7 +400,7 @@ export async function projectEvent(event: PosEvent): Promise<void> {
 
     case 'cash_session_closed': {
       const d = p as unknown as CashSessionClosedPayload
-      await posDb.cashSessions.update(d.session_id, {
+      const closedFields = {
         closed_at: event.created_at_local,
         closed_by: event.user_id,
         counted_amounts: d.counted_amounts,
@@ -385,8 +410,24 @@ export async function projectEvent(event: PosEvent): Promise<void> {
         total_sales: d.total_sales,
         total_tips: d.total_tips,
         closed_accounts: d.closed_accounts,
-        is_open: false,
-      })
+        is_open: false as const,
+      }
+      const existing = await posDb.cashSessions.get(d.session_id)
+      if (existing) {
+        await posDb.cashSessions.update(d.session_id, closedFields)
+      } else {
+        // El cierre llegó antes que su apertura (seq invertido): creamos el
+        // registro ya cerrado (tombstone). Cuando llegue la apertura, la rama de
+        // arriba la respetará y solo rellenará hora/monto de apertura.
+        await posDb.cashSessions.put({
+          id: d.session_id,
+          restaurant_id: event.restaurant_id,
+          opened_at: event.created_at_local,
+          opened_by: event.user_id,
+          initial_amount: 0,
+          ...closedFields,
+        })
+      }
       break
     }
 
