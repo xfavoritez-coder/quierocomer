@@ -166,7 +166,7 @@ function OrderCard({
   const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
   const isRetiro = !isDelivery && !isDineIn
   const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-  const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
+  const typeColor = isDelivery ? '#64748b' : isDineIn ? '#8b5cf6' : '#64748b'
   const next = nextAction(order.opsStage, isDelivery)
   const busy = stageBusy === order.id
 
