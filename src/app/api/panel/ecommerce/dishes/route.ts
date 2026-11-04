@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     where: { restaurantId, deletedAt: null },
     select: {
       id: true, name: true, price: true, isActive: true, soldOut: true,
-      ecommerceOnly: true, appOnly: true, photos: true,
+      ecommerceOnly: true, appOnly: true, photos: true, description: true,
       category: { select: { id: true, name: true } },
     },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
@@ -46,8 +46,12 @@ export async function PATCH(req: NextRequest) {
   const dish = await prisma.dish.findUnique({ where: { id }, select: { restaurantId: true } });
   if (!dish || dish.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const data: { isActive?: boolean } = {};
+  const data: { isActive?: boolean; soldOut?: boolean; price?: number; description?: string | null; photos?: string[] } = {};
   if (typeof body.isActive === "boolean") data.isActive = body.isActive;
+  if (typeof body.soldOut === "boolean") data.soldOut = body.soldOut;
+  if (typeof body.price === "number" && body.price >= 0) data.price = body.price;
+  if (typeof body.description === "string" || body.description === null) data.description = body.description || null;
+  if (Array.isArray(body.photos)) data.photos = body.photos.filter((p: unknown) => typeof p === "string");
   if (!Object.keys(data).length) return NextResponse.json({ error: "Sin cambios" }, { status: 400 });
 
   const updated = await prisma.dish.update({ where: { id }, data });
