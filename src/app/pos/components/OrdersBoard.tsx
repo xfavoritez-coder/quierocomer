@@ -336,7 +336,6 @@ function CobroStrip({
           <div style={{ fontWeight: 700, fontSize: 13.5, color: blocked ? RED : 'var(--amber-press)', lineHeight: 1.35 }}>
             {blocked ? 'Debes cobrar el pedido antes de cambiar su estado' : 'Pago pendiente'}
           </div>
-          {!blocked && <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 1 }}>Cobra el pedido para poder avanzar su estado.</div>}
         </div>
         {blocked && (
           <button onClick={onDismissBlock} title="Descartar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, padding: 2, lineHeight: 0, flexShrink: 0 }}>
