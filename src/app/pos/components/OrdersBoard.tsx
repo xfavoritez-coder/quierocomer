@@ -50,6 +50,7 @@ interface PosOrderLite {
 }
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
+const toName = (s: string) => s.trim().replace(/\S+/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase())
 
 function cleanAddr(addr: string): string {
   return addr
@@ -215,7 +216,7 @@ function OrderCard({
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
             }}>
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {order.customerName || 'Cliente'}
+              {toName(order.customerName || 'Cliente')}
             </div>
             {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
           </div>
@@ -474,7 +475,7 @@ function OrderDetailPanel({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
             {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
-            {order.customerName || 'Cliente'}
+            {toName(order.customerName || 'Cliente')}
           </div>
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -1064,7 +1065,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
     return (
       <div className="pos-modal-overlay" onClick={onClose}>
         <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
-          <div className="pos-modal-title">{order.customerName || 'Cliente'}</div>
+          <div className="pos-modal-title">{toName(order.customerName || 'Cliente')}</div>
           <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 10 }}>
             <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
             <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
@@ -1090,7 +1091,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
       <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '100%' }}>
-        <div className="pos-modal-title">Cobrar · {order.customerName || 'Cliente'}</div>
+        <div className="pos-modal-title">Cobrar · {toName(order.customerName || 'Cliente')}</div>
 
         <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 6 }}>
           <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>

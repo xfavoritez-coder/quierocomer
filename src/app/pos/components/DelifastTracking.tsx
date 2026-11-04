@@ -136,7 +136,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
           {statusLabel(t.status)}
         </span>
         {etaMin != null && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Llega al local en <b>{etaMin} min</b></span>}
-        {(t.provider || t.vehicle) && <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>{[t.provider, t.vehicle].filter(Boolean).join(' · ')}</span>}
       </div>
 
       {/* Repartidor */}
@@ -152,12 +151,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
             <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--ink)' }}>{t.driver.name || 'Repartidor'}</div>
             {t.driver.phone && <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>{t.driver.phone}</div>}
           </div>
-          {t.driver.phone && (
-            <a href={`tel:${t.driver.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999, background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.3a1 1 0 0 1 1 1 11 11 0 0 0 .56 3.5 1 1 0 0 1-.25 1z"/></svg>
-              Llamar
-            </a>
-          )}
         </div>
       )}
 
