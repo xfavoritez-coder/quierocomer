@@ -427,7 +427,7 @@ export default function KdsPage({
           <span className="kpi" title="Completados en menos de 10 minutos">Pedidos preparados en buen tiempo: <b>{greenCount}</b></span>
           <button type="button" className="nav-toggle" aria-label="Menú" aria-expanded={menuOpen} onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}>☰</button>
           <div className={`nav-links${menuOpen ? " open" : ""}`}>
-            <Link href={backHref} className="ghost" onClick={() => setMenuOpen(false)}>↩️ Volver</Link>
+            <Link href={backHref} className="ghost" onClick={() => setMenuOpen(false)}>↩️ {backHref === "/pos" ? "Volver al POS" : "Volver"}</Link>
             <button type="button" className={`ghost ${completeMode ? "on on-green" : ""}`} aria-pressed={completeMode} onClick={toggleComplete} title="Activa un botón verde 'Marcar listo' en cada pedido pendiente">{completeMode ? "✓ Botón Listo: ON" : "Botón Listo: OFF"}</button>
             <button type="button" className={`ghost ${groupHour ? "on" : ""}`} aria-pressed={groupHour} onClick={toggleGroup}>🕐 Completados por hora</button>
             <button type="button" className="ghost" onClick={genPair}>📺 Vincular tablet</button>
