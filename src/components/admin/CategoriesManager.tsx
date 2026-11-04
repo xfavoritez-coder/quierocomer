@@ -113,6 +113,15 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   const [schStart, setSchStart] = useState(category.scheduleStart || "");
   const [schEnd, setSchEnd] = useState(category.scheduleEnd || "");
   const menuRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next) {
+      setTimeout(() => rowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -142,10 +151,10 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   }, [menuOpen, changingType]);
 
   return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
+    <div ref={(node) => { setNodeRef(node); (rowRef as React.MutableRefObject<HTMLDivElement | null>).current = node; }} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
       {/* Category row */}
       <div
-        onClick={() => setExpanded(!expanded)}
+        onClick={toggleExpanded}
         style={{
           background: isHidden ? "var(--adm-bg)" : "var(--adm-card)",
           border: "0.5px solid var(--adm-card-border)",
