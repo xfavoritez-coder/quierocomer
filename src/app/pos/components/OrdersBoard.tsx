@@ -206,46 +206,42 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 8,
         flex: 1, minWidth: 0,
       }}>
-        {/* Fila superior: nombre (izq) + total y chips (der) */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        {/* Fila superior: nombre (izq) + total (der) — misma altura, sin chips */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{
             minWidth: 0, flex: 1,
             fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
             display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
-            overflow: 'hidden', minHeight: 'calc(1.3em * 2)', wordBreak: 'break-word',
+            overflow: 'hidden', wordBreak: 'break-word',
           }}>
             {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
             {order.customerName || 'Cliente'}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
-              {clp(order.totalAmount)}
-            </span>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
-              <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
-            </div>
-          </div>
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)', flexShrink: 0 }}>
+            {clp(order.totalAmount)}
+          </span>
         </div>
 
-        {/* Meta: hora · N ítems */}
-        <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        {/* Meta: hora · N ítems · chips */}
+        <div style={{ fontSize: 13, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
+          {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
+          <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
         </div>
 
         {/* Dirección / mesa / retiro — hasta 3 líneas, con alto mínimo reservado
             para que la distribución sea igual en todas las tarjetas. */}
-        <div style={{
+        {secondary && <div style={{
           fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.4,
           display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3,
-          overflow: 'hidden', minHeight: 'calc(1.4em * 2)', wordBreak: 'break-word',
+          overflow: 'hidden', wordBreak: 'break-word',
         }}>
           {isDelivery && order.addressLine && (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
           )}
           {secondary}
-        </div>
+        </div>}
       </div>
 
       {/* Footer coloreado: estado + (si está pagado) botón de avance */}
