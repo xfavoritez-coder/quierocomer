@@ -108,35 +108,12 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
       ],
     }] : []),
-    ...(opts.hasCentroPedidos ? [{
-      key: "motoristas",
-      label: "Motoristas",
-      icon: Bike,
-      items: [
-        { icon: Navigation, labelKey: "nav_centro_tracking", href: `${base}/centro-pedidos/seguimiento` },
-        { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
-        { icon: Wallet, labelKey: "nav_centro_wallet", href: `${base}/centro-pedidos/saldo` },
-      ],
-    }] : []),
     ...(opts.hasPos ? [{
       key: "pos",
-      label: "Punto de venta",
+      label: "POS",
       icon: Receipt,
       items: [
         { icon: Receipt, labelKey: "nav_pos_open", href: "/pos" },
-      ],
-    }] : []),
-    ...(opts.hasBodega ? [{
-      key: "bodega",
-      label: "Bodega",
-      icon: Warehouse,
-      items: [
-        { icon: Warehouse, labelKey: "nav_bodega_home", href: `${base}/bodega` },
-        { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
-        { icon: Truck, labelKey: "nav_bodega_proveedores", href: `${base}/bodega/proveedores` },
-        { icon: ClipboardList, labelKey: "nav_bodega_porcomprar", href: `${base}/bodega/por-comprar` },
-        { icon: ClipboardCheck, labelKey: "nav_bodega_conteo", href: `${base}/bodega/conteo` },
-        { icon: Settings, labelKey: "nav_bodega_config", href: `${base}/bodega/configuracion` },
       ],
     }] : []),
     {
@@ -152,6 +129,29 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Scan, labelKey: "nav_loyalty_scan", href: `${base}/loyalty/escanear` },
       ],
     },
+    ...(opts.hasBodega ? [{
+      key: "bodega",
+      label: "Bodega",
+      icon: Warehouse,
+      items: [
+        { icon: Warehouse, labelKey: "nav_bodega_home", href: `${base}/bodega` },
+        { icon: ShoppingCart, labelKey: "nav_bodega_compras", href: `${base}/bodega/compras` },
+        { icon: Truck, labelKey: "nav_bodega_proveedores", href: `${base}/bodega/proveedores` },
+        { icon: ClipboardList, labelKey: "nav_bodega_porcomprar", href: `${base}/bodega/por-comprar` },
+        { icon: ClipboardCheck, labelKey: "nav_bodega_conteo", href: `${base}/bodega/conteo` },
+        { icon: Settings, labelKey: "nav_bodega_config", href: `${base}/bodega/configuracion` },
+      ],
+    }] : []),
+    ...(opts.hasCentroPedidos ? [{
+      key: "motoristas",
+      label: "Motoristas",
+      icon: Bike,
+      items: [
+        { icon: Navigation, labelKey: "nav_centro_tracking", href: `${base}/centro-pedidos/seguimiento` },
+        { icon: Bike, labelKey: "nav_centro_drivers", href: `${base}/centro-pedidos/repartidores` },
+        { icon: Wallet, labelKey: "nav_centro_wallet", href: `${base}/centro-pedidos/saldo` },
+      ],
+    }] : []),
     ...(FINANCIAL_ALLOWED.includes(opts.slug ?? "") ? [{
       key: "administracion",
       label: "Administración",
