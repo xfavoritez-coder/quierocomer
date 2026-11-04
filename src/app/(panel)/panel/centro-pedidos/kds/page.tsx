@@ -534,7 +534,7 @@ const KDS_CSS = `
   .kds-root .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
     padding:12px 16px; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
   .kds-root .topbar h1{ margin:0; font-size:17px; font-weight:700; letter-spacing:.02em; display:flex; align-items:center; gap:9px; }
-  .kds-root .topbar h1::before{ content:"🍣"; font-size:18px; }
+  .kds-root .topbar h1::before{ content:""; width:24px; height:24px; background:url('/logo.png') center/contain no-repeat; display:inline-block; flex-shrink:0; }
   .kds-root .topbar .right{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; position:relative; }
   .kds-root .topbar .right .nav-links{ display:flex; gap:8px; align-items:center; }
   .kds-root .topbar .right .nav-toggle{ display:none; width:40px; height:38px; padding:0; border-radius:10px; cursor:pointer; background:var(--bg-soft); color:var(--text); border:1px solid var(--line); font-size:20px; line-height:1; align-items:center; justify-content:center; font-family:inherit; }
