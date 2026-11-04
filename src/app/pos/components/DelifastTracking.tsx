@@ -229,7 +229,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: 'var(--sunk)', color: 'var(--ink-2)', border: '1px solid var(--line-strong)',
+      background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line-strong)',
       fontWeight: 600, fontSize: 12, borderRadius: 20, padding: '4px 10px',
       flexShrink: 0, whiteSpace: 'nowrap',
     }}>
