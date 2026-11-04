@@ -166,7 +166,17 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
 
         if (getBridgeUrl()) {
           const pr = await printCashClose(closePayload)
-          if (!pr.ok) toast.error(pr.error || 'No se pudo imprimir el cierre')
+          if (!pr.ok) {
+            // El cierre YA se guardó arriba; esto es solo la impresión del ticket.
+            // "Failed to fetch" = el agente de impresión (localhost:7777) no está
+            // disponible. Se avisa claro para no alarmar: el cierre está hecho.
+            const isConn = /failed to fetch|load failed|networkerror|conexión|aborted|timeout|abort/i.test(pr.error || '')
+            toast.error(
+              isConn
+                ? 'El cierre se guardó. No se pudo imprimir el ticket: el agente de impresión no está disponible.'
+                : `El cierre se guardó, pero no se pudo imprimir el ticket: ${pr.error}`,
+            )
+          }
         }
       }
       goHome()
