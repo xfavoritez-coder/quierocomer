@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Motorbike } from 'lucide-react'
 
 type Pt = { lat: number; lng: number } | null
 interface Tracking {
@@ -40,8 +41,9 @@ export function statusLabel(s?: string | null): string {
   if (!e) return 'Reparto'
   if (/entregad|delivered/.test(e)) return 'Entregado'
   if (/cancel|anul/.test(e)) return 'Cancelado'
+  if (/at_pickup|arriving_pickup|en.?local|llegó.*local/.test(e)) return 'Repartidor en local'
+  if (/pickup|camino.*local|retir/.test(e)) return 'Camino al local'
   if (/dropoff|transit|camino|ruta/.test(e)) return 'En camino'
-  if (/arriving_pickup|at_pickup|pickup|en.?local|llegó.*local/.test(e)) return 'Repartidor en local'
   if (/assigned|asignad/.test(e)) return 'Asignado'
   if (/accept|confirmad/.test(e)) return 'Confirmado'
   if (/buscando|searching|pending/.test(e)) return 'Buscando repartidor'
@@ -73,8 +75,8 @@ function TrackingBox({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg>
-        <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>Reparto Delifast</span>
+        <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista</span>
       </div>
       {children}
     </div>
