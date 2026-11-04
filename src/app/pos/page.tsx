@@ -36,6 +36,7 @@ import PosSonidoPanel from './components/panels/PosSonidoPanel'
 import PosMesasConfigPanel from './components/panels/PosMesasConfigPanel'
 import PosGarzonesPanel from './components/panels/PosGarzonesPanel'
 import PosHistorialPanel from './components/panels/PosHistorialPanel'
+import PosReportesPanel from './components/panels/PosReportesPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -49,6 +50,7 @@ const INNER_PAGES: Record<string, { title: string; component: React.ComponentTyp
   sonido: { title: 'Sonido de pedidos', component: PosSonidoPanel },
   mesas: { title: 'Configurar mesas', component: PosMesasConfigPanel },
   garzones: { title: 'Garzones', component: PosGarzonesPanel },
+  reportes: { title: 'Reportes', component: PosReportesPanel },
 }
 type TableStatus = 'libre' | 'abierta' | 'con_pedidos' | 'cuenta_pedida' | 'pagada_parcial'
 
