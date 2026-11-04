@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Save, UtensilsCrossed, Lock } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, UtensilsCrossed, Lock, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseAccompConfig, emptyAccompConfig, type AccompConfig } from "@/lib/ecommerce/accompaniments";
@@ -46,6 +46,32 @@ export default function AccompanimentsPage() {
   // Rules (producto -> grupo). Mosaico: asignar grupo/cantidad por producto.
   const [ruleFilter, setRuleFilter] = useState("");
   const [ruleOnly, setRuleOnly] = useState<"all" | "hidden">("all");
+
+  // Quick-assign: productos visibles sin regla asignada
+  const [quickGroup, setQuickGroup] = useState<Record<string, string>>({});
+  const [quickQty, setQuickQty] = useState<Record<string, number>>({});
+  const [quickSaving, setQuickSaving] = useState<string | null>(null);
+
+  async function quickAssign(productId: string) {
+    const groupId = quickGroup[productId];
+    if (!groupId || !restaurantId) return;
+    const quantity = quickQty[productId] || 1;
+    const newCfg = { ...cfg, rules: [...cfg.rules, { productId, groupId, quantity }] };
+    setCfg(newCfg);
+    setQuickSaving(productId);
+    try {
+      const res = await fetch("/api/panel/ecommerce/accompaniments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, config: newCfg }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Error al guardar"); setCfg(cfg); setQuickSaving(null); return; }
+      setCfg(parseAccompConfig(data.config));
+      toast.success("Acompañamiento asignado y guardado");
+    } catch { toast.error("Error de conexión"); setCfg(cfg); }
+    setQuickSaving(null);
+  }
   const setProductGroup = (productId: string, groupId: string) => setCfg((c) => {
     const rules = c.rules.filter((r) => r.productId !== productId);
     if (groupId) {
@@ -98,6 +124,63 @@ export default function AccompanimentsPage() {
         <p style={{ fontFamily: FB, color: "var(--adm-text3)", marginTop: 24 }}>Cargando…</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 20 }}>
+          {/* ── Alerta: productos sin acompañamiento asignado ── */}
+          {(() => {
+            if (!cfg.perProductEnabled || !cfg.groups.length) return null;
+            const unassigned = dishes.filter((d) => !d.hidden && !cfg.rules.some((r) => r.productId === d.id));
+            if (!unassigned.length) return null;
+            return (
+              <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 16, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <AlertTriangle size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+                  <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "#ef4444" }}>
+                    {unassigned.length} producto{unassigned.length !== 1 ? "s" : ""} sin acompañamiento asignado
+                  </span>
+                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.4 }}>
+                  Estos productos están visibles en la tienda pero no tienen acompañamiento configurado. El cliente puede quedar bloqueado al pedir.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {unassigned.map((d) => {
+                    const gid = quickGroup[d.id] ?? "";
+                    const qty = quickQty[d.id] ?? 1;
+                    const saving = quickSaving === d.id;
+                    return (
+                      <div key={d.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span style={{ flex: "1 1 140px", fontFamily: FB, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", minWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                        {d.category && (
+                          <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 999, padding: "2px 8px", flexShrink: 0 }}>{d.category}</span>
+                        )}
+                        <select
+                          value={gid}
+                          onChange={(e) => setQuickGroup((p) => ({ ...p, [d.id]: e.target.value }))}
+                          style={{ ...inp, marginTop: 0, flex: "1 1 130px", minWidth: 110, padding: "7px 8px", fontSize: "0.78rem" }}
+                        >
+                          <option value="">— Seleccionar grupo —</option>
+                          {cfg.groups.map((g) => <option key={g.id} value={g.id}>{g.name || "(sin nombre)"}</option>)}
+                        </select>
+                        <input
+                          value={qty}
+                          onChange={(e) => setQuickQty((p) => ({ ...p, [d.id]: Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1) }))}
+                          inputMode="numeric"
+                          title="Cantidad"
+                          style={{ ...inp, marginTop: 0, width: 52, flex: "0 0 52px", padding: "7px 6px", textAlign: "center", fontSize: "0.82rem" }}
+                        />
+                        <button
+                          onClick={() => quickAssign(d.id)}
+                          disabled={!gid || saving}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 14px", background: gid ? ACCENT : "var(--adm-hover)", border: `1px solid ${gid ? ACCENT : "var(--adm-card-border)"}`, borderRadius: 8, color: gid ? "#1a1a1a" : "var(--adm-text3)", fontFamily: F, fontSize: "0.78rem", fontWeight: 800, cursor: gid && !saving ? "pointer" : "not-allowed", flexShrink: 0, opacity: saving ? 0.6 : 1 }}
+                        >
+                          <Check size={13} /> {saving ? "Guardando…" : "Asignar"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── Por monto ── */}
           <section style={card}>
             <div style={rowBetween}>
