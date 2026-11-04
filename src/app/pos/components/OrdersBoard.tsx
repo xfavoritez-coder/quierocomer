@@ -141,12 +141,7 @@ async function confirmDeliveredIfNeeded(restaurantId: string, order: PosOrderLit
   return true
 }
 
-// Cronómetro del pedido: en retiro, una vez "listo" el tiempo se CONGELA (hora
-// de listo − creación); en el resto cuenta en vivo hasta que se finaliza.
-function OrderTimer({ order, isRetiro, icon = true, style }: { order: PosOrderLite; isRetiro: boolean; icon?: boolean; style?: React.CSSProperties }) {
-  if (isRetiro && order.opsStage === 'ready' && order.opsReadyForDeliveryAt) {
-    return <FrozenClock from={order.createdAt} to={order.opsReadyForDeliveryAt} icon={icon} style={style} />
-  }
+function OrderTimer({ order, isRetiro: _isRetiro, icon = true, style }: { order: PosOrderLite; isRetiro: boolean; icon?: boolean; style?: React.CSSProperties }) {
   return <LiveClock since={order.createdAt} icon={icon} style={style} />
 }
 
