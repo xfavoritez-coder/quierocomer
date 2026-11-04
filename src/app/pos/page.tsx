@@ -201,7 +201,14 @@ type DesktopPanel =
 export default function PosHomePage() {
   const navigate = usePosNav()
   const isDesktop = useIsDesktop()
-  const { restaurantId, restaurant, restaurants, posEnabled } = usePosRestaurant()
+  const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled } = usePosRestaurant()
+
+  // Auth guard: redirect to login if session resolved but no restaurant found
+  useEffect(() => {
+    if (!posLoading && !restaurantId) {
+      window.location.href = '/pos/login'
+    }
+  }, [posLoading, restaurantId])
 
   // ── Multi-branch mode ────────────────────────────────────────────
   // branchMode: restaurantId (single branch) | 'todas' | '' (defaults to current)
@@ -412,6 +419,9 @@ export default function PosHomePage() {
       </div>
     )
   }
+
+  // Mientras resuelve la sesión, no mostrar nada (el useEffect redirige si no hay sesión)
+  if (posLoading || (!posLoading && !restaurantId)) return null
 
   // Guard de acceso: si el local tiene el POS deshabilitado (posEnabled === false
   // vía sesión de panel) no se muestra. null = desconocido (sin sesión) → se permite.
