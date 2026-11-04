@@ -228,7 +228,8 @@ export default function PosHomePage() {
       localStorage.setItem('pos:branchMode', 'todas')
       setBranchMode('todas')
     } else if (id !== restaurantId) {
-      // Different branch → update and reload
+      // Different branch → preserve inner page across reload
+      if (innerPage) localStorage.setItem('pos:restoreInnerPage', innerPage)
       localStorage.setItem('pos:branchMode', id)
       switchPosBranch(id)
     } else {
@@ -271,7 +272,12 @@ export default function PosHomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
   const [mesaOpenModal, setMesaOpenModal] = useState<{ tableId: string; tableNumber: number; tableLabel: string } | null>(null)
-  const [innerPage, setInnerPage] = useState<string | null>(null)
+  const [innerPage, setInnerPage] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    const saved = localStorage.getItem('pos:restoreInnerPage')
+    if (saved) { localStorage.removeItem('pos:restoreInnerPage'); return saved }
+    return null
+  })
 
   useState(() => {
     setRestaurantId(restaurantId)
