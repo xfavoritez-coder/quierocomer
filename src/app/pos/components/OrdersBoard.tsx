@@ -660,13 +660,28 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       if (v === 1 || v === 2 || v === 3) setViewCols(v)
     } catch { }
   }, [])
+  // Máximo de columnas que caben bien según el ancho del dispositivo: teléfono
+  // = 1 (en móvil 2/3 columnas se ven apretadas y cortan el texto), tablet = 2,
+  // desktop = 3. Arranca en 1 para que el SSR no choque con la hidratación.
+  const [maxCols, setMaxCols] = useState<1 | 2 | 3>(1)
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth
+      setMaxCols(w >= 900 ? 3 : w >= 600 ? 2 : 1)
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [])
   const cycleView = useCallback(() => {
     setViewCols(prev => {
-      const next = (prev === 1 ? 2 : prev === 2 ? 3 : 1) as 1 | 2 | 3
+      const next = (prev >= maxCols ? 1 : prev + 1) as 1 | 2 | 3
       try { localStorage.setItem('pos:boardCols', String(next)) } catch { }
       return next
     })
-  }, [])
+  }, [maxCols])
+  // Columnas efectivas: la preferencia guardada, acotada a lo que cabe.
+  const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
   // primero. También se recuerda por dispositivo.
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
@@ -776,14 +791,16 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             >
               <SortIcon dir={sortDir} />
             </button>
-            <button
-              onClick={cycleView}
-              title={`Vista: ${viewCols === 1 ? 'filas' : viewCols + ' columnas'} · toca para cambiar`}
-              aria-label="Cambiar vista"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
-            >
-              <ViewIcon cols={viewCols} />
-            </button>
+            {maxCols > 1 && (
+              <button
+                onClick={cycleView}
+                title={`Vista: ${cols === 1 ? 'filas' : cols + ' columnas'} · toca para cambiar`}
+                aria-label="Cambiar vista"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
+              >
+                <ViewIcon cols={cols} />
+              </button>
+            )}
             <button
               onClick={() => navigate('/pos/tomar-pedido')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
@@ -807,7 +824,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <p>Sin pedidos activos.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${viewCols}, minmax(0, 1fr))`, gap: 14, alignItems: 'stretch' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 14, alignItems: 'stretch' }}>
             {list.map((o) => (
               <OrderCard
                 key={o.id}
