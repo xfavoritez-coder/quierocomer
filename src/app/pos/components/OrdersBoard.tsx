@@ -201,9 +201,9 @@ function OrderCard({
       {/* Body: nombre + info secundaria. flex:1 para empujar el footer abajo y
           que todas las tarjetas de una fila queden a la misma altura. */}
       <div style={{
-        padding: '14px 16px 12px',
+        padding: '14px 16px 14px',
         background: 'var(--surface)',
-        display: 'flex', flexDirection: 'column', gap: 8,
+        display: 'flex', flexDirection: 'column', gap: 10,
         flex: 1, minWidth: 0,
       }}>
         {/* Fila superior: nombre (izq) + total (der) — misma altura, sin chips */}
