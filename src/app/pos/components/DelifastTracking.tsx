@@ -69,12 +69,13 @@ function hm(ts?: string | null): string | null {
 // Contenedor estable (a NIVEL DE MÓDULO): si se define dentro del componente,
 // React lo ve como un tipo nuevo en cada render y re-monta el subárbol — eso
 // reiniciaba el mapa Leaflet cada pocos segundos y perdía el marcador.
-function TrackingBox({ children }: { children: React.ReactNode }) {
+function TrackingBox({ children, badge }: { children: React.ReactNode; badge?: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg>
-        <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>Reparto Delifast</span>
+        <span style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Reparto Delifast</span>
+        {badge}
       </div>
       {children}
     </div>
@@ -127,16 +128,17 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   ]
   if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
 
+  const statusPill = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: sc + '18', color: sc, border: `1px solid ${sc}40`, fontWeight: 700, fontSize: 12.5, borderRadius: 20, padding: '3px 10px', flexShrink: 0 }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: sc }} />
+      {statusLabel(t.status)}
+    </span>
+  )
+
   return (
-    <TrackingBox>
-      {/* Estado + ETA */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: sc + '18', color: sc, border: `1px solid ${sc}40`, fontWeight: 700, fontSize: 12.5, borderRadius: 20, padding: '3px 10px' }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: sc }} />
-          {statusLabel(t.status)}
-        </span>
-        {etaMin != null && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Llega al local en <b>{etaMin} min</b></span>}
-      </div>
+    <TrackingBox badge={statusPill}>
+      {/* ETA al local */}
+      {etaMin != null && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Llega al local en <b>{etaMin} min</b></span>}
 
       {/* Repartidor */}
       {t.driver && (t.driver.name || t.driver.phone) && (

@@ -50,6 +50,7 @@ interface PosOrderLite {
   items: unknown
   createdAt: string
   rawPayload?: unknown
+  delifastVentaId?: string | null
   _branchId?: string  // set internally in multi-branch mode
 }
 
@@ -78,10 +79,13 @@ const STAGE_COLOR: Record<string, string> = {
   delivered: '#6b7280',
 }
 
-function nextAction(stage: string, isDelivery: boolean): { label: string; stage: string } | null {
+function nextAction(stage: string, isDelivery: boolean, delifastVentaId?: string | null): { label: string; stage: string } | null {
   if (stage === 'preparing') return { label: 'Listo', stage: 'ready' }
+  // Órdenes con Delifast asignado: Delifast controla los estados de reparto y entrega
+  if (stage === 'ready' && isDelivery && delifastVentaId) return null
   if (stage === 'ready' && isDelivery) return { label: 'Enviar a reparto', stage: 'out_for_delivery' }
   if (stage === 'ready' && !isDelivery) return { label: 'Entregado', stage: 'delivered' }
+  if (stage === 'out_for_delivery' && delifastVentaId) return null
   if (stage === 'out_for_delivery') return { label: 'Entregado', stage: 'delivered' }
   return null
 }
@@ -173,7 +177,7 @@ function OrderCard({
   const isRetiro = !isDelivery && !isDineIn
   const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
   const typeColor = isDelivery ? '#64748b' : isDineIn ? '#8b5cf6' : '#64748b'
-  const next = nextAction(order.opsStage, isDelivery)
+  const next = nextAction(order.opsStage, isDelivery, order.delifastVentaId)
   const busy = stageBusy === order.id
 
   // Realce de la tarjeta: rojo si está bloqueada (intento de avanzar sin cobrar),
@@ -413,7 +417,7 @@ function OrderDetailPanel({
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
   const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
   const isRetiro = !isDelivery && !isDineIn
-  const next = nextAction(order.opsStage, isDelivery)
+  const next = nextAction(order.opsStage, isDelivery, order.delifastVentaId)
   const lines = itemLines(order.items)
   const busy = stageBusy === order.id
   const [confirmCancel, setConfirmCancel] = useState(false)
