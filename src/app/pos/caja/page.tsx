@@ -43,7 +43,7 @@ export default function CajaPage() {
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
-  const [initialAmount, setInitialAmount] = useState('50000')
+  const [initialAmount, setInitialAmount] = useState('')
   const [countedCash, setCountedCash] = useState('')
   const [closingNote, setClosingNote] = useState('')
   const [opening, setOpening] = useState(false)
@@ -292,6 +292,7 @@ export default function CajaPage() {
                   type="text"
                   inputMode="numeric"
                   value={initialAmount}
+                  placeholder="50.000"
                   onChange={e => setInitialAmount(e.target.value.replace(/\D/g, ''))}
                   style={{
                     flex: 1, fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 700,
