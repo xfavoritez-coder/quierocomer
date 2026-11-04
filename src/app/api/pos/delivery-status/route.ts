@@ -72,10 +72,14 @@ export async function POST(req: NextRequest) {
   type PO = { id: string; restaurantId: string; externalId: string; opsStage: string; delifastVentaId: string | null };
   let po: PO | null = null;
 
+  // Delifast SOLO despacha pedidos de delivery → sus eventos nunca deben tocar un
+  // pedido de retiro. isDelivery:true en todos los match evita falsos positivos
+  // (p. ej. un despacho de "Romina" emparejado por nombre con un retiro de "Romina").
+
   // 1) Match exacto por id_venta ya guardado (eventos repetidos del mismo pedido).
   if (idVenta) {
     po = await prisma.posOrder.findFirst({
-      where: { restaurantId, delifastVentaId: idVenta },
+      where: { restaurantId, delifastVentaId: idVenta, isDelivery: true },
       select: { id: true, restaurantId: true, externalId: true, opsStage: true, delifastVentaId: true },
     });
   }
@@ -89,18 +93,19 @@ export async function POST(req: NextRequest) {
     });
     if (oo) {
       po = await prisma.posOrder.findFirst({
-        where: { restaurantId, externalId: `oo-${oo.id}` },
+        where: { restaurantId, externalId: `oo-${oo.id}`, isDelivery: true },
         select: { id: true, restaurantId: true, externalId: true, opsStage: true, delifastVentaId: true },
       });
     }
   }
 
-  // 3) Último recurso: por nombre de cliente, pedido activo reciente (12 h).
+  // 3) Último recurso: por nombre de cliente, pedido de DELIVERY activo reciente (12 h).
   if (!po && cliente) {
     const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
     po = await prisma.posOrder.findFirst({
       where: {
         restaurantId,
+        isDelivery: true,
         createdAt: { gte: since },
         customerName: { equals: cliente, mode: "insensitive" },
         opsStage: { not: "delivered" },
