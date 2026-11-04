@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
 import type { PaymentMethod } from '@/lib/pos'
+import { getBridgeStatus, printComanda, printKitchenComanda } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
@@ -412,6 +413,33 @@ function OrderDetailPanel({
   const [cancelReason, setCancelReason] = useState('')
   const [canceling, setCanceling] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
+  const [printing, setPrinting] = useState<'ticket' | 'kitchen' | null>(null)
+  const [printMsg, setPrintMsg] = useState<string | null>(null)
+
+  const bridgeType = (): 'mesa' | 'mostrador' | 'retiro' | 'delivery' =>
+    isDelivery ? 'delivery' : isDineIn ? 'mesa' : 'retiro'
+
+  const orderLabel = order.orderReference ?? (order.dailyNumber != null ? String(order.dailyNumber) : order.id.slice(-6))
+
+  const handlePrint = async (kind: 'ticket' | 'kitchen') => {
+    setPrintOpen(false); setPrinting(kind); setPrintMsg(null)
+    const status = await getBridgeStatus()
+    if (!status.ok) { setPrintMsg('Agente desconectado'); setPrinting(null); return }
+    const r = await printKitchenComanda({
+      jobId: order.id + '-' + kind,
+      type: bridgeType(),
+      orderLabel,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerAddress: order.addressLine,
+      sentBy: kind === 'ticket' ? 'caja' : 'cocina',
+      items: itemLines(order.items).map(l => ({ quantity: l.qty, dish_name: l.name, modifiers: l.options.map(o => ({ name: o, price_adjustment: 0 })), note: l.note })),
+    })
+    setPrintMsg(r.ok ? '✓ Impreso' : '✗ ' + (r.error || 'Error'))
+    setPrinting(null)
+    setTimeout(() => setPrintMsg(null), 3000)
+  }
 
   const handleCancel = async () => {
     setCanceling(true)
@@ -441,7 +469,7 @@ function OrderDetailPanel({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 22px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 22px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0, position: 'relative' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
             {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
@@ -460,9 +488,51 @@ function OrderDetailPanel({
             )}
           </div>
         </div>
-        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, position: 'relative' }}>
+          {/* Botón impresora */}
+          <button
+            onClick={() => setPrintOpen(o => !o)}
+            disabled={!!printing}
+            title="Imprimir"
+            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
+          >
+            {printing ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+              </svg>
+            )}
+          </button>
+
+          {/* Dropdown */}
+          {printOpen && (
+            <>
+              <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Ticket de caja
+                </button>
+                <div style={{ height: 1, background: 'var(--line)' }} />
+                <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                  Comanda cocina
+                </button>
+              </div>
+            </>
+          )}
+
+          {printMsg && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
+              {printMsg}
+            </div>
+          )}
+
+          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
 
       {/* Scrollable body */}

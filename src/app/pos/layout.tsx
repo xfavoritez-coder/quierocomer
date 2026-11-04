@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 
 export default function PosLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="antialiased" style={{ color: 'var(--ink)', fontFamily: 'var(--sans)' }}>
+    <div className="antialiased" style={{ color: 'var(--ink)', fontFamily: 'var(--sans)', height: '100dvh', overflow: 'hidden' }}>
       {/* Fonts + design tokens */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -78,6 +78,13 @@ export default function PosLayout({ children }: { children: React.ReactNode }) {
         :focus-visible {
           outline: 2px solid var(--amber);
           outline-offset: 2px;
+        }
+
+        /* Bloquea el scroll nativo del browser en mobile — el POS maneja su propio scroll interno */
+        html, body {
+          height: 100%;
+          overflow: hidden;
+          overscroll-behavior: none;
         }
       `}</style>
       <PosServiceWorker />

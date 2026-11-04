@@ -2,6 +2,7 @@
    Extracted from pos-design.html mockup.
    All POS screens consume ONLY these classes + tokens.
 */
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- shell ---------- */
 .pos-shell{height:100dvh;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;position:relative}
