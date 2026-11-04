@@ -35,19 +35,19 @@ export default function PosConfigPanel({ restaurantId, title, onDone }: { restau
     const SubPanel = active.component
     return (
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        {/* Back header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: '1px solid var(--line)', background: 'var(--surface)', flexShrink: 0 }}>
-          <button
-            onClick={() => setActiveSection(null)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M15 18l-6-6 6-6"/>
-            </svg>
-          </button>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--ink)' }}>{active.title}</span>
+        {/* Back row — solo flecha, título va dentro del sub-panel */}
+        <div style={{ borderBottom: '1px solid var(--line)', background: 'var(--surface)', flexShrink: 0 }}>
+          <div style={{ maxWidth: 520, margin: '0 auto', width: '100%', padding: '8px 16px' }}>
+            <button
+              onClick={() => setActiveSection(null)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: 'var(--sans)', fontSize: '0.82rem', fontWeight: 600 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+              Configuración
+            </button>
+          </div>
         </div>
-        <SubPanel restaurantId={restaurantId} />
+        <SubPanel restaurantId={restaurantId} title={active.title} />
       </div>
     )
   }
