@@ -22,7 +22,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function verifySignature(rawBody: string, signature: string | null): boolean {
-  const secret = process.env.UBEREATS_CLIENT_SECRET || "";
+  // Clave de firma del webhook configurada en el dashboard de Uber (Basic HMAC).
+  // Dedicada (no el client secret de OAuth); fallback al client secret por compat.
+  const secret = process.env.UBEREATS_WEBHOOK_SIGNING_KEY || process.env.UBEREATS_CLIENT_SECRET || "";
   if (!secret || !signature) return false;
   const expected = crypto.createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
   const a = Buffer.from(expected);
