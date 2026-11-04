@@ -39,7 +39,7 @@ import PosHistorialPanel from './components/panels/PosHistorialPanel'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos' | 'cobros'
 
 const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<{ restaurantId: string; title?: string; onDone?: () => void }> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
@@ -71,6 +71,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'mesas', label: 'Mesas' },
   { id: 'retiro', label: 'Retiro' },
   { id: 'delivery', label: 'Delivery' },
+  { id: 'cobros', label: 'Por cobrar' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -254,17 +255,24 @@ export default function PosHomePage() {
     return status !== 'libre'
   }).length
 
-  const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
+  const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number; cobros: number }>({ retiro: 0, delivery: 0, cobros: 0 })
   useEffect(() => {
     if (!restaurantId) return
     const fetchCounts = async () => {
       try {
-        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
-        const d = await r.json()
-        if (r.ok && Array.isArray(d.orders)) {
+        const [ra, rc] = await Promise.all([
+          fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' }),
+          fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=cobros`, { cache: 'no-store' }),
+        ])
+        const d = await ra.json()
+        const dc = await rc.json().catch(() => null)
+        const cobros = (rc.ok && dc && Array.isArray(dc.orders)) ? dc.orders.length : 0
+        if (ra.ok && Array.isArray(d.orders)) {
           const delivery = d.orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
           const retiro = d.orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
-          setOrderCounts({ retiro, delivery })
+          setOrderCounts({ retiro, delivery, cobros })
+        } else {
+          setOrderCounts((prev) => ({ ...prev, cobros }))
         }
       } catch { /* noop */ }
     }
@@ -283,6 +291,7 @@ export default function PosHomePage() {
     ...(orderCounts.retiro > 0 ? { retiro: orderCounts.retiro } : {}),
     ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
     ...(totalOnline > 0 ? { todos: totalOnline } : {}),
+    ...(orderCounts.cobros > 0 ? { cobros: orderCounts.cobros } : {}),
   }
 
   // Handlers
@@ -413,7 +422,7 @@ export default function PosHomePage() {
                 onClick={() => { setTab(t.id); setInnerPage(null) }}
               >
                 {t.label}
-                {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+                {tabCounts[t.id] ? <span className="pos-tab-badge" style={t.id === 'cobros' ? { background: '#f59e0b', color: '#fff' } : undefined}>{tabCounts[t.id]}</span> : null}
               </button>
             ))}
           </div>
@@ -452,8 +461,8 @@ export default function PosHomePage() {
       {/* ── Main content (solo cuando no hay inner page) ── */}
       {!innerPage && <>
 
-      {/* ── Retiro / Delivery / Todos ── */}
-      {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
+      {/* ── Retiro / Delivery / Todos / Por cobrar ── */}
+      {(tab === 'retiro' || tab === 'delivery' || tab === 'todos' || tab === 'cobros') && (
         <OrdersBoard restaurantId={restaurantId} type={tab} />
       )}
 

@@ -97,6 +97,17 @@ export async function GET(req: NextRequest) {
     where.createdAt = dateRange;
     where.posStatus = { not: "canceled" };
     where.paidAmount = { gt: 0 };
+  } else if (scope === "cobros") {
+    // Cobros pendientes: pedidos cerrados operativamente (entregados) pero que
+    // todavía tienen saldo por cobrar. Son los que "caen" del board de activos
+    // sin haberse cobrado (p. ej. Delifast los marcó entregados). No deben
+    // perderse: acá siguen gestionables hasta que se cobren. El filtro final
+    // paidAmount < totalAmount se hace en JS (Prisma no compara columnas).
+    // Ventana amplia (30 días) para no perder rezagados de días anteriores.
+    where.posStatus = { not: "canceled" };
+    where.opsStage = "delivered";
+    where.totalAmount = { gt: 0 };
+    where.createdAt = { gte: new Date(Date.now() - 30 * 86400_000) };
   } else {
     // Activos: los pedidos en curso (preparación/listo/reparto). Al cerrar un
     // pedido pasa a "delivered" y debe salir de esta lista; los entregados y
@@ -136,8 +147,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ orders: withNum, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime });
   }
 
-  const nums = await dailyOrderNumbers(restaurantId, orders.map((o) => ({ id: o.id, createdAt: o.createdAt })));
-  const ordersOut = orders.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
+  // Cobros pendientes: solo los que realmente tienen saldo (paidAmount < total).
+  const visible = scope === "cobros" ? orders.filter((o) => (o.paidAmount || 0) < (o.totalAmount || 0)) : orders;
+  const nums = await dailyOrderNumbers(restaurantId, visible.map((o) => ({ id: o.id, createdAt: o.createdAt })));
+  const ordersOut = visible.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
   return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled });
 }
 
@@ -158,15 +171,24 @@ export async function PATCH(req: NextRequest) {
     if (!["efectivo", "debito", "credito", "transferencia", "webpay"].includes(method)) {
       return NextResponse.json({ error: "Método inválido" }, { status: 400 });
     }
-    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, rawPayload: true } });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, rawPayload: true } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     const total = order.totalAmount || 0;
+    // Idempotencia: si el pedido ya está cobrado completo, no re-escribir. Evita el
+    // doble cobro por doble clic o por dos cajeras cobrando el mismo pedido a la vez.
+    if (total > 0 && (order.paidAmount || 0) >= total) {
+      const current = await prisma.posOrder.findUnique({ where: { id } });
+      return NextResponse.json({ order: current, alreadyPaid: true });
+    }
     const tip = Math.max(0, Math.round(Number(body?.tip) || 0));
     const received = method === "efectivo" ? Math.max(0, Math.round(Number(body?.received) || 0)) : total;
     const change = Math.max(0, received - total);
     const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
       ? (order.rawPayload as Record<string, unknown>) : {};
-    const rawPayload = { ...prevRaw, posPayment: { method, received, tip, at: new Date().toISOString() } };
+    // Auditoría del cobro: método, montos, instante, quién lo registró (panel_id) y
+    // el origen de la confirmación. Se guarda en rawPayload (sin tocar el schema).
+    const by = req.cookies.get("panel_id")?.value || "caja";
+    const rawPayload = { ...prevRaw, posPayment: { method, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 } };
     const updated = await prisma.posOrder.update({
       where: { id },
       data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },

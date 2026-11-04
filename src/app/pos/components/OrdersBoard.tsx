@@ -8,7 +8,12 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking from './DelifastTracking'
 
-type OrderType = 'retiro' | 'delivery' | 'todos'
+type OrderType = 'retiro' | 'delivery' | 'todos' | 'cobros'
+
+// Paleta de cobro: ámbar = pendiente (estado normal), rojo = advertencia al
+// intentar avanzar sin cobrar. El rojo es transitorio y descartable.
+const AMBER = '#f59e0b'
+const RED = '#dc2626'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -138,15 +143,19 @@ function OrderTimer({ order, isRetiro, icon = true, style }: { order: PosOrderLi
 // ── Order card ──────────────────────────────────────────────────────
 
 function OrderCard({
-  order, isSelected, showTypeChip, stageBusy,
-  onSelect, onStageChange,
+  order, isSelected, showTypeChip, stageBusy, blocked,
+  onSelect, onStageChange, onCobro, onBlock, onDismissBlock,
 }: {
   order: PosOrderLite
   isSelected: boolean
   showTypeChip: boolean
   stageBusy: string | null
+  blocked: boolean
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
+  onCobro: (o: PosOrderLite) => void
+  onBlock: (o: PosOrderLite) => void
+  onDismissBlock: () => void
 }) {
   const isDesktop = useIsDesktop()
   const paid = isPaid(order)
@@ -160,15 +169,22 @@ function OrderCard({
   const next = nextAction(order.opsStage, isDelivery)
   const busy = stageBusy === order.id
 
+  // Realce de la tarjeta: rojo si está bloqueada (intento de avanzar sin cobrar),
+  // ámbar si está impaga, normal si está pagada.
+  const shell: React.CSSProperties = blocked
+    ? { border: `1.5px solid ${RED}`, boxShadow: `0 0 0 1px ${RED}, 0 8px 22px rgba(220,38,38,.22)` }
+    : !paid
+      ? { border: `1.5px solid ${AMBER}cc`, boxShadow: `0 0 0 1px ${AMBER}73, 0 8px 22px rgba(245,158,11,.20)` }
+      : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
+
   return (
     <div
       style={{
-        border: `1.5px solid var(--line)`,
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
-        boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)',
+        ...shell,
         transform: isSelected ? 'translateY(-2px)' : 'none',
         fontFamily: 'var(--sans)',
-        transition: 'box-shadow .15s, transform .15s',
+        transition: 'box-shadow .2s ease, border-color .2s ease, transform .15s ease',
       }}
       onClick={onSelect}
     >
@@ -208,13 +224,13 @@ function OrderCard({
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
               {showTypeChip && <span style={chip(typeColor)}>{typeLabel}</span>}
-              <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Por cobrar'}</span>
+              <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer coloreado: estado + botón acción */}
+      {/* Footer coloreado: estado + (si está pagado) botón de avance */}
       <div
         style={{
           padding: '11px 18px',
@@ -231,7 +247,9 @@ function OrderCard({
           </span>
           <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13 }} />
         </span>
-        {next && (
+        {/* Pagado: avanzar es la acción principal. Impago: el avance vive en la
+            franja de cobro de abajo (interceptado). */}
+        {paid && next && (
           <button
             onClick={() => onStageChange(order, next.stage)}
             disabled={busy}
@@ -246,6 +264,105 @@ function OrderCard({
           </button>
         )}
       </div>
+
+      {/* Franja de cobro — solo si está impago. Cobrar es la acción principal. */}
+      {!paid && (
+        <CobroStrip
+          order={order} next={next} blocked={blocked} busy={busy}
+          onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
+        />
+      )}
+    </div>
+  )
+}
+
+// Franja de cobro reutilizable (tarjeta y panel). Ámbar = pago pendiente; al
+// intentar avanzar se pone roja con la advertencia, sin modal y descartable.
+function CobroStrip({
+  order, next, blocked, busy, onCobro, onBlock, onStageChange, onDismissBlock,
+}: {
+  order: PosOrderLite
+  next: { label: string; stage: string } | null
+  blocked: boolean
+  busy: boolean
+  onCobro: (o: PosOrderLite) => void
+  onBlock: (o: PosOrderLite) => void
+  onStageChange: (o: PosOrderLite, stage: string) => void
+  onDismissBlock: () => void
+}) {
+  const balance = Math.max(0, (order.totalAmount || 0) - (order.paidAmount || 0))
+  return (
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        padding: '12px 18px 14px',
+        background: blocked ? 'rgba(220,38,38,.08)' : 'rgba(245,158,11,.10)',
+        borderTop: `1px solid ${blocked ? RED : AMBER}2e`,
+        display: 'flex', flexDirection: 'column', gap: 10,
+        transition: 'background .2s ease',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={blocked ? RED : AMBER} strokeWidth="2.2" style={{ flexShrink: 0, marginTop: 1 }}>
+          {blocked
+            ? <><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></>
+            : <><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></>}
+        </svg>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 13.5, color: blocked ? RED : 'var(--amber-press)', lineHeight: 1.35 }}>
+            {blocked ? 'Debes cobrar el pedido antes de cambiar su estado' : 'Pago pendiente'}
+          </div>
+          {!blocked && <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 1 }}>Cobra el pedido para poder avanzar su estado.</div>}
+        </div>
+        {blocked && (
+          <button onClick={onDismissBlock} title="Descartar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, padding: 2, lineHeight: 0, flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={() => onCobro(order)}
+          style={{
+            flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            padding: '11px 14px', borderRadius: 10, border: 'none',
+            background: 'var(--amber)', color: '#fff', fontWeight: 800, fontSize: 15,
+            cursor: 'pointer', fontFamily: 'var(--sans)',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          Cobrar {clp(balance || order.totalAmount)}
+        </button>
+        {next && (
+          blocked ? (
+            <button
+              onClick={() => onStageChange(order, next.stage)}
+              disabled={busy}
+              style={{
+                flexShrink: 0, padding: '11px 12px', borderRadius: 10,
+                border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)',
+                fontWeight: 600, fontSize: 12.5, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
+              }}
+              title="Avanzar el estado sin cobrar (quedará en Por cobrar)"
+            >
+              {busy ? '…' : 'Avanzar sin cobrar'}
+            </button>
+          ) : (
+            <button
+              onClick={() => onBlock(order)}
+              style={{
+                flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '11px 14px', borderRadius: 10,
+                border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)',
+                fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              {next.label}
+            </button>
+          )
+        )}
+      </div>
     </div>
   )
 }
@@ -253,15 +370,18 @@ function OrderCard({
 // ── Order detail panel ──────────────────────────────────────────────
 
 function OrderDetailPanel({
-  order, restaurantId, cajaOpen, stageBusy, delifastEnabled, onStageChange, onCobro, onClose, onPaid, navigate,
+  order, restaurantId, cajaOpen, stageBusy, delifastEnabled, blocked, onStageChange, onCobro, onBlock, onDismissBlock, onClose, onPaid, navigate,
 }: {
   order: PosOrderLite
   restaurantId: string
   cajaOpen: boolean
   stageBusy: string | null
   delifastEnabled: boolean
+  blocked: boolean
   onStageChange: (o: PosOrderLite, stage: string) => void
-  onCobro: () => void
+  onCobro: (o: PosOrderLite) => void
+  onBlock: (o: PosOrderLite) => void
+  onDismissBlock: () => void
   onClose: () => void
   onPaid: () => void
   navigate: (path: string) => void
@@ -412,7 +532,9 @@ function OrderDetailPanel({
                   {STAGE_LABEL[order.opsStage] ?? order.opsStage}
                 </span>
               </div>
-              {next && (
+              {/* Pagado: avanzar es la acción principal. Impago: el avance se
+                  gestiona en la franja de cobro de abajo (interceptado). */}
+              {paid && next && (
                 <button
                   onClick={() => onStageChange(order, next.stage)}
                   disabled={busy}
@@ -446,15 +568,13 @@ function OrderDetailPanel({
           )
         })()}
 
-        {/* Cobrar — solo si no está pagado */}
+        {/* Cobro — franja ámbar/roja, misma lógica y botones que la tarjeta */}
         {!paid && (
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
-            <button
-              onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } onCobro() }}
-              style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-            >
-              {cajaOpen ? 'Cobrar →' : 'Abrir caja →'}
-            </button>
+          <div style={{ borderRadius: 12, overflow: 'hidden', border: `1.5px solid ${blocked ? RED : AMBER + 'cc'}` }}>
+            <CobroStrip
+              order={order} next={next} blocked={blocked} busy={busy}
+              onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
+            />
           </div>
         )}
 
@@ -475,10 +595,24 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const [selected, setSelected] = useState<PosOrderLite | null>(null)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
   const [stageBusy, setStageBusy] = useState<string | null>(null)
+  const [blockedId, setBlockedId] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
   const cashSession = useOpenCashSession(restaurantId)
   const cajaOpen = !!cashSession
+  const isCobros = type === 'cobros'
+
+  // Cobrar: si la caja está cerrada se redirige a abrirla; si no, abre el modal.
+  const handleCobro = useCallback((o: PosOrderLite) => {
+    setBlockedId(null)
+    if (!cajaOpen) { navigate('/pos/caja'); return }
+    setCobro(o)
+    if (!isDesktop) setSelected(null)
+  }, [cajaOpen, isDesktop, navigate])
+
+  // Intento de avanzar un pedido impago → se intercepta y la tarjeta se pone roja.
+  const blockAdvance = useCallback((o: PosOrderLite) => setBlockedId(o.id), [])
+  const dismissBlock = useCallback(() => setBlockedId(null), [])
 
   useEffect(() => {
     if (restaurantId) { setRestaurantId(restaurantId); setUserId(TEST_USER_ID) }
@@ -487,7 +621,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   const fetchOrders = useCallback(async () => {
     if (!restaurantId) return
     try {
-      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=${isCobros ? 'cobros' : 'activos'}`, { cache: 'no-store' })
       const d = await r.json()
       if (r.ok && Array.isArray(d.orders)) {
         setOrders(d.orders)
@@ -497,7 +631,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       }
     } catch { }
     setLoading(false)
-  }, [restaurantId])
+  }, [restaurantId, isCobros])
 
   useEffect(() => {
     setLoading(true)
@@ -507,17 +641,21 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
   }, [fetchOrders])
 
   const list = useMemo(() => {
+    // "Por cobrar" ya viene filtrado del servidor (entregados impagos); no se
+    // subdivide por tipo. El resto se filtra por la pestaña activa.
+    if (isCobros) return orders
     return orders.filter((o) => {
       if (type === 'todos') return true
       const deliv = o.isDelivery || o.saleType === 'delivery'
       if (type === 'delivery') return deliv
       return !deliv && o.saleType !== 'dine-in' && o.saleType !== 'dinein'
     })
-  }, [orders, type])
+  }, [orders, type, isCobros])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     if (stage === 'delivered' && !(await confirmDeliveredIfNeeded(restaurantId, order, delifastEnabled))) return
     setStageBusy(order.id)
+    setBlockedId(null)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -539,15 +677,17 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
-            {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
+            {isCobros ? 'Por cobrar' : type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
           </div>
-          <button
-            onClick={() => navigate('/pos/tomar-pedido')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            {newOrderLabel}
-          </button>
+          {!isCobros && (
+            <button
+              onClick={() => navigate('/pos/tomar-pedido')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              {newOrderLabel}
+            </button>
+          )}
         </div>
 
         {/* List */}
@@ -560,7 +700,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
             <div className="ring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg>
             </div>
-            <p>Sin pedidos activos.</p>
+            <p>{isCobros ? 'Sin cobros pendientes.' : 'Sin pedidos activos.'}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -569,8 +709,9 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                 key={o.id}
                 order={o}
                 isSelected={selected?.id === o.id}
-                showTypeChip={type === 'todos'}
+                showTypeChip={type === 'todos' || isCobros}
                 stageBusy={stageBusy}
+                blocked={blockedId === o.id}
                 onSelect={() => {
                   if (isDesktop) {
                     setSelected(prev => prev?.id === o.id ? null : o)
@@ -579,6 +720,9 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
                   }
                 }}
                 onStageChange={changeStage}
+                onCobro={handleCobro}
+                onBlock={blockAdvance}
+                onDismissBlock={dismissBlock}
               />
             ))}
           </div>
@@ -594,8 +738,11 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
       cajaOpen={cajaOpen}
       stageBusy={stageBusy}
       delifastEnabled={delifastEnabled}
+      blocked={blockedId === selected.id}
       onStageChange={changeStage}
-      onCobro={() => setCobro(selected)}
+      onCobro={handleCobro}
+      onBlock={blockAdvance}
+      onDismissBlock={dismissBlock}
       onClose={() => setSelected(null)}
       onPaid={() => { setSelected(null); fetchOrders() }}
       navigate={navigate}
@@ -619,7 +766,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
           {detailSection}
         </div>
         {cobro && (
-          <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+          <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
         )}
       </div>
     )
@@ -642,8 +789,11 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
               cajaOpen={cajaOpen}
               stageBusy={stageBusy}
               delifastEnabled={delifastEnabled}
+              blocked={blockedId === selected.id}
               onStageChange={changeStage}
-              onCobro={() => { setCobro(selected); setSelected(null) }}
+              onCobro={handleCobro}
+              onBlock={blockAdvance}
+              onDismissBlock={dismissBlock}
               onClose={() => setSelected(null)}
               onPaid={() => { setSelected(null); fetchOrders() }}
               navigate={navigate}
@@ -652,7 +802,7 @@ export default function OrdersBoard({ restaurantId, type }: { restaurantId: stri
         </div>
       )}
       {cobro && (
-        <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); fetchOrders() }} />
+        <CobroModal order={cobro} restaurantId={restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
       )}
     </>
   )
