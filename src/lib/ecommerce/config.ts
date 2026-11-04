@@ -134,6 +134,9 @@ export interface CentroPedidosConfig {
   /** En delivery, el cargo de servicio de la plataforma lo paga el CLIENTE (se suma
    *  a su despacho) en vez de descontarse del saldo del restaurante (default: no). */
   customerAbsorbsSurcharge?: boolean;
+  /** Minutos que un pedido de RETIRO puede estar "En preparación" antes de que el
+   *  POS avise con un modal. 0 = desactivado. Sin definir = 60. */
+  prepAlertMinutes?: number;
 }
 
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {

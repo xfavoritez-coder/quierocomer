@@ -47,6 +47,9 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.uberEnabled === "boolean") merged.uberEnabled = incoming.uberEnabled;
   if (typeof incoming.pedidosyaEnabled === "boolean") merged.pedidosyaEnabled = incoming.pedidosyaEnabled;
   if (typeof incoming.customerAbsorbsSurcharge === "boolean") merged.customerAbsorbsSurcharge = incoming.customerAbsorbsSurcharge;
+  if (typeof incoming.prepAlertMinutes === "number" && Number.isFinite(incoming.prepAlertMinutes)) {
+    merged.prepAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.prepAlertMinutes)));
+  }
 
   const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };
   // "Mostrar descripción en Tomar pedidos" vive en ecommerceStoreConfig (lo lee el tomador).

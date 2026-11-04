@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -28,6 +28,7 @@ import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
 import OrdersBoard from './components/OrdersBoard'
+import PrepAlertWatcher from './components/PrepAlertWatcher'
 import { LiveClock } from './components/OrderClock'
 import PosCartaPanel from './components/panels/PosCartaPanel'
 import PosCajaPanel from './components/panels/PosCajaPanel'
@@ -251,6 +252,10 @@ export default function PosHomePage() {
   }).length
 
   const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
+  // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
+  const [activeOrders, setActiveOrders] = useState<any[]>([])
+  const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
+  const refreshOrdersRef = useRef<() => void>(() => {})
   useEffect(() => {
     if (!restaurantId) return
     const fetchCounts = async () => {
@@ -261,9 +266,12 @@ export default function PosHomePage() {
           const delivery = d.orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
           const retiro = d.orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
           setOrderCounts({ retiro, delivery })
+          setActiveOrders(d.orders)
+          if (typeof d.prepAlertMinutes === 'number') setPrepAlertMin(d.prepAlertMinutes)
         }
       } catch { /* noop */ }
     }
+    refreshOrdersRef.current = fetchCounts
     fetchCounts()
     if (!supabase) return
     const channel = supabase
@@ -391,6 +399,10 @@ export default function PosHomePage() {
 
   return (
     <div className="pos-shell">
+      {/* Alerta global de retiro atascado en preparación (corre en todas las pestañas). */}
+      {restaurantId && (
+        <PrepAlertWatcher restaurantId={restaurantId} orders={activeOrders} prepAlertMinutes={prepAlertMin} onChanged={() => refreshOrdersRef.current()} />
+      )}
       {/* ── Header — siempre visible con tabs ── */}
       <PosHeader
         mode="brand"

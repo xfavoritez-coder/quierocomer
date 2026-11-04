@@ -7,6 +7,7 @@ interface PedidosCfg {
   uberEnabled?: boolean
   pedidosyaEnabled?: boolean
   customerAbsorbsSurcharge?: boolean
+  prepAlertMinutes?: number
 }
 
 function PosToggle({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
@@ -35,6 +36,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
   const [posMode,   setPosMode]   = useState(false)
   const [showDesc,  setShowDesc]  = useState(false)
   const [savingPed, setSavingPed] = useState(false)
+  const [prepMin,   setPrepMin]   = useState('60')
 
   const loadPedidos = useCallback(async () => {
     if (!restaurantId) return
@@ -43,12 +45,28 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
       const d = await r.json()
       if (r.ok && d.config) {
         setPedidos(d.config)
+        setPrepMin(String(typeof d.config.prepAlertMinutes === 'number' ? d.config.prepAlertMinutes : 60))
         if (typeof d.posModeEffective === 'boolean') setPosMode(d.posModeEffective)
         if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions)
       }
     } catch { /* noop */ }
   }, [restaurantId])
   useEffect(() => { loadPedidos() }, [loadPedidos])
+
+  const savePrepMin = async () => {
+    if (!restaurantId) return
+    const n = Math.min(600, Math.max(0, parseInt(prepMin, 10) || 0))
+    setPrepMin(String(n))
+    setPedidos(p => ({ ...p, prepAlertMinutes: n }))
+    setSavingPed(true)
+    try {
+      await fetch('/api/panel/ecommerce/pos-orders/settings', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, config: { prepAlertMinutes: n } }),
+      })
+    } catch { /* noop */ }
+    setSavingPed(false)
+  }
 
   const updatePedidos = async (patch: Partial<PedidosCfg & { posMode?: boolean }>) => {
     if (!restaurantId) return
@@ -99,6 +117,26 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
             return <ToggleRow key={key} title={title} desc={desc} checked={checked} disabled={savingPed} onChange={() => updatePedidos({ [key]: !checked })} />
           })}
           <ToggleRow title="Mostrar descripción de productos" desc="En «Tomar pedidos» muestra la descripción debajo del nombre de cada producto." checked={showDesc} disabled={savingPed} onChange={() => updateShowDesc(!showDesc)} />
+
+          {/* Alerta de retiro atascado en preparación */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'var(--sunk)', border: `1px solid ${(parseInt(prepMin, 10) || 0) > 0 ? 'var(--amber)' : 'var(--line)'}`, borderRadius: 14, padding: '14px 16px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)' }}>Alerta de retiro en preparación</div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 3 }}>Avisa con un modal si un pedido de retiro lleva demasiado tiempo «En preparación». 0 = desactivado.</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <input
+                type="number" inputMode="numeric" min={0} max={600}
+                value={prepMin}
+                disabled={savingPed}
+                onChange={(e) => setPrepMin(e.target.value.replace(/\D/g, ''))}
+                onBlur={savePrepMin}
+                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                style={{ width: 64, textAlign: 'right', padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 15, fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--ink)', outline: 'none' }}
+              />
+              <span style={{ fontSize: '0.8rem', color: 'var(--ink-2)', fontWeight: 600 }}>min</span>
+            </div>
+          </div>
 
         </div>
       </div>
