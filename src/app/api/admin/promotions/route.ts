@@ -15,10 +15,10 @@ import { ensurePromoDish, removePromoDish, syncPromoStoreProductsActive } from "
 
 async function revalidateRestaurant(restaurantId: string) {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } });
-  if (r?.slug) revalidateTag(`qr-restaurant-${r.slug}`, "minutes");
-  // La oferta (discountPrice) afecta el precio del storefront cacheado.
-  revalidateTag("ecom-storefront", "max");
-  if (r?.slug) revalidateTag(`ecom-storefront-slug-${r.slug}`, "max");
+  // { expire: 0 } = expiración inmediata (no stale-while-revalidate) — el próximo request obtiene datos frescos
+  if (r?.slug) revalidateTag(`qr-restaurant-${r.slug}`, { expire: 0 } as any);
+  revalidateTag("ecom-storefront", { expire: 0 } as any);
+  if (r?.slug) revalidateTag(`ecom-storefront-slug-${r.slug}`, { expire: 0 } as any);
 }
 
 export async function GET(req: NextRequest) {
