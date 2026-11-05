@@ -55,3 +55,6 @@ cartapdf.pdf
 
 # Worktrees temporales de agentes (no deben versionarse)
 .claude/worktrees/
+
+_fixcajas.cjs
+_tmp_*.cjs
