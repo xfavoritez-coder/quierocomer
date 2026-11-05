@@ -154,14 +154,18 @@ function ProductRow({ p, onToggleSoldOut, onEdit, onDelete }: {
 
       {/* Name + price */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isSoldOut ? '#ef4444' : isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}{isHidden ? ' · oculto' : ''}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isSoldOut ? '#ef4444' : isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+          {isSoldOut && <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: '#ef4444', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 4, padding: '1px 5px' }}>AGOTADO</span>}
+          {isHidden && !isSoldOut && <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.62rem', color: 'var(--ink-3)', background: 'var(--sunk)', borderRadius: 4, padding: '1px 5px' }}>oculto</span>}
+        </div>
         <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>{clp(p.price)}</div>
       </div>
 
       {/* Agotar / Disponible */}
       <button onClick={onToggleSoldOut}
         style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isSoldOut ? '#ef4444' : 'var(--line)'}`, background: isSoldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: isSoldOut ? '#ef4444' : 'var(--ink-2)' }}>
-        {isSoldOut ? 'Agotado' : 'Agotar'}
+        {isSoldOut ? 'Reponer' : 'Agotar'}
       </button>
 
       {/* Edit */}
