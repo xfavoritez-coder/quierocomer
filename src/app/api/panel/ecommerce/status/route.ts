@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 
 /**
@@ -17,8 +18,7 @@ export async function GET(req: NextRequest) {
   // Verificar pertenencia (owner o team member)
   let allowed = false;
   if (panelId.startsWith("tm_")) {
-    const m = await prisma.teamMember.findUnique({ where: { id: panelId.slice(3) }, select: { restaurantId: true } });
-    allowed = m?.restaurantId === restaurantId;
+    allowed = await teamMemberCanAccess(panelId.slice(3), restaurantId);
   } else if (panelId === "demo") {
     allowed = true;
   } else {

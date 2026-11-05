@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 
 // GET — list reviews for a restaurant
 export async function GET(req: NextRequest) {
@@ -12,8 +13,7 @@ export async function GET(req: NextRequest) {
   // Verify ownership
   let allowed = false;
   if (panelId.startsWith("tm_")) {
-    const m = await prisma.teamMember.findUnique({ where: { id: panelId.slice(3) }, select: { restaurantId: true } });
-    allowed = m?.restaurantId === restaurantId;
+    allowed = await teamMemberCanAccess(panelId.slice(3), restaurantId);
   } else {
     const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
     allowed = r?.ownerId === panelId;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,8 +11,7 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
   if (!panelId) return false;
   if (panelId === "demo") return true;
   if (panelId.startsWith("tm_")) {
-    const m = await prisma.teamMember.findUnique({ where: { id: panelId.slice(3) }, select: { restaurantId: true } });
-    return m?.restaurantId === restaurantId;
+    return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
   return r?.ownerId === panelId;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 
 /**
  * PATCH /api/panel/ordering-mode
@@ -21,12 +22,7 @@ export async function PATCH(req: NextRequest) {
   // Verify ownership — handle both owner and team member
   let allowed = false;
   if (panelId.startsWith("tm_")) {
-    const memberId = panelId.slice(3);
-    const member = await prisma.teamMember.findUnique({
-      where: { id: memberId },
-      select: { restaurantId: true },
-    });
-    allowed = member?.restaurantId === restaurantId;
+    allowed = await teamMemberCanAccess(panelId.slice(3), restaurantId);
   } else {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId },

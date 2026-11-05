@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { loadEcommerceStorefront } from "@/lib/ecommerce/storefront-data";
 
 export const runtime = "nodejs";
@@ -9,8 +10,7 @@ async function verifyAccess(req: NextRequest, restaurantId: string): Promise<boo
   const panelId = req.cookies.get("panel_id")?.value;
   if (!panelId) return false;
   if (panelId.startsWith("tm_")) {
-    const m = await prisma.teamMember.findUnique({ where: { id: panelId.slice(3) }, select: { restaurantId: true } });
-    return m?.restaurantId === restaurantId;
+    return teamMemberCanAccess(panelId.slice(3), restaurantId);
   }
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
   return r?.ownerId === panelId;

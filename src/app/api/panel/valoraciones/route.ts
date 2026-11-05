@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 
 export async function PATCH(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -15,8 +16,7 @@ export async function PATCH(req: NextRequest) {
   // Verify ownership
   let allowed = false;
   if (panelId.startsWith("tm_")) {
-    const m = await prisma.teamMember.findUnique({ where: { id: panelId.slice(3) }, select: { restaurantId: true } });
-    allowed = m?.restaurantId === restaurantId;
+    allowed = await teamMemberCanAccess(panelId.slice(3), restaurantId);
   } else {
     const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
     allowed = r?.ownerId === panelId;
