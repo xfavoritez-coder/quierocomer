@@ -35,6 +35,13 @@ interface Channel     { name: string; sales: number; orders: number }
 interface ProductRank { name: string; qty: number; revenue: number }
 interface TypeBucket  { type: string; label: string; sales: number; orders: number }
 interface MonthlyDay  { day: number; sales: number; orders: number }
+interface DeliveryTimeRow { ref: string; name: string; prepMin: number | null; transitMin: number | null; totalMin: number }
+interface DeliveryTimes {
+  count: number
+  avgTotal: number | null; avgPrep: number | null; avgTransit: number | null
+  pctUnder30: number | null; pctUnder45: number | null; pctUnder60: number | null
+  orders: DeliveryTimeRow[]
+}
 interface Report {
   ordersCount: number
   productSales: number
@@ -46,6 +53,7 @@ interface Report {
   products: ProductRank[]
   byType: TypeBucket[]
   monthly: { month: string; days: MonthlyDay[] }
+  deliveryTimes?: DeliveryTimes
 }
 
 // ── Design primitives ─────────────────────────────────────────────
@@ -289,6 +297,88 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
   )
 }
 
+function minLabel(m: number | null): string {
+  if (m == null) return '—'
+  if (m < 60) return `${m} min`
+  return `${Math.floor(m / 60)}h ${m % 60}min`
+}
+
+function timeColor(m: number): string {
+  if (m <= 30) return GREEN
+  if (m <= 45) return BLUE
+  if (m <= 60) return 'var(--amber)'
+  return '#ef4444'
+}
+
+function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
+  if (dt.count === 0) return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>Delivery · Delifast</span>
+      </div>
+      <p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0', fontSize: '0.82rem' }}>Sin entregas completadas en el período.</p>
+    </Card>
+  )
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{dt.count} pedidos · Delifast</span>
+      </div>
+
+      {/* KPI summary pills */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
+        {[
+          { label: 'Promedio total', value: minLabel(dt.avgTotal), color: dt.avgTotal != null ? timeColor(dt.avgTotal) : 'var(--ink-3)' },
+          { label: 'Preparación', value: minLabel(dt.avgPrep), color: BLUE },
+          { label: 'En tránsito', value: minLabel(dt.avgTransit), color: PURPLE },
+        ].map(s => (
+          <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', borderLeft: `3px solid ${s.color}` }}>
+            <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* % bajo umbral */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+        {([['≤30 min', dt.pctUnder30, GREEN], ['≤45 min', dt.pctUnder45, BLUE], ['≤60 min', dt.pctUnder60, 'var(--amber)']] as [string, number | null, string][]).map(([label, pct, color]) => (
+          <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: F, fontSize: '0.74rem', fontWeight: 700, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+            {pct ?? '—'}% {label}
+          </span>
+        ))}
+      </div>
+
+      {/* Tabla por pedido */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {/* header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px', gap: 8, padding: '4px 6px', marginBottom: 2 }}>
+          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Pedido</span>
+          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Prep.</span>
+          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Tránsito</span>
+          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
+        </div>
+        {dt.orders.map((o, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+            <div style={{ minWidth: 0 }}>
+              <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                {o.ref ? `#${o.ref}` : '—'}
+              </span>
+              {o.name && <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{o.name}</span>}
+            </div>
+            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
+            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.transitMin != null ? `${o.transitMin}m` : '—'}</span>
+            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: timeColor(o.totalMin), textAlign: 'right', alignSelf: 'center' }}>{o.totalMin}m</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 // ── Merge arrays by key, summing numeric fields ───────────────────
 function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]): any[] {
   const map = new Map<string | number, Record<string, any>>()
@@ -336,6 +426,22 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.revenue - a.revenue),
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
+            deliveryTimes: (() => {
+              const allOrders = valid.flatMap(r => r.deliveryTimes?.orders ?? []).sort((a, b) => a.totalMin - b.totalMin)
+              const n = allOrders.length
+              if (n === 0) return { count: 0, avgTotal: null, avgPrep: null, avgTransit: null, pctUnder30: null, pctUnder45: null, pctUnder60: null, orders: [] }
+              const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : null
+              return {
+                count: n,
+                avgTotal: avg(allOrders.map(o => o.totalMin)),
+                avgPrep: avg(allOrders.filter(o => o.prepMin != null).map(o => o.prepMin!)),
+                avgTransit: avg(allOrders.filter(o => o.transitMin != null).map(o => o.transitMin!)),
+                pctUnder30: Math.round((allOrders.filter(o => o.totalMin <= 30).length / n) * 100),
+                pctUnder45: Math.round((allOrders.filter(o => o.totalMin <= 45).length / n) * 100),
+                pctUnder60: Math.round((allOrders.filter(o => o.totalMin <= 60).length / n) * 100),
+                orders: allOrders,
+              }
+            })(),
           })
         }
       } else {
@@ -442,6 +548,14 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             {/* Ranking */}
             <SectionLabel>Productos</SectionLabel>
             <ProductRanking products={data.products} />
+
+            {/* Tiempos de entrega */}
+            {data.deliveryTimes && (
+              <>
+                <SectionLabel>Delivery</SectionLabel>
+                <DeliveryTimesSection dt={data.deliveryTimes} />
+              </>
+            )}
 
           </div>
         )}

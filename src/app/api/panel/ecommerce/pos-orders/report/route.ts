@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true },
+    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true },
   });
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
@@ -117,6 +117,49 @@ export async function GET(req: NextRequest) {
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
   const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
 
+  // ── Tiempos de entrega (solo pedidos delivery con opsDeliveredAt) ─────────
+  interface DeliveryTimeRow {
+    ref: string; name: string;
+    prepMin: number | null;    // createdAt → opsDispatchedAt
+    transitMin: number | null; // opsDispatchedAt → opsDeliveredAt
+    totalMin: number;          // createdAt → opsDeliveredAt
+  }
+  const deliveryTimeRows: DeliveryTimeRow[] = [];
+  for (const o of orders) {
+    if (!o.isDelivery || !o.opsDeliveredAt) continue;
+    const created = o.createdAt.getTime();
+    const delivered = o.opsDeliveredAt.getTime();
+    if (delivered <= created) continue;
+    const totalMin = Math.round((delivered - created) / 60000);
+    const prepMin = o.opsDispatchedAt ? Math.round((o.opsDispatchedAt.getTime() - created) / 60000) : null;
+    const transitMin = o.opsDispatchedAt ? Math.round((delivered - o.opsDispatchedAt.getTime()) / 60000) : null;
+    deliveryTimeRows.push({
+      ref: o.orderReference || "",
+      name: o.customerName || "",
+      prepMin,
+      transitMin,
+      totalMin,
+    });
+  }
+  deliveryTimeRows.sort((a, b) => a.totalMin - b.totalMin);
+  const dtCount = deliveryTimeRows.length;
+  const avgTotal = dtCount > 0 ? Math.round(deliveryTimeRows.reduce((s, r) => s + r.totalMin, 0) / dtCount) : null;
+  const avgPrep = dtCount > 0 && deliveryTimeRows.some(r => r.prepMin != null)
+    ? Math.round(deliveryTimeRows.filter(r => r.prepMin != null).reduce((s, r) => s + r.prepMin!, 0) / deliveryTimeRows.filter(r => r.prepMin != null).length)
+    : null;
+  const avgTransit = dtCount > 0 && deliveryTimeRows.some(r => r.transitMin != null)
+    ? Math.round(deliveryTimeRows.filter(r => r.transitMin != null).reduce((s, r) => s + r.transitMin!, 0) / deliveryTimeRows.filter(r => r.transitMin != null).length)
+    : null;
+  const pctUnder30 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 30).length / dtCount) * 100) : null;
+  const pctUnder45 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 45).length / dtCount) * 100) : null;
+  const pctUnder60 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 60).length / dtCount) * 100) : null;
+  const deliveryTimes = {
+    count: dtCount,
+    avgTotal, avgPrep, avgTransit,
+    pctUnder30, pctUnder45, pctUnder60,
+    orders: deliveryTimeRows,
+  };
+
   const byType = [
     { type: "delivery", label: "Delivery", sales: typeMap.delivery.sales, orders: typeMap.delivery.orders },
     { type: "pickup", label: "Retiro", sales: typeMap.pickup.sales, orders: typeMap.pickup.orders },
@@ -160,5 +203,6 @@ export async function GET(req: NextRequest) {
     products,
     byType,
     monthly: { month: monthYm, days: monthlyDays },
+    deliveryTimes,
   });
 }
