@@ -73,6 +73,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
         ...(body.daysOfWeek !== undefined && { daysOfWeek: body.daysOfWeek }),
+        // Código Toteat (POS) del producto, editable desde la carta. Vacío = sin código.
+        ...(body.toteatProductId !== undefined && {
+          toteatProductId: body.toteatProductId ? String(body.toteatProductId).trim() : null,
+          toteatMappedAt: body.toteatProductId ? new Date() : null,
+        }),
       },
       include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });

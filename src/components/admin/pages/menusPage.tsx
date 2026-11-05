@@ -34,6 +34,7 @@ interface Dish {
   id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; appOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string; daysOfWeek?: number[];
+  toteatProductId?: string | null;
   category: { id: string; name: string };
 }
 interface Restaurant { id: string; name: string; slug: string; }
@@ -851,6 +852,7 @@ export default function AdminMenus() {
   const [eDetailedDesc, setEDetailedDesc] = useState("");
   const [ePrice, setEPrice] = useState("");
   const [eDiscountPrice, setEDiscountPrice] = useState("");
+  const [eToteatCode, setEToteatCode] = useState("");
   const [eDaysOfWeek, setEDaysOfWeek] = useState<number[]>([]);
   const [eIngredients, setEIngredients] = useState("");
   const [eIngredientIds, setEIngredientIds] = useState<string[]>([]);
@@ -971,6 +973,7 @@ export default function AdminMenus() {
     setEDetailedDesc(d.detailedDescription || "");
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
+    setEToteatCode((d as any).toteatProductId || "");
     setEDaysOfWeek(d.daysOfWeek || []);
     setEIngredients(d.ingredients || "");
     setRespectAllergens(new Set()); // reset al abrir un plato distinto
@@ -1017,6 +1020,7 @@ export default function AdminMenus() {
       detailedDescription: eDetailedDesc || null,
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
+      toteatProductId: eToteatCode.trim() || null,
       daysOfWeek: eDaysOfWeek,
       photos: ePhotoUrl ? [ePhotoUrl] : [],
       ingredients: eIngredients || null,
@@ -1288,6 +1292,15 @@ export default function AdminMenus() {
                   <label style={LBL}>Precio oferta <span style={{ fontWeight: 400, color: "var(--adm-text3)" }}>(se muestra tachado)</span></label>
                   <input type="number" value={eDiscountPrice} onChange={e => setEDiscountPrice(e.target.value)} placeholder="Opcional" style={INP} />
                 </div>
+              </div>
+
+              {/* Código Toteat (POS) */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>
+                  Código Toteat (POS)
+                  <span style={{ fontWeight: 400, color: "var(--adm-text3)", marginLeft: 4 }}>(para comandar a Toteat; vacío = sin código)</span>
+                </label>
+                <input type="text" value={eToteatCode} onChange={e => setEToteatCode(e.target.value)} placeholder="Ej: 10234" style={INP} />
               </div>
 
               {/* Visibilidad por días */}
