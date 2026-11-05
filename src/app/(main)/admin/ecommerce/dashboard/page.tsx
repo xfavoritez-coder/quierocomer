@@ -125,7 +125,7 @@ export default function EcommerceDashboardPage() {
           {/* Revenue chart by day */}
           {data.ordersChart.length > 1 && (
             <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", marginBottom: 16 }}>
-              <SectionLabel>Revenue por día (últimos {days} días)</SectionLabel>
+              <SectionLabel>{`Revenue por día (últimos ${days} días)`}</SectionLabel>
               {/* Labels row */}
               <div style={{ display: "flex", gap: 1, marginBottom: 4 }}>
                 {data.ordersChart.map((d, i) => (
