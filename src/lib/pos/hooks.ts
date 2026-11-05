@@ -75,7 +75,12 @@ export function useOpenAccounts(restaurantId?: string): Account[] {
   return useDexieQuery(
     () => posDb.accounts
       .where('status').anyOf(['abierta', 'con_pedidos', 'cuenta_pedida', 'pagada_parcial'])
-      .filter(a => !restaurantId || a.restaurant_id === restaurantId)
+      // Se excluyen las cuentas `po_` (pedidos del Centro reconciliados): esos son
+      // pedidos del Centro, no cuentas reales del POS (mesa/mostrador/retiro
+      // atendido en caja). Se cobran por su propio flujo (PosOrder.paidAmount), así
+      // que su cuenta espejo puede quedar abierta en $0 y NO debe avisar en el
+      // cierre ni contar como "cuenta abierta". Consistente con useSessionSummary.
+      .filter(a => (!restaurantId || a.restaurant_id === restaurantId) && !a.id.startsWith('po_'))
       .toArray(),
     [restaurantId],
     []
