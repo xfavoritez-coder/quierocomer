@@ -22,7 +22,7 @@ export interface DelifastTracking {
   provider: string | null;        // proveedor del reparto (Uber…)
   vehicle: string | null;         // tipo de vehículo (Motorista…)
   eta: string | null;             // minutos estimados para llegar al local
-  dropoffEta: string | null;      // ETA estimada de entrega al cliente (dropoff)
+  dropoffEta: string | null;      // hora "HH:MM" estimada de llegada al CLIENTE (del time-badge de la página pública)
   driver: { name: string | null; photo: string | null; phone: string | null } | null;
   pin: string | null;             // PIN de entrega
   statusUrl: string | null;       // link público de seguimiento
@@ -155,7 +155,7 @@ export async function getDelifastTracking(
       provider: str(viaje.proveedor) || str(venta.proveedor_reparto),
       vehicle: str(viaje.tipo_vehiculo) || str(venta.tipo_vehiculo),
       eta: str(viaje.pickup_eta),
-      dropoffEta: str(viaje.minutos_llegada_casa),
+      dropoffEta: null, // se completa abajo desde la página pública (time-badge)
       driver: {
         name: str(viaje.repartidor),
         photo: absUrl(viaje.repartidor_imagen),
@@ -181,6 +181,18 @@ export async function getDelifastTracking(
     };
     // Si el repartidor no trae nada, lo dejamos en null (aún sin asignar).
     if (tracking.driver && !tracking.driver.name && !tracking.driver.phone && !tracking.driver.photo) tracking.driver = null;
+
+    // Hora estimada de llegada al CLIENTE ("Llega a las 22:08 aprox.") — solo vive
+    // en la página pública del cliente (render server-side, no en la API). Se saca
+    // con un fetch + regex. Solo mientras el pedido va en camino (no entregado ni
+    // cancelado), para no hacer el fetch de más.
+    if (tracking.statusUrl && !tracking.timeline.entregado && !tracking.timeline.cancelado) {
+      try {
+        const html = await fetch(tracking.statusUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.text());
+        const m = html.match(/Llega a las\s*(\d{1,2}:\d{2})/i);
+        if (m) tracking.dropoffEta = m[1];
+      } catch { /* la página pública puede fallar; el resto del seguimiento sigue */ }
+    }
     return tracking;
   };
 

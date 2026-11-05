@@ -132,7 +132,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   if (state === 'pending') return live ? <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></TrackingBox> : null
   if (state === 'error' || !t) return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></TrackingBox>
 
-  const sc = statusColor(t.status)
   // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
   const etaMin = !t.timeline.llegadaLocal ? etaMinutes(t.eta) : null
   const steps: { label: string; ts: string | null }[] = [
@@ -147,6 +146,15 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 
   return (
     <TrackingBox eta={etaMin}>
+      {/* ETA de llegada al CLIENTE ("Llega a las HH:MM") — del time-badge de la página pública. */}
+      {t.dropoffEta && (
+        <div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--amber-tint)', color: 'var(--amber-press)', border: '1px solid var(--amber)', fontWeight: 700, fontSize: 12.5, borderRadius: 20, padding: '3px 10px' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+            Llega al cliente ~{t.dropoffEta}
+          </span>
+        </div>
+      )}
       {/* Repartidor */}
       {t.driver && (t.driver.name || t.driver.phone) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
