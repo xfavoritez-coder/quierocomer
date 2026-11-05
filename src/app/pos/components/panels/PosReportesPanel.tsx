@@ -73,9 +73,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Stat({ label, value, hint, color, big }: { label: string; value: string; hint?: string; color: string; big?: boolean }) {
+function Stat({ label, value, hint, color, big, span }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
       <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
@@ -525,7 +525,7 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             {/* KPIs */}
             <SectionLabel>{singleDay ? 'Resumen del día' : 'Resumen del período'}</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
-              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} hint="Productos con IVA" color={GREEN} big />
+              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} hint="Productos con IVA" color={GREEN} big span={2} />
               <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'} />
               <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
