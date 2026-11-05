@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -75,7 +75,7 @@ const ORIGEN_BADGE: Record<string, { bg: string; color: string }> = {
   HANDOFF: { bg: "rgba(168,85,247,.1)", color: "#a855f7" },
 };
 
-const SALUD_COLORS: Record<string, string> = { green: "#4ade80", yellow: "#fbbf24", red: "#f87171", gray: "#555" };
+const SALUD_COLORS: Record<string, string> = { green: "#4ade80", yellow: "#fbbf24", red: "#f87171", gray: "#999" };
 const SALUD_LABELS: Record<string, string> = { green: "Activo", yellow: "Tibio", red: "Dormido", gray: "Sin owner" };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -176,7 +176,7 @@ export default function ClientesPage() {
     setTogglingExempt(null);
   }
 
-  if (sessionLoading || loading) return <div style={{ padding: 40, textAlign: "center", color: "#555" }}>Cargando...</div>;
+  if (sessionLoading || loading) return <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Cargando...</div>;
 
   const s = stats;
 

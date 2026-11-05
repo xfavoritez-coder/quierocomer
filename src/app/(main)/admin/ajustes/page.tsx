@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ type SyncResponse = {
 const ACTION_LABEL: Record<SyncResult["action"], { label: string; color: string }> = {
   created: { label: "Creado", color: "#16a34a" },
   updated: { label: "Actualizado", color: "#2563eb" },
-  no_change: { label: "Sin cambios", color: "#666" },
+  no_change: { label: "Sin cambios", color: "#999" },
   error: { label: "Error", color: "#dc2626" },
 };
 
@@ -257,7 +257,7 @@ export default function AjustesPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 70px 40px", gap: 8, alignItems: "center", marginBottom: 6, fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>
           <span>Desde ($)</span><span>Hasta ($)</span><span>Recargo ($)</span><span style={{ textAlign: "right" }}>%</span><span />
         </div>
-        {tiers.length === 0 && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#666", margin: "4px 0 10px" }}>Sin tramos. Agrega el primero abajo.</p>}
+        {tiers.length === 0 && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#999", margin: "4px 0 10px" }}>Sin tramos. Agrega el primero abajo.</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {tiers.map((t, i) => {
             const pct = t.min > 0 ? Math.round((t.surcharge / t.min) * 1000) / 10 : 0;
@@ -277,7 +277,7 @@ export default function AjustesPage() {
           <button onClick={addTier} style={{ padding: "9px 14px", background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, color: "#eee", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Agregar tramo</button>
           <button onClick={saveTiers} disabled={tiersSaving} style={{ padding: "10px 18px", background: GOLD, color: "#1a1a1a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: tiersSaving ? "wait" : "pointer", opacity: tiersSaving ? 0.6 : 1 }}>{tiersSaving ? "Guardando…" : "Guardar tramos"}</button>
         </div>
-        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", margin: "8px 0 0" }}>El % es el recargo sobre el monto base del tramo (recargo ÷ Desde). Si el costo supera el último tramo, se aplica el recargo del tramo más alto.</p>
+        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", margin: "8px 0 0" }}>El % es el recargo sobre el monto base del tramo (recargo ÷ Desde). Si el costo supera el último tramo, se aplica el recargo del tramo más alto.</p>
       </div>
 
       {/* App de repartidores (QuieroComer Delivery) */}
@@ -323,7 +323,7 @@ export default function AjustesPage() {
             <a href="/descargar-app" target="_blank" rel="noreferrer" style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#F4A623", textDecoration: "none" }}>quierocomer.com/descargar-app ↗</a>
             <button onClick={() => { navigator.clipboard?.writeText("https://quierocomer.com/descargar-app").then(() => toast.success("Link copiado")).catch(() => {}); }} style={{ padding: "5px 10px", borderRadius: 7, border: "1px solid #2A2A2A", background: "#0d0d0d", color: "#ccc", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Copiar</button>
           </div>
-          <p style={{ fontSize: "0.72rem", color: "#666", margin: "8px 0 0" }}>Recuerda tocar <strong style={{ color: "#999" }}>Guardar</strong> arriba después de subir un APK, o el link no mostrará la descarga.</p>
+          <p style={{ fontSize: "0.72rem", color: "#999", margin: "8px 0 0" }}>Recuerda tocar <strong style={{ color: "#999" }}>Guardar</strong> arriba después de subir un APK, o el link no mostrará la descarga.</p>
         </div>
       </div>
 
@@ -345,10 +345,10 @@ export default function AjustesPage() {
 
         {result && (
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #2A2A2A" }}>
-            <p style={{ fontSize: "0.75rem", color: "#666", margin: "0 0 4px" }}>
+            <p style={{ fontSize: "0.75rem", color: "#999", margin: "0 0 4px" }}>
               Endpoint: <span style={{ color: "#999" }}>{result.flowApiUrl}</span>
             </p>
-            <p style={{ fontSize: "0.75rem", color: "#666", margin: "0 0 14px" }}>
+            <p style={{ fontSize: "0.75rem", color: "#999", margin: "0 0 14px" }}>
               Callback: <span style={{ color: "#999" }}>{result.callbackUrl}</span>
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -358,7 +358,7 @@ export default function AjustesPage() {
                   <div key={r.planId} style={{ background: "#0d0d0d", border: "1px solid #2A2A2A", borderRadius: 8, padding: "12px 14px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                       <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "#fff" }}>
-                        {r.name} <span style={{ color: "#666", fontWeight: 400, fontSize: "0.75rem" }}>({r.planId})</span>
+                        {r.name} <span style={{ color: "#999", fontWeight: 400, fontSize: "0.75rem" }}>({r.planId})</span>
                       </span>
                       <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: status.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         {status.label}
@@ -367,7 +367,7 @@ export default function AjustesPage() {
                     <p style={{ fontSize: "0.78rem", color: "#bbb", margin: 0 }}>
                       Neto {fmt(r.amountNet)} + IVA {fmt(r.amountIva)} = <strong style={{ color: "#F4A623" }}>{fmt(r.amountGross)}</strong>
                       {r.previousAmount !== undefined && r.previousAmount !== r.amountGross && (
-                        <span style={{ color: "#666" }}> · antes: {fmt(r.previousAmount)}</span>
+                        <span style={{ color: "#999" }}> · antes: {fmt(r.previousAmount)}</span>
                       )}
                     </p>
                     {r.error && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "6px 0 0" }}>{r.error}</p>}

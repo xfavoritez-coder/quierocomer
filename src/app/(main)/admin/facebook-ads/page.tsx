@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -115,7 +115,7 @@ const CSS = `
   .fb-period-pills::-webkit-scrollbar { display: none; }
   .fb-pill { padding: 8px 16px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
   .fb-pill-active { background: #3b82f6; color: #fff; box-shadow: 0 2px 12px rgba(59,130,246,.3); }
-  .fb-pill-inactive { background: #161616; color: #666; }
+  .fb-pill-inactive { background: #161616; color: #999; }
 
   /* Source filter - horizontal scroll */
   .fb-sources { display: flex; gap: 5px; margin-bottom: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; scrollbar-width: none; }
@@ -131,7 +131,7 @@ const CSS = `
   .fb-card-val { font-size: 22px; font-weight: 800; line-height: 1.1; transition: color .5s; }
   @media (min-width: 480px) { .fb-card-val { font-size: 26px; } }
   .fb-card-suffix { font-size: 13px; font-weight: 800; color: #ddd; margin-left: 3px; }
-  .fb-card-label { font-size: 10px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .fb-card-label { font-size: 10px; color: #999; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 
   /* Hourly chart - scrollable on mobile with bigger bars */
   .fb-hourly-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; margin: 0 -4px; }
@@ -161,7 +161,7 @@ const CSS = `
 
   /* Section */
   .fb-section { background: #111; border-radius: 14px; padding: 14px 14px; border: 1px solid #1e1e1e; margin-bottom: 12px; }
-  .fb-section-title { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .05em; }
+  .fb-section-title { font-size: 12px; font-weight: 700; color: #999; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .05em; }
 
   /* Campaign table - badges wrap on mobile */
   .fb-camp-table-row { padding: 10px 0; border-bottom: 1px solid #1a1a1a; }
@@ -176,7 +176,7 @@ const CSS = `
   .fb-sess-header { display: flex; flex-direction: column; gap: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   @media (min-width: 640px) { .fb-sess-header { flex-direction: row; justify-content: space-between; align-items: center; } }
   .fb-sess-top { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-  .fb-sess-metrics { display: flex; gap: 12px; font-size: 12px; color: #666; flex-shrink: 0; padding: 4px 0 0; }
+  .fb-sess-metrics { display: flex; gap: 12px; font-size: 12px; color: #999; flex-shrink: 0; padding: 4px 0 0; }
   @media (min-width: 640px) { .fb-sess-metrics { padding: 0; } }
   .fb-sess-detail { margin-top: 10px; padding: 14px; background: #0d0d0d; border-radius: 12px; border: 1px solid #1a1a1a; }
   .fb-sess-grid { display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 12px; margin-bottom: 12px; padding: 12px; background: #141414; border-radius: 10px; }
@@ -220,8 +220,8 @@ const CSS = `
   @keyframes fbPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
   @keyframes fbSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  .fb-empty { font-size: 13px; color: #555; padding: 16px 0; text-align: center; }
-  .fb-loading { padding: 60px 20px; text-align: center; color: #555; font-size: 14px; }
+  .fb-empty { font-size: 13px; color: #999; padding: 16px 0; text-align: center; }
+  .fb-loading { padding: 60px 20px; text-align: center; color: #999; font-size: 14px; }
 
   /* Loading overlay */
   .fb-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; animation: fbFadeIn .15s ease; }
@@ -238,7 +238,7 @@ const CSS = `
   @keyframes fbFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* Scroll hint for hourly chart */
-  .fb-scroll-hint { font-size: 10px; color: #444; text-align: right; margin-top: 4px; }
+  .fb-scroll-hint { font-size: 10px; color: #888; text-align: right; margin-top: 4px; }
   @media (min-width: 600px) { .fb-scroll-hint { display: none; } }
 `;
 
@@ -447,7 +447,7 @@ export default function FacebookAdsPage() {
             <button
               onClick={() => setSource(null)}
               className="fb-src-btn"
-              style={{ background: source === null ? "#6366f1" : "#161616", color: source === null ? "#fff" : "#666" }}
+              style={{ background: source === null ? "#6366f1" : "#161616", color: source === null ? "#fff" : "#999" }}
             >
               Todas ({Object.values(sourceBreakdown).reduce((a, b) => a + b, 0)})
             </button>
@@ -456,7 +456,7 @@ export default function FacebookAdsPage() {
                 key={src}
                 onClick={() => setSource(src)}
                 className="fb-src-btn"
-                style={{ background: source === src ? "#6366f1" : "#161616", color: source === src ? "#fff" : "#666" }}
+                style={{ background: source === src ? "#6366f1" : "#161616", color: source === src ? "#fff" : "#999" }}
               >
                 {src} ({count})
               </button>
@@ -481,7 +481,7 @@ export default function FacebookAdsPage() {
             <StatCard label="Mobile" value={stats.mobile} color="#8b5cf6" />
             <StatCard label="Desktop" value={stats.desktop} color="#64748b" />
             {totalLogoClicks > 0 && <StatCard label="Vieron carta" value={totalLogoClicks} color="#a855f7" suffix={`${stats.totalSessions > 0 ? Math.round((totalLogoClicks / stats.totalSessions) * 100) : 0}%`} />}
-            {stats.ghostSessions > 0 && <StatCard label="Fantasmas" value={stats.ghostSessions} color="#444" suffix="filtradas" />}
+            {stats.ghostSessions > 0 && <StatCard label="Fantasmas" value={stats.ghostSessions} color="#888" suffix="filtradas" />}
           </div>
 
           {/* Hourly */}
@@ -526,7 +526,7 @@ export default function FacebookAdsPage() {
                               <span style={{ fontSize: 8, color: "#F4A623", fontWeight: 700 }}>{d.subircarta}</span>
                             </div>
                           ) : <div style={{ height: 12 }} />}
-                          <span className="fb-hour-label" style={{ color: h === currentHour ? "#F4A623" : "#555", fontWeight: h === currentHour ? 800 : 400 }}>{h}</span>
+                          <span className="fb-hour-label" style={{ color: h === currentHour ? "#F4A623" : "#999", fontWeight: h === currentHour ? 800 : 400 }}>{h}</span>
                         </div>
                       );
                     })}
@@ -572,7 +572,7 @@ export default function FacebookAdsPage() {
                             </>}
                             {d.visits > 0 && barH >= 22 && <span style={{ position: "absolute", top: 2, left: 0, right: 0, fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center" }}>{d.visits}</span>}
                           </div>
-                          <span className="fb-hour-label" style={{ color: isToday ? "#F4A623" : dayNum === 1 ? "#aaa" : "#555", fontWeight: isToday ? 800 : dayNum === 1 ? 600 : 400, fontSize: 9 }}>
+                          <span className="fb-hour-label" style={{ color: isToday ? "#F4A623" : dayNum === 1 ? "#aaa" : "#999", fontWeight: isToday ? 800 : dayNum === 1 ? 600 : 400, fontSize: 9 }}>
                             {dayNum === 1 || days.indexOf(days.find(x => x[0] === day)!) === 0 ? label : dayNum}
                           </span>
                         </div>
@@ -606,7 +606,7 @@ export default function FacebookAdsPage() {
                           <span style={{ fontSize: 13, color: "#888" }}>{c.visits}</span>
                           {c.subircarta > 0 && <span style={{ fontSize: 13, color: "#F4A623" }}>{c.subircarta} /sc</span>}
                           {c.converted > 0 && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 700 }}>{c.converted} conv ({Math.round((c.converted / c.visits) * 100)}%)</span>}
-                          <span style={{ fontSize: 13, color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
+                          <span style={{ fontSize: 13, color: "#999" }}>{fmtDuration(c.avgDuration)}</span>
                         </div>
                         {(() => {
                           const solo = c.visits - c.subircarta;
@@ -643,7 +643,7 @@ export default function FacebookAdsPage() {
                   style={{ width: "100%", padding: "8px 32px 8px 12px", borderRadius: 8, border: "1px solid #222", background: "#0a0a0a", color: "#ccc", fontSize: 12, outline: "none", boxSizing: "border-box" }}
                 />
                 {sessFilter && (
-                  <button onClick={() => { setSessFilter(""); setSessPage(0); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#666", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>×</button>
+                  <button onClick={() => { setSessFilter(""); setSessPage(0); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#999", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>×</button>
                 )}
               </div>
             </div>
@@ -667,7 +667,7 @@ export default function FacebookAdsPage() {
 
               return (<>
             {filtered.length === 0 && <div className="fb-empty">{q ? "Sin resultados para ese filtro." : "Sin datos todavia."}</div>}
-            {q && filtered.length > 0 && <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>{filtered.length} resultado{filtered.length !== 1 ? "s" : ""}</div>}
+            {q && filtered.length > 0 && <div style={{ fontSize: 11, color: "#999", marginBottom: 8 }}>{filtered.length} resultado{filtered.length !== 1 ? "s" : ""}</div>}
             {paged.map((s) => {
               const isExpanded = expandedSession === s.id;
               const date = new Date(s.createdAt);
@@ -679,7 +679,7 @@ export default function FacebookAdsPage() {
                 <div key={s.id} className={`fb-sess ${isNew ? "fb-sess-new" : ""}`}>
                   <div className="fb-sess-header" onClick={() => setExpandedSession(isExpanded ? null : s.id)}>
                     <div className="fb-sess-top">
-                      <span style={{ fontSize: 11, color: "#666", fontWeight: 500 }}>{dateStr}</span>
+                      <span style={{ fontSize: 11, color: "#999", fontWeight: 500 }}>{dateStr}</span>
                       <span className="fb-badge" style={{
                         background: s.bounced ? "#ef44441a" : s.converted ? "#22c55e1a" : "#3b82f61a",
                         color: s.bounced ? "#ef4444" : s.converted ? "#22c55e" : "#3b82f6",
@@ -694,7 +694,7 @@ export default function FacebookAdsPage() {
                       <span className="fb-badge" style={{ background: "#ffffff06", color: "#888" }}>
                         {ua.os}{ua.deviceName ? ` · ${ua.deviceName}` : ""}
                       </span>
-                      <span style={{ fontSize: 10, color: "#555" }}>{ua.browser}</span>
+                      <span style={{ fontSize: 10, color: "#999" }}>{ua.browser}</span>
                       {s.utmCampaign && <span style={{ fontSize: 10, color: "#eab308", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{s.utmCampaign}</span>}
                       {!source && s.utmSource && <span style={{ fontSize: 10, color: "#6366f1" }}>{s.utmSource}</span>}
                     </div>
@@ -702,7 +702,7 @@ export default function FacebookAdsPage() {
                       <span>{fmtDuration(s.duration)}</span>
                       <span>{s.maxScroll}%</span>
                       <span>{s.interactions} int</span>
-                      <span style={{ color: "#444", fontSize: 10 }}>{isExpanded ? "▲" : "▼"}</span>
+                      <span style={{ color: "#888", fontSize: 10 }}>{isExpanded ? "▲" : "▼"}</span>
                     </div>
                   </div>
 
@@ -733,7 +733,7 @@ export default function FacebookAdsPage() {
                       )}
 
                       {s.leadId && (
-                        <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>Lead: <span style={{ color: "#22c55e", fontWeight: 700 }}>{s.leadId}</span></div>
+                        <div style={{ fontSize: 11, color: "#999", marginBottom: 8 }}>Lead: <span style={{ color: "#22c55e", fontWeight: 700 }}>{s.leadId}</span></div>
                       )}
 
                       {(() => {
@@ -751,7 +751,7 @@ export default function FacebookAdsPage() {
                                     ev.type === "page_load" ? "#3b82f6" :
                                     ev.type === "input_focus" ? "#eab308" :
                                     ev.type === "tab_hidden" ? "#ef4444" :
-                                    ev.type === "tab_visible" ? "#84cc16" : "#666"
+                                    ev.type === "tab_visible" ? "#84cc16" : "#999"
                                 }}>
                                   {ev.type}
                                 </span>
@@ -785,12 +785,12 @@ export default function FacebookAdsPage() {
             {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "12px 0 4px" }}>
                 <button onClick={() => setSessPage(Math.max(0, page - 1))} disabled={page === 0}
-                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page === 0 ? "#111" : "#222", color: page === 0 ? "#444" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page === 0 ? "default" : "pointer" }}>
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page === 0 ? "#111" : "#222", color: page === 0 ? "#888" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page === 0 ? "default" : "pointer" }}>
                   ← Ant
                 </button>
-                <span style={{ fontSize: 12, color: "#666" }}>{page + 1} / {totalPages}</span>
+                <span style={{ fontSize: 12, color: "#999" }}>{page + 1} / {totalPages}</span>
                 <button onClick={() => setSessPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}
-                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page >= totalPages - 1 ? "#111" : "#222", color: page >= totalPages - 1 ? "#444" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page >= totalPages - 1 ? "default" : "pointer" }}>
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page >= totalPages - 1 ? "#111" : "#222", color: page >= totalPages - 1 ? "#888" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page >= totalPages - 1 ? "default" : "pointer" }}>
                   Sig →
                 </button>
               </div>
@@ -807,7 +807,7 @@ export default function FacebookAdsPage() {
                 {Object.entries(logoClicks).sort((a, b) => b[1] - a[1]).map(([slug, count]) => (
                   <div key={slug} className="fb-logo-chip">
                     <span style={{ color: "#8b5cf6", fontWeight: 700, fontSize: 12 }}>{slug}</span>
-                    <span style={{ color: "#666", fontSize: 12 }}>{count}</span>
+                    <span style={{ color: "#999", fontSize: 12 }}>{count}</span>
                   </div>
                 ))}
               </div>
@@ -825,7 +825,7 @@ export default function FacebookAdsPage() {
                   <div key={name} style={{ padding: "6px 0", borderBottom: "1px solid #141414" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12 }}>
                       <span style={{ color: "#bbb" }}>{name}</span>
-                      <span style={{ color: "#14b8a6", fontWeight: 700 }}>{count} <span style={{ color: "#555", fontWeight: 400 }}>({pct}%)</span></span>
+                      <span style={{ color: "#14b8a6", fontWeight: 700 }}>{count} <span style={{ color: "#999", fontWeight: 400 }}>({pct}%)</span></span>
                     </div>
                     <div style={{ height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: "#14b8a6", borderRadius: 3, transition: "width .5s ease" }} />

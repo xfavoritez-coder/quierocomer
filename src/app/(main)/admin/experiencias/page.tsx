@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -96,10 +96,10 @@ export default function AdminExperiencias() {
             <button onClick={() => handleToggle(i.id)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: i.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: i.isActive ? "#ff6b6b" : "#4ade80" }}>
               {i.isActive ? "Pausar" : "Activar"}
             </button>
-            <button onClick={() => handleRemove(i.id)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", color: "#555", background: "rgba(255,255,255,0.04)" }}>Quitar</button>
+            <button onClick={() => handleRemove(i.id)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", color: "#999", background: "rgba(255,255,255,0.04)" }}>Quitar</button>
           </div>
         ))}
-        {instances.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#555", textAlign: "center", padding: 20 }}>Ningún local tiene experiencia asignada</p>}
+        {instances.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 20 }}>Ningún local tiene experiencia asignada</p>}
       </div>
 
       {/* Templates library */}

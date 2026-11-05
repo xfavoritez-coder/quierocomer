@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -79,7 +79,7 @@ export default function OwnersPage() {
   useEffect(() => { fetchOwners(); fetchRestaurants(); }, [fetchOwners, fetchRestaurants]);
 
   if (!isSuper) return (
-    <div style={{ padding: 32, fontFamily: F, color: "#666" }}>Solo superadmin puede acceder.</div>
+    <div style={{ padding: 32, fontFamily: F, color: "#999" }}>Solo superadmin puede acceder.</div>
   );
 
   const openCreate = () => {
@@ -205,7 +205,7 @@ export default function OwnersPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#fff", margin: 0, fontWeight: 700 }}>Owners</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#555", margin: "4px 0 0" }}>{owners.length} usuarios registrados</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#999", margin: "4px 0 0" }}>{owners.length} usuarios registrados</p>
         </div>
         <button onClick={openCreate} style={{
           padding: "10px 22px", background: GOLD, color: "#0a0a0a", border: "none",
@@ -218,7 +218,7 @@ export default function OwnersPage() {
 
       {/* Search */}
       <div style={{ marginBottom: 20, position: "relative" }}>
-        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#555", fontSize: "0.9rem", pointerEvents: "none" }}>🔍</span>
+        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#999", fontSize: "0.9rem", pointerEvents: "none" }}>🔍</span>
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Buscar por nombre o email..."
@@ -234,7 +234,7 @@ export default function OwnersPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#444", fontFamily: F }}>
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#888", fontFamily: F }}>
           <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>👤</div>
           <p style={{ fontSize: "0.9rem" }}>{search ? "Sin resultados" : "No hay owners registrados"}</p>
         </div>
@@ -274,7 +274,7 @@ export default function OwnersPage() {
                       </span>
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 16px", marginTop: 4 }}>
-                      <a href={`mailto:${o.email}`} style={{ fontFamily: F, fontSize: "0.78rem", color: "#666", textDecoration: "none" }}>{o.email}</a>
+                      <a href={`mailto:${o.email}`} style={{ fontFamily: F, fontSize: "0.78rem", color: "#999", textDecoration: "none" }}>{o.email}</a>
                       {o.whatsapp && (
                         <a href={`https://wa.me/${o.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
                           style={{ fontFamily: F, fontSize: "0.78rem", color: "#22c55e", textDecoration: "none" }}>
@@ -286,8 +286,8 @@ export default function OwnersPage() {
 
                   {/* Last login — desktop right */}
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#444", marginBottom: 2 }}>Último acceso</div>
-                    <div style={{ fontFamily: F, fontSize: "0.78rem", color: "#666" }}>{relativeTime(o.lastLoginAt)}</div>
+                    <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", marginBottom: 2 }}>Último acceso</div>
+                    <div style={{ fontFamily: F, fontSize: "0.78rem", color: "#999" }}>{relativeTime(o.lastLoginAt)}</div>
                   </div>
                 </div>
 
@@ -390,7 +390,7 @@ export default function OwnersPage() {
 
             {modal === "password" ? (
               <>
-                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#666", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Nueva contraseña</label>
+                <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#999", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Nueva contraseña</label>
                 <input type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)} placeholder="Mínimo 8 caracteres" style={inputStyle} />
                 <button onClick={handleSetPassword} disabled={formLoading} style={{ marginTop: 20, width: "100%", padding: 12, background: GOLD, color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontWeight: 700, cursor: "pointer", fontSize: "0.88rem" }}>
                   {formLoading ? "Guardando..." : "Guardar contraseña"}
@@ -405,14 +405,14 @@ export default function OwnersPage() {
                   ...(modal === "create" ? [{ label: "Contraseña", value: formPassword, setter: setFormPassword, placeholder: "Mínimo 8 caracteres", type: "password" }] : []),
                 ].map(({ label, value, setter, placeholder, type }) => (
                   <div key={label}>
-                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#555", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</label>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#999", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</label>
                     <input type={type} value={value} onChange={e => setter(e.target.value)} placeholder={placeholder} style={inputStyle} />
                   </div>
                 ))}
 
                 {modal === "edit" && (
                   <div>
-                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#555", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Status</label>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#999", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>Status</label>
                     <select value={formStatus} onChange={e => setFormStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
                       <option value="ACTIVE">Activo</option>
                       <option value="PENDING">Pendiente</option>
@@ -422,12 +422,12 @@ export default function OwnersPage() {
                 )}
 
                 <div>
-                  <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#555", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#999", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" }}>
                     Restaurantes asignados
                   </label>
                   <div style={{ maxHeight: 160, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, padding: "2px 0" }}>
                     {allRestaurants.length === 0 ? (
-                      <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#444" }}>No hay restaurantes disponibles</p>
+                      <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888" }}>No hay restaurantes disponibles</p>
                     ) : allRestaurants.map(r => {
                       const checked = formRestaurantIds.includes(r.id);
                       return (
@@ -460,7 +460,7 @@ export default function OwnersPage() {
                     </div>
                     <div>
                       <div style={{ fontFamily: F, fontSize: "0.82rem", color: "#ccc" }}>Enviar email de bienvenida</div>
-                      <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>Se enviará con las credenciales al crear</div>
+                      <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999" }}>Se enviará con las credenciales al crear</div>
                     </div>
                   </label>
                 )}

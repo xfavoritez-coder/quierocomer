@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 
@@ -233,13 +233,13 @@ export default function FunnelPage() {
           <button key={key} onClick={() => { setFilter(key); setShowVisits(false); }} style={{
             padding: "7px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
             background: filter === key ? (active_color || "#fff") : "#1e1e1e",
-            color: filter === key ? (active_color ? "#0a0a0a" : "#0a0a0a") : "#666",
+            color: filter === key ? (active_color ? "#0a0a0a" : "#0a0a0a") : "#999",
             transition: "all .15s",
           }}>{label}</button>
         ))}
         <button onClick={() => setShowVisits(!showVisits)} style={{
           padding: "7px 14px", borderRadius: 20, border: "1px solid #2a2a2a", cursor: "pointer", fontSize: 12, fontWeight: 600,
-          background: showVisits ? "#1e2a3a" : "transparent", color: showVisits ? "#60a5fa" : "#555",
+          background: showVisits ? "#1e2a3a" : "transparent", color: showVisits ? "#60a5fa" : "#999",
         }}>Visitas /subircarta ({visits.length})</button>
       </div>
 
@@ -257,12 +257,12 @@ export default function FunnelPage() {
                 border: `1px solid ${converted ? "rgba(34,197,94,0.2)" : "#202020"}`, marginBottom: 5,
                 display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap",
               }}>
-                <span style={{ fontSize: 12, color: "#555" }}>{ds}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: converted ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)", color: converted ? "#22c55e" : "#444" }}>
+                <span style={{ fontSize: 12, color: "#999" }}>{ds}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 5, background: converted ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)", color: converted ? "#22c55e" : "#888" }}>
                   {converted ? "Subió carta" : "Solo visitó"}
                 </span>
                 {v.utmCampaign && <span style={{ fontSize: 11, color: "#a78bfa" }}>{v.utmCampaign}</span>}
-                {v.utmSource && <span style={{ fontSize: 11, color: "#666" }}>{v.utmSource}{v.utmMedium ? `/${v.utmMedium}` : ""}</span>}
+                {v.utmSource && <span style={{ fontSize: 11, color: "#999" }}>{v.utmSource}{v.utmMedium ? `/${v.utmMedium}` : ""}</span>}
                 {v.referrer && <span style={{ fontSize: 11, color: "#60a5fa" }}>{(() => { try { return new URL(v.referrer).hostname; } catch { return v.referrer; } })()}</span>}
               </div>
             );
@@ -274,7 +274,7 @@ export default function FunnelPage() {
       {!showVisits && (
         <div>
           {filteredLeads.length === 0 && (
-            <div style={{ padding: 32, textAlign: "center", color: "#444" }}>Sin leads en este filtro.</div>
+            <div style={{ padding: 32, textAlign: "center", color: "#888" }}>Sin leads en este filtro.</div>
           )}
           {filteredLeads.map((lead) => (
             <LeadCard key={lead.id} lead={lead} onDelete={fetchData} onReprocess={fetchData} />
@@ -382,18 +382,18 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
                 <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "rgba(239,68,68,0.08)", color: "#f87171" }}>EMAIL NO ABIERTO</span>
               )}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 10px", marginTop: 5, fontSize: 12, color: "#666" }}>
-              <span style={{ color: "#555" }}>{dateStr}</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 10px", marginTop: 5, fontSize: 12, color: "#999" }}>
+              <span style={{ color: "#999" }}>{dateStr}</span>
               {lead.city && <span style={{ color: "#60a5fa" }}>{lead.city}</span>}
               {lead.device && <span>{lead.device === "mobile" ? "📱" : lead.device === "tablet" ? "📟" : "💻"}</span>}
               {lead.ownerName && lead.ownerName !== lead.localName && <span style={{ color: "#888" }}>{lead.ownerName}</span>}
               {lead.detectedProvider?.name && <span style={{ color: "#a78bfa" }}>{lead.detectedProvider.name}</span>}
               {!isLanding && (
-                <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 5, background: "rgba(255,255,255,0.05)", color: "#555" }}>{lead.cartaType}</span>
+                <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 5, background: "rgba(255,255,255,0.05)", color: "#999" }}>{lead.cartaType}</span>
               )}
             </div>
             {lead.email && (
-              <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
                 {lead.email}
                 {lead.openedVia && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 5px", borderRadius: 4, background: lead.openedVia === "whatsapp" ? "rgba(34,197,94,0.1)" : "rgba(59,130,246,0.1)", color: lead.openedVia === "whatsapp" ? "#22c55e" : "#60a5fa", fontWeight: 600 }}>vía {lead.openedVia}</span>}
               </div>
@@ -424,7 +424,7 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
               : s.wa ? "#22c55e"
               : "#60a5fa"
               : "#2a2a2a";
-            const textColor = step.done ? (s.green ? "#43d17b" : s.highlight ? "#F4A623" : s.wa ? "#22c55e" : "#aaa") : "#444";
+            const textColor = step.done ? (s.green ? "#43d17b" : s.highlight ? "#F4A623" : s.wa ? "#22c55e" : "#aaa") : "#888";
             return (
               <div key={step.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
@@ -473,7 +473,7 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
           )}
           <button onClick={() => setExpanded(!expanded)} style={{
             marginLeft: "auto", fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
-            background: expanded ? "rgba(255,255,255,0.08)" : "transparent", color: expanded ? "#aaa" : "#444",
+            background: expanded ? "rgba(255,255,255,0.08)" : "transparent", color: expanded ? "#aaa" : "#888",
             border: "1px solid rgba(255,255,255,0.08)",
           }}>
             {expanded ? "Ocultar ▲" : "Detalle ▼"}
@@ -499,7 +499,7 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
 
           {/* Full timeline */}
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6 }}>Timeline completo</div>
+            <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6 }}>Timeline completo</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 14px", fontSize: 11 }}>
               <TL label="Inicio" time={fmtTime(lead.createdAt)} />
               {!isLanding && <>
@@ -556,7 +556,7 @@ function LeadCard({ lead, onDelete, onReprocess }: { lead: Lead; onDelete: () =>
                   <span key={i} style={{
                     fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: 500,
                     background: isError ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.04)",
-                    color: isError ? "#f87171" : "#555",
+                    color: isError ? "#f87171" : "#999",
                     border: `1px solid ${isError ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)"}`,
                   }} title={e.error || e.fileName || ""}>
                     {e.action}{e.files ? ` (${e.files} fotos)` : ""}{e.error ? `: ${e.error.slice(0, 30)}` : ""}
@@ -604,7 +604,7 @@ function TL({ label, time, delta, color }: { label: string; time: string | null;
     <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
       <span style={{ color: time ? (color || "#60a5fa") : "#2a2a2a", fontWeight: 600 }}>{label}</span>
       {time
-        ? <span style={{ color: "#666" }}>{time}{delta && <span style={{ color: "#444", marginLeft: 2 }}>({delta})</span>}</span>
+        ? <span style={{ color: "#999" }}>{time}{delta && <span style={{ color: "#888", marginLeft: 2 }}>({delta})</span>}</span>
         : <span style={{ color: "#2a2a2a" }}>—</span>}
     </div>
   );
@@ -616,9 +616,9 @@ function MetricCard({ label, value, color, rate }: { label: string; value: numbe
     <div style={{ background: "#141414", borderRadius: 10, padding: "12px 14px", border: "1px solid #1e1e1e" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
         <span style={{ fontSize: 22, fontWeight: 700, color: color || "#fff" }}>{value}</span>
-        {rate && <span style={{ fontSize: 11, color: "#555" }}>{rate}</span>}
+        {rate && <span style={{ fontSize: 11, color: "#999" }}>{rate}</span>}
       </div>
-      <div style={{ fontSize: 11, color: "#555", marginTop: 1 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#999", marginTop: 1 }}>{label}</div>
     </div>
   );
 }
@@ -655,7 +655,7 @@ function OnboardBlock({ events }: { events: any[] }) {
             {isComplete ? `${totalSteps}/${totalSteps} COMPLETO` : abandoned ? `Abandonó paso ${(abandoned.atStep ?? 0) + 1}` : `${completedSteps}/${totalSteps}`}
           </span>
         </div>
-        <span style={{ color: "#444", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color: "#888", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
       </div>
       {open && (
         <div style={{ padding: "0 12px 10px", display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 11 }}>
@@ -665,7 +665,7 @@ function OnboardBlock({ events }: { events: any[] }) {
             return (
               <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ color: s.event ? "#84cc16" : "#333", fontWeight: 600 }}>{s.label}</span>
-                {s.event ? <span style={{ color: "#666" }}>{fmt(s.event.ts)}{delta && <span style={{ color: "#444", marginLeft: 2 }}>({delta})</span>}</span> : <span style={{ color: "#2a2a2a" }}>—</span>}
+                {s.event ? <span style={{ color: "#999" }}>{fmt(s.event.ts)}{delta && <span style={{ color: "#888", marginLeft: 2 }}>({delta})</span>}</span> : <span style={{ color: "#2a2a2a" }}>—</span>}
               </div>
             );
           })}
@@ -705,7 +705,7 @@ function PanelJourneyBlock({ events }: { events: any[] }) {
             {uniqueSections.length} sección{uniqueSections.length !== 1 ? "es" : ""}{totalTime ? ` · ${totalTime}` : ""}
           </span>
         </div>
-        <span style={{ color: "#444", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color: "#888", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
       </div>
       {open && (
         <div style={{ padding: "0 12px 10px", display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 11 }}>
@@ -715,7 +715,7 @@ function PanelJourneyBlock({ events }: { events: any[] }) {
             return (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ color: "#eab308", fontWeight: 600 }}>{LABELS[v.section] || v.section}</span>
-                <span style={{ color: "#666" }}>{fmt(v.ts)}{delta && <span style={{ color: "#444", marginLeft: 2 }}>({delta})</span>}</span>
+                <span style={{ color: "#999" }}>{fmt(v.ts)}{delta && <span style={{ color: "#888", marginLeft: 2 }}>({delta})</span>}</span>
               </div>
             );
           })}
@@ -768,7 +768,7 @@ function DoctorInline({ events }: { events: any[] }) {
             if (!msg) return null;
             return (
               <div key={i} style={{ fontSize: 11, marginBottom: 4, padding: "4px 0", borderBottom: "1px solid rgba(168,85,247,0.06)" }}>
-                <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, fontWeight: 700, marginRight: 6, background: isSuccess ? "rgba(34,197,94,0.1)" : isSummary ? "rgba(168,85,247,0.12)" : isRetry ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.04)", color: isSuccess ? "#22c55e" : isSummary ? "#a855f7" : isRetry ? "#60a5fa" : "#666" }}>
+                <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, fontWeight: 700, marginRight: 6, background: isSuccess ? "rgba(34,197,94,0.1)" : isSummary ? "rgba(168,85,247,0.12)" : isRetry ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.04)", color: isSuccess ? "#22c55e" : isSummary ? "#a855f7" : isRetry ? "#60a5fa" : "#999" }}>
                   {isSuccess ? "OK" : isSummary ? (e.action?.includes("escalat") ? "ESC" : "FIN") : isRetry ? "RETRY" : e.action?.replace("doctor_", "")}
                 </span>
                 <span style={{ color: "#777" }}>{msg.slice(0, 120)}{msg.length > 120 ? "..." : ""}</span>
@@ -796,7 +796,7 @@ function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }
   if (state === "confirm") return (
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
       <button onClick={del} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.12)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>Confirmar</button>
-      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>No</button>
+      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#999", border: "1px solid rgba(255,255,255,0.06)" }}>No</button>
     </span>
   );
   return (
@@ -827,7 +827,7 @@ function NukeButton({ leadId, onDone }: { leadId: string; onDone: () => void }) 
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
       <span style={{ fontSize: 10, color: "#f87171" }}>¿Eliminar cuenta?</span>
       <button onClick={nuke} style={{ fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)" }}>Sí, eliminar todo</button>
-      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>No</button>
+      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "#999", border: "1px solid rgba(255,255,255,0.06)" }}>No</button>
     </span>
   );
   return (
@@ -867,7 +867,7 @@ function PanelActivitiesBlock({ leadId }: { leadId: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div style={{ fontSize: 11, color: "#444", padding: "6px 0" }}>Cargando acciones...</div>;
+  if (loading) return <div style={{ fontSize: 11, color: "#888", padding: "6px 0" }}>Cargando acciones...</div>;
   if (!activities || activities.length === 0) return <div style={{ fontSize: 11, color: "#333", padding: "4px 0" }}>Sin acciones registradas en el panel.</div>;
 
   const SECTION_LABELS: Record<string, string> = {
@@ -977,9 +977,9 @@ function PanelActivitiesBlock({ leadId }: { leadId: string }) {
 
   return (
     <div style={{ marginTop: 10 }}>
-      <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
         Acciones en panel
-        <span style={{ color: "#555", fontWeight: 400, fontSize: 9, textTransform: "none" }}>{activities.length} eventos</span>
+        <span style={{ color: "#999", fontWeight: 400, fontSize: 9, textTransform: "none" }}>{activities.length} eventos</span>
         {uniqueIps.length > 0 && (
           <span style={{ fontSize: 9, color: "#ef4444", fontWeight: 600, background: "rgba(239,68,68,0.08)", padding: "1px 6px", borderRadius: 4, border: "1px solid rgba(239,68,68,0.15)" }}>
             IP{uniqueIps.length > 1 ? "s" : ""}: {uniqueIps.join(", ")}
@@ -1004,14 +1004,14 @@ function PanelActivitiesBlock({ leadId }: { leadId: string }) {
               <span title={device}>{device === "mobile" ? "📱" : "💻"}</span>
               <span style={{
                 flex: 1,
-                color: isAction ? "#e8c87a" : isVisit ? "#666" : "#aaa",
+                color: isAction ? "#e8c87a" : isVisit ? "#999" : "#aaa",
                 fontWeight: isAction ? 600 : 400,
               }}>
                 {label}
-                {a.count > 1 && <span style={{ color: "#444", fontSize: 10, marginLeft: 4 }}>×{a.count}</span>}
+                {a.count > 1 && <span style={{ color: "#888", fontSize: 10, marginLeft: 4 }}>×{a.count}</span>}
               </span>
               {(a.details as any)?.email && (
-                <span style={{ color: "#555", fontSize: 10 }}>{(a.details as any).email}</span>
+                <span style={{ color: "#999", fontSize: 10 }}>{(a.details as any).email}</span>
               )}
               {a.ip && <span style={{ color: "#333", fontSize: 10, fontFamily: "monospace" }}>{a.ip}</span>}
             </div>

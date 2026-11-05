@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -64,7 +64,7 @@ const PLAN_COLORS: Record<string, { text: string; bg: string; border: string }> 
 };
 
 function PlanBadge({ plan }: { plan: string }) {
-  const c = PLAN_COLORS[plan] ?? { text: "#666", bg: "rgba(100,100,100,0.12)", border: "#333" };
+  const c = PLAN_COLORS[plan] ?? { text: "#999", bg: "rgba(100,100,100,0.12)", border: "#333" };
   return (
     <span style={{
       fontSize: 11, fontWeight: 700, padding: "3px 8px",
@@ -94,7 +94,7 @@ function CopyBtn({ text }: { text: string }) {
         border: `1px solid ${copied ? "#4ade80" : "#333"}`,
         borderRadius: 6,
         background: copied ? "rgba(74,222,128,0.12)" : "#1a1a1a",
-        color: copied ? "#4ade80" : "#666",
+        color: copied ? "#4ade80" : "#999",
         cursor: "pointer", transition: "all 0.15s",
         fontWeight: copied ? 700 : 400,
       }}
@@ -252,14 +252,14 @@ export default function FacturasPage() {
       )}
 
       {loading && (
-        <div style={{ textAlign: "center", padding: 80, color: "#555", fontFamily: F }}>
+        <div style={{ textAlign: "center", padding: 80, color: "#999", fontFamily: F }}>
           Cargando…
         </div>
       )}
 
       {!loading && rows.length === 0 && (
         <div style={{
-          textAlign: "center", padding: 60, color: "#555", fontFamily: F, fontSize: 14,
+          textAlign: "center", padding: 60, color: "#999", fontFamily: F, fontSize: 14,
           background: "#1a1a1a", borderRadius: 12, border: "1px solid #2a2a2a",
         }}>
           No hay locales activos en este período.
@@ -300,10 +300,10 @@ export default function FacturasPage() {
                     <td style={{ padding: "13px 16px" }}>
                       <div style={{ fontWeight: 600, color: "#fff", fontFamily: F }}>{r.name}</div>
                       {r.billingCompanyName && r.billingCompanyName !== r.name && (
-                        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{r.billingCompanyName}</div>
+                        <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{r.billingCompanyName}</div>
                       )}
                       {r.ownerEmail && (
-                        <div style={{ fontSize: 11, color: "#555", marginTop: 1 }}>{r.ownerEmail}</div>
+                        <div style={{ fontSize: 11, color: "#999", marginTop: 1 }}>{r.ownerEmail}</div>
                       )}
                     </td>
                     <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
@@ -313,7 +313,7 @@ export default function FacturasPage() {
                           <CopyBtn text={cleanRut(r.billingRut)} />
                         </span>
                       ) : (
-                        <span style={{ color: "#444", fontSize: 12 }}>—</span>
+                        <span style={{ color: "#888", fontSize: 12 }}>—</span>
                       )}
                     </td>
                     <td style={{ padding: "13px 16px", textAlign: "center" }}>
@@ -322,7 +322,7 @@ export default function FacturasPage() {
                     <td style={{ padding: "13px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#ccc" }}>
                       {fmt(r.amountNet)}
                     </td>
-                    <td style={{ padding: "13px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#666" }}>
+                    <td style={{ padding: "13px 16px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#999" }}>
                       {fmt(r.amountGross)}
                     </td>
                     <td style={{ padding: "13px 16px", textAlign: "center" }}>
@@ -332,7 +332,7 @@ export default function FacturasPage() {
                         style={{
                           padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           border: "none", background: uploading === r.id ? "#2a2a2a" : GOLD,
-                          color: uploading === r.id ? "#666" : "#000",
+                          color: uploading === r.id ? "#999" : "#000",
                           cursor: uploading === r.id ? "default" : "pointer",
                           fontFamily: F, whiteSpace: "nowrap",
                           transition: "opacity 0.15s",
@@ -422,7 +422,7 @@ export default function FacturasPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
-                              fontSize: 11, color: "#666", padding: "3px 8px",
+                              fontSize: 11, color: "#999", padding: "3px 8px",
                               borderRadius: 99, border: "1px solid #2a2a2a",
                               textDecoration: "none", background: "#111",
                             }}
@@ -457,7 +457,7 @@ function TH({ children, center, right }: { children: React.ReactNode; center?: b
   return (
     <th style={{
       padding: "9px 16px", textAlign: center ? "center" : right ? "right" : "left",
-      fontSize: 10, fontWeight: 700, color: "#555", letterSpacing: "0.07em",
+      fontSize: 10, fontWeight: 700, color: "#999", letterSpacing: "0.07em",
       textTransform: "uppercase", background: "#161616", fontFamily: "var(--font-display)",
     }}>
       {children}
@@ -472,7 +472,7 @@ function StatCard({ label, value, color }: { label: string; value: number; color
       borderRadius: 12, padding: "14px 16px", textAlign: "center",
     }}>
       <div style={{ fontSize: 26, fontWeight: 700, color, fontFamily: "var(--font-display)" }}>{value}</div>
-      <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{label}</div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -124,7 +124,7 @@ export default function WhatsAppPage() {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: 40, height: 40, border: `3px solid ${GREEN}30`, borderTopColor: GREEN, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-        <div style={{ color: "#666", fontSize: 13, fontFamily: FB }}>Cargando conversaciones...</div>
+        <div style={{ color: "#999", fontSize: 13, fontFamily: FB }}>Cargando conversaciones...</div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     </div>
@@ -147,8 +147,8 @@ export default function WhatsAppPage() {
         .wa-filters button { flex-shrink: 0; }
         .wa-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .wa-conv-item { background: #111; border-radius: 12px; padding: 12px 16px; border: 1px solid #1a1a1a; cursor: pointer; text-align: left; width: 100%; transition: all 0.15s; }
-        .wa-conv-meta { font-size: 11px; color: #666; display: flex; gap: 6px; margin-top: 1px; }
-        .wa-conv-preview { font-size: 12px; color: #555; margin-top: 6px; margin-left: 42px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .wa-conv-meta { font-size: 11px; color: #999; display: flex; gap: 6px; margin-top: 1px; }
+        .wa-conv-preview { font-size: 12px; color: #999; margin-top: 6px; margin-left: 42px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .wa-conv-insight { margin-top: 6px; margin-left: 42px; font-size: 11px; color: ${GOLD}; display: flex; align-items: center; gap: 4px; }
 
         /* ═══ Chat Thread - WhatsApp style ═══ */
@@ -290,13 +290,13 @@ export default function WhatsAppPage() {
         ] as const).map(t => (
           <button key={t.key} onClick={() => { setView(t.key); if (t.key !== "chat") setSelectedPhone(null); }} style={{
             background: view === t.key ? "#1e1e1e" : "transparent",
-            color: view === t.key ? "#fff" : "#555",
+            color: view === t.key ? "#fff" : "#999",
             fontFamily: FB,
           }}>
             <span style={{ fontSize: 14 }}>{t.icon}</span>
             <span className="wa-nav-label">{t.label}</span>
             {"count" in t && (t as any).count > 0 && (
-              <span style={{ fontSize: 9, background: view === t.key ? "#333" : "#1a1a1a", padding: "1px 6px", borderRadius: 10, color: view === t.key ? "#fff" : "#666" }}>{(t as any).count}</span>
+              <span style={{ fontSize: 9, background: view === t.key ? "#333" : "#1a1a1a", padding: "1px 6px", borderRadius: 10, color: view === t.key ? "#fff" : "#999" }}>{(t as any).count}</span>
             )}
           </button>
         ))}
@@ -344,7 +344,7 @@ export default function WhatsAppPage() {
             <GlassCard>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Ultimas respuestas</div>
               {conversations.filter(c => c.responded).length === 0 ? (
-                <div style={{ color: "#555", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Aun nadie ha respondido</div>
+                <div style={{ color: "#999", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Aun nadie ha respondido</div>
               ) : (
                 conversations.filter(c => c.responded).slice(0, 5).map(c => (
                   <MiniConvRow key={c.phone} c={c} onOpen={openChat} timeAgo={timeAgo} />
@@ -356,7 +356,7 @@ export default function WhatsAppPage() {
             <GlassCard>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Ultimos insights</div>
               {allInsights.length === 0 ? (
-                <div style={{ color: "#555", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Sin insights aun</div>
+                <div style={{ color: "#999", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Sin insights aun</div>
               ) : (
                 allInsights.slice(0, 5).map((ins, i) => (
                   <div key={i} onClick={() => openChat(ins.phone)} style={{ padding: "8px 0", borderBottom: i < 4 ? "1px solid #1a1a1a" : "none", cursor: "pointer" }}>
@@ -372,7 +372,7 @@ export default function WhatsAppPage() {
           <GlassCard>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
               Esperando respuesta
-              <span style={{ fontSize: 11, color: "#555", fontWeight: 400, marginLeft: 8 }}>
+              <span style={{ fontSize: 11, color: "#999", fontWeight: 400, marginLeft: 8 }}>
                 {conversations.filter(c => !c.responded && c.outbound > 0).length} pendientes
               </span>
             </div>
@@ -398,7 +398,7 @@ export default function WhatsAppPage() {
                 background: "#111", color: "#ddd", fontSize: 13, outline: "none", boxSizing: "border-box",
               }}
             />
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#555" }}>🔍</span>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#999" }}>🔍</span>
           </div>
 
           {/* Filters */}
@@ -435,7 +435,7 @@ export default function WhatsAppPage() {
                         background: c.responded ? `${GREEN}15` : c.isCamila ? `${PURPLE}15` : "#1a1a1a",
                         border: `1px solid ${c.responded ? `${GREEN}30` : "#222"}`,
                         display: "grid", placeItems: "center",
-                        fontSize: 14, color: c.responded ? GREEN : "#555",
+                        fontSize: 14, color: c.responded ? GREEN : "#999",
                       }}>
                         {(c.localName || c.ownerName || "?").charAt(0).toUpperCase()}
                       </div>
@@ -454,13 +454,13 @@ export default function WhatsAppPage() {
                         <div className="wa-conv-meta">
                           {c.ownerName && <span>{c.ownerName}</span>}
                           <span>{c.phone}</span>
-                          {c.plan && <span style={{ color: "#444" }}>{c.plan}</span>}
+                          {c.plan && <span style={{ color: "#888" }}>{c.plan}</span>}
                         </div>
                       </div>
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, color: "#555" }}>{timeAgo(c.lastAt)}</span>
+                    <span style={{ fontSize: 10, color: "#999" }}>{timeAgo(c.lastAt)}</span>
                     <div style={{ display: "flex", gap: 3 }}>
                       {c.inbound > 0 && <span style={{ fontSize: 9, color: "#888", background: "#1a1a1a", padding: "1px 5px", borderRadius: 4 }}>{c.inbound}↓</span>}
                       {c.outbound > 0 && <span style={{ fontSize: 9, color: GREEN, background: `${GREEN}10`, padding: "1px 5px", borderRadius: 4 }}>{c.outbound}↑</span>}
@@ -480,7 +480,7 @@ export default function WhatsAppPage() {
                 )}
               </button>
             ))}
-            {filteredConvs.length === 0 && <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 13 }}>Sin resultados</div>}
+            {filteredConvs.length === 0 && <div style={{ padding: 40, textAlign: "center", color: "#999", fontSize: 13 }}>Sin resultados</div>}
           </div>
         </div>
       )}
@@ -570,7 +570,7 @@ export default function WhatsAppPage() {
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>💡</div>
               <div style={{ fontSize: 15, color: "#fff", fontWeight: 600, marginBottom: 6 }}>Aun no hay insights</div>
-              <div style={{ fontSize: 13, color: "#666", lineHeight: 1.6, maxWidth: 360, margin: "0 auto" }}>
+              <div style={{ fontSize: 13, color: "#999", lineHeight: 1.6, maxWidth: 360, margin: "0 auto" }}>
                 Cuando los duenos respondan a Camila, ella capturara automaticamente por que no estan usando su carta.
               </div>
             </div>
@@ -636,7 +636,7 @@ export default function WhatsAppPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <div style={{ width: 4, height: 16, borderRadius: 2, background: cat?.color || "#555" }} />
                       <span style={{ fontSize: 13, fontWeight: 700, color: cat?.color || "#888" }}>{cat?.label || "Otros"}</span>
-                      <span style={{ fontSize: 11, color: "#555" }}>({items.length})</span>
+                      <span style={{ fontSize: 11, color: "#999" }}>({items.length})</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 12 }}>
                       {items.map((ins, i) => (
@@ -649,7 +649,7 @@ export default function WhatsAppPage() {
                           </div>
                           <div style={{ display: "flex", gap: 8, fontSize: 11, alignItems: "center" }}>
                             <span style={{ fontWeight: 700, color: GOLD }}>{ins.local || "—"}</span>
-                            <span style={{ color: "#555" }}>{ins.owner}</span>
+                            <span style={{ color: "#999" }}>{ins.owner}</span>
                             <span style={{ color: GREEN, marginLeft: "auto" }}>Ver chat →</span>
                           </div>
                         </button>
@@ -690,7 +690,7 @@ export default function WhatsAppPage() {
 
           {/* Knowledge base */}
           <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Conocimiento adicional</div>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: "#999", marginBottom: 14, lineHeight: 1.5 }}>
             Agrega temas que Camila debe conocer al responder. Se suman a las instrucciones base.
           </div>
 
@@ -718,12 +718,12 @@ export default function WhatsAppPage() {
                 <p style={{ fontSize: 12, color: "#999", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{e.content}</p>
               </div>
             ))}
-            {knowledge.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "#555", fontSize: 12, background: "#111", borderRadius: 12, border: "1px solid #1a1a1a" }}>Sin conocimiento adicional</div>}
+            {knowledge.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "#999", fontSize: 12, background: "#111", borderRadius: 12, border: "1px solid #1a1a1a" }}>Sin conocimiento adicional</div>}
           </div>
 
           {/* Add */}
           <div style={{ background: "#0d0d0d", borderRadius: 14, padding: "18px 20px", border: "1px solid #1a1a1a" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>Nuevo tema</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 12 }}>Nuevo tema</div>
             <input
               type="text" placeholder="Tema (ej: Como subir fotos, Planes...)"
               value={newTopic} onChange={e => setNewTopic(e.target.value)}
@@ -793,9 +793,9 @@ function MiniConvRow({ c, onOpen, timeAgo }: { c: Conversation; onOpen: (phone: 
     }}>
       <div>
         <div style={{ fontSize: 12, fontWeight: 600, color: "#ddd" }}>{c.localName || c.phone}</div>
-        <div style={{ fontSize: 10, color: "#666" }}>{c.ownerName}</div>
+        <div style={{ fontSize: 10, color: "#999" }}>{c.ownerName}</div>
       </div>
-      <span style={{ fontSize: 10, color: "#555" }}>{timeAgo(c.lastAt)}</span>
+      <span style={{ fontSize: 10, color: "#999" }}>{timeAgo(c.lastAt)}</span>
     </div>
   );
 }

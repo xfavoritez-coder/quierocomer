@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
@@ -10,7 +10,7 @@ function Card({ label, value, sub, color = "#F4A623" }: { label: string; value: 
     <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
       <p style={{ fontFamily: F, fontSize: "1.8rem", color, margin: "0 0 4px", fontWeight: 700 }}>{value}</p>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: 0 }}>{label}</p>
-      {sub && <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#555", margin: "4px 0 0" }}>{sub}</p>}
+      {sub && <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", margin: "4px 0 0" }}>{sub}</p>}
     </div>
   );
 }
@@ -80,7 +80,7 @@ export default function AnalyticsDashboard() {
           <Card label="Platos vistos / sesión" value={data.avgDishesViewed} color="white" />
         </div>
       ) : (
-        <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>
+        <p style={{ color: "#999", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>
       )}
 
       {/* Top Attention Dishes */}
@@ -98,7 +98,7 @@ export default function AnalyticsDashboard() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-                    <span style={{ fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{d.category}</span>
+                    <span style={{ fontSize: "0.7rem", color: "#999", flexShrink: 0 }}>{d.category}</span>
                   </div>
                   <div style={{ display: "flex", gap: 12, marginTop: 2 }}>
                     <span style={{ fontSize: "0.72rem", color: "#888" }}>{d.viewPct}% de sesiones</span>
@@ -106,11 +106,11 @@ export default function AnalyticsDashboard() {
                     <span style={{ fontSize: "0.72rem", color: "#F4A623" }}>{Math.round(d.avgDwellMs / 1000)}s promedio</span>
                   </div>
                 </div>
-                <span style={{ fontFamily: F, fontSize: "0.82rem", color: "#555", flexShrink: 0 }}>${d.price?.toLocaleString("es-CL")}</span>
+                <span style={{ fontFamily: F, fontSize: "0.82rem", color: "#999", flexShrink: 0 }}>${d.price?.toLocaleString("es-CL")}</span>
               </div>
             ))}
           </div>
-          <p style={{ fontSize: "0.68rem", color: "#444", marginTop: 8, fontFamily: F }}>Basado en {attention.totalSessions} sesiones de los últimos 28 días</p>
+          <p style={{ fontSize: "0.68rem", color: "#888", marginTop: 8, fontFamily: F }}>Basado en {attention.totalSessions} sesiones de los últimos 28 días</p>
         </div>
       )}
     </div>

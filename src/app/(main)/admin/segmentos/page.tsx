@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
@@ -177,7 +177,7 @@ export default function AdminSegmentos() {
                 <span style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600 }}>{seg.name}</span>
                 {seg.isAuto && <span style={{ fontSize: "0.6rem", background: "rgba(127,191,220,0.15)", color: "#7fbfdc", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Auto</span>}
               </div>
-              {seg.description && <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#666", margin: "2px 0 0" }}>{seg.description}</p>}
+              {seg.description && <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#999", margin: "2px 0 0" }}>{seg.description}</p>}
               <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
                 {(seg.rules as Rule[]).map((r, i) => (
                   <span key={i} style={{ fontFamily: F, fontSize: "0.65rem", padding: "2px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 4, color: "#aaa" }}>
@@ -188,12 +188,12 @@ export default function AdminSegmentos() {
             </div>
             <div style={{ textAlign: "center", flexShrink: 0 }}>
               <p style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", fontWeight: 700, margin: 0 }}>{seg.cachedCount ?? "—"}</p>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", margin: 0 }}>personas</p>
+              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", margin: 0 }}>personas</p>
             </div>
           </div>
         ))}
         {segments.length === 0 && !creating && (
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 40 }}>No hay segmentos. Crea el primero.</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 40 }}>No hay segmentos. Crea el primero.</p>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
@@ -8,9 +8,9 @@ const F = "var(--font-display)";
 function StatCard({ label, value, sub, color = "#F4A623" }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
     <div style={{ padding: "16px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12 }}>
-      <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
       <div style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color }}>{value}</div>
-      {sub && <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", marginTop: 2 }}>{sub}</div>}
+      {sub && <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -111,7 +111,7 @@ export default function PersonalizationPage() {
         ))}
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4 }}>
           <input type="date" value={from} onChange={(e) => handleFrom(e.target.value)} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
-          <span style={{ color: "#666", fontSize: "0.72rem" }}>–</span>
+          <span style={{ color: "#999", fontSize: "0.72rem" }}>–</span>
           <input type="date" value={to} onChange={(e) => handleTo(e.target.value)} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
         </div>
       </div>
@@ -131,13 +131,13 @@ export default function PersonalizationPage() {
             </div>
             {data.recommendations.topDishes.length > 0 && (
               <>
-                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Top platos recomendados</h3>
+                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Top platos recomendados</h3>
                 {data.recommendations.topDishes.map((d: any) => (
                   <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #1A1A1A" }}>
                     <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#aaa", flex: 1 }}>{d.name}</span>
                     <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#F4A623" }}>{d.shown} vistas</span>
                     <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#4ade80" }}>{d.tapped} clicks</span>
-                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: d.shown > 0 ? "#888" : "#444" }}>{d.shown > 0 ? Math.round((d.tapped / d.shown) * 100) : 0}%</span>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: d.shown > 0 ? "#888" : "#888" }}>{d.shown > 0 ? Math.round((d.tapped / d.shown) * 100) : 0}%</span>
                   </div>
                 ))}
               </>
@@ -159,7 +159,7 @@ export default function PersonalizationPage() {
             <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 700, marginBottom: 12 }}>👤 Perfil del comensal ({data.audience.totalProfiles} perfiles)</h2>
             {data.audience.diets.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Distribución de dietas</h3>
+                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Distribución de dietas</h3>
                 {data.audience.diets.map((d: any) => (
                   <BarRow key={d.name} label={d.name === "vegan" ? "🌿 Vegano" : d.name === "vegetarian" ? "🌱 Vegetariano" : "🍖 Omnívoro"} value={d.count} max={data.audience.totalProfiles} color={d.name === "vegan" ? "#4ade80" : d.name === "vegetarian" ? "#86efac" : "#F4A623"} />
                 ))}
@@ -167,7 +167,7 @@ export default function PersonalizationPage() {
             )}
             {data.audience.restrictions.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Restricciones más comunes</h3>
+                <h3 style={{ fontFamily: F, fontSize: "0.75rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Restricciones más comunes</h3>
                 {data.audience.restrictions.map((r: any) => (
                   <BarRow key={r.name} label={r.name} value={r.count} max={data.audience.restrictions[0]?.count || 1} color="#ff6b6b" />
                 ))}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
@@ -308,15 +308,15 @@ export default function AdminLocales() {
         {/* Editable fields */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Nombre</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Nombre</label>
             <input value={editName} onChange={e => setEditName(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.88rem", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Descripción</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Descripción</label>
             <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={2} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Logo</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Logo</label>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               {selected.logoUrl ? (
                 <img src={selected.logoUrl} alt="Logo" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }} />
@@ -330,30 +330,30 @@ export default function AdminLocales() {
             </div>
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Teléfono</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Teléfono</label>
             <input value={editPhone} onChange={e => setEditPhone(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 2 1234 5678" />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>WhatsApp</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>WhatsApp</label>
             <input value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 9 1234 5678" />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Instagram</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Instagram</label>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRight: "none", borderRadius: "8px 0 0 8px", color: "#666", fontFamily: F, fontSize: "0.82rem" }}>@</span>
+              <span style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRight: "none", borderRadius: "8px 0 0 8px", color: "#999", fontFamily: F, fontSize: "0.82rem" }}>@</span>
               <input value={editInstagram} onChange={e => setEditInstagram(e.target.value.replace(/^@/, ""))} style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: "0 8px 8px 0", color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="tu_usuario" />
             </div>
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Sitio web</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Sitio web</label>
             <input value={editWebsite} onChange={e => setEditWebsite(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://tu-sitio.cl" />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Dirección</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Dirección</label>
             <input value={editAddress} onChange={e => setEditAddress(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="Av. Providencia 1234, Santiago" />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Tipo de local</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Tipo de local</label>
             <div style={{ display: "flex", gap: 6 }}>
               {[
                 { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
@@ -364,7 +364,7 @@ export default function AdminLocales() {
                   flex: 1, padding: "8px 6px", borderRadius: 8, border: "none", cursor: "pointer",
                   fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
                   background: editDietType === opt.value ? (opt.value === "OMNIVORE" ? "rgba(139,90,43,0.2)" : "rgba(74,222,128,0.15)") : "rgba(255,255,255,0.04)",
-                  color: editDietType === opt.value ? (opt.value === "OMNIVORE" ? "#c9935a" : "#4ade80") : "#666",
+                  color: editDietType === opt.value ? (opt.value === "OMNIVORE" ? "#c9935a" : "#4ade80") : "#999",
                 }}>
                   {opt.icon} {opt.label}
                 </button>
@@ -372,7 +372,7 @@ export default function AdminLocales() {
             </div>
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Idiomas de la carta</label>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Idiomas de la carta</label>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[
                 { code: "es", label: "Español", flag: "🇪🇸" },
@@ -390,7 +390,7 @@ export default function AdminLocales() {
                     padding: "8px 12px", borderRadius: 8, border: "none", cursor: isEs ? "default" : "pointer",
                     fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
                     background: isOn ? "rgba(127,191,220,0.15)" : "rgba(255,255,255,0.04)",
-                    color: isOn ? "#7fbfdc" : "#555",
+                    color: isOn ? "#7fbfdc" : "#999",
                     opacity: isEs ? 0.7 : 1,
                   }}>
                     {lang.flag} {lang.label}
@@ -398,7 +398,7 @@ export default function AdminLocales() {
                 );
               })}
             </div>
-            <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#555", margin: "6px 0 0" }}>Español siempre activo. Los demás se pueden activar o desactivar.</p>
+            <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#999", margin: "6px 0 0" }}>Español siempre activo. Los demás se pueden activar o desactivar.</p>
           </div>
           <button onClick={saveChanges} disabled={saving} style={{ padding: "12px", background: saved ? "rgba(74,222,128,0.15)" : "#F4A623", color: saved ? "#4ade80" : "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", marginTop: 6 }}>
             {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}
@@ -521,7 +521,7 @@ export default function AdminLocales() {
               ))}
             </div>
           </div>
-          <p style={{ margin: 0 }}>Owner: {selected.owner ? `${selected.owner.name} (${selected.owner.email})` : <span style={{ color: "#666" }}>Sin asignar</span>}</p>
+          <p style={{ margin: 0 }}>Owner: {selected.owner ? `${selected.owner.name} (${selected.owner.email})` : <span style={{ color: "#999" }}>Sin asignar</span>}</p>
           <p style={{ margin: 0 }}>Creado: {new Date(selected.createdAt).toLocaleDateString("es-CL")}</p>
         </div>
 
@@ -1058,7 +1058,7 @@ export default function AdminLocales() {
                         );
                       })}
                     </div>
-                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", margin: "6px 0 0", lineHeight: 1.4 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", margin: "6px 0 0", lineHeight: 1.4 }}>
                       {handoffPlan === "FREE"
                         ? "Sin trial. Email simple sin urgencia."
                         : `Activa 7 días gratis. Email con instrucciones para inscribir tarjeta antes de que venza.`}
@@ -1224,7 +1224,7 @@ export default function AdminLocales() {
                 style={{
                   width: 36, height: 36, borderRadius: 8, border: "none", cursor: "pointer",
                   background: bulkSelected.has(r.id) ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)",
-                  color: bulkSelected.has(r.id) ? "#ef4444" : "#555",
+                  color: bulkSelected.has(r.id) ? "#ef4444" : "#999",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "1rem", flexShrink: 0, marginRight: 6,
                   transition: "all 0.15s",
@@ -1254,12 +1254,12 @@ export default function AdminLocales() {
                   {r.ecommerceStoreConfig?.branchName && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.12)", color: "#4ade80", fontFamily: F, fontWeight: 700, flexShrink: 0 }}>🏷️ {r.ecommerceStoreConfig.branchName}</span>}
                   {r.isDemo && <span style={{ fontSize: "0.58rem", padding: "1px 5px", borderRadius: 4, background: "rgba(127,191,220,0.12)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>DEMO</span>}
                 </div>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4,
                   background: r.plan === "PREMIUM" ? "rgba(124,58,237,0.15)" : r.plan === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.06)",
-                  color: r.plan === "PREMIUM" ? "#c084fc" : r.plan === "GOLD" ? "#F4A623" : "#666",
+                  color: r.plan === "PREMIUM" ? "#c084fc" : r.plan === "GOLD" ? "#F4A623" : "#999",
                 }}>
                   {r.plan === "PREMIUM" ? "Premium" : r.plan === "GOLD" ? "Gold" : "Free"}
                 </span>
@@ -1269,7 +1269,7 @@ export default function AdminLocales() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 40 }}>No hay locales que coincidan</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 40 }}>No hay locales que coincidan</p>
         )}
       </div>
     </div>
@@ -1355,7 +1355,7 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-            🔌 Integración Toteat {isConfigured ? <span style={{ color: "#4ade80", fontSize: "0.7rem", marginLeft: 6 }}>● Conectado</span> : <span style={{ color: "#666", fontSize: "0.7rem", marginLeft: 6 }}>○ Sin configurar</span>}
+            🔌 Integración Toteat {isConfigured ? <span style={{ color: "#4ade80", fontSize: "0.7rem", marginLeft: 6 }}>● Conectado</span> : <span style={{ color: "#999", fontSize: "0.7rem", marginLeft: 6 }}>○ Sin configurar</span>}
           </p>
           {isConfigured && (
             <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "2px 0 0" }}>
@@ -1363,17 +1363,17 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
             </p>
           )}
         </div>
-        <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color: "#999", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
       </div>
 
       {open && (
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #2A2A2A", display: "flex", flexDirection: "column", gap: 10 }}>
           {!editing && isConfigured ? (
             <div style={{ fontFamily: F, fontSize: "0.78rem", color: "#aaa" }}>
-              <p style={{ margin: 0 }}><span style={{ color: "#666" }}>Restaurant ID (xir):</span> {restaurant.toteatRestaurantId}</p>
-              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>Local ID (xil):</span> {restaurant.toteatLocalId}</p>
-              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>User ID (xiu):</span> {restaurant.toteatUserId}</p>
-              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#666" }}>Token:</span> ••••••••{restaurant.toteatApiToken?.slice(-4)}</p>
+              <p style={{ margin: 0 }}><span style={{ color: "#999" }}>Restaurant ID (xir):</span> {restaurant.toteatRestaurantId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#999" }}>Local ID (xil):</span> {restaurant.toteatLocalId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#999" }}>User ID (xiu):</span> {restaurant.toteatUserId}</p>
+              <p style={{ margin: "4px 0 0" }}><span style={{ color: "#999" }}>Token:</span> ••••••••{restaurant.toteatApiToken?.slice(-4)}</p>
             </div>
           ) : !editing && !isConfigured ? (
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: 0 }}>Este local todavía no tiene integración con Toteat. Configura las credenciales para activar el cruce de vistas vs ventas, dashboard live y badges en tiempo real.</p>
@@ -1471,7 +1471,7 @@ function IntegrationGroup({ title, sub, ok, children }: { title: string; sub: st
             <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#777", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</p>
           </div>
         </div>
-        <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: ok ? "#4ade80" : "#666", flexShrink: 0 }}>{ok ? "● Configurada" : "○ Sin configurar"}</span>
+        <span style={{ fontFamily: F, fontSize: "0.66rem", fontWeight: 700, color: ok ? "#4ade80" : "#999", flexShrink: 0 }}>{ok ? "● Configurada" : "○ Sin configurar"}</span>
       </button>
       {open && <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 14px 14px" }}>{children}</div>}
     </div>
@@ -1610,11 +1610,11 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-            🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#666", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/{totalCount} configuradas</span>
+            🛒 Credenciales Ecommerce <span style={{ color: configuredCount > 0 ? "#4ade80" : "#999", fontSize: "0.7rem", marginLeft: 6 }}>{configuredCount}/{totalCount} configuradas</span>
           </p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>Webpay · Flow · MercadoPago · Uber Direct · PedidosYa · Google Maps · Twilio · POS</p>
         </div>
-        <span style={{ color: "#666", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color: "#999", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
       </div>
 
       {open && (
@@ -1788,7 +1788,7 @@ function BrandBranchesBox({ restaurant, onOpenBranch }: { restaurant: { id: stri
     <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 8 }}>
       <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", margin: 0 }}>🏷️ Marca</p>
       {loading ? (
-        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: "8px 0 0" }}>Cargando…</p>
+        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", margin: "8px 0 0" }}>Cargando…</p>
       ) : !brandSlug ? (
         <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "6px 0 0", lineHeight: 1.5 }}>
           Este local aún no pertenece a una marca. Al crear la primera sucursal se generará el identificador de marca automáticamente.
@@ -1799,7 +1799,7 @@ function BrandBranchesBox({ restaurant, onOpenBranch }: { restaurant: { id: stri
             <span style={{ fontFamily: "monospace", fontSize: "0.82rem", color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 6, padding: "2px 8px" }}>{brandSlug}</span>
             <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#888" }}>{branches.length} sucursal{branches.length === 1 ? "" : "es"}</span>
           </div>
-          <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#666", margin: "0 0 10px" }}>Entrada pública: quierocomer.com/ecommerce/marca/{brandSlug}</p>
+          <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#999", margin: "0 0 10px" }}>Entrada pública: quierocomer.com/ecommerce/marca/{brandSlug}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {branches.map(b => {
               const dirty = (draft[b.id] ?? "").trim() !== (b.branchName || "");
@@ -1895,7 +1895,7 @@ function AddBranchBox({ restaurant }: { restaurant: { id: string; name: string }
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: "#aaa", marginBottom: 4 }}>Nombre de la sucursal *</label>
             <input value={branchName} onChange={e => setBranchName(e.target.value)} placeholder="Providencia" maxLength={60} style={inputStyle} />
-            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#666", margin: "4px 0 0" }}>El local se llamará &quot;{restaurant.name} · {branchName.trim() || "…"}&quot;.</p>
+            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#999", margin: "4px 0 0" }}>El local se llamará &quot;{restaurant.name} · {branchName.trim() || "…"}&quot;.</p>
           </div>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: "#aaa", marginBottom: 4 }}>Dirección (opcional)</label>
@@ -1903,7 +1903,7 @@ function AddBranchBox({ restaurant }: { restaurant: { id: string; name: string }
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", color: "#ccc" }}>
             <input type="checkbox" checked={copyMenu} onChange={e => setCopyMenu(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#4ade80" }} />
-            Copiar la carta de {restaurant.name} a la nueva sucursal <span style={{ color: "#666" }}>(sin códigos Toteat)</span>
+            Copiar la carta de {restaurant.name} a la nueva sucursal <span style={{ color: "#999" }}>(sin códigos Toteat)</span>
           </label>
           <div>
             <button onClick={create} disabled={busy} style={{ padding: "9px 16px", background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
@@ -1984,7 +1984,7 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
         </button>
       </div>
       {msg && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: "8px 0 0" }}>{msg}</p>}
-      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", margin: "6px 0 0" }}>Usa un monto negativo (ej: -5000) para ajustar a la baja.</p>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", margin: "6px 0 0" }}>Usa un monto negativo (ej: -5000) para ajustar a la baja.</p>
 
       {txns.length > 0 && (
         <div style={{ marginTop: 14, borderTop: "1px solid #2A2A2A", paddingTop: 12 }}>
@@ -1997,7 +1997,7 @@ function WalletSection({ restaurantId }: { restaurantId: string }) {
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#777" }}> · {t.description || "—"} · {new Date(t.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
                 <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: t.amount >= 0 ? "#4ade80" : "#ff6b6b" }}>{t.amount >= 0 ? "+" : "−"}{clpAdmin(Math.abs(t.amount))}</span>
-                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", minWidth: 70, textAlign: "right" }}>{clpAdmin(t.balanceAfter)}</span>
+                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", minWidth: 70, textAlign: "right" }}>{clpAdmin(t.balanceAfter)}</span>
                 <button onClick={() => removeTxn(t.id)} title="Eliminar movimiento" style={{ border: "none", background: "transparent", color: "#ff6b6b", cursor: "pointer", fontFamily: F, fontSize: "0.9rem", lineHeight: 1, padding: "0 2px", flexShrink: 0 }}>✕</button>
               </div>
             ))}

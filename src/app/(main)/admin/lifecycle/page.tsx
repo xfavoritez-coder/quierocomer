@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { STAGE_META, ENGAGEMENT_CRITERIA, type LifecycleStage } from "@/lib/admin/lifecycle";
 
@@ -79,7 +79,7 @@ function getInitials(name: string) {
   return name.split(" ").map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
 }
 
-const SALUD_COLORS: Record<string, string> = { green: "#4ade80", yellow: "#fbbf24", red: "#f87171", gray: "#555" };
+const SALUD_COLORS: Record<string, string> = { green: "#4ade80", yellow: "#fbbf24", red: "#f87171", gray: "#999" };
 const SALUD_LABELS: Record<string, string> = { green: "Activo", yellow: "Tibio", red: "Dormido", gray: "Sin owner" };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -248,7 +248,7 @@ export default function LifecyclePage() {
           </h1>
           <p style={{ color: "#888", fontSize: 13, margin: 0 }}>
             Vista unificada de leads, clientes y su estado actual
-            {computedAt && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· actualizado {timeAgo(computedAt)}</span>}
+            {computedAt && <span style={{ color: "#999", marginLeft: 8, fontSize: 11 }}>· actualizado {timeAgo(computedAt)}</span>}
           </p>
         </div>
         <button onClick={() => setShowCreateStore(true)} style={{ padding: "7px 14px", background: "#F4A623", border: "none", borderRadius: 8, color: "#000", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
@@ -302,7 +302,7 @@ export default function LifecyclePage() {
         {/* Header row */}
         <div className="lc-table-header" style={{
           display: "grid", gridTemplateColumns: "2fr 1.3fr 1fr 1.1fr 0.7fr 0.5fr 0.7fr",
-          padding: "10px 16px", borderBottom: "1px solid #2a2a2a", fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em",
+          padding: "10px 16px", borderBottom: "1px solid #2a2a2a", fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em",
         }}>
           {([
             { key: "name", label: "Restaurante" },
@@ -316,7 +316,7 @@ export default function LifecyclePage() {
             <span
               key={col.key}
               onClick={() => { if (sortBy === col.key) setSortDir(d => d === "asc" ? "desc" : "asc"); else { setSortBy(col.key); setSortDir("desc"); } }}
-              style={{ cursor: "pointer", color: sortBy === col.key ? GOLD : "#666", userSelect: "none" }}
+              style={{ cursor: "pointer", color: sortBy === col.key ? GOLD : "#999", userSelect: "none" }}
             >
               {col.label} {sortBy === col.key ? (sortDir === "asc" ? "▲" : "▼") : ""}
             </span>
@@ -353,7 +353,7 @@ export default function LifecyclePage() {
                 )}
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{entry.name}</div>
-                  <div style={{ fontSize: 11, color: "#666" }}>{entry.slug}</div>
+                  <div style={{ fontSize: 11, color: "#999" }}>{entry.slug}</div>
                 </div>
               </div>
 
@@ -362,10 +362,10 @@ export default function LifecyclePage() {
                 {ownerName ? (
                   <>
                     <div style={{ fontSize: 13, color: "#ccc" }}>{ownerName}</div>
-                    <div style={{ fontSize: 11, color: "#666" }}>{ownerEmail}</div>
+                    <div style={{ fontSize: 11, color: "#999" }}>{ownerEmail}</div>
                   </>
                 ) : (
-                  <span style={{ fontSize: 12, color: "#555" }}>Sin owner</span>
+                  <span style={{ fontSize: 12, color: "#999" }}>Sin owner</span>
                 )}
               </div>
 
@@ -409,7 +409,7 @@ export default function LifecyclePage() {
             {expanded === entry.id && (
               <div style={{ padding: "16px 20px 20px", borderBottom: "1px solid #2a2a2a", background: "#141414" }}>
                 {detailLoading === entry.id && (
-                  <div style={{ color: "#666", fontSize: 12, padding: "8px 0 12px" }}>Cargando historial…</div>
+                  <div style={{ color: "#999", fontSize: 12, padding: "8px 0 12px" }}>Cargando historial…</div>
                 )}
                 <button onClick={(e) => { e.stopPropagation(); setExpanded(null); }} style={{
                   background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: "0 0 12px", display: "flex", alignItems: "center", gap: 4,
@@ -427,7 +427,7 @@ export default function LifecyclePage() {
 
                 {/* Engagement breakdown */}
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
                     Engagement ({entry.engagement}%)
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -435,7 +435,7 @@ export default function LifecyclePage() {
                       <span key={label} style={{
                         padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500,
                         background: entry.engagementChecks[i] ? "rgba(74,222,128,.1)" : "rgba(255,255,255,.04)",
-                        color: entry.engagementChecks[i] ? "#4ade80" : "#555",
+                        color: entry.engagementChecks[i] ? "#4ade80" : "#999",
                         border: `1px solid ${entry.engagementChecks[i] ? "rgba(74,222,128,.2)" : "#2a2a2a"}`,
                       }}>
                         {entry.engagementChecks[i] ? "✓" : "·"} {label}
@@ -447,7 +447,7 @@ export default function LifecyclePage() {
                 {/* Timeline visual */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Timeline
                     </div>
                     <ActivityBtn restaurantId={entry.id} name={entry.name} />
@@ -477,10 +477,10 @@ export default function LifecyclePage() {
                   comms.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                   return (
                     <div style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Comunicaciones</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Comunicaciones</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         {comms.length === 0
-                          ? <span style={{ fontSize: 11, color: "#555" }}>Sin comunicaciones registradas</span>
+                          ? <span style={{ fontSize: 11, color: "#999" }}>Sin comunicaciones registradas</span>
                           : comms.map((c, i) => <div key={i}>{c.node}</div>)}
                       </div>
                     </div>
@@ -517,7 +517,7 @@ export default function LifecyclePage() {
         })}
 
         {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 14 }}>Sin resultados</div>
+          <div style={{ padding: 40, textAlign: "center", color: "#999", fontSize: 14 }}>Sin resultados</div>
         )}
         {entries.length < total && (
           <div style={{ padding: "14px 16px", textAlign: "center", borderTop: "1px solid #2a2a2a" }}>
@@ -620,11 +620,11 @@ function TimelineSection({ entry, detail }: { entry: Entry; detail?: DetailData 
             border: `2px solid ${DOT_COLORS[item.dot] || "#2a2a2a"}`,
             background: item.dot ? DOT_COLORS[item.dot] : "#1a1a1a",
           }} />
-          <div style={{ fontSize: 10, color: "#666", marginBottom: 2 }}>{fmtDate(item.time)}</div>
+          <div style={{ fontSize: 10, color: "#999", marginBottom: 2 }}>{fmtDate(item.time)}</div>
           <div style={{ fontSize: 13, color: "#bbb" }}>{item.text}</div>
         </div>
       ))}
-      {items.length === 0 && <div style={{ color: "#555", fontSize: 13, padding: "10px 0" }}>Sin actividad registrada.</div>}
+      {items.length === 0 && <div style={{ color: "#999", fontSize: 13, padding: "10px 0" }}>Sin actividad registrada.</div>}
     </div>
   );
 }
@@ -665,13 +665,13 @@ function ActivityModal({ restaurantId, name, onClose }: { restaurantId: string; 
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Actividad del panel</h3>
             <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>{name}</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 20 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: 20 }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px 20px" }}>
           {loading ? (
-            <div style={{ color: "#666", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Cargando...</div>
+            <div style={{ color: "#999", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Cargando...</div>
           ) : activities.length === 0 ? (
-            <div style={{ color: "#555", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Sin acciones registradas.</div>
+            <div style={{ color: "#999", fontSize: 13, padding: "20px 0", textAlign: "center" }}>Sin acciones registradas.</div>
           ) : (
             activities.map((a: any, i: number) => {
               const label = ACTION_LABELS[a.action] || a.action;
@@ -699,7 +699,7 @@ function ActivityModal({ restaurantId, name, onClose }: { restaurantId: string; 
               const deviceIcon = deviceType === "mobile" ? "📱" : deviceType === "desktop" ? "🖥" : null;
               return (
                 <div key={a.id || i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid #222" }}>
-                  <div style={{ fontSize: 11, color: "#666", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
+                  <div style={{ fontSize: 11, color: "#999", minWidth: 110, flexShrink: 0 }}>{fmtDate(a.createdAt)}</div>
                   <div style={{ fontSize: 13, color: "#bbb", flex: 1 }}>
                     <strong style={{ color: "#ddd" }}>{label}</strong>
                     {detail && <span style={{ marginLeft: 6, color: "#777", fontSize: 12 }}>{detail}</span>}
@@ -807,16 +807,16 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
 
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
         Plan y facturación
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {/* Current plan badge */}
         <span style={{
           padding: "4px 12px", borderRadius: 99, fontSize: 12, fontWeight: 700,
-          background: `${PLAN_COLORS[entry.plan] || "#555"}18`,
-          color: PLAN_COLORS[entry.plan] || "#555",
-          border: `1px solid ${PLAN_COLORS[entry.plan] || "#555"}30`,
+          background: `${PLAN_COLORS[entry.plan] || "#888"}18`,
+          color: PLAN_COLORS[entry.plan] || "#888",
+          border: `1px solid ${PLAN_COLORS[entry.plan] || "#888"}30`,
         }}>
           {entry.plan}
         </span>
@@ -854,7 +854,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
             ))}
             <button onClick={() => setShowPlanSelect(false)} style={{
               padding: "4px 8px", borderRadius: 6, border: "none", background: "transparent",
-              color: "#555", fontSize: 11, cursor: "pointer",
+              color: "#999", fontSize: 11, cursor: "pointer",
             }}>✕</button>
           </div>
         )}
@@ -958,7 +958,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
                   }}
                 />
                 {isOverride && (
-                  <button onClick={() => setMpAmount("")} style={{ fontSize: 10, color: "#555", background: "none", border: "none", cursor: "pointer" }}>
+                  <button onClick={() => setMpAmount("")} style={{ fontSize: 10, color: "#999", background: "none", border: "none", cursor: "pointer" }}>
                     reset
                   </button>
                 )}
@@ -982,7 +982,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
             </button>
             <button onClick={() => setShowManualPayment(false)} style={{
               height: 30, padding: "0 8px", borderRadius: 6, border: "none",
-              background: "transparent", color: "#555", fontSize: 11, cursor: "pointer", alignSelf: "flex-start",
+              background: "transparent", color: "#999", fontSize: 11, cursor: "pointer", alignSelf: "flex-start",
             }}>✕</button>
           </div>
         );
@@ -1014,7 +1014,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
                 </span>
               )}
             </div>
-            <span style={{ fontSize: 10, color: "#666" }}>
+            <span style={{ fontSize: 10, color: "#999" }}>
               Para 50.000 IVA inc ingresa 42017 · Para 59.500 IVA inc ingresa 50000
             </span>
           </div>
@@ -1048,7 +1048,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
           </button>
           <button onClick={() => setShowCustomPrice(false)} style={{
             height: 30, padding: "0 8px", borderRadius: 6, border: "none",
-            background: "transparent", color: "#555", fontSize: 11, cursor: "pointer", alignSelf: "flex-end",
+            background: "transparent", color: "#999", fontSize: 11, cursor: "pointer", alignSelf: "flex-end",
           }}>✕</button>
         </div>
       )}
@@ -1060,7 +1060,7 @@ function PlanActions({ entry, onUpdate }: { entry: Entry; onUpdate: (u: Partial<
 function MiniCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "8px 14px", minWidth: 80 }}>
-      <div style={{ fontSize: 10, color: "#666", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
+      <div style={{ fontSize: 10, color: "#999", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
       <div style={{ fontSize: 14, fontWeight: 600, color: highlight ? "#4ade80" : "#ccc", marginTop: 2 }}>{value}</div>
     </div>
   );
@@ -1129,7 +1129,7 @@ function CreateStoreModal({ onClose, onCreated }: { onClose: () => void; onCreat
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#fff" }}>Nueva Tienda</h2>
-              <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 20 }}>✕</button>
+              <button onClick={onClose} style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: 20 }}>✕</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div><label style={lbl}>Nombre de la tienda *</label><input value={storeName} onChange={e => setStoreName(e.target.value)} placeholder="Ej: Treino" style={inp} /></div>
@@ -1212,10 +1212,10 @@ function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { rest
           <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20, width: "100%", maxWidth: 400, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Enviar mensaje</h3>
-              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>✕</button>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: 18 }}>✕</button>
             </div>
             <p style={{ fontSize: 12, color: "#888", margin: "0 0 4px" }}>Para: <strong style={{ color: "#ccc" }}>{ownerName}</strong></p>
-            <p style={{ fontSize: 11, color: "#666", margin: "0 0 14px" }}>{channel === "email" ? ownerEmail : ownerWa}</p>
+            <p style={{ fontSize: 11, color: "#999", margin: "0 0 14px" }}>{channel === "email" ? ownerEmail : ownerWa}</p>
 
             {/* Channel toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
@@ -1249,9 +1249,9 @@ function SendMessageBtn({ restaurantId, ownerName, ownerEmail, ownerWa }: { rest
                     <div style={{ fontSize: 13, fontWeight: 600, color: sent === t.key ? "#4ade80" : "#ddd", marginBottom: 2 }}>
                       {sent === t.key ? "✓ Enviado" : t.label}
                     </div>
-                    <div style={{ fontSize: 11, color: "#666" }}>{t.desc}</div>
+                    <div style={{ fontSize: 11, color: "#999" }}>{t.desc}</div>
                   </div>
-                  {sending === t.key && <span style={{ fontSize: 11, color: "#666" }}>...</span>}
+                  {sending === t.key && <span style={{ fontSize: 11, color: "#999" }}>...</span>}
                 </button>
               ))}
             </div>

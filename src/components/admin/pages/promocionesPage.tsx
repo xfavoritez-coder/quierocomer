@@ -16,7 +16,7 @@ function parseCLP(v: string): number | null {
   return isNaN(n) || n <= 0 ? null : n;
 }
 
-function getPromoDisplayStatus(p: { status: string; validFrom: string | null; validUntil: string | null }): string {
+function getPromoDisplayStatus(p: { status: string; validFrom?: string | null; validUntil?: string | null }): string {
   if (p.status === "ACTIVE" && p.validFrom && new Date(p.validFrom) > new Date()) return "SCHEDULED";
   return p.status;
 }

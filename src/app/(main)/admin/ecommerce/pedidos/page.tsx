@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -80,9 +80,9 @@ function timeAgo(iso: string) {
 function StatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div style={{ background: "#1a1a1a", borderRadius: 14, padding: "18px 20px", border: "1px solid #262626" }}>
-      <p style={{ fontSize: 11, color: "#666", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F }}>{label}</p>
+      <p style={{ fontSize: 11, color: "#999", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F }}>{label}</p>
       <p style={{ fontSize: 22, fontWeight: 800, color: color || ACCENT, margin: 0, fontFamily: F }}>{value}</p>
-      {sub && <p style={{ fontSize: 11, color: "#555", margin: "4px 0 0", fontFamily: F }}>{sub}</p>}
+      {sub && <p style={{ fontSize: 11, color: "#999", margin: "4px 0 0", fontFamily: F }}>{sub}</p>}
     </div>
   );
 }
@@ -226,7 +226,7 @@ export default function PedidosOnlinePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 20 }}>
             {topDishes.length > 0 && (
               <div style={{ background: "#1a1a1a", borderRadius: 14, padding: "18px 20px", border: "1px solid #262626" }}>
-                <p style={{ fontSize: 11, color: "#666", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
                   Lo más pedido
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -247,7 +247,7 @@ export default function PedidosOnlinePage() {
 
             {Object.keys(stats.byPaymentMethod).length > 0 && (
               <div style={{ background: "#1a1a1a", borderRadius: 14, padding: "18px 20px", border: "1px solid #262626" }}>
-                <p style={{ fontSize: 11, color: "#666", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
                   Métodos de pago
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -263,7 +263,7 @@ export default function PedidosOnlinePage() {
 
             {!restaurantFilter && stats.byRestaurant.length > 1 && (
               <div style={{ background: "#1a1a1a", borderRadius: 14, padding: "18px 20px", border: "1px solid #262626" }}>
-                <p style={{ fontSize: 11, color: "#666", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: F, fontWeight: 700 }}>
                   Por local
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -296,15 +296,15 @@ export default function PedidosOnlinePage() {
       {/* Table */}
       <div style={{ background: "#1a1a1a", borderRadius: 16, border: "1px solid #262626", overflow: "hidden" }}>
         {loading ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#555" }}>Cargando...</div>
+          <div style={{ padding: 48, textAlign: "center", color: "#999" }}>Cargando...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#555" }}>No hay pedidos</div>
+          <div style={{ padding: 48, textAlign: "center", color: "#999" }}>No hay pedidos</div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #262626" }}>
                 {["Restaurante", "Cliente", "Tipo", "Pago", "Total", "Estado", "Fecha", ""].map(h => (
-                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -315,11 +315,11 @@ export default function PedidosOnlinePage() {
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                   <td style={{ padding: "12px 16px", fontSize: 13 }}>
                     <span style={{ fontWeight: 600, color: "#fff" }}>{order.restaurant.name}</span>
-                    <span style={{ display: "block", fontSize: 11, color: "#555" }}>{order.restaurant.slug}</span>
+                    <span style={{ display: "block", fontSize: 11, color: "#999" }}>{order.restaurant.slug}</span>
                   </td>
                   <td style={{ padding: "12px 16px", fontSize: 13 }}>
                     <span style={{ color: "#ddd" }}>{order.customerName}</span>
-                    <span style={{ display: "block", fontSize: 11, color: "#555" }}>{order.customerPhone}</span>
+                    <span style={{ display: "block", fontSize: 11, color: "#999" }}>{order.customerPhone}</span>
                   </td>
                   <td style={{ padding: "12px 16px", fontSize: 12, color: "#aaa" }}>
                     {order.orderType === "PICKUP" ? "🏠 Retiro" : "🚚 Delivery"}
@@ -335,7 +335,7 @@ export default function PedidosOnlinePage() {
                       {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: "12px 16px", fontSize: 11, color: "#555" }}>
+                  <td style={{ padding: "12px 16px", fontSize: 11, color: "#999" }}>
                     <span title={fmtDate(order.createdAt)}>{timeAgo(order.createdAt)}</span>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -369,37 +369,37 @@ export default function PedidosOnlinePage() {
             <div style={{ padding: "20px 22px", borderBottom: "1px solid #262626", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <h2 style={{ fontFamily: F, fontSize: 20, fontWeight: 800, margin: "0 0 4px", color: "#fff" }}>Detalle del pedido</h2>
-                <p style={{ fontSize: 12, color: "#555", margin: 0 }}>{fmtDate(selected.createdAt)} · {selected.restaurant.name}</p>
+                <p style={{ fontSize: 12, color: "#999", margin: 0 }}>{fmtDate(selected.createdAt)} · {selected.restaurant.name}</p>
               </div>
               <button onClick={() => setSelected(null)} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: "#262626", color: "#aaa", cursor: "pointer", fontSize: 16 }}>✕</button>
             </div>
             <div style={{ padding: "20px 22px" }}>
               <div style={{ marginBottom: 18 }}>
-                <p style={{ fontSize: 11, color: "#555", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Cliente</p>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Cliente</p>
                 <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 2px" }}>{selected.customerName}</p>
                 <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>{selected.customerPhone}</p>
               </div>
               <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
                 <div style={{ flex: 1, background: "#111", borderRadius: 10, padding: "12px 14px" }}>
-                  <p style={{ fontSize: 11, color: "#555", margin: "0 0 4px", textTransform: "uppercase" }}>Tipo</p>
+                  <p style={{ fontSize: 11, color: "#999", margin: "0 0 4px", textTransform: "uppercase" }}>Tipo</p>
                   <p style={{ fontSize: 14, fontWeight: 600, color: "#ddd", margin: 0 }}>{selected.orderType === "PICKUP" ? "🏠 Retiro" : "🚚 Delivery"}</p>
                   {selected.deliveryAddress && <p style={{ fontSize: 12, color: "#777", margin: "4px 0 0" }}>{selected.deliveryAddress}</p>}
                 </div>
                 <div style={{ flex: 1, background: "#111", borderRadius: 10, padding: "12px 14px" }}>
-                  <p style={{ fontSize: 11, color: "#555", margin: "0 0 4px", textTransform: "uppercase" }}>Pago</p>
+                  <p style={{ fontSize: 11, color: "#999", margin: "0 0 4px", textTransform: "uppercase" }}>Pago</p>
                   <p style={{ fontSize: 14, fontWeight: 600, color: "#ddd", margin: 0, textTransform: "capitalize" }}>{selected.paymentMethod}</p>
                 </div>
               </div>
               <div style={{ marginBottom: 18 }}>
-                <p style={{ fontSize: 11, color: "#555", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Productos</p>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Productos</p>
                 {(selected.items as OrderItem[]).map((item, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid #222" }}>
                     <div>
                       <span style={{ fontSize: 14, color: "#fff" }}>{item.quantity}× {item.dishName}</span>
                       {item.selectedOptions?.length > 0 && (
-                        <span style={{ display: "block", fontSize: 11, color: "#666" }}>{item.selectedOptions.map(o => o.optionName).join(", ")}</span>
+                        <span style={{ display: "block", fontSize: 11, color: "#999" }}>{item.selectedOptions.map(o => o.optionName).join(", ")}</span>
                       )}
-                      {item.notes && <span style={{ display: "block", fontSize: 11, color: "#666", fontStyle: "italic" }}>"{item.notes}"</span>}
+                      {item.notes && <span style={{ display: "block", fontSize: 11, color: "#999", fontStyle: "italic" }}>"{item.notes}"</span>}
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 600, color: ACCENT, flexShrink: 0, marginLeft: 12 }}>{fmtCLP(item.unitTotal * item.quantity)}</span>
                   </div>
@@ -411,16 +411,16 @@ export default function PedidosOnlinePage() {
               </div>
               {selected.notes && (
                 <div style={{ background: "#111", borderRadius: 10, padding: "12px 14px", marginBottom: 18 }}>
-                  <p style={{ fontSize: 11, color: "#555", margin: "0 0 4px", textTransform: "uppercase" }}>Notas</p>
+                  <p style={{ fontSize: 11, color: "#999", margin: "0 0 4px", textTransform: "uppercase" }}>Notas</p>
                   <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>{selected.notes}</p>
                 </div>
               )}
               <div>
-                <p style={{ fontSize: 11, color: "#555", margin: "0 0 8px", textTransform: "uppercase" }}>Cambiar estado</p>
+                <p style={{ fontSize: 11, color: "#999", margin: "0 0 8px", textTransform: "uppercase" }}>Cambiar estado</p>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {Object.entries(STATUS_LABELS).map(([v, l]) => (
                     <button key={v} onClick={() => updateStatus(selected.id, v)}
-                      style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${selected.status === v ? STATUS_COLORS[v] : "#333"}`, background: selected.status === v ? `${STATUS_COLORS[v]}22` : "#111", color: selected.status === v ? STATUS_COLORS[v] : "#666", fontSize: 13, fontWeight: selected.status === v ? 700 : 400, cursor: "pointer" }}>
+                      style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${selected.status === v ? STATUS_COLORS[v] : "#333"}`, background: selected.status === v ? `${STATUS_COLORS[v]}22` : "#111", color: selected.status === v ? STATUS_COLORS[v] : "#999", fontSize: 13, fontWeight: selected.status === v ? 700 : 400, cursor: "pointer" }}>
                       {l}
                     </button>
                   ))}

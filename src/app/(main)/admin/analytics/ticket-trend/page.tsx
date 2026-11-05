@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
@@ -47,7 +47,7 @@ export default function TicketTrendPage() {
       </div>
 
       {!restaurantId ? (
-        <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>Selecciona un local para ver la tendencia</p>
+        <p style={{ color: "#999", fontFamily: F, textAlign: "center", padding: 40 }}>Selecciona un local para ver la tendencia</p>
       ) : loading ? (
         <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
       ) : data.length > 0 ? (
@@ -64,7 +64,7 @@ export default function TicketTrendPage() {
                     <div style={{ width: "100%", height: h, background: isActivation ? "#4ade80" : "#F4A623", borderRadius: "4px 4px 0 0", position: "relative" }}>
                       {isActivation && <div style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", fontFamily: F, fontSize: "0.55rem", color: "#4ade80", whiteSpace: "nowrap" }}>QR</div>}
                     </div>
-                    <span style={{ fontFamily: F, fontSize: "0.55rem", color: "#666", transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>{d.weekStart.slice(5)}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.55rem", color: "#999", transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>{d.weekStart.slice(5)}</span>
                   </div>
                 );
               })}
@@ -88,7 +88,7 @@ export default function TicketTrendPage() {
           </div>
         </>
       ) : (
-        <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets para este local</p>
+        <p style={{ color: "#999", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets para este local</p>
       )}
     </div>
   );

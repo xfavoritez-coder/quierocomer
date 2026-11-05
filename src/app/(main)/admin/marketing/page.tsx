@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 
@@ -38,7 +38,7 @@ function StatCard({ label, value, pct, color, icon }: { label: string; value: nu
         {pct && <span style={{ fontSize: 11, fontWeight: 700, color, fontFamily: F }}>{pct}</span>}
       </div>
       <p style={{ fontSize: 30, fontWeight: 700, color, fontFamily: F, margin: "0 0 4px", lineHeight: 1 }}>{value}</p>
-      <p style={{ fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", margin: 0, fontFamily: F }}>{label}</p>
+      <p style={{ fontSize: 11, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", margin: 0, fontFamily: F }}>{label}</p>
     </div>
   );
 }
@@ -75,7 +75,7 @@ export default function MarketingAdmin() {
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontFamily: F, fontSize: 24, fontWeight: 700, color: "#F4A623", margin: "0 0 6px" }}>📣 Marketing</h1>
-        <p style={{ fontSize: 13, color: "#666", margin: 0, fontFamily: F }}>Campañas de plataforma · Tracking · Leads</p>
+        <p style={{ fontSize: 13, color: "#999", margin: 0, fontFamily: F }}>Campañas de plataforma · Tracking · Leads</p>
       </div>
 
       {/* Campaign selector */}
@@ -97,7 +97,7 @@ export default function MarketingAdmin() {
           <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 22px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
               <p style={{ fontSize: 15, fontWeight: 700, color: "#eee", fontFamily: F, margin: "0 0 4px" }}>{campaign.subject}</p>
-              <p style={{ fontSize: 12, color: "#666", margin: 0, fontFamily: F }}>
+              <p style={{ fontSize: 12, color: "#999", margin: 0, fontFamily: F }}>
                 {campaign.sentAt ? `Enviada el ${new Date(campaign.sentAt).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}` : "No enviada"}
               </p>
             </div>
@@ -146,18 +146,18 @@ export default function MarketingAdmin() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: F }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #2A2A2A" }}>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Email</th>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Enviado</th>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Abierto</th>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Clic</th>
-                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Estado</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Email</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Enviado</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Abierto</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Clic</th>
+                  <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "center", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredContacts.slice(0, 100).map((c) => (
                   <tr key={c.email} style={{ borderTop: "1px solid #222" }}>
                     <td style={{ padding: "10px 16px", color: "#ccc" }}>{c.email}</td>
-                    <td style={{ padding: "10px 16px", color: "#666" }}>
+                    <td style={{ padding: "10px 16px", color: "#999" }}>
                       {c.sentAt ? new Date(c.sentAt).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}
                     </td>
                     <td style={{ padding: "10px 16px", textAlign: "center" }}>
@@ -178,12 +178,12 @@ export default function MarketingAdmin() {
               </tbody>
             </table>
             {filteredContacts.length > 100 && (
-              <p style={{ padding: 14, textAlign: "center", color: "#666", fontSize: 11, borderTop: "1px solid #222", fontFamily: F }}>
+              <p style={{ padding: 14, textAlign: "center", color: "#999", fontSize: 11, borderTop: "1px solid #222", fontFamily: F }}>
                 Mostrando 100 de {filteredContacts.length} contactos
               </p>
             )}
             {filteredContacts.length === 0 && (
-              <p style={{ padding: 32, textAlign: "center", color: "#555", fontSize: 13, fontFamily: F }}>Sin contactos en este filtro</p>
+              <p style={{ padding: 32, textAlign: "center", color: "#999", fontSize: 13, fontFamily: F }}>Sin contactos en este filtro</p>
             )}
           </div>
         </>
@@ -192,7 +192,7 @@ export default function MarketingAdmin() {
       {data.campaigns.length === 0 && (
         <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: 48, textAlign: "center" }}>
           <p style={{ fontSize: 32, margin: "0 0 12px" }}>📣</p>
-          <p style={{ color: "#666", fontSize: 14, fontFamily: F }}>No hay campañas aún</p>
+          <p style={{ color: "#999", fontSize: 14, fontFamily: F }}>No hay campañas aún</p>
         </div>
       )}
 
@@ -209,21 +209,21 @@ export default function MarketingAdmin() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: F }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #2A2A2A" }}>
-              <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Email</th>
-              <th style={{ padding: "12px 16px", fontWeight: 600, color: "#666", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Fecha</th>
+              <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Email</th>
+              <th style={{ padding: "12px 16px", fontWeight: 600, color: "#999", textAlign: "left", textTransform: "uppercase", fontSize: 10, letterSpacing: "0.5px" }}>Fecha</th>
             </tr>
           </thead>
           <tbody>
             {data.demoLeads.map((l, i) => (
               <tr key={i} style={{ borderTop: "1px solid #222" }}>
                 <td style={{ padding: "10px 16px", color: "#ccc" }}>{l.to}</td>
-                <td style={{ padding: "10px 16px", color: "#666" }}>{new Date(l.createdAt).toLocaleString("es-CL")}</td>
+                <td style={{ padding: "10px 16px", color: "#999" }}>{new Date(l.createdAt).toLocaleString("es-CL")}</td>
               </tr>
             ))}
           </tbody>
         </table>
         {data.demoLeads.length === 0 && (
-          <p style={{ padding: 32, textAlign: "center", color: "#555", fontSize: 13, fontFamily: F }}>Sin leads aún — cuando alguien pida demo desde la landing aparecerá aquí</p>
+          <p style={{ padding: 32, textAlign: "center", color: "#999", fontSize: 13, fontFamily: F }}>Sin leads aún — cuando alguien pida demo desde la landing aparecerá aquí</p>
         )}
       </div>
     </div>

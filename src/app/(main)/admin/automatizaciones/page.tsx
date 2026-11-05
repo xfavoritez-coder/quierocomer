@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
@@ -102,7 +102,7 @@ export default function AdminAutomatizaciones() {
                   <span style={{ fontSize: "1.1rem" }}>{t.icon}</span>
                   <span style={{ fontFamily: F, fontSize: "0.85rem", color: fTrigger === t.value ? "#F4A623" : "white", fontWeight: 600 }}>{t.label}</span>
                 </div>
-                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", margin: "4px 0 0" }}>{t.desc}</p>
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", margin: "4px 0 0" }}>{t.desc}</p>
               </button>
             ))}
           </div>
@@ -151,11 +151,11 @@ export default function AdminAutomatizaciones() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600 }}>{rule.name}</span>
-                  <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: rule.isActive ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: rule.isActive ? "#4ade80" : "#666", fontWeight: 600 }}>
+                  <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: rule.isActive ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: rule.isActive ? "#4ade80" : "#999", fontWeight: 600 }}>
                     {rule.isActive ? "Activa" : "Pausada"}
                   </span>
                 </div>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: "4px 0 0" }}>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", margin: "4px 0 0" }}>
                   {t?.label || rule.trigger}
                   {rule.trigger === "inactivity" && ` · ${(rule.triggerConfig as any)?.daysInactive || 14} días`}
                   {rule.trigger === "milestone" && ` · visita ${(rule.triggerConfig as any)?.milestoneVisit || 5}`}
@@ -177,7 +177,7 @@ export default function AdminAutomatizaciones() {
           <div style={{ textAlign: "center", padding: 60 }}>
             <p style={{ fontSize: "2rem", marginBottom: 12 }}>⚡</p>
             <p style={{ fontFamily: F, fontSize: "0.92rem", color: "#888" }}>No hay automatizaciones</p>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#555" }}>Crea reglas para enviar emails automáticos por cumpleaños, inactividad y más</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#999" }}>Crea reglas para enviar emails automáticos por cumpleaños, inactividad y más</p>
           </div>
         )}
       </div>

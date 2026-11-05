@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
@@ -132,7 +132,7 @@ export default function TicketsPage() {
               <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#ff6b6b", cursor: "pointer", fontFamily: F, fontSize: "0.72rem" }}>×</button>
             </div>
           ))}
-          {tickets.length === 0 && <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets</p>}
+          {tickets.length === 0 && <p style={{ color: "#999", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets</p>}
         </div>
       )}
     </div>

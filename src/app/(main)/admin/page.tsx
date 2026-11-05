@@ -217,7 +217,7 @@ function BillingSection({ data }: { data: BillingData }) {
                       <span style={{
                         fontSize: "0.7rem", fontWeight: 600, padding: "2px 7px", borderRadius: 5,
                         background: r.method === "Flow" ? "rgba(96,165,250,0.12)" : r.method === "MercadoPago" ? "rgba(0,180,80,0.12)" : r.method === "—" ? "transparent" : "rgba(251,191,36,0.1)",
-                        color: r.method === "Flow" ? "#60a5fa" : r.method === "MercadoPago" ? "#4ade80" : r.method === "—" ? "#444" : "#fbbf24",
+                        color: r.method === "Flow" ? "#60a5fa" : r.method === "MercadoPago" ? "#4ade80" : r.method === "—" ? "#888" : "#fbbf24",
                       }}>{r.method}</span>
                     </td>
                     <td style={{ padding: "10px 0 10px 8px", fontSize: "0.85rem", color: r.billingRut ? "var(--adm-text)" : "var(--adm-text3)", fontFamily: "monospace" }}>

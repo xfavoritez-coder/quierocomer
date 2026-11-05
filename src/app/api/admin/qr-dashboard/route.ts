@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
     };
 
     // Total registered users
-    const totalUsers = await prisma.user.count();
-    const newUsers = await prisma.user.count({ where: { createdAt: { gte: since } } });
-    const verifiedUsers = await prisma.user.count({ where: { verifiedAt: { not: null } } });
+    const totalUsers = await prisma.qRUser.count();
+    const newUsers = await prisma.qRUser.count({ where: { createdAt: { gte: since } } });
+    const verifiedUsers = await prisma.qRUser.count({ where: { verifiedAt: { not: null } } });
 
     // Session stats (MENU_VIEW events = page visits)
     const sessionEventCounts = await prisma.statEvent.groupBy({
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       .map(([date, count]) => ({ date, count }));
 
     // Diet preferences
-    const dietCounts = await prisma.user.groupBy({
+    const dietCounts = await prisma.qRUser.groupBy({
       by: ["dietType"],
       _count: { _all: true },
       where: { dietType: { not: null } },

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
@@ -62,7 +62,7 @@ export default function SearchesPage() {
           ))}
         </div>
       ) : (
-        <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>No hay búsquedas fallidas en el período</p>
+        <p style={{ color: "#999", fontFamily: F, textAlign: "center", padding: 40 }}>No hay búsquedas fallidas en el período</p>
       )}
     </div>
   );

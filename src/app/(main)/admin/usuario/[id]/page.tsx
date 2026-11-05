@@ -127,7 +127,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
               </span>
             </div>
             {user?.email && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#888", margin: "2px 0 0" }}>{user.email}</p>}
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#555", margin: "4px 0 0" }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", margin: "4px 0 0" }}>
               Primera visita: {new Date(guest.createdAt).toLocaleDateString("es-CL")} · Última: {timeAgo(guest.lastSeenAt)}
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
           ].map(s => (
             <div key={s.label} style={{ background: "#111", borderRadius: 10, padding: "10px 12px", textAlign: "center" }}>
               <p style={{ fontFamily: F, fontSize: "1.2rem", color: s.color, fontWeight: 700, margin: 0 }}>{s.value}</p>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", margin: 0 }}>{s.label}</p>
+              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#999", margin: 0 }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -247,7 +247,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                         <span> · {timeAgo(exp.submittedAt)}</span>
                       </div>
                     </div>
-                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{isExpOpen ? "▲" : "▼"}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", flexShrink: 0 }}>{isExpOpen ? "▲" : "▼"}</span>
                   </button>
 
                   {/* Expanded result */}
@@ -317,7 +317,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                   <a href={`/qr/${s.restaurant?.slug}`} target="_blank" onClick={e => e.stopPropagation()} style={{ textDecoration: "none" }}>
                     <span style={{ fontFamily: F, fontSize: "0.85rem", color: "white", fontWeight: 600, borderBottom: "1px dashed rgba(255,255,255,0.2)" }}>{s.restaurant?.name}</span>
                   </a>
-                  <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", display: "flex", gap: 8, marginTop: 2 }}>
+                  <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", display: "flex", gap: 8, marginTop: 2 }}>
                     <span>{timeAgo(s.startedAt)}</span>
                     {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}
                     <span>· {formatDuration(s.durationMs)}</span>
@@ -325,7 +325,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                     {s.sortUsed && s.sortUsed !== "default" && <span>· ↕ {SORT_LABELS[s.sortUsed] || s.sortUsed}</span>}
                   </div>
                 </div>
-                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>{isOpen ? "▲" : "▼"}</span>
+                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#999" }}>{isOpen ? "▲" : "▼"}</span>
               </button>
 
               {isOpen && (
@@ -338,13 +338,13 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
 
                   {s.dishesViewed?.length > 0 && (
                     <div style={{ marginBottom: 10 }}>
-                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platos vistos</p>
+                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platos vistos</p>
                       {s.dishesViewed.map((d: any, i: number) => (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
                           <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 700, color: "#7fbfdc", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>
                           {d.dish?.photos?.[0] && <img src={d.dish.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId?.slice(0, 8)}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.7rem", color: (d.detailMs || 0) > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.detailMs || 0)}</span>
+                          <span style={{ fontFamily: F, fontSize: "0.7rem", color: (d.detailMs || 0) > 5000 ? "#F4A623" : "#999" }}>{formatDuration(d.detailMs || 0)}</span>
                         </div>
                       ))}
                     </div>

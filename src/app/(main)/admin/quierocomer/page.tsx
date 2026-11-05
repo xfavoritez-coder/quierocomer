@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 
@@ -93,7 +93,7 @@ export default function QuieroComerAdminPage() {
             <div style={{ background: "#1A1A1A", borderRadius: 12, padding: 16 }}>
               <h3 style={{ margin: "0 0 12px", fontSize: 14, color: "#888" }}>Búsquedas de hoy</h3>
               {data.searches.length === 0 ? (
-                <p style={{ fontSize: 13, color: "#555", margin: 0 }}>Sin búsquedas registradas</p>
+                <p style={{ fontSize: 13, color: "#999", margin: 0 }}>Sin búsquedas registradas</p>
               ) : (
                 <div style={{ maxHeight: 280, overflowY: "auto" }}>
                   {data.searches.map((s, i) => (
@@ -162,7 +162,7 @@ function HourlyChart({ hourly }: { hourly: { hour: number; count: number }[] }) 
               background: count > 0 ? GOLD : "#2A2A2A",
               borderRadius: 2,
             }} />
-            <span style={{ fontSize: 7, color: "#555" }}>{hour}</span>
+            <span style={{ fontSize: 7, color: "#999" }}>{hour}</span>
           </div>
         )
       })}
@@ -181,7 +181,7 @@ function DishTable({ title, rows, color }: { title: string; rows: DishRow[]; col
       <div style={{
         display: "grid", gridTemplateColumns: "40px 1fr 1fr 80px",
         padding: "10px 16px", borderBottom: "1px solid #222",
-        fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
+        fontSize: 11, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
       }}>
         <span></span>
         <span>Plato</span>

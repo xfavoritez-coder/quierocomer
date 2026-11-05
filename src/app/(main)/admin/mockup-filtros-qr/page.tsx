@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * MOCKUP — Propuestas de posición para filtros en /qr
@@ -127,7 +127,7 @@ function Phone({ children, label, dark = false, highlight = false }: { children:
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
       <div style={{
-        fontSize: 13, fontWeight: 700, color: highlight ? ACCENT : "#666",
+        fontSize: 13, fontWeight: 700, color: highlight ? ACCENT : "#999",
         background: highlight ? "rgba(244,166,35,0.1)" : "rgba(0,0,0,0.05)",
         border: `1.5px solid ${highlight ? "rgba(244,166,35,0.4)" : "transparent"}`,
         borderRadius: 8, padding: "4px 12px",
@@ -467,7 +467,7 @@ export default function MockupFiltrosQRPage() {
         <h1 style={{ fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 4px" }}>
           Mockup — Filtros en carta QR
         </h1>
-        <p style={{ fontSize: 14, color: "#666", margin: "0 0 28px" }}>
+        <p style={{ fontSize: 14, color: "#999", margin: "0 0 28px" }}>
           Propuestas de posición y estilo para las pills de filtro. La marcada con <strong style={{ color: ACCENT }}>★</strong> es la que más me convence. Toca las pills para ver el efecto activo.
         </p>
 
@@ -477,7 +477,7 @@ export default function MockupFiltrosQRPage() {
             <button key={s} onClick={() => setSection(s)} style={{
               padding: "8px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer",
               background: section === s ? "#111" : "rgba(0,0,0,0.06)",
-              border: "none", color: section === s ? "#fff" : "#555",
+              border: "none", color: section === s ? "#fff" : "#999",
             }}>
               {s === "lista" ? "Vista Lista" : s === "impact" ? "Vista Impact" : "Vista Free"}
             </button>

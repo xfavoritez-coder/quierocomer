@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 
@@ -31,7 +31,7 @@ const STATUS = {
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  PREMIUM: "#a855f7", GOLD: "#F4A623", FREE: "#666",
+  PREMIUM: "#a855f7", GOLD: "#F4A623", FREE: "#999",
 };
 
 export default function ActividadPage() {
@@ -130,8 +130,8 @@ export default function ActividadPage() {
                     <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{local.name}</span>
                     <span style={{
                       fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4,
-                      background: `${PLAN_COLORS[local.plan] || "#666"}20`,
-                      color: PLAN_COLORS[local.plan] || "#666",
+                      background: `${PLAN_COLORS[local.plan] || "#888"}20`,
+                      color: PLAN_COLORS[local.plan] || "#888",
                       textTransform: "uppercase",
                     }}>
                       {local.plan}
@@ -177,7 +177,7 @@ export default function ActividadPage() {
                   {/* Owner info */}
                   {local.owner && (
                     <div style={{ marginTop: 14, padding: "12px 14px", background: "#111", borderRadius: 10, border: "1px solid #222" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Dueño</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>Dueño</div>
                       <div style={{ fontSize: 13, color: "#ccc" }}>{local.owner.name}</div>
                       <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{local.owner.email}</div>
                       <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
@@ -207,7 +207,7 @@ export default function ActividadPage() {
                   <ActivityTimeline restaurantId={local.id} />
 
                   {/* Activation date */}
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 10 }}>
+                  <div style={{ fontSize: 11, color: "#999", marginTop: 10 }}>
                     Activado: {new Date(local.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
                   </div>
                 </div>
@@ -217,7 +217,7 @@ export default function ActividadPage() {
         })}
 
         {filtered.length === 0 && (
-          <div style={{ padding: 32, textAlign: "center", color: "#666" }}>
+          <div style={{ padding: 32, textAlign: "center", color: "#999" }}>
             No hay locales {filter !== "all" ? `con estado "${STATUS[filter as keyof typeof STATUS]?.label}"` : ""}.
           </div>
         )}
@@ -286,15 +286,15 @@ function ActivityTimeline({ restaurantId }: { restaurantId: string }) {
 
   useEffect(() => { if (!loaded) load(); }, [loaded]);
 
-  if (!loaded && loading) return <div style={{ marginTop: 14, fontSize: 12, color: "#666" }}>Cargando actividad...</div>;
+  if (!loaded && loading) return <div style={{ marginTop: 14, fontSize: 12, color: "#999" }}>Cargando actividad...</div>;
 
   if (loaded && activities.length === 0) {
-    return <div style={{ marginTop: 14, fontSize: 12, color: "#555", fontStyle: "italic" }}>Sin actividad registrada aún.</div>;
+    return <div style={{ marginTop: 14, fontSize: 12, color: "#999", fontStyle: "italic" }}>Sin actividad registrada aún.</div>;
   }
 
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
         Actividad reciente
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -312,9 +312,9 @@ function ActivityTimeline({ restaurantId }: { restaurantId: string }) {
                   {d.dishName && <span style={{ fontSize: 11, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {d.dishName}</span>}
                   {d.name && !d.dishName && <span style={{ fontSize: 11, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {d.name}</span>}
                   {d.section && <span style={{ fontSize: 11, color: "#888" }}>· {d.section}</span>}
-                  {d.fields && <span style={{ fontSize: 10, color: "#555" }}>({d.fields.join(", ")})</span>}
+                  {d.fields && <span style={{ fontSize: 10, color: "#999" }}>({d.fields.join(", ")})</span>}
                 </div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{time}</div>
+                <div style={{ fontSize: 10, color: "#999", marginTop: 2 }}>{time}</div>
               </div>
             </div>
           );

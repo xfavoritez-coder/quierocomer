@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
@@ -225,7 +225,7 @@ export default function AdminCampanias() {
                     <span style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600 }}>{c.name}</span>
                     <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
                   </div>
-                  <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", marginTop: 4, display: "flex", gap: 8 }}>
+                  <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", marginTop: 4, display: "flex", gap: 8 }}>
                     {c.segment && <span>👥 {c.segment.name}</span>}
                     {c.subject && <span>· {c.subject.slice(0, 40)}{c.subject.length > 40 ? "..." : ""}</span>}
                     <span>· {new Date(c.createdAt).toLocaleDateString("es-CL")}</span>
@@ -237,15 +237,15 @@ export default function AdminCampanias() {
                   <div style={{ display: "flex", gap: 14, flexShrink: 0 }}>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontFamily: F, fontSize: "1rem", color: "#4ade80", fontWeight: 700, margin: 0 }}>{c.stats?.sent || stats?.sent || 0}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#666", margin: 0 }}>Enviados</p>
+                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#999", margin: 0 }}>Enviados</p>
                     </div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontFamily: F, fontSize: "1rem", color: "#7fbfdc", fontWeight: 700, margin: 0 }}>{stats?.opened || 0}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#666", margin: 0 }}>Abiertos</p>
+                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#999", margin: 0 }}>Abiertos</p>
                     </div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontFamily: F, fontSize: "1rem", color: "#F4A623", fontWeight: 700, margin: 0 }}>{stats?.clicked || 0}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#666", margin: 0 }}>Clicks</p>
+                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#999", margin: 0 }}>Clicks</p>
                     </div>
                   </div>
                 )}
@@ -266,7 +266,7 @@ export default function AdminCampanias() {
           );
         })}
         {campaigns.length === 0 && !creating && (
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 40 }}>No hay campañas. Crea la primera.</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 40 }}>No hay campañas. Crea la primera.</p>
         )}
       </div>
     </div>
