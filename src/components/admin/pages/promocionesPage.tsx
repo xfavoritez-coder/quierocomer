@@ -982,127 +982,158 @@ export default function AdminPromociones() {
                 </div>
 
                 {/* Detail / inline edit */}
-                {isOpen && editing?.id === p.id && (
+                {isOpen && editing?.id === p.id && (() => {
+                  const DAYS_SHORT = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+                  const DAYS_ABBR  = ["D","L","M","Mi","J","V","S"];
+                  const promodays  = editDaysOfWeek.length ? editDaysOfWeek.map(i => DAYS_SHORT[i]).join(" · ") : "todos los días";
+                  const otherdays  = editDaysOfWeek.length ? [0,1,2,3,4,5,6].filter(i => !editDaysOfWeek.includes(i)).map(i => DAYS_SHORT[i]).join(" · ") : "";
+                  const hasOriginal = editSelectedDishes.length > 0;
+                  const hasLinked   = !!editing.linkedDishId;
+                  return (
                   <div style={{ padding: "16px 18px 18px", borderTop: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.03)" }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>{t("promo_edit_title")}</p>
-                    <input placeholder={t("promo_name_label")} value={editName} onChange={e => setEditName(e.target.value)} style={I} />
-                    <textarea placeholder={t("promo_desc_label")} value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
-                    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                      <input placeholder={t("promo_normal_price_label")} type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
-                      <input placeholder={t("promo_promo_price_hint")} type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
-                    </div>
 
-                    {/* Platos asociados */}
-                    <div style={{ marginTop: 12 }}>
-                      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Plato al que aplica el descuento</p>
-                      {editSelectedDishes.length > 0 && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                          {editSelectedDishes.map(id => {
-                            const d = localDishes.find(x => x.id === id);
-                            if (!d) return null;
-                            return (
-                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, padding: "4px 8px 4px 6px" }}>
-                                {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 22, height: 22, borderRadius: 4, objectFit: "cover" }} />}
-                                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{d.name}</span>
-                                <button onClick={() => setEditSelectedDishes(prev => prev.filter(x => x !== id))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "0.9rem", padding: 0, lineHeight: 1 }}>✕</button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <input
-                        placeholder="Buscar plato…"
-                        value={editDishSearch}
-                        onChange={e => setEditDishSearch(e.target.value)}
-                        style={{ ...I, marginBottom: 4 }}
-                      />
-                      {editDishSearch.trim() && (
-                        <div style={{ maxHeight: 160, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 8 }}>
-                          {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase()) && !editSelectedDishes.includes(d.id)).slice(0, 20).map(d => (
-                            <div key={d.id} onClick={() => { setEditSelectedDishes(prev => [...prev, d.id]); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
-                              {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 26, height: 26, borderRadius: 5, objectFit: "cover" }} />}
-                              <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)" }}>{d.name}</span>
-                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image */}
-                    {editing.promoType === "graphic" && (
-                      <>
-                        {editImageUrl ? (
-                          <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 150 }}>
-                            <img src={editImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            <button onClick={() => setEditImageUrl("")} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-                          </div>
-                        ) : (
-                          <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px", background: "var(--adm-hover)", border: "2px dashed var(--adm-card-border)", borderRadius: 12, cursor: editUploading ? "wait" : "pointer", marginBottom: 12 }}>
-                            <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) await handleEditUpload(f); }} />
-                            <span style={{ fontFamily: F, fontSize: "0.82rem", color: editUploading ? "#F4A623" : "var(--adm-text2)" }}>{editUploading ? t("promo_uploading") : "📷 " + t("promo_upload_hint")}</span>
-                          </label>
-                        )}
-                      </>
-                    )}
-
-                    {/* Modifier templates */}
-                    {availableTemplates.length > 0 && (
-                      <div style={{ marginTop: 10 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          {availableTemplates.map(tpl => (
-                            <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                              <input type="checkbox" checked={editModifierTemplateIds.includes(tpl.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
-                              <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Days of week */}
-                    <div style={{ marginTop: 12 }}>
-                      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_days_label")}</p>
+                    {/* ── Bloque 1: Días activos ───────────────────────── */}
+                    <div style={{ marginBottom: 14 }}>
+                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Días activos</p>
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                        {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
-                          <button key={i} onClick={() => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: editDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
+                        {DAYS_ABBR.map((d, i) => (
+                          <button key={i} onClick={() => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 700, background: editDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
                         ))}
                       </div>
                     </div>
 
-                    {/* Reemplazar original en carta */}
-                    {editSelectedDishes.length > 0 && editing.linkedDishId && (
-                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 12, padding: "10px 12px", background: editHideOriginal ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: `1px solid ${editHideOriginal ? "#F4A623" : "var(--adm-card-border)"}`, borderRadius: 10, cursor: "pointer" }}>
-                        <input type="checkbox" checked={editHideOriginal} onChange={e => setEditHideOriginal(e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer" }} />
-                        <span style={{ flex: 1 }}>
-                          <span style={{ display: "block", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>Reemplazar el plato en la carta los días de promo</span>
-                          <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2, lineHeight: 1.4 }}>El plato original desaparece los días activos y aparece el item de promo en su lugar. Se revierte automáticamente los otros días.</span>
-                        </span>
-                      </label>
-                    )}
+                    {/* ── Bloque 2: Lo que ve el cliente ──────────────── */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
 
-                    {/* Date range */}
-                    <div style={{ marginTop: 12 }}>
-                      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_date_range")}</p>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
-                          <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      {/* Días normales → plato original */}
+                      {hasOriginal && otherdays && (
+                        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 12px" }}>
+                          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 7 }}>El cliente ve → {otherdays}</p>
+                          {editSelectedDishes.map(id => {
+                            const d = localDishes.find(x => x.id === id);
+                            if (!d) return null;
+                            return (
+                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
+                                <div style={{ flex: 1 }}>
+                                  <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)" }}>{d.name}</span>
+                                  <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", marginLeft: 8 }}>${d.price.toLocaleString("es-CL")}</span>
+                                </div>
+                                <button onClick={() => setEditSelectedDishes(prev => prev.filter(x => x !== id))} title="Quitar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "1rem", padding: 0 }}>✕</button>
+                              </div>
+                            );
+                          })}
+                          {/* Buscador para cambiar el plato original */}
+                          <div style={{ marginTop: 8 }}>
+                            <input placeholder="Cambiar plato…" value={editDishSearch} onChange={e => setEditDishSearch(e.target.value)} style={{ ...I, marginBottom: 2, fontSize: "0.78rem", padding: "7px 10px" }} />
+                            {editDishSearch.trim() && (
+                              <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
+                                {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase()) && !editSelectedDishes.includes(d.id)).slice(0, 20).map(d => (
+                                  <div key={d.id} onClick={() => { setEditSelectedDishes(prev => [...prev, d.id]); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
+                                    {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
+                                    <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
+                                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
-                          <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      )}
+
+                      {/* Sin plato original: buscar uno */}
+                      {!hasOriginal && (
+                        <div style={{ background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", borderRadius: 10, padding: "10px 12px" }}>
+                          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 7 }}>El cliente ve → {otherdays || "resto de días"}</p>
+                          <input placeholder="Buscar plato base…" value={editDishSearch} onChange={e => setEditDishSearch(e.target.value)} style={{ ...I, marginBottom: 2, fontSize: "0.78rem", padding: "7px 10px" }} />
+                          {editDishSearch.trim() && (
+                            <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
+                              {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase())).slice(0, 20).map(d => (
+                                <div key={d.id} onClick={() => { setEditSelectedDishes([d.id]); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
+                                  {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
+                                  <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
+                                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
+                      )}
+
+                      {/* Días de oferta → item de promo */}
+                      <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10, padding: "10px 12px" }}>
+                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 9 }}>El cliente ve → {promodays}</p>
+                        <input
+                          placeholder="Nombre del item de oferta"
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          style={{ ...I, marginBottom: 8 }}
+                        />
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio de oferta</label>
+                            <input placeholder="22.900" type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
+                          </div>
+                          {hasOriginal && (
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio normal (tachado)</label>
+                              <input placeholder="25.900" type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
+                            </div>
+                          )}
+                        </div>
+                        {/* Reemplazar plato original */}
+                        {hasOriginal && hasLinked && (
+                          <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, cursor: "pointer" }}>
+                            <input type="checkbox" checked={editHideOriginal} onChange={e => setEditHideOriginal(e.target.checked)} style={{ width: 15, height: 15, accentColor: "#F4A623" }} />
+                            <span style={{ fontFamily: F, fontSize: "0.75rem", color: editHideOriginal ? "#F4A623" : "var(--adm-text2)" }}>Ocultar el plato normal esos días {editHideOriginal ? "✓" : ""}</span>
+                          </label>
+                        )}
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                    {/* ── Bloque 3: Opcionales ────────────────────────── */}
+                    {editing.promoType === "graphic" && (
+                      editImageUrl ? (
+                        <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 120 }}>
+                          <img src={editImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <button onClick={() => setEditImageUrl("")} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                        </div>
+                      ) : (
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", borderRadius: 10, cursor: editUploading ? "wait" : "pointer", marginBottom: 12 }}>
+                          <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) await handleEditUpload(f); }} />
+                          <span style={{ fontFamily: F, fontSize: "0.8rem", color: editUploading ? "#F4A623" : "var(--adm-text2)" }}>📷 {editUploading ? t("promo_uploading") : t("promo_upload_hint")}</span>
+                        </label>
+                      )
+                    )}
+                    {availableTemplates.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
+                        {availableTemplates.map(tpl => (
+                          <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer", marginBottom: 4 }}>
+                            <input type="checkbox" checked={editModifierTemplateIds.includes(tpl.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
+                            <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("promo_date_from")}</label>
+                        <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("promo_date_to")}</label>
+                        <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10 }}>
                       <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>{t("save")}</button>
                       <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {isOpen && editing?.id !== p.id && (
                   <div style={{ padding: "12px 18px 18px", borderTop: "1px solid var(--adm-card-border)" }}>
