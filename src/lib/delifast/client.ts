@@ -22,6 +22,7 @@ export interface DelifastTracking {
   provider: string | null;        // proveedor del reparto (Uber…)
   vehicle: string | null;         // tipo de vehículo (Motorista…)
   eta: string | null;             // minutos estimados para llegar al local
+  dropoffEta: string | null;      // ETA estimada de entrega al cliente (dropoff)
   driver: { name: string | null; photo: string | null; phone: string | null } | null;
   pin: string | null;             // PIN de entrega
   statusUrl: string | null;       // link público de seguimiento
@@ -154,6 +155,7 @@ export async function getDelifastTracking(
       provider: str(viaje.proveedor) || str(venta.proveedor_reparto),
       vehicle: str(viaje.tipo_vehiculo) || str(venta.tipo_vehiculo),
       eta: str(viaje.pickup_eta),
+      dropoffEta: str(viaje.dropoff_eta),
       driver: {
         name: str(viaje.repartidor),
         photo: absUrl(viaje.repartidor_imagen),
