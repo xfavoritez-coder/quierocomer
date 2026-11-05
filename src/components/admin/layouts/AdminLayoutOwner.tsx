@@ -44,7 +44,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean; hasPos?: boolean; orderingHidden?: boolean } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean; hasPos?: boolean; orderingHidden?: boolean; isSuperAdmin?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -163,13 +163,32 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Settings, labelKey: "nav_configuracion_financiera", href: `${base}/administracion/configuracion` },
       ],
     }] : []),
+    ...(opts.isSuperAdmin ? [{
+      key: "super-ecommerce",
+      label: "Ecommerce",
+      icon: TrendingUp,
+      items: [
+        { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/ecommerce/dashboard` },
+        { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
+        { icon: UsersRound, labelKey: "nav_users", href: `${base}/ecommerce/usuarios` },
+      ],
+    }] : []),
+    ...(opts.isSuperAdmin ? [{
+      key: "super-carta-qr",
+      label: "Carta QR",
+      icon: QrCode,
+      items: [
+        { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/carta-qr/dashboard` },
+        { icon: UsersRound, labelKey: "nav_users", href: `${base}/carta-qr/usuarios` },
+      ],
+    }] : []),
     {
       key: "config",
       label: "Configuración",
       icon: Settings,
       items: [
         { icon: Settings, labelKey: "nav_config_general", href: `${base}/configuracion/general` },
-        { icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` },
+        ...(!opts.isSuperAdmin ? [{ icon: UsersRound, labelKey: "nav_users", href: `${base}/usuarios` }] : []),
       ],
     },
     {
@@ -276,7 +295,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasCentroPedidos = !!(selected as any)?.centroPedidosEnabled;
   const hasPos = !!(selected as any)?.posEnabled;
   const orderingHidden = !!(selected as any)?.orderingNavHidden;
-  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos, hasPos, orderingHidden });
+  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos, hasPos, orderingHidden, isSuperAdmin: role === "SUPERADMIN" });
 
   // Perfil VIEWER: el owner controla qué secciones del sidebar puede ver.
   // viewerSections null/undefined = ve todas (comportamiento por defecto).

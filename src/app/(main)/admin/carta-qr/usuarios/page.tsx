@@ -1,0 +1,272 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useAdminSession } from "@/lib/admin/useAdminSession";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
+
+const F = "var(--font-display)";
+const FB = "var(--font-body)";
+const GOLD = "#F4A623";
+const BLUE = "#7fbfdc";
+const GREEN = "#16a34a";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+/** Compara días calendario (no períodos de 24h), respetando timezone del cliente. */
+function timeAgo(date: string | Date): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  const now = new Date();
+  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const tDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const days = Math.round((tDay - dDay) / 86400000);
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Ayer";
+  if (days < 7) return `Hace ${days} días`;
+  if (days < 30) return `Hace ${Math.floor(days / 7)} sem`;
+  return `Hace ${Math.floor(days / 30)} mes${Math.floor(days / 30) > 1 ? "es" : ""}`;
+}
+
+function fmtDate(date: string | Date): string {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function engagementLevel(score: number): { label: string; color: string } {
+  if (score >= 30) return { label: "Super fan", color: GOLD };
+  if (score >= 15) return { label: "Activo", color: GREEN };
+  if (score >= 5) return { label: "Regular", color: BLUE };
+  return { label: "Nuevo", color: "var(--adm-text3)" };
+}
+
+const DIET_LABELS: Record<string, string> = {
+  VEGAN: "🌿 Vegano", VEGETARIAN: "🌱 Vegetariano", OMNIVORE: "🍖 Carnívoro",
+};
+const SOURCE_LABELS: Record<string, string> = {
+  post_genio_CONVERTED: "Genio", cta_post_genio_CONVERTED: "CTA Genio",
+  cta_repeat_dish_CONVERTED: "CTA Plato", cta_promo_unlock_CONVERTED: "CTA Promo",
+  birthday_banner_CONVERTED: "Cumpleaños", favorites_CONVERTED: "Favoritos",
+  unknown_CONVERTED: "Directo",
+};
+
+// ─── Shared styles ────────────────────────────────────────────────────────────
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px",
+};
+const backBtnStyle: React.CSSProperties = {
+  background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 16,
+};
+const sectionLabelStyle: React.CSSProperties = {
+  fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em",
+};
+const metaLabelStyle: React.CSSProperties = {
+  fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", display: "block",
+};
+const metaValStyle: React.CSSProperties = {
+  fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: "2px 0 0",
+};
+const rowStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)",
+};
+const listRowBtnStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+  background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10,
+  cursor: "pointer", width: "100%", textAlign: "left",
+};
+const searchInputStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", marginBottom: 12,
+  background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)",
+  borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem",
+  outline: "none", boxSizing: "border-box",
+};
+function pillStyle(color: string, size: "sm" | "md" = "md"): React.CSSProperties {
+  return { padding: size === "sm" ? "2px 8px" : "4px 12px", borderRadius: 50, fontFamily: F, fontSize: size === "sm" ? "0.65rem" : "0.72rem", fontWeight: 600, background: `${color}18`, color };
+}
+function pageBtnStyle(disabled: boolean): React.CSSProperties {
+  return { padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: disabled ? "transparent" : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: disabled ? "default" : "pointer" };
+}
+
+function StatCard({ value, label, color = "var(--adm-text)", sub }: { value: string | number; label: string; color?: string; sub?: string }) {
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "14px 16px" }}>
+      <p style={{ fontFamily: F, fontSize: "1.4rem", color, fontWeight: 700, margin: 0 }}>{value}</p>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{label}</p>
+      {sub && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0", opacity: 0.7 }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface QRUser {
+  id: string; name: string | null; email: string;
+  verifiedAt: string | null; createdAt: string; unsubscribedAt: string | null;
+  dietType: string | null;
+}
+interface QRUserDetail {
+  user: QRUser & { birthDate: string | null; restrictions: string[]; dislikes: string[]; lastEmailAt: string | null };
+  engagementScore: number;
+  restaurants: { id: string; name: string; slug: string }[];
+  sessions: any[]; favorites: any[]; interactions: any[]; campaigns: any[];
+}
+
+// ─── QRTab component ─────────────────────────────────────────────────────────
+
+function QRTab() {
+  const [users, setUsers] = useState<QRUser[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<QRUserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/admin/users?search=${encodeURIComponent(search)}&page=${page}`)
+      .then(r => r.json())
+      .then(d => { setUsers(d.users || []); setTotal(d.total || 0); setPages(d.pages || 1); })
+      .catch(() => {}).finally(() => setLoading(false));
+  }, [page, search]);
+
+  const openDetail = async (id: string) => {
+    setSelected(null); setDetailLoading(true);
+    const res = await fetch(`/api/admin/users/${id}`);
+    const data = await res.json();
+    if (!data.error) setSelected(data);
+    setDetailLoading(false);
+  };
+
+  if (detailLoading) return (
+    <div>
+      <button onClick={() => setDetailLoading(false)} style={backBtnStyle}>&larr; Volver</button>
+      <p style={{ color: GOLD, fontFamily: F, padding: 40, textAlign: "center" }}>Cargando perfil...</p>
+    </div>
+  );
+
+  if (selected) {
+    const u = selected.user;
+    const eng = engagementLevel(selected.engagementScore);
+    const regInteraction = selected.interactions.find((i: any) => i.type?.endsWith("_CONVERTED"));
+    return (
+      <div style={{ maxWidth: 680 }}>
+        <button onClick={() => setSelected(null)} style={backBtnStyle}>&larr; Volver</button>
+        <div style={cardStyle}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: GOLD, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>
+              {(u.name || u.email)[0].toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "var(--adm-text)", margin: 0 }}>{u.name || "Sin nombre"}</h2>
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>{u.email}</p>
+            </div>
+            <span style={pillStyle(eng.color)}>{eng.label}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+            <div><label style={metaLabelStyle}>Registro</label><p style={metaValStyle}>{fmtDate(u.createdAt)}</p></div>
+            <div><label style={metaLabelStyle}>Cumpleaños</label><p style={metaValStyle}>{u.birthDate ? new Date(u.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" }) : "—"}</p></div>
+            <div><label style={metaLabelStyle}>Dieta</label><p style={metaValStyle}>{DIET_LABELS[u.dietType || ""] || "—"}</p></div>
+          </div>
+          {u.restrictions?.length > 0 && <div style={{ marginBottom: 8 }}><label style={metaLabelStyle}>Restricciones</label><div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>{u.restrictions.map((r: string) => <span key={r} style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: FB }}>{r}</span>)}</div></div>}
+          {u.dislikes?.length > 0 && <div style={{ marginBottom: 8 }}><label style={metaLabelStyle}>No le gusta</label><div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>{u.dislikes.map((d: string) => <span key={d} style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 50, background: "rgba(255,100,100,0.06)", color: "#ff6b6b", fontFamily: FB }}>🚫 {d}</span>)}</div></div>}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {u.verifiedAt && <span style={pillStyle(GREEN, "sm")}>✓ Verificado</span>}
+            {u.unsubscribedAt && <span style={pillStyle("#ef4444", "sm")}>Desuscrito</span>}
+            {regInteraction && <span style={pillStyle(BLUE, "sm")}>Vía {SOURCE_LABELS[regInteraction.type] || regInteraction.type.replace("_CONVERTED", "")}</span>}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, margin: "12px 0" }} className="adm-grid-2">
+          <StatCard value={selected.sessions.length} label="Sesiones" color={GOLD} />
+          <StatCard value={selected.favorites.length} label="Favoritos" color="#ef4444" />
+          <StatCard value={selected.interactions.length} label="Interacciones" color={BLUE} />
+          <StatCard value={selected.campaigns.length} label="Campañas" color={GREEN} />
+        </div>
+
+        {selected.restaurants.length > 0 && <div style={{ ...cardStyle, marginBottom: 10 }}><label style={sectionLabelStyle}>Locales visitados</label><div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>{selected.restaurants.map(r => <span key={r.id} style={pillStyle(GOLD)}>{r.name}</span>)}</div></div>}
+        {selected.favorites.length > 0 && (
+          <div style={{ ...cardStyle, marginBottom: 10 }}>
+            <label style={sectionLabelStyle}>Platos favoritos</label>
+            {selected.favorites.map((f: any) => (
+              <div key={f.id} style={rowStyle}>
+                {f.dish?.photos?.[0] && <img src={f.dish.photos[0]} alt="" style={{ width: 30, height: 30, borderRadius: 6, objectFit: "cover" }} />}
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{f.dish?.name || "?"}</span>
+                <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{f.restaurant?.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {selected.sessions.length > 0 && (
+          <div style={{ ...cardStyle, marginBottom: 10 }}>
+            <label style={sectionLabelStyle}>Últimas sesiones</label>
+            {selected.sessions.map((s: any) => (
+              <div key={s.id} style={rowStyle}>
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{s.restaurant?.name}</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {selected.campaigns.length > 0 && (
+          <div style={cardStyle}>
+            <label style={sectionLabelStyle}>Campañas recibidas</label>
+            {selected.campaigns.map((c: any) => (
+              <div key={c.id} style={rowStyle}>
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.campaign?.name || "?"}</span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {c.openedAt && <span style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 4, background: "rgba(22,163,74,0.08)", color: GREEN, fontFamily: F }}>Abierto</span>}
+                  {c.clickedAt && <span style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 4, background: `${GOLD}18`, color: GOLD, fontFamily: F }}>Click</span>}
+                  {!c.openedAt && <span style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 4, background: "rgba(0,0,0,0.04)", color: "var(--adm-text3)", fontFamily: F }}>Enviado</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 740 }}>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px" }}>{total.toLocaleString("es-CL")} usuarios registrados</p>
+      <input placeholder="Buscar por nombre o email..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={searchInputStyle} />
+      {loading ? <SkeletonLoading type="list" /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {users.map(u => (
+            <button key={u.id} onClick={() => openDetail(u.id)} style={listRowBtnStyle}>
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: `${GOLD}18`, display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.8rem", fontWeight: 700, flexShrink: 0 }}>
+                {(u.name || u.email)[0].toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: F, fontSize: "0.84rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {u.name || u.email.split("@")[0]}
+                  {u.verifiedAt && <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: GREEN, marginLeft: 6, verticalAlign: "middle" }} />}
+                </p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>{u.email}</p>
+              </div>
+              <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0 }}>{timeAgo(u.createdAt)}</span>
+            </button>
+          ))}
+          {users.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>Sin usuarios</p>}
+        </div>
+      )}
+      {pages > 1 && <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}><button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pageBtnStyle(page <= 1)}>Anterior</button><span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {pages}</span><button disabled={page >= pages} onClick={() => setPage(p => p + 1)} style={pageBtnStyle(page >= pages)}>Siguiente</button></div>}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function CartaQRUsuariosPage() {
+  const { loading, isSuper } = useAdminSession();
+  if (loading) return null;
+  if (!isSuper) return <div style={{ padding: 40, color: "#ef4444", fontFamily: F }}>No autorizado</div>;
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <h1 style={{ fontFamily: F, fontSize: "1.4rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 20px" }}>Usuarios Carta QR</h1>
+      <QRTab />
+    </div>
+  );
+}
