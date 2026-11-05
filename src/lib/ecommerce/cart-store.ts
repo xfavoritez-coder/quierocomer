@@ -26,6 +26,7 @@ export interface CartItem {
   image_url: string | null;
   toteat_code?: string | null;
   is_happy_hour?: boolean; // el precio del ítem viene de un happy hour activo
+  promo_id?: string | null; // oferta activa al momento de agregar al carrito
   options: CartItemOption[];
 }
 

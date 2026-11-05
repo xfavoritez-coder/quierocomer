@@ -41,7 +41,11 @@ export async function GET(req: NextRequest) {
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
-    const allDishIds = promotions.flatMap((p) => p.dishIds);
+    // Collect all dish IDs: legacy dishIds array + new dishId field
+    const allDishIds = [...new Set([
+      ...promotions.flatMap((p) => p.dishIds),
+      ...promotions.map((p) => (p as any).dishId).filter(Boolean),
+    ])];
     const dishes = allDishIds.length
       ? await prisma.dish.findMany({
           where: { id: { in: allDishIds } },
@@ -53,6 +57,8 @@ export async function GET(req: NextRequest) {
     const enriched = promotions.map((p) => ({
       ...p,
       dishes: p.dishIds.map((id) => dishMap[id]).filter(Boolean),
+      // new: single dish reference
+      dish: (p as any).dishId ? dishMap[(p as any).dishId] || null : null,
     }));
 
     return NextResponse.json({ promotions: enriched });
@@ -98,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create manual promotion
-    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek, modifierTemplateIds } = body;
+    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, dishId, promoName, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek, modifierTemplateIds } = body;
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId and name required" }, { status: 400 });
 
     await assertOwnsRestaurant(req, restaurantId);
@@ -108,7 +114,10 @@ export async function POST(req: NextRequest) {
       promoType: promoType || "product",
       imageUrl: imageUrl || null,
       thumbUrl: thumbUrl || null,
-      dishIds: dishIds || [], originalPrice, promoPrice, discountPct,
+      dishIds: dishIds || [],
+      dishId: dishId || null,
+      promoName: promoName || null,
+      originalPrice, promoPrice, discountPct,
       validFrom: validFrom ? new Date(validFrom) : null,
       validUntil: validUntil ? new Date(validUntil) : null,
       daysOfWeek: Array.isArray(daysOfWeek) ? daysOfWeek : [],
@@ -173,6 +182,8 @@ export async function PUT(req: NextRequest) {
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
         ...(data.hideOriginalWhenActive !== undefined && { hideOriginalWhenActive: !!data.hideOriginalWhenActive }),
         ...(Array.isArray(data.dishIds) && { dishIds: data.dishIds }),
+        ...(data.dishId !== undefined && { dishId: data.dishId || null }),
+        ...(data.promoName !== undefined && { promoName: data.promoName || null }),
         ...(data.position !== undefined && { position: data.position }),
         ...(data.featured !== undefined && { featured: data.featured }),
         ...(Array.isArray(modifierTemplateIds) && { modifierTemplates: { set: modifierTemplateIds.map((mid: string) => ({ id: mid })) } }),

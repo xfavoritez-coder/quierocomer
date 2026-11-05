@@ -1,14 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Tag } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
-/** Parse CLP price: "14.900" → 14900, "14900" → 14900, "14,9" → 14900 */
+
+const DAY_LABELS = ["D", "L", "M", "X", "J", "V", "S"];
+const DAY_LABELS_FULL = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
 function parseCLP(v: string): number | null {
   if (!v) return null;
   const clean = v.replace(/\./g, "").replace(/,/g, "");
@@ -16,37 +18,492 @@ function parseCLP(v: string): number | null {
   return isNaN(n) || n <= 0 ? null : n;
 }
 
-function getPromoDisplayStatus(p: { status: string; validFrom: string | null; validUntil: string | null }): string {
-  if (p.status === "ACTIVE" && p.validFrom && new Date(p.validFrom) > new Date()) return "SCHEDULED";
-  return p.status;
+function isPromoActiveToday(p: Promo): boolean {
+  if (p.status !== "ACTIVE") return false;
+  const now = new Date();
+  if (p.validFrom && new Date(p.validFrom) > now) return false;
+  if (p.validUntil && new Date(p.validUntil) < now) return false;
+  if (p.daysOfWeek && p.daysOfWeek.length > 0 && !p.daysOfWeek.includes(now.getDay())) return false;
+  return true;
 }
 
 interface Promo {
-  id: string; name: string; description: string | null; dishIds: string[];
-  dishes?: { id: string; name: string; price: number; photos: string[] }[];
-  originalPrice: number | null; promoPrice: number | null; discountPct: number | null;
-  validFrom: string | null; validUntil: string | null; status: string;
-  generatedBy: string; aiJustification: string | null; metrics: any;
-  promoType?: string; imageUrl?: string | null; thumbUrl?: string | null; linkedDishId?: string | null; hideOriginalWhenActive?: boolean;
-  createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
-  restaurant?: { name: string; logoUrl?: string | null } | null;
+  id: string;
+  name: string;
+  status: string;
+  dishId?: string | null;
+  promoName?: string | null;
+  promoPrice?: number | null;
+  originalPrice?: number | null;
   daysOfWeek?: number[];
+  validFrom?: string | null;
+  validUntil?: string | null;
+  dishes?: { id: string; name: string; price: number; photos: string[] }[];
+  // legacy fields — present but ignored
+  dishIds?: string[];
+  linkedDishId?: string | null;
+  hideOriginalWhenActive?: boolean;
+  promoType?: string;
+  imageUrl?: string | null;
   position?: number;
-  featured?: boolean;
-  modifierTemplates?: { id: string; name: string }[];
 }
 
-interface ModOption {
-  id: string; name: string; priceAdjustment: number; isDefault?: boolean; isHidden?: boolean; position: number;
+type FilterTab = "all" | "active" | "paused";
+
+const EMPTY_FORM = {
+  name: "",
+  dishId: "",
+  promoName: "",
+  promoPrice: "",
+  originalPrice: "",
+  daysOfWeek: [] as number[],
+  validFrom: "",
+  validUntil: "",
+};
+
+type PromoForm = typeof EMPTY_FORM;
+
+function DayChips({
+  days,
+  today,
+  onChange,
+  readonly,
+}: {
+  days: number[];
+  today?: number;
+  onChange?: (d: number[]) => void;
+  readonly?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+      {DAY_LABELS.map((label, i) => {
+        const active = days.includes(i);
+        const isToday = today === i;
+        if (readonly) {
+          return (
+            <span
+              key={i}
+              style={{
+                fontSize: 11,
+                padding: "2px 6px",
+                borderRadius: 4,
+                fontWeight: 600,
+                background: active
+                  ? isToday
+                    ? "#4ade80"
+                    : "var(--adm-hover)"
+                  : "transparent",
+                color: active
+                  ? isToday
+                    ? "#000"
+                    : "var(--adm-text)"
+                  : "var(--adm-text2)",
+                border: "1px solid",
+                borderColor: active ? (isToday ? "#4ade80" : "var(--adm-border)") : "var(--adm-border)",
+                opacity: active ? 1 : 0.4,
+              }}
+            >
+              {label}
+            </span>
+          );
+        }
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              if (!onChange) return;
+              onChange(active ? days.filter((d) => d !== i) : [...days, i]);
+            }}
+            style={{
+              fontSize: 12,
+              padding: "4px 9px",
+              borderRadius: 6,
+              fontWeight: 600,
+              cursor: "pointer",
+              border: "1px solid",
+              borderColor: active ? GOLD : "var(--adm-border)",
+              background: active ? `${GOLD}22` : "var(--adm-hover)",
+              color: active ? GOLD : "var(--adm-text2)",
+            }}
+          >
+            {DAY_LABELS_FULL[i]}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
-interface ModGroup {
-  id: string; name: string; required: boolean; minSelect: number; maxSelect: number; position: number;
-  options: ModOption[];
+
+function DishSearchPicker({
+  dishes,
+  selectedId,
+  onSelect,
+}: {
+  dishes: { id: string; name: string; price: number; photos: string[] }[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const selected = dishes.find((d) => d.id === selectedId);
+  const filtered = q
+    ? dishes.filter((d) => d.name.toLowerCase().includes(q.toLowerCase()))
+    : dishes.slice(0, 20);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {selected && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 10px",
+            borderRadius: 8,
+            background: "var(--adm-hover)",
+            border: `1px solid ${GOLD}`,
+          }}
+        >
+          {selected.photos?.[0] && (
+            <img
+              src={selected.photos[0]}
+              alt=""
+              style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover" }}
+            />
+          )}
+          <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{selected.name}</span>
+          <button
+            type="button"
+            onClick={() => onSelect("")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--adm-text2)",
+              fontSize: 14,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {!selected && (
+        <>
+          <input
+            type="text"
+            placeholder="Buscar plato..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            style={{
+              padding: "7px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+              color: "var(--adm-text)",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+          <div
+            style={{
+              maxHeight: 180,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+            }}
+          >
+            {filtered.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => { onSelect(d.id); setQ(""); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "7px 10px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  color: "var(--adm-text)",
+                }}
+              >
+                {d.photos?.[0] && (
+                  <img
+                    src={d.photos[0]}
+                    alt=""
+                    style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover" }}
+                  />
+                )}
+                <span style={{ fontSize: 13 }}>{d.name}</span>
+                <span style={{ fontSize: 11, color: "var(--adm-text2)", marginLeft: "auto" }}>
+                  ${d.price?.toLocaleString("es-CL")}
+                </span>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: "10px 12px", fontSize: 13, color: "var(--adm-text2)" }}>
+                Sin resultados
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
-interface ModTemplate {
-  id: string; name: string; restaurantId: string;
-  groups: ModGroup[];
-  dishes?: { id: string; name: string }[];
+
+function PromoForm({
+  form,
+  setForm,
+  dishes,
+  onSave,
+  onCancel,
+  onDelete,
+  saving,
+  isNew,
+}: {
+  form: PromoForm;
+  setForm: (f: PromoForm) => void;
+  dishes: { id: string; name: string; price: number; photos: string[] }[];
+  onSave: () => void;
+  onCancel: () => void;
+  onDelete?: () => void;
+  saving: boolean;
+  isNew?: boolean;
+}) {
+  const selectedDish = dishes.find((d) => d.id === form.dishId);
+
+  return (
+    <div
+      style={{
+        padding: "16px 18px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        borderTop: "1px solid var(--adm-border)",
+        marginTop: 8,
+      }}
+    >
+      {/* Nombre interno */}
+      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Nombre para identificarla en el panel
+        </span>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder="Ej: Martes de Suprema"
+          style={{
+            padding: "8px 10px",
+            borderRadius: 8,
+            border: "1px solid var(--adm-border)",
+            background: "var(--adm-card)",
+            color: "var(--adm-text)",
+            fontSize: 13,
+            outline: "none",
+          }}
+        />
+      </label>
+
+      {/* Plato */}
+      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Plato al que aplica
+        </span>
+        <DishSearchPicker
+          dishes={dishes}
+          selectedId={form.dishId}
+          onSelect={(id) => setForm({ ...form, dishId: id })}
+        />
+      </label>
+
+      {/* Nombre que ve el cliente */}
+      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Nombre que ve el cliente (dejar vacío para usar el nombre del plato)
+        </span>
+        <input
+          type="text"
+          value={form.promoName}
+          onChange={(e) => setForm({ ...form, promoName: e.target.value })}
+          placeholder={selectedDish?.name ?? "Nombre del plato"}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 8,
+            border: "1px solid var(--adm-border)",
+            background: "var(--adm-card)",
+            color: "var(--adm-text)",
+            fontSize: 13,
+            outline: "none",
+          }}
+        />
+      </label>
+
+      {/* Precios */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Precio de oferta
+          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.promoPrice}
+            onChange={(e) => setForm({ ...form, promoPrice: e.target.value })}
+            placeholder="19900"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+              color: "var(--adm-text)",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+        </label>
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Precio normal (aparece tachado)
+          </span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.originalPrice}
+            onChange={(e) => setForm({ ...form, originalPrice: e.target.value })}
+            placeholder="25900"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+              color: "var(--adm-text)",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+        </label>
+      </div>
+
+      {/* Días */}
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Días de la semana (vacío = todos los días)
+        </span>
+        <DayChips
+          days={form.daysOfWeek}
+          onChange={(d) => setForm({ ...form, daysOfWeek: d })}
+        />
+      </label>
+
+      {/* Rango de fechas */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Desde
+          </span>
+          <input
+            type="date"
+            value={form.validFrom}
+            onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+              color: "var(--adm-text)",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+        </label>
+        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Hasta
+          </span>
+          <input
+            type="date"
+            value={form.validUntil}
+            onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--adm-border)",
+              background: "var(--adm-card)",
+              color: "var(--adm-text)",
+              fontSize: 13,
+              outline: "none",
+            }}
+          />
+        </label>
+      </div>
+
+      {/* Acciones */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 4 }}>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          style={{
+            padding: "8px 18px",
+            borderRadius: 8,
+            border: "none",
+            background: GOLD,
+            color: "#000",
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.6 : 1,
+            fontFamily: F,
+          }}
+        >
+          {saving ? "Guardando…" : "Guardar"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            padding: "8px 14px",
+            borderRadius: 8,
+            border: "1px solid var(--adm-border)",
+            background: "none",
+            color: "var(--adm-text2)",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Cancelar
+        </button>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            style={{
+              marginLeft: "auto",
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "1px solid #ef4444",
+              background: "none",
+              color: "#ef4444",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            Eliminar
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function AdminPromociones() {
@@ -54,1121 +511,465 @@ export default function AdminPromociones() {
   const pathname = usePathname();
   const isPanel = pathname.startsWith("/panel");
 
-  const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-    SUGGESTED: { label: t("promo_status_suggested"), color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
-    ACTIVE: { label: t("promo_status_active"), color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
-    SCHEDULED: { label: t("promo_status_scheduled"), color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
-    PAUSED: { label: t("promo_status_paused"), color: "var(--adm-text2)", bg: "var(--adm-hover)" },
-  };
   const { restaurants, loading: sessionLoading, selectedRestaurantId, isSuper } = useAdminSession();
   const [selectedLocal, setSelectedLocal] = useState<string>("");
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>("all");
-  const [editing, setEditing] = useState<Promo | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [editPrice, setEditPrice] = useState("");
-  const [editOriginalPrice, setEditOriginalPrice] = useState("");
-  const [editImageUrl, setEditImageUrl] = useState("");
-  const [editUploading, setEditUploading] = useState(false);
+  const [filter, setFilter] = useState<FilterTab>("all");
 
-  // Create new promo
+  // Expanded card for inline editing
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<PromoForm>(EMPTY_FORM);
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Create new
   const [creating, setCreating] = useState(false);
-  const [createType, setCreateType] = useState<"graphic" | "product" | null>(null);
-  const [cName, setCName] = useState("");
-  const [cDesc, setCDesc] = useState("");
-  const [cImageUrl, setCImageUrl] = useState("");
-  const [cThumbUrl, setCThumbUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [cPromoPrice, setCPromoPrice] = useState("");
-  const [cOriginalPrice, setCOriginalPrice] = useState("");
-  const [cDiscountPct, setCDiscountPct] = useState("");
-  const [cSellInStore, setCSellInStore] = useState(false);
-  const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
-  const [cDaysOfWeek, setCDaysOfWeek] = useState<number[]>([]);
-  const [cValidFrom, setCValidFrom] = useState("");
-  const [cValidUntil, setCValidUntil] = useState("");
-  const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
-  const [editValidFrom, setEditValidFrom] = useState("");
-  const [editValidUntil, setEditValidUntil] = useState("");
+  const [createForm, setCreateForm] = useState<PromoForm>(EMPTY_FORM);
+  const [createSaving, setCreateSaving] = useState(false);
+
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
-  const [savingNew, setSavingNew] = useState(false);
-  const [dishSearch, setDishSearch] = useState("");
-  const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
-  const [cModifierTemplateIds, setCModifierTemplateIds] = useState<string[]>([]);
-  const [editModifierTemplateIds, setEditModifierTemplateIds] = useState<string[]>([]);
-  const [editHideOriginal, setEditHideOriginal] = useState(false);
-  const [editSelectedDishes, setEditSelectedDishes] = useState<string[]>([]);
-  const [editDishSearch, setEditDishSearch] = useState("");
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"ofertas" | "modificadores">("ofertas");
+  const today = new Date().getDay();
 
-  // Modifier templates full data
-  const [modTemplates, setModTemplates] = useState<ModTemplate[]>([]);
-  const [modLoading, setModLoading] = useState(false);
-  const [modNewName, setModNewName] = useState("");
-  const [modCreating, setModCreating] = useState(false);
-  // Inline editing states
-  const [modEditingName, setModEditingName] = useState<{ id: string; name: string } | null>(null);
-  const [modAddingGroup, setModAddingGroup] = useState<string | null>(null);
-  const [modGroupForm, setModGroupForm] = useState({ name: "", required: false, minSelect: 0, maxSelect: 1 });
-  const [modAddingOption, setModAddingOption] = useState<string | null>(null);
-  const [modOptionForm, setModOptionForm] = useState({ name: "", priceAdjustment: 0 });
-  const [modEditingGroup, setModEditingGroup] = useState<{ id: string; name: string; required: boolean; minSelect: number; maxSelect: number } | null>(null);
-  const [modEditingOption, setModEditingOption] = useState<{ id: string; name: string; priceAdjustment: number } | null>(null);
-
-  // Auto-set selectedLocal from session (for owners)
+  // Auto-set selectedLocal from session
   useEffect(() => {
     if (selectedRestaurantId && !selectedLocal) setSelectedLocal(selectedRestaurantId);
   }, [selectedRestaurantId, selectedLocal]);
 
   // Load dishes when local changes
   useEffect(() => {
-    if (!selectedLocal) { setLocalDishes([]); setAvailableTemplates([]); return; }
+    if (!selectedLocal) { setLocalDishes([]); return; }
     fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
-      .then(r => r.json()).then(d => { const arr = Array.isArray(d) ? d : d?.dishes; if (Array.isArray(arr)) setLocalDishes(arr); })
-      .catch(() => {});
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
+      .then((r) => r.json())
+      .then((d) => {
+        const arr = Array.isArray(d) ? d : d?.dishes;
+        if (Array.isArray(arr)) setLocalDishes(arr);
+      })
       .catch(() => {});
   }, [selectedLocal]);
 
-  const toggleDishSelection = (id: string) => {
-    setCSelectedDishes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
-
-  const selectedDishesTotal = cSelectedDishes.reduce((sum, id) => {
-    const d = localDishes.find(x => x.id === id);
-    return sum + (d?.price || 0);
-  }, 0);
-
-  const handlePromoUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("folder", "general");
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) {
-        setCImageUrl(data.url);
-        setCThumbUrl(data.url);
-      } else {
-        alert(data.error || "Error al subir imagen");
-      }
-    } catch (e) {
-      alert("Error al subir imagen");
-    }
-    setUploading(false);
-  };
-
-  const handleCreatePromo = async () => {
-    if (!selectedLocal || !cName) return;
-    setSavingNew(true);
-    const body: any = {
-      restaurantId: selectedLocal,
-      name: cName,
-      description: cDesc || null,
-      promoType: createType,
-      daysOfWeek: cDaysOfWeek.length > 0 ? cDaysOfWeek : [],
-    };
-    if (createType === "graphic") {
-      body.imageUrl = cImageUrl || null;
-      body.thumbUrl = cThumbUrl || null;
-      body.originalPrice = parseCLP(cOriginalPrice);
-      body.promoPrice = parseCLP(cPromoPrice);
-      body.sellInStore = cSellInStore;
-    } else {
-      body.dishIds = cSelectedDishes;
-      body.originalPrice = selectedDishesTotal;
-      body.promoPrice = parseCLP(cPromoPrice);
-      body.discountPct = cDiscountPct ? Number(cDiscountPct) : null;
-    }
-    if (cModifierTemplateIds.length > 0) body.modifierTemplateIds = cModifierTemplateIds;
-    if (cValidFrom) body.validFrom = cValidFrom;
-    if (cValidUntil) body.validUntil = cValidUntil;
-    const res = await fetch("/api/admin/promotions", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (data.promotion) setPromos(prev => [data.promotion, ...prev]);
-    resetCreate();
-    setSavingNew(false);
-  };
-
-  const resetCreate = () => {
-    setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSellInStore(false); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]); setCValidFrom(""); setCValidUntil("");
-  };
-
+  // Load promos when local changes
   useEffect(() => {
-    if (sessionLoading || !selectedLocal) { setPromos([]); return; }
+    if (!selectedLocal) { setPromos([]); return; }
     setLoading(true);
     fetch(`/api/admin/promotions?restaurantId=${selectedLocal}`)
-      .then(r => r.json()).then(d => setPromos(d.promotions || []))
-      .catch(() => {}).finally(() => setLoading(false));
-  }, [selectedLocal, sessionLoading]);
-
-  const handleGenerate = async () => {
-    if (!selectedLocal) return;
-    setGenerating(true);
-    try {
-      const res = await fetch("/api/admin/promotions", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "suggest", restaurantId: selectedLocal }),
-      });
-      const data = await res.json();
-      if (data.promotions) setPromos(prev => [...data.promotions, ...prev]);
-    } catch (e) { console.error(e); }
-    setGenerating(false);
-  };
-
-  const handleStatus = async (id: string, status: string) => {
-    const res = await fetch("/api/admin/promotions", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
-    if (res.ok) setPromos(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("promo_confirm_delete"))) return;
-    await fetch("/api/admin/promotions", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: "DELETED" }),
-    });
-    setPromos(prev => prev.filter(p => p.id !== id));
-  };
-
-  // Vender / dejar de vender en la tienda una promo gráfica existente (crea/quita el producto).
-  const [storeBusy, setStoreBusy] = useState<string | null>(null);
-  const toggleSellInStore = async (p: Promo) => {
-    const enable = !p.linkedDishId;
-    if (!enable && !confirm("¿Quitar el producto de la tienda? La promo seguirá en la carta.")) return;
-    setStoreBusy(p.id);
-    try {
-      const res = await fetch("/api/admin/promotions", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: p.id, sellInStore: enable }),
-      });
-      const data = await res.json();
-      if (data.promotion) setPromos(prev => prev.map(x => x.id === p.id ? { ...x, ...data.promotion } : x));
-    } catch { /* noop */ }
-    setStoreBusy(null);
-  };
-
-  const startEdit = (p: Promo) => {
-    setEditing(p);
-    setEditName(p.name);
-    setEditDesc(p.description || "");
-    setEditPrice(p.promoPrice?.toString() || "");
-    setEditOriginalPrice(p.originalPrice?.toString() || "");
-    setEditImageUrl(p.imageUrl || "");
-    setEditDaysOfWeek(p.daysOfWeek || []);
-    setEditValidFrom(p.validFrom ? p.validFrom.slice(0, 10) : "");
-    setEditValidUntil(p.validUntil ? p.validUntil.slice(0, 10) : "");
-    setEditModifierTemplateIds((p.modifierTemplates || []).map(t => t.id));
-    setEditHideOriginal(p.hideOriginalWhenActive ?? false);
-    setEditSelectedDishes(p.dishIds || []);
-    setEditDishSearch("");
-    setExpanded(p.id);
-  };
-
-  const handleEditUpload = async (file: File) => {
-    setEditUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("localId", editing?.restaurant?.name || "promo");
-      fd.append("dishName", editName || "promo");
-      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) setEditImageUrl(data.url);
-      else {
-        const fd2 = new FormData();
-        fd2.append("file", file);
-        fd2.append("folder", "general");
-        const res2 = await fetch("/api/upload", { method: "POST", body: fd2 });
-        const data2 = await res2.json();
-        if (data2.url) setEditImageUrl(data2.url);
-      }
-    } catch {}
-    setEditUploading(false);
-  };
-
-  const saveEdit = async () => {
-    if (!editing) return;
-    const body: any = {
-      id: editing.id, name: editName, description: editDesc,
-      promoPrice: parseCLP(editPrice),
-      originalPrice: parseCLP(editOriginalPrice),
-      imageUrl: editImageUrl || null,
-      daysOfWeek: editDaysOfWeek.length > 0 ? editDaysOfWeek : [],
-      validFrom: editValidFrom || null,
-      validUntil: editValidUntil || null,
-      modifierTemplateIds: editModifierTemplateIds,
-      hideOriginalWhenActive: editHideOriginal,
-      dishIds: editSelectedDishes,
-    };
-    const res = await fetch("/api/admin/promotions", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (data.promotion) {
-      const updatedDishes = localDishes.filter(d => editSelectedDishes.includes(d.id));
-      setPromos(prev => prev.map(p => p.id === editing.id ? { ...p, ...body, dishes: updatedDishes } : p));
-    }
-    setEditing(null);
-  };
-
-  const movePromo = async (id: string, dir: "up" | "down") => {
-    const idx = filtered.findIndex(p => p.id === id);
-    if (idx < 0) return;
-    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= filtered.length) return;
-    const newOrder = [...filtered];
-    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
-    const ids = newOrder.map(p => p.id);
-    // Optimistic update
-    setPromos(prev => {
-      const copy = [...prev];
-      const allIds = ids;
-      allIds.forEach((pid, i) => {
-        const p = copy.find(x => x.id === pid);
-        if (p) p.position = i;
-      });
-      copy.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
-      return copy;
-    });
-    await fetch("/api/admin/promotions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reorder", order: ids, restaurantId: selectedLocal }),
-    });
-  };
-
-  const toggleFeatured = async (p: Promo) => {
-    const newVal = !p.featured;
-    setPromos(prev => prev.map(x => x.id === p.id ? { ...x, featured: newVal } : x));
-    await fetch("/api/admin/promotions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.id, featured: newVal }),
-    });
-  };
-
-  // Fetch full modifier templates when tab is active
-  useEffect(() => {
-    if (activeTab !== "modificadores" || !selectedLocal) { setModTemplates([]); return; }
-    setModLoading(true);
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setModTemplates(d); })
+      .then((r) => r.json())
+      .then((d) => {
+        const arr = Array.isArray(d) ? d : d?.promotions;
+        if (Array.isArray(arr)) setPromos(arr);
+      })
       .catch(() => {})
-      .finally(() => setModLoading(false));
-  }, [activeTab, selectedLocal]);
+      .finally(() => setLoading(false));
+  }, [selectedLocal]);
 
-  const modRefresh = async () => {
-    if (!selectedLocal) return;
-    const r = await fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`);
-    const d = await r.json();
-    if (Array.isArray(d)) setModTemplates(d);
-  };
+  function promoToForm(p: Promo): PromoForm {
+    return {
+      name: p.name ?? "",
+      dishId: p.dishId ?? "",
+      promoName: p.promoName ?? "",
+      promoPrice: p.promoPrice != null ? String(p.promoPrice) : "",
+      originalPrice: p.originalPrice != null ? String(p.originalPrice) : "",
+      daysOfWeek: p.daysOfWeek ?? [],
+      validFrom: p.validFrom ? p.validFrom.slice(0, 10) : "",
+      validUntil: p.validUntil ? p.validUntil.slice(0, 10) : "",
+    };
+  }
 
-  const modCreateTemplate = async () => {
-    if (!selectedLocal || !modNewName.trim()) return;
-    setModCreating(true);
+  function openEdit(p: Promo) {
+    setExpandedId(p.id);
+    setEditForm(promoToForm(p));
+  }
+
+  function closeEdit() {
+    setExpandedId(null);
+    setEditForm(EMPTY_FORM);
+  }
+
+  async function saveEdit(promo: Promo) {
+    setEditSaving(true);
     try {
-      await fetch("/api/admin/modifier-templates", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedLocal, name: modNewName.trim(), scope: "promotion" }),
+      const body: Record<string, unknown> = {
+        id: promo.id,
+        name: editForm.name,
+        dishId: editForm.dishId || null,
+        promoName: editForm.promoName || null,
+        promoPrice: parseCLP(editForm.promoPrice),
+        originalPrice: parseCLP(editForm.originalPrice) || null,
+        daysOfWeek: editForm.daysOfWeek,
+        validFrom: editForm.validFrom || null,
+        validUntil: editForm.validUntil || null,
+      };
+      const res = await fetch("/api/admin/promotions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
-      setModNewName("");
-      await modRefresh();
-      // Also refresh simple list for ofertas tab
-      fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
-        .then(r => r.json()).then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); }).catch(() => {});
-    } catch {}
-    setModCreating(false);
-  };
+      if (res.ok) {
+        const data = await res.json();
+        const updated = data.promotion ?? data;
+        setPromos((prev) => prev.map((p) => (p.id === promo.id ? { ...p, ...updated } : p)));
+        closeEdit();
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  }
 
-  const modDeleteTemplate = async (id: string) => {
-    if (!confirm("¿Eliminar este template de modificadores y todos sus grupos/opciones?")) return;
-    await fetch("/api/admin/modifier-templates", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: id }) });
-    await modRefresh();
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
-      .then(r => r.json()).then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); }).catch(() => {});
-  };
+  async function toggleStatus(promo: Promo) {
+    const newStatus = promo.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
+    const res = await fetch("/api/admin/promotions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: promo.id, status: newStatus }),
+    });
+    if (res.ok) {
+      setPromos((prev) =>
+        prev.map((p) => (p.id === promo.id ? { ...p, status: newStatus } : p))
+      );
+    }
+  }
 
-  const modUpdateTemplateName = async (id: string, name: string) => {
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: id, name }) });
-    await modRefresh();
-    setModEditingName(null);
-  };
+  async function deletePromo(promo: Promo) {
+    if (!confirm(`¿Eliminar la oferta "${promo.name}"?`)) return;
+    const res = await fetch("/api/admin/promotions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: promo.id, status: "DELETED" }),
+    });
+    if (res.ok) {
+      setPromos((prev) => prev.filter((p) => p.id !== promo.id));
+      closeEdit();
+    }
+  }
 
-  const modAddGroup = async (templateId: string) => {
-    if (!modGroupForm.name.trim()) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addGroupToTemplate: templateId, ...modGroupForm }) });
-    setModAddingGroup(null);
-    setModGroupForm({ name: "", required: false, minSelect: 0, maxSelect: 1 });
-    await modRefresh();
-  };
+  async function saveCreate() {
+    if (!selectedLocal) return;
+    setCreateSaving(true);
+    try {
+      const body = {
+        restaurantId: selectedLocal,
+        name: createForm.name,
+        dishId: createForm.dishId || undefined,
+        promoName: createForm.promoName || undefined,
+        promoPrice: parseCLP(createForm.promoPrice),
+        originalPrice: parseCLP(createForm.originalPrice) || undefined,
+        daysOfWeek: createForm.daysOfWeek,
+        validFrom: createForm.validFrom || undefined,
+        validUntil: createForm.validUntil || undefined,
+      };
+      const res = await fetch("/api/admin/promotions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const created = data.promotion ?? data;
+        setPromos((prev) => [created, ...prev]);
+        setCreating(false);
+        setCreateForm(EMPTY_FORM);
+      }
+    } finally {
+      setCreateSaving(false);
+    }
+  }
 
-  const modUpdateGroup = async () => {
-    if (!modEditingGroup) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ groupId: modEditingGroup.id, name: modEditingGroup.name, required: modEditingGroup.required, minSelect: modEditingGroup.minSelect, maxSelect: modEditingGroup.maxSelect }) });
-    setModEditingGroup(null);
-    await modRefresh();
-  };
-
-  const modDeleteGroup = async (id: string) => {
-    if (!confirm("¿Eliminar este grupo y todas sus opciones?")) return;
-    await fetch("/api/admin/modifier-templates", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ groupId: id }) });
-    await modRefresh();
-  };
-
-  const modAddOption = async (groupId: string) => {
-    if (!modOptionForm.name.trim()) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addOptionToGroup: groupId, name: modOptionForm.name, priceAdjustment: modOptionForm.priceAdjustment }) });
-    setModAddingOption(null);
-    setModOptionForm({ name: "", priceAdjustment: 0 });
-    await modRefresh();
-  };
-
-  const modUpdateOption = async () => {
-    if (!modEditingOption) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: modEditingOption.id, name: modEditingOption.name, priceAdjustment: modEditingOption.priceAdjustment }) });
-    setModEditingOption(null);
-    await modRefresh();
-  };
-
-  const modDeleteOption = async (id: string) => {
-    await fetch("/api/admin/modifier-templates", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: id }) });
-    await modRefresh();
-  };
-
-  const filtered = promos.filter(p => {
-    if (p.status === "DELETED") return false;
-    if (isPanel && p.status === "SUGGESTED") return false; // Hide suggestions in panel
-    if (filter === "all") return true;
-    return p.status === filter;
+  const filtered = promos.filter((p) => {
+    if (filter === "active") return p.status === "ACTIVE";
+    if (filter === "paused") return p.status === "PAUSED";
+    return p.status !== "DELETED";
   });
 
-  if (sessionLoading) return <SkeletonLoading type="cards" />;
+  if (sessionLoading) return <SkeletonLoading />;
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
-        <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Tag size={20} color="var(--adm-text3)" /> {isPanel ? t("promo_title") : t("promo_title_admin")}</h1>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{t("promo_subtitle")}</p>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {!isPanel && (
+    <div style={{ padding: "24px 20px", maxWidth: 780, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+        <h2 style={{ fontFamily: F, fontWeight: 800, fontSize: 22, margin: 0 }}>Ofertas</h2>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          {/* Selector de local — solo super admin */}
+          {!isPanel && restaurants && restaurants.length > 0 && (
             <select
               value={selectedLocal}
-              onChange={e => setSelectedLocal(e.target.value)}
-              style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-            >
-              <option value="" style={{ background: "var(--adm-select-bg)" }}>{t("promo_all_restaurants")}</option>
-              {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
-            </select>
-          )}
-          {!isPanel && selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
-            padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
-            color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
-          }}>
-            {generating ? t("promo_analyzing") : t("promo_generate")}
-          </button>}
-        </div>
-      </div>
-
-      {/* ===== MODIFICADORES (hidden, accessible via Mi Carta) ===== */}
-      {false && selectedLocal && (
-        <div>
-          {/* Create new template */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-            <input placeholder="Nombre del nuevo template..." value={modNewName} onChange={e => setModNewName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") modCreateTemplate(); }} style={{ ...INP, flex: 1, marginBottom: 0 }} />
-            <button onClick={modCreateTemplate} disabled={modCreating || !modNewName.trim()} style={{ padding: "8px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", opacity: modCreating || !modNewName.trim() ? 0.5 : 1, whiteSpace: "nowrap" }}>
-              {modCreating ? "Creando..." : "+ Crear template"}
-            </button>
-          </div>
-
-          {modLoading ? <SkeletonLoading type="cards" /> : modTemplates.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 60 }}>
-              <p style={{ fontSize: "2rem", marginBottom: 12 }}>🔧</p>
-              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>No hay templates de modificadores</p>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Crea uno para agregar opciones como tamaños, extras, etc.</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {modTemplates.map(tpl => {
-                // Find which promos use this template
-                const usedBy = promos.filter(p => p.modifierTemplates?.some(mt => mt.id === tpl.id));
-                return (
-                  <div key={tpl.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden" }}>
-                    {/* Template header */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid var(--adm-card-border)" }}>
-                      {modEditingName?.id === tpl.id ? (
-                        <div style={{ display: "flex", gap: 6, flex: 1 }}>
-                          <input value={modEditingName.name} onChange={e => setModEditingName({ ...modEditingName, name: e.target.value })} onKeyDown={e => { if (e.key === "Enter") modUpdateTemplateName(tpl.id, modEditingName.name); if (e.key === "Escape") setModEditingName(null); }} autoFocus style={{ ...INP, flex: 1, marginBottom: 0, fontSize: "0.92rem", fontWeight: 600 }} />
-                          <button onClick={() => modUpdateTemplateName(tpl.id, modEditingName.name)} style={{ padding: "6px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>OK</button>
-                          <button onClick={() => setModEditingName(null)} style={{ padding: "6px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>X</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                          <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{tpl.name}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>{tpl.groups.length} grupo{tpl.groups.length !== 1 ? "s" : ""}</span>
-                          {usedBy.length > 0 && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#F4A623", background: "rgba(244,166,35,0.1)", padding: "2px 8px", borderRadius: 4 }}>Usado en {usedBy.length} oferta{usedBy.length !== 1 ? "s" : ""}</span>}
-                        </div>
-                      )}
-                      {!modEditingName && (
-                        <div style={{ display: "flex", gap: 4 }}>
-                          <button onClick={() => setModEditingName({ id: tpl.id, name: tpl.name })} style={{ padding: "5px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>Editar</button>
-                          <button onClick={() => modDeleteTemplate(tpl.id)} style={{ padding: "5px 10px", background: "none", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 6, color: "#ff6b6b", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>Eliminar</button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Groups */}
-                    <div style={{ padding: "12px 16px" }}>
-                      {tpl.groups.map(grp => (
-                        <div key={grp.id} style={{ marginBottom: 12, background: "var(--adm-hover)", borderRadius: 10, padding: "10px 12px", border: "1px solid var(--adm-card-border)" }}>
-                          {/* Group header */}
-                          {modEditingGroup?.id === grp.id ? (
-                            <div style={{ marginBottom: 8 }}>
-                              <input value={modEditingGroup.name} onChange={e => setModEditingGroup({ ...modEditingGroup, name: e.target.value })} style={{ ...INP, marginBottom: 6, fontWeight: 600 }} />
-                              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-                                <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>
-                                  <input type="checkbox" checked={modEditingGroup.required} onChange={e => setModEditingGroup({ ...modEditingGroup, required: e.target.checked })} style={{ accentColor: "#F4A623" }} />
-                                  Obligatorio
-                                </label>
-                                <label style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>Min: <select value={modEditingGroup.minSelect} onChange={e => setModEditingGroup({ ...modEditingGroup, minSelect: Number(e.target.value) })} style={{ background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text)", fontFamily: F, fontSize: "0.75rem", padding: "2px 4px" }}>{[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
-                                <label style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>Max: <select value={modEditingGroup.maxSelect} onChange={e => setModEditingGroup({ ...modEditingGroup, maxSelect: Number(e.target.value) })} style={{ background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text)", fontFamily: F, fontSize: "0.75rem", padding: "2px 4px" }}>{[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
-                              </div>
-                              <div style={{ display: "flex", gap: 6 }}>
-                                <button onClick={modUpdateGroup} style={{ padding: "5px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>Guardar</button>
-                                <button onClick={() => setModEditingGroup(null)} style={{ padding: "5px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>Cancelar</button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600 }}>{grp.name}</span>
-                                {grp.required && <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#F4A623", background: "rgba(244,166,35,0.1)", padding: "1px 6px", borderRadius: 3 }}>Obligatorio</span>}
-                                <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>min:{grp.minSelect} max:{grp.maxSelect}</span>
-                              </div>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                <button onClick={() => setModEditingGroup({ id: grp.id, name: grp.name, required: grp.required, minSelect: grp.minSelect, maxSelect: grp.maxSelect })} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.68rem", cursor: "pointer" }}>Editar</button>
-                                <button onClick={() => modDeleteGroup(grp.id)} style={{ padding: "3px 8px", background: "none", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 4, color: "#ff6b6b", fontFamily: F, fontSize: "0.68rem", cursor: "pointer" }}>X</button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Options */}
-                          {grp.options.length > 0 && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 6 }}>
-                              {grp.options.map(opt => (
-                                <div key={opt.id}>
-                                  {modEditingOption?.id === opt.id ? (
-                                    <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "4px 0" }}>
-                                      <input value={modEditingOption.name} onChange={e => setModEditingOption({ ...modEditingOption, name: e.target.value })} style={{ ...INP, flex: 1, marginBottom: 0, fontSize: "0.78rem", padding: "6px 8px" }} />
-                                      <input type="number" value={modEditingOption.priceAdjustment} onChange={e => setModEditingOption({ ...modEditingOption, priceAdjustment: Number(e.target.value) })} style={{ ...INP, width: 80, marginBottom: 0, fontSize: "0.78rem", padding: "6px 8px" }} />
-                                      <button onClick={modUpdateOption} style={{ padding: "4px 8px", background: "#F4A623", color: "white", border: "none", borderRadius: 4, fontFamily: F, fontSize: "0.7rem", cursor: "pointer" }}>OK</button>
-                                      <button onClick={() => setModEditingOption(null)} style={{ padding: "4px 6px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.7rem", cursor: "pointer" }}>X</button>
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", borderRadius: 5, background: opt.isHidden ? "rgba(255,107,107,0.05)" : "transparent" }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        <span style={{ fontFamily: F, fontSize: "0.8rem", color: opt.isHidden ? "var(--adm-text3)" : "var(--adm-text)", textDecoration: opt.isHidden ? "line-through" : "none" }}>{opt.name}</span>
-                                        {opt.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.72rem", color: opt.priceAdjustment > 0 ? "#4ade80" : "#ff6b6b" }}>{opt.priceAdjustment > 0 ? "+" : ""}${opt.priceAdjustment.toLocaleString("es-CL")}</span>}
-                                      </div>
-                                      <div style={{ display: "flex", gap: 3 }}>
-                                        <button onClick={() => setModEditingOption({ id: opt.id, name: opt.name, priceAdjustment: opt.priceAdjustment })} style={{ padding: "2px 6px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 3, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.65rem", cursor: "pointer" }}>Editar</button>
-                                        <button onClick={() => modDeleteOption(opt.id)} style={{ padding: "2px 6px", background: "none", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 3, color: "#ff6b6b", fontFamily: F, fontSize: "0.65rem", cursor: "pointer" }}>X</button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Add option form */}
-                          {modAddingOption === grp.id ? (
-                            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                              <input placeholder="Nombre opcion" value={modOptionForm.name} onChange={e => setModOptionForm({ ...modOptionForm, name: e.target.value })} onKeyDown={e => { if (e.key === "Enter") modAddOption(grp.id); }} autoFocus style={{ ...INP, flex: 1, marginBottom: 0, fontSize: "0.78rem", padding: "6px 8px" }} />
-                              <input type="number" placeholder="$+-" value={modOptionForm.priceAdjustment || ""} onChange={e => setModOptionForm({ ...modOptionForm, priceAdjustment: Number(e.target.value) })} style={{ ...INP, width: 70, marginBottom: 0, fontSize: "0.78rem", padding: "6px 8px" }} />
-                              <button onClick={() => modAddOption(grp.id)} style={{ padding: "5px 10px", background: "#F4A623", color: "white", border: "none", borderRadius: 5, fontFamily: F, fontSize: "0.72rem", cursor: "pointer", whiteSpace: "nowrap" }}>+</button>
-                              <button onClick={() => { setModAddingOption(null); setModOptionForm({ name: "", priceAdjustment: 0 }); }} style={{ padding: "5px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 5, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>X</button>
-                            </div>
-                          ) : (
-                            <button onClick={() => { setModAddingOption(grp.id); setModOptionForm({ name: "", priceAdjustment: 0 }); }} style={{ padding: "4px 10px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 5, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer", marginTop: 2 }}>+ Agregar opcion</button>
-                          )}
-                        </div>
-                      ))}
-
-                      {/* Add group form */}
-                      {modAddingGroup === tpl.id ? (
-                        <div style={{ background: "var(--adm-hover)", borderRadius: 10, padding: "10px 12px", border: "1px dashed rgba(244,166,35,0.3)" }}>
-                          <input placeholder="Nombre del grupo" value={modGroupForm.name} onChange={e => setModGroupForm({ ...modGroupForm, name: e.target.value })} onKeyDown={e => { if (e.key === "Enter") modAddGroup(tpl.id); }} autoFocus style={{ ...INP, marginBottom: 6, fontWeight: 600 }} />
-                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-                            <label style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>
-                              <input type="checkbox" checked={modGroupForm.required} onChange={e => setModGroupForm({ ...modGroupForm, required: e.target.checked })} style={{ accentColor: "#F4A623" }} />
-                              Obligatorio
-                            </label>
-                            <label style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>Min: <select value={modGroupForm.minSelect} onChange={e => setModGroupForm({ ...modGroupForm, minSelect: Number(e.target.value) })} style={{ background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text)", fontFamily: F, fontSize: "0.75rem", padding: "2px 4px" }}>{[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
-                            <label style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)" }}>Max: <select value={modGroupForm.maxSelect} onChange={e => setModGroupForm({ ...modGroupForm, maxSelect: Number(e.target.value) })} style={{ background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, color: "var(--adm-text)", fontFamily: F, fontSize: "0.75rem", padding: "2px 4px" }}>{[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
-                          </div>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button onClick={() => modAddGroup(tpl.id)} style={{ padding: "6px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Agregar grupo</button>
-                            <button onClick={() => { setModAddingGroup(null); setModGroupForm({ name: "", required: false, minSelect: 0, maxSelect: 1 }); }} style={{ padding: "6px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer" }}>Cancelar</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button onClick={() => { setModAddingGroup(tpl.id); setModGroupForm({ name: "", required: false, minSelect: 0, maxSelect: 1 }); }} style={{ padding: "6px 14px", background: "none", border: "1px dashed rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", fontFamily: F, fontSize: "0.78rem", cursor: "pointer", marginTop: tpl.groups.length > 0 ? 4 : 0 }}>+ Agregar grupo</button>
-                      )}
-
-                      {/* Which promos use this template */}
-                      {usedBy.length > 0 && (
-                        <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid var(--adm-card-border)" }}>
-                          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Usado en ofertas</p>
-                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                            {usedBy.map(p => (
-                              <span key={p.id} style={{ fontFamily: F, fontSize: "0.72rem", color: "#F4A623", background: "rgba(244,166,35,0.08)", padding: "2px 8px", borderRadius: 4, border: "1px solid rgba(244,166,35,0.15)" }}>{p.name}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ===== OFERTAS ===== */}
-      {<>
-      {/* Filters + create button */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
-        {[
-          { key: "all", label: t("promo_filter_all") },
-          ...(!isPanel ? [{ key: "SUGGESTED", label: t("promo_filter_suggested") }] : []),
-          { key: "ACTIVE", label: t("promo_filter_active") },
-          { key: "PAUSED", label: t("promo_filter_paused") },
-        ].map(f => (
-          <button key={f.key} onClick={() => setFilter(f.key)} style={{
-            padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-            background: filter === f.key ? "var(--adm-card-border)" : "transparent",
-            color: filter === f.key ? "var(--adm-text)" : "var(--adm-text3)",
-          }}>
-            {f.label}
-          </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        {selectedLocal && (
-          <button onClick={() => creating ? resetCreate() : setCreating(true)} style={{ padding: "8px 16px", background: creating ? "none" : "#F4A623", color: creating ? "var(--adm-text2)" : "white", border: creating ? "1px solid var(--adm-card-border)" : "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-            {creating ? t("promo_cancel") : t("promo_create")}
-          </button>
-        )}
-      </div>
-
-      {/* Create new promo */}
-      {creating && !createType && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_type_title")}</h3>
-          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <button onClick={() => setCreateType("graphic")} style={{ padding: "20px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
-              <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🖼️</span>
-              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>{t("promo_type_graphic")}</span>
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>{t("promo_type_graphic_desc")}</span>
-            </button>
-            <button onClick={() => setCreateType("product")} style={{ padding: "20px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
-              <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🍽️</span>
-              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, display: "block" }}>{t("promo_type_products")}</span>
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>{t("promo_type_products_desc")}</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {creating && createType === "graphic" && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_graphic_title")}</h3>
-          <input placeholder={t("promo_name_label")} value={cName} onChange={e => setCName(e.target.value)} style={INP} />
-          <textarea placeholder={t("promo_desc_label")} value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
-
-          {/* File upload */}
-          {!cImageUrl ? (
-            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "24px 16px", background: "var(--adm-hover)", border: "2px dashed var(--adm-card-border)", borderRadius: 12, cursor: uploading ? "wait" : "pointer", marginBottom: 12, transition: "border-color 0.2s" }}
-              onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "#F4A623"; }}
-              onDragLeave={e => { e.currentTarget.style.borderColor = "var(--adm-card-border)"; }}
-              onDrop={async e => {
-                e.preventDefault();
-                e.currentTarget.style.borderColor = "var(--adm-card-border)";
-                const file = e.dataTransfer.files[0];
-                if (file) await handlePromoUpload(file);
+              onChange={(e) => setSelectedLocal(e.target.value)}
+              style={{
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid var(--adm-border)",
+                background: "var(--adm-card)",
+                color: "var(--adm-text)",
+                fontSize: 13,
+                cursor: "pointer",
               }}
             >
-              <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => {
-                const file = e.target.files?.[0];
-                if (file) await handlePromoUpload(file);
-              }} />
-              <span style={{ fontSize: "2rem" }}>{uploading ? "⏳" : "📷"}</span>
-              <span style={{ fontFamily: F, fontSize: "0.85rem", color: uploading ? "#F4A623" : "var(--adm-text2)" }}>{uploading ? t("promo_uploading") : t("promo_upload_hint")}</span>
-              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{t("promo_upload_types")}</span>
-            </label>
-          ) : (
-            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 180 }}>
-              <img src={cImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <button onClick={() => { setCImageUrl(""); setCThumbUrl(""); }} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-            </div>
-          )}
-
-          {/* Prices (optional) */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <input type="text" inputMode="numeric" placeholder={t("promo_normal_price_hint")} value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
-            <input type="text" inputMode="numeric" placeholder={t("promo_promo_price_hint")} value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
-          </div>
-
-          {/* Vender también en la tienda ecommerce (crea un producto en el catálogo) */}
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 14, padding: "10px 12px", background: cSellInStore ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: `1px solid ${cSellInStore ? "#F4A623" : "var(--adm-card-border)"}`, borderRadius: 10, cursor: "pointer" }}>
-            <input type="checkbox" checked={cSellInStore} onChange={e => setCSellInStore(e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer" }} />
-            <span style={{ flex: 1 }}>
-              <span style={{ display: "block", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)" }}>Vender también en la tienda</span>
-              <span style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2, lineHeight: 1.4 }}>Crea un producto en el catálogo (categoría “Promociones”) con esta imagen y precio. Aparecerá en la tienda ecommerce y podrás asignarle su código de POS.</span>
-            </span>
-          </label>
-
-          {/* Modifier templates */}
-          {availableTemplates.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {availableTemplates.map(tpl => (
-                  <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={cModifierTemplateIds.includes(tpl.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Days of week */}
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_days_label")}</p>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
-                <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
+              <option value="">Seleccionar local…</option>
+              {restaurants.map((r: any) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
               ))}
-            </div>
-          </div>
-
-          {/* Date range */}
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
-                <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
-                <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? t("promo_creating") : t("promo_create_btn")}</button>
-            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
-          </div>
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={() => { setCreating(true); setCreateForm(EMPTY_FORM); setExpandedId(null); }}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "none",
+              background: GOLD,
+              color: "#000",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: F,
+            }}
+          >
+            + Nueva oferta
+          </button>
         </div>
-      )}
+      </div>
 
-      {creating && createType === "product" && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>{t("promo_products_title")}</h3>
-          <input placeholder={t("promo_name_label")} value={cName} onChange={e => setCName(e.target.value)} style={INP} />
-          <textarea placeholder={t("promo_desc_label")} value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+        {(["all", "active", "paused"] as FilterTab[]).map((tab) => {
+          const labels: Record<FilterTab, string> = { all: "Todas", active: "Activas", paused: "Pausadas" };
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setFilter(tab)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 20,
+                border: "1px solid var(--adm-border)",
+                background: filter === tab ? GOLD : "var(--adm-hover)",
+                color: filter === tab ? "#000" : "var(--adm-text2)",
+                fontWeight: filter === tab ? 700 : 500,
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              {labels[tab]}
+            </button>
+          );
+        })}
+      </div>
 
-          {/* Dish selector */}
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{t("promo_select_dishes")} ({cSelectedDishes.length})</p>
-          <input
-            placeholder={t("promo_search_dish")}
-            value={dishSearch}
-            onChange={e => setDishSearch(e.target.value)}
-            style={{ ...INP, marginBottom: 0, borderRadius: "10px 10px 0 0", borderBottom: "none" }}
+      {/* Formulario de creación */}
+      {creating && (
+        <div
+          style={{
+            borderRadius: 12,
+            border: `2px solid ${GOLD}`,
+            background: "var(--adm-card)",
+            marginBottom: 16,
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: "14px 18px", fontWeight: 700, fontSize: 15, fontFamily: F }}>
+            Nueva oferta
+          </div>
+          <PromoForm
+            form={createForm}
+            setForm={setCreateForm}
+            dishes={localDishes}
+            onSave={saveCreate}
+            onCancel={() => { setCreating(false); setCreateForm(EMPTY_FORM); }}
+            saving={createSaving}
+            isNew
           />
-          <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 14, borderRadius: "0 0 10px 10px", border: "1px solid var(--adm-card-border)", scrollbarWidth: "none" }}>
-            {localDishes.filter(d => !dishSearch || d.name.toLowerCase().includes(dishSearch.toLowerCase())).map(d => {
-              const sel = cSelectedDishes.includes(d.id);
-              return (
-                <button key={d.id} onClick={() => toggleDishSelection(d.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: sel ? "rgba(244,166,35,0.08)" : "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
-                  {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
-                  <span style={{ fontFamily: F, fontSize: "0.82rem", color: sel ? "#F4A623" : "var(--adm-text)", flex: 1, fontWeight: sel ? 600 : 400 }}>{d.name}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>${d.price?.toLocaleString("es-CL")}</span>
-                  {sel && <span style={{ color: "#F4A623", fontSize: "14px" }}>✓</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {cSelectedDishes.length > 0 && (
-            <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{t("promo_original_price")}</span>
-                <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600 }}>${selectedDishesTotal.toLocaleString("es-CL")}</span>
-              </div>
-              <div style={{ display: "flex", gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>{t("promo_promo_price")}</label>
-                  <input type="text" inputMode="numeric" placeholder={t("promo_promo_price_hint")} value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>{t("promo_discount_pct")}</label>
-                  <input type="number" placeholder="%" value={cDiscountPct} onChange={e => setCDiscountPct(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Modifier templates */}
-          {availableTemplates.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {availableTemplates.map(tpl => (
-                  <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={cModifierTemplateIds.includes(tpl.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
-                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Days of week */}
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_days_label")}</p>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
-                <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Date range */}
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>{t("promo_date_range")}</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_from")}</label>
-                <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>{t("promo_date_to")}</label>
-                <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? t("promo_creating") : t("promo_create_btn")}</button>
-            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
-          </div>
         </div>
       )}
 
+      {/* Loading */}
+      {loading && <SkeletonLoading />}
 
+      {/* Sin local seleccionado */}
+      {!loading && !selectedLocal && (
+        <div style={{ textAlign: "center", color: "var(--adm-text2)", padding: "40px 0", fontSize: 14 }}>
+          Selecciona un local para ver las ofertas
+        </div>
+      )}
 
-      {loading ? (
-        <SkeletonLoading type="cards" />
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map(p => {
-            const displayStatus = getPromoDisplayStatus(p);
-            const st = STATUS_STYLES[displayStatus] || STATUS_STYLES.SUGGESTED;
-            const isOpen = editing?.id === p.id;
-            const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
-            return (
-              <div key={p.id} data-promo-id={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
-                {/* Header — draggable from anywhere */}
+      {/* Sin resultados */}
+      {!loading && selectedLocal && filtered.length === 0 && !creating && (
+        <div style={{ textAlign: "center", color: "var(--adm-text2)", padding: "40px 0", fontSize: 14 }}>
+          No hay ofertas{filter !== "all" ? " en esta categoría" : ""}
+        </div>
+      )}
+
+      {/* Cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.map((promo) => {
+          const dish = promo.dishes?.[0] ?? localDishes.find((d) => d.id === promo.dishId);
+          const photoUrl = dish?.photos?.[0] ?? null;
+          const isToday = isPromoActiveToday(promo);
+          const isExpanded = expandedId === promo.id;
+
+          return (
+            <div
+              key={promo.id}
+              style={{
+                borderRadius: 12,
+                border: isExpanded ? `2px solid ${GOLD}` : "1px solid var(--adm-border)",
+                background: "var(--adm-card)",
+                overflow: "hidden",
+                transition: "border-color 0.15s",
+              }}
+            >
+              {/* Card header — clickeable */}
+              <div
+                onClick={() => isExpanded ? closeEdit() : openEdit(promo)}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  padding: "14px 16px",
+                  cursor: "pointer",
+                }}
+              >
+                {/* Foto o emoji */}
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", cursor: isPanel ? "grab" : "pointer", touchAction: isPanel ? "none" : "auto", userSelect: "none" }}
-                  onPointerDown={isPanel ? (e) => {
-                    if ((e.target as HTMLElement).closest("button")) return;
-                    const card = e.currentTarget.closest("[data-promo-id]") as HTMLElement;
-                    if (!card) return;
-                    const container = card.parentElement;
-                    if (!container) return;
-                    const startY = e.clientY;
-                    const cardH = card.offsetHeight + 10;
-                    let moved = false;
-                    card.style.zIndex = "10";
-
-                    const onMove = (ev: PointerEvent) => {
-                      const dy = ev.clientY - startY;
-                      if (Math.abs(dy) > 5) moved = true;
-                      if (moved) {
-                        card.style.opacity = "0.85";
-                        card.style.transition = "none";
-                        card.style.transform = `translateY(${dy}px)`;
-                      }
-                    };
-                    const onUp = (ev: PointerEvent) => {
-                      document.removeEventListener("pointermove", onMove);
-                      document.removeEventListener("pointerup", onUp);
-                      card.style.zIndex = "";
-                      card.style.opacity = "";
-                      card.style.transform = "";
-                      card.style.transition = "";
-                      if (moved) {
-                        const dy = ev.clientY - startY;
-                        const steps = Math.round(dy / cardH);
-                        if (steps !== 0) {
-                          const dir = steps > 0 ? "down" : "up";
-                          for (let i = 0; i < Math.abs(steps); i++) movePromo(p.id, dir);
-                        }
-                      } else {
-                        if (editing?.id === p.id) setEditing(null); else startEdit(p);
-                      }
-                    };
-                    document.addEventListener("pointermove", onMove);
-                    document.addEventListener("pointerup", onUp);
-                  } : () => { if (editing?.id === p.id) setEditing(null); else startEdit(p); }}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    flexShrink: 0,
+                    background: "var(--adm-hover)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24,
+                  }}
                 >
-                  {/* Grip dots — subtle */}
-                  {isPanel && (
-                    <div style={{ display: "grid", gridTemplateColumns: "3px 3px", gap: 2, flexShrink: 0, opacity: 0.3 }}>
-                      {[...Array(6)].map((_, i) => <div key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--adm-text2)" }} />)}
-                    </div>
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    "🏷️"
                   )}
-                  {/* Star inline */}
-                  {isPanel && (
-                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "1.1rem", lineHeight: 1, flexShrink: 0 }}>{p.featured ? "⭐" : "☆"}</button>
-                  )}
-                  {(() => {
-                    const thumb = p.dishes?.[0]?.photos?.[0] || (p.imageUrl ? (p.thumbUrl || p.imageUrl) : null);
-                    return thumb ? (
-                      <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                    ) : (
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
-                        {p.restaurant?.name?.charAt(0) || "🏷️"}
-                      </div>
-                    );
-                  })()}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                      <span style={{ fontSize: "0.58rem", padding: "2px 7px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600, flexShrink: 0 }}>{st.label}</span>
-                    </div>
-                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {p.promoPrice ? `$${p.promoPrice.toLocaleString("es-CL")}` : ""}{p.discountPct ? ` · ${p.discountPct}% off` : ""}{dishNames.length > 0 ? ` · ${dishNames.join(", ")}` : ""}{p.daysOfWeek && p.daysOfWeek.length > 0 ? ` · ${p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}` : ""}{p.validFrom || p.validUntil ? ` · ${p.validFrom ? new Date(p.validFrom).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "..."} → ${p.validUntil ? new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "..."}` : ""}
-                    </p>
-                  </div>
-                  <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
 
-                {/* Detail / inline edit */}
-                {isOpen && editing?.id === p.id && (() => {
-                  const DAYS_SHORT = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-                  const DAYS_ABBR  = ["D","L","M","Mi","J","V","S"];
-                  const promodays  = editDaysOfWeek.length ? editDaysOfWeek.map(i => DAYS_SHORT[i]).join(" · ") : "todos los días";
-                  const otherdays  = editDaysOfWeek.length ? [0,1,2,3,4,5,6].filter(i => !editDaysOfWeek.includes(i)).map(i => DAYS_SHORT[i]).join(" · ") : "";
-                  const hasOriginal = editSelectedDishes.length > 0;
-                  const hasLinked   = !!editing.linkedDishId;
-                  return (
-                  <div style={{ padding: "16px 18px 18px", borderTop: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.03)" }}>
-
-                    {/* ── Bloque 1: Días activos ───────────────────────── */}
-                    <div style={{ marginBottom: 14 }}>
-                      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Días activos</p>
-                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                        {DAYS_ABBR.map((d, i) => (
-                          <button key={i} onClick={() => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 700, background: editDaysOfWeek.includes(i) ? "#F4A623" : "var(--adm-hover)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* ── Bloque 2: Lo que ve el cliente ──────────────── */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-
-                      {/* Días normales → plato original */}
-                      {hasOriginal && otherdays && (
-                        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 12px" }}>
-                          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 7 }}>El cliente ve → {otherdays}</p>
-                          {editSelectedDishes.map(id => {
-                            const d = localDishes.find(x => x.id === id);
-                            if (!d) return null;
-                            return (
-                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
-                                <div style={{ flex: 1 }}>
-                                  <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)" }}>{d.name}</span>
-                                  <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", marginLeft: 8 }}>${d.price.toLocaleString("es-CL")}</span>
-                                </div>
-                                <button onClick={() => setEditSelectedDishes(prev => prev.filter(x => x !== id))} title="Quitar" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "1rem", padding: 0 }}>✕</button>
-                              </div>
-                            );
-                          })}
-                          {/* Buscador para cambiar el plato original */}
-                          <div style={{ marginTop: 8 }}>
-                            <input placeholder="Cambiar plato…" value={editDishSearch} onChange={e => setEditDishSearch(e.target.value)} style={{ ...I, marginBottom: 2, fontSize: "0.78rem", padding: "7px 10px" }} />
-                            {editDishSearch.trim() && (
-                              <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
-                                {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase()) && !editSelectedDishes.includes(d.id)).slice(0, 20).map(d => (
-                                  <div key={d.id} onClick={() => { setEditSelectedDishes(prev => [...prev, d.id]); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
-                                    {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
-                                    <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
-                                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Sin plato original: buscar uno */}
-                      {!hasOriginal && (
-                        <div style={{ background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", borderRadius: 10, padding: "10px 12px" }}>
-                          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 7 }}>El cliente ve → {otherdays || "resto de días"}</p>
-                          <input placeholder="Buscar plato base…" value={editDishSearch} onChange={e => setEditDishSearch(e.target.value)} style={{ ...I, marginBottom: 2, fontSize: "0.78rem", padding: "7px 10px" }} />
-                          {editDishSearch.trim() && (
-                            <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
-                              {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase())).slice(0, 20).map(d => (
-                                <div key={d.id} onClick={() => { setEditSelectedDishes([d.id]); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
-                                  {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
-                                  <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
-                                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Días de oferta → item de promo */}
-                      <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10, padding: "10px 12px" }}>
-                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 9 }}>El cliente ve → {promodays}</p>
-                        <input
-                          placeholder="Nombre del item de oferta"
-                          value={editName}
-                          onChange={e => setEditName(e.target.value)}
-                          style={{ ...I, marginBottom: 8 }}
-                        />
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio de oferta</label>
-                            <input placeholder="22.900" type="text" inputMode="numeric" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
-                          </div>
-                          {hasOriginal && (
-                            <div style={{ flex: 1 }}>
-                              <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio normal (tachado)</label>
-                              <input placeholder="25.900" type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
-                            </div>
-                          )}
-                        </div>
-                        {/* Reemplazar plato original */}
-                        {hasOriginal && hasLinked && (
-                          <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, cursor: "pointer" }}>
-                            <input type="checkbox" checked={editHideOriginal} onChange={e => setEditHideOriginal(e.target.checked)} style={{ width: 15, height: 15, accentColor: "#F4A623" }} />
-                            <span style={{ fontFamily: F, fontSize: "0.75rem", color: editHideOriginal ? "#F4A623" : "var(--adm-text2)" }}>Ocultar el plato normal esos días {editHideOriginal ? "✓" : ""}</span>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* ── Bloque 3: Opcionales ────────────────────────── */}
-                    {editing.promoType === "graphic" && (
-                      editImageUrl ? (
-                        <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 120 }}>
-                          <img src={editImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          <button onClick={() => setEditImageUrl("")} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-                        </div>
-                      ) : (
-                        <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--adm-hover)", border: "1px dashed var(--adm-card-border)", borderRadius: 10, cursor: editUploading ? "wait" : "pointer", marginBottom: 12 }}>
-                          <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) await handleEditUpload(f); }} />
-                          <span style={{ fontFamily: F, fontSize: "0.8rem", color: editUploading ? "#F4A623" : "var(--adm-text2)" }}>📷 {editUploading ? t("promo_uploading") : t("promo_upload_hint")}</span>
-                        </label>
-                      )
+                {/* Info principal */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, fontSize: 15, fontFamily: F }}>{promo.name}</span>
+                    {/* Badge estado */}
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "2px 7px",
+                        borderRadius: 20,
+                        background: promo.status === "ACTIVE" ? "rgba(74,222,128,0.15)" : "var(--adm-hover)",
+                        color: promo.status === "ACTIVE" ? "#4ade80" : "var(--adm-text2)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {promo.status === "ACTIVE" ? "ACTIVA" : "PAUSADA"}
+                    </span>
+                    {/* Badge HOY */}
+                    {isToday && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          background: "#4ade80",
+                          color: "#000",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        HOY
+                      </span>
                     )}
-                    {availableTemplates.length > 0 && (
-                      <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_modifiers")}</p>
-                        {availableTemplates.map(tpl => (
-                          <label key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(tpl.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer", marginBottom: 4 }}>
-                            <input type="checkbox" checked={editModifierTemplateIds.includes(tpl.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(tpl.id) ? prev.filter(x => x !== tpl.id) : [...prev, tpl.id])} style={{ accentColor: "#F4A623" }} />
-                            <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(tpl.id) ? "#F4A623" : "var(--adm-text)" }}>{tpl.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("promo_date_from")}</label>
-                        <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>{t("promo_date_to")}</label>
-                        <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>{t("save")}</button>
-                      <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
-                      {(editing.status === "ACTIVE" || editing.status === "PAUSED") && (
-                        <button onClick={() => { handleDelete(editing.id); setEditing(null); }} style={{ marginLeft: "auto", padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_delete")}</button>
-                      )}
-                      {editing.status === "ACTIVE" && (
-                        <button onClick={() => { handleStatus(editing.id, "PAUSED"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(136,136,136,0.1)", border: "1px solid rgba(136,136,136,0.3)", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_pause")}</button>
-                      )}
-                      {editing.status === "PAUSED" && (
-                        <button onClick={() => { handleStatus(editing.id, "ACTIVE"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 8, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_activate")}</button>
-                      )}
-                      {editing.status === "SUGGESTED" && (
-                        <>
-                          <button onClick={() => { handleStatus(editing.id, "ACTIVE"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 8, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_approve")}</button>
-                          <button onClick={() => { handleDelete(editing.id); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_discard")}</button>
-                        </>
-                      )}
-                    </div>
                   </div>
-                  );
-                })()}
 
+                  {/* Plato */}
+                  {dish && (
+                    <div style={{ fontSize: 12, color: "var(--adm-text2)", marginBottom: 2 }}>
+                      🍽 {dish.name}
+                    </div>
+                  )}
+
+                  {/* promoName si difiere del plato */}
+                  {promo.promoName && promo.promoName !== dish?.name && (
+                    <div style={{ fontSize: 12, color: "var(--adm-text2)", marginBottom: 2 }}>
+                      → se muestra como: <em>{promo.promoName}</em>
+                    </div>
+                  )}
+
+                  {/* Precios */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                    {promo.promoPrice != null && (
+                      <span style={{ fontWeight: 700, fontSize: 15, color: GOLD }}>
+                        ${promo.promoPrice.toLocaleString("es-CL")}
+                      </span>
+                    )}
+                    {promo.originalPrice != null && (
+                      <span style={{ fontSize: 13, color: "var(--adm-text2)", textDecoration: "line-through" }}>
+                        ${promo.originalPrice.toLocaleString("es-CL")}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Días */}
+                  {promo.daysOfWeek && promo.daysOfWeek.length > 0 && (
+                    <div style={{ marginTop: 6 }}>
+                      <DayChips days={promo.daysOfWeek} today={today} readonly />
+                    </div>
+                  )}
+
+                  {/* Rango de fechas */}
+                  {(promo.validFrom || promo.validUntil) && (
+                    <div style={{ fontSize: 11, color: "var(--adm-text2)", marginTop: 4 }}>
+                      {promo.validFrom && `Desde ${promo.validFrom.slice(0, 10)}`}
+                      {promo.validFrom && promo.validUntil && " · "}
+                      {promo.validUntil && `Hasta ${promo.validUntil.slice(0, 10)}`}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botón Pausar/Activar */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleStatus(promo); }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--adm-border)",
+                    background: "var(--adm-hover)",
+                    color: "var(--adm-text2)",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {promo.status === "ACTIVE" ? "Pausar" : "Activar"}
+                </button>
               </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div style={{ textAlign: "center", padding: 60 }}>
-              <p style={{ fontSize: "2rem", marginBottom: 12 }}>🏷️</p>
-              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>{t("promo_empty_title")}</p>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{t("promo_empty_desc")}</p>
+
+              {/* Editor inline expandido */}
+              {isExpanded && (
+                <PromoForm
+                  form={editForm}
+                  setForm={setEditForm}
+                  dishes={localDishes}
+                  onSave={() => saveEdit(promo)}
+                  onCancel={closeEdit}
+                  onDelete={() => deletePromo(promo)}
+                  saving={editSaving}
+                />
+              )}
             </div>
-          )}
-        </div>
-      )}
-      </>}
+          );
+        })}
+      </div>
     </div>
   );
-}
-
-const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
-const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
-function btnStyle(color: string): React.CSSProperties {
-  return { padding: "8px 16px", background: `${color}15`, border: `1px solid ${color}40`, borderRadius: 8, color, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" };
 }

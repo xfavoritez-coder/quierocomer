@@ -72,6 +72,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.leafOverride !== undefined && { leafOverride: body.leafOverride || null }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
+        ...(body.daysOfWeek !== undefined && { daysOfWeek: body.daysOfWeek }),
       },
       include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });

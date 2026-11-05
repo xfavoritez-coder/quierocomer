@@ -925,6 +925,7 @@ model Dish {
   hideFromOrdering      Boolean                @default(false)
   ecommerceOnly         Boolean                @default(false)
   appOnly               Boolean                @default(false)
+  daysOfWeek            Int[]                  @default([])
   detailedDescription   String?
   toteatProductId       String?
   toteatMappedAt        DateTime?
@@ -1622,8 +1623,10 @@ model Promotion {
   daysOfWeek        Int[]              @default([])
   position          Int                @default(0)
   featured          Boolean            @default(false)
-  linkedDishId           String?            // Dish creado en el catálogo para vender la promo en la tienda
-  hideOriginalWhenActive Boolean            @default(false) // Ocultar dishIds cuando el linkedDish esté activo
+  linkedDishId           String?
+  hideOriginalWhenActive Boolean            @default(false)
+  dishId                 String?            // nuevo: plato único al que aplica la oferta
+  promoName              String?            // nuevo: nombre alternativo cuando la oferta está activa
   restaurant             Restaurant         @relation(fields: [restaurantId], references: [id])
   modifierTemplates ModifierTemplate[] @relation("ModifierTemplateToPromotion")
 

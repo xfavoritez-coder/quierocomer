@@ -51,12 +51,7 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
           }),
         },
       },
-      promotions: {
-        where: {
-          isActive: true,
-          OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
-        },
-      },
+      // promotions loaded separately below to avoid TS issues with new fields
       schedules: {
         where: { isActive: true },
       },
@@ -73,19 +68,51 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
 
   if (!restaurant) return null;
 
-  // Overlay translations: replace description/name with translated versions
-  // Components receive the same shape — no changes needed downstream
+  // ── Cargar promos activas del restaurante (query separada para tipos nuevos) ──
+  const now = new Date();
+  const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+  const activePromos = await (prisma as any).promotion.findMany({
+    where: {
+      restaurantId: restaurant.id,
+      status: "ACTIVE",
+      dishId: { not: null },
+      OR: [{ validUntil: null }, { validUntil: { gt: now } }],
+    },
+    select: { id: true, dishId: true, promoName: true, promoPrice: true, originalPrice: true, daysOfWeek: true, validFrom: true },
+  }).then((promos: any[]) => promos.filter(p => {
+    if (p.validFrom && new Date(p.validFrom) > now) return false;
+    if (p.daysOfWeek && p.daysOfWeek.length > 0 && !p.daysOfWeek.includes(todayDow)) return false;
+    return true;
+  }));
+
+  // ── Filtrar platos por daysOfWeek y aplicar overrides de promo ──
+  const r = restaurant as any;
+  const filteredDishes = (r.dishes as any[]).filter((d: any) => {
+    if (!d.daysOfWeek || d.daysOfWeek.length === 0) return true;
+    return d.daysOfWeek.includes(todayDow);
+  });
+
+  for (const dish of filteredDishes) {
+    const promo = activePromos.find((p: any) => p.dishId === dish.id);
+    if (promo) {
+      if (promo.promoName) dish.name = promo.promoName;
+      if (promo.promoPrice != null) dish.discountPrice = promo.promoPrice;
+      if (promo.originalPrice != null) dish.price = promo.originalPrice;
+      dish._promoId = promo.id;
+    }
+  }
+
+  // Overlay translations
   if (needTranslations) {
-    for (const cat of restaurant.categories as any[]) {
+    for (const cat of r.categories as any[]) {
       const tr = cat.translations?.[0];
       if (tr?.name) cat.name = tr.name;
     }
-    for (const dish of restaurant.dishes as any[]) {
+    for (const dish of filteredDishes) {
       const tr = dish.translations?.[0];
       dish._hasTranslation = !!(tr?.name);
-      if (tr?.name) dish.name = tr.name;
+      if (tr?.name && !dish._promoId) dish.name = tr.name;
       if (tr?.description) dish.description = tr.description;
-      // Overlay modifier translations
       for (const template of (dish.modifierTemplates || [])) {
         for (const group of (template.groups || [])) {
           const gtr = group.translations?.[0];
@@ -100,7 +127,7 @@ async function _getRestaurantBySlug(slug: string, lang: Lang) {
     }
   }
 
-  return { ...restaurant, ratingMap: {} as Record<string, { avg: number; count: number }> };
+  return { ...r, dishes: filteredDishes, ratingMap: {} as Record<string, { avg: number; count: number }> };
 }
 
 // Cache per slug+lang — 5 minutes TTL (tag-based invalidation garantiza actualización inmediata en cambios del panel)

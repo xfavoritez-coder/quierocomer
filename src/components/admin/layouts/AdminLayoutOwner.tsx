@@ -110,7 +110,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     }] : []),
     ...(opts.hasPos ? [{
       key: "pos",
-      label: "POS",
+      label: "Punto de venta",
       icon: Receipt,
       items: [
         { icon: Receipt, labelKey: "nav_pos_open", href: "/pos" },

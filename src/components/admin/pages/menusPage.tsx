@@ -33,7 +33,7 @@ interface Category { id: string; name: string; position: number; isActive: boole
 interface Dish {
   id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; appOnly?: boolean; ingredients: string | null;
-  allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
+  allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string; daysOfWeek?: number[];
   category: { id: string; name: string };
 }
 interface Restaurant { id: string; name: string; slug: string; }
@@ -851,6 +851,7 @@ export default function AdminMenus() {
   const [eDetailedDesc, setEDetailedDesc] = useState("");
   const [ePrice, setEPrice] = useState("");
   const [eDiscountPrice, setEDiscountPrice] = useState("");
+  const [eDaysOfWeek, setEDaysOfWeek] = useState<number[]>([]);
   const [eIngredients, setEIngredients] = useState("");
   const [eIngredientIds, setEIngredientIds] = useState<string[]>([]);
   const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string; allergens?: { id: string; name: string }[] }[]>([]);
@@ -970,6 +971,7 @@ export default function AdminMenus() {
     setEDetailedDesc(d.detailedDescription || "");
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
+    setEDaysOfWeek(d.daysOfWeek || []);
     setEIngredients(d.ingredients || "");
     setRespectAllergens(new Set()); // reset al abrir un plato distinto
     setETags([...d.tags]);
@@ -1015,6 +1017,7 @@ export default function AdminMenus() {
       detailedDescription: eDetailedDesc || null,
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
+      daysOfWeek: eDaysOfWeek,
       photos: ePhotoUrl ? [ePhotoUrl] : [],
       ingredients: eIngredients || null,
       tags: eTags,
@@ -1282,9 +1285,37 @@ export default function AdminMenus() {
                   <input type="number" value={ePrice} onChange={e => setEPrice(e.target.value)} style={INP} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={LBL}>{t("menu_discount_price_edit")}</label>
+                  <label style={LBL}>Precio oferta <span style={{ fontWeight: 400, color: "var(--adm-text3)" }}>(se muestra tachado)</span></label>
                   <input type="number" value={eDiscountPrice} onChange={e => setEDiscountPrice(e.target.value)} placeholder="Opcional" style={INP} />
                 </div>
+              </div>
+
+              {/* Visibilidad por días */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={LBL}>
+                  Mostrar solo estos días
+                  <span style={{ fontWeight: 400, color: "var(--adm-text3)", marginLeft: 4 }}>(vacío = siempre)</span>
+                </label>
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                  {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"].map((d, i) => {
+                    const on = eDaysOfWeek.includes(i);
+                    return (
+                      <button key={i} type="button" onClick={() => setEDaysOfWeek(prev => on ? prev.filter(x => x !== i) : [...prev, i])} style={{ padding: "6px 12px", borderRadius: 8, border: on ? "1.5px solid rgba(244,166,35,0.4)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, background: on ? "rgba(244,166,35,0.12)" : "transparent", color: on ? "#F4A623" : "var(--adm-text3)" }}>
+                        {d}
+                      </button>
+                    );
+                  })}
+                  {eDaysOfWeek.length > 0 && (
+                    <button type="button" onClick={() => setEDaysOfWeek([])} style={{ padding: "6px 10px", borderRadius: 8, border: "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: "var(--font-display)", fontSize: "0.72rem", background: "transparent", color: "var(--adm-text3)" }}>
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                {eDaysOfWeek.length > 0 && (
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#F4A623", marginTop: 6 }}>
+                    Este plato solo aparece los {eDaysOfWeek.map(i => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][i]).join(", ")}
+                  </p>
+                )}
               </div>
 
               <div style={{ marginBottom: 24 }}>
