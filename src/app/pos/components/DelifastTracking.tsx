@@ -201,14 +201,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         })}
       </div>
 
-      {/* ETA de llegada al CLIENTE ("Llega a las HH:MM") — del time-badge de la página pública. */}
-      {t.dropoffEta && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, color: 'var(--ink-2)' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-          Llega al cliente aprox. a las <b style={{ color: 'var(--ink)' }}>{t.dropoffEta}</b>
-        </div>
-      )}
-
       {/* Link público */}
       {t.statusUrl && (
         <a href={t.statusUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
@@ -224,6 +216,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
   const [status, setStatus] = useState<string | null>(null)
   const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
+  const [dropoffEta, setDropoffEta] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -236,6 +229,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
         if (!d.configured || d.pending || !d.tracking) return
         setStatus(d.tracking.status ?? null)
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
+        setDropoffEta(d.tracking.dropoffEta ?? null)
       } catch { /* fail-silent */ }
     }
     load()
@@ -252,16 +246,18 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
     : status
   const sc = statusColor(effectiveStatus)
   const label = statusLabel(effectiveStatus)
+  // Va en camino al cliente (no "ya llegó" ni entregado) → anexar la hora estimada.
+  const enCamino = effectiveStatus !== 'at_dropoff' && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
 
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       background: 'var(--sunk)', color: 'var(--ink-2)', border: '1px solid var(--line-strong)',
       fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '4px 10px',
-      flexShrink: 0, whiteSpace: 'nowrap',
+      flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {label}
+      {label}{enCamino && dropoffEta ? `, llega a las ${dropoffEta} aprox` : ''}
     </span>
   )
 }
