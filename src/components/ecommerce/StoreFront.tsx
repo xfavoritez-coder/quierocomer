@@ -13,6 +13,7 @@ import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
+import { trackStoreView, trackDishView, trackCartAdd } from "@/lib/ecommerce/storeAnalytics";
 
 // Controles de "marca" (multisucursal): la tienda se muestra directo en
 // /ecommerce/marca/<brand> con el menú compartido, pero la sucursal se elige recién
@@ -91,7 +92,8 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     selectedProductRef.current = p;
     setSelectedProduct(p);
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
-  }, []);
+    trackDishView(tenant.id, p.id, p.name);
+  }, [tenant.id]);
   const [cartBump, setCartBump] = useState(false);
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
@@ -132,7 +134,10 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const repriceItems = useCartStore((s) => s.repriceItems);
   const itemCount = useCartStore((s) => s.itemCount());
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    trackStoreView(tenant.id);
+  }, [tenant.id]);
   // En modo marca el contenedor liga el carrito a la sucursal elegida (adoptRestaurant),
   // así que aquí NO lo hacemos (evita que setRestaurantId vacíe el carrito al cambiar
   // el catálogo representante → sucursal). En modo normal, se liga a este tenant.
@@ -221,11 +226,14 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       setCartBump(true);
       setTimeout(() => setCartBump(false), 450);
       const p = selectedProductRef.current;
-      if (p) fbTrack("AddToCart", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
+      if (p) {
+        fbTrack("AddToCart", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
+        trackCartAdd(tenant.id, p.id, p.name, p.price);
+      }
     }
     window.addEventListener("cart:item-added", handleAdded);
     return () => window.removeEventListener("cart:item-added", handleAdded);
-  }, []);
+  }, [tenant.id]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return products;

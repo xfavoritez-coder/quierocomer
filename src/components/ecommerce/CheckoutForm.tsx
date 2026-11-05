@@ -9,6 +9,8 @@ import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { isInApp } from "@/lib/ecommerce/isInApp";
 import { clp } from "@/lib/ecommerce/format";
 import StoreLink from "./StoreLink";
+import { getGuestId } from "@/lib/guestId";
+import { trackCheckoutStart, trackCheckoutAbandon, trackOrderPlaced } from "@/lib/ecommerce/storeAnalytics";
 
 // Cupón aplicado: guardamos sus parámetros para recalcular el descuento en vivo
 // (misma fórmula que el servidor) según subtotal y costo de despacho.
@@ -82,9 +84,12 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const [scheduleDayYmd, setScheduleDayYmd] = useState<string | null>(null);
   const [slotDays, setSlotDays] = useState<SlotDay[]>([]);
 
+  const orderPlacedRef = useRef(false);
   useEffect(() => {
     setMounted(true);
     if (items.length > 0) fbTrack("InitiateCheckout", { value: subtotal, currency: "CLP", num_items: items.length });
+    trackCheckoutStart(tenant.id, items.length, subtotal);
+    return () => { if (!orderPlacedRef.current) trackCheckoutAbandon(tenant.id); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -360,6 +365,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           couponCode: coupon?.code || null,
           scheduledFor: scheduleMode === "scheduled" && scheduledIso ? scheduledIso : null,
           fromApp: isInApp(),
+          guestId: getGuestId(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -368,6 +374,10 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         toast.error(data.error || "No se pudo crear el pedido");
         setSending(false); return;
       }
+
+      // Pedido creado — marcar para no disparar abandon al desmontar.
+      orderPlacedRef.current = true;
+      trackOrderPlaced(tenant.id, data.orderId, total);
 
       // Pago online: NO vaciamos el carrito todavía. Guardamos el pedido pendiente:
       // si el cliente vuelve sin pagar, marcamos el pago fallido y conserva su carrito.

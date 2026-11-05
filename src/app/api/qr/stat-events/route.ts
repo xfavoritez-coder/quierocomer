@@ -20,11 +20,22 @@ export async function POST(req: NextRequest) {
   let body: any;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
 
-  const { eventType, metadata } = body || {};
+  const { eventType, metadata, guestId } = body || {};
   if (!eventType) return NextResponse.json({ error: "eventType required" }, { status: 400 });
 
   // Use provided restaurantId or fall back to first restaurant in DB
   const restaurantId = body.restaurantId || await getLandingRestaurantId();
+
+  // Si viene guestId, asegurar que exista el GuestProfile (upsert ligero).
+  if (guestId && typeof guestId === "string" && guestId.length > 10) {
+    try {
+      await prisma.guestProfile.upsert({
+        where: { id: guestId },
+        create: { id: guestId, lastSeenAt: new Date() },
+        update: { lastSeenAt: new Date() },
+      });
+    } catch { /* ignore */ }
+  }
 
   try {
     await prisma.statEvent.create({
@@ -33,6 +44,7 @@ export async function POST(req: NextRequest) {
         restaurantId,
         sessionId: body.sessionId || "anonymous",
         metadata: metadata || undefined,
+        ...(guestId && typeof guestId === "string" ? { guestId } : {}),
       },
     });
   } catch (e: any) {
