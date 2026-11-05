@@ -134,15 +134,16 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
 }
 
 // ── ProductRow ─────────────────────────────────────────────────────
-function ProductRow({ p, onToggleHidden, onEdit, onDelete }: {
+function ProductRow({ p, onToggleSoldOut, onEdit, onDelete }: {
   p: Product
-  onToggleHidden: () => void
+  onToggleSoldOut: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
-  const isHidden = !!p.hidden
+  const isHidden   = !!p.hidden
+  const isSoldOut  = !!p.is_sold_out
   return (
-    <div style={{ background: isHidden ? 'var(--sunk)' : 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: isHidden ? 0.65 : 1 }}>
+    <div style={{ background: isSoldOut ? 'rgba(239,68,68,0.04)' : isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isSoldOut ? 'rgba(239,68,68,0.25)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: isHidden ? 0.5 : 1 }}>
       {/* Thumb */}
       <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
         {p.image_url
@@ -153,14 +154,14 @@ function ProductRow({ p, onToggleHidden, onEdit, onDelete }: {
 
       {/* Name + price */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+        <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: isSoldOut ? '#ef4444' : isHidden ? 'var(--ink-3)' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}{isHidden ? ' · oculto' : ''}</div>
         <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>{clp(p.price)}</div>
       </div>
 
-      {/* Ocultar / Mostrar */}
-      <button onClick={onToggleHidden}
-        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isHidden ? '#b45309' : 'var(--line)'}`, background: isHidden ? 'rgba(245,158,11,0.14)' : 'transparent', color: isHidden ? '#b45309' : 'var(--ink-2)' }}>
-        {isHidden ? 'Mostrar' : 'Ocultar'}
+      {/* Agotar / Disponible */}
+      <button onClick={onToggleSoldOut}
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '5px 9px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${isSoldOut ? '#ef4444' : 'var(--line)'}`, background: isSoldOut ? 'rgba(239,68,68,0.12)' : 'transparent', color: isSoldOut ? '#ef4444' : 'var(--ink-2)' }}>
+        {isSoldOut ? 'Agotado' : 'Agotar'}
       </button>
 
       {/* Edit */}
@@ -298,6 +299,14 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
       const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive: !nextHidden }) })
       if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: !nextHidden } : p) } : d)
     } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, hidden: !nextHidden } : p) } : d) }
+  }, [])
+
+  const toggleDishSoldOut = useCallback(async (id: string, next: boolean) => {
+    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: next } : p) } : d)
+    try {
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soldOut: next }) })
+      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d)
+    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d) }
   }, [])
 
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
@@ -499,7 +508,7 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                                   onSave={handleProductSaved} onCancel={() => setEditingProdId(null)} />
                               ) : (
                                 <ProductRow key={p.id} p={p}
-                                  onToggleHidden={() => toggleHidden(p.id, !p.hidden)}
+                                  onToggleSoldOut={() => toggleDishSoldOut(p.id, !p.is_sold_out)}
                                   onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
                                   onDelete={() => handleDeleteProduct(p.id)} />
                               )
