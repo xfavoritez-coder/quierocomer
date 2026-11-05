@@ -17,7 +17,6 @@ export {
   voidItem,
   recordPayment,
   closeAccount,
-  registerExternalPayment,
   toPaymentMethod,
   deliveryPlatformLabel,
   voidAccount,

@@ -19,7 +19,6 @@ import type {
   StaffSavedPayload,
   StaffDeletedPayload,
   PaymentMethod,
-  AccountType,
 } from './types'
 
 // ── Device & user context ────────────────────────────────────────
@@ -128,12 +127,6 @@ export async function deleteCashSession(payload: CashSessionDeletedPayload) {
   return createEvent('cash_session_deleted', payload as unknown as Record<string, unknown>)
 }
 
-/**
- * Registra en la caja del POS el cobro de un pedido externo del Centro de
- * pedidos (chips Retiro/Delivery), creando una cuenta cerrada con su pago para
- * que entre al arqueo (useSessionSummary). Id determinístico `po_<orderId>`
- * para no duplicar si se reintenta. Devuelve false si ya estaba registrado.
- */
 // Mapea un método de pago (del POS o de un pago online: webpay, mercadopago,
 // flow, etc.) a una de las categorías del arqueo de caja. Los pagos online sin
 // bucket propio caen en "App de pago".
@@ -159,47 +152,6 @@ export function deliveryPlatformLabel(vendorName?: string | null): string | null
   if (v.includes("didi")) return "Didi Food"
   if (v.includes("justo")) return "Justo"
   return null
-}
-
-export async function registerExternalPayment(opts: {
-  orderId: string
-  type: 'retiro' | 'delivery'
-  customerName?: string
-  amount: number
-  tip: number
-  method: PaymentMethod
-  /** Restaurante dueño del cobro (para la clave y la etiqueta). Por defecto el actual. */
-  restaurantId?: string
-  /** Hora real del pedido (ISO o epoch). Si se pasa, la cuenta se abre/cierra con
-   *  esa fecha, de modo que el arqueo la ubica en el turno que corresponde. */
-  at?: string | number
-}): Promise<boolean> {
-  const rid = opts.restaurantId || _restaurantId
-  // Compatibilidad: si existe la clave vieja `po_<orderId>` y es del MISMO
-  // restaurante, ya estaba contada (cobro manual previo) → no duplicar.
-  const legacy = await posDb.accounts.get(`po_${opts.orderId}`)
-  if (legacy && legacy.restaurant_id === rid) return false
-  const account_type: AccountType = opts.type === 'delivery' ? 'delivery' : 'retiro'
-  const atIso = opts.at != null ? new Date(opts.at).toISOString() : undefined
-  // Clave de idempotencia POR restaurante.
-  const accountId = `po_${rid}_${opts.orderId}`
-  const existing = await posDb.accounts.get(accountId)
-  // AUTO-REPARABLE: si la cuenta quedó a medio hacer (p.ej. la reconciliación se
-  // interrumpió entre los 3 eventos), se completan las partes faltantes en vez de
-  // dejarla sin pago o sin cerrar para siempre.
-  const hasPayment = (existing?.payments?.length ?? 0) > 0
-  const isClosed = existing?.status === 'cerrada'
-  if (existing && hasPayment && isClosed) return false // ya está completa
-  if (!existing) {
-    await createEvent('account_opened', { account_id: accountId, account_type, customer_name: opts.customerName }, atIso)
-  }
-  if (!hasPayment) {
-    await createEvent('payment_recorded', { payment_id: uuidv4(), account_id: accountId, amount: Math.max(0, Math.round(opts.amount)), tip: Math.max(0, Math.round(opts.tip)), method: opts.method }, atIso)
-  }
-  if (!isClosed) {
-    await createEvent('account_closed', { account_id: accountId }, atIso)
-  }
-  return true
 }
 
 export async function configureTables(payload: TablesConfiguredPayload) {
