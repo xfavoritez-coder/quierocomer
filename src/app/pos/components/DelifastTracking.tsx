@@ -71,12 +71,17 @@ function hm(ts?: string | null): string | null {
 // Contenedor estable (a NIVEL DE MÓDULO): si se define dentro del componente,
 // React lo ve como un tipo nuevo en cada render y re-monta el subárbol — eso
 // reiniciaba el mapa Leaflet cada pocos segundos y perdía el marcador.
-function TrackingBox({ children }: { children: React.ReactNode }) {
+function TrackingBox({ children, eta }: { children: React.ReactNode; eta?: number | null }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista Delifast</span>
+        {eta != null && (
+          <span style={{ marginLeft: 'auto', fontSize: 12.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+            Llega en <b>{eta} min</b>
+          </span>
+        )}
       </div>
       {children}
     </div>
@@ -130,10 +135,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
 
   return (
-    <TrackingBox>
-      {/* ETA al local */}
-      {etaMin != null && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Llega al local en <b>{etaMin} min</b></span>}
-
+    <TrackingBox eta={etaMin}>
       {/* Repartidor */}
       {t.driver && (t.driver.name || t.driver.phone) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
