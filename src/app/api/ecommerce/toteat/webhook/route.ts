@@ -106,17 +106,18 @@ export async function POST(req: NextRequest) {
       items: m.items ?? undefined, rawPayload: ord as any, completedAt: m.completedAt,
     };
 
-    const existing = await prisma.posOrder.findUnique({
+    // Upsert atómico: evita la race condition donde dos webhooks simultáneos del
+    // mismo pedido pasan el findUnique antes de que ninguno haya creado el registro.
+    const trackingToken = crypto.randomBytes(20).toString("hex");
+    const upserted = await prisma.posOrder.upsert({
       where: { restaurantId_externalId: { restaurantId, externalId: m.externalId } },
-      select: { id: true },
+      create: { restaurantId, externalId: m.externalId, provider: "toteat", trackingToken, ...data },
+      update: data,
+      select: { id: true, trackingToken: true },
     });
-    if (existing) {
-      await prisma.posOrder.update({ where: { id: existing.id }, data });
-    } else {
-      // Token de seguimiento desde que entra el pedido (link /track/<token> ya usable).
-      const trackingToken = crypto.randomBytes(20).toString("hex");
-      const created = await prisma.posOrder.create({ data: { restaurantId, externalId: m.externalId, provider: "toteat", trackingToken, ...data }, select: { id: true } });
-      nuevos.push({ id: created.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, vendorName: m.vendorName || "", trackingToken, total: m.totalAmount, isDelivery: m.isDelivery });
+    // Si el trackingToken del resultado coincide con el que generamos, fue una creación.
+    if (upserted.trackingToken === trackingToken) {
+      nuevos.push({ id: upserted.id, externalId: m.externalId, customerName: m.customerName, customerPhone: m.customerPhone, orderReference: m.orderReference || m.externalId, vendorName: m.vendorName || "", trackingToken, total: m.totalAmount, isDelivery: m.isDelivery });
     }
     processed++;
   }
