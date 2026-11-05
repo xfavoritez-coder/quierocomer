@@ -504,7 +504,10 @@ export default function PosHomePage() {
       )}
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
-      {cashSession === null && !syncing && (
+      {/* Solo depende de cashSession (undefined=cargando → no se muestra; null=cerrada
+          confirmada → se muestra). NO se gatea con `syncing`: eso la hacía parpadear
+          en cada pasada de sync. */}
+      {cashSession === null && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',
