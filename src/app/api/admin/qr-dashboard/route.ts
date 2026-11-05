@@ -22,10 +22,10 @@ export async function GET(req: NextRequest) {
     const newUsers = await prisma.qRUser.count({ where: { createdAt: { gte: since } } });
     const verifiedUsers = await prisma.qRUser.count({ where: { verifiedAt: { not: null } } });
 
-    // Session stats (MENU_VIEW events = page visits)
+    // Session stats
     const sessionEventCounts = await prisma.statEvent.groupBy({
       by: ["eventType"],
-      where: { ...eventWhere, eventType: { in: ["MENU_VIEW", "DISH_VIEW", "GENIO_SESSION_START", "GENIO_RECOMMENDATION", "PROMO_VIEW", "REVIEW_SUBMIT"] as any[] } },
+      where: { ...eventWhere, eventType: { in: ["SESSION_START", "DISH_VIEW", "GENIO_START", "RECOMMENDATION_SHOWN", "PROMO_VIEWED", "DISH_FAVORITED"] as any[] } },
       _count: { _all: true },
     });
     const eventMap: Record<string, number> = {};
@@ -40,25 +40,26 @@ export async function GET(req: NextRequest) {
     const dishViews = new Map<string, { name: string; count: number }>();
     for (const e of dishViewEvents) {
       const meta = e.metadata as any;
-      const name: string = meta?.dishName || "?";
+      const name: string = meta?.dishName || meta?.name || "?";
+      if (name === "?") continue;
       if (!dishViews.has(name)) dishViews.set(name, { name, count: 0 });
       dishViews.get(name)!.count++;
     }
     const topViewedDishes = Array.from(dishViews.values()).sort((a, b) => b.count - a.count).slice(0, 10);
 
-    // Peak hours (MENU_VIEW)
-    const menuViewEvents = await prisma.statEvent.findMany({
-      where: { ...eventWhere, eventType: "MENU_VIEW" as any },
+    // Peak hours (SESSION_START)
+    const sessionEvents = await prisma.statEvent.findMany({
+      where: { ...eventWhere, eventType: "SESSION_START" as any },
       select: { createdAt: true },
       take: 5000,
     });
     const hourCounts = new Array(24).fill(0);
-    for (const e of menuViewEvents) hourCounts[new Date(e.createdAt).getHours()]++;
+    for (const e of sessionEvents) hourCounts[new Date(e.createdAt).getHours()]++;
     const peakHours = hourCounts.map((count, hour) => ({ hour, count }));
 
     // Visits by day
     const byDay = new Map<string, number>();
-    for (const e of menuViewEvents) {
+    for (const e of sessionEvents) {
       const day = new Date(e.createdAt).toISOString().slice(0, 10);
       byDay.set(day, (byDay.get(day) || 0) + 1);
     }
