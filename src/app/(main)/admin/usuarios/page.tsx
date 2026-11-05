@@ -340,7 +340,7 @@ function EcomTab() {
             <StatCard value={stats.paidOrderCount} label="Pedidos" color={GOLD} />
             <StatCard value={clp(stats.totalSpent)} label="Total gastado" color={GREEN} />
             <StatCard value={clp(stats.avgTicket)} label="Ticket promedio" color={BLUE} />
-            <StatCard value={`${stats.daysSinceLastOrder ?? "?"} días`} label="Último pedido" color={stats.daysSinceLastOrder > 30 ? "#ef4444" : "var(--adm-text)"} />
+            <StatCard value={`${customer.daysSinceLastOrder ?? "?"} días`} label="Último pedido" color={customer.daysSinceLastOrder > 30 ? "#ef4444" : "var(--adm-text)"} />
           </div>
         </div>
 
