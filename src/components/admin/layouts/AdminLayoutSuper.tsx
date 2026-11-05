@@ -3,16 +3,22 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const NAV = [
+const NAV: { icon: string; label: string; href: string; badge?: boolean; section?: boolean }[] = [
   { icon: "📊", label: "Dashboard", href: "/admin" },
   { icon: "🔄", label: "Lifecycle", href: "/admin/lifecycle" },
   { icon: "👤", label: "Owners", href: "/admin/owners" },
-  { icon: "👥", label: "Usuarios", href: "/admin/usuarios" },
   { icon: "🎯", label: "Funnel", href: "/admin/funnel" },
   { icon: "🧪", label: "Tests A/B", href: "/admin/tests-ab" },
   { icon: "✉️", label: "Mail Marketing", href: "/admin/mailmarketing" },
   { icon: "💬", label: "WhatsApp", href: "/admin/whatsapp" },
-  { icon: "🛒", label: "Pedidos Online", href: "/admin/pedidos-online" },
+  { icon: "", label: "ECOMMERCE", href: "", section: true },
+  { icon: "📈", label: "Dashboard", href: "/admin/ecommerce/dashboard" },
+  { icon: "🛒", label: "Pedidos", href: "/admin/ecommerce/pedidos" },
+  { icon: "👥", label: "Clientes", href: "/admin/ecommerce/usuarios" },
+  { icon: "", label: "CARTA QR", href: "", section: true },
+  { icon: "📊", label: "Analytics", href: "/admin/carta-qr/dashboard" },
+  { icon: "👤", label: "Usuarios", href: "/admin/carta-qr/usuarios" },
+  { icon: "", label: "GENERAL", href: "", section: true },
   { icon: "🧾", label: "Facturación", href: "/admin/facturas" },
   { icon: "📦", label: "Planes", href: "/admin/planes" },
   { icon: "🎧", label: "Soporte", href: "/admin/soporte", badge: true },
@@ -45,19 +51,26 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
       .catch(() => {});
   }, [pathname]);
 
-  const navItem = (n: typeof NAV[0], style: React.CSSProperties) => (
-    <Link key={n.href} href={n.href} style={style}>
-      <span>{n.icon}</span>
-      <span>{n.label}</span>
-      {n.badge && unreadSupport > 0 && (
-        <span style={{
-          marginLeft: "auto", fontSize: "0.6rem", fontWeight: 800,
-          padding: "2px 6px", borderRadius: 50,
-          background: "#dc2626", color: "#fff", lineHeight: 1.3,
-        }}>{unreadSupport}</span>
-      )}
-    </Link>
-  );
+  const navItem = (n: typeof NAV[0], style: React.CSSProperties) => {
+    if (n.section) return (
+      <div key={n.label} style={{ padding: "10px 16px 4px", fontSize: "0.58rem", fontWeight: 800, color: "#555", letterSpacing: "0.1em", fontFamily: "var(--font-display)", textTransform: "uppercase", borderTop: "1px solid #2A2A2A", marginTop: 4 }}>
+        {n.label}
+      </div>
+    );
+    return (
+      <Link key={n.href} href={n.href} style={style}>
+        <span>{n.icon}</span>
+        <span>{n.label}</span>
+        {n.badge && unreadSupport > 0 && (
+          <span style={{
+            marginLeft: "auto", fontSize: "0.6rem", fontWeight: 800,
+            padding: "2px 6px", borderRadius: 50,
+            background: "#dc2626", color: "#fff", lineHeight: 1.3,
+          }}>{unreadSupport}</span>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <div className="theme-dark" style={{ display: "flex", minHeight: "100vh", background: "#111111", overflowX: "hidden" }}>
