@@ -89,7 +89,12 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     setMounted(true);
     if (items.length > 0) fbTrack("InitiateCheckout", { value: subtotal, currency: "CLP", num_items: items.length });
     trackCheckoutStart(tenant.id, items.length, subtotal);
-    return () => { if (!orderPlacedRef.current) trackCheckoutAbandon(tenant.id); };
+    return () => {
+      if (!orderPlacedRef.current) {
+        const cartSnapshot = items.map((i) => ({ name: i.name, unit_price: i.unit_price, quantity: i.quantity }));
+        trackCheckoutAbandon(tenant.id, cartSnapshot);
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

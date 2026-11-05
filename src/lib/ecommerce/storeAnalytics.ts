@@ -13,7 +13,6 @@ function sendEvent(eventType: string, restaurantId: string, metadata?: Record<st
     sessionId: getSessionId(),
     metadata,
   });
-  // keepalive: true para que sobreviva al cierre de página (checkout abandon, etc.)
   fetch("/api/qr/stat-events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -28,9 +27,12 @@ export function trackStoreView(restaurantId: string) {
   setTimeout(() => sendEvent("STORE_VIEW", restaurantId), 3000);
 }
 
-/** Usuario abrió el modal de detalle de un plato en el store. */
-export function trackDishView(restaurantId: string, dishId: string, dishName: string) {
-  sendEvent("STORE_DISH_VIEW", restaurantId, { dishId, dishName });
+/**
+ * Usuario cerró el modal de detalle de un plato.
+ * Se dispara al cierre (no al abrir) para incluir el tiempo de permanencia.
+ */
+export function trackDishView(restaurantId: string, dishId: string, dishName: string, dwellMs?: number) {
+  sendEvent("STORE_DISH_VIEW", restaurantId, { dishId, dishName, ...(dwellMs != null ? { dwellMs } : {}) });
 }
 
 /** Usuario agregó un producto al carrito. */
@@ -50,15 +52,20 @@ export function trackCheckoutStart(restaurantId: string, itemCount: number, subt
 
 /**
  * Usuario cerró o abandonó el checkout sin completar el pedido.
+ * Incluye el contenido del carrito para saber exactamente qué dejó.
  * Usa sendBeacon para garantizar envío incluso al cerrar la pestaña.
  */
-export function trackCheckoutAbandon(restaurantId: string) {
+export function trackCheckoutAbandon(
+  restaurantId: string,
+  cartItems?: { name: string; unit_price: number; quantity: number }[]
+) {
   if (typeof navigator === "undefined") return;
   const payload = JSON.stringify({
     eventType: "STORE_CHECKOUT_ABANDON",
     restaurantId,
     guestId: getGuestId(),
     sessionId: getSessionId(),
+    metadata: cartItems?.length ? { cartItems } : undefined,
   });
   if (navigator.sendBeacon) {
     navigator.sendBeacon("/api/qr/stat-events", new Blob([payload], { type: "application/json" }));
@@ -70,4 +77,12 @@ export function trackCheckoutAbandon(restaurantId: string) {
 /** Pedido completado con éxito. */
 export function trackOrderPlaced(restaurantId: string, orderId: string, total: number) {
   sendEvent("STORE_ORDER_PLACED", restaurantId, { orderId, total });
+}
+
+/**
+ * Búsqueda en el store que no devolvió resultados.
+ * Solo se dispara cuando hay query y 0 resultados (oportunidad de menú).
+ */
+export function trackSearch(restaurantId: string, query: string) {
+  sendEvent("STORE_SEARCH", restaurantId, { query });
 }

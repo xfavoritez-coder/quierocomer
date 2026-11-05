@@ -13,7 +13,7 @@ import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
-import { trackStoreView, trackDishView, trackCartAdd } from "@/lib/ecommerce/storeAnalytics";
+import { trackStoreView, trackDishView, trackCartAdd, trackSearch } from "@/lib/ecommerce/storeAnalytics";
 
 // Controles de "marca" (multisucursal): la tienda se muestra directo en
 // /ecommerce/marca/<brand> con el menú compartido, pero la sucursal se elige recién
@@ -88,12 +88,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const [menuLoginExpanded, setMenuLoginExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"home" | "favorites" | "contact" | "profile">("home");
   const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuLoginExpanded(false); setMenuOpen(true); }, []);
+  const dishOpenAtRef = useRef<number>(0);
   const openProduct = useCallback((p: StoreProduct) => {
     selectedProductRef.current = p;
+    dishOpenAtRef.current = Date.now();
     setSelectedProduct(p);
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
-    trackDishView(tenant.id, p.id, p.name);
-  }, [tenant.id]);
+  }, []);
   const [cartBump, setCartBump] = useState(false);
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
@@ -240,6 +241,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     const q = search.toLowerCase();
     return products.filter((p) => p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q));
   }, [products, search]);
+
+  // Búsqueda sin resultados: esperar 1s para evitar spam mientras el usuario escribe
+  useEffect(() => {
+    if (!search.trim() || filtered.length > 0) return;
+    const t = setTimeout(() => trackSearch(tenant.id, search.trim()), 1000);
+    return () => clearTimeout(t);
+  }, [search, filtered.length, tenant.id]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, StoreProduct[]>();
@@ -496,7 +504,14 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         <ProductModal
           product={selectedProduct}
           primaryColor={primaryColor}
-          onClose={() => setSelectedProduct(null)}
+          onClose={() => {
+            const p = selectedProductRef.current;
+            if (p) {
+              const dwellMs = Date.now() - dishOpenAtRef.current;
+              trackDishView(tenant.id, p.id, p.name, dwellMs > 500 ? dwellMs : undefined);
+            }
+            setSelectedProduct(null);
+          }}
           scrollImage
           intercept={brandMode && !hasBranch}
           onIntercept={() => { const p = selectedProduct; setSelectedProduct(null); brandControls!.onRequireBranch(p); }}
