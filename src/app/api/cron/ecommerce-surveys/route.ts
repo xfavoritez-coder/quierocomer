@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const candidates = await prisma.onlineOrder.findMany({
     where: {
       status: "DONE",
-      paymentStatus: "paid",
+      paymentStatus: { in: ["paid", "unpaid"] },
       surveySentAt: null,
       customerEmail: { not: null },
       updatedAt: { gte: since },
