@@ -70,8 +70,12 @@ export default function CajaPage() {
         // Ventas DESDE que se abrió la caja (el turno), no del día calendario: una
         // caja que cruza la medianoche debe seguir mostrando lo vendido anoche.
         const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        const openedMs = new Date(cashSession.opened_at).getTime()
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(new Date(cashSession.opened_at))}&to=${fmt(new Date())}`)
+        // El turno cuenta TODO el día de apertura: un pedido pertenece a su día, no a
+        // la hora en que se abrió la caja. Límite inferior = medianoche del día de
+        // apertura (hora local = Chile), así se incluyen los pagados antes de abrir.
+        const openedDate = new Date(cashSession.opened_at)
+        const openedMs = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate(), 0, 0, 0, 0).getTime()
+        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(openedDate)}&to=${fmt(new Date())}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}

@@ -61,8 +61,13 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     const load = async () => {
       try {
         const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        const openedMs = new Date(cashSession.opened_at).getTime()
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(new Date(cashSession.opened_at))}&to=${fmt(new Date())}`)
+        // El turno abarca TODO el día de apertura: cuenta los pedidos del día aunque
+        // se hayan pagado ANTES de abrir la caja (un pedido pertenece a su día, no a
+        // la hora en que se abrió la caja). Límite inferior = medianoche del día de
+        // apertura (hora local = Chile), no el instante exacto de apertura.
+        const openedDate = new Date(cashSession.opened_at)
+        const openedMs = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate(), 0, 0, 0, 0).getTime()
+        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(openedDate)}&to=${fmt(new Date())}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
