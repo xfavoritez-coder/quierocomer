@@ -147,7 +147,6 @@ export async function getDelifastTracking(
       if (vd && typeof vd === "object") viaje = { ...viaje, ...vd };
     }
 
-    console.log('[delifast:status_raw]', JSON.stringify({ status: viaje.status, pickup_status: viaje.pickup_status, dropoff_status: viaje.dropoff_status }))
     const loc = (viaje.last_location || {}) as Record<string, unknown>;
     const tracking: DelifastTracking = {
       idVenta,

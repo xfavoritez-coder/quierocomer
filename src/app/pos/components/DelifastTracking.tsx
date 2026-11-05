@@ -216,6 +216,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
  *  Solo renderiza algo cuando Delifast está configurado y hay estado disponible. */
 export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
   const [status, setStatus] = useState<string | null>(null)
+  const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -227,6 +228,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
         if (cancelled) return
         if (!d.configured || d.pending || !d.tracking) return
         setStatus(d.tracking.status ?? null)
+        setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
       } catch { /* fail-silent */ }
     }
     load()
@@ -236,8 +238,13 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
 
   if (!status) return null
 
-  const sc = statusColor(status)
-  const label = statusLabel(status)
+  // Delifast mantiene status="dropoff" aunque el motorista ya llegó al cliente.
+  // Detectamos la llegada por timeline.llegadaCasa.
+  const effectiveStatus = llegadaCasa && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
+    ? 'at_dropoff'
+    : status
+  const sc = statusColor(effectiveStatus)
+  const label = statusLabel(effectiveStatus)
 
   return (
     <span style={{
