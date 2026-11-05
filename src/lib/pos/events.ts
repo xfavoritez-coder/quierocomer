@@ -172,8 +172,25 @@ export async function deleteStaff(payload: StaffDeletedPayload) {
 
 // ── Projection engine (incremental) ─────────────────────────────
 
+/** Limpieza local: borra del Dexie las cuentas espejo `po_` (pedidos del Centro)
+ *  que hayan quedado de versiones anteriores. Es local-only (no appendea eventos):
+ *  esas cuentas o eran locales del equipo o ya están anuladas en el servidor, y la
+ *  proyección ya no las recrea. Idempotente; se corre al abrir el POS. */
+export async function purgeMirrorAccounts(): Promise<void> {
+  try {
+    const po = await posDb.accounts.filter(a => typeof a.id === 'string' && a.id.startsWith('po_')).toArray()
+    if (po.length) await posDb.accounts.bulkDelete(po.map(a => a.id))
+  } catch { /* noop */ }
+}
+
 export async function projectEvent(event: PosEvent): Promise<void> {
   const p = event.payload
+
+  // Cuentas espejo `po_` (pedidos del Centro reconciliados): ya no se crean (se
+  // quitó registerExternalPayment) y nada las usa — los hooks las excluyen. NO se
+  // proyectan, para no ensuciar el Dexie local ni siquiera en un rebuild completo.
+  const accId = (p as { account_id?: unknown })?.account_id
+  if (typeof accId === 'string' && accId.startsWith('po_')) return
 
   switch (event.type) {
     case 'account_opened': {

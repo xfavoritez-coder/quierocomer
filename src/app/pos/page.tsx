@@ -16,6 +16,7 @@ import {
   migrateLocalTablesToEvents,
   migrateLocalStaffToEvents,
   deduplicateStaff,
+  purgeMirrorAccounts,
 } from '@/lib/pos'
 import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
@@ -285,6 +286,7 @@ export default function PosHomePage() {
     migrateLocalTablesToEvents(restaurantId)
     migrateLocalStaffToEvents(restaurantId)
     deduplicateStaff(restaurantId)
+    purgeMirrorAccounts()
   })
 
   // Tab counts for badges

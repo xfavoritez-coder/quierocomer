@@ -17,6 +17,7 @@ export {
   voidItem,
   recordPayment,
   closeAccount,
+  purgeMirrorAccounts,
   toPaymentMethod,
   deliveryPlatformLabel,
   voidAccount,
