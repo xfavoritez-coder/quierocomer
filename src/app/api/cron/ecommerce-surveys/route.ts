@@ -55,16 +55,20 @@ export async function GET(req: NextRequest) {
 
   // Encuestas WhatsApp
   for (const o of waCandidates) {
+    // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
+    const claimed = await prisma.onlineOrder.updateMany({
+      where: { id: o.id, surveySentAt: null },
+      data: { surveySentAt: new Date() },
+    });
+    if (claimed.count === 0) { skipped++; continue; }
+
     const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
     });
-    if (ok) {
-      await prisma.onlineOrder.update({ where: { id: o.id }, data: { surveySentAt: new Date() } }).catch(() => {});
-      sent++;
-    } else skipped++;
+    if (ok) sent++; else skipped++;
   }
 
   // Encuestas ecommerce/panel-online (pedidos marcados DONE)
@@ -86,15 +90,19 @@ export async function GET(req: NextRequest) {
     const minMs = s.hoursAfter * 60 * 60 * 1000;
     if (ageMs < minMs || ageMs > minMs + 24 * 60 * 60 * 1000) { skipped++; continue; }
 
+    // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
+    const claimed = await prisma.onlineOrder.updateMany({
+      where: { id: o.id, surveySentAt: null },
+      data: { surveySentAt: new Date() },
+    });
+    if (claimed.count === 0) { skipped++; continue; }
+
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: s,
     });
-    if (ok) {
-      await prisma.onlineOrder.update({ where: { id: o.id }, data: { surveySentAt: new Date() } }).catch(() => {});
-      sent++;
-    }
+    if (ok) sent++; else skipped++;
   }
 
   return NextResponse.json({ ok: true, scanned: candidates.length + waCandidates.length, sent, skipped });
