@@ -447,7 +447,7 @@ export interface StorefrontLive {
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   // id de plato → precio/disponibilidad vigentes (solo los que difieren se mezclan)
-  products: Record<string, { price: number; original_price: number | null; is_happy_hour: boolean; is_sold_out: boolean }>;
+  products: Record<string, { price: number; original_price: number | null; is_happy_hour: boolean; is_sold_out: boolean; promo_name?: string | null; promo_id?: string | null }>;
 }
 
 /**
@@ -471,9 +471,29 @@ export async function loadEcommerceLive(key: string): Promise<StorefrontLive | n
   const store = parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor });
   const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   const activeHHs = activeHappyHours((r.happyHours as any[]).filter((h) => appliesToChannel(h, "ecommerce")));
+
+  // Promos activas hoy (igual lógica que loadEcommerceStorefront) para aplicar
+  // nombre de promo en la capa en vivo (sin depender del caché).
+  const now = new Date();
+  const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+  const livePromos = await (prisma as any).promotion.findMany({
+    where: { restaurantId: r.id, status: "ACTIVE", dishId: { not: null }, OR: [{ validUntil: null }, { validUntil: { gt: now } }] },
+    select: { id: true, dishId: true, promoName: true, promoPrice: true, originalPrice: true, daysOfWeek: true, validFrom: true },
+  }).then((promos: any[]) => promos.filter((p: any) => {
+    if (p.validFrom && new Date(p.validFrom) > now) return false;
+    if (p.daysOfWeek?.length > 0 && !p.daysOfWeek.includes(todayDow)) return false;
+    return true;
+  }));
+  const promoByDishIdLive = new Map<string, { id: string; promoName: string | null; promoPrice: number | null; originalPrice: number | null }>();
+  for (const p of livePromos) promoByDishIdLive.set(p.dishId, p);
+
   const products: StorefrontLive["products"] = {};
   for (const c of r.categories) for (const d of c.dishes) {
-    products[d.id] = { ...dishEffectivePricing(d, activeHHs), is_sold_out: dishSoldOut(d) };
+    const promo = promoByDishIdLive.get(d.id);
+    const pricing = promo?.promoPrice != null
+      ? { price: promo.promoPrice, original_price: promo.originalPrice ?? d.price, is_happy_hour: false }
+      : dishEffectivePricing(d, activeHHs);
+    products[d.id] = { ...pricing, is_sold_out: dishSoldOut(d), promo_name: promo?.promoName ?? null, promo_id: promo?.id ?? null };
   }
   return { openStatus: avail.openStatus, deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled, products };
 }
@@ -491,7 +511,16 @@ export async function getEcommerceStorefront(key: string, opts?: { fromApp?: boo
   const tenant: StoreTenant = { ...base.tenant, openStatus: live.openStatus, deliveryEnabled: live.deliveryEnabled, pickupEnabled: live.pickupEnabled };
   const products = base.products.map((p) => {
     const o = live!.products[p.id];
-    return o ? { ...p, price: o.price, original_price: o.original_price, is_happy_hour: o.is_happy_hour, is_sold_out: o.is_sold_out } : p;
+    if (!o) return p;
+    return {
+      ...p,
+      name: o.promo_name || p.name,
+      price: o.price,
+      original_price: o.original_price,
+      is_happy_hour: o.is_happy_hour,
+      is_sold_out: o.is_sold_out,
+      promo_id: o.promo_id ?? p.promo_id,
+    };
   });
   return { tenant, categories: base.categories, products };
 }

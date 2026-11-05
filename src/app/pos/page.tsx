@@ -518,7 +518,7 @@ export default function PosHomePage() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2" style={{ flexShrink: 0 }}>
             <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/>
           </svg>
-          <span style={{ color: 'var(--amber-press)', fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)' }}>Caja cerrada — abre la caja para poder cobrar.</span>
+          <span style={{ color: 'var(--amber-press)', fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)' }}>Caja cerrada</span>
           <button
             onClick={() => setInnerPage('caja')}
             style={{ border: 'none', background: 'var(--amber)', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}

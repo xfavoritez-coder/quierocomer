@@ -334,7 +334,7 @@
 .pos-sector-pill:not(.on) .pos-sector-count{background:var(--line-strong);color:var(--ink-2)}
 
 /* ── Branch selector bar ───────────────────────────────────────── */
-.pos-branch-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0}
+.pos-branch-bar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0}
 .pos-branch-bar::-webkit-scrollbar{display:none}
 .pos-branch-pill{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:9999px;border:1px solid var(--line);background:var(--sunk);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:var(--sans);transition:.14s;white-space:nowrap;flex-shrink:0;line-height:1}
 .pos-branch-pill:hover{border-color:var(--line-strong);color:var(--ink)}
