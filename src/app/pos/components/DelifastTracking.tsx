@@ -64,9 +64,10 @@ function etaMinutes(eta?: string | null): number | null {
 }
 
 // Convierte minutos (o timestamp "YYYY-MM-DD HH:MM:SS") a hora estimada "HH:MM".
+// Devuelve null si los minutos son 0 o negativos (dato no disponible o ya pasado).
 function etaToHM(eta?: string | null): string | null {
   const mins = etaMinutes(eta)
-  if (mins === null) return null
+  if (mins === null || mins <= 0) return null
   const d = new Date(Date.now() + mins * 60000)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
@@ -242,7 +243,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
   // Si hay ETA de entrega al cliente y el motorista está en camino, mostrar hora estimada.
   const isEnCamino = /dropoff|transit|camino|ruta/.test((status || '').toLowerCase())
   const etaTime = isEnCamino ? etaToHM(dropoffEta) : null
-  const label = etaTime ? `Entrega ~${etaTime}` : baseLabel
+  const label = etaTime ? `Entrega ${etaTime} aprox` : baseLabel
 
   return (
     <span style={{
