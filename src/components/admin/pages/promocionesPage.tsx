@@ -900,7 +900,7 @@ export default function AdminPromociones() {
           {filtered.map(p => {
             const displayStatus = getPromoDisplayStatus(p);
             const st = STATUS_STYLES[displayStatus] || STATUS_STYLES.SUGGESTED;
-            const isOpen = expanded === p.id;
+            const isOpen = editing?.id === p.id;
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
               <div key={p.id} data-promo-id={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
@@ -942,12 +942,12 @@ export default function AdminPromociones() {
                           for (let i = 0; i < Math.abs(steps); i++) movePromo(p.id, dir);
                         }
                       } else {
-                        setExpanded(isOpen ? null : p.id);
+                        if (editing?.id === p.id) setEditing(null); else startEdit(p);
                       }
                     };
                     document.addEventListener("pointermove", onMove);
                     document.addEventListener("pointerup", onUp);
-                  } : () => setExpanded(isOpen ? null : p.id)}
+                  } : () => { if (editing?.id === p.id) setEditing(null); else startEdit(p); }}
                 >
                   {/* Grip dots — subtle */}
                   {isPanel && (
@@ -1127,80 +1127,29 @@ export default function AdminPromociones() {
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", gap: 10 }}>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                       <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>{t("save")}</button>
                       <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>{t("promo_cancel")}</button>
+                      {(editing.status === "ACTIVE" || editing.status === "PAUSED") && (
+                        <button onClick={() => { handleDelete(editing.id); setEditing(null); }} style={{ marginLeft: "auto", padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_delete")}</button>
+                      )}
+                      {editing.status === "ACTIVE" && (
+                        <button onClick={() => { handleStatus(editing.id, "PAUSED"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(136,136,136,0.1)", border: "1px solid rgba(136,136,136,0.3)", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_pause")}</button>
+                      )}
+                      {editing.status === "PAUSED" && (
+                        <button onClick={() => { handleStatus(editing.id, "ACTIVE"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 8, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_activate")}</button>
+                      )}
+                      {editing.status === "SUGGESTED" && (
+                        <>
+                          <button onClick={() => { handleStatus(editing.id, "ACTIVE"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 8, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_approve")}</button>
+                          <button onClick={() => { handleDelete(editing.id); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>{t("promo_action_discard")}</button>
+                        </>
+                      )}
                     </div>
                   </div>
                   );
                 })()}
 
-                {isOpen && editing?.id !== p.id && (
-                  <div style={{ padding: "12px 18px 18px", borderTop: "1px solid var(--adm-card-border)" }}>
-                    {p.description && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>{p.description}</p>}
-
-                    {p.aiJustification && (
-                      <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("promo_ai_reason")}</p>
-                        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{p.aiJustification}</p>
-                      </div>
-                    )}
-
-                    {/* Dishes */}
-                    {(p.dishes?.length || 0) > 0 && (
-                      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                        {p.dishes!.map(d => (
-                          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, padding: "6px 10px" }}>
-                            {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover" }} />}
-                            <div>
-                              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0 }}>{d.name}</p>
-                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                {p.promoPrice && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#4ade80", fontWeight: 600 }}>${p.promoPrice.toLocaleString("es-CL")}</span>}
-                                <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", textDecoration: p.promoPrice ? "line-through" : "none" }}>${d.price.toLocaleString("es-CL")}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Prices */}
-                    <div style={{ display: "flex", gap: 12, fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", marginBottom: 14 }}>
-                      {p.originalPrice && <span>{t("promo_original_label")} ${p.originalPrice.toLocaleString("es-CL")}</span>}
-                      {p.promoPrice && <span style={{ color: "#4ade80" }}>{t("promo_promo_label")} ${p.promoPrice.toLocaleString("es-CL")}</span>}
-                      {p.discountPct && <span style={{ color: "#F4A623" }}>{p.discountPct}% {t("promo_discount_pct").toLowerCase()}</span>}
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {p.status === "SUGGESTED" && (
-                        <>
-                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>{t("promo_action_approve")}</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_discard")}</button>
-                        </>
-                      )}
-                      {p.status === "ACTIVE" && (
-                        <>
-                          <button onClick={() => handleStatus(p.id, "PAUSED")} style={btnStyle("#888")}>{t("promo_action_pause")}</button>
-                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>{t("promo_action_edit")}</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_delete")}</button>
-                        </>
-                      )}
-                      {p.status === "PAUSED" && (
-                        <>
-                          <button onClick={() => handleStatus(p.id, "ACTIVE")} style={btnStyle("#4ade80")}>{t("promo_action_activate")}</button>
-                          <button onClick={() => startEdit(p)} style={btnStyle("#7fbfdc")}>{t("promo_action_edit")}</button>
-                          <button onClick={() => handleDelete(p.id)} style={btnStyle("#ff6b6b")}>{t("promo_action_delete")}</button>
-                        </>
-                      )}
-                      {p.promoType === "graphic" && p.status !== "SUGGESTED" && (
-                        <button onClick={() => toggleSellInStore(p)} disabled={storeBusy === p.id} style={btnStyle(p.linkedDishId ? "#4ade80" : "#F4A623")}>
-                          {storeBusy === p.id ? "…" : p.linkedDishId ? "✓ En la tienda" : "🛒 Vender en tienda"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}
