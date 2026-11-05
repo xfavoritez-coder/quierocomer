@@ -30,7 +30,7 @@ export function statusColor(s?: string | null): string {
   const e = (s || '').toLowerCase()
   if (/entregad|delivered/.test(e)) return '#16a34a'
   if (/cancel|anul/.test(e)) return '#dc2626'
-  if (/camino|reparto|ruta|dropoff|transit/.test(e)) return '#3b82f6'
+  if (/camino|reparto|ruta|dropoff|transit|at_dropoff|arriving_dropoff/.test(e)) return '#3b82f6'
   if (/local|pickup|retir/.test(e)) return '#8b5cf6'
   if (/asignad|assigned|confirmad|buscando|accept/.test(e)) return '#f59e0b'
   return '#64748b'
@@ -44,6 +44,7 @@ export function statusLabel(s?: string | null): string {
   if (/cancel|anul/.test(e)) return 'Cancelado'
   if (/at_pickup|arriving_pickup|en.?local|lleg[oó].*local/.test(e)) return 'Repartidor en local'
   if (/pickup|camino.*local|retir/.test(e)) return 'Camino al local'
+  if (/at_dropoff|arriving_dropoff|lleg[oó].*cas|en.?cas|lleg[oó].*cliente/.test(e)) return 'Llegó al cliente'
   if (/dropoff|transit|camino|ruta/.test(e)) return 'En camino'
   if (/assigned|asignad/.test(e)) return 'Asignado'
   if (/accept|confirmad/.test(e)) return 'Confirmado'
