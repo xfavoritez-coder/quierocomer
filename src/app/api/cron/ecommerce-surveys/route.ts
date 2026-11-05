@@ -52,9 +52,13 @@ export async function GET(req: NextRequest) {
   });
 
   let sent = 0, skipped = 0;
+  // Deduplicación por email dentro de esta corrida: un cliente puede tener varios
+  // pedidos calificados al mismo tiempo. Solo se envía una encuesta por correo.
+  const emailsSentThisRun = new Set<string>();
 
   // Encuestas WhatsApp
   for (const o of waCandidates) {
+    const email = (o.customerEmail as string).toLowerCase().trim();
     // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
     const claimed = await prisma.onlineOrder.updateMany({
       where: { id: o.id, surveySentAt: null },
@@ -62,13 +66,16 @@ export async function GET(req: NextRequest) {
     });
     if (claimed.count === 0) { skipped++; continue; }
 
+    // Si ya se envió encuesta a este correo en esta corrida, omitir (ya quedó marcado arriba).
+    if (emailsSentThisRun.has(email)) { skipped++; continue; }
+
     const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
     });
-    if (ok) sent++; else skipped++;
+    if (ok) { sent++; emailsSentThisRun.add(email); } else skipped++;
   }
 
   // Encuestas ecommerce/panel-online (pedidos marcados DONE)
@@ -90,6 +97,8 @@ export async function GET(req: NextRequest) {
     const minMs = s.hoursAfter * 60 * 60 * 1000;
     if (ageMs < minMs || ageMs > minMs + 24 * 60 * 60 * 1000) { skipped++; continue; }
 
+    const email = (o.customerEmail as string).toLowerCase().trim();
+
     // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
     const claimed = await prisma.onlineOrder.updateMany({
       where: { id: o.id, surveySentAt: null },
@@ -97,12 +106,15 @@ export async function GET(req: NextRequest) {
     });
     if (claimed.count === 0) { skipped++; continue; }
 
+    // Si ya se envió encuesta a este correo en esta corrida, omitir (ya quedó marcado arriba).
+    if (emailsSentThisRun.has(email)) { skipped++; continue; }
+
     const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
     const ok = await sendSurveyEmail({
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: s,
     });
-    if (ok) sent++; else skipped++;
+    if (ok) { sent++; emailsSentThisRun.add(email); } else skipped++;
   }
 
   return NextResponse.json({ ok: true, scanned: candidates.length + waCandidates.length, sent, skipped });
