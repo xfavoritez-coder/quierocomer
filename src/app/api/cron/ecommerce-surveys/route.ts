@@ -52,9 +52,15 @@ export async function GET(req: NextRequest) {
   });
 
   let sent = 0, skipped = 0;
+  // Un email solo recibe una encuesta por corrida. Si tiene más órdenes pendientes,
+  // se envían en las siguientes corridas (1h después), evitando envíos masivos simultáneos.
+  const emailProcessedThisRun = new Set<string>();
 
   // Encuestas WhatsApp
   for (const o of waCandidates) {
+    const email = (o.customerEmail as string).toLowerCase().trim();
+    if (emailProcessedThisRun.has(email)) { skipped++; continue; }
+
     // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
     const claimed = await prisma.onlineOrder.updateMany({
       where: { id: o.id, surveySentAt: null },
@@ -68,11 +74,14 @@ export async function GET(req: NextRequest) {
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
     });
-    if (ok) sent++; else skipped++;
+    if (ok) { sent++; emailProcessedThisRun.add(email); } else skipped++;
   }
 
   // Encuestas ecommerce/panel-online (pedidos marcados DONE)
   for (const o of candidates) {
+    const email = (o.customerEmail as string).toLowerCase().trim();
+    if (emailProcessedThisRun.has(email)) { skipped++; continue; }
+
     const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
     const s = cfg.survey;
     if (!s.enabled || s.questions.filter((q) => q.active).length === 0) { skipped++; continue; }
@@ -102,7 +111,7 @@ export async function GET(req: NextRequest) {
       to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
       accent: cfg.primaryColor, customerName: o.customerName, survey: s,
     });
-    if (ok) sent++; else skipped++;
+    if (ok) { sent++; emailProcessedThisRun.add(email); } else skipped++;
   }
 
   return NextResponse.json({ ok: true, scanned: candidates.length + waCandidates.length, sent, skipped });

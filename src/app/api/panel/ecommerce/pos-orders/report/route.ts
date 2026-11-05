@@ -123,6 +123,7 @@ export async function GET(req: NextRequest) {
     prepMin: number | null;    // createdAt → opsDispatchedAt
     transitMin: number | null; // opsDispatchedAt → opsDeliveredAt
     totalMin: number;          // createdAt → opsDeliveredAt
+    deliveryFee: number;
   }
   const deliveryTimeRows: DeliveryTimeRow[] = [];
   for (const o of orders) {
@@ -139,6 +140,7 @@ export async function GET(req: NextRequest) {
       prepMin,
       transitMin,
       totalMin,
+      deliveryFee: o.deliveryFee || 0,
     });
   }
   deliveryTimeRows.sort((a, b) => a.totalMin - b.totalMin);

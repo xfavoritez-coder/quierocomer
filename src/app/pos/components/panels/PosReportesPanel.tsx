@@ -35,7 +35,7 @@ interface Channel     { name: string; sales: number; orders: number }
 interface ProductRank { name: string; qty: number; revenue: number }
 interface TypeBucket  { type: string; label: string; sales: number; orders: number }
 interface MonthlyDay  { day: number; sales: number; orders: number }
-interface DeliveryTimeRow { ref: string; name: string; prepMin: number | null; transitMin: number | null; totalMin: number }
+interface DeliveryTimeRow { ref: string; name: string; prepMin: number | null; transitMin: number | null; totalMin: number; deliveryFee: number }
 interface DeliveryTimes {
   count: number
   avgTotal: number | null; avgPrep: number | null; avgTransit: number | null
@@ -355,14 +355,15 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
       {/* Tabla por pedido */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {/* header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px', gap: 8, padding: '4px 6px', marginBottom: 2 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '4px 6px', marginBottom: 2 }}>
           <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Pedido</span>
           <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Prep.</span>
           <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Tránsito</span>
           <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
+          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Delivery</span>
         </div>
         {dt.orders.map((o, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
             <div style={{ minWidth: 0 }}>
               <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                 {o.ref ? `#${o.ref}` : '—'}
@@ -372,6 +373,7 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.transitMin != null ? `${o.transitMin}m` : '—'}</span>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: timeColor(o.totalMin), textAlign: 'right', alignSelf: 'center' }}>{o.totalMin}m</span>
+            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.deliveryFee > 0 ? clp(o.deliveryFee) : '—'}</span>
           </div>
         ))}
       </div>
