@@ -216,7 +216,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
  *  Solo renderiza algo cuando Delifast está configurado y hay estado disponible. */
 export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
   const [status, setStatus] = useState<string | null>(null)
-  const [dropoffEta, setDropoffEta] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -228,7 +227,6 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
         if (cancelled) return
         if (!d.configured || d.pending || !d.tracking) return
         setStatus(d.tracking.status ?? null)
-        setDropoffEta(d.tracking.dropoffEta ?? null)
       } catch { /* fail-silent */ }
     }
     load()
@@ -239,11 +237,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
   if (!status) return null
 
   const sc = statusColor(status)
-  const baseLabel = statusLabel(status)
-  // Si hay ETA de entrega al cliente y el motorista está en camino, mostrar hora estimada.
-  const isEnCamino = /dropoff|transit|camino|ruta/.test((status || '').toLowerCase())
-  const etaTime = isEnCamino ? etaToHM(dropoffEta) : null
-  const label = etaTime ? `Entrega ${etaTime} aprox` : baseLabel
+  const label = statusLabel(status)
 
   return (
     <span style={{
