@@ -247,8 +247,9 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     },
   });
 
-  // Promos activas hoy: para saber qué plato está en oferta y guardar promo_id en el pedido
-  const promoByDishId = new Map<string, string>();
+  // Promos activas hoy: aplicar nombre/precio override y guardar promo_id en el pedido
+  type ActivePromo = { id: string; dishId: string; promoName: string | null; promoPrice: number | null; originalPrice: number | null };
+  const promoByDishId = new Map<string, ActivePromo>();
   if (!includeHidden) {
     const now = new Date();
     const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
@@ -259,13 +260,13 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         dishId: { not: null },
         OR: [{ validUntil: null }, { validUntil: { gt: now } }],
       },
-      select: { id: true, dishId: true, daysOfWeek: true, validFrom: true },
+      select: { id: true, dishId: true, promoName: true, promoPrice: true, originalPrice: true, daysOfWeek: true, validFrom: true },
     }).then((promos: any[]) => promos.filter((p: any) => {
       if (p.validFrom && new Date(p.validFrom) > now) return false;
       if (p.daysOfWeek?.length > 0 && !p.daysOfWeek.includes(todayDow)) return false;
       return true;
     }));
-    for (const p of activePromos) promoByDishId.set(p.dishId, p.id);
+    for (const p of activePromos) promoByDishId.set(p.dishId, p);
   }
 
   const storeCategories: StoreCategory[] = [];
@@ -277,6 +278,13 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     for (const d of cat.dishes) {
       // Precio/oferta/happy hour vigentes (lógica compartida con loadEcommerceLive).
       const pricing = dishEffectivePricing(d, activeHHs);
+      const activePromo = promoByDishId.get(d.id);
+
+      // Override de nombre y precio si hay una oferta activa hoy
+      const displayName = activePromo?.promoName || d.name;
+      const displayPricing = activePromo?.promoPrice != null
+        ? { price: activePromo.promoPrice, original_price: activePromo.originalPrice ?? d.price, is_happy_hour: false }
+        : pricing;
 
       // Aplanar los grupos de modificadores de todas las plantillas del plato.
       const optionGroups: StoreOptionGroup[] = [];
@@ -303,12 +311,12 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       products.push({
         id: d.id,
         category_id: d.categoryId,
-        name: d.name,
+        name: displayName,
         description: d.description,
         detailed_description: d.detailedDescription ?? null,
-        price: pricing.price,
-        original_price: pricing.original_price,
-        is_happy_hour: pricing.is_happy_hour,
+        price: displayPricing.price,
+        original_price: displayPricing.original_price,
+        is_happy_hour: displayPricing.is_happy_hour,
         image_url: d.photos?.[0] ?? null,
         is_sold_out: dishSoldOut(d),
         is_hero: d.isHero === true,
@@ -317,7 +325,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         // "Pedidos online". Solo se puebla con includeHidden (gestión de carta).
         hidden: !cat.isActive || d.isActive === false || d.hideFromOrdering === true,
         option_groups: optionGroups,
-        promo_id: promoByDishId.get(d.id) ?? null,
+        promo_id: activePromo?.id ?? null,
       });
     }
   }
