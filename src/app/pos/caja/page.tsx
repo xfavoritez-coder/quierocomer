@@ -38,7 +38,7 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 export default function CajaPage() {
   const navigate = usePosNav()
   const { restaurantId, restaurant, loading: restLoading } = usePosRestaurant()
-  const { syncing } = usePosSync(restaurantId)
+  const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
@@ -255,7 +255,7 @@ export default function CajaPage() {
 
   // Mientras no se resuelve el restaurante, no mostramos ni caja ni "abrir caja"
   // (evita el parpadeo con datos de otro local).
-  if (restLoading && !cashSession) {
+  if ((restLoading || !syncReady) && !cashSession) {
     return (
       <div className="pos-shell">
         <PosHeader mode="back" eyebrow="Caja" subtitle="Cargando…" syncing={syncing} onBack={goHome} />

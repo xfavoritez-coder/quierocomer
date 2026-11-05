@@ -240,7 +240,7 @@ export default function PosHomePage() {
     }
   }
 
-  const { syncing } = usePosSync(restaurantId)
+  const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const accounts = useOpenAccounts(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
   const tables = useTables(restaurantId)
@@ -504,10 +504,12 @@ export default function PosHomePage() {
       )}
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
-      {/* Solo depende de cashSession (undefined=cargando → no se muestra; null=cerrada
-          confirmada → se muestra). NO se gatea con `syncing`: eso la hacía parpadear
-          en cada pasada de sync. */}
-      {cashSession === null && (
+      {/* Se muestra solo cuando la caja está CERRADA confirmada: cashSession===null
+          (no undefined=cargando) Y la primera sincronización del local terminó
+          (syncReady). Así no parpadea en cada sync incremental ni al cambiar de
+          sucursal (mientras sincroniza el nuevo local, syncReady=false → no se
+          muestra el falso "caja cerrada"). */}
+      {cashSession === null && syncReady && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',

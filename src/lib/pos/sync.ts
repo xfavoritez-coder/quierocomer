@@ -15,22 +15,49 @@ let _isSyncing = false
 let _restaurantId = ''
 let _onSyncStatusChange: ((syncing: boolean) => void) | null = null
 
+// ── "Primera sincronización lista" ───────────────────────────────
+// A diferencia de `syncing` (que se prende/apaga en CADA ciclo incremental, y por
+// eso no sirve para gatear UI sin parpadear), este flag se vuelve true cuando la
+// sincronización INICIAL del local terminó y ya NO vuelve a false hasta cambiar de
+// local (lo cual recarga la página). Sirve para distinguir "cargando" de "cerrada".
+let _initialSyncDone = false
+const _readyListeners = new Set<(v: boolean) => void>()
+function setInitialSyncDone(v: boolean) {
+  _initialSyncDone = v
+  _readyListeners.forEach((f) => f(v))
+}
+export function subscribePosReady(fn: (v: boolean) => void): () => void {
+  _readyListeners.add(fn)
+  fn(_initialSyncDone)
+  return () => { _readyListeners.delete(fn) }
+}
+
 // ── Public API ───────────────────────────────────────────────────
 
 export function startSync(restaurantId: string, onStatusChange?: (syncing: boolean) => void) {
-  _restaurantId = restaurantId
   _onSyncStatusChange = onStatusChange ?? null
+
+  // Idempotente: si ya está corriendo para ESTE mismo local (otro componente ya
+  // llamó startSync, p.ej. la página del POS + el panel de caja a la vez), no se
+  // reinicia — reiniciar re-pullearía todo y resetearía `ready` (flash de carga).
+  if (_restaurantId === restaurantId && (_isSyncing || _syncTimer)) {
+    onStatusChange?.(_isSyncing)
+    return
+  }
+  _restaurantId = restaurantId
 
   if (_syncTimer) clearInterval(_syncTimer)
 
   // Full initial pull + rebuild on startup, then start incremental interval
   _isSyncing = true
   _onSyncStatusChange?.(true)
+  setInitialSyncDone(false)
   initialSync(restaurantId)
     .catch(err => console.error('[POS Sync] Initial sync error:', err))
     .finally(() => {
       _isSyncing = false
       _onSyncStatusChange?.(false)
+      setInitialSyncDone(true)
       _syncTimer = setInterval(syncCycle, SYNC_INTERVAL_MS)
     })
 

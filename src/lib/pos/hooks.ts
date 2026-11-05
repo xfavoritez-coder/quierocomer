@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
-import { startSync, stopSync } from './sync'
+import { startSync, stopSync, subscribePosReady } from './sync'
 import { getRestaurantId } from './events'
 import type { Account, CashSession, PosTable, PosSector, PosStaff } from './types'
 import type { CachedProduct } from './types'
@@ -52,7 +52,12 @@ export function useOnlineStatus(): boolean {
 
 export function usePosSync(restaurantId: string) {
   const [syncing, setSyncing] = useState(false)
+  // `ready` = la sincronización INICIAL del local terminó (distingue "cargando" de
+  // "cerrada"). No parpadea con los ciclos incrementales.
+  const [ready, setReady] = useState(false)
   const online = useOnlineStatus()
+
+  useEffect(() => subscribePosReady(setReady), [])
 
   useEffect(() => {
     if (!restaurantId) return
@@ -60,7 +65,7 @@ export function usePosSync(restaurantId: string) {
     return () => stopSync()
   }, [restaurantId])
 
-  return { syncing, online }
+  return { syncing, online, ready }
 }
 
 // ── Pending sync count ───────────────────────────────────────────

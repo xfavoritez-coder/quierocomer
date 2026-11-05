@@ -36,7 +36,7 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 
 export default function PosCajaPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const { restaurant, loading: restLoading } = usePosRestaurant()
-  const { syncing } = usePosSync(restaurantId)
+  const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
@@ -267,7 +267,9 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     )
   }
 
-  if (restLoading && !cashSession) {
+  // Mientras carga el local o aún no termina la primera sincronización, mostramos
+  // un spinner en vez del "Abrir caja" (evita el falso cerrado al cambiar de local).
+  if ((restLoading || !syncReady) && !cashSession) {
     return (
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
