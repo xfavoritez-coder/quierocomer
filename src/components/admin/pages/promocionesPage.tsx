@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Tag } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { usePanelLang } from "@/lib/i18n/panel";
@@ -8,14 +9,16 @@ import { usePanelLang } from "@/lib/i18n/panel";
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
 
-const DAY_LABELS = ["D", "L", "M", "X", "J", "V", "S"];
-const DAY_LABELS_FULL = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
 function parseCLP(v: string): number | null {
   if (!v) return null;
   const clean = v.replace(/\./g, "").replace(/,/g, "");
   const n = parseInt(clean, 10);
   return isNaN(n) || n <= 0 ? null : n;
+}
+
+function getPromoDisplayStatus(p: { status: string; validFrom: string | null; validUntil: string | null }): string {
+  if (p.status === "ACTIVE" && p.validFrom && new Date(p.validFrom) > new Date()) return "SCHEDULED";
+  return p.status;
 }
 
 function isPromoActiveToday(p: Promo): boolean {
@@ -38,472 +41,12 @@ interface Promo {
   daysOfWeek?: number[];
   validFrom?: string | null;
   validUntil?: string | null;
+  dish?: { id: string; name: string; price: number; photos: string[] } | null;
   dishes?: { id: string; name: string; price: number; photos: string[] }[];
-  // legacy fields — present but ignored
+  // legacy
   dishIds?: string[];
-  linkedDishId?: string | null;
-  hideOriginalWhenActive?: boolean;
-  promoType?: string;
-  imageUrl?: string | null;
   position?: number;
-}
-
-type FilterTab = "all" | "active" | "paused";
-
-const EMPTY_FORM = {
-  name: "",
-  dishId: "",
-  promoName: "",
-  promoPrice: "",
-  originalPrice: "",
-  daysOfWeek: [] as number[],
-  validFrom: "",
-  validUntil: "",
-};
-
-type PromoForm = typeof EMPTY_FORM;
-
-function DayChips({
-  days,
-  today,
-  onChange,
-  readonly,
-}: {
-  days: number[];
-  today?: number;
-  onChange?: (d: number[]) => void;
-  readonly?: boolean;
-}) {
-  return (
-    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-      {DAY_LABELS.map((label, i) => {
-        const active = days.includes(i);
-        const isToday = today === i;
-        if (readonly) {
-          return (
-            <span
-              key={i}
-              style={{
-                fontSize: 11,
-                padding: "2px 6px",
-                borderRadius: 4,
-                fontWeight: 600,
-                background: active
-                  ? isToday
-                    ? "#4ade80"
-                    : "var(--adm-hover)"
-                  : "transparent",
-                color: active
-                  ? isToday
-                    ? "#000"
-                    : "var(--adm-text)"
-                  : "var(--adm-text2)",
-                border: "1px solid",
-                borderColor: active ? (isToday ? "#4ade80" : "var(--adm-border)") : "var(--adm-border)",
-                opacity: active ? 1 : 0.4,
-              }}
-            >
-              {label}
-            </span>
-          );
-        }
-        return (
-          <button
-            key={i}
-            type="button"
-            onClick={() => {
-              if (!onChange) return;
-              onChange(active ? days.filter((d) => d !== i) : [...days, i]);
-            }}
-            style={{
-              fontSize: 12,
-              padding: "4px 9px",
-              borderRadius: 6,
-              fontWeight: 600,
-              cursor: "pointer",
-              border: "1px solid",
-              borderColor: active ? GOLD : "var(--adm-border)",
-              background: active ? `${GOLD}22` : "var(--adm-hover)",
-              color: active ? GOLD : "var(--adm-text2)",
-            }}
-          >
-            {DAY_LABELS_FULL[i]}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function DishSearchPicker({
-  dishes,
-  selectedId,
-  onSelect,
-}: {
-  dishes: { id: string; name: string; price: number; photos: string[] }[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-}) {
-  const [q, setQ] = useState("");
-  const selected = dishes.find((d) => d.id === selectedId);
-  const filtered = q
-    ? dishes.filter((d) => d.name.toLowerCase().includes(q.toLowerCase()))
-    : dishes.slice(0, 20);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      {selected && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "6px 10px",
-            borderRadius: 8,
-            background: "var(--adm-hover)",
-            border: `1px solid ${GOLD}`,
-          }}
-        >
-          {selected.photos?.[0] && (
-            <img
-              src={selected.photos[0]}
-              alt=""
-              style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover" }}
-            />
-          )}
-          <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{selected.name}</span>
-          <button
-            type="button"
-            onClick={() => onSelect("")}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--adm-text2)",
-              fontSize: 14,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-      {!selected && (
-        <>
-          <input
-            type="text"
-            placeholder="Buscar plato..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            style={{
-              padding: "7px 10px",
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-              color: "var(--adm-text)",
-              fontSize: 13,
-              outline: "none",
-            }}
-          />
-          <div
-            style={{
-              maxHeight: 180,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-            }}
-          >
-            {filtered.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => { onSelect(d.id); setQ(""); }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "7px 10px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  color: "var(--adm-text)",
-                }}
-              >
-                {d.photos?.[0] && (
-                  <img
-                    src={d.photos[0]}
-                    alt=""
-                    style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover" }}
-                  />
-                )}
-                <span style={{ fontSize: 13 }}>{d.name}</span>
-                <span style={{ fontSize: 11, color: "var(--adm-text2)", marginLeft: "auto" }}>
-                  ${d.price?.toLocaleString("es-CL")}
-                </span>
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <div style={{ padding: "10px 12px", fontSize: 13, color: "var(--adm-text2)" }}>
-                Sin resultados
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function PromoForm({
-  form,
-  setForm,
-  dishes,
-  onSave,
-  onCancel,
-  onDelete,
-  saving,
-  isNew,
-}: {
-  form: PromoForm;
-  setForm: (f: PromoForm) => void;
-  dishes: { id: string; name: string; price: number; photos: string[] }[];
-  onSave: () => void;
-  onCancel: () => void;
-  onDelete?: () => void;
-  saving: boolean;
-  isNew?: boolean;
-}) {
-  const selectedDish = dishes.find((d) => d.id === form.dishId);
-
-  return (
-    <div
-      style={{
-        padding: "16px 18px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        borderTop: "1px solid var(--adm-border)",
-        marginTop: 8,
-      }}
-    >
-      {/* Nombre interno */}
-      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Nombre para identificarla en el panel
-        </span>
-        <input
-          type="text"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Ej: Martes de Suprema"
-          style={{
-            padding: "8px 10px",
-            borderRadius: 8,
-            border: "1px solid var(--adm-border)",
-            background: "var(--adm-card)",
-            color: "var(--adm-text)",
-            fontSize: 13,
-            outline: "none",
-          }}
-        />
-      </label>
-
-      {/* Plato */}
-      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Plato al que aplica
-        </span>
-        <DishSearchPicker
-          dishes={dishes}
-          selectedId={form.dishId}
-          onSelect={(id) => setForm({ ...form, dishId: id })}
-        />
-      </label>
-
-      {/* Nombre que ve el cliente */}
-      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Nombre que ve el cliente (dejar vacío para usar el nombre del plato)
-        </span>
-        <input
-          type="text"
-          value={form.promoName}
-          onChange={(e) => setForm({ ...form, promoName: e.target.value })}
-          placeholder={selectedDish?.name ?? "Nombre del plato"}
-          style={{
-            padding: "8px 10px",
-            borderRadius: 8,
-            border: "1px solid var(--adm-border)",
-            background: "var(--adm-card)",
-            color: "var(--adm-text)",
-            fontSize: 13,
-            outline: "none",
-          }}
-        />
-      </label>
-
-      {/* Precios */}
-      <div style={{ display: "flex", gap: 12 }}>
-        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Precio de oferta
-          </span>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={form.promoPrice}
-            onChange={(e) => setForm({ ...form, promoPrice: e.target.value })}
-            placeholder="19900"
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-              color: "var(--adm-text)",
-              fontSize: 13,
-              outline: "none",
-            }}
-          />
-        </label>
-        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Precio normal (aparece tachado)
-          </span>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={form.originalPrice}
-            onChange={(e) => setForm({ ...form, originalPrice: e.target.value })}
-            placeholder="25900"
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-              color: "var(--adm-text)",
-              fontSize: 13,
-              outline: "none",
-            }}
-          />
-        </label>
-      </div>
-
-      {/* Días */}
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          Días de la semana (vacío = todos los días)
-        </span>
-        <DayChips
-          days={form.daysOfWeek}
-          onChange={(d) => setForm({ ...form, daysOfWeek: d })}
-        />
-      </label>
-
-      {/* Rango de fechas */}
-      <div style={{ display: "flex", gap: 12 }}>
-        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Desde
-          </span>
-          <input
-            type="date"
-            value={form.validFrom}
-            onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-              color: "var(--adm-text)",
-              fontSize: 13,
-              outline: "none",
-            }}
-          />
-        </label>
-        <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-          <span style={{ fontSize: 11, color: "var(--adm-text2)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Hasta
-          </span>
-          <input
-            type="date"
-            value={form.validUntil}
-            onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid var(--adm-border)",
-              background: "var(--adm-card)",
-              color: "var(--adm-text)",
-              fontSize: 13,
-              outline: "none",
-            }}
-          />
-        </label>
-      </div>
-
-      {/* Acciones */}
-      <div style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 4 }}>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          style={{
-            padding: "8px 18px",
-            borderRadius: 8,
-            border: "none",
-            background: GOLD,
-            color: "#000",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: saving ? "not-allowed" : "pointer",
-            opacity: saving ? 0.6 : 1,
-            fontFamily: F,
-          }}
-        >
-          {saving ? "Guardando…" : "Guardar"}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            padding: "8px 14px",
-            borderRadius: 8,
-            border: "1px solid var(--adm-border)",
-            background: "none",
-            color: "var(--adm-text2)",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: "pointer",
-          }}
-        >
-          Cancelar
-        </button>
-        {onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            style={{
-              marginLeft: "auto",
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: "1px solid #ef4444",
-              background: "none",
-              color: "#ef4444",
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
-            Eliminar
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  createdAt?: string;
 }
 
 export default function AdminPromociones() {
@@ -511,465 +54,497 @@ export default function AdminPromociones() {
   const pathname = usePathname();
   const isPanel = pathname.startsWith("/panel");
 
-  const { restaurants, loading: sessionLoading, selectedRestaurantId, isSuper } = useAdminSession();
-  const [selectedLocal, setSelectedLocal] = useState<string>("");
+  const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+    ACTIVE:    { label: "Activa",    color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
+    SCHEDULED: { label: "Programada", color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
+    PAUSED:    { label: "Pausada",   color: "var(--adm-text2)", bg: "var(--adm-hover)" },
+    SUGGESTED: { label: "Sugerida",  color: GOLD,      bg: `rgba(244,166,35,0.1)` },
+  };
+
+  const { restaurants, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
+  const [selectedLocal, setSelectedLocal] = useState("");
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<FilterTab>("all");
-
-  // Expanded card for inline editing
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<PromoForm>(EMPTY_FORM);
-  const [editSaving, setEditSaving] = useState(false);
-
-  // Create new
-  const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState<PromoForm>(EMPTY_FORM);
-  const [createSaving, setCreateSaving] = useState(false);
-
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
+  const [filter, setFilter] = useState("all");
 
-  const today = new Date().getDay();
+  // Editor inline
+  const [editing, setEditing] = useState<Promo | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDishId, setEditDishId] = useState("");
+  const [editPromoName, setEditPromoName] = useState("");
+  const [editPromoPrice, setEditPromoPrice] = useState("");
+  const [editOriginalPrice, setEditOriginalPrice] = useState("");
+  const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
+  const [editValidFrom, setEditValidFrom] = useState("");
+  const [editValidUntil, setEditValidUntil] = useState("");
+  const [editDishSearch, setEditDishSearch] = useState("");
 
-  // Auto-set selectedLocal from session
+  // Crear nueva oferta
+  const [creating, setCreating] = useState(false);
+  const [cName, setCName] = useState("");
+  const [cDishId, setCDishId] = useState("");
+  const [cPromoName, setCPromoName] = useState("");
+  const [cPromoPrice, setCPromoPrice] = useState("");
+  const [cOriginalPrice, setCOriginalPrice] = useState("");
+  const [cDaysOfWeek, setCDaysOfWeek] = useState<number[]>([]);
+  const [cValidFrom, setCValidFrom] = useState("");
+  const [cValidUntil, setCValidUntil] = useState("");
+  const [cDishSearch, setCDishSearch] = useState("");
+  const [savingNew, setSavingNew] = useState(false);
+
   useEffect(() => {
     if (selectedRestaurantId && !selectedLocal) setSelectedLocal(selectedRestaurantId);
   }, [selectedRestaurantId, selectedLocal]);
 
-  // Load dishes when local changes
   useEffect(() => {
     if (!selectedLocal) { setLocalDishes([]); return; }
     fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const arr = Array.isArray(d) ? d : d?.dishes;
-        if (Array.isArray(arr)) setLocalDishes(arr);
-      })
+      .then(r => r.json())
+      .then(d => { const arr = Array.isArray(d) ? d : d?.dishes; if (Array.isArray(arr)) setLocalDishes(arr); })
       .catch(() => {});
   }, [selectedLocal]);
 
-  // Load promos when local changes
   useEffect(() => {
-    if (!selectedLocal) { setPromos([]); return; }
+    if (sessionLoading || !selectedLocal) { setPromos([]); return; }
     setLoading(true);
     fetch(`/api/admin/promotions?restaurantId=${selectedLocal}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const arr = Array.isArray(d) ? d : d?.promotions;
-        if (Array.isArray(arr)) setPromos(arr);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [selectedLocal]);
+      .then(r => r.json()).then(d => setPromos(d.promotions || []))
+      .catch(() => {}).finally(() => setLoading(false));
+  }, [selectedLocal, sessionLoading]);
 
-  function promoToForm(p: Promo): PromoForm {
-    return {
-      name: p.name ?? "",
-      dishId: p.dishId ?? "",
-      promoName: p.promoName ?? "",
-      promoPrice: p.promoPrice != null ? String(p.promoPrice) : "",
-      originalPrice: p.originalPrice != null ? String(p.originalPrice) : "",
-      daysOfWeek: p.daysOfWeek ?? [],
-      validFrom: p.validFrom ? p.validFrom.slice(0, 10) : "",
-      validUntil: p.validUntil ? p.validUntil.slice(0, 10) : "",
+  const handleStatus = async (id: string, status: string) => {
+    const res = await fetch("/api/admin/promotions", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    if (res.ok) setPromos(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Eliminar esta oferta?")) return;
+    await fetch("/api/admin/promotions", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "DELETED" }),
+    });
+    setPromos(prev => prev.filter(p => p.id !== id));
+    setEditing(null);
+  };
+
+  const startEdit = (p: Promo) => {
+    setEditing(p);
+    setEditName(p.name);
+    setEditDishId(p.dishId || "");
+    setEditPromoName(p.promoName || "");
+    setEditPromoPrice(p.promoPrice?.toString() || "");
+    setEditOriginalPrice(p.originalPrice?.toString() || "");
+    setEditDaysOfWeek(p.daysOfWeek || []);
+    setEditValidFrom(p.validFrom ? p.validFrom.slice(0, 10) : "");
+    setEditValidUntil(p.validUntil ? p.validUntil.slice(0, 10) : "");
+    setEditDishSearch("");
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    const body: any = {
+      id: editing.id,
+      name: editName,
+      dishId: editDishId || null,
+      promoName: editPromoName || null,
+      promoPrice: parseCLP(editPromoPrice),
+      originalPrice: parseCLP(editOriginalPrice),
+      daysOfWeek: editDaysOfWeek,
+      validFrom: editValidFrom || null,
+      validUntil: editValidUntil || null,
     };
-  }
-
-  function openEdit(p: Promo) {
-    setExpandedId(p.id);
-    setEditForm(promoToForm(p));
-  }
-
-  function closeEdit() {
-    setExpandedId(null);
-    setEditForm(EMPTY_FORM);
-  }
-
-  async function saveEdit(promo: Promo) {
-    setEditSaving(true);
-    try {
-      const body: Record<string, unknown> = {
-        id: promo.id,
-        name: editForm.name,
-        dishId: editForm.dishId || null,
-        promoName: editForm.promoName || null,
-        promoPrice: parseCLP(editForm.promoPrice),
-        originalPrice: parseCLP(editForm.originalPrice) || null,
-        daysOfWeek: editForm.daysOfWeek,
-        validFrom: editForm.validFrom || null,
-        validUntil: editForm.validUntil || null,
-      };
-      const res = await fetch("/api/admin/promotions", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const updated = data.promotion ?? data;
-        setPromos((prev) => prev.map((p) => (p.id === promo.id ? { ...p, ...updated } : p)));
-        closeEdit();
-      }
-    } finally {
-      setEditSaving(false);
-    }
-  }
-
-  async function toggleStatus(promo: Promo) {
-    const newStatus = promo.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
     const res = await fetch("/api/admin/promotions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: promo.id, status: newStatus }),
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
     if (res.ok) {
-      setPromos((prev) =>
-        prev.map((p) => (p.id === promo.id ? { ...p, status: newStatus } : p))
-      );
+      const dishObj = localDishes.find(d => d.id === editDishId) || null;
+      setPromos(prev => prev.map(p => p.id === editing.id ? { ...p, ...body, dish: dishObj } : p));
     }
-  }
+    setEditing(null);
+  };
 
-  async function deletePromo(promo: Promo) {
-    if (!confirm(`¿Eliminar la oferta "${promo.name}"?`)) return;
+  const resetCreate = () => {
+    setCreating(false);
+    setCName(""); setCDishId(""); setCPromoName(""); setCPromoPrice(""); setCOriginalPrice("");
+    setCDaysOfWeek([]); setCValidFrom(""); setCValidUntil(""); setCDishSearch("");
+  };
+
+  const handleCreate = async () => {
+    if (!selectedLocal || !cName || !cDishId) return;
+    setSavingNew(true);
+    const body: any = {
+      restaurantId: selectedLocal,
+      name: cName,
+      dishId: cDishId,
+      promoName: cPromoName || null,
+      promoPrice: parseCLP(cPromoPrice),
+      originalPrice: parseCLP(cOriginalPrice),
+      daysOfWeek: cDaysOfWeek,
+      validFrom: cValidFrom || null,
+      validUntil: cValidUntil || null,
+    };
     const res = await fetch("/api/admin/promotions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: promo.id, status: "DELETED" }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-    if (res.ok) {
-      setPromos((prev) => prev.filter((p) => p.id !== promo.id));
-      closeEdit();
+    const data = await res.json();
+    if (data.promotion) {
+      const dishObj = localDishes.find(d => d.id === cDishId) || null;
+      setPromos(prev => [{ ...data.promotion, dish: dishObj }, ...prev]);
     }
-  }
+    resetCreate();
+    setSavingNew(false);
+  };
 
-  async function saveCreate() {
-    if (!selectedLocal) return;
-    setCreateSaving(true);
-    try {
-      const body = {
-        restaurantId: selectedLocal,
-        name: createForm.name,
-        dishId: createForm.dishId || undefined,
-        promoName: createForm.promoName || undefined,
-        promoPrice: parseCLP(createForm.promoPrice),
-        originalPrice: parseCLP(createForm.originalPrice) || undefined,
-        daysOfWeek: createForm.daysOfWeek,
-        validFrom: createForm.validFrom || undefined,
-        validUntil: createForm.validUntil || undefined,
-      };
-      const res = await fetch("/api/admin/promotions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const created = data.promotion ?? data;
-        setPromos((prev) => [created, ...prev]);
-        setCreating(false);
-        setCreateForm(EMPTY_FORM);
-      }
-    } finally {
-      setCreateSaving(false);
-    }
-  }
+  const toggleDayCreate = (i: number) => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
+  const toggleDayEdit = (i: number) => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
 
-  const filtered = promos.filter((p) => {
-    if (filter === "active") return p.status === "ACTIVE";
-    if (filter === "paused") return p.status === "PAUSED";
-    return p.status !== "DELETED";
+  const DAYS_ABBR = ["D","L","M","Mi","J","V","S"];
+  const DAYS_FULL = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+  const todayIdx = new Date().getDay();
+
+  const filtered = promos.filter(p => {
+    if (p.status === "DELETED") return false;
+    if (filter === "all") return true;
+    if (filter === "ACTIVE") return p.status === "ACTIVE";
+    if (filter === "PAUSED") return p.status === "PAUSED";
+    return true;
   });
 
-  if (sessionLoading) return <SkeletonLoading />;
+  if (sessionLoading) return <SkeletonLoading type="cards" />;
 
   return (
-    <div style={{ padding: "24px 20px", maxWidth: 780, margin: "0 auto" }}>
+    <div style={{ maxWidth: 800 }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
-        <h2 style={{ fontFamily: F, fontWeight: 800, fontSize: 22, margin: 0 }}>Ofertas</h2>
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          {/* Selector de local — solo super admin */}
-          {!isPanel && restaurants && restaurants.length > 0 && (
-            <select
-              value={selectedLocal}
-              onChange={(e) => setSelectedLocal(e.target.value)}
-              style={{
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid var(--adm-border)",
-                background: "var(--adm-card)",
-                color: "var(--adm-text)",
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              <option value="">Seleccionar local…</option>
-              {restaurants.map((r: any) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
-          )}
-          <button
-            type="button"
-            onClick={() => { setCreating(true); setCreateForm(EMPTY_FORM); setExpandedId(null); }}
-            style={{
-              padding: "8px 16px",
-              borderRadius: 8,
-              border: "none",
-              background: GOLD,
-              color: "#000",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-              fontFamily: F,
-            }}
-          >
-            + Nueva oferta
-          </button>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            <Tag size={20} color="var(--adm-text3)" /> Ofertas
+          </h1>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
+            Aplica un precio especial a un plato existente ciertos días o por un período
+          </p>
         </div>
+        {!isPanel && (
+          <select
+            value={selectedLocal}
+            onChange={e => setSelectedLocal(e.target.value)}
+            style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+          >
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+            {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
+          </select>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
-        {(["all", "active", "paused"] as FilterTab[]).map((tab) => {
-          const labels: Record<FilterTab, string> = { all: "Todas", active: "Activas", paused: "Pausadas" };
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setFilter(tab)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 20,
-                border: "1px solid var(--adm-border)",
-                background: filter === tab ? GOLD : "var(--adm-hover)",
-                color: filter === tab ? "#000" : "var(--adm-text2)",
-                fontWeight: filter === tab ? 700 : 500,
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              {labels[tab]}
-            </button>
-          );
-        })}
+      {/* Filters + create */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
+        {[
+          { key: "all", label: "Todas" },
+          { key: "ACTIVE", label: "Activas" },
+          { key: "PAUSED", label: "Pausadas" },
+        ].map(f => (
+          <button key={f.key} onClick={() => setFilter(f.key)} style={{
+            padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+            background: filter === f.key ? "var(--adm-card-border)" : "transparent",
+            color: filter === f.key ? "var(--adm-text)" : "var(--adm-text3)",
+          }}>
+            {f.label}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        {selectedLocal && (
+          <button onClick={() => creating ? resetCreate() : setCreating(true)} style={{
+            padding: "8px 16px", background: creating ? "none" : GOLD,
+            color: creating ? "var(--adm-text2)" : "white",
+            border: creating ? "1px solid var(--adm-card-border)" : "none",
+            borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0,
+          }}>
+            {creating ? "Cancelar" : "+ Nueva oferta"}
+          </button>
+        )}
       </div>
 
       {/* Formulario de creación */}
       {creating && (
-        <div
-          style={{
-            borderRadius: 12,
-            border: `2px solid ${GOLD}`,
-            background: "var(--adm-card)",
-            marginBottom: 16,
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ padding: "14px 18px", fontWeight: 700, fontSize: 15, fontFamily: F }}>
-            Nueva oferta
-          </div>
-          <PromoForm
-            form={createForm}
-            setForm={setCreateForm}
-            dishes={localDishes}
-            onSave={saveCreate}
-            onCancel={() => { setCreating(false); setCreateForm(EMPTY_FORM); }}
-            saving={createSaving}
-            isNew
-          />
-        </div>
-      )}
+        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16, marginTop: 0 }}>Nueva oferta</h3>
 
-      {/* Loading */}
-      {loading && <SkeletonLoading />}
+          <label style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Nombre interno (para identificarla en el panel)</label>
+          <input placeholder="Ej: Martes de Suprema" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
 
-      {/* Sin local seleccionado */}
-      {!loading && !selectedLocal && (
-        <div style={{ textAlign: "center", color: "var(--adm-text2)", padding: "40px 0", fontSize: 14 }}>
-          Selecciona un local para ver las ofertas
-        </div>
-      )}
-
-      {/* Sin resultados */}
-      {!loading && selectedLocal && filtered.length === 0 && !creating && (
-        <div style={{ textAlign: "center", color: "var(--adm-text2)", padding: "40px 0", fontSize: 14 }}>
-          No hay ofertas{filter !== "all" ? " en esta categoría" : ""}
-        </div>
-      )}
-
-      {/* Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.map((promo) => {
-          const dish = promo.dishes?.[0] ?? localDishes.find((d) => d.id === promo.dishId);
-          const photoUrl = dish?.photos?.[0] ?? null;
-          const isToday = isPromoActiveToday(promo);
-          const isExpanded = expandedId === promo.id;
-
-          return (
-            <div
-              key={promo.id}
-              style={{
-                borderRadius: 12,
-                border: isExpanded ? `2px solid ${GOLD}` : "1px solid var(--adm-border)",
-                background: "var(--adm-card)",
-                overflow: "hidden",
-                transition: "border-color 0.15s",
-              }}
-            >
-              {/* Card header — clickeable */}
-              <div
-                onClick={() => isExpanded ? closeEdit() : openEdit(promo)}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 12,
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                }}
-              >
-                {/* Foto o emoji */}
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    flexShrink: 0,
-                    background: "var(--adm-hover)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24,
-                  }}
-                >
-                  {photoUrl ? (
-                    <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    "🏷️"
-                  )}
-                </div>
-
-                {/* Info principal */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 15, fontFamily: F }}>{promo.name}</span>
-                    {/* Badge estado */}
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "2px 7px",
-                        borderRadius: 20,
-                        background: promo.status === "ACTIVE" ? "rgba(74,222,128,0.15)" : "var(--adm-hover)",
-                        color: promo.status === "ACTIVE" ? "#4ade80" : "var(--adm-text2)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {promo.status === "ACTIVE" ? "ACTIVA" : "PAUSADA"}
-                    </span>
-                    {/* Badge HOY */}
-                    {isToday && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "2px 7px",
-                          borderRadius: 20,
-                          background: "#4ade80",
-                          color: "#000",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        HOY
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Plato */}
-                  {dish && (
-                    <div style={{ fontSize: 12, color: "var(--adm-text2)", marginBottom: 2 }}>
-                      🍽 {dish.name}
-                    </div>
-                  )}
-
-                  {/* promoName si difiere del plato */}
-                  {promo.promoName && promo.promoName !== dish?.name && (
-                    <div style={{ fontSize: 12, color: "var(--adm-text2)", marginBottom: 2 }}>
-                      → se muestra como: <em>{promo.promoName}</em>
-                    </div>
-                  )}
-
-                  {/* Precios */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                    {promo.promoPrice != null && (
-                      <span style={{ fontWeight: 700, fontSize: 15, color: GOLD }}>
-                        ${promo.promoPrice.toLocaleString("es-CL")}
-                      </span>
-                    )}
-                    {promo.originalPrice != null && (
-                      <span style={{ fontSize: 13, color: "var(--adm-text2)", textDecoration: "line-through" }}>
-                        ${promo.originalPrice.toLocaleString("es-CL")}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Días */}
-                  {promo.daysOfWeek && promo.daysOfWeek.length > 0 && (
-                    <div style={{ marginTop: 6 }}>
-                      <DayChips days={promo.daysOfWeek} today={today} readonly />
-                    </div>
-                  )}
-
-                  {/* Rango de fechas */}
-                  {(promo.validFrom || promo.validUntil) && (
-                    <div style={{ fontSize: 11, color: "var(--adm-text2)", marginTop: 4 }}>
-                      {promo.validFrom && `Desde ${promo.validFrom.slice(0, 10)}`}
-                      {promo.validFrom && promo.validUntil && " · "}
-                      {promo.validUntil && `Hasta ${promo.validUntil.slice(0, 10)}`}
-                    </div>
-                  )}
-                </div>
-
-                {/* Botón Pausar/Activar */}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); toggleStatus(promo); }}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 8,
-                    border: "1px solid var(--adm-border)",
-                    background: "var(--adm-hover)",
-                    color: "var(--adm-text2)",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {promo.status === "ACTIVE" ? "Pausar" : "Activar"}
-                </button>
-              </div>
-
-              {/* Editor inline expandido */}
-              {isExpanded && (
-                <PromoForm
-                  form={editForm}
-                  setForm={setEditForm}
-                  dishes={localDishes}
-                  onSave={() => saveEdit(promo)}
-                  onCancel={closeEdit}
-                  onDelete={() => deletePromo(promo)}
-                  saving={editSaving}
-                />
-              )}
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Plato al que aplica</p>
+          {cDishId ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10, marginBottom: 12 }}>
+              {localDishes.find(d => d.id === cDishId)?.photos?.[0] && <img src={localDishes.find(d => d.id === cDishId)!.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover" }} />}
+              <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", flex: 1 }}>{localDishes.find(d => d.id === cDishId)?.name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>${localDishes.find(d => d.id === cDishId)?.price.toLocaleString("es-CL")}</span>
+              <button onClick={() => setCDishId("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "1rem", padding: 0 }}>✕</button>
             </div>
-          );
-        })}
-      </div>
+          ) : (
+            <>
+              <input placeholder="Buscar plato…" value={cDishSearch} onChange={e => setCDishSearch(e.target.value)} style={{ ...INP, borderRadius: "10px 10px 0 0", borderBottom: "none", marginBottom: 0 }} />
+              <div style={{ maxHeight: 180, overflowY: "auto", marginBottom: 12, borderRadius: "0 0 10px 10px", border: "1px solid var(--adm-card-border)", scrollbarWidth: "none" }}>
+                {localDishes.filter(d => !cDishSearch || d.name.toLowerCase().includes(cDishSearch.toLowerCase())).slice(0, 20).map(d => (
+                  <button key={d.id} onClick={() => { setCDishId(d.id); setCDishSearch(""); if (!cOriginalPrice) setCOriginalPrice(String(d.price)); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", width: "100%", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                    {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover" }} />}
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{d.name}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>${d.price?.toLocaleString("es-CL")}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <label style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Nombre que ve el cliente esos días <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(vacío = usa el nombre del plato)</span></label>
+          <input placeholder={localDishes.find(d => d.id === cDishId)?.name || "Ej: Martes de Suprema"} value={cPromoName} onChange={e => setCPromoName(e.target.value)} style={INP} />
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Precio de oferta</label>
+              <input type="text" inputMode="numeric" placeholder="19.900" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>Precio normal (tachado)</label>
+              <input type="text" inputMode="numeric" placeholder="25.900" value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+            </div>
+          </div>
+
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Días activos <span style={{ color: "var(--adm-text3)", fontWeight: 400 }}>(vacío = todos los días)</span></p>
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 14 }}>
+            {DAYS_ABBR.map((d, i) => (
+              <button key={i} onClick={() => toggleDayCreate(i)} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? GOLD : "var(--adm-hover)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Desde</label>
+              <input type="date" value={cValidFrom} onChange={e => setCValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Hasta</label>
+              <input type="date" value={cValidUntil} onChange={e => setCValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleCreate} disabled={savingNew || !cName || !cDishId} style={{ flex: 1, padding: "10px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cDishId ? 0.5 : 1 }}>
+              {savingNew ? "Guardando…" : "Crear oferta"}
+            </button>
+            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista */}
+      {loading ? <SkeletonLoading type="cards" /> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtered.map(p => {
+            const displayStatus = getPromoDisplayStatus(p);
+            const st = STATUS_STYLES[displayStatus] || STATUS_STYLES.PAUSED;
+            const isOpen = editing?.id === p.id;
+            const activeToday = isPromoActiveToday(p);
+            // Plato base: preferir dish (nuevo campo), fallback a dishes[0] (legacy)
+            const baseDish = p.dish || p.dishes?.[0] || null;
+            const promoDisplayName = p.promoName || baseDish?.name || p.name;
+
+            return (
+              <div key={p.id} style={{ background: "var(--adm-card)", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden" }}>
+                {/* Header de la card */}
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", cursor: "pointer", userSelect: "none" }}
+                  onClick={() => { if (editing?.id === p.id) setEditing(null); else startEdit(p); }}
+                >
+                  {/* Foto */}
+                  {baseDish?.photos?.[0] ? (
+                    <img src={baseDish.photos[0]} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: GOLD, flexShrink: 0 }}>🏷️</div>
+                  )}
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Nombre + badges */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize: "0.58rem", padding: "2px 7px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600, flexShrink: 0 }}>{st.label}</span>
+                      {activeToday && (
+                        <span style={{ fontSize: "0.58rem", padding: "2px 7px", borderRadius: 4, background: "rgba(74,222,128,0.18)", color: "#4ade80", fontWeight: 700, flexShrink: 0, border: "1px solid rgba(74,222,128,0.35)" }}>HOY</span>
+                      )}
+                    </div>
+
+                    {/* Subtítulo */}
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 4, alignItems: "center" }}>
+                      {baseDish && (
+                        <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)" }}>
+                          🍽 {baseDish.name}
+                          {p.promoName && p.promoName !== baseDish.name && (
+                            <span style={{ color: GOLD }}> → {p.promoName}</span>
+                          )}
+                        </span>
+                      )}
+                      {p.promoPrice != null && (
+                        <span style={{ fontFamily: F, fontSize: "0.7rem", color: GOLD, fontWeight: 600 }}>
+                          ${p.promoPrice.toLocaleString("es-CL")}
+                          {p.originalPrice != null && <span style={{ color: "var(--adm-text3)", fontWeight: 400, textDecoration: "line-through", marginLeft: 4 }}>${p.originalPrice.toLocaleString("es-CL")}</span>}
+                        </span>
+                      )}
+                      {p.daysOfWeek && p.daysOfWeek.length > 0 && (
+                        <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>
+                          {p.daysOfWeek.map(d => (
+                            <span key={d} style={{ marginRight: 1, color: d === todayIdx && activeToday ? GOLD : "var(--adm-text3)", fontWeight: d === todayIdx && activeToday ? 700 : 400 }}>
+                              {DAYS_ABBR[d]}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                      {(p.validFrom || p.validUntil) && (
+                        <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>
+                          {p.validFrom ? new Date(p.validFrom).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "…"} → {p.validUntil ? new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "…"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botón rápido pausar/activar */}
+                  {p.status === "ACTIVE" && (
+                    <button onClick={e => { e.stopPropagation(); handleStatus(p.id, "PAUSED"); }} style={{ padding: "5px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 7, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.7rem", cursor: "pointer", flexShrink: 0 }}>Pausar</button>
+                  )}
+                  {p.status === "PAUSED" && (
+                    <button onClick={e => { e.stopPropagation(); handleStatus(p.id, "ACTIVE"); }} style={{ padding: "5px 10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 7, color: "#4ade80", fontFamily: F, fontSize: "0.7rem", cursor: "pointer", flexShrink: 0 }}>Activar</button>
+                  )}
+
+                  <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
+                </div>
+
+                {/* Editor inline */}
+                {isOpen && editing?.id === p.id && (
+                  <div style={{ padding: "16px 18px 18px", borderTop: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.03)" }}>
+
+                    {/* Resumen HOY */}
+                    {p.status === "ACTIVE" && (() => {
+                      const baseDishes = localDishes.filter(d => d.id === editDishId);
+                      return (
+                        <div style={{ padding: "9px 12px", background: activeToday ? "rgba(74,222,128,0.07)" : "rgba(0,0,0,0.04)", border: `1px solid ${activeToday ? "rgba(74,222,128,0.25)" : "var(--adm-card-border)"}`, borderRadius: 9, marginBottom: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: baseDishes.length > 0 ? 8 : 0 }}>
+                            <span style={{ fontSize: "0.9rem" }}>{activeToday ? "✅" : "⏸"}</span>
+                            <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: activeToday ? "#4ade80" : "var(--adm-text2)" }}>
+                              {activeToday ? "Activa hoy" : "No activa hoy — el cliente ve el menú normal"}
+                            </span>
+                          </div>
+                          {activeToday && baseDishes.map(d => (
+                            <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", background: "rgba(74,222,128,0.06)", borderRadius: 7, border: "1px solid rgba(74,222,128,0.15)" }}>
+                              {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover" }} />}
+                              <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", flex: 1 }}>{editPromoName || d.name}</span>
+                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textDecoration: "line-through" }}>${d.price.toLocaleString("es-CL")}</span>
+                              {editPromoPrice && <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#4ade80" }}>${(parseCLP(editPromoPrice) ?? 0).toLocaleString("es-CL")}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Nombre interno */}
+                    <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Nombre interno</label>
+                    <input value={editName} onChange={e => setEditName(e.target.value)} style={I} />
+
+                    {/* Plato */}
+                    <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Plato al que aplica</p>
+                    {editDishId ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10, marginBottom: 12 }}>
+                        {localDishes.find(d => d.id === editDishId)?.photos?.[0] && <img src={localDishes.find(d => d.id === editDishId)!.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover" }} />}
+                        <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", flex: 1 }}>{localDishes.find(d => d.id === editDishId)?.name}</span>
+                        <button onClick={() => setEditDishId("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "1rem", padding: 0 }}>✕</button>
+                      </div>
+                    ) : (
+                      <>
+                        <input placeholder="Buscar plato…" value={editDishSearch} onChange={e => setEditDishSearch(e.target.value)} style={{ ...I, borderRadius: "8px 8px 0 0", borderBottom: "none", marginBottom: 0 }} />
+                        {editDishSearch.trim() && (
+                          <div style={{ maxHeight: 140, overflowY: "auto", marginBottom: 10, borderRadius: "0 0 8px 8px", border: "1px solid var(--adm-card-border)", scrollbarWidth: "none" }}>
+                            {localDishes.filter(d => d.name.toLowerCase().includes(editDishSearch.toLowerCase())).slice(0, 20).map(d => (
+                              <div key={d.id} onClick={() => { setEditDishId(d.id); setEditDishSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--adm-card-border)" }}>
+                                {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
+                                <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
+                                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Nombre que ve el cliente */}
+                    <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Nombre que ve el cliente <span style={{ fontWeight: 400 }}>(vacío = nombre del plato)</span></label>
+                    <input placeholder={localDishes.find(d => d.id === editDishId)?.name || ""} value={editPromoName} onChange={e => setEditPromoName(e.target.value)} style={I} />
+
+                    {/* Precios */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio de oferta</label>
+                        <input type="text" inputMode="numeric" placeholder="19.900" value={editPromoPrice} onChange={e => setEditPromoPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Precio normal (tachado)</label>
+                        <input type="text" inputMode="numeric" placeholder="25.900" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, marginBottom: 0 }} />
+                      </div>
+                    </div>
+
+                    {/* Días */}
+                    <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 7 }}>Días activos <span style={{ fontWeight: 400, textTransform: "none" }}>(vacío = todos)</span></p>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 14 }}>
+                      {DAYS_ABBR.map((d, i) => (
+                        <button key={i} onClick={() => toggleDayEdit(i)} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 700, background: editDaysOfWeek.includes(i) ? GOLD : "var(--adm-hover)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "var(--adm-text2)" }}>{d}</button>
+                      ))}
+                    </div>
+
+                    {/* Rango de fechas */}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Desde</label>
+                        <input type="date" value={editValidFrom} onChange={e => setEditValidFrom(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Hasta</label>
+                        <input type="date" value={editValidUntil} onChange={e => setEditValidUntil(e.target.value)} style={{ ...INP, marginBottom: 0, colorScheme: "dark" }} />
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <button onClick={saveEdit} style={{ padding: "10px 20px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+                      <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+                      {editing.status === "ACTIVE" && (
+                        <button onClick={() => { handleStatus(editing.id, "PAUSED"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(136,136,136,0.1)", border: "1px solid rgba(136,136,136,0.3)", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Pausar</button>
+                      )}
+                      {editing.status === "PAUSED" && (
+                        <button onClick={() => { handleStatus(editing.id, "ACTIVE"); setEditing(null); }} style={{ padding: "10px 16px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 8, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Activar</button>
+                      )}
+                      <button onClick={() => handleDelete(editing.id)} style={{ marginLeft: "auto", padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Eliminar</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div style={{ textAlign: "center", padding: 60 }}>
+              <p style={{ fontSize: "2rem", marginBottom: 12 }}>🏷️</p>
+              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>No hay ofertas</p>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Creá una oferta para aplicar un precio especial a un plato ciertos días</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
+const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
