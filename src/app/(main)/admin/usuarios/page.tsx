@@ -11,14 +11,25 @@ const GREEN = "#16a34a";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
+/** Compara días calendario (no períodos de 24h), respetando timezone del cliente. */
 function timeAgo(date: string | Date): string {
-  const diff = Date.now() - new Date(date).getTime();
-  const days = Math.floor(diff / 86400000);
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  const now = new Date();
+  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const tDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const days = Math.round((tDay - dDay) / 86400000);
   if (days === 0) return "Hoy";
   if (days === 1) return "Ayer";
   if (days < 7) return `Hace ${days} días`;
   if (days < 30) return `Hace ${Math.floor(days / 7)} sem`;
   return `Hace ${Math.floor(days / 30)} mes${Math.floor(days / 30) > 1 ? "es" : ""}`;
+}
+
+function fmtDate(date: string | Date): string {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function clp(n: number) { return `$${n.toLocaleString("es-CL")}`; }
@@ -45,7 +56,6 @@ const SOURCE_LABELS: Record<string, string> = {
   birthday_banner_CONVERTED: "Cumpleaños", favorites_CONVERTED: "Favoritos",
   unknown_CONVERTED: "Directo",
 };
-
 const EVENT_LABELS: Record<string, string> = {
   STORE_VIEW: "Entró al store",
   STORE_DISH_VIEW: "Vio plato",
@@ -57,13 +67,101 @@ const EVENT_LABELS: Record<string, string> = {
   STORE_SEARCH: "Buscó sin resultado",
 };
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── Shared styles ────────────────────────────────────────────────────────────
 
-function StatCard({ value, label, color = "var(--adm-text)" }: { value: string | number; label: string; color?: string }) {
+const cardStyle: React.CSSProperties = {
+  background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px",
+};
+const backBtnStyle: React.CSSProperties = {
+  background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 16,
+};
+const sectionLabelStyle: React.CSSProperties = {
+  fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em",
+};
+const metaLabelStyle: React.CSSProperties = {
+  fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", textTransform: "uppercase", display: "block",
+};
+const metaValStyle: React.CSSProperties = {
+  fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: "2px 0 0",
+};
+const rowStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)",
+};
+const listRowBtnStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+  background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10,
+  cursor: "pointer", width: "100%", textAlign: "left",
+};
+const searchInputStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", marginBottom: 12,
+  background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)",
+  borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem",
+  outline: "none", boxSizing: "border-box",
+};
+function pillStyle(color: string, size: "sm" | "md" = "md"): React.CSSProperties {
+  return { padding: size === "sm" ? "2px 8px" : "4px 12px", borderRadius: 50, fontFamily: F, fontSize: size === "sm" ? "0.65rem" : "0.72rem", fontWeight: 600, background: `${color}18`, color };
+}
+function pageBtnStyle(disabled: boolean): React.CSSProperties {
+  return { padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: disabled ? "transparent" : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: disabled ? "default" : "pointer" };
+}
+
+function StatCard({ value, label, color = "var(--adm-text)", sub }: { value: string | number; label: string; color?: string; sub?: string }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "14px 16px" }}>
       <p style={{ fontFamily: F, fontSize: "1.4rem", color, fontWeight: 700, margin: 0 }}>{value}</p>
-      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>{label}</p>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{label}</p>
+      {sub && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0", opacity: 0.7 }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD (carga paralela QR + Ecommerce)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface DashboardData {
+  qr: { total: number; verified: number };
+  ecom: { totalCustomers: number; totalRevenue: number; avgTicket: number; repeatCustomers: number };
+}
+
+function Dashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/users?page=1&limit=1").then(r => r.json()),
+      fetch("/api/admin/ecommerce-customers?page=1&limit=1").then(r => r.json()),
+    ]).then(([qrRes, ecomRes]) => {
+      setData({
+        qr: { total: qrRes.total || 0, verified: 0 },
+        ecom: ecomRes.overview || { totalCustomers: 0, totalRevenue: 0, avgTicket: 0, repeatCustomers: 0 },
+      });
+    }).catch(() => {});
+  }, []);
+
+  if (!data) return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 24 }} className="adm-grid-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 14, height: 68 }} />
+      ))}
+    </div>
+  );
+
+  const repeatPct = data.ecom.totalCustomers > 0 ? Math.round(data.ecom.repeatCustomers / data.ecom.totalCustomers * 100) : 0;
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Resumen general</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }} className="adm-grid-2">
+        <StatCard value={data.qr.total.toLocaleString("es-CL")} label="Usuarios carta QR" color={BLUE} sub="registrados" />
+        <StatCard value={data.ecom.totalCustomers.toLocaleString("es-CL")} label="Clientes ecommerce" color={GOLD} sub="únicos por teléfono" />
+        <StatCard value={`${repeatPct}%`} label="Tasa de recompra" color={GREEN} sub="pidieron 2+ veces" />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="adm-grid-2">
+        <StatCard value={clp(data.ecom.totalRevenue)} label="Revenue total ecommerce" color={GREEN} />
+        <StatCard value={clp(data.ecom.avgTicket)} label="Ticket promedio" color={GOLD} />
+        <StatCard value={data.ecom.repeatCustomers.toLocaleString("es-CL")} label="Clientes recurrentes" color={BLUE} sub="compraron más de 1 vez" />
+      </div>
     </div>
   );
 }
@@ -77,7 +175,6 @@ interface QRUser {
   verifiedAt: string | null; createdAt: string; unsubscribedAt: string | null;
   dietType: string | null;
 }
-
 interface QRUserDetail {
   user: QRUser & { birthDate: string | null; restrictions: string[]; dislikes: string[]; lastEmailAt: string | null };
   engagementScore: number;
@@ -100,13 +197,11 @@ function QRTab() {
     fetch(`/api/admin/users?search=${encodeURIComponent(search)}&page=${page}`)
       .then(r => r.json())
       .then(d => { setUsers(d.users || []); setTotal(d.total || 0); setPages(d.pages || 1); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {}).finally(() => setLoading(false));
   }, [page, search]);
 
   const openDetail = async (id: string) => {
-    setSelected(null);
-    setDetailLoading(true);
+    setSelected(null); setDetailLoading(true);
     const res = await fetch(`/api/admin/users/${id}`);
     const data = await res.json();
     if (!data.error) setSelected(data);
@@ -127,7 +222,6 @@ function QRTab() {
     return (
       <div style={{ maxWidth: 680 }}>
         <button onClick={() => setSelected(null)} style={backBtnStyle}>&larr; Volver</button>
-
         <div style={cardStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: GOLD, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>
@@ -140,7 +234,7 @@ function QRTab() {
             <span style={pillStyle(eng.color)}>{eng.label}</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
-            <div><label style={metaLabelStyle}>Registro</label><p style={metaValStyle}>{new Date(u.createdAt).toLocaleDateString("es-CL")}</p></div>
+            <div><label style={metaLabelStyle}>Registro</label><p style={metaValStyle}>{fmtDate(u.createdAt)}</p></div>
             <div><label style={metaLabelStyle}>Cumpleaños</label><p style={metaValStyle}>{u.birthDate ? new Date(u.birthDate).toLocaleDateString("es-CL", { day: "numeric", month: "long", timeZone: "UTC" }) : "—"}</p></div>
             <div><label style={metaLabelStyle}>Dieta</label><p style={metaValStyle}>{DIET_LABELS[u.dietType || ""] || "—"}</p></div>
           </div>
@@ -153,22 +247,14 @@ function QRTab() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 14 }} className="adm-grid-2">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, margin: "12px 0" }} className="adm-grid-2">
           <StatCard value={selected.sessions.length} label="Sesiones" color={GOLD} />
           <StatCard value={selected.favorites.length} label="Favoritos" color="#ef4444" />
           <StatCard value={selected.interactions.length} label="Interacciones" color={BLUE} />
           <StatCard value={selected.campaigns.length} label="Campañas" color={GREEN} />
         </div>
 
-        {selected.restaurants.length > 0 && (
-          <div style={{ ...cardStyle, marginBottom: 10 }}>
-            <label style={sectionLabelStyle}>Locales visitados</label>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-              {selected.restaurants.map(r => <span key={r.id} style={pillStyle(GOLD)}>{r.name}</span>)}
-            </div>
-          </div>
-        )}
-
+        {selected.restaurants.length > 0 && <div style={{ ...cardStyle, marginBottom: 10 }}><label style={sectionLabelStyle}>Locales visitados</label><div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>{selected.restaurants.map(r => <span key={r.id} style={pillStyle(GOLD)}>{r.name}</span>)}</div></div>}
         {selected.favorites.length > 0 && (
           <div style={{ ...cardStyle, marginBottom: 10 }}>
             <label style={sectionLabelStyle}>Platos favoritos</label>
@@ -181,19 +267,17 @@ function QRTab() {
             ))}
           </div>
         )}
-
         {selected.sessions.length > 0 && (
           <div style={{ ...cardStyle, marginBottom: 10 }}>
             <label style={sectionLabelStyle}>Últimas sesiones</label>
             {selected.sessions.map((s: any) => (
               <div key={s.id} style={rowStyle}>
                 <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{s.restaurant?.name}</span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{new Date(s.startedAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)}</span>
               </div>
             ))}
           </div>
         )}
-
         {selected.campaigns.length > 0 && (
           <div style={cardStyle}>
             <label style={sectionLabelStyle}>Campañas recibidas</label>
@@ -215,13 +299,8 @@ function QRTab() {
 
   return (
     <div style={{ maxWidth: 740 }}>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 16px" }}>{total} usuarios registrados</p>
-      <input
-        placeholder="Buscar por nombre o email..."
-        value={search}
-        onChange={e => { setSearch(e.target.value); setPage(1); }}
-        style={searchInputStyle}
-      />
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px" }}>{total.toLocaleString("es-CL")} usuarios registrados</p>
+      <input placeholder="Buscar por nombre o email..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={searchInputStyle} />
       {loading ? <SkeletonLoading type="list" /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {users.map(u => (
@@ -242,13 +321,7 @@ function QRTab() {
           {users.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>Sin usuarios</p>}
         </div>
       )}
-      {pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pageBtnStyle(page <= 1)}>Anterior</button>
-          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {pages}</span>
-          <button disabled={page >= pages} onClick={() => setPage(p => p + 1)} style={pageBtnStyle(page >= pages)}>Siguiente</button>
-        </div>
-      )}
+      {pages > 1 && <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}><button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pageBtnStyle(page <= 1)}>Anterior</button><span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {pages}</span><button disabled={page >= pages} onClick={() => setPage(p => p + 1)} style={pageBtnStyle(page >= pages)}>Siguiente</button></div>}
     </div>
   );
 }
@@ -263,7 +336,6 @@ interface EcomCustomer {
   firstOrderAt: string; lastOrderAt: string;
   guestIds: string[]; restaurants: string[];
 }
-
 interface EcomDetail {
   customer: { name: string; email: string | null; phone: string; firstOrderAt: string; lastOrderAt: string; daysSinceLastOrder: number };
   stats: { orderCount: number; paidOrderCount: number; totalSpent: number; avgTicket: number };
@@ -276,7 +348,6 @@ interface EcomDetail {
 
 function EcomTab() {
   const [customers, setCustomers] = useState<EcomCustomer[]>([]);
-  const [overview, setOverview] = useState({ totalCustomers: 0, totalRevenue: 0, avgTicket: 0, repeatCustomers: 0 });
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -289,19 +360,12 @@ function EcomTab() {
     setLoading(true);
     fetch(`/api/admin/ecommerce-customers?search=${encodeURIComponent(search)}&page=${page}`)
       .then(r => r.json())
-      .then(d => {
-        setCustomers(d.customers || []);
-        setTotal(d.total || 0);
-        setPages(d.pages || 1);
-        if (d.overview) setOverview(d.overview);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then(d => { setCustomers(d.customers || []); setTotal(d.total || 0); setPages(d.pages || 1); })
+      .catch(() => {}).finally(() => setLoading(false));
   }, [page, search]);
 
   const openDetail = async (phone: string) => {
-    setSelected(null);
-    setDetailLoading(true);
+    setSelected(null); setDetailLoading(true);
     const res = await fetch(`/api/admin/ecommerce-customers/${encodeURIComponent(phone)}`);
     const data = await res.json();
     if (!data.error) setSelected(data);
@@ -322,7 +386,6 @@ function EcomTab() {
       <div style={{ maxWidth: 720 }}>
         <button onClick={() => setSelected(null)} style={backBtnStyle}>&larr; Volver</button>
 
-        {/* Header */}
         <div style={cardStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: `${st.color}18`, display: "flex", alignItems: "center", justifyContent: "center", color: st.color, fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>
@@ -340,11 +403,15 @@ function EcomTab() {
             <StatCard value={stats.paidOrderCount} label="Pedidos" color={GOLD} />
             <StatCard value={clp(stats.totalSpent)} label="Total gastado" color={GREEN} />
             <StatCard value={clp(stats.avgTicket)} label="Ticket promedio" color={BLUE} />
-            <StatCard value={`${customer.daysSinceLastOrder ?? "?"} días`} label="Último pedido" color={customer.daysSinceLastOrder > 30 ? "#ef4444" : "var(--adm-text)"} />
+            <StatCard
+              value={timeAgo(customer.lastOrderAt)}
+              label="Último pedido"
+              color={customer.daysSinceLastOrder > 30 ? "#ef4444" : "var(--adm-text)"}
+              sub={fmtDate(customer.lastOrderAt)}
+            />
           </div>
         </div>
 
-        {/* Funnel */}
         <div style={{ ...cardStyle, marginTop: 10 }}>
           <label style={sectionLabelStyle}>Funnel de comportamiento</label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 10 }} className="adm-grid-2">
@@ -364,7 +431,6 @@ function EcomTab() {
           </div>
         </div>
 
-        {/* Platos más pedidos */}
         {topDishes.length > 0 && (
           <div style={{ ...cardStyle, marginTop: 10 }}>
             <label style={sectionLabelStyle}>Platos más pedidos</label>
@@ -379,10 +445,9 @@ function EcomTab() {
           </div>
         )}
 
-        {/* Platos vistos pero no pedidos */}
         {viewedOnlyDishes.length > 0 && (
           <div style={{ ...cardStyle, marginTop: 10 }}>
-            <label style={sectionLabelStyle}>Vio pero nunca pidió <span style={{ color: "#ef4444", fontSize: "0.65rem" }}>→ oportunidad de cupón</span></label>
+            <label style={sectionLabelStyle}>Vio pero nunca pidió <span style={{ color: "#ef4444", fontWeight: 400 }}>→ oportunidad de cupón</span></label>
             {viewedOnlyDishes.map((d, i) => (
               <div key={i} style={rowStyle}>
                 <span style={{ fontFamily: FB, fontSize: "0.84rem", color: "var(--adm-text)", flex: 1 }}>{d.dishName}</span>
@@ -392,7 +457,6 @@ function EcomTab() {
           </div>
         )}
 
-        {/* Historial de pedidos */}
         {selected.orders.length > 0 && (
           <div style={{ ...cardStyle, marginTop: 10 }}>
             <label style={sectionLabelStyle}>Historial de pedidos</label>
@@ -403,7 +467,7 @@ function EcomTab() {
                     #{o.orderNumber} · {o.restaurantName}
                   </p>
                   <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>
-                    {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })} · {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                    {fmtDate(o.createdAt)} · {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
                   </p>
                 </div>
                 <span style={pillStyle(o.paymentStatus === "paid" ? GREEN : GOLD, "sm")}>{o.paymentStatus === "paid" ? "Pagado" : o.paymentStatus}</span>
@@ -413,7 +477,6 @@ function EcomTab() {
           </div>
         )}
 
-        {/* Timeline de eventos */}
         {storeEvents.length > 0 && (
           <div style={{ ...cardStyle, marginTop: 10 }}>
             <label style={sectionLabelStyle}>Timeline de actividad en el store</label>
@@ -421,11 +484,11 @@ function EcomTab() {
               {storeEvents.slice(0, 30).map((e) => {
                 const meta = e.metadata as any;
                 const label = EVENT_LABELS[e.eventType] || e.eventType;
-                const detail = meta?.dishName || meta?.query || (meta?.cartItems ? `${meta.cartItems.length} ítems` : "") || meta?.orderId || "";
+                const detail = meta?.dishName || meta?.query || (meta?.cartItems ? `${meta.cartItems.length} ítems en carrito` : "") || meta?.orderId || "";
                 return (
                   <div key={e.id} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "4px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                     <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0, width: 72 }}>
-                      {new Date(e.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                      {fmtDate(e.createdAt)}
                     </span>
                     <span style={{ fontFamily: F, fontSize: "0.78rem", color: e.eventType.includes("ABANDON") ? "#ef4444" : e.eventType.includes("ORDER_PLACED") ? GREEN : "var(--adm-text2)" }}>
                       {label}
@@ -444,22 +507,8 @@ function EcomTab() {
 
   return (
     <div style={{ maxWidth: 740 }}>
-      {/* Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 20 }} className="adm-grid-2">
-        <StatCard value={overview.totalCustomers} label="Clientes únicos" color={GOLD} />
-        <StatCard value={clp(overview.totalRevenue)} label="Revenue total" color={GREEN} />
-        <StatCard value={clp(overview.avgTicket)} label="Ticket promedio" color={BLUE} />
-        <StatCard value={`${overview.totalCustomers > 0 ? Math.round(overview.repeatCustomers / overview.totalCustomers * 100) : 0}%`} label="Recompra" color={GOLD} />
-      </div>
-
-      {/* Search + list */}
-      <input
-        placeholder="Buscar por nombre, teléfono o email..."
-        value={search}
-        onChange={e => { setSearch(e.target.value); setPage(1); }}
-        style={searchInputStyle}
-      />
-
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px" }}>{total.toLocaleString("es-CL")} clientes únicos</p>
+      <input placeholder="Buscar por nombre, teléfono o email..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={searchInputStyle} />
       {loading ? <SkeletonLoading type="list" /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {customers.map(c => {
@@ -479,7 +528,9 @@ function EcomTab() {
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <p style={{ fontFamily: F, fontSize: "0.78rem", color: st.color, fontWeight: 600, margin: 0 }}>{c.orderCount} pedido{c.orderCount !== 1 ? "s" : ""}</p>
-                  <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: 0 }}>{timeAgo(c.lastOrderAt)}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: 0 }}>
+                    {timeAgo(c.lastOrderAt)} · {fmtDate(c.lastOrderAt)}
+                  </p>
                 </div>
               </button>
             );
@@ -491,20 +542,13 @@ function EcomTab() {
           )}
         </div>
       )}
-
-      {pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pageBtnStyle(page <= 1)}>Anterior</button>
-          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {pages}</span>
-          <button disabled={page >= pages} onClick={() => setPage(p => p + 1)} style={pageBtnStyle(page >= pages)}>Siguiente</button>
-        </div>
-      )}
+      {pages > 1 && <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}><button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pageBtnStyle(page <= 1)}>Anterior</button><span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {pages}</span><button disabled={page >= pages} onClick={() => setPage(p => p + 1)} style={pageBtnStyle(page >= pages)}>Siguiente</button></div>}
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PÁGINA PRINCIPAL — Tabs
+// PÁGINA PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function UsuariosPage() {
@@ -512,106 +556,30 @@ export default function UsuariosPage() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: "0 0 4px" }}>Usuarios</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: "0 0 20px" }}>Usuarios</h1>
 
-      {/* Tab selector */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--adm-card-border)", paddingBottom: 0 }}>
+      {/* Dashboard general */}
+      <Dashboard />
+
+      {/* Divisor */}
+      <div style={{ borderTop: "1px solid var(--adm-card-border)", marginBottom: 0 }} />
+
+      {/* Submenu tabs */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: "1px solid var(--adm-card-border)" }}>
         {([
           { key: "qr" as const, label: "Carta QR" },
           { key: "ecommerce" as const, label: "Ecommerce" },
         ]).map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            style={{
-              padding: "8px 18px",
-              background: "none",
-              border: "none",
-              borderBottom: tab === t.key ? `2px solid ${GOLD}` : "2px solid transparent",
-              color: tab === t.key ? GOLD : "var(--adm-text3)",
-              fontFamily: F,
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              marginBottom: -1,
-            }}
-          >
-            {t.label}
-          </button>
+          <button key={t.key} onClick={() => setTab(t.key)} style={{
+            padding: "10px 20px", background: "none", border: "none",
+            borderBottom: tab === t.key ? `2px solid ${GOLD}` : "2px solid transparent",
+            color: tab === t.key ? GOLD : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", marginBottom: -1,
+          }}>{t.label}</button>
         ))}
       </div>
 
       {tab === "qr" ? <QRTab /> : <EcomTab />}
     </div>
   );
-}
-
-// ─── Shared styles ────────────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  background: "var(--adm-card)",
-  border: "1px solid var(--adm-card-border)",
-  borderRadius: 14,
-  padding: "16px 18px",
-};
-
-const backBtnStyle: React.CSSProperties = {
-  background: "none", border: "none", color: GOLD, fontFamily: F,
-  fontSize: "0.85rem", cursor: "pointer", marginBottom: 16,
-};
-
-const sectionLabelStyle: React.CSSProperties = {
-  fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-};
-
-const metaLabelStyle: React.CSSProperties = {
-  fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)",
-  textTransform: "uppercase", display: "block",
-};
-
-const metaValStyle: React.CSSProperties = {
-  fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", margin: "2px 0 0",
-};
-
-const rowStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 10,
-  padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)",
-};
-
-const listRowBtnStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 12,
-  padding: "10px 12px", background: "var(--adm-card)",
-  border: "1px solid var(--adm-card-border)", borderRadius: 10,
-  cursor: "pointer", width: "100%", textAlign: "left",
-};
-
-const searchInputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 14px", marginBottom: 12,
-  background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)",
-  borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem",
-  outline: "none", boxSizing: "border-box",
-};
-
-function pillStyle(color: string, size: "sm" | "md" = "md"): React.CSSProperties {
-  return {
-    padding: size === "sm" ? "2px 8px" : "4px 12px",
-    borderRadius: 50,
-    fontFamily: F,
-    fontSize: size === "sm" ? "0.65rem" : "0.72rem",
-    fontWeight: 600,
-    background: `${color}18`,
-    color,
-  };
-}
-
-function pageBtnStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: "8px 16px", borderRadius: 8,
-    border: "1px solid var(--adm-card-border)",
-    background: disabled ? "transparent" : "var(--adm-hover)",
-    color: disabled ? "var(--adm-text3)" : "var(--adm-text)",
-    fontFamily: F, fontSize: "0.8rem",
-    cursor: disabled ? "default" : "pointer",
-  };
 }

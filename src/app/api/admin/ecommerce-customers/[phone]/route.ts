@@ -57,7 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ phon
                 "STORE_CHECKOUT_ABANDON",
                 "STORE_ORDER_PLACED",
                 "STORE_SEARCH",
-              ],
+              ] as any[],
             },
           },
           select: {
