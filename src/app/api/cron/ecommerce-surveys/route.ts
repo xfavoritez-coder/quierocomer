@@ -8,9 +8,9 @@ export const maxDuration = 60;
 
 /**
  * Cron: envía las encuestas de satisfacción pendientes.
- * Un pedido califica si: estado DONE (Entregado), tiene correo, aún no se envió
- * (surveySentAt null), la tienda tiene la encuesta activada y ya pasaron las horas
- * configuradas desde que quedó DONE.
+ * Califica un pedido si: status DONE + paymentStatus "paid", tiene correo,
+ * aún no se envió (surveySentAt null), la tienda tiene la encuesta activada
+ * y ya pasaron las horas configuradas desde que quedó DONE.
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -19,65 +19,29 @@ export async function GET(req: NextRequest) {
   }
 
   const now = Date.now();
-  const since = new Date(now - 7 * 24 * 60 * 60 * 1000); // ventana de 7 días para acotar
+  const since = new Date(now - 7 * 24 * 60 * 60 * 1000); // ventana de 7 días
 
   const candidates = await prisma.onlineOrder.findMany({
-    where: { status: "DONE", surveySentAt: null, customerEmail: { not: null }, updatedAt: { gte: since } },
+    where: {
+      status: "DONE",
+      paymentStatus: "paid",
+      surveySentAt: null,
+      customerEmail: { not: null },
+      updatedAt: { gte: since },
+    },
     orderBy: { updatedAt: "asc" },
     take: 120,
     select: {
-      id: true, customerName: true, customerEmail: true, statusHistory: true, updatedAt: true, restaurantId: true,
-      restaurant: { select: { name: true, logoUrl: true, cartaAccentColor: true, ecommerceStoreConfig: true } },
-    },
-  });
-
-  // Pedidos WhatsApp: nunca llegan a DONE, se encuestan 2h después de crearse
-  const waHoursAfter = 2;
-  const waCutoff = new Date(now - waHoursAfter * 60 * 60 * 1000);
-  const waWindow = new Date(now - (waHoursAfter + 24) * 60 * 60 * 1000);
-  const waCandidates = await prisma.onlineOrder.findMany({
-    where: {
-      surveySentAt: null,
-      customerEmail: { not: null },
-      status: { notIn: ["CANCELLED"] },
-      createdAt: { gte: waWindow, lte: waCutoff },
-      restaurant: { orderingMode: "whatsapp" },
-    },
-    orderBy: { createdAt: "asc" },
-    take: 60,
-    select: {
-      id: true, customerName: true, customerEmail: true, createdAt: true,
+      id: true, customerName: true, customerEmail: true, statusHistory: true, updatedAt: true,
       restaurant: { select: { name: true, logoUrl: true, cartaAccentColor: true, ecommerceStoreConfig: true } },
     },
   });
 
   let sent = 0, skipped = 0;
-  // Un email solo recibe una encuesta por corrida. Si tiene más órdenes pendientes,
-  // se envían en las siguientes corridas (1h después), evitando envíos masivos simultáneos.
+  // Un email solo recibe una encuesta por corrida: si tiene más órdenes pendientes
+  // se envían en las siguientes horas, evitando ráfagas al mismo cliente.
   const emailProcessedThisRun = new Set<string>();
 
-  // Encuestas WhatsApp
-  for (const o of waCandidates) {
-    const email = (o.customerEmail as string).toLowerCase().trim();
-    if (emailProcessedThisRun.has(email)) { skipped++; continue; }
-
-    // Marcar atómicamente ANTES de enviar: si otra instancia ya lo hizo, count=0 y se omite.
-    const claimed = await prisma.onlineOrder.updateMany({
-      where: { id: o.id, surveySentAt: null },
-      data: { surveySentAt: new Date() },
-    });
-    if (claimed.count === 0) { skipped++; continue; }
-
-    const cfg = parseStoreConfig(o.restaurant.ecommerceStoreConfig, { accent: o.restaurant.cartaAccentColor });
-    const link = `${storeAbsBase({ customDomain: cfg.customDomain })}/encuesta/${o.id}`;
-    const ok = await sendSurveyEmail({
-      to: o.customerEmail as string, link, storeName: o.restaurant.name, logoUrl: cfg.storeLogoUrl ?? o.restaurant.logoUrl,
-      accent: cfg.primaryColor, customerName: o.customerName, survey: cfg.survey,
-    });
-    if (ok) { sent++; emailProcessedThisRun.add(email); } else skipped++;
-  }
-
-  // Encuestas ecommerce/panel-online (pedidos marcados DONE)
   for (const o of candidates) {
     const email = (o.customerEmail as string).toLowerCase().trim();
     if (emailProcessedThisRun.has(email)) { skipped++; continue; }
@@ -114,5 +78,5 @@ export async function GET(req: NextRequest) {
     if (ok) { sent++; emailProcessedThisRun.add(email); } else skipped++;
   }
 
-  return NextResponse.json({ ok: true, scanned: candidates.length + waCandidates.length, sent, skipped });
+  return NextResponse.json({ ok: true, scanned: candidates.length, sent, skipped });
 }
