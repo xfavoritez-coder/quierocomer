@@ -920,7 +920,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
             )}
             {!allBranches && (
               <button
-                onClick={() => navigate('/pos/tomar-pedido')}
+                onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } navigate('/pos/tomar-pedido') }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
