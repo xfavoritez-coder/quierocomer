@@ -103,6 +103,7 @@ export interface StoreProduct {
   toteat_code: string | null;
   hidden?: boolean; // inactivo/oculto para el cliente (solo en gestión de carta)
   option_groups: StoreOptionGroup[];
+  promo_id?: string | null; // oferta activa hoy sobre este plato (para analytics)
 }
 
 export interface StorefrontData {
@@ -246,6 +247,27 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     },
   });
 
+  // Promos activas hoy: para saber qué plato está en oferta y guardar promo_id en el pedido
+  const promoByDishId = new Map<string, string>();
+  if (!includeHidden) {
+    const now = new Date();
+    const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+    const activePromos = await (prisma as any).promotion.findMany({
+      where: {
+        restaurantId: restaurant.id,
+        status: "ACTIVE",
+        dishId: { not: null },
+        OR: [{ validUntil: null }, { validUntil: { gt: now } }],
+      },
+      select: { id: true, dishId: true, daysOfWeek: true, validFrom: true },
+    }).then((promos: any[]) => promos.filter((p: any) => {
+      if (p.validFrom && new Date(p.validFrom) > now) return false;
+      if (p.daysOfWeek?.length > 0 && !p.daysOfWeek.includes(todayDow)) return false;
+      return true;
+    }));
+    for (const p of activePromos) promoByDishId.set(p.dishId, p.id);
+  }
+
   const storeCategories: StoreCategory[] = [];
   const products: StoreProduct[] = [];
 
@@ -295,6 +317,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         // "Pedidos online". Solo se puebla con includeHidden (gestión de carta).
         hidden: !cat.isActive || d.isActive === false || d.hideFromOrdering === true,
         option_groups: optionGroups,
+        promo_id: promoByDishId.get(d.id) ?? null,
       });
     }
   }

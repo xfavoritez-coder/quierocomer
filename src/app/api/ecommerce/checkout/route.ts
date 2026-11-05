@@ -29,6 +29,7 @@ interface CartItemIn {
   quantity: number;
   image_url?: string | null;
   toteat_code?: string | null;
+  promo_id?: string | null;
   options?: { group_id: string; group_name: string; value_id: string; value: string; price_delta: number; toteat_modifier_code?: string | null }[];
 }
 
@@ -252,6 +253,7 @@ export async function POST(req: NextRequest) {
       product_id: it.product_id,
       unit_price: unit,
       toteat_code: it.toteat_code ?? null,
+      promo_id: it.promo_id ?? null,
       options: it.options ?? [],
     }));
 

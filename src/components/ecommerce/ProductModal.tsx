@@ -114,6 +114,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       image_url: product.image_url,
       toteat_code: product.toteat_code,
       is_happy_hour: product.is_happy_hour === true,
+      promo_id: product.promo_id ?? null,
       options,
     });
     window.dispatchEvent(new CustomEvent("cart:item-added"));
