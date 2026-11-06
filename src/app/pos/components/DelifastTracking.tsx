@@ -82,7 +82,7 @@ function hm(ts?: string | null): string | null {
 // Contenedor estable (a NIVEL DE MÓDULO): si se define dentro del componente,
 // React lo ve como un tipo nuevo en cada render y re-monta el subárbol — eso
 // reiniciaba el mapa Leaflet cada pocos segundos y perdía el marcador.
-function TrackingBox({ children, eta }: { children: React.ReactNode; eta?: number | null }) {
+function TrackingBox({ children, eta, etaLabel = 'Llega en' }: { children: React.ReactNode; eta?: number | null; etaLabel?: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 14, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -90,7 +90,7 @@ function TrackingBox({ children, eta }: { children: React.ReactNode; eta?: numbe
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista Delifast</span>
         {eta != null && (
           <span style={{ marginLeft: 'auto', fontSize: 12.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
-            Llega en <b>{eta} min</b>
+            {etaLabel} <b>{eta} min</b>
           </span>
         )}
       </div>
@@ -134,6 +134,8 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 
   // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
   const etaMin = !t.timeline.llegadaLocal ? etaMinutes(t.eta) : null
+  // ETA al cliente: solo tiene sentido mientras va al cliente (ya salió del local, aún no llegó).
+  const dropoffEtaMin = t.timeline.llegadaLocal && !t.timeline.llegadaCasa ? etaMinutes(t.dropoffEta) : null
   const steps: { label: string; ts: string | null }[] = [
     { label: 'Confirmada', ts: t.timeline.confirmacion },
     { label: 'Pickup iniciado', ts: t.timeline.inicioPickup },
@@ -145,7 +147,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
 
   return (
-    <TrackingBox eta={etaMin}>
+    <TrackingBox eta={dropoffEtaMin ?? etaMin} etaLabel={dropoffEtaMin != null ? 'Llega al cliente en' : 'Llega en'}>
       {/* Repartidor */}
       {t.driver && (t.driver.name || t.driver.phone) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -257,7 +259,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
       flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {label}{enCamino && dropoffEta ? `, llega a las ${dropoffEta} aprox` : ''}
+      {enCamino && dropoffEta ? `llega a las ${dropoffEta} aprox` : label}
     </span>
   )
 }
