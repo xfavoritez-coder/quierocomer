@@ -988,7 +988,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
   // Modo distancia (Google Maps autocomplete)
   const gmapsReady = useGoogleMaps(mapMode ? tenant.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts?: AddressParts } | null>(null);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts?: AddressParts; hasNumber?: boolean } | null>(null);
   const [feeResult, setFeeResult] = useState<DistanceFeeResult | null>(null);
   const [feeLoading, setFeeLoading] = useState(false);
 
@@ -1029,7 +1029,10 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
       // Dirección armada desde los componentes (calle número, comuna, ciudad, región, país)
       // con comas; quita el código postal chileno de 7 dígitos.
       const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
-      const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value) };
+      // ¿La dirección elegida trae numeración de calle? (componente street_number).
+      // Sin número no se permite continuar: una calle sin numeración no es válida.
+      const hasNumber = Array.isArray(place?.address_components) && place.address_components.some((c: { types?: string[] }) => c.types?.includes("street_number"));
+      const d = { lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value), hasNumber };
       setDest(d);
       computeFeeFor(d);
     });
@@ -1037,7 +1040,11 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
     return () => { g.maps.event?.removeListener?.(listener); };
   }, [mapMode, tab, gmapsReady, computeFeeFor]);
 
-  const deliveryReady = mapMode ? !!(feeResult?.available && dest) : (!!selectedZone && !!address.trim());
+  // En modo comuna la dirección es texto libre: exigimos al menos un dígito (numeración).
+  const zoneAddrHasNumber = /\d/.test(address);
+  const deliveryReady = mapMode
+    ? !!(feeResult?.available && dest && dest.hasNumber)
+    : (!!selectedZone && !!address.trim() && zoneAddrHasNumber);
 
   // Al arrastrar el pin en el mapa: actualiza la ubicación y recalcula el despacho.
   function onMapMove(lat: number, lng: number) {
@@ -1047,12 +1054,12 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
   function confirm() {
     if (tab === "pickup") { confirmPickup(); requestClose(); return; }
     if (mapMode) {
-      if (!feeResult?.available || !dest) return;
+      if (!feeResult?.available || !dest || !dest.hasNumber) return;
       setDeliveryAddress({ address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: feeResult.fee, zoneName: null, minOrder: null, parts: dest.parts ?? null });
       requestClose();
       return;
     }
-    if (!selectedZone || !address.trim()) return;
+    if (!selectedZone || !address.trim() || !/\d/.test(address)) return;
     setDeliveryAddress({ address: `${address.trim()}, ${selectedZone.name}`, details: details.trim(), lat: null, lng: null, fee: selectedZone.fee, zoneName: selectedZone.name, minOrder: selectedZone.minOrder ?? null, parts: { street: address.trim(), comuna: selectedZone.name, city: "", region: "", country: "Chile" } });
     requestClose();
   }
@@ -1128,7 +1135,9 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección de entrega</span>
                 <input ref={inputRef} defaultValue={deliveryAddress?.address ?? ""} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
-                <span className="text-[11px] text-gray-400">Elige una opción de la lista para calcular el despacho.</span>
+                {dest && !dest.hasNumber
+                  ? <span className="text-[11px] text-red-500 font-semibold">Falta la numeración: elige la dirección con su número de calle.</span>
+                  : <span className="text-[11px] text-gray-400">Elige una opción de la lista para calcular el despacho.</span>}
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>
@@ -1168,6 +1177,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección</span>
                 <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle y número" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+                {address.trim() && !zoneAddrHasNumber && <span className="text-[11px] text-red-500 font-semibold">Agrega la numeración de la calle para continuar.</span>}
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>

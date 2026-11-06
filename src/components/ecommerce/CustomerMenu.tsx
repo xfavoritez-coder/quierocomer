@@ -46,10 +46,13 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
 
   return (
     <div className={`fixed inset-0 z-50 flex ${sheet ? "justify-center items-end sm:items-center" : side === "left" ? "justify-start" : "justify-end"}`}>
-      <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
+      {/* Overlay oscuro SIN backdrop-blur: animar la opacidad de un overlay con
+          blur(18px) saturaba la GPU y trababa la animación de cierre del drawer en
+          escritorio. Un overlay sólido se desvanece de forma fluida. */}
+      <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.5)" }} />
       <div className={`${sheet
         ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`}>
+        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`} style={{ willChange: "transform" }}>
         {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
