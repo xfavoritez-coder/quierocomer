@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -75,6 +75,7 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
   const divRef    = useRef<HTMLDivElement>(null)
   const mapRef    = useRef<L.Map | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [fullscreen, setFullscreen] = useState(false)
 
   // Inicializar mapa una sola vez
   useEffect(() => {
@@ -128,6 +129,31 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Ajustar tamaño del mapa al cambiar modo pantalla completa
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    // Leaflet necesita un frame para que el DOM haya actualizado su tamaño
+    const t = setTimeout(() => {
+      map.invalidateSize()
+      // Forzar redibujado del heatmap con el nuevo tamaño
+      const canvas = canvasRef.current
+      if (canvas) {
+        const topLeft = map.containerPointToLayerPoint([0, 0])
+        L.DomUtil.setPosition(canvas, topLeft)
+        drawHeatmap(canvas, map, points, getRadius(map.getZoom()))
+      }
+    }, 50)
+    return () => clearTimeout(t)
+  }, [fullscreen, points])
+
+  // Cerrar pantalla completa con Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   // Redibujar cuando cambian los puntos
   useEffect(() => {
     const map = mapRef.current
@@ -156,7 +182,44 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
     setTimeout(() => redraw(), 50)
   }, [points])
 
-  return <div ref={divRef} style={{ width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }} />
+  const wrapperStyle: React.CSSProperties = fullscreen
+    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#000', display: 'flex', flexDirection: 'column' }
+    : { position: 'relative', width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }
+
+  const mapStyle: React.CSSProperties = fullscreen
+    ? { flex: 1, width: '100%' }
+    : { width: '100%', height: '100%' }
+
+  return (
+    <div style={wrapperStyle}>
+      <div ref={divRef} style={mapStyle} />
+      <button
+        onClick={() => setFullscreen(f => !f)}
+        title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+        style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 10000,
+          width: 32, height: 32, borderRadius: 8,
+          background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.15)',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+        }}
+      >
+        {fullscreen ? (
+          // Ícono "contraer"
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.2">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
+            <path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
+          </svg>
+        ) : (
+          // Ícono "expandir"
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+          </svg>
+        )}
+      </button>
+    </div>
+  )
 }
 
 function getRadius(zoom: number): number {
