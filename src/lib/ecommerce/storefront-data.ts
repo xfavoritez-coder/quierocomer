@@ -226,7 +226,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true, soldOut: true,
-          toteatProductId: true, isHero: true, isActive: true, hideFromOrdering: true,
+          toteatProductId: true, isHero: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -250,9 +250,9 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
   // Promos activas hoy: aplicar nombre/precio override y guardar promo_id en el pedido
   type ActivePromo = { id: string; dishId: string; promoName: string | null; promoPrice: number | null; originalPrice: number | null };
   const promoByDishId = new Map<string, ActivePromo>();
+  const now = new Date();
+  const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
   if (!includeHidden) {
-    const now = new Date();
-    const todayDow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
     const activePromos = await (prisma as any).promotion.findMany({
       where: {
         restaurantId: restaurant.id,
@@ -273,9 +273,15 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
   const products: StoreProduct[] = [];
 
   for (const cat of categories) {
-    if (!cat.dishes.length) continue;
+    // Filtro por día: Dish.daysOfWeek ("mostrar solo estos días"). En gestión de
+    // carta (includeHidden) se muestran todos; en la tienda se oculta el plato los
+    // días no incluidos, igual que en la carta QR (getRestaurant.ts).
+    const visibleDishes = includeHidden
+      ? cat.dishes
+      : cat.dishes.filter((d: any) => !d.daysOfWeek?.length || d.daysOfWeek.includes(todayDow));
+    if (!visibleDishes.length) continue;
     storeCategories.push({ id: cat.id, name: cat.name, position: cat.position });
-    for (const d of cat.dishes) {
+    for (const d of visibleDishes) {
       // Precio/oferta/happy hour vigentes (lógica compartida con loadEcommerceLive).
       const pricing = dishEffectivePricing(d, activeHHs);
       const activePromo = promoByDishId.get(d.id);
