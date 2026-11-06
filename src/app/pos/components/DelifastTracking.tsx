@@ -259,7 +259,7 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
       flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {enCamino && dropoffEta ? `llega a las ${dropoffEta} aprox` : label}
+      {enCamino && dropoffEta ? `Llega a las ${dropoffEta} aprox` : label}
     </span>
   )
 }
