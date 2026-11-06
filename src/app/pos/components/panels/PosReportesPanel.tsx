@@ -328,7 +328,9 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
-        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{dt.count} pedidos · Delifast</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>
+          {dt.orders.filter((o: any) => o.totalMin != null).length} de {dt.count} entregados
+        </span>
       </div>
 
       {/* KPI summary pills */}
@@ -375,7 +377,7 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
             </div>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.transitMin != null ? `${o.transitMin}m` : '—'}</span>
-            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: timeColor(o.totalMin), textAlign: 'right', alignSelf: 'center' }}>{o.totalMin}m</span>
+            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: o.totalMin != null ? timeColor(o.totalMin) : 'var(--ink-3)', textAlign: 'right', alignSelf: 'center' }}>{o.totalMin != null ? `${o.totalMin}m` : '—'}</span>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.deliveryFee > 0 ? clp(o.deliveryFee) : '—'}</span>
           </div>
         ))}

@@ -117,23 +117,26 @@ export async function GET(req: NextRequest) {
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
   const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
 
-  // ── Tiempos de entrega (solo pedidos delivery con opsDeliveredAt) ─────────
+  // ── Tiempos de entrega (todos los pedidos delivery, completados o en curso) ─
   interface DeliveryTimeRow {
     ref: string; name: string;
     prepMin: number | null;    // createdAt → opsDispatchedAt
     transitMin: number | null; // opsDispatchedAt → opsDeliveredAt
-    totalMin: number;          // createdAt → opsDeliveredAt
+    totalMin: number | null;   // null = aún no entregado
     deliveryFee: number;
   }
   const deliveryTimeRows: DeliveryTimeRow[] = [];
   for (const o of orders) {
-    if (!o.isDelivery || !o.opsDeliveredAt) continue;
+    if (!o.isDelivery) continue;
     const created = o.createdAt.getTime();
-    const delivered = o.opsDeliveredAt.getTime();
-    if (delivered <= created) continue;
-    const totalMin = Math.round((delivered - created) / 60000);
+    let totalMin: number | null = null;
+    let transitMin: number | null = null;
+    if (o.opsDeliveredAt && o.opsDeliveredAt.getTime() > created) {
+      const delivered = o.opsDeliveredAt.getTime();
+      totalMin = Math.round((delivered - created) / 60000);
+      if (o.opsDispatchedAt) transitMin = Math.round((delivered - o.opsDispatchedAt.getTime()) / 60000);
+    }
     const prepMin = o.opsDispatchedAt ? Math.round((o.opsDispatchedAt.getTime() - created) / 60000) : null;
-    const transitMin = o.opsDispatchedAt ? Math.round((delivered - o.opsDispatchedAt.getTime()) / 60000) : null;
     deliveryTimeRows.push({
       ref: o.orderReference || "",
       name: o.customerName || "",
@@ -143,18 +146,27 @@ export async function GET(req: NextRequest) {
       deliveryFee: o.deliveryFee || 0,
     });
   }
-  deliveryTimeRows.sort((a, b) => a.totalMin - b.totalMin);
+  // Ordenar: completados primero (por totalMin asc), luego en curso al final
+  deliveryTimeRows.sort((a, b) => {
+    if (a.totalMin == null && b.totalMin == null) return 0;
+    if (a.totalMin == null) return 1;
+    if (b.totalMin == null) return -1;
+    return a.totalMin - b.totalMin;
+  });
   const dtCount = deliveryTimeRows.length;
-  const avgTotal = dtCount > 0 ? Math.round(deliveryTimeRows.reduce((s, r) => s + r.totalMin, 0) / dtCount) : null;
-  const avgPrep = dtCount > 0 && deliveryTimeRows.some(r => r.prepMin != null)
-    ? Math.round(deliveryTimeRows.filter(r => r.prepMin != null).reduce((s, r) => s + r.prepMin!, 0) / deliveryTimeRows.filter(r => r.prepMin != null).length)
+  // Promedios y % solo sobre pedidos ya entregados (con totalMin)
+  const completed = deliveryTimeRows.filter(r => r.totalMin != null);
+  const cCount = completed.length;
+  const avgTotal = cCount > 0 ? Math.round(completed.reduce((s, r) => s + r.totalMin!, 0) / cCount) : null;
+  const avgPrep = cCount > 0 && completed.some(r => r.prepMin != null)
+    ? Math.round(completed.filter(r => r.prepMin != null).reduce((s, r) => s + r.prepMin!, 0) / completed.filter(r => r.prepMin != null).length)
     : null;
-  const avgTransit = dtCount > 0 && deliveryTimeRows.some(r => r.transitMin != null)
-    ? Math.round(deliveryTimeRows.filter(r => r.transitMin != null).reduce((s, r) => s + r.transitMin!, 0) / deliveryTimeRows.filter(r => r.transitMin != null).length)
+  const avgTransit = cCount > 0 && completed.some(r => r.transitMin != null)
+    ? Math.round(completed.filter(r => r.transitMin != null).reduce((s, r) => s + r.transitMin!, 0) / completed.filter(r => r.transitMin != null).length)
     : null;
-  const pctUnder30 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 30).length / dtCount) * 100) : null;
-  const pctUnder45 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 45).length / dtCount) * 100) : null;
-  const pctUnder60 = dtCount > 0 ? Math.round((deliveryTimeRows.filter(r => r.totalMin <= 60).length / dtCount) * 100) : null;
+  const pctUnder30 = cCount > 0 ? Math.round((completed.filter(r => r.totalMin! <= 30).length / cCount) * 100) : null;
+  const pctUnder45 = cCount > 0 ? Math.round((completed.filter(r => r.totalMin! <= 45).length / cCount) * 100) : null;
+  const pctUnder60 = cCount > 0 ? Math.round((completed.filter(r => r.totalMin! <= 60).length / cCount) * 100) : null;
   const deliveryTimes = {
     count: dtCount,
     avgTotal, avgPrep, avgTransit,
