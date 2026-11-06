@@ -547,7 +547,7 @@ function DeliveryTimesSection({ dt, restaurantId }: { dt: DeliveryTimes; restaur
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
-        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>Delivery · Delifast</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>Delivery</span>
       </div>
       <p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0', fontSize: '0.82rem' }}>Sin entregas completadas en el período.</p>
     </Card>

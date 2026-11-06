@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       status: { not: "CANCELLED" },
       OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
     },
-    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true },
+    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true },
   });
   const unmirroredOnline = onlineOrders.filter((o) => !mirroredOnlineIds.has(o.id));
 
@@ -226,6 +226,55 @@ export async function GET(req: NextRequest) {
       delifastVentaId: o.delifastVentaId ?? null,
     });
   }
+  // Tiempos de entrega para OnlineOrder no-espejados (deliveryhandroll/Uber): se
+  // derivan de statusHistory — IN_DELIVERY = despacho (en reparto), DONE = entregado.
+  const shTs = (sh: unknown, status: string): number | null => {
+    if (!Array.isArray(sh)) return null;
+    for (const e of sh) {
+      if (e && typeof e === "object" && (e as any).status === status && (e as any).ts) {
+        const t = new Date((e as any).ts).getTime();
+        if (Number.isFinite(t)) return t;
+      }
+    }
+    return null;
+  };
+  for (const o of unmirroredOnline) {
+    if (o.orderType !== "DELIVERY") continue;
+    const created = o.createdAt.getTime();
+    const dispatchedMs = shTs(o.statusHistory, "IN_DELIVERY");
+    const deliveredMs = shTs(o.statusHistory, "DONE");
+    const readyMs = shTs(o.statusHistory, "READY");
+    let totalMin: number | null = null;
+    let transitMin: number | null = null;
+    if (deliveredMs && deliveredMs > created) {
+      totalMin = Math.round((deliveredMs - created) / 60000);
+      if (dispatchedMs) transitMin = Math.round((deliveredMs - dispatchedMs) / 60000);
+    }
+    const prepMin = dispatchedMs ? Math.round((dispatchedMs - created) / 60000) : null;
+    const courierName = (o.courier && typeof o.courier === "object"
+      ? String((o.courier as any).courierName ?? (o.courier as any).name ?? "")
+      : "").trim();
+    deliveryTimeRows.push({
+      orderId: o.id,
+      ref: o.orderNumber != null ? String(o.orderNumber) : "",
+      name: o.customerName || "",
+      phone: o.customerPhone || "",
+      addressLine: o.deliveryAddress || "",
+      totalAmount: o.total || 0,
+      paidAmount: o.total || 0,
+      deliveryFee: o.deliveryFee || 0,
+      tipAmount: 0,
+      vendorName: courierName || (o.fromApp ? "App" : "Web"),
+      createdAt: o.createdAt.toISOString(),
+      readyAt: readyMs ? new Date(readyMs).toISOString() : null,
+      dispatchedAt: dispatchedMs ? new Date(dispatchedMs).toISOString() : null,
+      deliveredAt: deliveredMs ? new Date(deliveredMs).toISOString() : null,
+      prepMin, transitMin, totalMin,
+      items: o.items,
+      delifastVentaId: null,
+    });
+  }
+
   // Ordenar: completados primero (por totalMin asc), luego en curso al final
   deliveryTimeRows.sort((a, b) => {
     if (a.totalMin == null && b.totalMin == null) return 0;
