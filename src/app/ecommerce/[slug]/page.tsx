@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
+import { requestIsFromApp } from "@/lib/ecommerce/appRequest";
 import type { Metadata } from "next";
 import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand, loadBrandSlugForSlug } from "@/lib/ecommerce/storefront-data";
 import type { BrandBranch } from "@/lib/ecommerce/storefront-data";
@@ -73,9 +73,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function EcommerceStorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  // ¿La request viene desde la app nativa? La cookie qc_app la setea <AppFlagSync/>
-  // cuando detecta la WebView de Capacitor. Solo entonces se cargan los platos appOnly.
-  const fromApp = (await cookies()).get("qc_app")?.value === "1";
+  // ¿La request viene desde la app nativa? Por User-Agent (token de la app, ya en
+  // el PRIMER render) o por la cookie qc_app (fallback). Solo entonces se cargan los
+  // platos appOnly. Ver src/lib/ecommerce/appRequest.ts.
+  const fromApp = await requestIsFromApp();
 
   // ── Dominio de MARCA (ej. kojo.cl) ──────────────────────────────────────────
   // Si la request llega por el dominio propio de una marca, servimos la página de
