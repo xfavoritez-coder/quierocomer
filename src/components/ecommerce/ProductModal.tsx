@@ -254,10 +254,6 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Asa para arrastrar (hint del gesto) — solo mobile */}
-        <div className="sm:hidden absolute top-0 inset-x-0 z-10 flex justify-center pt-2 pointer-events-none" style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top))" }}>
-          <span className="w-10 h-1.5 rounded-full bg-white/80 shadow" />
-        </div>
         <button onClick={requestClose} className="qc-glass-x absolute right-3 z-10 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition" style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}>
           <X className="w-5 h-5 text-gray-700" />
         </button>
