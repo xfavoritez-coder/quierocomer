@@ -432,7 +432,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     <div className={`qc-storefront min-h-screen ${impact ? "qc-impact" : "bg-gray-50"}`} style={impact ? { ...storeFontVars, background: "#0e0e0e" } : storeFontVars}>
       <StoreStyles />
       {impact && <ImpactSkin />}
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" richColors offset={{ top: "calc(env(safe-area-inset-top) + 16px)" }} mobileOffset={{ top: "calc(env(safe-area-inset-top) + 16px)" }} />
 
       <header className="sticky top-0 z-40 bg-white shadow-sm" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">

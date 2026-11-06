@@ -394,7 +394,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
           En web sin safe-area env()=0px → altura 0, invisible, sin regresión. */}
       <div aria-hidden className="fixed top-0 inset-x-0 z-[35]" style={{ height: "env(safe-area-inset-top)", background: tenant.headerBgColor || "#ffffff" }} />
       <StoreStyles />
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" richColors offset={{ top: "calc(env(safe-area-inset-top) + 16px)" }} mobileOffset={{ top: "calc(env(safe-area-inset-top) + 16px)" }} />
 
       {/* ── Header — logo centrado, NO sticky (se scrollea) ────── */}
       <header ref={headerRef} className="shadow-sm" style={{ background: tenant.headerBgColor }}>
