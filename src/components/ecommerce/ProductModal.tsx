@@ -37,6 +37,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [errorGroupId, setErrorGroupId] = useState<string | null>(null);
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const addItem = useCartStore((s) => s.addItem);
   const { closing, requestClose } = useCloseAnimation(onClose);
 
@@ -214,20 +215,56 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
     </>
   );
 
+  // ── Arrastrar hacia abajo para cerrar (solo mobile / touch) ──────────────
+  // Se arma solo si el área de scroll está arriba del todo, para no pelear con el
+  // scroll interno. Al soltar: si se arrastró lo suficiente, cierra; si no, vuelve.
+  const dragStartY = useRef<number | null>(null);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const onTouchStart = (e: React.TouchEvent) => {
+    if ((scrollerRef.current?.scrollTop ?? 0) > 0) { dragStartY.current = null; return; }
+    dragStartY.current = e.touches[0].clientY;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (dragStartY.current == null) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy <= 0) { if (!dragging) dragStartY.current = null; return; }
+    if (!dragging) setDragging(true);
+    setDragY(dy);
+  };
+  const onTouchEnd = () => {
+    if (dragStartY.current == null) { setDragging(false); return; }
+    const shouldClose = dragY > 110;
+    dragStartY.current = null;
+    setDragging(false);
+    if (shouldClose) { setDragY(typeof window !== "undefined" ? window.innerHeight : 1000); setTimeout(onClose, 220); }
+    else setDragY(0);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Overlay — solo visible en desktop */}
       <div className={`absolute inset-0 bg-black/50 hidden sm:block ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
 
       {/* Modal — pantalla completa en mobile, centrado en desktop */}
-      <div className={`relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
+      <div
+        className={`relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl ${closing ? "qc-modal-out" : "qc-modal-in"}`}
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: dragging ? "none" : "transform .22s ease-out" } : undefined}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Asa para arrastrar (hint del gesto) — solo mobile */}
+        <div className="sm:hidden absolute top-0 inset-x-0 z-10 flex justify-center pt-2 pointer-events-none" style={{ paddingTop: "calc(0.5rem + env(safe-area-inset-top))" }}>
+          <span className="w-10 h-1.5 rounded-full bg-white/80 shadow" />
+        </div>
         <button onClick={requestClose} className="qc-glass-x absolute right-3 z-10 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition" style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}>
           <X className="w-5 h-5 text-gray-700" />
         </button>
 
         {scrollImage ? (
           // Tema base: imagen + detalle scrollean juntos; solo el footer queda fijo.
-          <div className="flex-1 overflow-y-auto flex flex-col">
+          <div ref={scrollerRef} className="flex-1 overflow-y-auto overscroll-contain flex flex-col">
             {imageBlock}
             <div className="p-5 flex flex-col gap-4">{details}</div>
           </div>
@@ -235,7 +272,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
           // Otros temas: imagen fija arriba y detalle con scroll propio.
           <>
             {imageBlock}
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">{details}</div>
+            <div ref={scrollerRef} className="flex-1 overflow-y-auto overscroll-contain p-5 flex flex-col gap-4">{details}</div>
           </>
         )}
 

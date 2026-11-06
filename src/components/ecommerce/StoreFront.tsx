@@ -381,6 +381,26 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     })();
   }, [headerDark, tenant.headerBgColor]);
 
+  // Overscroll (rubber-band) en la app: al tirar hacia abajo sobre el header, la
+  // WebView revelaba el fondo BLANCO del documento detrás del status bar. Pintamos
+  // el fondo del documento con el color del header (así el rebote es invisible) y
+  // limitamos el rebote vertical. Se restaura al desmontar el storefront.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevBg = html.style.backgroundColor;
+    const prevHtmlOB = html.style.overscrollBehaviorY;
+    const prevBodyOB = body.style.overscrollBehaviorY;
+    html.style.backgroundColor = tenant.headerBgColor || "#ffffff";
+    html.style.overscrollBehaviorY = "none";
+    body.style.overscrollBehaviorY = "none";
+    return () => {
+      html.style.backgroundColor = prevBg;
+      html.style.overscrollBehaviorY = prevHtmlOB;
+      body.style.overscrollBehaviorY = prevBodyOB;
+    };
+  }, [tenant.headerBgColor]);
+
   const badge = mounted ? itemCount : 0;
 
   return (
