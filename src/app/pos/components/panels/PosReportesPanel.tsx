@@ -431,7 +431,7 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             grossTotal: valid.reduce((s, r) => s + r.grossTotal, 0),
             hourly: mergeByKey(valid.flatMap(r => r.hourly), 'hour', ['sales', 'orders']).sort((a, b) => a.hour - b.hour),
             channels: mergeByKey(valid.flatMap(r => r.channels), 'name', ['sales', 'orders']),
-            products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.revenue - a.revenue),
+            products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.qty - a.qty),
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
             deliveryTimes: (() => {
