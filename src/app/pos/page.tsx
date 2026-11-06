@@ -202,7 +202,7 @@ type DesktopPanel =
 export default function PosHomePage() {
   const navigate = usePosNav()
   const isDesktop = useIsDesktop()
-  const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled, isOwner } = usePosRestaurant()
+  const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled } = usePosRestaurant()
 
   // Auth guard: redirect to login if session resolved but no restaurant found
   useEffect(() => {
@@ -247,6 +247,22 @@ export default function PosHomePage() {
   const sectors = useSectors(restaurantId)
   const garzones = useStaff(restaurantId)
   const pendingCount = usePendingSyncCount()
+
+  // Verificación server-side de caja cuando Dexie no tiene sesión tras sync.
+  // Evita el falso "caja cerrada" cuando el evento aún no llegó a Supabase desde
+  // el terminal del staff (p.ej. el owner abre /pos en un browser nuevo).
+  // null = pendiente | true = abierta | false = cerrada confirmada
+  const [serverCajaOpen, setServerCajaOpen] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (!restaurantId || !syncReady || cashSession !== null) { setServerCajaOpen(null); return }
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => { ctrl.abort(); setServerCajaOpen(false) }, 4000)
+    fetch(`/api/pos/cash-status?restaurantId=${restaurantId}`, { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { clearTimeout(timer); setServerCajaOpen(d?.open === true ? true : false) })
+      .catch(() => { clearTimeout(timer); setServerCajaOpen(false) })
+    return () => { ctrl.abort(); clearTimeout(timer) }
+  }, [restaurantId, syncReady, cashSession])
 
   // Desktop split-panel state
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null)
@@ -509,7 +525,7 @@ export default function PosHomePage() {
           (syncReady). Así no parpadea en cada sync incremental ni al cambiar de
           sucursal (mientras sincroniza el nuevo local, syncReady=false → no se
           muestra el falso "caja cerrada"). */}
-      {cashSession === null && syncReady && !isOwner && (
+      {cashSession === null && syncReady && serverCajaOpen === false && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',
