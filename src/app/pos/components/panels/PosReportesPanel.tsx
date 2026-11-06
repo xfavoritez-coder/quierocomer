@@ -1001,6 +1001,10 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               </>
             )}
 
+            {/* Clientes */}
+            <SectionLabel>Clientes</SectionLabel>
+            <ClientsSection restaurantId={restaurantId} />
+
             {/* Comportamiento de usuarios (store events) */}
             <SectionLabel>Comportamiento de usuarios</SectionLabel>
             <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
