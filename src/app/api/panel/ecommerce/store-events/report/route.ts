@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { isSuperAdmin } from "@/lib/adminAuth";
 import { chileDayRangeUtc, chileTodayYmd } from "@/lib/driver/serialize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
+  if (isSuperAdmin(req)) return true;
   const panelId = req.cookies.get("panel_id")?.value;
   if (!panelId) return false;
   if (panelId === "demo") return true;
