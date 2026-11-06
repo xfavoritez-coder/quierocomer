@@ -215,20 +215,23 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 8,
         flex: 1, minWidth: 0,
       }}>
-        {/* Fila 1: [nombre · chip tipo] ↔ [monto · chip pago] */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-            <div style={{
-              fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
-            }}>
-              {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {toName(order.customerName || 'Cliente')}
-            </div>
+        {/* Fila 1: nombre del cliente a ancho completo (hasta 2 líneas, sin recorte) */}
+        <div style={{
+          fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
+          display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+          overflow: 'hidden', wordBreak: 'break-word',
+        }}>
+          {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+          {toName(order.customerName || 'Cliente')}
+        </div>
+
+        {/* Fila 2: [chip tipo · sucursal] ↔ [monto · chip pago] */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', rowGap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
             {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
             {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
             <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
               {clp(order.totalAmount)}
             </span>
