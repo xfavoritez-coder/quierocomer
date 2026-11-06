@@ -1030,7 +1030,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
             <OrderDetailPanel
               order={selected}
-              restaurantId={restaurantId}
+              restaurantId={selected._branchId || restaurantId}
               cajaOpen={cajaOpen}
               stageBusy={stageBusy}
               delifastEnabled={delifastEnabled}
