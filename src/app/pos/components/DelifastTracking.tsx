@@ -52,12 +52,21 @@ export function statusLabel(s?: string | null): string {
   return e.charAt(0).toUpperCase() + e.slice(1)
 }
 
-// pickup_eta puede venir como minutos ("4") o como timestamp ("2026-11-03 18:13:33").
-// Devuelve minutos hasta la hora estimada (0 si ya pasó), o null.
+// pickup_eta puede venir como minutos ("4"), timestamp ("2026-11-03 18:13:33") o
+// solo hora "HH:MM" (dropoffEta de Delifast). Devuelve minutos hasta la hora
+// estimada (0 si ya pasó), o null.
 function etaMinutes(eta?: string | null): number | null {
   if (!eta) return null
   const s = String(eta).trim()
   if (/^\d+$/.test(s)) return Number(s)
+  // "HH:MM" sin fecha: calcular minutos desde ahora hasta esa hora hoy (o mañana si ya pasó)
+  const hm = s.match(/^(\d{1,2}):(\d{2})$/)
+  if (hm) {
+    const target = new Date()
+    target.setHours(Number(hm[1]), Number(hm[2]), 0, 0)
+    if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1)
+    return Math.max(0, Math.round((target.getTime() - Date.now()) / 60000))
+  }
   const t = Date.parse(s.replace(' ', 'T'))
   if (!Number.isFinite(t)) return null
   return Math.max(0, Math.round((t - Date.now()) / 60000))
