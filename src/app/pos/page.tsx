@@ -30,6 +30,7 @@ import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
 import OrdersBoard from './components/OrdersBoard'
 import PrepAlertWatcher from './components/PrepAlertWatcher'
+import DelifastCancelWatcher from './components/DelifastCancelWatcher'
 import { LiveClock } from './components/OrderClock'
 import PosCartaPanel from './components/panels/PosCartaPanel'
 import PosCajaPanel from './components/panels/PosCajaPanel'
@@ -472,6 +473,10 @@ export default function PosHomePage() {
       {/* Alerta global de retiro atascado en preparación (corre en todas las pestañas). */}
       {restaurantId && (
         <PrepAlertWatcher restaurantId={restaurantId} orders={activeOrders} prepAlertMinutes={prepAlertMin} readyAlertMinutes={readyAlertMin} onChanged={() => refreshOrdersRef.current()} />
+      )}
+      {/* Alerta global de reparto cancelado en Delifast. */}
+      {restaurantId && (
+        <DelifastCancelWatcher restaurantId={restaurantId} orders={activeOrders} onChanged={() => refreshOrdersRef.current()} />
       )}
       {/* ── Header — siempre visible con tabs ── */}
       <PosHeader

@@ -3,6 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Motorbike } from 'lucide-react'
 
+// Keyframe para pill de cancelación pulsante — inyectado una sola vez.
+let _pulseInjected = false
+function injectPulse() {
+  if (_pulseInjected || typeof document === 'undefined') return
+  _pulseInjected = true
+  const s = document.createElement('style')
+  s.textContent = `@keyframes delifast-cancel-pulse{0%,100%{opacity:1}50%{opacity:.55}}`
+  document.head.appendChild(s)
+}
+
 type Pt = { lat: number; lng: number } | null
 interface Tracking {
   idViaje: string | null
@@ -224,11 +234,18 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 
 /** Pill compacto del estado Delifast para embeber en la tarjeta del board.
  *  Solo renderiza algo cuando Delifast está configurado y hay estado disponible. */
-export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId: string; posOrderId: string }) {
+export function DelifastStatusPill({
+  restaurantId, posOrderId, onCancelDetected,
+}: {
+  restaurantId: string
+  posOrderId: string
+  onCancelDetected?: () => void
+}) {
   const [status, setStatus] = useState<string | null>(null)
   const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
   const [dropoffEta, setDropoffEta] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const cancelFiredRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -255,10 +272,31 @@ export function DelifastStatusPill({ restaurantId, posOrderId }: { restaurantId:
   const effectiveStatus = llegadaCasa && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
     ? 'at_dropoff'
     : status
-  const sc = statusColor(effectiveStatus)
   const label = statusLabel(effectiveStatus)
   // Va en camino al cliente (no "ya llegó" ni entregado) → anexar la hora estimada.
   const enCamino = effectiveStatus !== 'at_dropoff' && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
+  const isCancelled = /cancel|anul/.test(effectiveStatus.toLowerCase())
+
+  // Notificar al padre la primera vez que se detecta cancelación.
+  if (isCancelled && !cancelFiredRef.current) {
+    cancelFiredRef.current = true
+    onCancelDetected?.()
+  }
+
+  if (isCancelled) {
+    injectPulse()
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        background: 'rgba(220,38,38,.13)', color: '#dc2626', border: '1px solid rgba(220,38,38,.35)',
+        fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '4px 10px',
+        flexShrink: 0, animation: 'delifast-cancel-pulse 1.6s ease-in-out infinite',
+      }}>
+        <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
+        Reparto cancelado
+      </span>
+    )
+  }
 
   return (
     <span style={{

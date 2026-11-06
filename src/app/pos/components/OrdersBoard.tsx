@@ -175,6 +175,8 @@ function OrderCard({
   const typeColor = isDelivery ? '#64748b' : isDineIn ? '#8b5cf6' : '#64748b'
   const next = nextAction(order.opsStage, isDelivery, order.delifastVentaId)
   const busy = stageBusy === order.id
+  // Cuando Delifast cancela el reparto el footer pasa a rojo aunque opsStage=ready.
+  const [delifastCancelled, setDelifastCancelled] = useState(false)
 
   // Realce de la tarjeta: rojo si está bloqueada (intento de avanzar sin cobrar),
   // ámbar si está impaga, normal si está pagada.
@@ -254,45 +256,72 @@ function OrderCard({
       </div>
 
       {/* Footer coloreado: estado + (si está pagado) botón de avance */}
-      <div
-        style={{
-          padding: '11px 16px',
-          minHeight: 56,
-          boxSizing: 'border-box',
-          background: (STAGE_COLOR[order.opsStage] ?? '#aaa') + '14',
-          borderTop: `1px solid ${(STAGE_COLOR[order.opsStage] ?? '#aaa')}28`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-          flexWrap: 'wrap', rowGap: 8,
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
-            {STAGE_LABEL[order.opsStage] ?? order.opsStage}
-          </span>
-          <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
-        </span>
-        {/* Pagado: avanzar es la acción principal. Impago: el avance vive en la
-            franja de cobro de abajo (interceptado). */}
-        {paid && next && (
-          <button
-            onClick={() => onStageChange(order, next.stage)}
-            disabled={busy}
+      {(() => {
+        const footerColor = delifastCancelled ? RED : (STAGE_COLOR[order.opsStage] ?? '#aaa')
+        const stageLabel = delifastCancelled
+          ? `${STAGE_LABEL[order.opsStage] ?? order.opsStage} · Reparto cancelado`
+          : (STAGE_LABEL[order.opsStage] ?? order.opsStage)
+        return (
+          <div
             style={{
-              fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-              background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
-              cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-              fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+              padding: '11px 16px',
+              minHeight: 56,
+              boxSizing: 'border-box',
+              background: footerColor + '14',
+              borderTop: `1px solid ${footerColor}28`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+              flexWrap: 'wrap', rowGap: 8,
             }}
+            onClick={e => e.stopPropagation()}
           >
-            {busy ? '…' : next.label + ' →'}
-          </button>
-        )}
-        {paid && !next && order.delifastVentaId && (
-          <DelifastStatusPill restaurantId={order._branchId ?? restaurantId} posOrderId={order.id} />
-        )}
-      </div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: footerColor }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: footerColor, flexShrink: 0 }} />
+                {stageLabel}
+              </span>
+              <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
+            </span>
+            {/* Pagado: avanzar es la acción principal. Impago: el avance vive en la
+                franja de cobro de abajo (interceptado). */}
+            {paid && next && (
+              <button
+                onClick={() => onStageChange(order, next.stage)}
+                disabled={busy}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
+                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                {busy ? '…' : next.label + ' →'}
+              </button>
+            )}
+            {paid && !next && order.delifastVentaId && (
+              <DelifastStatusPill
+                restaurantId={order._branchId ?? restaurantId}
+                posOrderId={order.id}
+                onCancelDetected={() => setDelifastCancelled(true)}
+              />
+            )}
+            {/* Cuando Delifast cancela: botón para marcar entregado manualmente. */}
+            {paid && delifastCancelled && order.opsStage !== 'delivered' && (
+              <button
+                onClick={() => onStageChange(order, 'delivered')}
+                disabled={busy}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: RED, color: '#fff',
+                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                {busy ? '…' : 'Marcar entregado →'}
+              </button>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Franja de cobro — solo si está impago. Cobrar es la acción principal. */}
       {!paid && (

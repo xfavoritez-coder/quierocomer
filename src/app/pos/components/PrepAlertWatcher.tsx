@@ -79,6 +79,10 @@ export default function PrepAlertWatcher({
   const setStage = async (stage: 'ready' | 'delivered') => {
     if (busy) return
     setBusy(true)
+    // Snooze immediately so evalAlerts doesn't re-fire if the orders refresh
+    // arrives before the stage change propagates (server latency race).
+    prepSnooze(`${order.id}:${alert.kind}`, 5 * 60 * 1000)
+    setAlert(null)
     try {
       await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -87,7 +91,6 @@ export default function PrepAlertWatcher({
       onChanged?.()
     } catch { }
     setBusy(false)
-    setAlert(null)
   }
   const postpone = () => { prepSnooze(`${order.id}:${alert.kind}`, PREP_SNOOZE_MS); setAlert(null) }
 
