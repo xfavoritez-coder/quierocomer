@@ -235,18 +235,14 @@ model TeamMember {
 
 // Eventos del POS (event sourcing offline-first). Tabla compartida entre
 // dispositivos vía Supabase Realtime. server_seq es asignado por el servidor.
-model PosEvent {
-  event_id        String   @id
-  device_id       String
-  user_id         String
-  restaurant_id   String
-  created_at_local String
-  type            String
-  payload         Json
-  server_seq      Int      @default(autoincrement())
-
-  @@index([restaurant_id, server_seq])
-}
+// ⚠️ NO AGREGAR UN MODELO PARA LOS EVENTOS DEL POS.
+// El event-store del POS vive en la tabla RAW-SQL `pos_events` (snake_case),
+// creada a mano con src/lib/pos/sql/001_pos_events.sql (BIGSERIAL + JSONB + RLS
+// + realtime). Prisma NO la administra a propósito.
+// Un `model PosEvent` colado aquí hizo que `prisma db push` creara una tabla
+// `PosEvent` vacía y BORRARA `pos_events` (incidente nov-2026, pérdida de todas
+// las cajas). Nunca corras `prisma db push` contra prod. Ver memoria
+// quierocomer-raw-sql-tables.
 
 model Restaurant {
   id                         String                    @id @default(cuid())
