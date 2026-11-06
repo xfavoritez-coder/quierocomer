@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import DelifastTracking from '../DelifastTracking'
+import StoreEventsPanel from '@/components/ecommerce/StoreEventsPanel'
 
 const DeliveryHeatmap = dynamic(() => import('../DeliveryHeatmap'), { ssr: false, loading: () => <div style={{ height: 340, borderRadius: 14, background: 'var(--sunk)', border: '1px solid var(--line)' }} /> })
 
@@ -826,6 +827,10 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
                 </div>
               </>
             )}
+
+            {/* Comportamiento de usuarios (store events) */}
+            <SectionLabel>Comportamiento de usuarios</SectionLabel>
+            <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
 
           </div>
         )}

@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, ShoppingBag, Receipt } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
+import StoreEventsPanel from "@/components/ecommerce/StoreEventsPanel";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -48,12 +49,22 @@ function addMonth(ym: string, delta: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Returns last day of a YYYY-MM month as YYYY-MM-DD */
+function lastDayOfMonth(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m, 0)); // day 0 of next month = last day of this month
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+type PageTab = "Ventas" | "Eventos";
+
 export default function ReportesPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [month, setMonth] = useState<string>(() => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit" }).format(new Date()).slice(0, 7));
   const [data, setData] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<PageTab>("Ventas");
 
   const load = useCallback(async () => {
     if (!restaurantId) return;
@@ -76,6 +87,16 @@ export default function ReportesPage() {
   const card: React.CSSProperties = { background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 16, boxShadow: "var(--adm-card-shadow)" };
   const sectionTitle: React.CSSProperties = { fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" };
 
+  const tabPillBase: React.CSSProperties = {
+    fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
+    padding: "7px 16px", borderRadius: 999, border: "1px solid var(--adm-card-border)",
+    cursor: "pointer", transition: "all .15s",
+  };
+
+  // Compute date range for StoreEventsPanel
+  const fromDate = `${month}-01`;
+  const toDate = lastDayOfMonth(month);
+
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 2px 40px" }}>
       {/* Encabezado */}
@@ -83,107 +104,123 @@ export default function ReportesPage() {
         <Link href="/panel/ecommerce" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text2)" }}><ArrowLeft size={18} /></Link>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 900, color: "var(--adm-text)", margin: 0 }}>Reportes</h1>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Ventas y productos del mes</p>
+          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Ventas y comportamiento del mes</p>
         </div>
       </div>
 
-      {/* Selector de mes */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+      {/* Selector de mes + tabs */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
         <button onClick={() => setMonth((m) => addMonth(m, -1))} style={navBtn} aria-label="Mes anterior"><ChevronLeft size={18} /></button>
-        <span style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", minWidth: 160, textAlign: "center", textTransform: "capitalize" }}>{data?.monthLabel || "…"}</span>
+        <span style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", minWidth: 160, textAlign: "center", textTransform: "capitalize" }}>{data?.monthLabel || `${month}`}</span>
         <button onClick={() => setMonth((m) => addMonth(m, 1))} disabled={isCurrent} style={{ ...navBtn, opacity: isCurrent ? 0.4 : 1, cursor: isCurrent ? "default" : "pointer" }} aria-label="Mes siguiente"><ChevronRight size={18} /></button>
         {!isCurrent && <button onClick={() => setMonth(thisMonth)} style={{ padding: "8px 14px", borderRadius: 10, border: `1px solid ${GOLD}`, background: GOLD, color: "#1a1a1a", fontFamily: F, fontSize: "0.8rem", fontWeight: 800, cursor: "pointer" }}>Este mes</button>}
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          {(["Ventas", "Eventos"] as PageTab[]).map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{ ...tabPillBase, background: activeTab === tab ? "var(--adm-text)" : "var(--adm-card)", color: activeTab === tab ? "var(--adm-card)" : "var(--adm-text3)" }}>
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {loading && !data ? (
-        <div style={{ ...card, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, padding: "40px 20px" }}>Cargando…</div>
-      ) : !data ? (
-        <div style={{ ...card, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, padding: "40px 20px" }}>No se pudo cargar el reporte.</div>
-      ) : (
-        <>
-          {/* KPIs */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
-            <div style={card}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{fmt(data.totalSales)}</strong>
-                <TrendingUp size={16} color={GOLD} />
+      {/* ── Tab: Ventas ──────────────────────────────────────────── */}
+      {activeTab === "Ventas" && (
+        loading && !data ? (
+          <div style={{ ...card, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, padding: "40px 20px" }}>Cargando…</div>
+        ) : !data ? (
+          <div style={{ ...card, textAlign: "center", color: "var(--adm-text3)", fontFamily: FB, padding: "40px 20px" }}>No se pudo cargar el reporte.</div>
+        ) : (
+          <>
+            {/* KPIs */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 20 }}>
+              <div style={card}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{fmt(data.totalSales)}</strong>
+                  <TrendingUp size={16} color={GOLD} />
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Venta del mes</span>
+                <Delta pct={data.deltas?.sales} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.totalSales ?? 0))} />
               </div>
-              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Venta del mes</span>
-              <Delta pct={data.deltas?.sales} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.totalSales ?? 0))} />
-            </div>
-            <div style={card}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{data.orderCount}</strong>
-                <ShoppingBag size={16} color="var(--adm-text3)" />
+              <div style={card}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{data.orderCount}</strong>
+                  <ShoppingBag size={16} color="var(--adm-text3)" />
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Pedidos</span>
+                <Delta pct={data.deltas?.orders} partial={data.prev?.partial} prevLabel={prevTip(data.prev, String(data.prev?.orderCount ?? 0))} />
               </div>
-              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Pedidos</span>
-              <Delta pct={data.deltas?.orders} partial={data.prev?.partial} prevLabel={prevTip(data.prev, String(data.prev?.orderCount ?? 0))} />
-            </div>
-            <div style={card}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{fmt(data.avgTicket)}</strong>
-                <Receipt size={16} color="var(--adm-text3)" />
+              <div style={card}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <strong style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, letterSpacing: "-0.04em", color: "var(--adm-text)" }}>{fmt(data.avgTicket)}</strong>
+                  <Receipt size={16} color="var(--adm-text3)" />
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Ticket promedio</span>
+                <Delta pct={data.deltas?.ticket} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.avgTicket ?? 0))} />
               </div>
-              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", fontWeight: 700 }}>Ticket promedio</span>
-              <Delta pct={data.deltas?.ticket} partial={data.prev?.partial} prevLabel={prevTip(data.prev, fmt(data.prev?.avgTicket ?? 0))} />
             </div>
-          </div>
 
-          {/* Venta por día */}
-          <div style={{ ...card, marginBottom: 20 }}>
-            <h3 style={sectionTitle}>Venta por día</h3>
-            {data.totalSales === 0 ? (
-              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
-            ) : (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2, paddingLeft: 12, paddingRight: 52 }}>
-                {data.byDay.map((d) => {
-                  const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
-                  const isToday = d.ymd === data.today;
-                  const sameWeekday = !!data.today && !isToday && weekdayNum(d.ymd) === weekdayNum(data.today);
-                  return (
-                    <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      {/* Monto exacto sobre la barra (diagonal para que quepa) */}
-                      <div style={{ height: 46, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "flex-start", overflow: "visible" }}>
-                        {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : sameWeekday ? CELESTE : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "left bottom" }}>{fmt(d.total)}</span>}
+            {/* Venta por día */}
+            <div style={{ ...card, marginBottom: 20 }}>
+              <h3 style={sectionTitle}>Venta por día</h3>
+              {data.totalSales === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin ventas este mes.</p>
+              ) : (
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 3, overflowX: "auto", paddingBottom: 2, paddingLeft: 12, paddingRight: 52 }}>
+                  {data.byDay.map((d) => {
+                    const h = d.total > 0 ? Math.max(4, Math.round((d.total / maxDay) * 120)) : 2;
+                    const isToday = d.ymd === data.today;
+                    const sameWeekday = !!data.today && !isToday && weekdayNum(d.ymd) === weekdayNum(data.today);
+                    return (
+                      <div key={d.ymd} title={`${d.day} · ${fmt(d.total)} · ${d.count} pedido${d.count !== 1 ? "s" : ""}`} style={{ flex: "1 0 20px", minWidth: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        {/* Monto exacto sobre la barra (diagonal para que quepa) */}
+                        <div style={{ height: 46, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "flex-start", overflow: "visible" }}>
+                          {d.total > 0 && <span style={{ fontFamily: FB, fontSize: "0.56rem", fontWeight: 800, color: isToday ? "#16a34a" : sameWeekday ? CELESTE : "var(--adm-text2)", whiteSpace: "nowrap", lineHeight: 1, transform: "rotate(-45deg)", transformOrigin: "left bottom" }}>{fmt(d.total)}</span>}
+                        </div>
+                        <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
+                          <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : sameWeekday ? CELESTE : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
+                        </div>
+                        <span style={{ fontFamily: FB, fontSize: "0.58rem", fontWeight: d.total > 0 ? 700 : 400, color: "var(--adm-text3)", lineHeight: 1 }}>{d.day}</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.52rem", color: "var(--adm-text3)", lineHeight: 1, opacity: 0.7 }}>{weekdayOf(d.ymd)}</span>
                       </div>
-                      <div style={{ width: "100%", height: 120, display: "flex", alignItems: "flex-end" }}>
-                        <div style={{ width: "100%", height: h, background: d.total > 0 ? (isToday ? "#16a34a" : sameWeekday ? CELESTE : GOLD) : "var(--adm-hover)", borderRadius: "4px 4px 0 0" }} />
-                      </div>
-                      <span style={{ fontFamily: FB, fontSize: "0.58rem", fontWeight: d.total > 0 ? 700 : 400, color: "var(--adm-text3)", lineHeight: 1 }}>{d.day}</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.52rem", color: "var(--adm-text3)", lineHeight: 1, opacity: 0.7 }}>{weekdayOf(d.ymd)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-          {/* Ranking de productos vendidos */}
-          <div style={card}>
-            <h3 style={sectionTitle}>Ranking de productos vendidos</h3>
-            {data.products.length === 0 ? (
-              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin productos vendidos este mes.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {data.products.map((p, i) => (
-                  <div key={p.name} style={{ display: "grid", gridTemplateColumns: "26px 1fr auto", alignItems: "center", gap: 12 }}>
-                    <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 900, color: i < 3 ? GOLD : "var(--adm-text3)", textAlign: "right" }}>{i + 1}</div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-                        <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", whiteSpace: "nowrap", flexShrink: 0 }}>{fmt(p.revenue)}</span>
+            {/* Ranking de productos vendidos */}
+            <div style={card}>
+              <h3 style={sectionTitle}>Ranking de productos vendidos</h3>
+              {data.products.length === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", margin: 0 }}>Sin productos vendidos este mes.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {data.products.map((p, i) => (
+                    <div key={p.name} style={{ display: "grid", gridTemplateColumns: "26px 1fr auto", alignItems: "center", gap: 12 }}>
+                      <div style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 900, color: i < 3 ? GOLD : "var(--adm-text3)", textAlign: "right" }}>{i + 1}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+                          <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                          <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", whiteSpace: "nowrap", flexShrink: 0 }}>{fmt(p.revenue)}</span>
+                        </div>
+                        <div style={{ height: 6, background: "var(--adm-hover)", borderRadius: 999, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${(p.qty / maxProd) * 100}%`, background: GOLD, borderRadius: 999 }} />
+                        </div>
                       </div>
-                      <div style={{ height: 6, background: "var(--adm-hover)", borderRadius: 999, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${(p.qty / maxProd) * 100}%`, background: GOLD, borderRadius: 999 }} />
-                      </div>
+                      <div style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 900, color: "var(--adm-text)", textAlign: "right", minWidth: 44 }}>{p.qty}<span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontWeight: 700 }}> u.</span></div>
                     </div>
-                    <div style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 900, color: "var(--adm-text)", textAlign: "right", minWidth: 44 }}>{p.qty}<span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontWeight: 700 }}> u.</span></div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )
+      )}
+
+      {/* ── Tab: Eventos ─────────────────────────────────────────── */}
+      {activeTab === "Eventos" && restaurantId && (
+        <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
       )}
     </div>
   );
