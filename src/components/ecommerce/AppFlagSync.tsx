@@ -8,13 +8,18 @@ import { isInApp } from "@/lib/ecommerce/isInApp";
  * la app nativa (WebView de Capacitor). El servidor lee esa cookie para decidir
  * si muestra los platos marcados como appOnly (exclusivos de la app).
  *
- * - Dentro de la app y la cookie aún no está → la setea y refresca una vez, para
- *   que la página vuelva a renderizar incluyendo los platos exclusivos.
+ * - Dentro de la app y la cookie aún no está → solo la setea. Los platos appOnly
+ *   aparecerán en la primera navegación (o en la próxima apertura), cuando el
+ *   servidor ya reciba la cookie. NO se llama router.refresh() acá: en el primer
+ *   arranque de la app un refresh durante/justo tras la hidratación interrumpía
+ *   el montaje de la WebView y dejaba TODOS los botones sin responder (el scroll
+ *   nativo seguía) hasta cerrar y reabrir la app. Diferirlo tampoco bastaba: el
+ *   refresh en sí rompe la interactividad en esa WebView. Por eso se omite.
  * - En la web normal con la cookie puesta (caso raro) → la limpia y refresca, así
- *   nunca se filtran productos solo-app a un navegador web.
+ *   nunca se filtran productos solo-app a un navegador web. En un navegador real
+ *   el refresh es inocuo (el bug es exclusivo de la WebView de Capacitor).
  *
- * `active` = lo que el servidor creyó en este render (cookie presente). Al cambiar
- * la cookie y refrescar, `active` se actualiza y el efecto deja de dispararse.
+ * `active` = lo que el servidor creyó en este render (cookie presente).
  */
 export default function AppFlagSync({ active }: { active: boolean }) {
   const router = useRouter();
@@ -25,26 +30,11 @@ export default function AppFlagSync({ active }: { active: boolean }) {
       document.cookie = inApp
         ? "qc_app=1; path=/; max-age=31536000; SameSite=Lax; Secure"
         : "qc_app=; path=/; max-age=0; SameSite=Lax; Secure";
-    } catch { return; }
-    // IMPORTANTE: NO refrescar durante la hidratación. En el primer arranque de la
-    // app nativa (cookie aún ausente) un router.refresh() inmediato interrumpía el
-    // montaje y dejaba los botones sin responder hasta reabrir la app (el scroll
-    // nativo seguía). Diferimos el refresh hasta que la página esté cargada e idle,
-    // ya con la interacción enganchada; ahí el refresh es una revalidación normal.
-    let done = false;
-    const run = () => {
-      if (done) return;
-      done = true;
-      router.refresh();
-    };
-    const schedule = () => {
-      const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
-      if (ric) ric(run, { timeout: 2000 });
-      else setTimeout(run, 800);
-    };
-    if (document.readyState === "complete") schedule();
-    else window.addEventListener("load", schedule, { once: true });
-    return () => { done = true; };
+    } catch {
+      return;
+    }
+    // Solo refrescamos en la dirección web (limpiar), nunca dentro de la app.
+    if (!inApp) router.refresh();
   }, [active, router]);
   return null;
 }
