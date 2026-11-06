@@ -41,7 +41,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
   return (
     <div className={`fixed inset-0 z-50 ${mobileOnly ? "lg:hidden" : ""}`}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col">
+      <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100 shrink-0">
           <h2 className="font-black text-lg text-gray-900">Tu pedido</h2>

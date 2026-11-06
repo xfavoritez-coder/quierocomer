@@ -7,6 +7,14 @@ import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 
 export const dynamic = "force-dynamic";
 
+// viewport-fit=cover para que env(safe-area-inset-*) funcione dentro de la app
+// nativa (WebView) — header y botones respetan el notch/home-indicator.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const tenant = await loadEcommerceTenant(slug);

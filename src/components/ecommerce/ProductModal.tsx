@@ -221,7 +221,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
 
       {/* Modal — pantalla completa en mobile, centrado en desktop */}
       <div className={`relative bg-white w-full h-full sm:h-auto sm:rounded-3xl sm:max-w-md sm:max-h-[90vh] flex flex-col shadow-2xl ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
-        <button onClick={requestClose} className="qc-glass-x absolute top-3 right-3 z-10 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition">
+        <button onClick={requestClose} className="qc-glass-x absolute right-3 z-10 bg-white/90 rounded-full p-1.5 shadow active:scale-90 transition" style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}>
           <X className="w-5 h-5 text-gray-700" />
         </button>
 
@@ -240,7 +240,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
         )}
 
         {/* Footer — cantidad + agregar */}
-        <div className="border-t border-gray-100 p-4 flex items-center gap-3 shrink-0">
+        <div className="border-t border-gray-100 p-4 flex items-center gap-3 shrink-0" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
           <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-2">
             <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2 text-gray-600">
               <Minus className="w-4 h-4" />

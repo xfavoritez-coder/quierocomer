@@ -434,7 +434,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       {impact && <ImpactSkin />}
       <Toaster position="top-center" richColors />
 
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+      <header className="sticky top-0 z-40 bg-white shadow-sm" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
           <StoreLink href={storeHref} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50 transition">
             <ArrowLeft className="w-5 h-5" />
