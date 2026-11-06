@@ -263,12 +263,12 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
         {tab === "delivery" ? (
           <div>
             <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Tu dirección</label>
-            <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
+            <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
             <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal que reparte a tu dirección.</p>
             {dest && !dest.hasNumber && <p style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 700, margin: "8px 2px 0" }}>Falta la numeración: elige la dirección con su número de calle.</p>}
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
             {dest && (
-              <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginTop: 10 }} />
+              <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box", marginTop: 10 }} />
             )}
             {dest && evalLoading && <p style={{ fontSize: "0.82rem", color: "#9ca3af", margin: "12px 2px 0" }}>Buscando sucursal que reparta a tu dirección…</p>}
             {dest && !evalLoading && noCoverage && (
