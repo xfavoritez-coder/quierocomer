@@ -272,35 +272,82 @@ function OrderTypePie({ byType }: { byType: TypeBucket[] }) {
   )
 }
 
+type ProductSortKey = 'qty' | 'revenue' | 'name'
 function ProductRanking({ products }: { products: ProductRank[] }) {
-  const maxQty = Math.max(1, ...products.map(p => p.qty))
+  const [sortKey, setSortKey] = useState<ProductSortKey>('qty')
+  const [sortAsc, setSortAsc] = useState(false)
+
+  const sorted = [...products].sort((a, b) => {
+    let diff = 0
+    if (sortKey === 'qty') diff = a.qty - b.qty
+    else if (sortKey === 'revenue') diff = a.revenue - b.revenue
+    else diff = a.name.localeCompare(b.name, 'es')
+    return sortAsc ? diff : -diff
+  })
+
+  const toggleSort = (key: ProductSortKey) => {
+    if (sortKey === key) setSortAsc(a => !a)
+    else { setSortKey(key); setSortAsc(false) }
+  }
+
+  const SortArrow = ({ col }: { col: ProductSortKey }) => {
+    const active = sortKey === col
+    return (
+      <svg width="10" height="10" viewBox="0 0 10 10" style={{ marginLeft: 3, opacity: active ? 1 : 0.3 }}>
+        {sortAsc && active
+          ? <path d="M5 2L9 8H1z" fill="currentColor"/>
+          : <path d="M5 8L1 2H9z" fill="currentColor"/>}
+      </svg>
+    )
+  }
+
+  const thSt = (col: ProductSortKey): React.CSSProperties => ({
+    fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: sortKey === col ? 'var(--ink)' : 'var(--ink-3)',
+    textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none',
+    display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
+  })
+
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Productos más vendidos</span>
-        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{products.length} · por cantidad</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{products.length} productos</span>
       </div>
       {products.length === 0 ? (
         <p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0', fontSize: '0.82rem' }}>Sin ventas en el período.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {products.map((p, i) => {
-            const pct = Math.max(4, Math.round((p.qty / maxQty) * 100))
-            return (
-              <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontFamily: F, fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
-                    <span style={{ minWidth: 0, fontFamily: F, fontSize: '0.84rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-                    <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{p.qty}<span style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--ink-3)' }}> u.{p.revenue > 0 ? ` · ${clp(p.revenue)}` : ''}</span></span>
-                  </div>
-                  <div style={{ height: 5, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
-                    <div style={{ width: `${pct}%`, height: '100%', background: 'var(--amber)', borderRadius: 999, transition: 'width .3s' }} />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
+            <thead>
+              <tr>
+                <th style={{ ...thSt('name'), textAlign: 'left', padding: '0 8px 8px 0', width: '100%' }} onClick={() => toggleSort('name')}>
+                  Producto <SortArrow col="name" />
+                </th>
+                <th style={{ ...thSt('qty'), textAlign: 'right', padding: '0 0 8px 8px' }} onClick={() => toggleSort('qty')}>
+                  Cant. <SortArrow col="qty" />
+                </th>
+                <th style={{ ...thSt('revenue'), textAlign: 'right', padding: '0 0 8px 16px' }} onClick={() => toggleSort('revenue')}>
+                  Venta <SortArrow col="revenue" />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((p, i) => (
+                <tr key={p.name} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+                  <td style={{ padding: '7px 8px 7px 0', fontSize: '0.84rem', fontWeight: 600, color: 'var(--ink)', maxWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 6, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontSize: '0.65rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                      {p.name}
+                    </span>
+                  </td>
+                  <td style={{ padding: '7px 0 7px 8px', fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{p.qty} u.</td>
+                  <td style={{ padding: '7px 0 7px 16px', fontSize: '0.84rem', fontWeight: 800, color: p.revenue > 0 ? 'var(--ink)' : 'var(--ink-4)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {p.revenue > 0 ? clp(p.revenue) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </Card>
@@ -613,18 +660,25 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
             deliveryTimes: (() => {
-              const allOrders = valid.flatMap(r => r.deliveryTimes?.orders ?? []).sort((a, b) => a.totalMin - b.totalMin)
+              const allOrders = valid.flatMap(r => r.deliveryTimes?.orders ?? []).sort((a, b) => {
+                if (a.totalMin == null && b.totalMin == null) return 0
+                if (a.totalMin == null) return 1
+                if (b.totalMin == null) return -1
+                return a.totalMin - b.totalMin
+              })
               const n = allOrders.length
               if (n === 0) return { count: 0, avgTotal: null, avgPrep: null, avgTransit: null, pctUnder30: null, pctUnder45: null, pctUnder60: null, orders: [] }
               const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : null
+              const completed = allOrders.filter(o => o.totalMin != null)
+              const c = completed.length
               return {
                 count: n,
-                avgTotal: avg(allOrders.map(o => o.totalMin)),
+                avgTotal: avg(completed.map(o => o.totalMin!)),
                 avgPrep: avg(allOrders.filter(o => o.prepMin != null).map(o => o.prepMin!)),
                 avgTransit: avg(allOrders.filter(o => o.transitMin != null).map(o => o.transitMin!)),
-                pctUnder30: Math.round((allOrders.filter(o => o.totalMin <= 30).length / n) * 100),
-                pctUnder45: Math.round((allOrders.filter(o => o.totalMin <= 45).length / n) * 100),
-                pctUnder60: Math.round((allOrders.filter(o => o.totalMin <= 60).length / n) * 100),
+                pctUnder30: c > 0 ? Math.round((completed.filter(o => o.totalMin! <= 30).length / c) * 100) : null,
+                pctUnder45: c > 0 ? Math.round((completed.filter(o => o.totalMin! <= 45).length / c) * 100) : null,
+                pctUnder60: c > 0 ? Math.round((completed.filter(o => o.totalMin! <= 60).length / c) * 100) : null,
                 orders: allOrders,
               }
             })(),
