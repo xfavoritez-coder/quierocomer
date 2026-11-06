@@ -304,8 +304,7 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
 
   const thSt = (col: ProductSortKey): React.CSSProperties => ({
     fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: sortKey === col ? 'var(--ink)' : 'var(--ink-3)',
-    textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none',
-    display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
+    textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
   })
 
   return (
@@ -321,14 +320,14 @@ function ProductRanking({ products }: { products: ProductRank[] }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
             <thead>
               <tr>
-                <th style={{ ...thSt('name'), textAlign: 'left', padding: '0 8px 8px 0', width: '100%' }} onClick={() => toggleSort('name')}>
-                  Producto <SortArrow col="name" />
+                <th style={{ textAlign: 'left', padding: '0 8px 8px 0' }} onClick={() => toggleSort('name')}>
+                  <span style={{ ...thSt('name'), display: 'inline-flex', alignItems: 'center' }}>Producto <SortArrow col="name" /></span>
                 </th>
-                <th style={{ ...thSt('qty'), textAlign: 'right', padding: '0 0 8px 8px' }} onClick={() => toggleSort('qty')}>
-                  Cant. <SortArrow col="qty" />
+                <th style={{ textAlign: 'right', padding: '0 0 8px 8px', width: 60 }} onClick={() => toggleSort('qty')}>
+                  <span style={{ ...thSt('qty'), display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>Cant. <SortArrow col="qty" /></span>
                 </th>
-                <th style={{ ...thSt('revenue'), textAlign: 'right', padding: '0 0 8px 16px' }} onClick={() => toggleSort('revenue')}>
-                  Venta <SortArrow col="revenue" />
+                <th style={{ textAlign: 'right', padding: '0 0 8px 16px', width: 90 }} onClick={() => toggleSort('revenue')}>
+                  <span style={{ ...thSt('revenue'), display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>Venta <SortArrow col="revenue" /></span>
                 </th>
               </tr>
             </thead>
