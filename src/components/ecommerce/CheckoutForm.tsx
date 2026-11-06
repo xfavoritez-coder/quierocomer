@@ -9,6 +9,7 @@ import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { isInApp } from "@/lib/ecommerce/isInApp";
 import { clp } from "@/lib/ecommerce/format";
 import StoreLink from "./StoreLink";
+import { trackCouponAttempt } from "@/lib/ecommerce/storeAnalytics";
 import { getGuestId } from "@/lib/guestId";
 import { trackCheckoutStart, trackCheckoutAbandon, trackOrderPlaced } from "@/lib/ecommerce/storeAnalytics";
 
@@ -336,9 +337,11 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           maxDiscountAmount: c.maxDiscountAmount, discountIncludesDelivery: c.discountIncludesDelivery === true,
         });
         setCouponMsg(null);
+        trackCouponAttempt(tenant.id, code, true);
       } else {
         setCoupon(null);
         setCouponMsg(data.error || "Cupón no válido");
+        trackCouponAttempt(tenant.id, code, false, data.error);
       }
     } catch { setCouponMsg("Error al validar el cupón"); }
     setCouponBusy(false);

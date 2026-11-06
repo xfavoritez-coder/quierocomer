@@ -13,7 +13,7 @@ import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import { useCloseAnimation } from "@/lib/ecommerce/useCloseAnimation";
 import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
-import { trackStoreView, trackDishView, trackCartAdd, trackSearch } from "@/lib/ecommerce/storeAnalytics";
+import { trackStoreView, trackDishView, trackCartAdd, trackCartView, trackSessionEnd, trackScrollCategory, trackSearch, trackModifierOpen } from "@/lib/ecommerce/storeAnalytics";
 
 // Controles de "marca" (multisucursal): la tienda se muestra directo en
 // /ecommerce/marca/<brand> con el menú compartido, pero la sucursal se elige recién
@@ -89,12 +89,18 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const [activeTab, setActiveTab] = useState<"home" | "favorites" | "contact" | "profile">("home");
   const openMenu = useCallback((v: CustomerMenuView) => { setMenuView(v); setMenuLoginExpanded(false); setMenuOpen(true); }, []);
   const dishOpenAtRef = useRef<number>(0);
+  const dishAddedToCartRef = useRef<boolean>(false);
+  const sessionStartRef = useRef<number>(Date.now());
+  const dishesViewedRef = useRef<number>(0);
   const openProduct = useCallback((p: StoreProduct) => {
     selectedProductRef.current = p;
     dishOpenAtRef.current = Date.now();
+    dishAddedToCartRef.current = false;
+    dishesViewedRef.current += 1;
     setSelectedProduct(p);
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
-  }, []);
+    if (p.option_groups && p.option_groups.length > 0) trackModifierOpen(tenant.id, p.id, p.name);
+  }, [tenant.id]);
   const [cartBump, setCartBump] = useState(false);
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
@@ -139,6 +145,35 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     setMounted(true);
     trackStoreView(tenant.id);
   }, [tenant.id]);
+
+  // Scroll category tracking via IntersectionObserver.
+  // Fires trackScrollCategory once per category, >50% visible for ≥2s.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const id = entry.target.id.replace("cat-", "");
+        if (entry.isIntersecting) {
+          if (!timers.has(id)) {
+            timers.set(id, setTimeout(() => {
+              trackScrollCategory(tenant.id, id, catMap.get(id) ?? id);
+              timers.delete(id);
+            }, 2000));
+          }
+        } else {
+          const t = timers.get(id);
+          if (t) { clearTimeout(t); timers.delete(id); }
+        }
+      }
+    }, { threshold: 0.5 });
+    categories.forEach((c) => {
+      const el = document.getElementById(`cat-${c.id}`);
+      if (el) observer.observe(el);
+    });
+    return () => { observer.disconnect(); timers.forEach(clearTimeout); };
+  }, [tenant.id, categories]);
   // En modo marca el contenedor liga el carrito a la sucursal elegida (adoptRestaurant),
   // así que aquí NO lo hacemos (evita que setRestaurantId vacíe el carrito al cambiar
   // el catálogo representante → sucursal). En modo normal, se liga a este tenant.
@@ -156,8 +191,10 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   // Ir al checkout: en modo marca sin sucursal, primero se elige sucursal.
   const goCheckout = useCallback(() => {
     if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
+    const cartValue = useCartStore.getState().subtotal?.() ?? 0;
+    trackCartView(tenant.id, useCartStore.getState().itemCount(), cartValue);
     window.location.href = `${storeBase}/checkout`;
-  }, [brandMode, hasBranch, brandControls, storeBase]);
+  }, [brandMode, hasBranch, brandControls, storeBase, tenant.id]);
 
   // Si se llega con ?menu=<vista> (p.ej. desde la página de seguimiento del
   // pedido), abrir el menú en esa vista y limpiar la URL para que no reabra al
@@ -228,12 +265,25 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       setTimeout(() => setCartBump(false), 450);
       const p = selectedProductRef.current;
       if (p) {
+        dishAddedToCartRef.current = true;
         fbTrack("AddToCart", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
         trackCartAdd(tenant.id, p.id, p.name, p.price);
       }
     }
     window.addEventListener("cart:item-added", handleAdded);
     return () => window.removeEventListener("cart:item-added", handleAdded);
+  }, [tenant.id]);
+
+  // Session end: fire on page unload (sendBeacon guarantees delivery)
+  useEffect(() => {
+    const getCartValue = () => {
+      try { return useCartStore.getState().subtotal?.() ?? 0; } catch { return 0; }
+    };
+    const handleUnload = () => {
+      trackSessionEnd(tenant.id, Date.now() - sessionStartRef.current, dishesViewedRef.current, getCartValue());
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
   }, [tenant.id]);
 
   const filtered = useMemo(() => {
@@ -508,7 +558,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
             const p = selectedProductRef.current;
             if (p) {
               const dwellMs = Date.now() - dishOpenAtRef.current;
-              trackDishView(tenant.id, p.id, p.name, dwellMs > 500 ? dwellMs : undefined);
+              trackDishView(tenant.id, p.id, p.name, dwellMs > 500 ? dwellMs : undefined, dishAddedToCartRef.current);
             }
             setSelectedProduct(null);
           }}
