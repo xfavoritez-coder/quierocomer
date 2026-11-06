@@ -15,6 +15,15 @@ import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
 
+// viewport-fit=cover habilita env(safe-area-inset-*) dentro de la app nativa
+// (Capacitor WebView iOS/Android) para que el contenido no quede bajo el notch/
+// status bar. En web sin safe-area no tiene efecto visible.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   // Dominio de marca (ej. kojo.cl): metadata de la marca.

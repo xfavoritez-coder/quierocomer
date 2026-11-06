@@ -360,10 +360,32 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     return () => window.removeEventListener("scroll", onScroll);
   }, [categories, alignCatChip]);
 
+  // Status bar nativo (app Capacitor): reloj/íconos legibles sobre la franja del
+  // header. En iOS el layout lo resuelve el CSS (env safe-area); en Android se usa
+  // barra sólida no-superpuesta (más fiable que env en Android 15 edge-to-edge).
+  // En web (sin Capacitor) no hace nada.
+  useEffect(() => {
+    const Cap = (window as unknown as { Capacitor?: Record<string, any> }).Capacitor;
+    const SB = Cap?.Plugins?.StatusBar;
+    if (!SB || !Cap?.isNativePlatform?.()) return;
+    (async () => {
+      try {
+        await SB.setStyle({ style: headerDark ? "LIGHT" : "DARK" });
+        if (Cap.getPlatform?.() === "android") {
+          if (tenant.headerBgColor) await SB.setBackgroundColor({ color: tenant.headerBgColor });
+          await SB.setOverlaysWebView({ overlay: false });
+        }
+      } catch {}
+    })();
+  }, [headerDark, tenant.headerBgColor]);
+
   const badge = mounted ? itemCount : 0;
 
   return (
-    <div className="qc-storefront min-h-screen bg-gray-50" style={storeFontVars}>
+    <div className="qc-storefront min-h-screen bg-gray-50" style={{ ...storeFontVars, paddingTop: "env(safe-area-inset-top)" }}>
+      {/* Franja que cubre el área del status bar (notch) en la app nativa iOS/Android.
+          En web sin safe-area env()=0px → altura 0, invisible, sin regresión. */}
+      <div aria-hidden className="fixed top-0 inset-x-0 z-[35]" style={{ height: "env(safe-area-inset-top)", background: tenant.headerBgColor || "#ffffff" }} />
       <StoreStyles />
       <Toaster position="top-center" richColors />
 
@@ -451,7 +473,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       </div>
 
       {/* ── Barra de categorías — sticky al top (el header se scrollea) ── */}
-      <div ref={catNavRef} className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+      <div ref={catNavRef} className="sticky z-30 bg-white border-b border-gray-100 shadow-sm" style={{ top: "env(safe-area-inset-top)" }}>
         <div className="max-w-6xl mx-auto px-4 flex items-center">
           <button
             onClick={() => { setSearchOpen((o) => !o); if (searchOpen) setSearch(""); }}
@@ -580,7 +602,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
       {/* 5 iconos planos e iguales (estilo Instagram), con nuestro color en el
           activo. El carrito es uno más de la fila y lleva su badge de cantidad. */}
-      <nav className="sm:hidden fixed bottom-3 inset-x-4 z-40 flex justify-center pointer-events-none">
+      <nav className="sm:hidden fixed inset-x-4 z-40 flex justify-center pointer-events-none" style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
         <div className="pointer-events-auto relative flex items-center justify-around w-full max-w-md mx-auto bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-2 h-16">
           <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
           <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { if (loggedIn === false) { promptLogin(""); return; } setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
