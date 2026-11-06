@@ -370,7 +370,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     if (!SB || !Cap?.isNativePlatform?.()) return;
     (async () => {
       try {
-        await SB.setStyle({ style: headerDark ? "LIGHT" : "DARK" });
+        // Capacitor: Style.Dark = texto/íconos CLAROS (para fondos oscuros);
+        // Style.Light = texto OSCURO (para fondos claros).
+        await SB.setStyle({ style: headerDark ? "DARK" : "LIGHT" });
         if (Cap.getPlatform?.() === "android") {
           if (tenant.headerBgColor) await SB.setBackgroundColor({ color: tenant.headerBgColor });
           await SB.setOverlaysWebView({ overlay: false });
