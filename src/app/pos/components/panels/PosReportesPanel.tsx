@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+
+const DeliveryHeatmap = dynamic(() => import('../DeliveryHeatmap'), { ssr: false, loading: () => <div style={{ height: 340, borderRadius: 14, background: 'var(--sunk)', border: '1px solid var(--line)' }} /> })
 
 // ── Helpers ─────────────────────────────────────────────────────────
 const clp = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-CL')
@@ -397,9 +400,12 @@ function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]
 // ── Main panel ────────────────────────────────────────────────────────
 interface BranchInfo { id: string; name: string; branchName?: string | null }
 
+interface HeatPt { lat: number; lng: number }
+
 export default function PosReportesPanel({ restaurantId, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
+  const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const today = chileTodayLocal()
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
@@ -451,6 +457,15 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         const d = await r.json()
         if (r.ok) setData(d)
       }
+      // Coordenadas para el mapa de calor (pedidos delivery con lat/lng)
+      const branches = allBranches && allBranches.length > 1 ? allBranches : [{ id: restaurantId }]
+      const heatResults = await Promise.all(
+        branches.map(b =>
+          fetch(`/api/panel/ecommerce/pos-orders/delivery-locations?restaurantId=${b.id}&from=${fromDate}&to=${toDate}`)
+            .then(r => r.ok ? r.json() : { points: [] }).catch(() => ({ points: [] }))
+        )
+      )
+      setHeatPoints(heatResults.flatMap((r: { points: HeatPt[] }) => r.points))
     } catch { /* noop */ }
     setLoading(false)
   }, [restaurantId, fromDate, toDate, allBranches])
@@ -556,6 +571,19 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               <>
                 <SectionLabel>Delivery</SectionLabel>
                 <DeliveryTimesSection dt={data.deliveryTimes} />
+              </>
+            )}
+
+            {/* Mapa de calor de pedidos delivery */}
+            {heatPoints.length > 0 && (
+              <>
+                <SectionLabel>Dónde salen los pedidos</SectionLabel>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14 }}>
+                  <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: F, marginBottom: 10 }}>
+                    {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación — las zonas más calientes concentran más pedidos
+                  </div>
+                  <DeliveryHeatmap points={heatPoints} />
+                </div>
               </>
             )}
 
