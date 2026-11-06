@@ -21,13 +21,15 @@ interface State {
   loading: boolean
   // null = desconocido (sin sesión de panel); true/false = habilitado por el local.
   posEnabled: boolean | null
+  // true = owner (dueño del local), false = team member (staff). null = desconocido.
+  isOwner: boolean | null
 }
 
 // Global singleton — fetched once for the lifetime of the SPA session.
 // Arranca VACÍO (no con el FALLBACK): así ninguna pantalla muestra datos de un
 // restaurante equivocado mientras resuelve el real (evita el flash de otra caja).
 let _restaurantId = ''
-let _state: State = { restaurantId: '', restaurant: null, restaurants: [], loading: true, posEnabled: null }
+let _state: State = { restaurantId: '', restaurant: null, restaurants: [], loading: true, posEnabled: null, isOwner: null }
 let _listeners = new Set<() => void>()
 let _fetched = false
 
@@ -64,7 +66,7 @@ function init() {
           const r = await fetch(`/api/pos/restaurant?id=${id}`).then(r => r.ok ? r.json() : null)
           if (r?.id) {
             syncEventsRestaurant(id)
-            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, restaurants: [], loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null }
+            _state = { restaurantId: id, restaurant: { id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null }, restaurants: [], loading: false, posEnabled: typeof r.posEnabled === "boolean" ? r.posEnabled : null, isOwner: null }
             notify()
             return
           }
@@ -86,6 +88,7 @@ function init() {
         restaurants: (data.restaurants as any[]).map((r: any) => ({ id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null })),
         loading: false,
         posEnabled: rest && typeof rest.posEnabled === "boolean" ? rest.posEnabled : null,
+        isOwner: !data.teamMember,
       }
       notify()
     })

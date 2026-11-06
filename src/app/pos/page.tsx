@@ -202,7 +202,7 @@ type DesktopPanel =
 export default function PosHomePage() {
   const navigate = usePosNav()
   const isDesktop = useIsDesktop()
-  const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled } = usePosRestaurant()
+  const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled, isOwner } = usePosRestaurant()
 
   // Auth guard: redirect to login if session resolved but no restaurant found
   useEffect(() => {
@@ -509,7 +509,7 @@ export default function PosHomePage() {
           (syncReady). Así no parpadea en cada sync incremental ni al cambiar de
           sucursal (mientras sincroniza el nuevo local, syncReady=false → no se
           muestra el falso "caja cerrada"). */}
-      {cashSession === null && syncReady && (
+      {cashSession === null && syncReady && !isOwner && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',
