@@ -156,7 +156,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const [tab, setTab] = useState<"delivery" | "pickup">(hasDelivery ? "delivery" : "pickup");
   const gmapsReady = useGoogleMaps(tab === "delivery" ? brand.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts } | null>(null);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts; hasNumber: boolean } | null>(null);
   const [details, setDetails] = useState("");
 
   // Evalúa TODAS las sucursales con delivery para la dirección escrita y determina
@@ -219,7 +219,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
       const loc = place?.geometry?.location;
       if (!loc) return;
       const cleanAddr = formatPlaceAddress(place, inputRef.current!.value);
-      setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value) });
+      // ¿La dirección elegida trae numeración de calle? (componente street_number).
+      const hasNumber = Array.isArray(place?.address_components) && place.address_components.some((c: { types?: string[] }) => c.types?.includes("street_number"));
+      setDest({ lat: loc.lat(), lng: loc.lng(), address: cleanAddr, parts: placeAddressParts(place, inputRef.current!.value), hasNumber });
     });
     inputRef.current.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
     return () => { g.maps.event?.removeListener?.(listener); };
@@ -232,7 +234,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   }, []);
 
   function confirmDelivery() {
-    if (!chosen || !dest || !chosen.available) return;
+    if (!chosen || !dest || !chosen.available || !dest.hasNumber) return;
     // zones: sin costo aquí → el cliente elige comuna en la tienda (deliveryType se
     // queda sin seleccionar hasta ese paso). onChoose en modo delivery SIN dirección
     // adopta la sucursal pero no fija la entrega (el selector normal la pedirá).
@@ -263,6 +265,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
             <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Tu dirección</label>
             <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
             <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal que reparte a tu dirección.</p>
+            {dest && !dest.hasNumber && <p style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 700, margin: "8px 2px 0" }}>Falta la numeración: elige la dirección con su número de calle.</p>}
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
             {dest && (
               <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginTop: 10 }} />
@@ -282,7 +285,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
                     <span style={{ fontWeight: 900, color: accent }}>{chosen.fee > 0 ? clp(chosen.fee) : "Gratis"}</span>
                   </div>
                 )}
-                <button onClick={confirmDelivery} disabled={evalLoading || switching} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", opacity: evalLoading || switching ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <button onClick={confirmDelivery} disabled={evalLoading || switching || !dest?.hasNumber} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: dest?.hasNumber ? "pointer" : "not-allowed", opacity: evalLoading || switching || !dest?.hasNumber ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   {switching ? <Loader2 size={16} className="animate-spin" /> : null}
                   Continuar con {chosen.branch.branchName || chosen.branch.name} →
                 </button>
