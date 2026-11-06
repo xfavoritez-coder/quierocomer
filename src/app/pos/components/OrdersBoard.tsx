@@ -259,7 +259,7 @@ function OrderCard({
       {(() => {
         const footerColor = delifastCancelled ? RED : (STAGE_COLOR[order.opsStage] ?? '#aaa')
         const stageLabel = delifastCancelled
-          ? `${STAGE_LABEL[order.opsStage] ?? order.opsStage} · Reparto cancelado`
+          ? 'Reparto cancelado'
           : (STAGE_LABEL[order.opsStage] ?? order.opsStage)
         return (
           <div
@@ -297,17 +297,22 @@ function OrderCard({
                 {busy ? '…' : next.label + ' →'}
               </button>
             )}
-            {paid && !next && order.delifastVentaId && (
+            {/* Pill invisible que solo detecta cancelación — sin render visual. */}
+            {paid && !next && order.delifastVentaId && !delifastCancelled && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
                 onCancelDetected={() => setDelifastCancelled(true)}
               />
             )}
-            {/* Cuando Delifast cancela: botón para marcar entregado manualmente. */}
+            {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
             {paid && delifastCancelled && order.opsStage !== 'delivered' && (
               <button
-                onClick={() => onStageChange(order, 'delivered')}
+                onClick={() => {
+                  if (window.confirm('¿Estás seguro que quieres marcar este pedido como entregado?')) {
+                    onStageChange(order, 'delivered')
+                  }
+                }}
                 disabled={busy}
                 style={{
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
@@ -316,7 +321,7 @@ function OrderCard({
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
               >
-                {busy ? '…' : 'Marcar entregado →'}
+                {busy ? '…' : 'Entregado →'}
               </button>
             )}
           </div>

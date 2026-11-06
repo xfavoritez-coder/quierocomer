@@ -284,6 +284,8 @@ export function DelifastStatusPill({
   }
 
   if (isCancelled) {
+    // Cuando hay callback de detección el pill es invisible (el padre maneja la UI).
+    if (onCancelDetected) return null
     injectPulse()
     return (
       <span style={{
