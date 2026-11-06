@@ -252,17 +252,32 @@ export default function PosHomePage() {
   // Verificación server-side de caja cuando Dexie no tiene sesión tras sync.
   // Evita el falso "caja cerrada" cuando el evento aún no llegó a Supabase desde
   // el terminal del staff (p.ej. el owner abre /pos en un browser nuevo).
-  // null = pendiente | true = abierta | false = cerrada confirmada
+  // null = pendiente/desconocido | true = abierta | false = cerrada confirmada
+  // IMPORTANTE: en error o timeout NO ponemos false (eso causaba falsos positivos);
+  // dejamos null y reintentamos cada 15s hasta obtener respuesta definitiva.
   const [serverCajaOpen, setServerCajaOpen] = useState<boolean | null>(null)
   useEffect(() => {
     if (!restaurantId || !syncReady || cashSession !== null) { setServerCajaOpen(null); return }
-    const ctrl = new AbortController()
-    const timer = setTimeout(() => { ctrl.abort(); setServerCajaOpen(false) }, 4000)
-    fetch(`/api/pos/cash-status?restaurantId=${restaurantId}`, { signal: ctrl.signal })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { clearTimeout(timer); setServerCajaOpen(d?.open === true ? true : false) })
-      .catch(() => { clearTimeout(timer); setServerCajaOpen(false) })
-    return () => { ctrl.abort(); clearTimeout(timer) }
+    let cancelled = false
+    const check = () => {
+      const ctrl = new AbortController()
+      // Timeout generoso: solo cancela la petición, NO muestra el banner.
+      const timer = setTimeout(() => ctrl.abort(), 8000)
+      fetch(`/api/pos/cash-status?restaurantId=${restaurantId}`, { signal: ctrl.signal })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          clearTimeout(timer)
+          if (!cancelled) setServerCajaOpen(d?.open === true ? true : (d?.open === false ? false : null))
+        })
+        .catch(() => {
+          clearTimeout(timer)
+          // Error de red o timeout: dejamos null (no mostrar banner por incertidumbre)
+        })
+    }
+    check()
+    // Reintentar cada 15s mientras la caja siga sin verse abierta en Dexie.
+    const t = setInterval(check, 15_000)
+    return () => { cancelled = true; clearInterval(t) }
   }, [restaurantId, syncReady, cashSession])
 
   // Desktop split-panel state
