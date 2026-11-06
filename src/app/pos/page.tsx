@@ -267,10 +267,13 @@ export default function PosHomePage() {
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           clearTimeout(timer)
-          if (!cancelled) setServerCajaOpen(d?.open === true ? true : (d?.open === false ? false : null))
+          if (cancelled) return
+          console.log('[POS cash-status]', JSON.stringify(d))
+          setServerCajaOpen(d?.open === true ? true : (d?.open === false ? false : null))
         })
         .catch(() => {
           clearTimeout(timer)
+          console.log('[POS cash-status] fetch error/timeout')
           // Error de red o timeout: dejamos null (no mostrar banner por incertidumbre)
         })
     }

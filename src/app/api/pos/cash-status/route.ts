@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  if (!supabase) return NextResponse.json({ open: false });
+  if (!supabase) return NextResponse.json({ open: null, reason: "no_supabase" });
 
   // Traer los últimos eventos de caja del restaurante
   const { data, error } = await supabase
@@ -40,8 +40,11 @@ export async function GET(req: NextRequest) {
   // llegó a Supabase (abierta offline / sync pendiente en el terminal), el banner
   // mostraría "Caja cerrada" aunque esté abierta. Solo confirmamos cierre cuando
   // encontramos eventos Y todos tienen cierre.
-  if (error) return NextResponse.json({ open: null });
-  if (!data?.length) return NextResponse.json({ open: null });
+  if (error) {
+    console.error("[cash-status] Supabase error:", error);
+    return NextResponse.json({ open: null, reason: "query_error", detail: error.message });
+  }
+  if (!data?.length) return NextResponse.json({ open: null, reason: "no_events" });
 
   // Reconstruir estado: sesión abierta = tiene opened sin closed/deleted posterior
   const sessions = new Map<string, { opened: boolean; closed: boolean }>();
@@ -56,5 +59,6 @@ export async function GET(req: NextRequest) {
   }
 
   const open = Array.from(sessions.values()).some(s => s.opened && !s.closed);
-  return NextResponse.json({ open });
+  const sessionList = Array.from(sessions.entries()).map(([id, s]) => ({ id: id.slice(-6), ...s }));
+  return NextResponse.json({ open, reason: open ? "confirmed_open" : "confirmed_closed", sessions: sessionList });
 }
