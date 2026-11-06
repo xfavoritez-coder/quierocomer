@@ -48,7 +48,8 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
 
   const isDelivery = order.orderType === "DELIVERY";
   const base = `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`;
-  const vendorName = channel === "web" ? `${base}-Web` : base;
+  // Origen del pedido en el nombre de canal: App (desde la app Capacitor) o Web.
+  const vendorName = order.fromApp ? `${base}-App` : channel === "web" ? `${base}-Web` : base;
 
   const items = Array.isArray(order.items)
     ? (order.items as unknown as StoredItem[]).map((it) => ({

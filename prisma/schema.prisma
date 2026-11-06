@@ -480,6 +480,7 @@ model OnlineOrder {
   couponCode         String?
   source             String     @default("pedir-online")
   channel            String     @default("online") // "online" (tienda) | "manual" (tomador de pedidos)
+  fromApp            Boolean    @default(false) // true = pedido hecho desde la app (Capacitor); false = web
   deliveryLat        Float?
   deliveryLng        Float?
   uberDeliveryId     String?

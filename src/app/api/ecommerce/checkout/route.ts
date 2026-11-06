@@ -283,6 +283,7 @@ export async function POST(req: NextRequest) {
         statusHistory: [{ status: isOnline ? "PENDING" : "ACCEPTED", ts: new Date().toISOString() }],
         scheduledFor: scheduledDate,
         guestId: guestId && typeof guestId === "string" && guestId.length > 10 ? guestId : null,
+        fromApp: fromApp === true,
       },
     });
 

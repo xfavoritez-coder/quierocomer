@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
+import { isSuperAdmin } from "@/lib/adminAuth";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Filtro de "venta" para OnlineOrder (native ecommerce, sin espejo al POS):
+// no cancelado, y pagado online O método offline (efectivo/transferencia).
+const ONLINE_PAY_METHODS = ["webpay", "flow", "mercadopago"];
+
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
+  if (isSuperAdmin(req)) return true;
   const panelId = req.cookies.get("panel_id")?.value;
   if (!panelId) return false;
   if (panelId === "demo") return true;
@@ -45,8 +51,25 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { id: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true },
+    select: { id: true, externalId: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true },
   });
+
+  // OnlineOrder (ecommerce nativo) que NO están espejados al POS. Para locales SIN
+  // Centro de pedidos/POS (ej. Hand Roll) todas sus ventas viven aquí; el espejo usa
+  // externalId "oo-<id>", así que excluimos los ya espejados para no duplicar.
+  const mirroredOnlineIds = new Set<string>();
+  for (const o of orders) {
+    if (o.externalId && o.externalId.startsWith("oo-")) mirroredOnlineIds.add(o.externalId.slice(3));
+  }
+  const onlineOrders = await prisma.onlineOrder.findMany({
+    where: {
+      restaurantId, source: "ecommerce", createdAt: { gte: start, lte: end },
+      status: { not: "CANCELLED" },
+      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
+    },
+    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true },
+  });
+  const unmirroredOnline = onlineOrders.filter((o) => !mirroredOnlineIds.has(o.id));
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
   let deliveryTotal = 0;
@@ -115,6 +138,46 @@ export async function GET(req: NextRequest) {
       const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 };
       p.qty += qty;
       p.revenue += Number.isFinite(rev) ? rev : 0;
+      productMap.set(pname, p);
+    }
+  }
+
+  // ── Agregación de OnlineOrder no-espejados (locales sin Centro/POS) ──
+  // total = subtotal + deliveryFee - discount (checkout) → neto = total - deliveryFee.
+  for (const o of unmirroredOnline) {
+    const fee = o.deliveryFee || 0;
+    const net = Math.max(0, (o.total || 0) - fee);
+    productSales += net;
+    deliveryTotal += fee;
+    grossTotal += o.total || 0;
+    const h = chileHour(o.createdAt);
+    hourly[h].sales += net;
+    hourly[h].orders += 1;
+
+    // Canal: App (desde la app) o Web.
+    const chName = o.fromApp ? "App" : "Web";
+    const ch = channelMap.get(chName) || { name: chName, sales: 0, orders: 0 };
+    ch.sales += net;
+    ch.orders += 1;
+    channelMap.set(chName, ch);
+
+    // Tipo: delivery / retiro (OnlineOrder no tiene mesas).
+    const type: "delivery" | "pickup" = o.orderType === "DELIVERY" ? "delivery" : "pickup";
+    typeMap[type].sales += net;
+    typeMap[type].orders += 1;
+
+    const items = Array.isArray(o.items) ? (o.items as unknown[]) : [];
+    for (const raw of items) {
+      if (!raw || typeof raw !== "object") continue;
+      const ln = raw as Record<string, any>;
+      const pname = String(ln.name ?? ln.dishName ?? ln.productName ?? ln.title ?? "").trim();
+      if (!pname) continue;
+      let qty = Number(ln.quantity ?? ln.qty ?? 1);
+      if (!(qty > 0)) qty = 1;
+      const unit = Number(ln.unitTotal ?? ln.unit_price ?? ln.unitPrice ?? ln.price ?? 0) || 0;
+      const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 };
+      p.qty += qty;
+      p.revenue += unit * qty;
       productMap.set(pname, p);
     }
   }
@@ -204,11 +267,34 @@ export async function GET(req: NextRequest) {
   const monthEnd = chileDayRangeUtc(today).end;
   const monthOrders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: monthStart, lte: monthEnd } },
-    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true },
+    select: { externalId: true, totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true },
   });
+  // Set de OnlineOrder ya espejados DENTRO del mes (para no duplicar en el gráfico mensual).
+  const mirroredMonthIds = new Set<string>();
+  for (const o of monthOrders) {
+    if (o.externalId && o.externalId.startsWith("oo-")) mirroredMonthIds.add(o.externalId.slice(3));
+  }
   const dayMap = new Map<number, { sales: number; orders: number }>();
   for (const o of monthOrders) {
     const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const day = parseInt(chileYmd(o.createdAt).slice(8, 10), 10);
+    const e = dayMap.get(day) || { sales: 0, orders: 0 };
+    e.sales += net;
+    e.orders += 1;
+    dayMap.set(day, e);
+  }
+  // OnlineOrder no-espejados del mes en curso (mismo criterio de "venta").
+  const monthOnline = await prisma.onlineOrder.findMany({
+    where: {
+      restaurantId, source: "ecommerce", createdAt: { gte: monthStart, lte: monthEnd },
+      status: { not: "CANCELLED" },
+      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
+    },
+    select: { id: true, total: true, deliveryFee: true, createdAt: true },
+  });
+  for (const o of monthOnline) {
+    if (mirroredMonthIds.has(o.id)) continue;
+    const net = Math.max(0, (o.total || 0) - (o.deliveryFee || 0));
     const day = parseInt(chileYmd(o.createdAt).slice(8, 10), 10);
     const e = dayMap.get(day) || { sales: 0, orders: 0 };
     e.sales += net;
@@ -224,7 +310,7 @@ export async function GET(req: NextRequest) {
     from: fromYmd,
     to: toYmd,
     today,
-    ordersCount: orders.length,
+    ordersCount: orders.length + unmirroredOnline.length,
     productSales,
     deliveryTotal,
     tipsTotal,

@@ -21,7 +21,7 @@ interface Order {
   orderType: "PICKUP" | "DELIVERY"; deliveryAddress: string | null; paymentMethod: string; paymentStatus: string; paymentGateway?: string | null;
   items: OrderItem[]; total: number; deliveryFee?: number; discount?: number; couponCode?: string | null;
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
-  source?: string | null; channel?: string | null;
+  source?: string | null; channel?: string | null; fromApp?: boolean;
   scheduledFor?: string | null; scheduledReleasedAt?: string | null;
   webpayToken?: string | null; webpayBuyOrder?: string | null; flowToken?: string | null;
   deliveryLat?: number | null; deliveryLng?: number | null;
@@ -439,8 +439,13 @@ export default function EcommercePedidosPage() {
                     </td>
                     <td style={{ ...tdStyle, color: "var(--adm-text)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.customerName || "—"}</td>
                     <td style={tdStyle}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--adm-text2)" }}>
-                        {o.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "var(--adm-text2)", flexWrap: "wrap" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          {o.orderType === "DELIVERY" ? <MapPin size={12} /> : <Store size={12} />} {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                        </span>
+                        <span title={o.fromApp ? "Pedido hecho desde la app" : "Pedido hecho desde la web"} style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.02em", padding: "2px 7px", borderRadius: 999, whiteSpace: "nowrap", color: o.fromApp ? "#fff" : "var(--adm-text2)", background: o.fromApp ? GOLD : "var(--adm-hover)", border: o.fromApp ? "none" : "1px solid var(--adm-card-border)" }}>
+                          {o.fromApp ? "APP" : "WEB"}
+                        </span>
                       </span>
                     </td>
                     <td style={tdStyle}>
