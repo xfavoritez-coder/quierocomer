@@ -171,6 +171,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: BarChart3, labelKey: "nav_analytics", href: `${base}/ecommerce/dashboard` },
         { icon: ClipboardList, labelKey: "nav_ecommerce_orders", href: `${base}/ecommerce/pedidos` },
         { icon: UsersRound, labelKey: "nav_users", href: `${base}/ecommerce/usuarios` },
+        { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
       ],
     }] : []),
     ...(opts.isSuperAdmin ? [{
