@@ -35,7 +35,13 @@ export async function GET(req: NextRequest) {
     .order("server_seq", { ascending: false })
     .limit(100);
 
-  if (error || !data?.length) return NextResponse.json({ open: false });
+  // Error de Supabase o sin ningún evento de caja → estado desconocido.
+  // NO devolver open:false en este caso: si el evento cash_session_opened aún no
+  // llegó a Supabase (abierta offline / sync pendiente en el terminal), el banner
+  // mostraría "Caja cerrada" aunque esté abierta. Solo confirmamos cierre cuando
+  // encontramos eventos Y todos tienen cierre.
+  if (error) return NextResponse.json({ open: null });
+  if (!data?.length) return NextResponse.json({ open: null });
 
   // Reconstruir estado: sesión abierta = tiene opened sin closed/deleted posterior
   const sessions = new Map<string, { opened: boolean; closed: boolean }>();
