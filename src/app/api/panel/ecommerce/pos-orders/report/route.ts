@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { totalAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true },
+    select: { id: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true },
   });
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
@@ -103,10 +103,13 @@ export async function GET(req: NextRequest) {
       let qty = Number(ln.quantity ?? ln.qty ?? 1);
       if (!(qty > 0)) qty = 1;
       let rev = 0;
-      if (ln.amountAfterTax != null) rev = Number(ln.amountAfterTax);
+      if (ln.amountAfterTax != null && Number(ln.amountAfterTax) > 0) rev = Number(ln.amountAfterTax);
+      else if (ln.netPrice != null && Number(ln.netPrice) > 0) rev = Number(ln.netPrice);
       else if (ln.unitPriceAfterTax != null) rev = Number(ln.unitPriceAfterTax) * qty;
-      else if (ln.unitPrice != null) rev = Number(ln.unitPrice) * qty;
-      else if (ln.price != null) rev = Number(ln.price) * qty;
+      else if (ln.unitPrice != null && Number(ln.unitPrice) > 0) rev = Number(ln.unitPrice) * qty;
+      else if (ln.price != null && Number(ln.price) > 0) rev = Number(ln.price) * qty;
+      else if (ln.amount != null && Number(ln.amount) > 0) rev = Number(ln.amount);
+      else if (ln.total != null && Number(ln.total) > 0) rev = Number(ln.total);
       const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 };
       p.qty += qty;
       p.revenue += Number.isFinite(rev) ? rev : 0;
@@ -119,11 +122,12 @@ export async function GET(req: NextRequest) {
 
   // ── Tiempos de entrega (todos los pedidos delivery, completados o en curso) ─
   interface DeliveryTimeRow {
-    ref: string; name: string;
-    prepMin: number | null;    // createdAt → opsDispatchedAt
-    transitMin: number | null; // opsDispatchedAt → opsDeliveredAt
-    totalMin: number | null;   // null = aún no entregado
-    deliveryFee: number;
+    orderId: string; ref: string; name: string; phone: string; addressLine: string;
+    totalAmount: number; paidAmount: number; deliveryFee: number; tipAmount: number;
+    vendorName: string;
+    createdAt: string; readyAt: string | null; dispatchedAt: string | null; deliveredAt: string | null;
+    prepMin: number | null; transitMin: number | null; totalMin: number | null;
+    items: unknown; delifastVentaId: string | null;
   }
   const deliveryTimeRows: DeliveryTimeRow[] = [];
   for (const o of orders) {
@@ -138,12 +142,23 @@ export async function GET(req: NextRequest) {
     }
     const prepMin = o.opsDispatchedAt ? Math.round((o.opsDispatchedAt.getTime() - created) / 60000) : null;
     deliveryTimeRows.push({
+      orderId: o.id,
       ref: o.orderReference || "",
       name: o.customerName || "",
-      prepMin,
-      transitMin,
-      totalMin,
+      phone: o.customerPhone || "",
+      addressLine: o.addressLine || "",
+      totalAmount: o.totalAmount || 0,
+      paidAmount: o.paidAmount || 0,
       deliveryFee: o.deliveryFee || 0,
+      tipAmount: o.tipAmount || 0,
+      vendorName: o.vendorName || "",
+      createdAt: o.createdAt.toISOString(),
+      readyAt: o.opsReadyForDeliveryAt?.toISOString() ?? null,
+      dispatchedAt: o.opsDispatchedAt?.toISOString() ?? null,
+      deliveredAt: o.opsDeliveredAt?.toISOString() ?? null,
+      prepMin, transitMin, totalMin,
+      items: o.items,
+      delifastVentaId: o.delifastVentaId ?? null,
     });
   }
   // Ordenar: completados primero (por totalMin asc), luego en curso al final

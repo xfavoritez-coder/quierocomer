@@ -399,10 +399,18 @@ function DeliveryOrderModal({ order, restaurantId, onClose }: { order: DeliveryT
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 0 0' }}
+      className="delivery-modal-backdrop"
       onClick={onClose}
     >
+      <style>{`
+        @media (min-width: 600px) {
+          .delivery-modal-backdrop { align-items: center !important; padding: 24px !important; }
+          .delivery-modal-sheet { border-radius: 20px !important; max-height: 88dvh !important; }
+        }
+      `}</style>
       <div
         onClick={e => e.stopPropagation()}
+        className="delivery-modal-sheet"
         style={{
           width: '100%', maxWidth: 520, maxHeight: '92dvh', overflowY: 'auto',
           background: 'var(--surface)', borderRadius: '20px 20px 0 0',
