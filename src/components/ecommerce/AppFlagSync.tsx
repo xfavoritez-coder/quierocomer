@@ -26,7 +26,25 @@ export default function AppFlagSync({ active }: { active: boolean }) {
         ? "qc_app=1; path=/; max-age=31536000; SameSite=Lax; Secure"
         : "qc_app=; path=/; max-age=0; SameSite=Lax; Secure";
     } catch { return; }
-    router.refresh();
+    // IMPORTANTE: NO refrescar durante la hidratación. En el primer arranque de la
+    // app nativa (cookie aún ausente) un router.refresh() inmediato interrumpía el
+    // montaje y dejaba los botones sin responder hasta reabrir la app (el scroll
+    // nativo seguía). Diferimos el refresh hasta que la página esté cargada e idle,
+    // ya con la interacción enganchada; ahí el refresh es una revalidación normal.
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      router.refresh();
+    };
+    const schedule = () => {
+      const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+      if (ric) ric(run, { timeout: 2000 });
+      else setTimeout(run, 800);
+    };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+    return () => { done = true; };
   }, [active, router]);
   return null;
 }
