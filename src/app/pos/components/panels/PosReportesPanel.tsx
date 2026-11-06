@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
+import DelifastTracking from '../DelifastTracking'
 
 const DeliveryHeatmap = dynamic(() => import('../DeliveryHeatmap'), { ssr: false, loading: () => <div style={{ height: 340, borderRadius: 14, background: 'var(--sunk)', border: '1px solid var(--line)' }} /> })
 
@@ -38,7 +39,13 @@ interface Channel     { name: string; sales: number; orders: number }
 interface ProductRank { name: string; qty: number; revenue: number }
 interface TypeBucket  { type: string; label: string; sales: number; orders: number }
 interface MonthlyDay  { day: number; sales: number; orders: number }
-interface DeliveryTimeRow { ref: string; name: string; prepMin: number | null; transitMin: number | null; totalMin: number; deliveryFee: number }
+interface DeliveryTimeRow {
+  orderId: string; ref: string; name: string; phone: string; addressLine: string;
+  totalAmount: number; paidAmount: number; deliveryFee: number; tipAmount: number; vendorName: string;
+  createdAt: string; readyAt: string | null; dispatchedAt: string | null; deliveredAt: string | null;
+  prepMin: number | null; transitMin: number | null; totalMin: number | null;
+  items: unknown; delifastVentaId: string | null;
+}
 interface DeliveryTimes {
   count: number
   avgTotal: number | null; avgPrep: number | null; avgTransit: number | null
@@ -313,7 +320,174 @@ function timeColor(m: number): string {
   return '#ef4444'
 }
 
-function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
+// ── Helpers de formato ───────────────────────────────────────────
+function fmtTime(iso: string | null): string {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+}
+function fmtDateTime(iso: string | null): string {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }).format(new Date(iso))
+}
+function diffMin(a: string | null, b: string | null): string {
+  if (!a || !b) return '—'
+  const d = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000)
+  if (d < 0) return '—'
+  return d < 60 ? `${d} min` : `${Math.floor(d / 60)}h ${d % 60}min`
+}
+
+// ── Modal detalle de pedido delivery ─────────────────────────────
+function DeliveryOrderModal({ order, restaurantId, onClose }: { order: DeliveryTimeRow; restaurantId: string; onClose: () => void }) {
+  const clpF = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-CL')
+  const items = Array.isArray(order.items) ? order.items as Record<string, any>[] : []
+  const lines = items.filter(it => it && typeof it === 'object' && !it.isExtra && it.referenceLine == null)
+
+  const timelineSteps = [
+    { label: 'Pedido recibido', ts: order.createdAt, color: '#64748b' },
+    { label: 'Listo para despacho', ts: order.readyAt, color: '#16a34a' },
+    { label: 'En reparto', ts: order.dispatchedAt, color: '#3b82f6' },
+    { label: 'Entregado', ts: order.deliveredAt, color: '#7c3aed' },
+  ]
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 0 0' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 520, maxHeight: '92dvh', overflowY: 'auto',
+          background: 'var(--surface)', borderRadius: '20px 20px 0 0',
+          padding: '20px 20px 32px', boxSizing: 'border-box',
+          display: 'flex', flexDirection: 'column', gap: 20,
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: F, fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>
+              {order.ref ? `#${order.ref}` : 'Pedido'} · {order.name || 'Cliente'}
+            </div>
+            <div style={{ fontFamily: F, fontSize: 13, color: 'var(--ink-3)', marginTop: 3 }}>
+              {fmtDateTime(order.createdAt)}{order.vendorName ? ` · ${order.vendorName}` : ''}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 4, lineHeight: 0, flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        {/* Info cliente */}
+        <div style={{ background: 'var(--sunk)', borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {order.addressLine && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--ink-3)', flexShrink: 0, marginTop: 1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+              <span style={{ fontFamily: F, fontSize: 13.5, color: 'var(--ink-2)' }}>{order.addressLine}</span>
+            </div>
+          )}
+          {order.phone && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'var(--ink-3)', flexShrink: 0 }}><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.3a1 1 0 0 1 1 1 11 11 0 0 0 .56 3.5 1 1 0 0 1-.25 1z"/></svg>
+              <a href={`tel:${order.phone}`} style={{ fontFamily: F, fontSize: 13.5, color: 'var(--ink-2)', textDecoration: 'none' }}>{order.phone}</a>
+            </div>
+          )}
+        </div>
+
+        {/* Montos */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {[
+            { label: 'Total', value: clpF(order.totalAmount) },
+            { label: 'Delivery', value: clpF(order.deliveryFee) },
+            { label: 'Propina', value: clpF(order.tipAmount) },
+          ].map(s => (
+            <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{s.label}</div>
+              <div style={{ fontFamily: F, fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Ítems */}
+        {lines.length > 0 && (
+          <div>
+            <div style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Productos</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {lines.map((it, i) => {
+                const name = String(it.productName ?? it.name ?? it.dishName ?? it.title ?? '').trim()
+                const qty = Number(it.quantity ?? it.qty ?? 1)
+                const price = Number(it.amountAfterTax ?? it.unitPriceAfterTax ?? it.unitPrice ?? it.price ?? 0)
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '5px 0', borderBottom: '1px solid var(--line)' }}>
+                    <span style={{ fontFamily: F, fontWeight: 700, fontSize: 13, color: 'var(--ink-3)', minWidth: 20 }}>{qty}×</span>
+                    <span style={{ fontFamily: F, fontSize: 13.5, color: 'var(--ink)', flex: 1 }}>{name || '—'}</span>
+                    {price > 0 && <span style={{ fontFamily: F, fontSize: 13, color: 'var(--ink-2)', flexShrink: 0 }}>{clpF(price)}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Timeline de etapas */}
+        <div>
+          <div style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Timeline</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {timelineSteps.map((step, i) => {
+              const done = !!step.ts
+              const isLast = i === timelineSteps.length - 1
+              const nextTs = timelineSteps[i + 1]?.ts ?? null
+              const dur = done && nextTs ? diffMin(step.ts, nextTs) : null
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  {/* dot + line */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: done ? step.color : 'var(--line-strong)', flexShrink: 0, marginTop: 4 }} />
+                    {!isLast && <div style={{ width: 2, flex: 1, minHeight: 24, background: done && nextTs ? step.color + '40' : 'var(--line)', marginTop: 2 }} />}
+                  </div>
+                  <div style={{ flex: 1, paddingBottom: isLast ? 0 : 16, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontFamily: F, fontSize: 13.5, fontWeight: done ? 700 : 400, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{step.label}</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: done ? 'var(--ink-2)' : 'var(--ink-4)', flexShrink: 0 }}>{fmtTime(step.ts)}</span>
+                    </div>
+                    {dur && <div style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>↓ {dur} hasta siguiente etapa</div>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Tiempos resumen */}
+        {(order.prepMin != null || order.transitMin != null || order.totalMin != null) && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {[
+              { label: 'Preparación', value: order.prepMin != null ? minLabel(order.prepMin) : '—', color: BLUE },
+              { label: 'Tránsito', value: order.transitMin != null ? minLabel(order.transitMin) : '—', color: PURPLE },
+              { label: 'Total', value: order.totalMin != null ? minLabel(order.totalMin) : '—', color: order.totalMin != null ? timeColor(order.totalMin) : 'var(--ink-3)' },
+            ].map(s => (
+              <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', borderLeft: `3px solid ${s.color}` }}>
+                <div style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 }}>{s.label}</div>
+                <div style={{ fontFamily: F, fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Delifast tracking (historial, sin live poll) */}
+        {order.delifastVentaId && (
+          <div>
+            <div style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Delifast</div>
+            <DelifastTracking restaurantId={restaurantId} posOrderId={order.orderId} live={false} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function DeliveryTimesSection({ dt, restaurantId }: { dt: DeliveryTimes; restaurantId: string }) {
+  const [selected, setSelected] = useState<DeliveryTimeRow | null>(null)
   if (dt.count === 0) return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -368,7 +542,7 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
           <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Delivery</span>
         </div>
         {dt.orders.map((o, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+          <div key={i} onClick={() => setSelected(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: 'pointer' }}>
             <div style={{ minWidth: 0 }}>
               <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                 {o.ref ? `#${o.ref}` : '—'}
@@ -382,6 +556,8 @@ function DeliveryTimesSection({ dt }: { dt: DeliveryTimes }) {
           </div>
         ))}
       </div>
+
+      {selected && <DeliveryOrderModal order={selected} restaurantId={restaurantId} onClose={() => setSelected(null)} />}
     </Card>
   )
 }
@@ -572,7 +748,7 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             {data.deliveryTimes && (
               <>
                 <SectionLabel>Delivery</SectionLabel>
-                <DeliveryTimesSection dt={data.deliveryTimes} />
+                <DeliveryTimesSection dt={data.deliveryTimes} restaurantId={restaurantId} />
               </>
             )}
 
