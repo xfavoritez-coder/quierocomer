@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(500, parseInt(req.nextUrl.searchParams.get("limit") ?? "200", 10) || 200);
 
   // Traer todos los pedidos no cancelados con email o teléfono, del restaurantId
-  const orders = await prisma.posOrder.findMany({
+  const posOrders = await prisma.posOrder.findMany({
     where: {
       restaurantId,
       posStatus: { not: "canceled" },
@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
       ],
     },
     select: {
+      externalId: true,
       customerEmail: true,
       customerName: true,
       customerPhone: true,
@@ -79,6 +80,44 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "asc" },
   });
 
+  // Pedido normalizado para agrupar clientes desde ambas fuentes.
+  interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date }
+  const orders: NormOrder[] = posOrders.map((o) => ({
+    email: o.customerEmail || "",
+    name: o.customerName || "",
+    phone: o.customerPhone || "",
+    net: Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
+    createdAt: o.createdAt,
+  }));
+
+  // OnlineOrder (ecommerce nativo) NO espejados al POS — para locales sin Centro/POS
+  // (ej. Hand Roll) todos sus clientes viven aquí. Dedup por externalId "oo-<id>".
+  const mirroredOnlineIds = new Set<string>();
+  for (const o of posOrders) {
+    if (o.externalId && o.externalId.startsWith("oo-")) mirroredOnlineIds.add(o.externalId.slice(3));
+  }
+  const onlineOrders = await prisma.onlineOrder.findMany({
+    where: {
+      restaurantId, source: "ecommerce",
+      status: { not: "CANCELLED" },
+      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
+    },
+    select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  for (const o of onlineOrders) {
+    if (mirroredOnlineIds.has(o.id)) continue;
+    if (!(o.customerEmail?.trim() || o.customerPhone?.trim())) continue;
+    orders.push({
+      email: o.customerEmail || "",
+      name: o.customerName || "",
+      phone: o.customerPhone || "",
+      net: Math.max(0, (o.total || 0) - (o.deliveryFee || 0)),
+      createdAt: o.createdAt,
+    });
+  }
+  orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
   // Agrupar por email (si no hay email, agrupar por teléfono)
   const clientMap = new Map<string, {
     email: string; name: string; phone: string;
@@ -88,25 +127,25 @@ export async function GET(req: NextRequest) {
   }>();
 
   for (const o of orders) {
-    const key = o.customerEmail?.trim().toLowerCase() || o.customerPhone?.trim() || "";
+    const key = o.email.trim().toLowerCase() || o.phone.trim() || "";
     if (!key) continue;
 
-    const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const net = o.net;
     const existing = clientMap.get(key);
     if (existing) {
       existing.orders++;
       existing.totalSpent += net;
       if (o.createdAt > existing.lastAt) {
         existing.lastAt = o.createdAt;
-        if (o.customerName) existing.name = o.customerName;
-        if (o.customerPhone) existing.phone = o.customerPhone;
+        if (o.name) existing.name = o.name;
+        if (o.phone) existing.phone = o.phone;
       }
       existing.dates.push(o.createdAt);
     } else {
       clientMap.set(key, {
-        email: o.customerEmail?.trim().toLowerCase() || "",
-        name: o.customerName || "",
-        phone: o.customerPhone || "",
+        email: o.email.trim().toLowerCase() || "",
+        name: o.name || "",
+        phone: o.phone || "",
         orders: 1,
         totalSpent: net,
         firstAt: o.createdAt,
