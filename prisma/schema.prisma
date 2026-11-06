@@ -522,6 +522,7 @@ model PosOrder {
   tableLabel String? // "Mesa 3" cuando aplica
 
   customerName  String @default("")
+  customerEmail String @default("")
   customerPhone String @default("")
   addressLine   String @default("")
   addressParts  Json?   // partes separadas (calle, comuna, ciudad, región, país); espejadas del OnlineOrder

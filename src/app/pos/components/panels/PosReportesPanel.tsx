@@ -635,6 +635,180 @@ interface BranchInfo { id: string; name: string; branchName?: string | null }
 
 interface HeatPt { lat: number; lng: number }
 
+// ── Tipos para sección Clientes ──────────────────────────────────────
+type ClientStatus = 'active' | 'at_risk' | 'churned' | 'new'
+interface ClientRow {
+  email: string; name: string; phone: string
+  orders: number; totalSpent: number; avgTicket: number
+  lastOrderAt: string; daysSinceLastOrder: number
+  avgFrequencyDays: number | null
+  status: ClientStatus; riskScore: number
+}
+interface ClientsData {
+  total: number
+  byStatus: { active: number; at_risk: number; churned: number; new: number }
+  clients: ClientRow[]
+}
+
+type ClientSortKey = 'riskScore' | 'totalSpent' | 'orders' | 'lastOrderAt' | 'avgFrequencyDays'
+
+const STATUS_LABEL: Record<ClientStatus, string> = { active: 'Activo', at_risk: 'En riesgo', churned: 'Perdido', new: 'Nuevo' }
+const STATUS_COLOR: Record<ClientStatus, string> = { active: 'var(--jade)', at_risk: 'var(--amber)', churned: '#ef4444', new: 'var(--slate)' }
+const STATUS_BG: Record<ClientStatus, string>    = { active: 'var(--jade-tint)', at_risk: 'var(--amber-tint)', churned: '#fef2f2', new: 'var(--slate-tint)' }
+
+function ClientsSection({ restaurantId }: { restaurantId: string }) {
+  const [cd, setCd] = useState<ClientsData | null>(null)
+  const [clLoading, setClLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<ClientSortKey>('riskScore')
+  const [sortAsc, setSortAsc] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<ClientStatus | 'all'>('all')
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    setClLoading(true)
+    fetch(`/api/panel/ecommerce/pos-orders/clients?restaurantId=${restaurantId}&limit=500`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCd(d) })
+      .finally(() => setClLoading(false))
+  }, [restaurantId])
+
+  const toggleSort = (key: ClientSortKey) => {
+    if (sortKey === key) setSortAsc(a => !a)
+    else { setSortKey(key); setSortAsc(false) }
+  }
+
+  const rows = cd?.clients ?? []
+  const filtered = rows.filter(c => {
+    if (filterStatus !== 'all' && c.status !== filterStatus) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q)
+    }
+    return true
+  })
+  const sorted = filtered.slice().sort((a, b) => {
+    let av: number, bv: number
+    if (sortKey === 'lastOrderAt') {
+      av = new Date(a.lastOrderAt).getTime(); bv = new Date(b.lastOrderAt).getTime()
+    } else {
+      av = a[sortKey] ?? 0; bv = b[sortKey] ?? 0
+    }
+    return sortAsc ? av - bv : bv - av
+  })
+
+  const SortArrow = ({ col }: { col: ClientSortKey }) => (
+    <svg width="10" height="10" viewBox="0 0 10 10" style={{ marginLeft: 3, opacity: sortKey === col ? 1 : 0.3 }}>
+      {sortAsc && sortKey === col
+        ? <path d="M5 2L9 8H1z" fill="currentColor"/>
+        : <path d="M5 8L1 2H9z" fill="currentColor"/>}
+    </svg>
+  )
+
+  const thSt = (col: ClientSortKey): React.CSSProperties => ({
+    fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: sortKey === col ? 'var(--ink)' : 'var(--ink-3)',
+    textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', padding: '0 6px 8px 0',
+  })
+
+  if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Cargando clientes…</div></Card>
+  if (!cd) return null
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Clientes</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{cd.total} únicos</span>
+      </div>
+
+      {/* Resumen por estado */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+        {(['active', 'at_risk', 'churned', 'new'] as ClientStatus[]).map(s => (
+          <button key={s} onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
+            style={{ background: filterStatus === s ? STATUS_BG[s] : 'var(--sunk)', border: `1.5px solid ${filterStatus === s ? STATUS_COLOR[s] : 'var(--line)'}`, borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+            <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: STATUS_COLOR[s] }}>{cd.byStatus[s]}</div>
+            <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>{STATUS_LABEL[s]}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Buscador */}
+      <input
+        value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Buscar por nombre, email o teléfono…"
+        style={{ width: '100%', boxSizing: 'border-box', fontFamily: F, fontSize: '0.82rem', padding: '8px 12px', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, color: 'var(--ink)', marginBottom: 14, outline: 'none' }}
+      />
+
+      {/* Tabla */}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
+          <thead>
+            <tr>
+              <th style={thSt('riskScore')} onClick={() => toggleSort('riskScore')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Riesgo <SortArrow col="riskScore" /></span>
+              </th>
+              <th style={{ ...thSt('totalSpent'), textAlign: 'left' }} onClick={() => toggleSort('totalSpent')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Cliente <SortArrow col="totalSpent" /></span>
+              </th>
+              <th style={thSt('orders')} onClick={() => toggleSort('orders')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Pedidos <SortArrow col="orders" /></span>
+              </th>
+              <th style={thSt('totalSpent')} onClick={() => toggleSort('totalSpent')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Gastado <SortArrow col="totalSpent" /></span>
+              </th>
+              <th style={thSt('avgFrequencyDays')} onClick={() => toggleSort('avgFrequencyDays')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Frec. <SortArrow col="avgFrequencyDays" /></span>
+              </th>
+              <th style={thSt('lastOrderAt')} onClick={() => toggleSort('lastOrderAt')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Último pedido <SortArrow col="lastOrderAt" /></span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.slice(0, 100).map((c, i) => (
+              <tr key={c.email || c.phone} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', borderRadius: 8 }}>
+                {/* Riesgo */}
+                <td style={{ padding: '8px 6px 8px 0', textAlign: 'center', width: 56 }}>
+                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <span style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 900, color: STATUS_COLOR[c.status],
+                      background: STATUS_BG[c.status], padding: '2px 7px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                      {STATUS_LABEL[c.status]}
+                    </span>
+                    {c.riskScore > 0 && <span style={{ fontSize: '0.6rem', color: 'var(--ink-3)', fontFamily: F }}>{c.riskScore}%</span>}
+                  </div>
+                </td>
+                {/* Nombre/email */}
+                <td style={{ padding: '8px 6px 8px 0', maxWidth: 160, overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email || c.phone}</div>
+                </td>
+                {/* Pedidos */}
+                <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
+                {/* Gastado */}
+                <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.totalSpent)}</td>
+                {/* Frecuencia */}
+                <td style={{ padding: '8px 6px', fontSize: '0.78rem', color: 'var(--ink-2)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {c.avgFrequencyDays !== null ? `c/${c.avgFrequencyDays}d` : '—'}
+                </td>
+                {/* Último pedido */}
+                <td style={{ padding: '8px 0 8px 6px', fontSize: '0.78rem', color: c.daysSinceLastOrder > 90 ? '#ef4444' : 'var(--ink-2)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {c.daysSinceLastOrder === 0 ? 'Hoy' : `Hace ${c.daysSinceLastOrder}d`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {sorted.length > 100 && (
+          <p style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', textAlign: 'center', margin: '12px 0 0' }}>
+            Mostrando 100 de {sorted.length} clientes filtrados
+          </p>
+        )}
+        {sorted.length === 0 && (
+          <p style={{ fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0' }}>Sin clientes para los filtros actuales.</p>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 export default function PosReportesPanel({ restaurantId, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
