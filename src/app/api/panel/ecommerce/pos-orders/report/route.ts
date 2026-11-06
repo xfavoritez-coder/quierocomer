@@ -105,7 +105,9 @@ export async function GET(req: NextRequest) {
       let rev = 0;
       if (ln.amountAfterTax != null && Number(ln.amountAfterTax) > 0) rev = Number(ln.amountAfterTax);
       else if (ln.netPrice != null && Number(ln.netPrice) > 0) rev = Number(ln.netPrice);
-      else if (ln.unitPriceAfterTax != null) rev = Number(ln.unitPriceAfterTax) * qty;
+      else if (ln.unitPriceAfterTax != null && Number(ln.unitPriceAfterTax) > 0) rev = Number(ln.unitPriceAfterTax) * qty;
+      else if (ln.unitTotal != null && Number(ln.unitTotal) > 0) rev = Number(ln.unitTotal) * qty;
+      else if (ln.unit_price != null && Number(ln.unit_price) > 0) rev = Number(ln.unit_price) * qty;
       else if (ln.unitPrice != null && Number(ln.unitPrice) > 0) rev = Number(ln.unitPrice) * qty;
       else if (ln.price != null && Number(ln.price) > 0) rev = Number(ln.price) * qty;
       else if (ln.amount != null && Number(ln.amount) > 0) rev = Number(ln.amount);
