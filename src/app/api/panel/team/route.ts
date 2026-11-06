@@ -158,7 +158,20 @@ export async function PUT(req: NextRequest) {
   if (newPassword && typeof newPassword === "string" && newPassword.length >= 8) {
     const bcrypt = await import("bcryptjs");
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await prisma.teamMember.update({ where: { id: memberId }, data: { passwordHash } });
+    // Actualizar el registro dado y todos los siblings del mismo email (mismo dueño)
+    // para que el login no encuentre otro registro con el hash viejo.
+    const target = await prisma.teamMember.findUnique({
+      where: { id: memberId },
+      select: { email: true, restaurant: { select: { ownerId: true } } },
+    });
+    if (target) {
+      await prisma.teamMember.updateMany({
+        where: { email: { equals: target.email, mode: "insensitive" }, restaurant: { ownerId: target.restaurant.ownerId } },
+        data: { passwordHash },
+      });
+    } else {
+      await prisma.teamMember.update({ where: { id: memberId }, data: { passwordHash } });
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -207,7 +220,17 @@ export async function PUT(req: NextRequest) {
     const m = await prisma.teamMember.update({
       where: { id: memberId },
       data: { inviteToken, inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), status: "PENDING", passwordHash: null },
-      select: { name: true, email: true, restaurant: { select: { name: true } } },
+      select: { name: true, email: true, restaurant: { select: { name: true, ownerId: true } } },
+    });
+    // Limpiar el hash en todos los registros siblings para que no puedan seguir
+    // logueándose con la contraseña anterior en otra sucursal.
+    await prisma.teamMember.updateMany({
+      where: {
+        email: { equals: m.email, mode: "insensitive" },
+        restaurant: { ownerId: m.restaurant.ownerId },
+        id: { not: memberId },
+      },
+      data: { passwordHash: null },
     });
     try {
       const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
