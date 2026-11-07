@@ -17,8 +17,6 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
   return r?.ownerId === panelId;
 }
 
-const ONLINE_PAY = ["webpay", "flow", "mercadopago"];
-
 // Normaliza un método de pago a las claves del arqueo del POS.
 function normMethod(m?: string | null): string {
   const x = (m || "").toLowerCase().trim();
@@ -68,11 +66,9 @@ export async function GET(req: NextRequest) {
   // Filtramos por eso (NO por createdAt): un pedido viejo cobrado hoy cuenta hoy.
   const pos = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, paidAmount: { gt: 0 }, updatedAt: { gte: start, lte: end } },
-    select: { externalId: true, totalAmount: true, paidAmount: true, tipAmount: true, vendorName: true, rawPayload: true, updatedAt: true },
+    select: { totalAmount: true, paidAmount: true, tipAmount: true, vendorName: true, rawPayload: true, updatedAt: true },
   });
-  const mirroredOnlineIds = new Set<string>();
   for (const o of pos) {
-    if (o.externalId && o.externalId.startsWith("oo-")) mirroredOnlineIds.add(o.externalId.slice(3));
     const amount = o.totalAmount || 0;
     if (amount <= 0 || (o.paidAmount || 0) < amount) continue; // solo pagados
     const rp = (o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, any> : {};
@@ -92,26 +88,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── OnlineOrder (ecommerce nativo) no-espejados — por FECHA DE PAGO ──
-  // paidAt cuando existe (pago online); si no (offline), cae a createdAt.
-  const online = await prisma.onlineOrder.findMany({
-    where: {
-      restaurantId, source: "ecommerce",
-      status: { not: "CANCELLED" },
-      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY } }],
-      AND: [{ OR: [
-        { paidAt: { gte: start, lte: end } },
-        { AND: [{ paidAt: null }, { createdAt: { gte: start, lte: end } }] },
-      ] }],
-    },
-    select: { id: true, total: true, paymentMethod: true },
-  });
-  for (const o of online) {
-    if (mirroredOnlineIds.has(o.id)) continue;
-    const amount = o.total || 0;
-    if (amount <= 0) continue;
-    add(normMethod(o.paymentMethod), amount, 0);
-  }
+  // NOTA: el arqueo NO incluye ventas de ecommerce nativo (OnlineOrder). Un local
+  // puede tener su propio POS (p.ej. Hand Roll usa Toteat) donde las ventas del
+  // ecommerce a propósito NO se ingresan. El cierre de caja refleja solo lo que
+  // pasó por el POS (PosOrder / Centro de pedidos) + las cuentas event-sourced.
 
   let total = 0, tips = 0, count = 0;
   for (const v of Object.values(byMethod)) { total += v.amount; tips += v.tip; count += v.count; }
