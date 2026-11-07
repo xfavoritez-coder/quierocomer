@@ -978,17 +978,18 @@ const DOW_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 function dowRankColor(rank: number, total: number): string {
   if (total <= 1) return GREEN
   const t = rank / (total - 1)
+  let r: number, g: number, b: number
   if (t <= 0.5) {
-    const r = Math.round(34  + (245 - 34)  * (t * 2))
-    const g = Math.round(197 + (158 - 197) * (t * 2))
-    const b = Math.round(94  + (11  - 94)  * (t * 2))
-    return `rgb(${r},${g},${b})`
+    r = Math.round(34  + (245 - 34)  * (t * 2))
+    g = Math.round(197 + (158 - 197) * (t * 2))
+    b = Math.round(94  + (11  - 94)  * (t * 2))
+  } else {
+    const t2 = (t - 0.5) * 2
+    r = Math.round(245 + (239 - 245) * t2)
+    g = Math.round(158 + (68  - 158) * t2)
+    b = Math.round(11  + (68  - 11)  * t2)
   }
-  const t2 = (t - 0.5) * 2
-  const r = Math.round(245 + (239 - 245) * t2)
-  const g = Math.round(158 + (68  - 158) * t2)
-  const b = Math.round(11  + (68  - 11)  * t2)
-  return `rgb(${r},${g},${b})`
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
 }
 const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
