@@ -467,9 +467,6 @@ export default function PosHomePage() {
         onMenu={() => setMenuOpen(m => !m)}
         onPendingClick={() => setPendingModal(true)}
         onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
-        branches={restaurants.length > 1 ? restaurants : undefined}
-        selectedBranchMode={restaurants.length > 1 ? effectiveBranchMode : undefined}
-        onBranchSelect={restaurants.length > 1 ? handleBranchSelect : undefined}
         centerSlot={
           <div className="pos-tabs-bar">
             {TABS.map(t => (
@@ -486,8 +483,8 @@ export default function PosHomePage() {
         }
       />
 
-      {/* ── Branch pills — mobile only, below header ── */}
-      {!isDesktop && restaurants.length > 1 && (
+      {/* ── Branch pills — below header ── */}
+      {restaurants.length > 1 && (
         <div className="pos-branch-bar">
           {restaurants.map(r => (
             <button
