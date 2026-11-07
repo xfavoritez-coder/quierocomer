@@ -47,7 +47,6 @@ function diffMin(a: string, b: string) {
 // ── Tipos ─────────────────────────────────────────────────────────────
 interface CustomerOrder {
   id: string
-  dailyNumber?: number | null
   orderReference?: string | null
   customerName: string
   customerPhone: string
@@ -135,8 +134,8 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {(order.orderReference || order.dailyNumber != null) && (
-              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>
+            {order.orderReference && (
+              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference}</span>
             )}
             {new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </div>
@@ -288,8 +287,8 @@ export default function CustomerOrdersDrawer({
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                        {(o.orderReference || o.dailyNumber != null) && (
-                          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 13 }}>#{o.orderReference ?? o.dailyNumber}</span>
+                        {o.orderReference && (
+                          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 13 }}>#{o.orderReference}</span>
                         )}
                         <span style={{ color: 'var(--ink-3)', fontWeight: 400, fontSize: 13 }}>
                           {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}

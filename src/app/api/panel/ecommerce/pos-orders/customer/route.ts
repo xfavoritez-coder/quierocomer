@@ -32,7 +32,6 @@ export async function GET(req: NextRequest) {
     },
     select: {
       id: true,
-      dailyNumber: true,
       orderReference: true,
       customerName: true,
       customerPhone: true,
