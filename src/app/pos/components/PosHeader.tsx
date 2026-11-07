@@ -90,15 +90,19 @@ export default function PosHeader({
         {mode === 'brand' ? (
           <div ref={dropRef} style={{ position: 'relative' }}>
             {/* ── Trigger ── */}
-            <div
-              className="pos-brand"
-              onClick={showBranchDrop ? () => setDropOpen(o => !o) : onBrandClick}
-              style={{ cursor: showBranchDrop || onBrandClick ? 'pointer' : undefined, userSelect: 'none' }}
-            >
+            <div className="pos-brand" style={{ userSelect: 'none' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" className="mk-logo" />
+              <img
+                src="/logo.png" alt="QuieroComer" className="mk-logo"
+                onClick={onBrandClick}
+                style={{ cursor: onBrandClick ? 'pointer' : undefined }}
+              />
               {storeName && (
-                <div className="pos-brand-store">
+                <div
+                  className="pos-brand-store"
+                  onClick={showBranchDrop ? () => setDropOpen(o => !o) : undefined}
+                  style={{ cursor: showBranchDrop ? 'pointer' : undefined }}
+                >
                   <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{storeName}</span>
                   {displayBranchName && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12, color: isAllMode ? 'var(--amber-press)' : 'var(--ink-3)' }}>
