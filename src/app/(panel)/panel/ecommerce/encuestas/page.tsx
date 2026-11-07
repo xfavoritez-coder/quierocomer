@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Star, Save, Send, Plus, Trash2, ArrowUp, ArrowDown, Settings, ListChecks, BarChart3 } from "lucide-react";
+import { ArrowLeft, Star, Save, Send, Plus, Trash2, ArrowUp, ArrowDown, Settings, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { parseStoreConfig, type EcommerceStoreConfig, type SurveyQuestion } from "@/lib/ecommerce/store-config";
@@ -10,23 +10,16 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const ACCENT = "#F4A623";
 
-type RespData = {
-  averages: { id: string; text: string; avg: number; count: number }[];
-  responses: { id: string; orderNumber: number | null; customerName: string | null; comment: string | null; createdAt: string; answers: { id: string; text: string; v: number }[] }[];
-  total: number;
-};
-
 export default function EncuestasPage() {
   const session = useSessionContext();
   const restaurantId = session?.selectedRestaurantId;
   const [cfg, setCfg] = useState<EcommerceStoreConfig>(() => parseStoreConfig(null));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"config" | "preguntas" | "respuestas">("respuestas");
+  const [tab, setTab] = useState<"config" | "preguntas">("config");
   const [newQ, setNewQ] = useState("");
   const [testEmail, setTestEmail] = useState("");
   const [testing, setTesting] = useState(false);
-  const [resp, setResp] = useState<RespData | null>(null);
 
   const survey = cfg.survey;
 
@@ -39,16 +32,6 @@ export default function EncuestasPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
-
-  const loadResponses = useCallback(() => {
-    if (!restaurantId) return;
-    fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setResp(d); })
-      .catch(() => {});
-  }, [restaurantId]);
-
-  useEffect(() => { loadResponses(); }, [loadResponses]);
 
   // Guarda el config completo (con la encuesta editada) vía el endpoint de settings.
   const saveNow = useCallback(async (nextCfg: EcommerceStoreConfig, quiet = false) => {
@@ -120,7 +103,6 @@ export default function EncuestasPage() {
 
       {!loading && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, marginBottom: 4 }}>
-          <Tab active={tab === "respuestas"} onClick={() => { setTab("respuestas"); loadResponses(); }} icon={BarChart3} label={`Respuestas${resp ? ` (${resp.total})` : ""}`} />
           <Tab active={tab === "config"} onClick={() => setTab("config")} icon={Settings} label="Configuración" />
           <Tab active={tab === "preguntas"} onClick={() => setTab("preguntas")} icon={ListChecks} label="Preguntas" />
         </div>
@@ -210,51 +192,6 @@ export default function EncuestasPage() {
           </section>
           )}
 
-          {/* ── Respuestas ── */}
-          {tab === "respuestas" && (
-          <>
-            {!resp ? (
-              <p style={{ fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</p>
-            ) : resp.total === 0 ? (
-              <section style={card}><p style={{ fontFamily: FB, color: "var(--adm-text3)", margin: 0 }}>Aún no hay respuestas. Cuando tus clientes califiquen sus pedidos, aparecerán aquí.</p></section>
-            ) : (
-              <>
-                <section style={card}>
-                  <p style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase", color: "var(--adm-text3)", margin: "0 0 12px" }}>Promedio por pregunta</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {resp.averages.map((a) => (
-                      <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                        <span style={{ fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text)" }}>{a.text}</span>
-                        <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: "var(--adm-text)", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                          <Star size={15} color="#f5b301" fill="#f5b301" /> {a.count ? a.avg.toFixed(1) : "—"} <span style={{ color: "var(--adm-text3)", fontWeight: 600 }}>({a.count})</span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {resp.responses.map((r) => (
-                  <section key={r.id} style={card}>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 800, color: "var(--adm-text)" }}>
-                        {r.customerName || "Cliente"} {r.orderNumber != null && <span style={{ color: "var(--adm-text3)", fontWeight: 600 }}>· #{r.orderNumber}</span>}
-                      </span>
-                      <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{new Date(r.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", marginTop: 8 }}>
-                      {r.answers.map((a) => (
-                        <span key={a.id} style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)" }}>
-                          {a.text}: <b style={{ color: "var(--adm-text)" }}>{a.v}</b> <Star size={12} color="#f5b301" fill="#f5b301" style={{ verticalAlign: "-1px" }} />
-                        </span>
-                      ))}
-                    </div>
-                    {r.comment && <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", fontStyle: "italic", margin: "10px 0 0", padding: "8px 12px", background: "var(--adm-hover)", borderRadius: 10 }}>&ldquo;{r.comment}&rdquo;</p>}
-                  </section>
-                ))}
-              </>
-            )}
-          </>
-          )}
         </div>
       )}
     </div>
