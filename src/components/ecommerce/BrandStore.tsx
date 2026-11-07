@@ -31,6 +31,7 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
   const [branchSlug, setBranchSlug] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [resolving, setResolving] = useState(true); // true hasta que se resuelva la sucursal guardada
 
   const adoptRestaurant = useCartStore((s) => s.adoptRestaurant);
   const setDeliveryAddress = useCartStore((s) => s.setDeliveryAddress);
@@ -69,21 +70,23 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
       const only = brand.branches[0];
       (async () => {
         const bd = only.slug === representative.tenant.slug ? representative : await fetchStorefront(only.slug);
-        if (!bd) return;
+        if (!bd) { setResolving(false); return; }
         adoptRestaurant(bd.tenant.id, bd.products);
         setData(bd); setBranchSlug(only.slug);
+        setResolving(false);
       })();
       return;
     }
-    if (!saved) return;
+    if (!saved) { setResolving(false); return; }
     const br = brand.branches.find((b) => b.slug === saved);
-    if (!br) { try { localStorage.removeItem(PERSIST_KEY); } catch {} return; }
+    if (!br) { try { localStorage.removeItem(PERSIST_KEY); } catch {} setResolving(false); return; }
     (async () => {
       const bd = br.slug === representative.tenant.slug ? representative : await fetchStorefront(br.slug);
-      if (!bd) return;
+      if (!bd) { setResolving(false); return; }
       adoptRestaurant(bd.tenant.id, bd.products); // carrito ya ligado → solo re-cotiza
       setData(bd);
       setBranchSlug(br.slug);
+      setResolving(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -112,10 +115,19 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
     return br ? (br.branchName || br.name) : null;
   }, [branchSlug, brand.branches]);
 
+  // Si la sucursal actual está cerrada, buscar una alternativa abierta para sugerirla
+  const openBranchLabel = useMemo(() => {
+    if (data.tenant.openStatus.open) return null;
+    const alt = brand.branches.find((b) => b.slug !== branchSlug && b.open);
+    return alt ? (alt.branchName || alt.name) : null;
+  }, [data.tenant.openStatus.open, brand.branches, branchSlug]);
+
   const brandControls: BrandControls = {
     hasBranch: !!branchSlug,
     branchLabel,
     onRequireBranch: () => setPickerOpen(true),
+    resolving,
+    openBranchLabel,
   };
 
   return (

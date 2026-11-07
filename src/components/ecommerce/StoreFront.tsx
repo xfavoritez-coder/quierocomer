@@ -24,6 +24,8 @@ export interface BrandControls {
   hasBranch: boolean;
   branchLabel: string | null;
   onRequireBranch: (product?: StoreProduct | null) => void;
+  resolving?: boolean;       // true mientras se carga la sucursal guardada (evita flash)
+  openBranchLabel?: string | null; // nombre de sucursal abierta alternativa (si la actual está cerrada)
 }
 
 interface Props {
@@ -438,29 +440,43 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── Banner de tienda cerrada ─────────────────────────────── */}
-      {/* Clickeable: abre el modal con los horarios de la semana (si hay horario). */}
-      {!tenant.openStatus.open && (
-        <button
-          type="button"
-          onClick={() => tenant.weeklyHours && setHoursModalOpen(true)}
-          className={`w-full bg-gray-900 text-white text-center py-3 px-4 ${tenant.weeklyHours ? "cursor-pointer hover:bg-gray-800 transition" : "cursor-default"}`}
-        >
-          {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? (
-            <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
-          ) : (
-            <>
-              <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
-              {(() => {
-                const t = tenant.openStatus.today;
-                let msg: string;
-                if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
-                else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
-                else msg = "Hoy no atendemos";
-                return <span className="text-sm text-gray-300"> · {msg}</span>;
-              })()}
-            </>
+      {/* Suprimido mientras brandControls.resolving=true para evitar el flash de hidratación */}
+      {!tenant.openStatus.open && !brandControls?.resolving && (
+        <>
+          <button
+            type="button"
+            onClick={() => tenant.weeklyHours && setHoursModalOpen(true)}
+            className={`w-full bg-gray-900 text-white text-center py-3 px-4 ${tenant.weeklyHours ? "cursor-pointer hover:bg-gray-800 transition" : "cursor-default"}`}
+          >
+            {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? (
+              <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
+            ) : (
+              <>
+                <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
+                {(() => {
+                  const t = tenant.openStatus.today;
+                  let msg: string;
+                  if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
+                  else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
+                  else msg = "Hoy no atendemos";
+                  return <span className="text-sm text-gray-300"> · {msg}</span>;
+                })()}
+              </>
+            )}
+          </button>
+          {brandControls && (
+            <button
+              type="button"
+              onClick={() => brandControls.onRequireBranch(null)}
+              className="w-full bg-gray-800 hover:bg-gray-700 transition text-white text-center py-2.5 px-4 border-t border-gray-700"
+            >
+              {brandControls.openBranchLabel
+                ? <span className="text-sm font-bold">🟢 {brandControls.openBranchLabel} está abierta · <span className="underline">Cambiar sucursal →</span></span>
+                : <span className="text-sm font-semibold text-gray-300">Ver otras sucursales →</span>
+              }
+            </button>
           )}
-        </button>
+        </>
       )}
 
       {/* ── Aviso de cierre parcial (un método bloqueado, la tienda sigue abierta) ── */}
