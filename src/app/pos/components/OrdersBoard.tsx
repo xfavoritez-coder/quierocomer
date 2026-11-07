@@ -592,7 +592,7 @@ function OrderDetailPanel({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
-              {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
+              {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
             </span>
             {(() => {
               const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
