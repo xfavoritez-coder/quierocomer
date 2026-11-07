@@ -35,6 +35,17 @@ export async function GET(req: NextRequest) {
   const { start } = chileDayRangeUtc(fromYmd);
   const { end } = chileDayRangeUtc(toYmd);
 
+  // Pedidos realmente completados (pagados o método offline, no cancelados)
+  const ONLINE_PAY_METHODS = ["webpay", "flow", "mercadopago"];
+  const completedOrdersCount = await prisma.onlineOrder.count({
+    where: {
+      restaurantId, source: "ecommerce",
+      createdAt: { gte: start, lte: end },
+      status: { not: "CANCELLED" },
+      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
+    },
+  });
+
   // All STORE_ events in date range (limit 5000)
   const events = await prisma.statEvent.findMany({
     where: {
@@ -57,7 +68,8 @@ export async function GET(req: NextRequest) {
   const dishViews       = eventCounts["STORE_DISH_VIEW"]      || 0;
   const cartAdds        = eventCounts["STORE_CART_ADD"]       || 0;
   const checkoutStarts  = eventCounts["STORE_CHECKOUT_START"] || 0;
-  const ordersPlaced    = eventCounts["STORE_ORDER_PLACED"]   || 0;
+  // Usar conteo real de OnlineOrders confirmadas, no eventos (que incluyen fallidos)
+  const ordersPlaced    = completedOrdersCount;
   const funnel = {
     storeViews, dishViews, cartAdds, checkoutStarts, ordersPlaced,
     browseRate:        safePct(dishViews,      storeViews),
