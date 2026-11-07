@@ -452,14 +452,18 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
             ) : (
               <>
-                <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
                 {(() => {
                   const t = tenant.openStatus.today;
+                  const branch = brandMode && tenant.branchName ? tenant.branchName : null;
                   let msg: string;
-                  if (tenant.openStatus.opensAt) msg = `Abrimos hoy a las ${tenant.openStatus.opensAt}`;
+                  if (tenant.openStatus.opensAt) msg = `Abre hoy a las ${tenant.openStatus.opensAt} hrs`;
                   else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
                   else msg = "Hoy no atendemos";
-                  return <span className="text-sm text-gray-300"> · {msg}</span>;
+                  return branch ? (
+                    <span className="text-sm font-bold">🔒 Sucursal {branch} cerrada · <span className="font-normal text-gray-300">{msg}</span></span>
+                  ) : (
+                    <><span className="text-sm font-bold">🔒 Estamos cerrados ahora</span><span className="text-sm text-gray-300"> · {msg}</span></>
+                  );
                 })()}
               </>
             )}
