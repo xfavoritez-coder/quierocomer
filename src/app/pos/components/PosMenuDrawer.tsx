@@ -37,6 +37,11 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       inline: 'caja',
     },
     {
+      label: 'KDS',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
+      href: '/pos/kds',
+    },
+    {
       label: 'Reportes',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
       inline: 'reportes',
