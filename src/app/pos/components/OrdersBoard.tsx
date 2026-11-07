@@ -239,29 +239,31 @@ function OrderCard({
         flex: 1, minWidth: 0,
       }}>
         {cols === 3 ? (
-          // 3 columnas (tarjeta angosta): nombre en su propia fila a ancho completo
-          // (hasta 2 líneas, sin recorte) y chips + monto bajan a una segunda fila.
+          // 3 columnas (tarjeta angosta): nombre + total/pagado en fila superior,
+          // chips de tipo/sucursal en fila inferior.
           <>
-            <div style={{
-              fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
-              display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
-              overflow: 'hidden', wordBreak: 'break-word',
-            }}>
-              {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {displayName(order.customerName || 'Cliente')}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', rowGap: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
-                {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
-                {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{
+                fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
+                display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+                overflow: 'hidden', wordBreak: 'break-word', flex: 1, minWidth: 0,
+              }}>
+                {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+                {displayName(order.customerName || 'Cliente')}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
                   {clp(order.totalAmount)}
                 </span>
                 <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
               </div>
             </div>
+            {(showTypeChip || branchLabel) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
+                {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
+              </div>
+            )}
           </>
         ) : (
           // 1 y 2 columnas (tarjeta ancha): fila única original
@@ -586,10 +588,9 @@ function OrderDetailPanel({
         />
       )}
       {/* Header */}
-      {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
         {/* Fila superior: nro pedido + tipo · botones imprimir/cerrar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 10px', background: 'var(--sunk)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
               {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
@@ -615,7 +616,7 @@ function OrderDetailPanel({
                 onClick={() => setPrintOpen(o => !o)}
                 disabled={!!printing}
                 title="Imprimir"
-                style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
+                style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--surface)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
               >
                 {printing ? (
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -650,18 +651,15 @@ function OrderDetailPanel({
             <button
               onClick={onClose}
               title="Cerrar"
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         </div>
 
-        {/* Línea separadora */}
-        <div style={{ height: 1, background: 'var(--line)' }} />
-
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px 14px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 22px 12px', borderTop: '1px solid var(--line)', minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName(order.customerName || 'Cliente')}
           </div>
@@ -684,14 +682,13 @@ function OrderDetailPanel({
             </button>
           )}
         </div>
-
       </div>
 
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Seguimiento del reparto (Delifast) — solo delivery */}
-        {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} />}
+        {isDelivery && <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} />}
 
         {/* Customer info */}
         {(order.customerPhone || (isDelivery && order.addressLine)) && (
