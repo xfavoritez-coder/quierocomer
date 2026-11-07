@@ -965,7 +965,6 @@ interface VentaMonth {
 interface DowStat { dow: number; avg: number; count: number }
 interface HistoricoData {
   months: VentaMonth[]
-  dowStats: DowStat[]
   currentMonthDays: { fecha: string; totalBruto: number; ventaMercat: number; ventaUber: number }[]
   last7Total: number
   totalRows: number
@@ -1031,11 +1030,6 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
   // Find same month last year or same month historical avg
   const prevSameName = months.find(m => m.yearMonth !== todayYm && m.yearMonth.endsWith(todayYm.slice(5)))
   const histRef = prevSameName?.totalBruto ?? null
-
-  // Best/worst days
-  const dowActive = data.dowStats.filter(d => d.count > 0)
-  const bestDow = dowActive.length > 0 ? dowActive.reduce((a, b) => a.avg > b.avg ? a : b) : null
-  const worstDow = dowActive.length > 0 ? dowActive.reduce((a, b) => a.avg < b.avg ? a : b) : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1124,49 +1118,6 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
         </Card>
       )}
 
-      {/* Día de semana benchmark */}
-      {dowActive.length > 0 && (
-        <Card>
-          <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
-          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
-            Promedio de venta neta por día · verde = mejor, rojo = peor
-          </div>
-          {(() => {
-            const maxAvg = Math.max(1, ...data.dowStats.map(x => x.avg))
-            const sorted = [...dowActive].sort((a, b) => b.avg - a.avg)
-            return (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                {data.dowStats.map(d => {
-                  const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
-                  const rank = sorted.findIndex(s => s.dow === d.dow)
-                  const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--slate)'
-                  const isBest = bestDow?.dow === d.dow
-                  const isWorst = worstDow?.dow === d.dow
-                  return (
-                    <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      {d.avg > 0 && (
-                        <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>
-                          {clpShort(d.avg)}
-                        </span>
-                      )}
-                      <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                        <div style={{
-                          width: '72%', maxWidth: 30, height: `${pct}%`,
-                          background: `linear-gradient(180deg,${color},${color}99)`,
-                          borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0,
-                        }} />
-                      </div>
-                      <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: isBest ? GREEN : isWorst ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
-                        {DOW_LABEL[d.dow]}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
-        </Card>
-      )}
     </div>
   )
 }
@@ -2154,6 +2105,45 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             {/* Venta por hora */}
             <SectionLabel>Horarios</SectionLabel>
             <HourlyChart hourly={data.hourly} />
+
+            {/* Día de semana */}
+            {data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0) && (() => {
+              const ds: DowStat[] = data.dowStats
+              const active = ds.filter(d => d.count > 0)
+              const sorted = [...active].sort((a, b) => b.avg - a.avg)
+              const maxAvg = Math.max(1, ...ds.map(x => x.avg))
+              const best = active.reduce((a, b) => a.avg > b.avg ? a : b)
+              const worst = active.reduce((a, b) => a.avg < b.avg ? a : b)
+              return (
+                <Card>
+                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
+                  <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
+                    Promedio de venta neta · verde = mejor, rojo = peor
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+                    {ds.map(d => {
+                      const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
+                      const rank = sorted.findIndex(s => s.dow === d.dow)
+                      const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--line)'
+                      return (
+                        <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          {d.avg > 0 && (
+                            <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>{clpShort(d.avg)}</span>
+                          )}
+                          <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                            <div style={{ width: '72%', maxWidth: 30, height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}99)`, borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0 }} />
+                          </div>
+                          <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: best.dow === d.dow ? GREEN : worst.dow === d.dow ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
+                            {DOW_LABEL[d.dow]}
+                          </span>
+                          {d.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-3)' }}>{d.count}d</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Card>
+              )
+            })()}
 
             {/* Venta del mes */}
             <SectionLabel>Mes en curso</SectionLabel>

@@ -83,6 +83,7 @@ export async function GET(req: NextRequest) {
   let grossTotal = 0; // lo que pagó el cliente (referencia)
   let ordersWithTip = 0;
   const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: h, sales: 0, orders: 0 }));
+  const dowMap = new Map<number, { sum: number; count: number }>();
   const channelMap = new Map<string, { name: string; sales: number; orders: number }>();
   const pmMap = new Map<string, { method: string; label: string; count: number; amount: number }>();
   const PM_LABELS: Record<string, string> = {
@@ -110,6 +111,9 @@ export async function GET(req: NextRequest) {
     const h = chileHour(o.createdAt);
     hourly[h].sales += net;
     hourly[h].orders += 1;
+    const dowKey = new Date(chileYmd(o.createdAt) + "T12:00:00Z").getUTCDay();
+    const dowEntry = dowMap.get(dowKey) || { sum: 0, count: 0 };
+    dowEntry.sum += net; dowEntry.count++; dowMap.set(dowKey, dowEntry);
 
     // Método de pago (desde rawPayload.posPayment.method)
     const rp = typeof o.rawPayload === "object" && o.rawPayload ? (o.rawPayload as Record<string, any>) : {};
@@ -529,6 +533,11 @@ export async function GET(req: NextRequest) {
     return { day: i + 1, sales: e?.sales || 0, orders: e?.orders || 0 };
   });
 
+  const dowStats = Array.from({ length: 7 }, (_, dow) => {
+    const a = dowMap.get(dow);
+    return { dow, avg: a ? Math.round(a.sum / a.count) : 0, count: a?.count ?? 0 };
+  });
+
   return NextResponse.json({
     from: fromYmd,
     to: toYmd,
@@ -539,6 +548,7 @@ export async function GET(req: NextRequest) {
     tipsTotal,
     grossTotal,
     hourly,
+    dowStats,
     channels,
     products,
     byType,
