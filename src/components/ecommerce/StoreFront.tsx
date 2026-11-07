@@ -452,7 +452,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
             ) : (
               <>
-                <span className="text-sm font-bold">🔒 Estamos cerrados ahora{brandMode && tenant.branchName ? ` · ${tenant.branchName}` : ""}</span>
+                <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
                 {(() => {
                   const t = tenant.openStatus.today;
                   let msg: string;
@@ -637,6 +637,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         <HoursModal
           weeklyHours={tenant.weeklyHours}
           primaryColor={primaryColor}
+          branchName={brandMode ? (tenant.branchName ?? null) : null}
           onClose={() => setHoursModalOpen(false)}
         />
       )}
@@ -647,7 +648,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
 
 // ── Modal de horarios de atención (se muestra cuando la tienda está cerrada) ──
 // Estilo referencia: ícono de reloj, título, lista Lun→Dom con rango horario.
-function HoursModal({ weeklyHours, primaryColor, onClose }: { weeklyHours: import("@/lib/ecommerce/hours").DayHours[]; primaryColor: string; onClose: () => void }) {
+function HoursModal({ weeklyHours, primaryColor, branchName, onClose }: { weeklyHours: import("@/lib/ecommerce/hours").DayHours[]; primaryColor: string; branchName?: string | null; onClose: () => void }) {
   // weeklyHours viene indexado 0=Dom … 6=Sáb. Se muestra Lun→Dom (como la referencia).
   const DISPLAY = [1, 2, 3, 4, 5, 6, 0];
   const LABELS: Record<number, string> = { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" };
@@ -670,6 +671,7 @@ function HoursModal({ weeklyHours, primaryColor, onClose }: { weeklyHours: impor
             <Clock className="w-8 h-8" style={{ color: primaryColor }} />
           </div>
           <h2 className="text-xl font-black text-gray-900 leading-tight">Estamos cerrados<br />momentáneamente</h2>
+          {branchName && <p className="text-sm font-semibold text-gray-500 mt-1">Sucursal {branchName}</p>}
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-2">Nuestros horarios de atención son:</p>
         </div>
         <div className="rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden mb-5">
