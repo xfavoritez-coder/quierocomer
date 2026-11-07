@@ -579,7 +579,7 @@ function OrderDetailPanel({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
-      <button onClick={onClose} className="pos-detail-close-mobile" style={{ position: 'absolute', top: -4, right: 2, zIndex: 20, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0 }}>
+      <button onClick={onClose} className="pos-detail-close-mobile" style={{ position: 'absolute', top: -12, right: 2, zIndex: 20, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0 }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       {showCustomerHistory && order.customerPhone && (
