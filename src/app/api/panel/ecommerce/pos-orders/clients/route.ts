@@ -166,10 +166,17 @@ export async function GET(req: NextRequest) {
       for (let i = 1; i < sorted.length; i++) {
         totalGap += (sorted[i].getTime() - sorted[i - 1].getTime()) / 86400000;
       }
-      avgFreq = Math.round(totalGap / (sorted.length - 1));
+      // Math.max(1, ...) evita 0 cuando dos pedidos son el mismo día
+      avgFreq = Math.max(1, Math.round(totalGap / (sorted.length - 1)));
     }
 
-    const daysSince = Math.floor((now.getTime() - c.lastAt.getTime()) / 86400000);
+    // Comparar fechas de calendario en zona Santiago para evitar que pedidos
+    // de "ayer a las 23h" aparezcan como "Hoy" por diferencia UTC < 24h
+    const fmt = (d: Date) =>
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(d)
+    const nowCalendar  = new Date(`${fmt(now)}T12:00:00Z`)
+    const lastCalendar = new Date(`${fmt(c.lastAt)}T12:00:00Z`)
+    const daysSince = Math.round((nowCalendar.getTime() - lastCalendar.getTime()) / 86400000);
     const status = computeStatus(daysSince, avgFreq);
     const riskScore = computeRisk(daysSince, avgFreq, c.orders);
 
