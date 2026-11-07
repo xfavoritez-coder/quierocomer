@@ -384,7 +384,7 @@ model Restaurant {
   deliveryBalance            Int                       @default(0) // saldo prepago (CLP) para solicitar repartidores externos
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
-  viewerSections             Json?                     // secciones del sidebar visibles para el perfil VIEWER (null = todas)
+  viewerSections             Json? // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
   automationRules            AutomationRule[]
   badgeSnapshots             BadgeSnapshot[]
@@ -448,53 +448,53 @@ model Restaurant {
 }
 
 model OnlineOrder {
-  id                 String     @id @default(cuid())
-  restaurantId       String
-  customerName       String
-  customerPhone      String
-  orderType          String
-  deliveryAddress    String?
-  deliveryAddressParts Json?   // partes separadas (calle, comuna, ciudad, región, país) de la dirección de delivery
-  paymentMethod      String
-  items              Json
-  total              Int
-  notes              String?
-  status             String     @default("PENDING")
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  customerEmail      String?
-  cancellationReason String?
-  statusHistory      Json       @default("[]")
-  paymentStatus      String     @default("pending")
-  paymentGateway     String?
-  webpayToken        String?
-  webpayBuyOrder     String?
-  paidAt             DateTime?
-  orderNumber        Int?
-  toteatOrderId      String?
-  posError           String?
-  posRetryCount      Int        @default(0)
-  deliveryFee        Int        @default(0)
-  flowToken          String?
-  discount           Int        @default(0)
-  couponCode         String?
-  source             String     @default("pedir-online")
-  channel            String     @default("online") // "online" (tienda) | "manual" (tomador de pedidos)
-  fromApp            Boolean    @default(false) // true = pedido hecho desde la app (Capacitor); false = web
-  deliveryLat        Float?
-  deliveryLng        Float?
-  uberDeliveryId     String?
-  courier            Json?
-  surveySentAt       DateTime?
-  printedAt          DateTime?
-  printRequestedAt   DateTime?
-  scheduledFor       DateTime?
-  scheduledReleasedAt DateTime?
-  pushSubscription   Json?
-  nativePush         Json?
-  liveActivityToken  String?
-  guestId            String?
-  restaurant         Restaurant @relation(fields: [restaurantId], references: [id])
+  id                   String     @id @default(cuid())
+  restaurantId         String
+  customerName         String
+  customerPhone        String
+  orderType            String
+  deliveryAddress      String?
+  deliveryAddressParts Json? // partes separadas (calle, comuna, ciudad, región, país) de la dirección de delivery
+  paymentMethod        String
+  items                Json
+  total                Int
+  notes                String?
+  status               String     @default("PENDING")
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  customerEmail        String?
+  cancellationReason   String?
+  statusHistory        Json       @default("[]")
+  paymentStatus        String     @default("pending")
+  paymentGateway       String?
+  webpayToken          String?
+  webpayBuyOrder       String?
+  paidAt               DateTime?
+  orderNumber          Int?
+  toteatOrderId        String?
+  posError             String?
+  posRetryCount        Int        @default(0)
+  deliveryFee          Int        @default(0)
+  flowToken            String?
+  discount             Int        @default(0)
+  couponCode           String?
+  source               String     @default("pedir-online")
+  channel              String     @default("online") // "online" (tienda) | "manual" (tomador de pedidos)
+  fromApp              Boolean    @default(false) // true = pedido hecho desde la app (Capacitor); false = web
+  deliveryLat          Float?
+  deliveryLng          Float?
+  uberDeliveryId       String?
+  courier              Json?
+  surveySentAt         DateTime?
+  printedAt            DateTime?
+  printRequestedAt     DateTime?
+  scheduledFor         DateTime?
+  scheduledReleasedAt  DateTime?
+  pushSubscription     Json?
+  nativePush           Json?
+  liveActivityToken    String?
+  guestId              String?
+  restaurant           Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])
   @@index([restaurantId, createdAt])
@@ -513,7 +513,7 @@ model PosOrder {
   provider   String @default("toteat")
 
   // Estado que reporta Toteat (mapeado): new | preparing | ready | on_the_way | delivered | canceled | accepted
-  posStatus String @default("new")
+  posStatus      String    @default("new")
   // Etapa operativa gestionada por el local: preparing | ready | out_for_delivery | delivered
   opsStage       String    @default("preparing")
   opsDeliveredAt DateTime?
@@ -526,7 +526,7 @@ model PosOrder {
   customerEmail String @default("")
   customerPhone String @default("")
   addressLine   String @default("")
-  addressParts  Json?   // partes separadas (calle, comuna, ciudad, región, país); espejadas del OnlineOrder
+  addressParts  Json? // partes separadas (calle, comuna, ciudad, región, país); espejadas del OnlineOrder
 
   totalAmount    Int    @default(0)
   paidAmount     Int    @default(0)
@@ -536,9 +536,9 @@ model PosOrder {
   discountAmount Int    @default(0)
   currency       String @default("CLP")
 
-  vendorName     String?
-  orderReference String?
-  delifastVentaId String?  // id_venta de Delifast, para mapear sus cambios de estado
+  vendorName      String?
+  orderReference  String?
+  delifastVentaId String? // id_venta de Delifast, para mapear sus cambios de estado
 
   items      Json? // líneas normalizadas del pedido
   rawPayload Json? // payload crudo de Toteat (para depurar/reprocesar)
@@ -548,10 +548,10 @@ model PosOrder {
   updatedAt   DateTime  @updatedAt
 
   // ── Reparto / despacho (app de repartidor) ──
-  assignedDriverId String?
-  assignedDriver   Driver? @relation(fields: [assignedDriverId], references: [id])
-  assignedTo       String? // nombre del repartidor asignado (compat con la app)
-  isAssigned       Boolean @default(false)
+  assignedDriverId      String?
+  assignedDriver        Driver?   @relation(fields: [assignedDriverId], references: [id])
+  assignedTo            String? // nombre del repartidor asignado (compat con la app)
+  isAssigned            Boolean   @default(false)
   opsReadyForDeliveryAt DateTime?
   opsDispatchedAt       DateTime?
 
@@ -560,13 +560,13 @@ model PosOrder {
   customerLng Float?
 
   // Tracking en vivo (GPS del repartidor)
-  trackingToken     String?   @unique
+  trackingToken      String?   @unique
   trackingLastPingAt DateTime?
-  lastLat        Float?
-  lastLng        Float?
-  lastAccuracyM  Float?
-  lastSpeedMps   Float?
-  lastHeadingDeg Float?
+  lastLat            Float?
+  lastLng            Float?
+  lastAccuracyM      Float?
+  lastSpeedMps       Float?
+  lastHeadingDeg     Float?
 
   // Courier externo (Uber Direct / PedidosYa)
   courier        Json? // CourierInfo (nombre/tel/foto/ubicación/tracking/POD)
@@ -586,18 +586,18 @@ model PosOrder {
 
 /// Repartidor de un local (login de la app). Multi-tenant por restaurantId.
 model Driver {
-  id            String     @id @default(cuid())
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
-  username      String
-  displayName   String
-  passwordHash  String
-  role          String     @default("driver") // driver | admin
-  active        Boolean    @default(true)
-  isOnShift     Boolean    @default(false)
+  id             String     @id @default(cuid())
+  restaurantId   String
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  username       String
+  displayName    String
+  passwordHash   String
+  role           String     @default("driver") // driver | admin
+  active         Boolean    @default(true)
+  isOnShift      Boolean    @default(false)
   shiftStartedAt DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   sessions       DriverSession[]
   assignedOrders PosOrder[]
@@ -1599,34 +1599,34 @@ model CampaignRecipient {
 }
 
 model Promotion {
-  id                String             @id @default(cuid())
-  restaurantId      String
-  name              String
-  description       String?
-  dishIds           String[]
-  originalPrice     Float?
-  promoPrice        Float?
-  discountPct       Int?
-  validFrom         DateTime?
-  validUntil        DateTime?
-  status            PromotionStatus    @default(SUGGESTED)
-  generatedBy       String             @default("manual")
-  aiJustification   String?
-  metrics           Json?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  imageUrl          String?
-  promoType         String             @default("product")
-  thumbUrl          String?
-  daysOfWeek        Int[]              @default([])
-  position          Int                @default(0)
-  featured          Boolean            @default(false)
+  id                     String             @id @default(cuid())
+  restaurantId           String
+  name                   String
+  description            String?
+  dishIds                String[]
+  originalPrice          Float?
+  promoPrice             Float?
+  discountPct            Int?
+  validFrom              DateTime?
+  validUntil             DateTime?
+  status                 PromotionStatus    @default(SUGGESTED)
+  generatedBy            String             @default("manual")
+  aiJustification        String?
+  metrics                Json?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  imageUrl               String?
+  promoType              String             @default("product")
+  thumbUrl               String?
+  daysOfWeek             Int[]              @default([])
+  position               Int                @default(0)
+  featured               Boolean            @default(false)
   linkedDishId           String?
   hideOriginalWhenActive Boolean            @default(false)
-  dishId                 String?            // nuevo: plato único al que aplica la oferta
-  promoName              String?            // nuevo: nombre alternativo cuando la oferta está activa
+  dishId                 String? // nuevo: plato único al que aplica la oferta
+  promoName              String? // nuevo: nombre alternativo cuando la oferta está activa
   restaurant             Restaurant         @relation(fields: [restaurantId], references: [id])
-  modifierTemplates ModifierTemplate[] @relation("ModifierTemplateToPromotion")
+  modifierTemplates      ModifierTemplate[] @relation("ModifierTemplateToPromotion")
 
   @@index([restaurantId])
   @@index([status])
@@ -2375,16 +2375,22 @@ model MermaLinea {
 }
 
 model VentaDia {
-  id           String       @id @default(cuid())
-  restaurantId String
-  fecha        DateTime
-  totalNeto    Float
-  totalBruto   Float
-  numOrdenes   Int
-  origen       PosProveedor
-  rawSyncId    String?
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
-  lineas       VentaLinea[]
+  id            String       @id @default(cuid())
+  restaurantId  String
+  fecha         DateTime
+  totalNeto     Float
+  totalBruto    Float
+  numOrdenes    Int
+  origen        PosProveedor
+  rawSyncId     String?
+  // Canales y margen (importación XLS Toteat)
+  ventaMercat   Int          @default(0)
+  ventaUber     Int          @default(0)
+  costoDespacho Int          @default(0)
+  margenPct     Float?
+  source        String       @default("sync") // "sync" | "xls-import"
+  restaurant    Restaurant   @relation(fields: [restaurantId], references: [id])
+  lineas        VentaLinea[]
 
   @@unique([restaurantId, fecha])
   @@index([restaurantId])
@@ -2676,12 +2682,12 @@ model PlatformSetting {
 model DeliveryWalletTxn {
   id           String     @id @default(cuid())
   restaurantId String
-  amount       Int        // CLP: positivo = recarga; negativo = cargo
-  type         String     // "topup" | "charge" | "refund" | "adjust"
+  amount       Int // CLP: positivo = recarga; negativo = cargo
+  type         String // "topup" | "charge" | "refund" | "adjust"
   description  String?
-  orderId      String?    // PosOrder relacionado (en cargos por courier)
-  balanceAfter Int        // saldo resultante tras el movimiento
-  createdBy    String?    // quién lo registró (admin) o el proveedor
+  orderId      String? // PosOrder relacionado (en cargos por courier)
+  balanceAfter Int // saldo resultante tras el movimiento
+  createdBy    String? // quién lo registró (admin) o el proveedor
   createdAt    DateTime   @default(now())
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
@@ -3192,7 +3198,7 @@ model FranIdentidadMarca {
   personalidad    String? @db.Text
 
   // Identidad
-  queSomos  String? @db.Text
+  queSomos   String? @db.Text
   queNoSomos String? @db.Text
 
   // Principios
@@ -3201,9 +3207,9 @@ model FranIdentidadMarca {
   principiosServicio    String? @db.Text
 
   // Sistema de franquicia
-  elementosCore         String? @db.Text
-  elementosFlexibles    String? @db.Text
-  reglasNoNegociables   String? @db.Text
+  elementosCore          String? @db.Text
+  elementosFlexibles     String? @db.Text
+  reglasNoNegociables    String? @db.Text
   libertadesFranquiciado String? @db.Text
 
   createdAt DateTime @default(now())
@@ -3358,30 +3364,30 @@ model FranEtapa {
 }
 
 model FranTarea {
-  id              String             @id @default(cuid())
-  etapaId         String
-  etapa           FranEtapa          @relation(fields: [etapaId], references: [id], onDelete: Cascade)
-  tareaTemplateId String?
-  tareaTemplate   FranTareaTemplate? @relation(fields: [tareaTemplateId], references: [id])
-  titulo          String
-  descripcion     String?
-  estado          FranEstadoTarea       @default(PENDIENTE)
-  validacion      FranValidacionStatus  @default(PROPUESTA)
-  prioridad       FranPrioridad         @default(MEDIA)
-  peso            Int                @default(1)
-  motivoBloqueo   String?
-  responsable     String?
-  fechaLimite     DateTime?
-  fechaCompletada DateTime?
-  costoEstimado   Float?
-  costoReal       Float?
-  proveedor       String?
-  notas               String?
-  entregableEsperado  String?
-  resultado           String?  @db.Text
-  orden               Int                @default(0)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  id                 String               @id @default(cuid())
+  etapaId            String
+  etapa              FranEtapa            @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+  tareaTemplateId    String?
+  tareaTemplate      FranTareaTemplate?   @relation(fields: [tareaTemplateId], references: [id])
+  titulo             String
+  descripcion        String?
+  estado             FranEstadoTarea      @default(PENDIENTE)
+  validacion         FranValidacionStatus @default(PROPUESTA)
+  prioridad          FranPrioridad        @default(MEDIA)
+  peso               Int                  @default(1)
+  motivoBloqueo      String?
+  responsable        String?
+  fechaLimite        DateTime?
+  fechaCompletada    DateTime?
+  costoEstimado      Float?
+  costoReal          Float?
+  proveedor          String?
+  notas              String?
+  entregableEsperado String?
+  resultado          String?              @db.Text
+  orden              Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   checklist FranChecklistItem[]
   bitacora  FranBitacora[]
