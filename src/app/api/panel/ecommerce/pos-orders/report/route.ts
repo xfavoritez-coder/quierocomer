@@ -222,10 +222,11 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Producto histórico desde VentaProductoMes (Toteat) ──────────────────
-  // Para meses en el rango que no tienen ningún PosOrder (data pre-QC),
-  // complementar con datos importados del XLS de Toteat.
+  // Toteat cubre TODOS los canales (POS físico + ecommerce + Uber).
+  // Estrategia: para meses donde existen datos de Toteat, Toteat es la fuente
+  // de verdad para productos (reemplaza lo acumulado desde PosOrders en ese mes).
+  // Para meses sin datos Toteat, se quedan los productos de PosOrders.
   {
-    // Meses calendarios cubiertos por el rango from/to
     const allMonths: string[] = []
     const [fy, fm] = fromYmd.split("-").map(Number)
     const [ty, tm] = toYmd.split("-").map(Number)
@@ -234,15 +235,83 @@ export async function GET(req: NextRequest) {
       allMonths.push(`${cy}-${String(cm).padStart(2, "0")}`)
       cm++; if (cm > 12) { cm = 1; cy++ }
     }
-    // Meses que sí tienen PosOrders reales → no usar histórico
-    const monthsWithOrders = new Set(orders.map(o => chileYmd(o.createdAt).slice(0, 7)))
-    const historicalMonths = allMonths.filter(m => !monthsWithOrders.has(m))
 
-    if (historicalMonths.length > 0) {
-      const historicalProducts = await prisma.ventaProductoMes.findMany({
-        where: { restaurantId, yearMonth: { in: historicalMonths } },
-        select: { productCode: true, productName: true, qty: true, revenue: true },
-      })
+    const historicalProducts = await prisma.ventaProductoMes.findMany({
+      where: { restaurantId, yearMonth: { in: allMonths } },
+      select: { yearMonth: true, productCode: true, productName: true, qty: true, revenue: true },
+    })
+
+    if (historicalProducts.length > 0) {
+      // Meses cubiertos por Toteat → quitar de productMap lo que vino de PosOrders en esos meses
+      const toteatMonths = new Set(historicalProducts.map(h => h.yearMonth))
+
+      // Reconstruir productMap: quitar productos de meses con datos Toteat
+      const posOrdersByMonth = new Map<string, { name: string; qty: number; revenue: number }[]>()
+      for (const o of orders) {
+        const ym = chileYmd(o.createdAt).slice(0, 7)
+        if (!toteatMonths.has(ym)) continue
+        // Este mes está cubierto por Toteat — no tocar productMap para él
+      }
+      // Rebuild productMap only from PosOrders in NON-toteat months
+      productMap.clear()
+      for (const o of orders) {
+        const ym = chileYmd(o.createdAt).slice(0, 7)
+        if (toteatMonths.has(ym)) continue // mes cubierto por Toteat, se omite
+        const ooId = o.externalId?.startsWith("oo-") ? o.externalId.slice(3) : null
+        const fallbackItems = ooId ? (onlineItemsFallback.get(ooId) ?? []) : []
+        const fallbackPriceMap = new Map<string, number>()
+        for (const fi of fallbackItems) {
+          if (!fi || typeof fi !== "object") continue
+          const fln = fi as Record<string, any>
+          const fname = String(fln.name ?? fln.dishName ?? "").trim()
+          const fprice = Number(fln.unit_price ?? fln.unitTotal ?? fln.price ?? 0)
+          if (fname && fprice > 0) fallbackPriceMap.set(fname, fprice)
+        }
+        const items = Array.isArray(o.items) ? (o.items as unknown[]) : []
+        for (const raw of items) {
+          if (!raw || typeof raw !== "object") continue
+          const ln = raw as Record<string, any>
+          if (ln.isExtra === true || ln.referenceLine != null) continue
+          const pname = String(ln.productName ?? ln.name ?? ln.dishName ?? ln.title ?? "").trim()
+          if (!pname) continue
+          const code = String(ln.productCode ?? "")
+          if (isDeliveryLine(pname, code)) continue
+          let qty = Number(ln.quantity ?? ln.qty ?? 1); if (!(qty > 0)) qty = 1
+          let rev = 0
+          if (ln.amountAfterTax != null && Number(ln.amountAfterTax) > 0) rev = Number(ln.amountAfterTax)
+          else if (ln.netPrice != null && Number(ln.netPrice) > 0) rev = Number(ln.netPrice)
+          else if (ln.unitPriceAfterTax != null && Number(ln.unitPriceAfterTax) > 0) rev = Number(ln.unitPriceAfterTax) * qty
+          else if (ln.unitTotal != null && Number(ln.unitTotal) > 0) rev = Number(ln.unitTotal) * qty
+          else if (ln.unit_price != null && Number(ln.unit_price) > 0) rev = Number(ln.unit_price) * qty
+          else if (ln.unitPrice != null && Number(ln.unitPrice) > 0) rev = Number(ln.unitPrice) * qty
+          else if (ln.price != null && Number(ln.price) > 0) rev = Number(ln.price) * qty
+          else if (ln.amount != null && Number(ln.amount) > 0) rev = Number(ln.amount)
+          else if (ln.total != null && Number(ln.total) > 0) rev = Number(ln.total)
+          else if (fallbackPriceMap.has(pname)) rev = fallbackPriceMap.get(pname)! * qty
+          const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 }
+          p.qty += qty; p.revenue += Number.isFinite(rev) ? rev : 0
+          productMap.set(pname, p)
+        }
+      }
+      // También unmirroredOnline en meses sin Toteat
+      for (const o of unmirroredOnline) {
+        const ym = chileYmd(o.createdAt).slice(0, 7)
+        if (toteatMonths.has(ym)) continue
+        const items = Array.isArray(o.items) ? (o.items as unknown[]) : []
+        for (const raw of items) {
+          if (!raw || typeof raw !== "object") continue
+          const ln = raw as Record<string, any>
+          const pname = String(ln.name ?? ln.dishName ?? ln.productName ?? ln.title ?? "").trim()
+          if (!pname) continue
+          let qty = Number(ln.quantity ?? ln.qty ?? 1); if (!(qty > 0)) qty = 1
+          const unit = Number(ln.unitTotal ?? ln.unit_price ?? ln.unitPrice ?? ln.price ?? 0) || 0
+          const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 }
+          p.qty += qty; p.revenue += unit * qty
+          productMap.set(pname, p)
+        }
+      }
+
+      // Ahora agregar los datos de Toteat
       for (const hp of historicalProducts) {
         if (hp.productCode === "TOTEATDVYCOST") continue
         const p = productMap.get(hp.productName) || { name: hp.productName, qty: 0, revenue: 0 }
