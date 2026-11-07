@@ -102,7 +102,6 @@ export default function TurnoBar({
           </span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>Abre el turno para empezar</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginTop: 1 }}>Primero el turno, luego la caja. Al cerrar el turno se sube todo a la nube.</div>
           </div>
         </div>
         <button

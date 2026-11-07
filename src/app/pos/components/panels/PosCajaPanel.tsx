@@ -62,11 +62,10 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     const openedAt = cashSession.opened_at
     const load = async () => {
       try {
-        // Ventas del turno (desde el día de apertura, hora Chile) combinando Centro
-        // (PosOrder) Y ecommerce nativo (OnlineOrder), por método — server-side.
-        const x = new Date(openedAt)
-        const from = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        const res = await fetch(`/api/pos/cash/sales?restaurantId=${restaurantId}&from=${from}`)
+        // Ventas de ESTA caja (ventana [apertura, ahora]) — por método, server-side.
+        // Cada cobro pertenece a la caja abierta en ese momento; no se comparte
+        // entre cajas del mismo día.
+        const res = await fetch(`/api/pos/cash/sales?restaurantId=${restaurantId}&from=${encodeURIComponent(openedAt)}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (!cancelled) setWebSales({ byMethod: data.byMethod ?? {}, total: data.total ?? 0, tips: data.tips ?? 0, count: data.count ?? 0 })
@@ -270,8 +269,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
 
           {step === 4 && (
             <div style={{ background: 'var(--jade-tint)', border: '1px solid var(--jade)', borderRadius: 'var(--r-card)', padding: '14px 16px', marginBottom: 18 }}>
-              <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>✓ Caja cerrada</div>
-              <div style={{ fontSize: 13, color: 'var(--ink-2)', marginTop: 2, lineHeight: 1.45 }}>Falta <b>cerrar el turno</b> para terminar el día y subir todo a la nube. Usa el botón <b>Cerrar turno</b> de arriba.</div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>✓ Caja cerrada · falta cerrar el turno</div>
             </div>
           )}
 

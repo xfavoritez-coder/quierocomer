@@ -49,9 +49,20 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const fromYmd = req.nextUrl.searchParams.get("from") || chileTodayYmd();
-  const start = chileDayRangeUtc(fromYmd).start;
-  const end = chileDayRangeUtc(chileTodayYmd()).end;
+  // Ventana por la CAJA (no por el día): cada cobro pertenece a la caja que estaba
+  // abierta en ese instante. `from` = apertura de la caja (ISO), `to` = cierre o
+  // ahora (ISO). Así dos cajas del mismo día NO comparten ventas. Acepta también
+  // YYYY-MM-DD por compatibilidad (cae a medianoche de ese día, hora Chile).
+  const fromParam = req.nextUrl.searchParams.get("from");
+  const toParam = req.nextUrl.searchParams.get("to");
+  const parseFrom = (s: string | null): Date => {
+    if (!s) return chileDayRangeUtc(chileTodayYmd()).start;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return chileDayRangeUtc(s).start;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? chileDayRangeUtc(chileTodayYmd()).start : d;
+  };
+  const start = parseFrom(fromParam);
+  const end = toParam ? (isNaN(new Date(toParam).getTime()) ? new Date() : new Date(toParam)) : new Date();
 
   const byMethod: Record<string, { amount: number; tip: number; count: number }> = {};
   const add = (method: string, amount: number, tip: number) => {
