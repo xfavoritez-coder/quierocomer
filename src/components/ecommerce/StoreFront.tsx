@@ -107,7 +107,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
   const [hoursModalOpen, setHoursModalOpen] = useState(
-    () => !tenant.openStatus.open && !tenant.scheduledOrdersEnabled && !!tenant.weeklyHours
+    () => !brandControls?.resolving && !tenant.openStatus.open && !tenant.scheduledOrdersEnabled && !!tenant.weeklyHours
   );
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
