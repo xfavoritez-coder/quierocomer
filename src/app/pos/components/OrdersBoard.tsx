@@ -597,9 +597,9 @@ function OrderDetailPanel({
             {(() => {
               const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
               const colors: Record<string, { bg: string; fg: string }> = {
-                Delivery: { bg: '#dbeafe', fg: '#1d4ed8' },
-                Retiro:   { bg: '#dcfce7', fg: '#15803d' },
-                Salón:    { bg: '#ede9fe', fg: '#6d28d9' },
+                Delivery: { bg: '#f1f5f9', fg: '#64748b' },
+                Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
+                Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
               }
               const c = colors[label]
               return (
