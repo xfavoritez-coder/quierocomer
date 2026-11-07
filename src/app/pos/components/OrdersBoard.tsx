@@ -588,11 +588,16 @@ function OrderDetailPanel({
       {/* Header */}
       {/* Header */}
       <div style={{ padding: '16px 22px 14px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
-        {/* Fila 1: nro pedido + botones imprimir/cerrar */}
+        {/* Fila 1: nro pedido + tipo + botones imprimir/cerrar */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
-            Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
+              Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.03em' }}>
+              {order.vendorName ? order.vendorName : isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
+            </span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ position: 'relative' }}>
             <button
