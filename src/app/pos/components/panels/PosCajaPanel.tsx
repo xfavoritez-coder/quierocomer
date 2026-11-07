@@ -58,52 +58,23 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   useEffect(() => {
     if (!restaurantId || !cashSession) { setWebSales({ byMethod: {}, total: 0, tips: 0, count: 0 }); return }
     let cancelled = false
+    const openedAt = cashSession.opened_at
     const load = async () => {
       try {
-        const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        // El turno abarca TODO el día de apertura: cuenta los pedidos del día aunque
-        // se hayan pagado ANTES de abrir la caja (un pedido pertenece a su día, no a
-        // la hora en que se abrió la caja). Límite inferior = medianoche del día de
-        // apertura (hora local = Chile), no el instante exacto de apertura.
-        const openedDate = new Date(cashSession.opened_at)
-        const openedMs = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate(), 0, 0, 0, 0).getTime()
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(openedDate)}&to=${fmt(new Date())}`)
+        // Ventas del turno (desde el día de apertura, hora Chile) combinando Centro
+        // (PosOrder) Y ecommerce nativo (OnlineOrder), por método — server-side.
+        const x = new Date(openedAt)
+        const from = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+        const res = await fetch(`/api/pos/cash/sales?restaurantId=${restaurantId}&from=${from}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
-        const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
-        let total = 0, tips = 0, count = 0
-        for (const o of (data.orders ?? [])) {
-          if (new Date(o.createdAt).getTime() < openedMs) continue
-          const amount = Number(o.totalAmount) || 0
-          if (amount <= 0 || (Number(o.paidAmount) || 0) < amount) continue
-          const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
-          const pp = rp.posPayment as { method?: string; parts?: { method?: string; amount?: number }[] } | undefined
-          const wp = rp.webPayment as { method?: string } | undefined
-          const platform = deliveryPlatformLabel(o.vendorName)
-          const tip = Number(o.tipAmount) || 0
-          const addTo = (m: string, amt: number, tp: number) => {
-            if (!byMethod[m]) byMethod[m] = { amount: 0, tip: 0, count: 0 }
-            byMethod[m].amount += amt; byMethod[m].tip += tp
-          }
-          // Pago combinado: reparte cada parte en su método; la propina va al primero.
-          const parts = Array.isArray(pp?.parts) ? pp!.parts!.filter(p => (Number(p.amount) || 0) > 0) : []
-          if (!platform && parts.length > 1) {
-            parts.forEach((p, i) => addTo(toPaymentMethod(p.method), Number(p.amount) || 0, i === 0 ? tip : 0))
-            byMethod[toPaymentMethod(parts[0].method)].count++
-          } else {
-            const method = platform ?? toPaymentMethod(parts[0]?.method || pp?.method || wp?.method)
-            addTo(method, amount, tip)
-            byMethod[method].count++
-          }
-          total += amount; tips += tip; count++
-        }
-        if (!cancelled) setWebSales({ byMethod, total, tips, count })
+        if (!cancelled) setWebSales({ byMethod: data.byMethod ?? {}, total: data.total ?? 0, tips: data.tips ?? 0, count: data.count ?? 0 })
       } catch { /* noop */ }
     }
     load()
     const id = setInterval(load, 20000)
     return () => { cancelled = true; clearInterval(id) }
-  }, [restaurantId, cashSession?.id])
+  }, [restaurantId, cashSession?.id, cashSession?.opened_at])
 
   const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
   const allKeys = new Set<string>([...ALL_METHODS, ...Object.keys(summary.byMethod), ...Object.keys(webSales.byMethod)])

@@ -65,43 +65,23 @@ export default function CajaPage() {
   useEffect(() => {
     if (!restaurantId || !cashSession) { setWebSales({ byMethod: {}, total: 0, tips: 0, count: 0 }); return }
     let cancelled = false
+    const openedAt = cashSession.opened_at
     const load = async () => {
       try {
-        // Ventas DESDE que se abrió la caja (el turno), no del día calendario: una
-        // caja que cruza la medianoche debe seguir mostrando lo vendido anoche.
-        const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-        // El turno cuenta TODO el día de apertura: un pedido pertenece a su día, no a
-        // la hora en que se abrió la caja. Límite inferior = medianoche del día de
-        // apertura (hora local = Chile), así se incluyen los pagados antes de abrir.
-        const openedDate = new Date(cashSession.opened_at)
-        const openedMs = new Date(openedDate.getFullYear(), openedDate.getMonth(), openedDate.getDate(), 0, 0, 0, 0).getTime()
-        const res = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=pagados&from=${fmt(openedDate)}&to=${fmt(new Date())}`)
+        // Ventas del turno (desde el día de apertura, hora Chile) combinando Centro
+        // (PosOrder) Y ecommerce nativo (OnlineOrder), por método — server-side.
+        const x = new Date(openedAt)
+        const from = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+        const res = await fetch(`/api/pos/cash/sales?restaurantId=${restaurantId}&from=${from}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
-        const byMethod: Record<string, { amount: number; tip: number; count: number }> = {}
-        let total = 0, tips = 0, count = 0
-        for (const o of (data.orders ?? [])) {
-          if (new Date(o.createdAt).getTime() < openedMs) continue // solo del turno actual
-          const amount = Number(o.totalAmount) || 0
-          if (amount <= 0 || (Number(o.paidAmount) || 0) < amount) continue
-          const rp = (o.rawPayload && typeof o.rawPayload === 'object' && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, unknown> : {}
-          const pp = rp.posPayment as { method?: string } | undefined
-          const wp = rp.webPayment as { method?: string } | undefined
-          // Si viene de una plataforma de delivery (Uber Eats, PedidosYa…), se
-          // muestra con su nombre exacto; si no, la categoría de pago normal.
-          const method = deliveryPlatformLabel(o.vendorName) ?? toPaymentMethod(pp?.method || wp?.method)
-          const tip = Number(o.tipAmount) || 0
-          if (!byMethod[method]) byMethod[method] = { amount: 0, tip: 0, count: 0 }
-          byMethod[method].amount += amount; byMethod[method].tip += tip; byMethod[method].count++
-          total += amount; tips += tip; count++
-        }
-        if (!cancelled) setWebSales({ byMethod, total, tips, count })
+        if (!cancelled) setWebSales({ byMethod: data.byMethod ?? {}, total: data.total ?? 0, tips: data.tips ?? 0, count: data.count ?? 0 })
       } catch { /* noop */ }
     }
     load()
     const id = setInterval(load, 20000) // refresco en vivo mientras la caja está abierta
     return () => { cancelled = true; clearInterval(id) }
-  }, [restaurantId, cashSession?.id])
+  }, [restaurantId, cashSession?.id, cashSession?.opened_at])
 
   // Arqueo combinado: cuentas locales del POS (mesas/mostrador/venta rápida) +
   // ventas del Centro del servidor. Incluye claves de plataforma (Uber Eats, etc.).
