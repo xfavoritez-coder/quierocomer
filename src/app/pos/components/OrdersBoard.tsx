@@ -766,46 +766,6 @@ function OrderDetailPanel({
           )}
         </div>
 
-        {/* Stage actions */}
-        {(() => {
-          const prev = prevAction(order.opsStage)
-          return (next || prev) ? (
-            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
-              {/* Pagado: avanzar es la acción principal. Impago: el avance se
-                  gestiona en la franja de cobro de abajo (interceptado). */}
-              {paid && next && (
-                <button
-                  onClick={() => onStageChange(order, next.stage)}
-                  disabled={busy}
-                  style={{
-                    width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                    background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
-                    fontWeight: 700, fontSize: 16, cursor: busy ? 'default' : 'pointer',
-                    opacity: busy ? 0.6 : 1, fontFamily: 'var(--sans)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}
-                >
-                  {busy ? 'Actualizando…' : `${next.label} →`}
-                </button>
-              )}
-              {prev && (
-                <button
-                  onClick={() => onStageChange(order, prev.stage)}
-                  disabled={busy}
-                  style={{
-                    width: '100%', marginTop: 8, padding: '10px 14px', borderRadius: 12,
-                    border: '1px solid var(--line)', background: 'transparent',
-                    color: 'var(--ink-3)', fontWeight: 600, fontSize: 14,
-                    cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-                    fontFamily: 'var(--sans)',
-                  }}
-                >
-                  ← {prev.label}
-                </button>
-              )}
-            </div>
-          ) : null
-        })()}
 
         {/* Cobro — franja ámbar/roja, misma lógica y botones que la tarjeta */}
         {!paid && (
