@@ -77,27 +77,7 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
       })();
       return;
     }
-    if (!saved) {
-      // Primera visita: auto-seleccionar la sucursal abierta (si hay una sola abierta,
-      // elegirla; si hay varias, preferir la representante si está abierta, si no la primera abierta).
-      const open = brand.branches.filter((b) => b.open);
-      const autoSelect = open.length === 1
-        ? open[0]
-        : open.find((b) => b.slug === representative.tenant.slug) ?? open[0];
-      if (autoSelect) {
-        (async () => {
-          const bd = autoSelect.slug === representative.tenant.slug ? representative : await fetchStorefront(autoSelect.slug);
-          if (!bd) { setResolving(false); return; }
-          adoptRestaurant(bd.tenant.id, bd.products);
-          setData(bd); setBranchSlug(autoSelect.slug);
-          try { localStorage.setItem(PERSIST_KEY, autoSelect.slug); } catch {}
-          setResolving(false);
-        })();
-        return;
-      }
-      setResolving(false);
-      return;
-    }
+    if (!saved) { setResolving(false); return; }
     const br = brand.branches.find((b) => b.slug === saved);
     if (!br) { try { localStorage.removeItem(PERSIST_KEY); } catch {} setResolving(false); return; }
     (async () => {

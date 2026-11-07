@@ -107,7 +107,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   // Modal de horarios: se auto-abre al entrar si la tienda está cerrada y el local
   // NO acepta pedidos programados (si los acepta, el cliente puede programar igual).
   const [hoursModalOpen, setHoursModalOpen] = useState(
-    () => !brandControls?.resolving && !tenant.openStatus.open && !tenant.scheduledOrdersEnabled && !!tenant.weeklyHours
+    () => !brandControls?.resolving && !(brandControls && !brandControls.hasBranch) && !tenant.openStatus.open && !tenant.scheduledOrdersEnabled && !!tenant.weeklyHours
   );
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
@@ -440,8 +440,8 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── Banner de tienda cerrada ─────────────────────────────── */}
-      {/* Suprimido mientras brandControls.resolving=true para evitar el flash de hidratación */}
-      {!tenant.openStatus.open && !brandControls?.resolving && (
+      {/* Suprimido mientras resolving=true (flash) o sin sucursal elegida en marca (misleading) */}
+      {!tenant.openStatus.open && !brandControls?.resolving && !(brandMode && !hasBranch) && (
         <>
           <button
             type="button"
