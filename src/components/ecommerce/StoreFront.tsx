@@ -452,7 +452,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
             ) : (
               <>
-                <span className="text-sm font-bold">🔒 Estamos cerrados ahora</span>
+                <span className="text-sm font-bold">🔒 Estamos cerrados ahora{brandMode && tenant.branchName ? ` · ${tenant.branchName}` : ""}</span>
                 {(() => {
                   const t = tenant.openStatus.today;
                   let msg: string;

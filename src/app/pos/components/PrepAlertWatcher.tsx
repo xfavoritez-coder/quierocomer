@@ -55,14 +55,6 @@ export default function PrepAlertWatcher({
         )
         if (r) return { id: r.id, kind: 'ready' as const }
       }
-      if (prepMin > 0) {
-        const p = ordersRef.current.find(o =>
-          isRetiroOrder(o) && o.opsStage === 'preparing' &&
-          now - new Date(o.createdAt).getTime() >= prepMin * 60000 &&
-          prepSnoozedUntil(`${o.id}:prep`) < now,
-        )
-        if (p) return { id: p.id, kind: 'prep' as const }
-      }
       return null
     })
   }, [prepMin, readyMin, stillValid])
