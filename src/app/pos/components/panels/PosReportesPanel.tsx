@@ -764,12 +764,16 @@ function SatisfaccionSection({ restaurantId }: { restaurantId: string }) {
 // ── Platos: vistas vs vendidos ────────────────────────────────────
 interface DishView { name: string; views: number; cartAdds: number; avgDwellMs: number | null }
 
+type PlatosSortKey = 'sold' | 'revenue' | 'views' | 'convRate'
+
 function PlatosSection({ restaurantId, fromDate, toDate, products, loading: reportLoading }: {
   restaurantId: string; fromDate: string; toDate: string
   products: ProductRank[]; loading: boolean
 }) {
   const [dishViews, setDishViews] = useState<DishView[]>([])
   const [viewsLoading, setViewsLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<PlatosSortKey>('sold')
+  const [sortAsc, setSortAsc] = useState(false)
 
   useEffect(() => {
     setViewsLoading(true)
@@ -781,29 +785,37 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
 
   const loading = reportLoading || viewsLoading
 
-  // Merge: products (sold) + dishViews (seen)
   const viewMap = new Map(dishViews.map(d => [d.name.toLowerCase(), d]))
 
-  // Build combined list: all products sold + views if available
   const rows = products.map(p => {
     const v = viewMap.get(p.name.toLowerCase())
+    const views = v?.views ?? 0
     return {
       name: p.name,
       sold: p.qty,
       revenue: p.revenue,
-      views: v?.views ?? 0,
+      views,
       cartAdds: v?.cartAdds ?? 0,
-      convRate: (v?.views ?? 0) > 0 && p.qty > 0 ? Math.min(100, Math.round((p.qty / (v?.views ?? 1)) * 100)) : null,
+      convRate: views > 0 && p.qty > 0 ? Math.min(100, Math.round((p.qty / views) * 100)) : null,
     }
   })
 
-  // Also add dishes with views but no sales
   const soldNames = new Set(products.map(p => p.name.toLowerCase()))
   const viewOnly = dishViews.filter(d => !soldNames.has(d.name.toLowerCase())).map(d => ({
-    name: d.name, sold: 0, revenue: 0, views: d.views, cartAdds: d.cartAdds, convRate: 0,
+    name: d.name, sold: 0, revenue: 0, views: d.views, cartAdds: d.cartAdds, convRate: null,
   }))
 
-  const all = [...rows, ...viewOnly].sort((a, b) => (b.views || 0) - (a.views || 0) || b.sold - a.sold)
+  const unsorted = [...rows, ...viewOnly]
+  const all = unsorted.slice().sort((a, b) => {
+    const av = a[sortKey] ?? -1
+    const bv = b[sortKey] ?? -1
+    return sortAsc ? av - bv : bv - av
+  })
+
+  const toggleSort = (key: PlatosSortKey) => {
+    if (sortKey === key) setSortAsc(x => !x)
+    else { setSortKey(key); setSortAsc(false) }
+  }
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
@@ -817,6 +829,20 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
   )
 
   const hasViews = all.some(r => r.views > 0)
+
+  const thSt = (col: PlatosSortKey): React.CSSProperties => ({
+    textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700,
+    color: sortKey === col ? 'var(--ink)' : 'var(--ink-3)', textTransform: 'uppercase',
+    whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
+  })
+
+  const SortArrow = ({ col }: { col: PlatosSortKey }) => (
+    <svg width="9" height="9" viewBox="0 0 10 10" style={{ marginLeft: 2, opacity: sortKey === col ? 1 : 0.3 }}>
+      {sortAsc && sortKey === col
+        ? <path d="M5 2L9 8H1z" fill="currentColor"/>
+        : <path d="M5 8L1 2H9z" fill="currentColor"/>}
+    </svg>
+  )
 
   return (
     <Card>
@@ -832,11 +858,19 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
           <thead>
             <tr>
               <th style={{ textAlign: 'left', padding: '0 8px 8px 0', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Plato</th>
-              <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Vendidos</th>
-              <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Venta</th>
+              <th style={thSt('sold')} onClick={() => toggleSort('sold')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Vendidos<SortArrow col="sold"/></span>
+              </th>
+              <th style={thSt('revenue')} onClick={() => toggleSort('revenue')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Venta<SortArrow col="revenue"/></span>
+              </th>
               {hasViews && <>
-                <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Vistas</th>
-                <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Conv.</th>
+                <th style={thSt('views')} onClick={() => toggleSort('views')}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>Vistas<SortArrow col="views"/></span>
+                </th>
+                <th style={thSt('convRate')} onClick={() => toggleSort('convRate')}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>Conv.<SortArrow col="convRate"/></span>
+                </th>
               </>}
             </tr>
           </thead>
