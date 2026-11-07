@@ -123,6 +123,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -166,72 +167,101 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   ]
   if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
 
+  // Right-side label for collapsed row
+  const etaDisplay = dropoffEtaMin != null && dropoffEtaMin > 0
+    ? `Llega en ${dropoffEtaMin} min`
+    : etaMin != null && etaMin > 0
+    ? `Llega en ${etaMin} min`
+    : null
+  const displayStatus = etaDisplay ?? statusLabel(t.status)
+  const displayColor = etaDisplay
+    ? (dropoffEtaMin != null ? '#3b82f6' : '#f59e0b')
+    : statusColor(t.status)
+
   return (
-    <TrackingBox eta={dropoffEtaMin ?? etaMin} etaLabel={dropoffEtaMin != null ? 'Llega al cliente en' : 'Llega en'}>
-      {/* Repartidor */}
-      {t.driver && (t.driver.name || t.driver.phone) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {t.driver.photo
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={t.driver.photo} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
-            : <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--sunk)', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.4-3.6-8-8-8s-8 3.6-8 8z"/></svg>
-              </div>}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--ink)' }}>{t.driver.name || 'Repartidor'}</div>
-            {t.driver.phone && <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>{t.driver.phone}</div>}
-          </div>
-        </div>
-      )}
+    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+      {/* Always-visible toggle row */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+      >
+        <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1, textAlign: 'left' }}>Motorista Delifast</span>
+        <span style={{ fontSize: 12.5, color: displayColor, fontWeight: 600, whiteSpace: 'nowrap' }}>{displayStatus}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+          style={{ color: 'var(--ink-3)', flexShrink: 0, marginLeft: 4, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
 
-      {/* PIN de entrega */}
-      {t.pin && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>PIN de entrega</span>
-          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, letterSpacing: '.08em', color: 'var(--ink)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 8, padding: '2px 10px' }}>{t.pin}</span>
-        </div>
-      )}
-
-      {/* Foto de la entrega en casa del cliente (prueba de entrega de Delifast) */}
-      {t.deliveryPhoto && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto de entrega</span>
-          <a href={t.deliveryPhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
-          </a>
-        </div>
-      )}
-
-      {/* Timeline en 2 columnas (3 por columna), llenado por columna. Cada fila:
-          hora a la izquierda, estado a la derecha. */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr',
-        gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(steps.length / 2)}, auto)`,
-        columnGap: 16, rowGap: 2,
-      }}>
-        {steps.map((s, i) => {
-          const done = !!s.ts
-          const isCancel = s.label === 'Cancelado'
-          return (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', minWidth: 0 }}>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5, color: 'var(--ink-3)', minWidth: 40, flexShrink: 0 }}>{hm(s.ts) || '—'}</span>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: done ? (isCancel ? '#dc2626' : '#16a34a') : 'var(--line-strong)' }} />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{s.label}</span>
+      {/* Expandable details */}
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 14px 14px', borderTop: '1px solid var(--line)' }}>
+          {/* Repartidor */}
+          {t.driver && (t.driver.name || t.driver.phone) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {t.driver.photo
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={t.driver.photo} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
+                : <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--sunk)', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.4-3.6-8-8-8s-8 3.6-8 8z"/></svg>
+                  </div>}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--ink)' }}>{t.driver.name || 'Repartidor'}</div>
+                {t.driver.phone && <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>{t.driver.phone}</div>}
+              </div>
             </div>
-          )
-        })}
-      </div>
+          )}
 
-      {/* Link público */}
-      {t.statusUrl && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <a href={t.statusUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
-            Ver seguimiento en vivo ↗
-          </a>
+          {/* PIN de entrega */}
+          {t.pin && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>PIN de entrega</span>
+              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, letterSpacing: '.08em', color: 'var(--ink)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 8, padding: '2px 10px' }}>{t.pin}</span>
+            </div>
+          )}
+
+          {/* Foto de la entrega */}
+          {t.deliveryPhoto && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto de entrega</span>
+              <a href={t.deliveryPhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
+              </a>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(steps.length / 2)}, auto)`,
+            columnGap: 16, rowGap: 2,
+          }}>
+            {steps.map((s, i) => {
+              const done = !!s.ts
+              const isCancel = s.label === 'Cancelado'
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', minWidth: 0 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5, color: 'var(--ink-3)', minWidth: 40, flexShrink: 0 }}>{hm(s.ts) || '—'}</span>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: done ? (isCancel ? '#dc2626' : '#16a34a') : 'var(--line-strong)' }} />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{s.label}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Link público */}
+          {t.statusUrl && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <a href={t.statusUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
+                Ver seguimiento en vivo ↗
+              </a>
+            </div>
+          )}
         </div>
       )}
-    </TrackingBox>
+    </div>
   )
 }
 

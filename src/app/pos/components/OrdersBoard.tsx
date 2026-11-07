@@ -578,10 +578,7 @@ function OrderDetailPanel({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
-      <button onClick={onClose} className="pos-detail-close-mobile" style={{ position: 'absolute', top: -8, right: 2, zIndex: 20, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0 }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {showCustomerHistory && order.customerPhone && (
         <CustomerOrdersDrawer
           restaurantId={restaurantId}
@@ -613,45 +610,17 @@ function OrderDetailPanel({
               )
             })()}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setPrintOpen(o => !o)}
-                disabled={!!printing}
-                title="Imprimir"
-                style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--surface)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
-              >
-                {printing ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                  </svg>
-                )}
-              </button>
-              {printOpen && (
-                <>
-                  <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
-                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
-                    <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                      Ticket de caja
-                    </button>
-                    <div style={{ height: 1, background: 'var(--line)' }} />
-                    <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                      Comanda cocina
-                    </button>
-                  </div>
-                </>
-              )}
-              {printMsg && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
-                  {printMsg}
-                </div>
-              )}
-            </div>
-          </div>
+          {/* X close button — mobile only */}
+          <button
+            className="pos-detail-close-mobile"
+            onClick={onClose}
+            title="Cerrar"
+            style={{ width: 32, height: 32, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
@@ -661,7 +630,7 @@ function OrderDetailPanel({
               {displayName(order.customerName || 'Cliente')}
             </div>
             {order.customerPhone && (
-              <div style={{ fontSize: 15, color: 'var(--ink-3)', marginTop: 2 }}>{order.customerPhone}</div>
+              <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
             )}
           </div>
           {order.customerPhone && customerCount !== null && (
@@ -772,8 +741,57 @@ function OrderDetailPanel({
           </div>
         )}
 
-        {/* Anular */}
-        <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} />
+        {/* Acciones finales: Imprimir + Anular — mismo contenedor, botones hermanos */}
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Imprimir ticket */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setPrintOpen(o => !o)}
+              disabled={!!printing}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                padding: '10px 14px', borderRadius: 10,
+                border: `1px solid ${printOpen ? 'var(--ink-3)' : 'var(--line)'}`,
+                background: printOpen ? 'var(--sunk)' : 'none',
+                color: 'var(--ink)', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600,
+                opacity: printing ? 0.6 : 1, transition: 'background .12s, border-color .12s',
+              }}
+            >
+              {printing ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                </svg>
+              )}
+              Imprimir ticket
+            </button>
+            {printOpen && (
+              <>
+                <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
+                <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 200, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                  <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Ticket de caja
+                  </button>
+                  <div style={{ height: 1, background: 'var(--line)' }} />
+                  <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    Comanda cocina
+                  </button>
+                </div>
+              </>
+            )}
+            {printMsg && (
+              <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
+                {printMsg}
+              </div>
+            )}
+          </div>
+
+          {/* Anular pedido */}
+          <AnularPedido confirm={confirmCancel} setConfirm={setConfirmCancel} reason={cancelReason} setReason={setCancelReason} canceling={canceling} onConfirm={handleCancel} noBorder />
+        </div>
       </div>
     </div>
   )
@@ -811,6 +829,49 @@ function SortIcon({ dir }: { dir: 'asc' | 'desc' }) {
         ? <path d="M17 7v10M14.5 14.5 17 17l2.5-2.5" />
         : <path d="M17 17V7M14.5 9.5 17 7l2.5 2.5" />}
     </svg>
+  )
+}
+
+// ── Mobile bottom sheet with swipe-down-to-dismiss ──────────────────
+function MobileDetailSheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  const [translateY, setTranslateY] = useState(0)
+  const startY = useRef(0)
+  const dragging = useRef(false)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY
+    dragging.current = true
+  }
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current) return
+    const delta = Math.max(0, e.touches[0].clientY - startY.current)
+    setTranslateY(delta)
+  }
+  const onTouchEnd = () => {
+    dragging.current = false
+    if (translateY > 100) { onClose() } else { setTranslateY(0) }
+  }
+
+  return (
+    <div className="pos-modal-overlay" onClick={onClose}>
+      <div
+        onClick={e => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          background: 'var(--surface)', borderRadius: '18px 18px 0 0',
+          maxHeight: '90dvh', display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)',
+          transform: `translateY(${translateY}px)`,
+          transition: translateY === 0 ? 'transform .25s ease' : 'none',
+        }}
+      >
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -1121,34 +1182,28 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     )
   }
 
-  // Mobile: list + modal for detail
+  // Mobile: list + bottom sheet with swipe-down-to-dismiss
   return (
     <>
       {listSection}
       {selected && (
-        <div className="pos-modal-overlay" onClick={() => setSelected(null)}>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
-          >
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
-            <OrderDetailPanel
-              order={selected}
-              restaurantId={selected._branchId || restaurantId}
-              cajaOpen={cajaOpen}
-              stageBusy={stageBusy}
-              delifastEnabled={delifastEnabled}
-              blocked={blockedId === selected.id}
-              onStageChange={changeStage}
-              onCobro={handleCobro}
-              onBlock={blockAdvance}
-              onDismissBlock={dismissBlock}
-              onClose={() => setSelected(null)}
-              onPaid={() => { setSelected(null); fetchOrders() }}
-              navigate={navigate}
-            />
-          </div>
-        </div>
+        <MobileDetailSheet onClose={() => setSelected(null)}>
+          <OrderDetailPanel
+            order={selected}
+            restaurantId={selected._branchId || restaurantId}
+            cajaOpen={cajaOpen}
+            stageBusy={stageBusy}
+            delifastEnabled={delifastEnabled}
+            blocked={blockedId === selected.id}
+            onStageChange={changeStage}
+            onCobro={handleCobro}
+            onBlock={blockAdvance}
+            onDismissBlock={dismissBlock}
+            onClose={() => setSelected(null)}
+            onPaid={() => { setSelected(null); fetchOrders() }}
+            navigate={navigate}
+          />
+        </MobileDetailSheet>
       )}
       {cobro && (
         <CobroModal order={cobro} restaurantId={cobro._branchId || restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
@@ -1394,12 +1449,13 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
 }
 
 // ── Anular pedido ───────────────────────────────────────────────────
-function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onConfirm }: {
-  confirm: boolean; setConfirm: (v: boolean) => void; reason: string; setReason: (v: string) => void; canceling: boolean; onConfirm: () => void;
+function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onConfirm, noBorder }: {
+  confirm: boolean; setConfirm: (v: boolean) => void; reason: string; setReason: (v: string) => void; canceling: boolean; onConfirm: () => void; noBorder?: boolean;
 }) {
+  const wrapStyle = noBorder ? {} : { borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4 }
   if (!confirm) {
     return (
-      <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4 }}>
+      <div style={wrapStyle}>
         <button
           onClick={() => setConfirm(true)}
           style={{ background: 'none', border: '1px solid #C53030', borderRadius: 10, padding: '10px 14px', width: '100%', color: '#C53030', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
@@ -1410,7 +1466,7 @@ function AnularPedido({ confirm, setConfirm, reason, setReason, canceling, onCon
     )
   }
   return (
-    <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ ...wrapStyle, paddingTop: noBorder ? 0 : 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>¿Anular este pedido?</div>
       <input
         value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Motivo (opcional)"
