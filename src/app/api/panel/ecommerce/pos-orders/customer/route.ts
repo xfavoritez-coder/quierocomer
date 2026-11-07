@@ -16,20 +16,25 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
   return r?.ownerId === panelId;
 }
 
-/** GET /api/panel/ecommerce/pos-orders/customer?restaurantId=X&phone=Y
- *  Devuelve el historial de pedidos de un cliente identificado por teléfono. */
+/** GET /api/panel/ecommerce/pos-orders/customer?restaurantId=X&phone=Y[&countOnly=1]
+ *  Con countOnly=1 devuelve solo { count } (rápido).
+ *  Sin countOnly devuelve { count, orders } con el historial completo. */
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
   const phone = req.nextUrl.searchParams.get("phone") || "";
+  const countOnly = req.nextUrl.searchParams.get("countOnly") === "1";
   if (!restaurantId || !phone) return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
+  const where = { restaurantId, customerPhone: phone, posStatus: { not: "canceled" } } as const;
+
+  if (countOnly) {
+    const count = await prisma.posOrder.count({ where });
+    return NextResponse.json({ count });
+  }
+
   const orders = await prisma.posOrder.findMany({
-    where: {
-      restaurantId,
-      customerPhone: phone,
-      posStatus: { not: "canceled" },
-    },
+    where,
     select: {
       id: true,
       orderReference: true,

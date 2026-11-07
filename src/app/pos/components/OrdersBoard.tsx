@@ -518,11 +518,11 @@ function OrderDetailPanel({
   const [customerCount, setCustomerCount] = useState<number | null>(null)
   const [showCustomerHistory, setShowCustomerHistory] = useState(false)
 
-  // Cargar conteo de pedidos del cliente si tiene teléfono
+  // Cargar solo el conteo de pedidos del cliente (countOnly=1 → solo count(), muy rápido)
   useEffect(() => {
     if (!order.customerPhone) return
     setCustomerCount(null)
-    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(order.customerPhone)}`, { cache: 'no-store' })
+    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(order.customerPhone)}&countOnly=1`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (typeof d?.count === 'number') setCustomerCount(d.count) })
       .catch(() => {})
