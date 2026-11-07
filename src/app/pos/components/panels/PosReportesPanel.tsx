@@ -983,6 +983,22 @@ interface HistoricoData {
 }
 
 const DOW_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+function dowRankColor(rank: number, total: number): string {
+  if (total <= 1) return GREEN
+  const t = rank / (total - 1)
+  if (t <= 0.5) {
+    const r = Math.round(34  + (245 - 34)  * (t * 2))
+    const g = Math.round(197 + (158 - 197) * (t * 2))
+    const b = Math.round(94  + (11  - 94)  * (t * 2))
+    return `rgb(${r},${g},${b})`
+  }
+  const t2 = (t - 0.5) * 2
+  const r = Math.round(245 + (239 - 245) * t2)
+  const g = Math.round(158 + (68  - 158) * t2)
+  const b = Math.round(11  + (68  - 11)  * t2)
+  return `rgb(${r},${g},${b})`
+}
 const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
 function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
@@ -1126,58 +1142,40 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
           <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
             Promedio de venta neta por día · verde = mejor, rojo = peor
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-            {(() => {
-              const maxAvg = Math.max(1, ...data.dowStats.map(x => x.avg))
-              // Sort active days to assign rank-based color
-              const sorted = [...dowActive].sort((a, b) => b.avg - a.avg)
-              // Interpolate color: rank 0 = green, rank n-1 = red, middle = amber
-              function rankColor(rank: number, total: number): string {
-                if (total <= 1) return GREEN
-                const t = rank / (total - 1) // 0 = best, 1 = worst
-                if (t <= 0.5) {
-                  // green → amber: #22c55e → #f59e0b
-                  const r = Math.round(34 + (245 - 34) * (t * 2))
-                  const g = Math.round(197 + (158 - 197) * (t * 2))
-                  const b = Math.round(94 + (11 - 94) * (t * 2))
-                  return `rgb(${r},${g},${b})`
-                } else {
-                  // amber → red: #f59e0b → #ef4444
-                  const t2 = (t - 0.5) * 2
-                  const r = Math.round(245 + (239 - 245) * t2)
-                  const g = Math.round(158 + (68 - 158) * t2)
-                  const b = Math.round(11 + (68 - 11) * t2)
-                  return `rgb(${r},${g},${b})`
-                }
-              }
-              return data.dowStats.map(d => {
-                const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
-                const rank = sorted.findIndex(s => s.dow === d.dow)
-                const color = d.avg > 0 ? rankColor(rank, sorted.length) : 'var(--slate)'
-                const isBest = bestDow?.dow === d.dow
-                const isWorst = worstDow?.dow === d.dow
-                return (
-                  <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {d.avg > 0 && (
-                      <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>
-                        {clpShort(d.avg)}
+          {(() => {
+            const maxAvg = Math.max(1, ...data.dowStats.map(x => x.avg))
+            const sorted = [...dowActive].sort((a, b) => b.avg - a.avg)
+            return (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+                {data.dowStats.map(d => {
+                  const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
+                  const rank = sorted.findIndex(s => s.dow === d.dow)
+                  const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--slate)'
+                  const isBest = bestDow?.dow === d.dow
+                  const isWorst = worstDow?.dow === d.dow
+                  return (
+                    <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      {d.avg > 0 && (
+                        <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>
+                          {clpShort(d.avg)}
+                        </span>
+                      )}
+                      <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                        <div style={{
+                          width: '72%', maxWidth: 30, height: `${pct}%`,
+                          background: `linear-gradient(180deg,${color},${color}99)`,
+                          borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0,
+                        }} />
+                      </div>
+                      <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: isBest ? GREEN : isWorst ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
+                        {DOW_LABEL[d.dow]}
                       </span>
-                    )}
-                    <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                      <div style={{
-                        width: '72%', maxWidth: 30, height: `${pct}%`,
-                        background: `linear-gradient(180deg,${color},${color}99)`,
-                        borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0,
-                      }} />
                     </div>
-                    <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: isBest ? GREEN : isWorst ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
-                      {DOW_LABEL[d.dow]}
-                    </span>
-                  </div>
-                )
-              })
-            })()}
-          </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </Card>
       )}
     </div>
