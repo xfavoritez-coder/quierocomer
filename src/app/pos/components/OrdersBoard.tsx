@@ -594,9 +594,20 @@ function OrderDetailPanel({
             <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
               Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.03em' }}>
-              {isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
-            </span>
+            {(() => {
+              const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+              const colors: Record<string, { bg: string; fg: string }> = {
+                Delivery: { bg: '#dbeafe', fg: '#1d4ed8' },
+                Retiro:   { bg: '#dcfce7', fg: '#15803d' },
+                Salón:    { bg: '#ede9fe', fg: '#6d28d9' },
+              }
+              const c = colors[label]
+              return (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '2px 8px' }}>
+                  {label}
+                </span>
+              )
+            })()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ position: 'relative' }}>
