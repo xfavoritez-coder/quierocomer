@@ -195,9 +195,9 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 
   // Right-side label for collapsed row
   const etaDisplay = dropoffEtaMin != null && dropoffEtaMin > 0
-    ? `Llega en ${dropoffEtaMin} min`
+    ? `Entrega en ${dropoffEtaMin} min`
     : etaMin != null && etaMin > 0
-    ? `Llega en ${etaMin} min`
+    ? `Entrega en ${etaMin} min`
     : null
   const displayStatus = etaDisplay ?? statusLabel(t.status)
   const displayColor = '#f59e0b'
