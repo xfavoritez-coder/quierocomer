@@ -643,7 +643,7 @@ function OrderDetailPanel({
         </div>
 
         {/* Fila 2: nombre del cliente + chip pedidos a la derecha */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: -4, minWidth: 0, width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, minWidth: 0, width: '100%' }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName(order.customerName || 'Cliente')}
           </div>
