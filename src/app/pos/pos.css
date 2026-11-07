@@ -440,3 +440,6 @@
   .pos-mesa.libre .pos-mesa-num{font-size:17px}
   .pos-mesa-garzon{font-size:10px}
 }
+@media(min-width:841px){
+  .pos-detail-close-mobile{display:none!important}
+}
