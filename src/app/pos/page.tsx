@@ -466,7 +466,7 @@ export default function PosHomePage() {
         syncing={syncing}
         onMenu={() => setMenuOpen(m => !m)}
         onPendingClick={() => setPendingModal(true)}
-        onBrandClick={restaurants.length > 1 ? undefined : () => { setTab('todos'); setInnerPage(null) }}
+        onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
         branches={restaurants.length > 1 ? restaurants : undefined}
         selectedBranchMode={restaurants.length > 1 ? effectiveBranchMode : undefined}
         onBranchSelect={restaurants.length > 1 ? handleBranchSelect : undefined}
