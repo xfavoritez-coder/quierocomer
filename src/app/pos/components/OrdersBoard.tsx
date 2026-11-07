@@ -595,7 +595,7 @@ function OrderDetailPanel({
               Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
             </span>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.03em' }}>
-              {order.vendorName ? order.vendorName : isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
+              {isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
