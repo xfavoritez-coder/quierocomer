@@ -76,7 +76,6 @@ function etaMinutes(eta?: string | null): number | null {
   if (hm) {
     const target = new Date()
     target.setHours(Number(hm[1]), Number(hm[2]), 0, 0)
-    if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1)
     return Math.max(0, Math.round((target.getTime() - Date.now()) / 60000))
   }
   const t = Date.parse(s.replace(' ', 'T'))
@@ -109,7 +108,7 @@ function TrackingBox({ children, eta, etaLabel = 'Llega en' }: { children: React
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>Motorista Delifast</span>
-        {eta != null && (
+        {eta != null && eta > 0 && (
           <span style={{ marginLeft: 'auto', fontSize: 12.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
             {etaLabel} <b>{eta} min</b>
           </span>
@@ -245,6 +244,7 @@ export function DelifastStatusPill({
 }) {
   const [status, setStatus] = useState<string | null>(null)
   const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
+  const [llegadaLocal, setLlegadaLocal] = useState<string | null>(null)
   const [dropoffEta, setDropoffEta] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelFiredRef = useRef(false)
@@ -259,6 +259,7 @@ export function DelifastStatusPill({
         if (!d.configured || d.pending || !d.tracking) return
         setStatus(d.tracking.status ?? null)
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
+        setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
       } catch { /* fail-silent */ }
     }
@@ -274,7 +275,12 @@ export function DelifastStatusPill({
   const effectiveStatus = llegadaCasa && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
     ? 'at_dropoff'
     : status
-  const label = statusLabel(effectiveStatus)
+  // "pickup" en Delifast significa tanto "en camino al local" como "en el local".
+  // Usamos timeline.llegadaLocal para distinguir: si no llegó → Camino al local.
+  const isPickupStatus = /pickup/.test((status || '').toLowerCase())
+  const label = (isPickupStatus && !llegadaLocal)
+    ? 'Camino al local'
+    : statusLabel(effectiveStatus)
   // Va en camino al cliente (no "ya llegó" ni entregado) → anexar la hora estimada.
   const enCamino = effectiveStatus !== 'at_dropoff' && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
   const isCancelled = /cancel|anul/.test(effectiveStatus.toLowerCase())
@@ -310,7 +316,7 @@ export function DelifastStatusPill({
       flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {enCamino && dropoffEta ? (() => { const m = etaMinutes(dropoffEta); return m != null && m > 0 ? `Entrega en ${m} min` : `Entrega a las ${dropoffEta}` })() : label}
+      {enCamino && dropoffEta ? (() => { const m = etaMinutes(dropoffEta); return m != null && m > 0 ? `Entrega en ${m} min` : 'Llegó al cliente' })() : label}
     </span>
   )
 }

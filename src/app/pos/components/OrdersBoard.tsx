@@ -585,84 +585,77 @@ function OrderDetailPanel({
         />
       )}
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 22px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0, position: 'relative' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span>
-              {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
-              {displayName(order.customerName || 'Cliente')}
-            </span>
-            {order.customerPhone && customerCount !== null && (
-              <button
-                onClick={() => setShowCustomerHistory(true)}
-                title="Ver historial del cliente"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
-                  padding: '3px 8px', borderRadius: 20,
-                  background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
-                  color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
-                  border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
-                  cursor: 'pointer', flexShrink: 0, transition: 'opacity .12s',
-                }}
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.4-3.6-8-8-8s-8 3.6-8 8"/></svg>
-                {customerCount} pedido{customerCount !== 1 ? 's' : ''}
-              </button>
+      {/* Header */}
+      <div style={{ padding: '16px 22px 14px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+        {/* Fila 1: nro pedido + botón imprimir */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
+            Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
+          </span>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setPrintOpen(o => !o)}
+              disabled={!!printing}
+              title="Imprimir"
+              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
+            >
+              {printing ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                </svg>
+              )}
+            </button>
+            {printOpen && (
+              <>
+                <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                  <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Ticket de caja
+                  </button>
+                  <div style={{ height: 1, background: 'var(--line)' }} />
+                  <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    Comanda cocina
+                  </button>
+                </div>
+              </>
             )}
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              {isDelivery ? 'Delivery' : isDineIn ? (order.tableLabel || 'Salón') : 'Retiro'} ·
-              <OrderTimer order={order} isRetiro={isRetiro} style={{ fontWeight: 800, color: 'var(--ink-2)' }} />
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, position: 'relative' }}>
-          {/* Botón impresora */}
-          <button
-            onClick={() => setPrintOpen(o => !o)}
-            disabled={!!printing}
-            title="Imprimir"
-            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
-          >
-            {printing ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-              </svg>
-            )}
-          </button>
-
-          {/* Dropdown */}
-          {printOpen && (
-            <>
-              <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
-              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
-                <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                  Ticket de caja
-                </button>
-                <div style={{ height: 1, background: 'var(--line)' }} />
-                <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                  Comanda cocina
-                </button>
+            {printMsg && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
+                {printMsg}
               </div>
-            </>
-          )}
-
-          {printMsg && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
-              {printMsg}
-            </div>
-          )}
-
-          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'var(--sunk)', color: 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
+            )}
+          </div>
         </div>
+
+        {/* Fila 2: nombre del cliente */}
+        <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, marginTop: -6 }}>
+          {displayName(order.customerName || 'Cliente')}
+        </div>
+
+        {/* Fila 3: chip pedidos (clickeable) */}
+        {order.customerPhone && (customerCount !== null || true) && (
+          <button
+            onClick={() => setShowCustomerHistory(true)}
+            title="Ver historial del cliente"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+              fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+              padding: '3px 10px', borderRadius: 20,
+              background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
+              color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
+              border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
+              cursor: 'pointer', transition: 'opacity .12s',
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            {customerCount ?? 5} pedido{(customerCount ?? 5) !== 1 ? 's' : ''}
+          </button>
+        )}
+
       </div>
 
       {/* Scrollable body */}
@@ -674,6 +667,10 @@ function OrderDetailPanel({
         {/* Customer info */}
         {(order.customerPhone || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+            </div>
             {order.customerPhone && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
