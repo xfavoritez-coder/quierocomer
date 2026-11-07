@@ -1016,7 +1016,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
   const months = data.months
   const getVal = (m: VentaMonth) => viewMode === 'mercat' ? m.ventaMercat : viewMode === 'uber' ? m.ventaUber : m.totalBruto
   const maxVal = Math.max(1, ...months.map(getVal))
-  const totalYear = months.reduce((s, m) => s + m.totalBruto, 0)
+  const totalYear = months.reduce((s, m) => s + getVal(m), 0)
   const avgMonth = months.length > 0 ? Math.round(totalYear / months.length) : 0
 
   // Proyección mes actual
@@ -1058,7 +1058,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
           <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Total: <strong>{clp(totalYear)}</strong></span>
           <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Prom./mes: <strong>{clp(avgMonth)}</strong></span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, paddingTop: 20, overflowX: 'auto', overflowY: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, paddingTop: 20, paddingBottom: 16, overflowX: 'auto', overflowY: 'hidden' }}>
           {months.map(m => {
             const val = getVal(m)
             const pct = val > 0 ? Math.max(4, Math.round((val / maxVal) * 100)) : 0
