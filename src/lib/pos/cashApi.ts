@@ -36,11 +36,23 @@ export interface ServerCaja {
   isOpen: boolean
 }
 
+// Paso del flujo obligatorio: 1 abrir turno · 2 abrir caja · 3 cerrar caja · 4 cerrar turno.
+export type CajaStep = 1 | 2 | 3 | 4
+
 export interface PosCashState {
   shift: ServerShift | null
   caja: ServerCaja | null
+  shiftClosedCajas: number
+  step: CajaStep
   loading: boolean
   refresh: () => Promise<void>
+}
+
+export function computeStep(shift: ServerShift | null, caja: ServerCaja | null, shiftClosedCajas: number): CajaStep {
+  if (!shift) return 1
+  if (caja) return 3
+  if (shiftClosedCajas > 0) return 4
+  return 2
 }
 
 async function post(body: Record<string, unknown>): Promise<any> {
@@ -79,7 +91,7 @@ export const cashApi = {
 /** Estado actual de caja/turno del local, autoritativo desde el servidor.
  *  Polling cada 12s + al recuperar foco/visibilidad. */
 export function usePosCash(restaurantId?: string, pollMs = 12000): PosCashState {
-  const [state, setState] = useState<{ shift: ServerShift | null; caja: ServerCaja | null } | undefined>(undefined)
+  const [state, setState] = useState<{ shift: ServerShift | null; caja: ServerCaja | null; shiftClosedCajas: number } | undefined>(undefined)
   const ridRef = useRef(restaurantId)
   ridRef.current = restaurantId
 
@@ -90,7 +102,7 @@ export function usePosCash(restaurantId?: string, pollMs = 12000): PosCashState 
       const r = await fetch(`/api/pos/cash?restaurantId=${rid}`, { cache: 'no-store' })
       if (r.ok) {
         const j = await r.json()
-        setState({ shift: j.shift ?? null, caja: j.caja ?? null })
+        setState({ shift: j.shift ?? null, caja: j.caja ?? null, shiftClosedCajas: j.shiftClosedCajas ?? 0 })
       }
     } catch { /* red caída: mantener último estado */ }
   }, [])
@@ -110,7 +122,10 @@ export function usePosCash(restaurantId?: string, pollMs = 12000): PosCashState 
     }
   }, [restaurantId, pollMs, refresh])
 
-  return { shift: state?.shift ?? null, caja: state?.caja ?? null, loading: state === undefined, refresh }
+  const shift = state?.shift ?? null
+  const caja = state?.caja ?? null
+  const shiftClosedCajas = state?.shiftClosedCajas ?? 0
+  return { shift, caja, shiftClosedCajas, step: computeStep(shift, caja, shiftClosedCajas), loading: state === undefined, refresh }
 }
 
 // Adapta la caja del servidor a la forma que espera useSessionSummary (Dexie).

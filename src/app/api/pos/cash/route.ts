@@ -34,7 +34,11 @@ export async function GET(req: NextRequest) {
     prisma.posShift.findFirst({ where: { restaurantId, isOpen: true }, orderBy: { openedAt: "desc" } }),
     prisma.posCashSession.findFirst({ where: { restaurantId, isOpen: true }, orderBy: { openedAt: "desc" } }),
   ]);
-  return NextResponse.json({ shift, caja }, { headers: { "Cache-Control": "no-store" } });
+  // ¿El turno abierto ya tuvo al menos una caja cerrada? (para el paso "cerrar turno").
+  const shiftClosedCajas = shift
+    ? await prisma.posCashSession.count({ where: { shiftId: shift.id, isOpen: false } })
+    : 0;
+  return NextResponse.json({ shift, caja, shiftClosedCajas }, { headers: { "Cache-Control": "no-store" } });
 }
 
 /** POST /api/pos/cash → { restaurantId, action, ... } */

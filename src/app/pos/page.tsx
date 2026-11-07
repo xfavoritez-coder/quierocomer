@@ -242,7 +242,7 @@ export default function PosHomePage() {
 
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const accounts = useOpenAccounts(restaurantId)
-  const { caja: cashSession, loading: cashLoading } = usePosCash(restaurantId)
+  const { caja: cashSession, step: cajaStep, loading: cashLoading } = usePosCash(restaurantId)
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
   const garzones = useStaff(restaurantId)
@@ -496,7 +496,14 @@ export default function PosHomePage() {
           (syncReady). Así no parpadea en cada sync incremental ni al cambiar de
           sucursal (mientras sincroniza el nuevo local, syncReady=false → no se
           muestra el falso "caja cerrada"). */}
-      {cashSession === null && syncReady && !cashLoading && (
+      {cashSession === null && syncReady && !cashLoading && (() => {
+        // Guía del paso pendiente (flujo obligatorio): 1 abrir turno · 2 abrir
+        // caja · 4 cerrar turno. (En 3 la caja está abierta → no se muestra.)
+        const msg = cajaStep === 1 ? 'Abre el turno para empezar'
+          : cajaStep === 4 ? 'Falta cerrar el turno'
+          : 'Falta abrir la caja'
+        const cta = cajaStep === 1 ? 'Abrir turno →' : cajaStep === 4 ? 'Cerrar turno →' : 'Abrir caja →'
+        return (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: 12, flexWrap: 'wrap',
@@ -507,15 +514,15 @@ export default function PosHomePage() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2" style={{ flexShrink: 0 }}>
             <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/>
           </svg>
-          <span style={{ color: 'var(--amber-press)', fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)' }}>Caja cerrada</span>
+          <span style={{ color: 'var(--amber-press)', fontWeight: 700, fontSize: 13, fontFamily: 'var(--sans)' }}>{msg}</span>
           <button
             onClick={() => setInnerPage('caja')}
             style={{ border: 'none', background: 'var(--amber)', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}
           >
-            Abrir caja →
+            {cta}
           </button>
         </div>
-      )}
+      )})()}
 
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
       {innerPage && INNER_PAGES[innerPage] && (

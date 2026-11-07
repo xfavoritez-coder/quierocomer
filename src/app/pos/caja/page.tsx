@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
 import StaleAccountsCleanup from '../components/StaleAccountsCleanup'
 import TurnoBar from '../components/TurnoBar'
+import CajaStepper from '../components/CajaStepper'
 import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
@@ -38,7 +39,7 @@ export default function CajaPage() {
   const navigate = usePosNav()
   const { restaurantId, restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
-  const { caja: serverCaja, shift, loading: cashLoading, refresh: refreshCash } = usePosCash(restaurantId)
+  const { caja: serverCaja, shift, step, loading: cashLoading, refresh: refreshCash } = usePosCash(restaurantId)
   const cashSession = toLegacyCashSession(serverCaja, restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
@@ -181,7 +182,9 @@ export default function CajaPage() {
           if (!pr.ok) toast.error(pr.error || 'No se pudo imprimir el cierre')
         }
       }
-      goHome()
+      // NO navegar: quedarse en la caja (ahora en el paso "Cerrar turno") para
+      // obligar a cerrar el turno. El estado se refresca y el stepper avanza.
+      await refreshCash()
     } catch (err) {
     } finally {
       setClosing(false)
@@ -261,10 +264,19 @@ export default function CajaPage() {
         <PosHeader mode="back" eyebrow="Caja" subtitle="Sin sesión activa" syncing={syncing} onBack={goHome} rightSlot={historialBtn} />
         <div className="pos-scroll">
           <div className="pos-caja-wrap">
+            <CajaStepper step={step} />
             <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
+
+            {step === 4 && (
+              <div style={{ background: 'var(--jade-tint)', border: '1px solid var(--jade)', borderRadius: 'var(--r-card)', padding: '14px 16px', marginBottom: 18 }}>
+                <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>✓ Caja cerrada</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-2)', marginTop: 2, lineHeight: 1.45 }}>Falta <b>cerrar el turno</b> para terminar el día y subir todo a la nube. Usa el botón <b>Cerrar turno</b> de arriba.</div>
+              </div>
+            )}
 
             {!shift ? null : (
             <>
+            {step !== 4 && (
             <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
               <div className="ring">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -273,9 +285,10 @@ export default function CajaPage() {
               </div>
               <p>No hay caja abierta</p>
             </div>
+            )}
 
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: '20px 18px', boxShadow: 'var(--sh-1)' }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Abrir caja</div>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: '20px 18px', boxShadow: 'var(--sh-1)', ...(step === 4 ? { opacity: 0.9 } : {}) }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>{step === 4 ? 'Abrir otra caja' : 'Abrir caja'}</div>
               <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Monto inicial en efectivo</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
                 <span style={{ fontFamily: 'var(--mono)', fontWeight: 600, fontSize: 16 }}>$</span>
@@ -330,6 +343,7 @@ export default function CajaPage() {
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
 
+          <CajaStepper step={step} />
           <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
 
           {/* ── Apertura ───────────────────────────── */}
