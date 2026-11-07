@@ -16,7 +16,9 @@ export const maxDuration = 60;
  * un día en que la encuesta estaba desactivada.
  */
 export async function POST(req: NextRequest) {
-  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  const authHeader = req.headers.get("authorization");
+  const cronOk = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
+  if (!cronOk && !isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await req.json().catch(() => null);
   const restaurantIds: string[] = Array.isArray(body?.restaurantIds) ? body.restaurantIds : [];
