@@ -27,7 +27,7 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       inline: 'carta',
     },
     {
-      label: 'Órdenes',
+      label: 'Historial pedidos',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>,
       inline: 'historial',
     },
