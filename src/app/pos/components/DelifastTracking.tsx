@@ -308,7 +308,7 @@ export function DelifastStatusPill({
       flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {enCamino && dropoffEta ? `Entrega a las ${dropoffEta}` : label}
+      {enCamino && dropoffEta ? (() => { const m = etaMinutes(dropoffEta); return m != null && m > 0 ? `Entrega en ${m} min` : `Entrega a las ${dropoffEta}` })() : label}
     </span>
   )
 }
