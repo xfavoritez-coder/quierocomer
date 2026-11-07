@@ -1106,10 +1106,13 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
           {tab === "pickup" ? (
             (() => {
               // Todas las sucursales pickup-enabled: la actual + las siblings (misma marca)
-              const allBranches: Array<{ id: string; name: string; branchName: string | null; address: string | null; lat: number | null; lng: number | null; isCurrent: boolean }> = [
-                { id: tenant.id, name: tenant.name, branchName: tenant.branchName, address: tenant.address, lat: null, lng: null, isCurrent: true },
-                ...(siblings ?? []).filter((s) => s.pickupEnabled).map((s) => ({ id: s.id, name: s.name, branchName: s.branchName, address: s.address, lat: s.lat, lng: s.lng, isCurrent: false })),
-              ];
+              const allBranches: Array<{ id: string; name: string; branchName: string | null; address: string | null; lat: number | null; lng: number | null; isCurrent: boolean; open: boolean; opensAt: string | null }> = [
+                { id: tenant.id, name: tenant.name, branchName: tenant.branchName, address: tenant.address, lat: null, lng: null, isCurrent: true, open: tenant.openStatus.open, opensAt: tenant.openStatus.opensAt },
+                ...(siblings ?? []).filter((s) => s.pickupEnabled).map((s) => ({ id: s.id, name: s.name, branchName: s.branchName, address: s.address, lat: s.lat, lng: s.lng, isCurrent: false, open: s.open, opensAt: s.opensAt })),
+              ].sort((a, b) => {
+                if (a.open !== b.open) return a.open ? -1 : 1;
+                return (a.branchName || a.name).localeCompare(b.branchName || b.name);
+              });
               const refLat = dest?.lat ?? null;
               const refLng = dest?.lng ?? null;
               return (
@@ -1119,14 +1122,19 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
                       ? haversineKm(refLat, refLng, b.lat, b.lng)
                       : null;
                     return (
-                      <div key={b.id} className="rounded-xl bg-gray-50 border border-gray-100 p-4">
+                      <div key={b.id} className={`rounded-xl border p-4 ${b.open ? "bg-gray-50 border-gray-100" : "bg-gray-50/60 border-gray-100 opacity-75"}`}>
                         <div className="flex items-start justify-between gap-2">
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-sm font-bold text-gray-700">{b.branchName ? `${b.name} — ${b.branchName}` : b.name}</p>
                             {b.address ? <p className="text-sm text-gray-500 mt-0.5">{b.address}</p> : <p className="text-sm text-gray-400 mt-0.5">Dirección disponible al confirmar.</p>}
+                            {!b.open && (
+                              <p className="text-xs font-semibold mt-1" style={{ color: b.opensAt ? "#d97706" : "#9ca3af" }}>
+                                {b.opensAt ? `Abre hoy a las ${b.opensAt}` : "Cerrado por hoy"}
+                              </p>
+                            )}
                           </div>
                           {distKm != null && (
-                            <span className="text-xs font-bold whitespace-nowrap mt-0.5" style={{ color: primaryColor }}>
+                            <span className="text-xs font-bold whitespace-nowrap mt-0.5 shrink-0" style={{ color: primaryColor }}>
                               {distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} km`}
                             </span>
                           )}

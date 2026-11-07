@@ -548,6 +548,7 @@ export interface BrandBranch {
   pickupEnabled: boolean;
   deliveryEnabled: boolean;
   open: boolean;
+  opensAt: string | null; // si está cerrado y abre hoy más tarde
 }
 export interface BrandData {
   brandSlug: string;
@@ -585,8 +586,13 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
       logoUrl: r.logoUrl, primaryColor: cfg.primaryColor,
       pickupEnabled: cfg.pickupEnabled, deliveryEnabled: cfg.deliveryEnabled,
       open: avail.openStatus.open,
+      opensAt: avail.openStatus.opensAt ?? null,
     };
-  }).sort((a, b) => (a.branchName || a.name).localeCompare(b.branchName || b.name));
+  }).sort((a, b) => {
+    // abiertas primero, luego alfabético
+    if (a.open !== b.open) return a.open ? -1 : 1;
+    return (a.branchName || a.name).localeCompare(b.branchName || b.name);
+  });
 
   const gmaps = parseEcommerceConfig(rows[0].ecommerceConfig).googleMaps?.apiKey || null;
   const allCfgs = rows.map((r) => parseStoreConfig(r.ecommerceStoreConfig, { accent: r.cartaAccentColor }));
