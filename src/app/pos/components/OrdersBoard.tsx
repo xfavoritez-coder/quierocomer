@@ -765,18 +765,11 @@ function OrderDetailPanel({
           )}
         </div>
 
-        {/* Stage */}
+        {/* Stage actions */}
         {(() => {
           const prev = prevAction(order.opsStage)
-          return (
+          return (next || prev) ? (
             <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Etapa</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (next || prev) ? 12 : 0 }}>
-                <span style={{ width: 9, height: 9, borderRadius: '50%', background: STAGE_COLOR[order.opsStage] ?? '#aaa', flexShrink: 0 }} />
-                <span style={{ fontSize: 16, fontWeight: 700, color: STAGE_COLOR[order.opsStage] ?? 'var(--ink-2)' }}>
-                  {STAGE_LABEL[order.opsStage] ?? order.opsStage}
-                </span>
-              </div>
               {/* Pagado: avanzar es la acción principal. Impago: el avance se
                   gestiona en la franja de cobro de abajo (interceptado). */}
               {paid && next && (
