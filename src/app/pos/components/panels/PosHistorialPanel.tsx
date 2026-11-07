@@ -38,6 +38,7 @@ interface HistorialOrder {
   items: unknown
   createdAt: string
   opsReadyForDeliveryAt?: string | null
+  opsDispatchedAt?: string | null
   opsDeliveredAt?: string | null
   completedAt?: string | null
   updatedAt?: string | null
@@ -78,12 +79,76 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
   if (!Array.isArray(items)) return []
   return items.map((it) => {
     const o = (it || {}) as Record<string, unknown>
+    const qty = Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1
+    let price = 0
+    if (Number(o.unitPriceAfterTax) > 0) price = Number(o.unitPriceAfterTax)
+    else if (Number(o.unitPrice) > 0) price = Number(o.unitPrice)
+    else if (Number(o.unit_price) > 0) price = Number(o.unit_price)
+    else if (Number(o.price) > 0) price = Number(o.price)
+    else if (Number(o.precio) > 0) price = Number(o.precio)
+    else if (Number(o.amountAfterTax) > 0) price = Math.round(Number(o.amountAfterTax) / qty)
+    else if (Number(o.netPrice) > 0) price = Math.round(Number(o.netPrice) / qty)
+    else if (Number(o.unitTotal) > 0) price = Number(o.unitTotal)
+    else if (Number(o.amount) > 0) price = Math.round(Number(o.amount) / qty)
+    else if (Number(o.total) > 0) price = Math.round(Number(o.total) / qty)
     return {
       name: String(o.name ?? o.productName ?? o.title ?? o.description ?? 'Ítem'),
-      qty: Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1,
-      price: Number(o.price ?? o.unitPrice ?? o.unit_price ?? o.precio ?? 0) || 0,
+      qty, price,
     }
   })
+}
+
+function fmt(d: string): string {
+  return new Date(d).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+}
+function diffMin(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000)
+}
+
+function OrderTimeline({ order }: { order: HistorialOrder }) {
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const canceled = order.posStatus === 'canceled'
+
+  type Step = { label: string; ts: string | null | undefined; color: string }
+  const steps: Step[] = [
+    { label: 'Recibido', ts: order.createdAt, color: 'var(--ink-3)' },
+    { label: 'Listo', ts: order.opsReadyForDeliveryAt, color: 'var(--jade)' },
+    ...(isDelivery ? [{ label: 'En camino', ts: order.opsDispatchedAt, color: 'var(--amber)' }] : []),
+    canceled
+      ? { label: 'Anulado', ts: order.updatedAt, color: '#ef4444' }
+      : { label: isDelivery ? 'Entregado' : 'Completado', ts: order.opsDeliveredAt ?? order.completedAt, color: 'var(--jade)' },
+  ]
+  const active = steps.filter(s => s.ts)
+  if (active.length < 2) return null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {active.map((step, i) => {
+        const prev = i > 0 ? active[i - 1] : null
+        const delta = prev ? diffMin(prev.ts!, step.ts!) : null
+        const isLast = i === active.length - 1
+        return (
+          <div key={step.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            {/* Línea vertical + dot */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 16, flexShrink: 0 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.color, flexShrink: 0, marginTop: 4 }} />
+              {!isLast && <div style={{ width: 2, flex: 1, background: 'var(--line)', minHeight: 20, margin: '3px 0' }} />}
+            </div>
+            {/* Contenido */}
+            <div style={{ paddingBottom: isLast ? 0 : 14, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{step.label}</span>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-3)' }}>{fmt(step.ts!)}</span>
+                {delta !== null && delta >= 0 && (
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-4)', marginLeft: 2 }}>+{delta} min</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function todayYmd(): string {
@@ -152,7 +217,7 @@ function HistorialDetailPanel({ order, onClose, restaurantId }: { order: Histori
           </div>
         )}
 
-        {/* Total + despacho */}
+        {/* Total + despacho + pago */}
         <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {order.deliveryFee > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
@@ -160,26 +225,35 @@ function HistorialDetailPanel({ order, onClose, restaurantId }: { order: Histori
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
             <span>Total</span>
             <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
           </div>
+          {/* Estado de pago integrado */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
+              {payMethod ? payMethod.charAt(0).toUpperCase() + payMethod.slice(1) : 'Pago'}
+            </span>
+            {canceled ? (
+              <span style={{ ...chip('#6b7280'), fontSize: 11 }}>
+                {cancelReason ? `Anulado · ${cancelReason}` : 'Anulado'}
+              </span>
+            ) : paid ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 800, color: 'var(--jade)',
+                background: 'var(--jade-tint)', padding: '4px 10px', borderRadius: 8 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                {clp(order.paidAmount)}
+              </span>
+            ) : (
+              <span style={{ ...chip('#f59e0b'), fontSize: 11 }}>Sin cobro registrado</span>
+            )}
+          </div>
         </div>
 
-        {/* Estado pago / motivo anulación */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, color: 'var(--ink-2)' }}>
-          {payMethod && (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ color: 'var(--ink-3)' }}>Método:</span>
-              <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{payMethod}</span>
-            </div>
-          )}
-          <div style={{ fontWeight: 700, color: canceled ? '#6b7280' : paid ? '#16a34a' : '#f59e0b', fontSize: 15 }}>
-            {canceled ? 'Anulado' : paid ? `Cobrado ${clp(order.paidAmount)}` : 'Sin cobro registrado'}
-          </div>
-          {canceled && cancelReason && (
-            <div style={{ fontSize: 13, color: 'var(--ink-3)', fontStyle: 'italic' }}>Motivo: {cancelReason}</div>
-          )}
+        {/* Timeline */}
+        <div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Historial</div>
+          <OrderTimeline order={order} />
         </div>
       </div>
     </div>
