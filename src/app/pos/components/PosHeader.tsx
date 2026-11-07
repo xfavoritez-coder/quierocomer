@@ -92,11 +92,13 @@ export default function PosHeader({
             {/* ── Trigger ── */}
             <div className="pos-brand" style={{ userSelect: 'none' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo.png" alt="QuieroComer" className="mk-logo"
-                onClick={onBrandClick}
-                style={{ cursor: onBrandClick ? 'pointer' : undefined }}
-              />
+              <a
+                href="/pos"
+                onClick={onBrandClick ? (e) => { e.preventDefault(); onBrandClick() } : undefined}
+                style={{ display: 'contents' }}
+              >
+                <img src="/logo.png" alt="QuieroComer" className="mk-logo" style={{ cursor: 'pointer' }} />
+              </a>
               {storeName && (
                 <div
                   className="pos-brand-store"
