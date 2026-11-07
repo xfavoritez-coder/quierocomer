@@ -63,6 +63,7 @@ interface Report {
   tipsTotal: number
   grossTotal: number
   hourly: HourBucket[]
+  dowStats?: DowStat[]
   channels: Channel[]
   products: ProductRank[]
   byType: TypeBucket[]
