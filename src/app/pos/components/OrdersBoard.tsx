@@ -9,6 +9,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
 import { supabase } from '@/lib/supabase'
+import CustomerOrdersDrawer from './CustomerOrdersDrawer'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -511,6 +512,18 @@ function OrderDetailPanel({
   const [printOpen, setPrintOpen] = useState(false)
   const [printing, setPrinting] = useState<'ticket' | 'kitchen' | null>(null)
   const [printMsg, setPrintMsg] = useState<string | null>(null)
+  const [customerCount, setCustomerCount] = useState<number | null>(null)
+  const [showCustomerHistory, setShowCustomerHistory] = useState(false)
+
+  // Cargar conteo de pedidos del cliente si tiene teléfono
+  useEffect(() => {
+    if (!order.customerPhone) return
+    setCustomerCount(null)
+    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(order.customerPhone)}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (typeof d?.count === 'number') setCustomerCount(d.count) })
+      .catch(() => {})
+  }, [order.id, order.customerPhone, restaurantId])
 
   const bridgeType = (): 'mesa' | 'mostrador' | 'retiro' | 'delivery' =>
     isDelivery ? 'delivery' : isDineIn ? 'mesa' : 'retiro'
@@ -563,12 +576,40 @@ function OrderDetailPanel({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {showCustomerHistory && order.customerPhone && (
+        <CustomerOrdersDrawer
+          restaurantId={restaurantId}
+          customerName={order.customerName}
+          customerPhone={order.customerPhone}
+          onClose={() => setShowCustomerHistory(false)}
+        />
+      )}
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 22px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0, position: 'relative' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
-            {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
-            {displayName(order.customerName || 'Cliente')}
+          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>
+              {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
+              {displayName(order.customerName || 'Cliente')}
+            </span>
+            {order.customerPhone && customerCount !== null && (
+              <button
+                onClick={() => setShowCustomerHistory(true)}
+                title="Ver historial del cliente"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+                  padding: '3px 8px', borderRadius: 20,
+                  background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
+                  color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
+                  border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
+                  cursor: 'pointer', flexShrink: 0, transition: 'opacity .12s',
+                }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.4-3.6-8-8-8s-8 3.6-8 8"/></svg>
+                {customerCount} pedido{customerCount !== 1 ? 's' : ''}
+              </button>
+            )}
           </div>
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
