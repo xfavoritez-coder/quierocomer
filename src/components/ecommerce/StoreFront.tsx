@@ -470,10 +470,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               onClick={() => brandControls.onRequireBranch(null)}
               className="w-full bg-gray-800 hover:bg-gray-700 transition text-white text-center py-2.5 px-4 border-t border-gray-700"
             >
-              {brandControls.openBranchLabel
-                ? <span className="text-sm font-bold">🟢 {brandControls.openBranchLabel} está abierta · <span className="underline">Cambiar sucursal →</span></span>
-                : <span className="text-sm font-semibold text-gray-300">Ver otras sucursales →</span>
-              }
+              <span className="text-sm font-semibold text-gray-300">Ver otras sucursales →</span>
             </button>
           )}
         </>
