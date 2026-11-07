@@ -454,10 +454,6 @@ export default function PosHomePage() {
 
   return (
     <div className="pos-shell">
-      {/* Alerta global de retiro atascado en preparación (corre en todas las pestañas). */}
-      {restaurantId && (
-        <PrepAlertWatcher restaurantId={restaurantId} orders={activeOrders} prepAlertMinutes={prepAlertMin} readyAlertMinutes={readyAlertMin} onChanged={() => refreshOrdersRef.current()} />
-      )}
       {/* Alerta global de reparto cancelado en Delifast. */}
       {restaurantId && (
         <DelifastCancelWatcher restaurantId={restaurantId} orders={activeOrders} onChanged={() => refreshOrdersRef.current()} />
