@@ -883,6 +883,57 @@ function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]
   return Array.from(map.values())
 }
 
+// ── Date range picker ─────────────────────────────────────────────
+function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onShift, onReset, onRefresh }: {
+  fromDate: string; toDate: string; today: string
+  onFromChange: (v: string) => void; onToChange: (v: string) => void
+  onShift: (days: number) => void; onReset: () => void; onRefresh?: () => void
+}) {
+  const singleDay = fromDate === toDate
+  const inputSt: React.CSSProperties = {
+    fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)',
+    background: 'var(--surface)', border: '1px solid var(--line)',
+    borderRadius: 8, padding: '7px 10px', cursor: 'pointer', minWidth: 0, flex: '1 1 110px', maxWidth: 140,
+  }
+  const navBtn: React.CSSProperties = {
+    width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)',
+    color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0,
+  }
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '10px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      {/* Date range row — never breaks mid-range */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 auto', minWidth: 0 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        {singleDay && (
+          <button onClick={() => onShift(-1)} style={navBtn}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        )}
+        <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={inputSt} />
+        <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)', flexShrink: 0 }}>→</span>
+        <input type="date" value={toDate} min={fromDate} onChange={e => onToChange(e.target.value || today)} style={inputSt} />
+        {singleDay && (
+          <button onClick={() => onShift(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        )}
+      </div>
+      {/* Secondary actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        {(fromDate !== today || toDate !== today) && (
+          <button onClick={onReset} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
+        )}
+        {onRefresh && (
+          <button onClick={onRefresh} style={{ width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', cursor: 'pointer' }} title="Actualizar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main panel ────────────────────────────────────────────────────────
 interface BranchInfo { id: string; name: string; branchName?: string | null }
 
@@ -1199,38 +1250,28 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
     setToDate(t => addDaysYmd(t, days))
   }
 
-  const inputSt: React.CSSProperties = {
-    fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)',
-    background: 'var(--surface)', border: '1px solid var(--line)',
-    borderRadius: 8, padding: '7px 10px', cursor: 'pointer',
-  }
-  const navBtn: React.CSSProperties = {
-    width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)',
-    color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0,
-  }
-
   return (
     <div className="pos-scroll">
       <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
 
         {/* Sub-section tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'var(--sunk)', borderRadius: 12, padding: 4 }}>
+        <div className="pos-report-tabs" style={{ display: 'flex', gap: 4, marginBottom: 14, background: 'var(--sunk)', borderRadius: 12, padding: 4, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          <style>{`.pos-report-tabs::-webkit-scrollbar{display:none}`}</style>
           {SUB_SECTIONS.map(s => (
             <button
               key={s.id}
               onClick={() => setSubSection(s.id)}
               style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: '8px 10px', borderRadius: 9, border: 'none', cursor: 'pointer',
-                fontFamily: F, fontSize: '0.78rem', fontWeight: 700, transition: '.15s',
+                flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                padding: '8px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                fontFamily: F, fontSize: '0.78rem', fontWeight: 700, transition: '.15s', whiteSpace: 'nowrap',
                 background: subSection === s.id ? 'var(--surface)' : 'transparent',
                 color: subSection === s.id ? 'var(--ink)' : 'var(--ink-3)',
                 boxShadow: subSection === s.id ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
               }}
             >
               {s.icon}
-              <span style={{ whiteSpace: 'nowrap' }}>{s.label}</span>
+              {s.label}
             </button>
           ))}
         </div>
@@ -1238,28 +1279,11 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         {/* Platos sub-section */}
         {subSection === 'platos' && (
           <>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {singleDay && (
-                <button onClick={() => shiftBoth(-1)} style={navBtn}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-              )}
-              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
-              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
-              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
-              {singleDay && (
-                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              )}
-              {(fromDate !== today || toDate !== today) && (
-                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
-              )}
-              <button onClick={fetchReport} style={{ marginLeft: 'auto', ...navBtn }} title="Actualizar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              </button>
-            </div>
+            <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
+              onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
+              onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
+              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onRefresh={fetchReport} />
             <PlatosSection
               restaurantId={restaurantId}
               fromDate={fromDate}
@@ -1278,25 +1302,10 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         {/* Comportamiento sub-section */}
         {subSection === 'comportamiento' && (
           <>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {singleDay && (
-                <button onClick={() => shiftBoth(-1)} style={navBtn}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-              )}
-              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
-              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
-              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
-              {singleDay && (
-                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              )}
-              {(fromDate !== today || toDate !== today) && (
-                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
-              )}
-            </div>
+            <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
+              onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
+              onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
+              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }} />
             <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
           </>
         )}
@@ -1304,28 +1313,11 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         {/* Delivery sub-section */}
         {subSection === 'delivery' && (
           <>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {singleDay && (
-                <button onClick={() => shiftBoth(-1)} style={navBtn}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-              )}
-              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
-              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
-              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
-              {singleDay && (
-                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              )}
-              {(fromDate !== today || toDate !== today) && (
-                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
-              )}
-              <button onClick={fetchReport} style={{ marginLeft: 'auto', ...navBtn }} title="Actualizar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              </button>
-            </div>
+            <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
+              onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
+              onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
+              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onRefresh={fetchReport} />
             {loading ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -1366,29 +1358,11 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         {/* Dashboard sub-section */}
         {subSection === 'dashboard' && <>
 
-        {/* Date picker */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          {singleDay && (
-            <button onClick={() => shiftBoth(-1)} style={navBtn}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-          )}
-          <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
-          <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
-          <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
-          {singleDay && (
-            <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          )}
-          {(fromDate !== today || toDate !== today) && (
-            <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
-          )}
-          <button onClick={fetchReport} style={{ marginLeft: 'auto', ...navBtn }} title="Actualizar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          </button>
-        </div>
+        <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
+          onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
+          onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
+          onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+          onRefresh={fetchReport} />
 
         {allBranches && allBranches.length > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
