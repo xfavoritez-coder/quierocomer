@@ -968,6 +968,191 @@ function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, on
   )
 }
 
+// ── Histórico anual (VentaDia) ──────────────────────────────────────
+interface VentaMonth {
+  yearMonth: string; totalBruto: number; totalNeto: number; numOrdenes: number
+  ventaMercat: number; ventaUber: number; numDias: number; avgMargen: number | null
+}
+interface DowStat { dow: number; avg: number; count: number }
+interface HistoricoData {
+  months: VentaMonth[]
+  dowStats: DowStat[]
+  currentMonthDays: { fecha: string; totalBruto: number; ventaMercat: number; ventaUber: number }[]
+  last7Total: number
+  totalRows: number
+}
+
+const DOW_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+
+function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
+  const [data, setData] = useState<HistoricoData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'bruto' | 'mercat' | 'uber'>('bruto')
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/panel/ecommerce/venta-historica?restaurantId=${restaurantId}&year=2026`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setData(d))
+      .finally(() => setLoading(false))
+  }, [restaurantId])
+
+  if (loading) return (
+    <Card><div style={{ textAlign: 'center', padding: 32, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      Cargando histórico…
+    </div></Card>
+  )
+  if (!data || data.months.length === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '32px 0', fontSize: '0.82rem' }}>Sin datos históricos importados.</p></Card>
+  )
+
+  const months = data.months
+  const getVal = (m: VentaMonth) => viewMode === 'mercat' ? m.ventaMercat : viewMode === 'uber' ? m.ventaUber : m.totalBruto
+  const maxVal = Math.max(1, ...months.map(getVal))
+  const totalYear = months.reduce((s, m) => s + m.totalBruto, 0)
+  const avgMonth = months.length > 0 ? Math.round(totalYear / months.length) : 0
+
+  // Proyección mes actual
+  const todayYm = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()).slice(0, 7)
+  const currentMonth = months.find(m => m.yearMonth === todayYm)
+  const currentDays = data.currentMonthDays
+  const currentTotal = currentDays.reduce((s, d) => s + d.totalBruto, 0)
+  const daysElapsed = currentDays.length
+  const totalDaysInMonth = new Date(parseInt(todayYm.slice(0, 4)), parseInt(todayYm.slice(5, 7)), 0).getDate()
+  const dailyAvgSoFar = daysElapsed > 0 ? currentTotal / daysElapsed : 0
+  const projection = Math.round(dailyAvgSoFar * totalDaysInMonth)
+  // Find same month last year or same month historical avg
+  const prevSameName = months.find(m => m.yearMonth !== todayYm && m.yearMonth.endsWith(todayYm.slice(5)))
+  const histRef = prevSameName?.totalBruto ?? null
+
+  // Best/worst days
+  const dowActive = data.dowStats.filter(d => d.count > 0)
+  const bestDow = dowActive.length > 0 ? dowActive.reduce((a, b) => a.avg > b.avg ? a : b) : null
+  const worstDow = dowActive.length > 0 ? dowActive.reduce((a, b) => a.avg < b.avg ? a : b) : null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Year bar chart */}
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Año 2026</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['bruto', 'mercat', 'uber'] as const).map(v => (
+              <button key={v} onClick={() => setViewMode(v)} style={{
+                fontFamily: F, fontSize: '0.66rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--line)', cursor: 'pointer',
+                background: viewMode === v ? 'var(--amber-tint-2)' : 'var(--sunk)',
+                color: viewMode === v ? 'var(--amber-press)' : 'var(--ink-3)',
+                borderColor: viewMode === v ? 'var(--amber)' : 'var(--line)',
+              }}>{v === 'bruto' ? 'Total' : v === 'mercat' ? 'Mercat' : 'Uber'}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+          <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Total: <strong>{clp(totalYear)}</strong></span>
+          <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Prom./mes: <strong>{clp(avgMonth)}</strong></span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, paddingTop: 20, overflowX: 'auto', overflowY: 'hidden' }}>
+          {months.map(m => {
+            const val = getVal(m)
+            const pct = val > 0 ? Math.max(4, Math.round((val / maxVal) * 100)) : 0
+            const mn = parseInt(m.yearMonth.slice(5)) - 1
+            const isToday = m.yearMonth === todayYm
+            return (
+              <div key={m.yearMonth} style={{ flex: '1 0 44px', minWidth: 44, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '100%', height: 110, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                  <div style={{
+                    position: 'relative', width: '70%', maxWidth: 32,
+                    height: `${pct}%`,
+                    background: isToday
+                      ? `linear-gradient(180deg,var(--amber),var(--amber)bb)`
+                      : `linear-gradient(180deg,${GREEN},${GREEN}bb)`,
+                    borderRadius: '4px 4px 0 0',
+                    minHeight: val > 0 ? 3 : 0,
+                  }}>
+                    {val > 0 && (
+                      <span style={{ position: 'absolute', bottom: '100%', marginBottom: 2, left: '50%', transform: 'translateX(-50%)', fontFamily: F, fontSize: '0.56rem', fontWeight: 800, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{clpShort(val)}</span>
+                    )}
+                  </div>
+                </div>
+                <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: isToday ? 'var(--amber-press)' : 'var(--ink-2)', marginTop: 4 }}>{MONTH_SHORT[mn]}</span>
+                <span style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-3)' }}>{m.numDias}d</span>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+
+      {/* Proyección mes actual */}
+      {daysElapsed > 0 && (
+        <Card>
+          <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 10 }}>
+            Proyección · {MONTH_SHORT[(parseInt(todayYm.slice(5)) - 1 + 12) % 12]} {todayYm.slice(0, 4)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Lleva</div>
+              <div style={{ fontFamily: F, fontSize: '0.95rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(currentTotal)}</div>
+              <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 2 }}>{daysElapsed} días</div>
+            </div>
+            <div style={{ background: 'var(--amber-tint)', borderRadius: 10, padding: '10px 12px', borderLeft: '3px solid var(--amber)' }}>
+              <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--amber-press)', textTransform: 'uppercase', marginBottom: 4 }}>Proyecta</div>
+              <div style={{ fontFamily: F, fontSize: '0.95rem', fontWeight: 900, color: 'var(--amber-press)' }}>{clpShort(projection)}</div>
+              <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 2 }}>al ritmo actual</div>
+            </div>
+            {histRef != null && (
+              <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Histórico</div>
+                <div style={{ fontFamily: F, fontSize: '0.95rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(histRef)}</div>
+                <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 2 }}>mismo mes</div>
+              </div>
+            )}
+            {currentMonth && currentMonth.numDias > 0 && (
+              <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', gridColumn: histRef != null ? undefined : 'span 2' }}>
+                <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Prom. día</div>
+                <div style={{ fontFamily: F, fontSize: '0.95rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(Math.round(currentTotal / daysElapsed))}</div>
+                <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 2 }}>con venta</div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Día de semana benchmark */}
+      {dowActive.length > 0 && (
+        <Card>
+          <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 4 }}>Por día de semana</div>
+          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 12 }}>
+            {bestDow && <span>Mejor: <strong style={{ color: GREEN }}>{DOW_LABEL[bestDow.dow]}</strong> {clpShort(bestDow.avg)}</span>}
+            {bestDow && worstDow && <span style={{ marginLeft: 12 }}>Peor: <strong style={{ color: '#ef4444' }}>{DOW_LABEL[worstDow.dow]}</strong> {clpShort(worstDow.avg)}</span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+            {data.dowStats.map(d => {
+              const pct = d.avg > 0 ? Math.max(4, Math.round((d.avg / Math.max(1, ...data.dowStats.map(x => x.avg))) * 100)) : 0
+              const isBest = bestDow?.dow === d.dow
+              const isWorst = worstDow?.dow === d.dow
+              return (
+                <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: '100%', height: 72, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                    <div style={{
+                      width: '72%', maxWidth: 28, height: `${pct}%`,
+                      background: isBest ? `linear-gradient(180deg,${GREEN},${GREEN}bb)` : isWorst ? 'linear-gradient(180deg,#ef4444,#ef4444bb)' : 'linear-gradient(180deg,var(--slate),var(--slate)bb)',
+                      borderRadius: '3px 3px 0 0', minHeight: d.avg > 0 ? 3 : 0,
+                    }} />
+                  </div>
+                  <span style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: isBest ? GREEN : isWorst ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>{DOW_LABEL[d.dow]}</span>
+                  {d.avg > 0 && <span style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-3)' }}>{clpShort(d.avg)}</span>}
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 // ── Main panel ────────────────────────────────────────────────────────
 interface BranchInfo { id: string; name: string; branchName?: string | null }
 
@@ -988,7 +1173,7 @@ interface ClientsData {
   clients: ClientRow[]
 }
 
-type ClientSortKey = 'riskScore' | 'totalSpent' | 'orders' | 'lastOrderAt' | 'avgFrequencyDays'
+type ClientSortKey = 'riskScore' | 'totalSpent' | 'orders' | 'lastOrderAt' | 'avgFrequencyDays' | 'avgTicket'
 
 const STATUS_LABEL: Record<ClientStatus, string> = { active: 'Activo', at_risk: 'En riesgo', churned: 'Perdido', new: 'Nuevo' }
 const STATUS_COLOR: Record<ClientStatus, string> = { active: 'var(--jade)', at_risk: 'var(--amber)', churned: '#ef4444', new: 'var(--slate)' }
@@ -1050,7 +1235,42 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
   if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Cargando clientes…</div></Card>
   if (!cd) return null
 
+  const allRows = cd.clients
+  const totalGastado = allRows.reduce((s, c) => s + c.totalSpent, 0)
+  const avgGastoCliente = allRows.length > 0 ? Math.round(totalGastado / allRows.length) : 0
+  const topSpender = allRows.length > 0 ? allRows.reduce((a, b) => a.totalSpent > b.totalSpent ? a : b) : null
+  const avgTicketGlobal = allRows.length > 0 ? Math.round(allRows.reduce((s, c) => s + c.avgTicket, 0) / allRows.length) : 0
+
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* KPIs clientes */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${BLUE}` }}>
+          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Total clientes</div>
+          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${GREEN}` }}>
+          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Total gastado</div>
+          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(totalGastado)}</div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${PURPLE}` }}>
+          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Prom. por cliente</div>
+          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clp(avgGastoCliente)}</div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid var(--amber)` }}>
+          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Ticket prom.</div>
+          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clp(avgTicketGlobal)}</div>
+        </div>
+        {topSpender && (
+          <div style={{ background: 'var(--amber-tint)', border: '1px solid var(--amber)', borderRadius: 14, padding: '12px 14px', gridColumn: 'span 2' }}>
+            <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--amber-press)', textTransform: 'uppercase', marginBottom: 4 }}>Top cliente</div>
+            <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{topSpender.name || topSpender.email || topSpender.phone}</div>
+            <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)' }}>{clp(topSpender.totalSpent)} · {topSpender.orders} pedidos</div>
+          </div>
+        )}
+      </div>
+
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Clientes</span>
@@ -1103,6 +1323,9 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
               <th style={thSt('totalSpent')} onClick={() => toggleSort('totalSpent')}>
                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>Gastado <SortArrow col="totalSpent" /></span>
               </th>
+              <th style={thSt('avgTicket')} onClick={() => toggleSort('avgTicket')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>⌀ Ticket <SortArrow col="avgTicket" /></span>
+              </th>
               <th style={thSt('avgFrequencyDays')} onClick={() => toggleSort('avgFrequencyDays')}>
                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>Frec. <SortArrow col="avgFrequencyDays" /></span>
               </th>
@@ -1134,6 +1357,8 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
                 <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
                 {/* Gastado */}
                 <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.totalSpent)}</td>
+                {/* Ticket prom. */}
+                <td style={{ padding: '8px 6px', fontSize: '0.78rem', color: 'var(--ink-2)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.avgTicket)}</td>
                 {/* Frecuencia */}
                 <td style={{ padding: '8px 6px', fontSize: '0.78rem', color: 'var(--ink-2)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {c.avgFrequencyDays !== null ? `c/${c.avgFrequencyDays}d` : '—'}
@@ -1156,6 +1381,7 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
         )}
       </div>
     </Card>
+    </div>
   )
 }
 
@@ -1739,6 +1965,10 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             {/* Venta del mes */}
             <SectionLabel>Mes en curso</SectionLabel>
             <MonthlyChart monthly={data.monthly} />
+
+            {/* Histórico anual */}
+            <SectionLabel>Histórico del año</SectionLabel>
+            <HistoricoAnualSection restaurantId={restaurantId} />
 
             {/* Ranking */}
             <SectionLabel>Productos</SectionLabel>

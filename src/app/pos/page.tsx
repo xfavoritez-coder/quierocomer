@@ -501,7 +501,10 @@ export default function PosHomePage() {
         syncing={syncing}
         onMenu={() => setMenuOpen(m => !m)}
         onPendingClick={() => setPendingModal(true)}
-        onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
+        onBrandClick={restaurants.length > 1 ? undefined : () => { setTab('todos'); setInnerPage(null) }}
+        branches={restaurants.length > 1 ? restaurants : undefined}
+        selectedBranchMode={restaurants.length > 1 ? effectiveBranchMode : undefined}
+        onBranchSelect={restaurants.length > 1 ? handleBranchSelect : undefined}
         centerSlot={
           <div className="pos-tabs-bar">
             {TABS.map(t => (
@@ -517,27 +520,6 @@ export default function PosHomePage() {
           </div>
         }
       />
-
-      {/* ── Selector de sucursal (solo cuando hay 2+ locales) ── */}
-      {restaurants.length > 1 && (
-        <div className="pos-branch-bar">
-          {restaurants.map(r => (
-            <button
-              key={r.id}
-              className={`pos-branch-pill${effectiveBranchMode === r.id ? ' on' : ''}`}
-              onClick={() => handleBranchSelect(r.id)}
-            >
-              {r.branchName || r.name}
-            </button>
-          ))}
-          <button
-            className={`pos-branch-pill${effectiveBranchMode === 'todas' ? ' on' : ''}`}
-            onClick={() => handleBranchSelect('todas')}
-          >
-            Todas
-          </button>
-        </div>
-      )}
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
       {/* Se muestra solo cuando la caja está CERRADA confirmada: cashSession===null
