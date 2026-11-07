@@ -1035,11 +1035,17 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Buscador */}
-      <input
-        value={search} onChange={e => setSearch(e.target.value)}
-        placeholder="Buscar por nombre, email o teléfono…"
-        style={{ width: '100%', boxSizing: 'border-box', fontFamily: F, fontSize: '0.82rem', padding: '8px 12px', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, color: 'var(--ink)', marginBottom: 14, outline: 'none' }}
-      />
+      <div style={{ position: 'relative', marginBottom: 14 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por nombre, email o teléfono…"
+          style={{ width: '100%', boxSizing: 'border-box', fontFamily: F, fontSize: '0.82rem', padding: '8px 12px 8px 32px', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, color: 'var(--ink)', outline: 'none', '--placeholder-color': 'var(--ink-2)' } as React.CSSProperties}
+        />
+        <style>{`input[placeholder="Buscar por nombre, email o teléfono…"]::placeholder{color:var(--ink-2);opacity:1}`}</style>
+      </div>
 
       {/* Tabla */}
       <div style={{ overflowX: 'auto' }}>
@@ -1079,10 +1085,11 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
                     {c.riskScore > 0 && <span style={{ fontSize: '0.6rem', color: 'var(--ink-3)', fontFamily: F }}>{c.riskScore}%</span>}
                   </div>
                 </td>
-                {/* Nombre/email */}
-                <td style={{ padding: '8px 6px 8px 0', maxWidth: 160, overflow: 'hidden' }}>
+                {/* Nombre/email/teléfono */}
+                <td style={{ padding: '8px 6px 8px 0', maxWidth: 180, overflow: 'hidden' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email || c.phone}</div>
+                  {c.email && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
+                  {c.phone && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.phone}</div>}
                 </td>
                 {/* Pedidos */}
                 <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
