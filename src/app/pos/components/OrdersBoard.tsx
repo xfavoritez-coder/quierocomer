@@ -116,7 +116,19 @@ function itemLines(items: unknown): { name: string; qty: number; price: number; 
     const o = (it || {}) as Record<string, unknown>
     const name = String(o.name ?? o.productName ?? o.title ?? o.description ?? 'Ítem')
     const qty = Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1
-    const price = Number(o.price ?? o.unitPrice ?? o.unit_price ?? o.precio ?? 0) || 0
+    // Intentar extraer precio unitario de los distintos formatos (Toteat, QC, legacy)
+    let price = 0
+    if (Number(o.unitPriceAfterTax) > 0) price = Number(o.unitPriceAfterTax)
+    else if (Number(o.unitPrice) > 0) price = Number(o.unitPrice)
+    else if (Number(o.unit_price) > 0) price = Number(o.unit_price)
+    else if (Number(o.price) > 0) price = Number(o.price)
+    else if (Number(o.precio) > 0) price = Number(o.precio)
+    // amountAfterTax y netPrice son totales de línea → dividir por qty
+    else if (Number(o.amountAfterTax) > 0) price = Math.round(Number(o.amountAfterTax) / qty)
+    else if (Number(o.netPrice) > 0) price = Math.round(Number(o.netPrice) / qty)
+    else if (Number(o.unitTotal) > 0) price = Number(o.unitTotal)
+    else if (Number(o.amount) > 0) price = Math.round(Number(o.amount) / qty)
+    else if (Number(o.total) > 0) price = Math.round(Number(o.total) / qty)
     const note = String(o.note ?? o.comment ?? '').trim()
     return { name, qty, price, options: itemOptions(o), note }
   })

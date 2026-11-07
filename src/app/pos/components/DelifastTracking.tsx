@@ -308,7 +308,7 @@ export function DelifastStatusPill({
       flexShrink: 0,
     }}>
       <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
-      {enCamino && dropoffEta ? `Llega a las ${dropoffEta} aprox` : label}
+      {enCamino && dropoffEta ? `Entrega a las ${dropoffEta}` : label}
     </span>
   )
 }
