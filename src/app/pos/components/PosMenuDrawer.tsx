@@ -109,10 +109,9 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
         </div>
 
         {/* Cerrar sesión — al fondo del drawer */}
-        <div style={{ padding: '10px 12px 16px', borderTop: '1px solid var(--line)' }}>
+        <div style={{ padding: '8px 16px 14px' }}>
           <button
-            className="pos-drawer-item"
-            style={{ color: '#ef4444' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-3)', fontSize: '0.78rem', padding: '4px 0', opacity: 0.7 }}
             onClick={async () => {
               await fetch('/api/panel/logout', { method: 'POST' })
               localStorage.removeItem('qc_panel_remember')
@@ -122,13 +121,11 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
               window.location.href = '/pos/login'
             }}
           >
-            <span className="pos-drawer-ic">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
             <span>Cerrar sesión</span>
           </button>
         </div>
