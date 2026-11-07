@@ -221,6 +221,38 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── Producto histórico desde VentaProductoMes (Toteat) ──────────────────
+  // Para meses en el rango que no tienen ningún PosOrder (data pre-QC),
+  // complementar con datos importados del XLS de Toteat.
+  {
+    // Meses calendarios cubiertos por el rango from/to
+    const allMonths: string[] = []
+    const [fy, fm] = fromYmd.split("-").map(Number)
+    const [ty, tm] = toYmd.split("-").map(Number)
+    let cy = fy, cm = fm
+    while (cy < ty || (cy === ty && cm <= tm)) {
+      allMonths.push(`${cy}-${String(cm).padStart(2, "0")}`)
+      cm++; if (cm > 12) { cm = 1; cy++ }
+    }
+    // Meses que sí tienen PosOrders reales → no usar histórico
+    const monthsWithOrders = new Set(orders.map(o => chileYmd(o.createdAt).slice(0, 7)))
+    const historicalMonths = allMonths.filter(m => !monthsWithOrders.has(m))
+
+    if (historicalMonths.length > 0) {
+      const historicalProducts = await prisma.ventaProductoMes.findMany({
+        where: { restaurantId, yearMonth: { in: historicalMonths } },
+        select: { productCode: true, productName: true, qty: true, revenue: true },
+      })
+      for (const hp of historicalProducts) {
+        if (hp.productCode === "TOTEATDVYCOST") continue
+        const p = productMap.get(hp.productName) || { name: hp.productName, qty: 0, revenue: 0 }
+        p.qty += hp.qty
+        p.revenue += hp.revenue
+        productMap.set(hp.productName, p)
+      }
+    }
+  }
+
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
   const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
   const paymentMethods = [...pmMap.values()].sort((a, b) => b.count - a.count);

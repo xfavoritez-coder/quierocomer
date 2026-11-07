@@ -435,6 +435,7 @@ model Restaurant {
   teamMembers                TeamMember[]
   toteatSales                ToteatSale[]
   ventasDia                  VentaDia[]
+  ventasProductoMes          VentaProductoMes[]
   waiterCalls                WaiterCall[]
   waiterSubscriptions        WaiterPushSubscription[]
   whatsappMessages           WhatsAppMessage[]
@@ -2405,6 +2406,22 @@ model VentaLinea {
   ventaDia        VentaDia @relation(fields: [ventaDiaId], references: [id], onDelete: Cascade)
 
   @@index([ventaDiaId])
+}
+
+model VentaProductoMes {
+  id           String @id @default(cuid())
+  restaurantId String
+  yearMonth    String // "2026-01"
+  source       String @default("toteat")
+  productCode  String?
+  productName  String
+  qty          Int    @default(0)
+  revenue      Int    @default(0) // CLP neto
+  createdAt    DateTime @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId, yearMonth])
 }
 
 model HojaImpresa {
