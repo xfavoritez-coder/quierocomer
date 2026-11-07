@@ -490,6 +490,27 @@ export default function PosHomePage() {
         }
       />
 
+      {/* ── Branch pills — mobile only, below header ── */}
+      {!isDesktop && restaurants.length > 1 && (
+        <div className="pos-branch-bar">
+          {restaurants.map(r => (
+            <button
+              key={r.id}
+              className={`pos-branch-pill${effectiveBranchMode === r.id ? ' on' : ''}`}
+              onClick={() => handleBranchSelect(r.id)}
+            >
+              {r.branchName || r.name}
+            </button>
+          ))}
+          <button
+            className={`pos-branch-pill${effectiveBranchMode === 'todas' ? ' on' : ''}`}
+            onClick={() => handleBranchSelect('todas')}
+          >
+            Todas
+          </button>
+        </div>
+      )}
+
       {/* ── Caja cerrada — ribbon siempre visible ── */}
       {/* Se muestra solo cuando la caja está CERRADA confirmada: cashSession===null
           (no undefined=cargando) Y la primera sincronización del local terminó
