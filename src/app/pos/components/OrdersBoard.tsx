@@ -587,79 +587,9 @@ function OrderDetailPanel({
       )}
       {/* Header */}
       {/* Header */}
-      <div style={{ padding: '16px 22px 14px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
-        {/* Fila 1: nro pedido + tipo + botones imprimir/cerrar */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
-              Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
-            </span>
-            {(() => {
-              const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-              const colors: Record<string, { bg: string; fg: string }> = {
-                Delivery: { bg: '#f1f5f9', fg: '#64748b' },
-                Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
-                Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
-              }
-              const c = colors[label]
-              return (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '2px 8px' }}>
-                  {label}
-                </span>
-              )
-            })()}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setPrintOpen(o => !o)}
-              disabled={!!printing}
-              title="Imprimir"
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
-            >
-              {printing ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                </svg>
-              )}
-            </button>
-            {printOpen && (
-              <>
-                <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
-                  <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Ticket de caja
-                  </button>
-                  <div style={{ height: 1, background: 'var(--line)' }} />
-                  <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                    Comanda cocina
-                  </button>
-                </div>
-              </>
-            )}
-            {printMsg && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
-                {printMsg}
-              </div>
-            )}
-          </div>
-            {/* Botón X cerrar (útil en mobile) */}
-            <button
-              onClick={onClose}
-              title="Cerrar"
-              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Fila 2: nombre del cliente + chip pedidos a la derecha */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, minWidth: 0, width: '100%' }}>
+      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
+        {/* Fila superior: nombre cliente + pill historial */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 22px 12px', minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName(order.customerName || 'Cliente')}
           </div>
@@ -682,6 +612,79 @@ function OrderDetailPanel({
             </button>
           )}
         </div>
+
+        {/* Línea separadora */}
+        <div style={{ height: 1, background: 'var(--line)' }} />
+
+        {/* Fila inferior: nro pedido + tipo · botones imprimir/cerrar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 22px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
+              {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
+            </span>
+            {(() => {
+              const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+              const colors: Record<string, { bg: string; fg: string }> = {
+                Delivery: { bg: '#f1f5f9', fg: '#64748b' },
+                Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
+                Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
+              }
+              const c = colors[label]
+              return (
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>
+                  {label}
+                </span>
+              )
+            })()}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setPrintOpen(o => !o)}
+                disabled={!!printing}
+                title="Imprimir"
+                style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--sunk)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
+              >
+                {printing ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                )}
+              </button>
+              {printOpen && (
+                <>
+                  <div onClick={() => setPrintOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
+                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                    <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      Ticket de caja
+                    </button>
+                    <div style={{ height: 1, background: 'var(--line)' }} />
+                    <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                      Comanda cocina
+                    </button>
+                  </div>
+                </>
+              )}
+              {printMsg && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, fontSize: 12, fontWeight: 600, color: printMsg.startsWith('✓') ? 'var(--jade)' : '#e05252', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', whiteSpace: 'nowrap', zIndex: 10 }}>
+                  {printMsg}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              title="Cerrar"
+              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
 
       </div>
 
