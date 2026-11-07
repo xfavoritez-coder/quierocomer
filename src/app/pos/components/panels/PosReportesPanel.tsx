@@ -1024,7 +1024,12 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Resumen por estado */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 16 }}>
+        <button onClick={() => setFilterStatus('all')}
+          style={{ background: filterStatus === 'all' ? 'var(--surface)' : 'var(--sunk)', border: `1.5px solid ${filterStatus === 'all' ? 'var(--ink-3)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+          <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
+          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>Todos</div>
+        </button>
         {(['active', 'at_risk', 'churned', 'new'] as ClientStatus[]).map(s => (
           <button key={s} onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
             style={{ background: filterStatus === s ? STATUS_BG[s] : 'var(--sunk)', border: `1.5px solid ${filterStatus === s ? STATUS_COLOR[s] : 'var(--line)'}`, borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
