@@ -147,11 +147,37 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   // No mostrar nada si Delifast no está configurado para el local.
   if (state === 'off') return null
 
-  if (state === 'loading') return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Cargando seguimiento…</span></TrackingBox>
-  // En historial (live=false) sin data de Delifast no se muestra nada (el pedido
-  // pudo no pasar por Delifast). En vivo sí avisamos que aún no hay repartidor.
-  if (state === 'pending') return live ? <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Aún sin repartidor asignado en Delifast.</span></TrackingBox> : null
-  if (state === 'error' || !t) return <TrackingBox><span style={{ fontSize: 13, color: 'var(--ink-3)' }}>No se pudo leer el seguimiento de Delifast.</span></TrackingBox>
+  if (state === 'loading') return (
+    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
+        <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
+        <span style={{ fontSize: 12.5, color: '#3b82f6', fontWeight: 600 }}>Cargando…</span>
+      </div>
+    </div>
+  )
+  // En historial (live=false) sin data de Delifast no se muestra nada.
+  if (state === 'pending') {
+    if (!live) return null
+    return (
+      <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
+          <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+          <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
+          <span style={{ fontSize: 12.5, color: '#3b82f6', fontWeight: 600 }}>Sin asignar</span>
+        </div>
+      </div>
+    )
+  }
+  if (state === 'error' || !t) return (
+    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
+        <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
+        <span style={{ fontSize: 12.5, color: 'var(--ink-3)', fontWeight: 600 }}>Sin datos</span>
+      </div>
+    </div>
+  )
 
   // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
   const etaMin = !t.timeline.llegadaLocal ? etaMinutes(t.eta) : null
@@ -174,9 +200,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
     ? `Llega en ${etaMin} min`
     : null
   const displayStatus = etaDisplay ?? statusLabel(t.status)
-  const displayColor = etaDisplay
-    ? (dropoffEtaMin != null ? '#3b82f6' : '#f59e0b')
-    : statusColor(t.status)
+  const displayColor = '#3b82f6'
 
   return (
     <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
