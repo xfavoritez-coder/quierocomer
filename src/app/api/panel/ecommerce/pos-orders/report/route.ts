@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
-    select: { id: true, externalId: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true },
+    select: { id: true, externalId: true, totalAmount: true, paidAmount: true, deliveryFee: true, tipAmount: true, createdAt: true, vendorName: true, items: true, isDelivery: true, saleType: true, tableLabel: true, opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true, orderReference: true, customerName: true, customerPhone: true, addressLine: true, delifastVentaId: true, rawPayload: true },
   });
 
   // OnlineOrder (ecommerce nativo) que NO están espejados al POS. Para locales SIN
@@ -81,8 +81,15 @@ export async function GET(req: NextRequest) {
   let deliveryTotal = 0;
   let tipsTotal = 0;
   let grossTotal = 0; // lo que pagó el cliente (referencia)
+  let ordersWithTip = 0;
   const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: h, sales: 0, orders: 0 }));
   const channelMap = new Map<string, { name: string; sales: number; orders: number }>();
+  const pmMap = new Map<string, { method: string; label: string; count: number; amount: number }>();
+  const PM_LABELS: Record<string, string> = {
+    efectivo: "Efectivo", debito: "Débito", credito: "Crédito", tarjeta: "Tarjeta",
+    transferencia: "Transferencia", webpay: "Webpay", mercadopago: "MercadoPago",
+    flow: "Flow", kushki: "Kushki", mixto: "Mixto",
+  };
   const productMap = new Map<string, { name: string; qty: number; revenue: number }>();
   const typeMap: Record<"delivery" | "pickup" | "dine-in", { sales: number; orders: number }> = {
     delivery: { sales: 0, orders: 0 }, pickup: { sales: 0, orders: 0 }, "dine-in": { sales: 0, orders: 0 },
@@ -99,9 +106,19 @@ export async function GET(req: NextRequest) {
     deliveryTotal += o.deliveryFee || 0;
     tipsTotal += o.tipAmount || 0;
     grossTotal += o.totalAmount || 0;
+    if ((o.tipAmount || 0) > 0) ordersWithTip++;
     const h = chileHour(o.createdAt);
     hourly[h].sales += net;
     hourly[h].orders += 1;
+
+    // Método de pago (desde rawPayload.posPayment.method)
+    const rp = typeof o.rawPayload === "object" && o.rawPayload ? (o.rawPayload as Record<string, any>) : {};
+    const rawMethod = (rp?.posPayment?.method || "").toLowerCase().trim();
+    if (rawMethod) {
+      const label = PM_LABELS[rawMethod] || rawMethod.charAt(0).toUpperCase() + rawMethod.slice(1);
+      const pm = pmMap.get(rawMethod) || { method: rawMethod, label, count: 0, amount: 0 };
+      pm.count += 1; pm.amount += net; pmMap.set(rawMethod, pm);
+    }
 
     // Venta por canal según vendorName.
     const name = (o.vendorName || "").trim() || "Sin canal";
@@ -206,6 +223,40 @@ export async function GET(req: NextRequest) {
 
   const channels = [...channelMap.values()].sort((a, b) => b.sales - a.sales);
   const products = [...productMap.values()].sort((a, b) => b.qty - a.qty);
+  const paymentMethods = [...pmMap.values()].sort((a, b) => b.count - a.count);
+
+  // Cancelaciones en el período (POS + e-commerce)
+  const [cancelledPos, cancelledOnline] = await Promise.all([
+    prisma.posOrder.findMany({
+      where: { restaurantId, posStatus: "canceled", createdAt: { gte: start, lte: end } },
+      select: { rawPayload: true },
+    }),
+    prisma.onlineOrder.findMany({
+      where: { restaurantId, status: "CANCELLED", createdAt: { gte: start, lte: end } },
+      select: { id: true },
+    }),
+  ]);
+  const cancelledCount = cancelledPos.length + cancelledOnline.length;
+  const totalWithCancelled = orders.length + unmirroredOnline.length + cancelledCount;
+  const cancelReasonMap = new Map<string, number>();
+  for (const o of cancelledPos) {
+    const rp2 = typeof o.rawPayload === "object" && o.rawPayload ? (o.rawPayload as Record<string, any>) : {};
+    const reason = rp2?.posCancel?.reason || "Sin motivo";
+    cancelReasonMap.set(reason, (cancelReasonMap.get(reason) || 0) + 1);
+  }
+  const cancellations = {
+    count: cancelledCount,
+    rate: totalWithCancelled > 0 ? Math.round((cancelledCount / totalWithCancelled) * 100) : 0,
+    reasons: [...cancelReasonMap.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count).slice(0, 5),
+  };
+
+  // Propinas detallado
+  const totalOrdersCount = orders.length + unmirroredOnline.length;
+  const tipsStats = {
+    total: tipsTotal,
+    avgPerOrder: totalOrdersCount > 0 ? Math.round(tipsTotal / totalOrdersCount) : 0,
+    pctWithTip: totalOrdersCount > 0 ? Math.round((ordersWithTip / totalOrdersCount) * 100) : 0,
+  };
 
   // ── Tiempos de entrega (todos los pedidos delivery, completados o en curso) ─
   interface DeliveryTimeRow {
@@ -392,5 +443,8 @@ export async function GET(req: NextRequest) {
     byType,
     monthly: { month: monthYm, days: monthlyDays },
     deliveryTimes,
+    paymentMethods,
+    cancellations,
+    tipsStats,
   });
 }

@@ -53,6 +53,9 @@ interface DeliveryTimes {
   pctUnder30: number | null; pctUnder45: number | null; pctUnder60: number | null
   orders: DeliveryTimeRow[]
 }
+interface PaymentMethod { method: string; label: string; count: number; amount: number }
+interface CancellationData { count: number; rate: number; reasons: { reason: string; count: number }[] }
+interface TipsStats { total: number; avgPerOrder: number; pctWithTip: number }
 interface Report {
   ordersCount: number
   productSales: number
@@ -65,6 +68,9 @@ interface Report {
   byType: TypeBucket[]
   monthly: { month: string; days: MonthlyDay[] }
   deliveryTimes?: DeliveryTimes
+  paymentMethods?: PaymentMethod[]
+  cancellations?: CancellationData
+  tipsStats?: TipsStats
 }
 
 // ── Design primitives ─────────────────────────────────────────────
@@ -617,6 +623,253 @@ function DeliveryTimesSection({ dt, restaurantId }: { dt: DeliveryTimes; restaur
   )
 }
 
+// ── Métodos de pago ───────────────────────────────────────────────
+function PaymentMethodsSection({ methods, total }: { methods: PaymentMethod[]; total: number }) {
+  if (!methods || methods.length === 0) return null
+  const palette = ['var(--amber)', GREEN, BLUE, PURPLE, '#ef4444', '#0ea5e9']
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Métodos de pago</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{methods.reduce((s, m) => s + m.count, 0)} pedidos</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {methods.map((m, i) => {
+          const pct = total > 0 ? Math.round((m.count / methods.reduce((s, x) => s + x.count, 0)) * 100) : 0
+          const color = palette[i % palette.length]
+          return (
+            <div key={m.method}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: F, fontSize: '0.84rem', fontWeight: 600, color: 'var(--ink)' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
+                  {m.label}
+                </span>
+                <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', flexShrink: 0 }}>
+                  {m.count} ped. <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 400, color: 'var(--ink-3)' }}>({pct}%)</span>
+                </span>
+              </div>
+              <div style={{ height: 6, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 999, transition: 'width .3s' }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
+// ── Cancelaciones ─────────────────────────────────────────────────
+function CancellationsSection({ data }: { data: CancellationData }) {
+  if (data.count === 0) return null
+  const rateColor = data.rate <= 5 ? GREEN : data.rate <= 15 ? 'var(--amber)' : '#ef4444'
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Cancelaciones</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: rateColor, background: rateColor + '18', padding: '2px 8px', borderRadius: 999 }}>{data.rate}% tasa</span>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: data.reasons.length > 0 ? 14 : 0 }}>
+        <div style={{ flex: 1, background: 'var(--sunk)', borderRadius: 10, padding: '10px 14px', borderLeft: `3px solid ${rateColor}` }}>
+          <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Cancelados</div>
+          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{data.count}</div>
+        </div>
+      </div>
+      {data.reasons.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Motivos</div>
+          {data.reasons.map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: 'var(--sunk)', borderRadius: 8 }}>
+              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-2)' }}>{r.reason}</span>
+              <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)' }}>{r.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// ── Satisfacción / NPS ────────────────────────────────────────────
+interface SurveyAvg { id: string; text: string; avg: number; count: number }
+interface SurveyResp { id: string; customerName: string | null; comment: string | null; createdAt: string; answers: { id: string; text: string; v: number }[] }
+
+function StarBar({ avg }: { avg: number }) {
+  const stars = [1, 2, 3, 4, 5]
+  return (
+    <div style={{ display: 'inline-flex', gap: 2 }}>
+      {stars.map(s => (
+        <svg key={s} width="12" height="12" viewBox="0 0 24 24" fill={s <= Math.round(avg) ? 'var(--amber)' : 'none'} stroke="var(--amber)" strokeWidth="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      ))}
+    </div>
+  )
+}
+
+function SatisfaccionSection({ restaurantId }: { restaurantId: string }) {
+  const [averages, setAverages] = useState<SurveyAvg[]>([])
+  const [responses, setResponses] = useState<SurveyResp[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.total > 0) { setAverages(d.averages); setResponses(d.responses) } })
+      .finally(() => setLoaded(true))
+  }, [restaurantId])
+
+  if (!loaded || averages.length === 0 || averages.every(a => a.count === 0)) return null
+
+  const withData = averages.filter(a => a.count > 0)
+  const overall = withData.reduce((s, a) => s + a.avg, 0) / (withData.length || 1)
+  const lastComments = responses.filter(r => r.comment).slice(0, 3)
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Satisfacción</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <StarBar avg={overall} />
+          <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{overall.toFixed(1)}</span>
+          <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{withData[0]?.count ?? 0} resp.</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: lastComments.length > 0 ? 14 : 0 }}>
+        {withData.map(a => (
+          <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <StarBar avg={a.avg} />
+              <span style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{a.avg.toFixed(1)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {lastComments.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Últimos comentarios</div>
+          {lastComments.map(r => (
+            <div key={r.id} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px' }}>
+              <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', fontStyle: 'italic', marginBottom: 2 }}>"{r.comment}"</div>
+              {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// ── Platos: vistas vs vendidos ────────────────────────────────────
+interface DishView { name: string; views: number; cartAdds: number; avgDwellMs: number | null }
+
+function PlatosSection({ restaurantId, fromDate, toDate, products, loading: reportLoading }: {
+  restaurantId: string; fromDate: string; toDate: string
+  products: ProductRank[]; loading: boolean
+}) {
+  const [dishViews, setDishViews] = useState<DishView[]>([])
+  const [viewsLoading, setViewsLoading] = useState(true)
+
+  useEffect(() => {
+    setViewsLoading(true)
+    fetch(`/api/panel/ecommerce/pos-orders/dish-insights?restaurantId=${restaurantId}&from=${fromDate}&to=${toDate}`)
+      .then(r => r.ok ? r.json() : { dishes: [] })
+      .then(d => setDishViews(d.dishes || []))
+      .finally(() => setViewsLoading(false))
+  }, [restaurantId, fromDate, toDate])
+
+  const loading = reportLoading || viewsLoading
+
+  // Merge: products (sold) + dishViews (seen)
+  const viewMap = new Map(dishViews.map(d => [d.name.toLowerCase(), d]))
+
+  // Build combined list: all products sold + views if available
+  const rows = products.map(p => {
+    const v = viewMap.get(p.name.toLowerCase())
+    return {
+      name: p.name,
+      sold: p.qty,
+      revenue: p.revenue,
+      views: v?.views ?? 0,
+      cartAdds: v?.cartAdds ?? 0,
+      convRate: (v?.views ?? 0) > 0 && p.qty > 0 ? Math.min(100, Math.round((p.qty / (v?.views ?? 1)) * 100)) : null,
+    }
+  })
+
+  // Also add dishes with views but no sales
+  const soldNames = new Set(products.map(p => p.name.toLowerCase()))
+  const viewOnly = dishViews.filter(d => !soldNames.has(d.name.toLowerCase())).map(d => ({
+    name: d.name, sold: 0, revenue: 0, views: d.views, cartAdds: d.cartAdds, convRate: 0,
+  }))
+
+  const all = [...rows, ...viewOnly].sort((a, b) => (b.views || 0) - (a.views || 0) || b.sold - a.sold)
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      Cargando…
+    </div>
+  )
+
+  if (all.length === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '32px 0', fontSize: '0.84rem' }}>Sin datos en el período.</p></Card>
+  )
+
+  const hasViews = all.some(r => r.views > 0)
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Platos</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{all.length} productos</span>
+      </div>
+      {!hasViews && (
+        <p style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 12 }}>Las vistas provienen del menú e-commerce. Si el local no usa tienda online, solo se muestran ventas POS.</p>
+      )}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', padding: '0 8px 8px 0', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Plato</th>
+              <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Vendidos</th>
+              <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Venta</th>
+              {hasViews && <>
+                <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Vistas</th>
+                <th style={{ textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Conv.</th>
+              </>}
+            </tr>
+          </thead>
+          <tbody>
+            {all.slice(0, 60).map((r, i) => {
+              const convColor = r.convRate === null ? 'var(--ink-3)' : r.convRate >= 20 ? GREEN : r.convRate >= 10 ? 'var(--amber)' : '#ef4444'
+              return (
+                <tr key={r.name} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+                  <td style={{ padding: '7px 8px 7px 0', fontSize: '0.82rem', fontWeight: 600, color: r.sold === 0 ? 'var(--ink-3)' : 'var(--ink)', maxWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 5, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontSize: '0.6rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                      {r.name}
+                    </span>
+                  </td>
+                  <td style={{ padding: '7px 0 7px 8px', fontSize: '0.82rem', fontWeight: 800, color: r.sold > 0 ? 'var(--ink)' : 'var(--ink-4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{r.sold > 0 ? `${r.sold} u.` : '—'}</td>
+                  <td style={{ padding: '7px 0 7px 8px', fontSize: '0.82rem', color: r.revenue > 0 ? 'var(--ink)' : 'var(--ink-4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{r.revenue > 0 ? clp(r.revenue) : '—'}</td>
+                  {hasViews && <>
+                    <td style={{ padding: '7px 0 7px 8px', fontSize: '0.82rem', color: r.views > 0 ? 'var(--ink-2)' : 'var(--ink-4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{r.views > 0 ? r.views : '—'}</td>
+                    <td style={{ padding: '7px 0 7px 8px', fontSize: '0.8rem', fontWeight: 700, color: convColor, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {r.convRate !== null ? `${r.convRate}%` : '—'}
+                    </td>
+                  </>}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        {all.length > 60 && <p style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', textAlign: 'center', margin: '10px 0 0' }}>Mostrando 60 de {all.length}</p>}
+      </div>
+    </Card>
+  )
+}
+
 // ── Merge arrays by key, summing numeric fields ───────────────────
 function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]): any[] {
   const map = new Map<string | number, Record<string, any>>()
@@ -809,7 +1062,61 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
   )
 }
 
+type ReportSubSection = 'dashboard' | 'delivery' | 'platos' | 'clientes' | 'comportamiento'
+
+const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode }[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'delivery',
+    label: 'Delivery',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+        <rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'platos',
+    label: 'Platos',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'clientes',
+    label: 'Clientes',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'comportamiento',
+    label: 'Comportamiento',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    ),
+  },
+]
+
 export default function PosReportesPanel({ restaurantId, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
+  const [subSection, setSubSection] = useState<ReportSubSection>('dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
@@ -907,6 +1214,158 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
     <div className="pos-scroll">
       <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
 
+        {/* Sub-section tabs */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'var(--sunk)', borderRadius: 12, padding: 4 }}>
+          {SUB_SECTIONS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSubSection(s.id)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '8px 10px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                fontFamily: F, fontSize: '0.78rem', fontWeight: 700, transition: '.15s',
+                background: subSection === s.id ? 'var(--surface)' : 'transparent',
+                color: subSection === s.id ? 'var(--ink)' : 'var(--ink-3)',
+                boxShadow: subSection === s.id ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
+              }}
+            >
+              {s.icon}
+              <span style={{ whiteSpace: 'nowrap' }}>{s.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Platos sub-section */}
+        {subSection === 'platos' && (
+          <>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {singleDay && (
+                <button onClick={() => shiftBoth(-1)} style={navBtn}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+              )}
+              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
+              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
+              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
+              {singleDay && (
+                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              )}
+              {(fromDate !== today || toDate !== today) && (
+                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
+              )}
+              <button onClick={fetchReport} style={{ marginLeft: 'auto', ...navBtn }} title="Actualizar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+            <PlatosSection
+              restaurantId={restaurantId}
+              fromDate={fromDate}
+              toDate={toDate}
+              products={data?.products ?? []}
+              loading={loading}
+            />
+          </>
+        )}
+
+        {/* Clientes sub-section */}
+        {subSection === 'clientes' && (
+          <ClientsSection restaurantId={restaurantId} />
+        )}
+
+        {/* Comportamiento sub-section */}
+        {subSection === 'comportamiento' && (
+          <>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {singleDay && (
+                <button onClick={() => shiftBoth(-1)} style={navBtn}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+              )}
+              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
+              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
+              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
+              {singleDay && (
+                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              )}
+              {(fromDate !== today || toDate !== today) && (
+                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
+              )}
+            </div>
+            <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
+          </>
+        )}
+
+        {/* Delivery sub-section */}
+        {subSection === 'delivery' && (
+          <>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {singleDay && (
+                <button onClick={() => shiftBoth(-1)} style={navBtn}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+              )}
+              <input type="date" value={fromDate} max={toDate} onChange={e => { const v = e.target.value || today; setFromDate(v); if (v > toDate) setToDate(v) }} style={inputSt} />
+              <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)' }}>→</span>
+              <input type="date" value={toDate} min={fromDate} onChange={e => { const v = e.target.value || today; setToDate(v); if (v < fromDate) setFromDate(v) }} style={inputSt} />
+              {singleDay && (
+                <button onClick={() => shiftBoth(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              )}
+              {(fromDate !== today || toDate !== today) && (
+                <button onClick={() => { setFromDate(today); setToDate(today) }} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>Hoy</button>
+              )}
+              <button onClick={fetchReport} style={{ marginLeft: 'auto', ...navBtn }} title="Actualizar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              </button>
+            </div>
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Cargando…
+              </div>
+            ) : !data ? (
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+                <p style={{ fontFamily: F, color: 'var(--ink-3)', fontSize: '0.84rem' }}>No se pudo cargar el reporte.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {data.deliveryTimes ? (
+                  <>
+                    <SectionLabel>Tiempos de entrega</SectionLabel>
+                    <DeliveryTimesSection dt={data.deliveryTimes} restaurantId={restaurantId} />
+                  </>
+                ) : (
+                  <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+                    <p style={{ fontFamily: F, color: 'var(--ink-3)', fontSize: '0.84rem' }}>Sin pedidos delivery en el período.</p>
+                  </div>
+                )}
+                {heatPoints.length > 0 && (
+                  <>
+                    <SectionLabel>Dónde salen los pedidos</SectionLabel>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14 }}>
+                      <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: F, marginBottom: 10 }}>
+                        {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación — las zonas más calientes concentran más pedidos
+                      </div>
+                      <DeliveryHeatmap points={heatPoints} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Dashboard sub-section */}
+        {subSection === 'dashboard' && <>
+
         {/* Date picker */}
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -958,7 +1417,10 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'} />
               <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
-              <Stat label="Propinas" value={clp(data.tipsTotal)} color={PURPLE} />
+              <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
+              {data.cancellations && data.cancellations.count > 0 && (
+                <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
+              )}
             </div>
 
             {/* Canal + Tipo */}
@@ -967,6 +1429,14 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               <ChannelBreakdown channels={data.channels} total={data.productSales} />
               <OrderTypePie byType={data.byType} />
             </div>
+
+            {/* Métodos de pago */}
+            {data.paymentMethods && data.paymentMethods.length > 0 && (
+              <>
+                <SectionLabel>Métodos de pago</SectionLabel>
+                <PaymentMethodsSection methods={data.paymentMethods} total={data.productSales} />
+              </>
+            )}
 
             {/* Venta por hora */}
             <SectionLabel>Horarios</SectionLabel>
@@ -980,37 +1450,23 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             <SectionLabel>Productos</SectionLabel>
             <ProductRanking products={data.products} />
 
-            {/* Tiempos de entrega */}
-            {data.deliveryTimes && (
+            {/* Cancelaciones */}
+            {data.cancellations && data.cancellations.count > 0 && (
               <>
-                <SectionLabel>Delivery</SectionLabel>
-                <DeliveryTimesSection dt={data.deliveryTimes} restaurantId={restaurantId} />
+                <SectionLabel>Cancelaciones</SectionLabel>
+                <CancellationsSection data={data.cancellations} />
               </>
             )}
 
-            {/* Mapa de calor de pedidos delivery */}
-            {heatPoints.length > 0 && (
-              <>
-                <SectionLabel>Dónde salen los pedidos</SectionLabel>
-                <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14 }}>
-                  <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: F, marginBottom: 10 }}>
-                    {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación — las zonas más calientes concentran más pedidos
-                  </div>
-                  <DeliveryHeatmap points={heatPoints} />
-                </div>
-              </>
-            )}
-
-            {/* Clientes */}
-            <SectionLabel>Clientes</SectionLabel>
-            <ClientsSection restaurantId={restaurantId} />
-
-            {/* Comportamiento de usuarios (store events) */}
-            <SectionLabel>Comportamiento de usuarios</SectionLabel>
-            <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
+            {/* Satisfacción */}
+            <SectionLabel>Satisfacción</SectionLabel>
+            <SatisfaccionSection restaurantId={restaurantId} />
 
           </div>
         )}
+
+        </>}{/* /dashboard */}
+
       </div>
     </div>
   )
