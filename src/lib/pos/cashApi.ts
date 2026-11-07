@@ -24,6 +24,7 @@ export interface ServerCaja {
   openedBy?: string | null
   initialAmount: number
   closedAt?: string | null
+  closedBy?: string | null
   countedAmounts?: Record<string, number> | null
   expectedAmounts?: Record<string, number> | null
   difference?: number | null
@@ -123,4 +124,51 @@ export function toLegacyCashSession(caja: ServerCaja | null | undefined, restaur
     initial_amount: caja.initialAmount ?? 0,
     is_open: caja.isOpen,
   }
+}
+
+// Caja cerrada del servidor → forma Dexie (snake_case) que usa el historial.
+export function toLegacyClosed(c: ServerCaja) {
+  return {
+    id: c.id,
+    restaurant_id: c.restaurantId,
+    opened_at: c.openedAt,
+    opened_by: c.openedBy ?? '',
+    initial_amount: c.initialAmount ?? 0,
+    closed_at: c.closedAt ?? undefined,
+    closed_by: c.closedBy ?? undefined,
+    counted_amounts: c.countedAmounts ?? undefined,
+    expected_amounts: c.expectedAmounts ?? undefined,
+    difference: c.difference ?? undefined,
+    note: c.note ?? undefined,
+    total_sales: c.totalSales ?? undefined,
+    total_tips: c.totalTips ?? undefined,
+    closed_accounts: c.closedAccounts ?? undefined,
+    is_open: false as const,
+  }
+}
+
+/** Historial de cierres del local (server-authoritative), mapeado a la forma
+ *  Dexie que ya consume el componente de historial. */
+export function useClosedCajas(restaurantId?: string): { sessions: ReturnType<typeof toLegacyClosed>[]; reload: () => void } {
+  const [rows, setRows] = useState<ReturnType<typeof toLegacyClosed>[]>([])
+  const ridRef = useRef(restaurantId)
+  ridRef.current = restaurantId
+  const load = useCallback(async () => {
+    const rid = ridRef.current
+    if (!rid) { setRows([]); return }
+    try {
+      const r = await fetch(`/api/pos/cash/history?restaurantId=${rid}&limit=180`, { cache: 'no-store' })
+      if (r.ok) {
+        const j = await r.json()
+        setRows((j.sessions as ServerCaja[]).map(toLegacyClosed))
+      }
+    } catch { /* red caída */ }
+  }, [])
+  useEffect(() => { load() }, [restaurantId, load])
+  return { sessions: rows, reload: load }
+}
+
+export const cashHistoryApi = {
+  deleteCaja: (restaurantId: string, sessionId: string) =>
+    post({ restaurantId, action: 'caja_delete', sessionId }),
 }

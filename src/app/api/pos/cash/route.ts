@@ -129,6 +129,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ caja: updated });
     }
 
+    // ── Eliminar un cierre del historial ──
+    case "caja_delete": {
+      const sessionId = String(body.sessionId || "");
+      const caja = sessionId ? await prisma.posCashSession.findUnique({ where: { id: sessionId } }) : null;
+      if (!caja || caja.restaurantId !== restaurantId) return NextResponse.json({ error: "Caja no encontrada" }, { status: 404 });
+      if (caja.isOpen) return NextResponse.json({ error: "No se puede eliminar una caja abierta" }, { status: 409 });
+      await prisma.posCashSession.delete({ where: { id: caja.id } });
+      return NextResponse.json({ ok: true });
+    }
+
     default:
       return NextResponse.json({ error: "Acción inválida" }, { status: 400 });
   }

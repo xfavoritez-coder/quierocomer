@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useClosedCashSessions, deleteCashSession } from '@/lib/pos'
+import { useClosedCajas, cashHistoryApi } from '@/lib/pos/cashApi'
 import type { CashSession } from '@/lib/pos'
 import { v4 as uuidv4 } from 'uuid'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
@@ -54,14 +54,15 @@ const timeLabel = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString('es-
  *  Presentacional: el contenedor (ruta o panel) provee el scroll/título. */
 export default function PosCajaHistorial({ restaurantId }: { restaurantId: string }) {
   const { restaurant } = usePosRestaurant()
-  const sessions = useClosedCashSessions(restaurantId)
+  const { sessions, reload } = useClosedCajas(restaurantId)
   const [open, setOpen] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
 
   const handleDelete = async (s: CashSession) => {
     try {
-      await deleteCashSession({ session_id: s.id, reason: 'borrado desde historial' })
+      await cashHistoryApi.deleteCaja(restaurantId, s.id)
       toast.success('Cierre eliminado del historial')
+      reload()
     } catch {
       toast.error('No se pudo eliminar')
     } finally {
