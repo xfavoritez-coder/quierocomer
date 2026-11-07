@@ -803,7 +803,7 @@ function OrderDetailPanel({
                 </button>
               )}
             </div>
-          )
+          ) : null
         })()}
 
         {/* Cobro — franja ámbar/roja, misma lógica y botones que la tarjeta */}
