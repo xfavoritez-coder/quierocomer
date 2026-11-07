@@ -289,7 +289,6 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
             </div>
           )}
         </div>
-      </div>
     </div>
   )
 }
