@@ -27,7 +27,7 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       inline: 'carta',
     },
     {
-      label: 'Historial de pedidos',
+      label: 'Órdenes',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>,
       inline: 'historial',
     },
@@ -35,11 +35,6 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       label: 'Caja',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 15h3"/></svg>,
       inline: 'caja',
-    },
-    {
-      label: 'KDS',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
-      href: '/pos/kds',
     },
     {
       label: 'Reportes',
@@ -111,7 +106,7 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
         {/* Cerrar sesión — al fondo del drawer */}
         <div style={{ padding: '8px 16px 14px' }}>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-3)', fontSize: '0.78rem', padding: '4px 0', opacity: 0.7 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-2)', fontSize: '0.8rem', padding: '4px 0' }}
             onClick={async () => {
               await fetch('/api/panel/logout', { method: 'POST' })
               localStorage.removeItem('qc_panel_remember')

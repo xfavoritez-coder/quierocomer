@@ -126,6 +126,7 @@ function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[
       {!hasData ? (
         <p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Aún no hay ventas este mes.</p>
       ) : (
+        <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, overflowX: 'auto', overflowY: 'hidden', paddingTop: 20, paddingBottom: 4 }}>
           {days.map(d => {
             const pct = d.sales > 0 ? Math.max(4, Math.round((d.sales / max) * 100)) : 0
@@ -151,6 +152,8 @@ function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[
               </div>
             )
           })}
+        </div>
+        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 32, background: 'linear-gradient(to right, transparent, var(--surface))', pointerEvents: 'none', borderRadius: '0 12px 12px 0' }} />
         </div>
       )}
     </Card>
@@ -1035,7 +1038,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Year bar chart */}
       <Card>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8, paddingBottom: 4 }}>
           <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Año 2026</span>
           <div style={{ display: 'flex', gap: 4 }}>
             {(['bruto', 'mercat', 'uber'] as const).map(v => (
@@ -1052,6 +1055,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
           <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Total: <strong>{clp(totalYear)}</strong></span>
           <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-2)' }}>Prom./mes: <strong>{clp(avgMonth)}</strong></span>
         </div>
+        <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, paddingTop: 20, paddingBottom: 16, overflowX: 'auto', overflowY: 'hidden' }}>
           {months.map(m => {
             const val = getVal(m)
@@ -1080,6 +1084,9 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
               </div>
             )
           })}
+        </div>
+        {/* scroll hint fade derecho */}
+        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 32, background: 'linear-gradient(to right, transparent, var(--surface))', pointerEvents: 'none', borderRadius: '0 12px 12px 0' }} />
         </div>
       </Card>
 
