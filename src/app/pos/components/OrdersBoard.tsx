@@ -587,11 +587,12 @@ function OrderDetailPanel({
       {/* Header */}
       {/* Header */}
       <div style={{ padding: '16px 22px 14px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
-        {/* Fila 1: nro pedido + botón imprimir */}
+        {/* Fila 1: nro pedido + botones imprimir/cerrar */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 17, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
             Pedido {order.orderReference ? `#${order.orderReference}` : `#${order.id.slice(-6)}`}
           </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setPrintOpen(o => !o)}
@@ -629,32 +630,41 @@ function OrderDetailPanel({
               </div>
             )}
           </div>
+            {/* Botón X cerrar (útil en mobile) */}
+            <button
+              onClick={onClose}
+              title="Cerrar"
+              style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         </div>
 
-        {/* Fila 2: nombre del cliente */}
-        <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, marginTop: -6 }}>
-          {displayName(order.customerName || 'Cliente')}
+        {/* Fila 2: nombre del cliente + chip pedidos inline */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: -6 }}>
+          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
+            {displayName(order.customerName || 'Cliente')}
+          </div>
+          {order.customerPhone && customerCount !== null && (
+            <button
+              onClick={() => setShowCustomerHistory(true)}
+              title="Ver historial del cliente"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0,
+                fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+                padding: '3px 10px', borderRadius: 20,
+                background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
+                color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
+                border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
+                cursor: 'pointer', transition: 'opacity .12s',
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              {customerCount} pedido{customerCount !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
-
-        {/* Fila 3: chip pedidos (clickeable) */}
-        {order.customerPhone && customerCount !== null && (
-          <button
-            onClick={() => setShowCustomerHistory(true)}
-            title="Ver historial del cliente"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
-              fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
-              padding: '3px 10px', borderRadius: 20,
-              background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
-              color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
-              border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
-              cursor: 'pointer', transition: 'opacity .12s',
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            {customerCount} pedido{customerCount !== 1 ? 's' : ''}
-          </button>
-        )}
 
       </div>
 

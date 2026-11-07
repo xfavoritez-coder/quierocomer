@@ -302,7 +302,7 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
               {qty > 0 && <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--ink-3)', marginLeft: 7 }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
             </div>
             <div style={{ fontSize: 14.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
               {(isDelivery && order.addressLine) ? (
                 <>
                   {isDesktop && <span style={{ color: 'var(--ink-4)' }}>·</span>}

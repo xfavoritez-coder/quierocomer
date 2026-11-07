@@ -87,8 +87,10 @@ async function main() {
   let skipped = 0;
   let errors = 0;
 
-  // Procesar en batches de 500
-  const BATCH = 500;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  // Procesar en batches pequeños con pausa para no saturar Supabase
+  const BATCH = 100;
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
     const toInsert: any[] = [];
@@ -178,7 +180,11 @@ async function main() {
       console.error(`  ERROR batch ${i}-${i + BATCH}:`, e.message);
       errors += toInsert.length;
     }
-    console.log(`  Batch ${i + BATCH} / ${rows.length} → insertados hasta ahora: ${inserted} | saltados: ${skipped}`);
+    const pct = Math.round(((i + BATCH) / rows.length) * 100);
+    console.log(`  [${pct}%] Batch ${i + 1}-${Math.min(i + BATCH, rows.length)} / ${rows.length} → insertados: ${inserted} | saltados: ${skipped}`);
+
+    // Pausa entre batches para no saturar Supabase
+    await sleep(800);
   }
 
   console.log(`\n\nFinalizado.`);
