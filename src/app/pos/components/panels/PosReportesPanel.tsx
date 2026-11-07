@@ -1045,7 +1045,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
                 background: viewMode === v ? 'var(--amber-tint-2)' : 'var(--sunk)',
                 color: viewMode === v ? 'var(--amber-press)' : 'var(--ink-3)',
                 borderColor: viewMode === v ? 'var(--amber)' : 'var(--line)',
-              }}>{v === 'bruto' ? 'Total' : v === 'mercat' ? 'Mercat' : 'Uber'}</button>
+              }}>{v === 'bruto' ? 'Total' : v === 'mercat' ? 'Online' : 'Uber'}</button>
             ))}
           </div>
         </div>
