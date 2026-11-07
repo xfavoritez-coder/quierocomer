@@ -3484,3 +3484,56 @@ model FranDocumento {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
+
+// ── Caja / Turno server-authoritative (2026-11-07) ─────────────────
+// Reemplazo de la caja event-sourced (pos_events/Dexie): el servidor es la
+// ÚNICA fuente de verdad. Elimina de raíz cajas zombi, desorden de server_seq y
+// cierres que "no suben". El POS abre/cierra vía endpoints; las ventas del turno
+// se calculan de PosOrder/OnlineOrder. Flujo: abrir turno → (abrir caja → cerrar
+// caja)* → cerrar turno.
+model PosShift {
+  id           String           @id @default(cuid())
+  restaurantId String
+  openedAt     DateTime         @default(now())
+  openedBy     String?
+  closedAt     DateTime?
+  closedBy     String?
+  cajaCount    Int?
+  totalSales   Int?
+  note         String?
+  source       String           @default("pos") // pos | import
+  isOpen       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  cashSessions PosCashSession[]
+
+  @@index([restaurantId, isOpen])
+  @@index([restaurantId, openedAt])
+}
+
+model PosCashSession {
+  id              String    @id @default(cuid())
+  restaurantId    String
+  shiftId         String?
+  shift           PosShift? @relation(fields: [shiftId], references: [id])
+  openedAt        DateTime  @default(now())
+  openedBy        String?
+  initialAmount   Int       @default(0)
+  closedAt        DateTime?
+  closedBy        String?
+  countedAmounts  Json?     // { efectivo: n, debito: n, ... }
+  expectedAmounts Json?
+  difference      Int?
+  totalSales      Int?
+  totalTips       Int?
+  closedAccounts  Int?
+  note            String?
+  source          String    @default("pos") // pos | import
+  isOpen          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([restaurantId, isOpen])
+  @@index([restaurantId, openedAt])
+  @@index([shiftId])
+}
