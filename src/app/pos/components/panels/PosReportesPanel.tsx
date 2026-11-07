@@ -1232,65 +1232,236 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
     textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', padding: '0 6px 8px 0',
   })
 
-  if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Cargando clientes…</div></Card>
+  if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
   if (!cd) return null
 
   const allRows = cd.clients
   const totalGastado = allRows.reduce((s, c) => s + c.totalSpent, 0)
   const avgGastoCliente = allRows.length > 0 ? Math.round(totalGastado / allRows.length) : 0
-  const topSpender = allRows.length > 0 ? allRows.reduce((a, b) => a.totalSpent > b.totalSpent ? a : b) : null
   const avgTicketGlobal = allRows.length > 0 ? Math.round(allRows.reduce((s, c) => s + c.avgTicket, 0) / allRows.length) : 0
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+  // Podio VIP: top 3 por gasto total
+  const bySpend = allRows.slice().sort((a, b) => b.totalSpent - a.totalSpent)
+  const top3 = bySpend.slice(0, 3)
 
-      {/* KPIs clientes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${BLUE}` }}>
-          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Total clientes</div>
-          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
-        </div>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${GREEN}` }}>
-          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Total gastado</div>
-          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(totalGastado)}</div>
-        </div>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${PURPLE}` }}>
-          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Prom. por cliente</div>
-          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clp(avgGastoCliente)}</div>
-        </div>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid var(--amber)` }}>
-          <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Ticket prom.</div>
-          <div style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>{clp(avgTicketGlobal)}</div>
-        </div>
-        {topSpender && (
-          <div style={{ background: 'var(--amber-tint)', border: '1px solid var(--amber)', borderRadius: 14, padding: '12px 14px', gridColumn: 'span 2' }}>
-            <div style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--amber-press)', textTransform: 'uppercase', marginBottom: 4 }}>Top cliente</div>
-            <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{topSpender.name || topSpender.email || topSpender.phone}</div>
-            <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)' }}>{clp(topSpender.totalSpent)} · {topSpender.orders} pedidos</div>
+  // 80/20: cuántos clientes generan el 80% del ingreso
+  const target80 = totalGastado * 0.8
+  let acc80 = 0, count80 = 0
+  for (const c of bySpend) { acc80 += c.totalSpent; count80++; if (acc80 >= target80) break }
+  const pct80clients = allRows.length > 0 ? Math.round((count80 / allRows.length) * 100) : 0
+
+  // Más fieles: top 5 por frecuencia (menor avgFrequencyDays)
+  const fieles = allRows
+    .filter(c => c.avgFrequencyDays !== null && c.orders >= 3)
+    .sort((a, b) => (a.avgFrequencyDays ?? 999) - (b.avgFrequencyDays ?? 999))
+    .slice(0, 5)
+
+  // Clientes a recuperar: at_risk o churned con 3+ pedidos, ordenados por gasto desc
+  const aRecuperar = allRows
+    .filter(c => (c.status === 'at_risk' || c.status === 'churned') && c.orders >= 3)
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, 5)
+
+  // Nuevos este mes (status new)
+  const nuevosEsteMes = cd.byStatus.new
+
+  // Distribución de salud: porcentajes
+  const totalForPct = cd.total || 1
+
+  // Avatar helper
+  const initials = (c: ClientRow) => {
+    const n = c.name || c.email || c.phone || '?'
+    return n.split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('') || '?'
+  }
+  const avatarBg = (c: ClientRow) => {
+    const h = (c.email + c.phone).split('').reduce((a, ch) => a + ch.charCodeAt(0), 0)
+    const colors = ['#3b82f6','#8b5cf6','#ec4899','#06b6d4','#10b981','#f59e0b','#ef4444']
+    return colors[h % colors.length]
+  }
+
+  const MEDAL = ['🥇','🥈','🥉']
+  const MEDAL_BG = ['linear-gradient(135deg,#FEF3C7,#FDE68A)','linear-gradient(135deg,#F1F5F9,#E2E8F0)','linear-gradient(135deg,#FEF0E0,#FDDBB8)']
+  const MEDAL_BORDER = ['#F59E0B','#94A3B8','#B45309']
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* ── KPIs fila ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+        {[
+          { label: 'Total clientes', value: cd.total.toLocaleString('es-CL'), color: BLUE },
+          { label: 'Total gastado', value: clpShort(totalGastado), color: GREEN },
+          { label: 'Gasto prom. cliente', value: clp(avgGastoCliente), color: PURPLE },
+          { label: 'Ticket promedio', value: clp(avgTicketGlobal), color: 'var(--amber)' },
+        ].map(k => (
+          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${k.color}` }}>
+            <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>{k.label}</div>
+            <div style={{ fontFamily: F, fontSize: '1.15rem', fontWeight: 900, color: 'var(--ink)' }}>{k.value}</div>
           </div>
-        )}
+        ))}
       </div>
+
+      {/* ── Podio VIP ── */}
+      {top3.length > 0 && (
+        <Card style={{ padding: '16px 14px' }}>
+          <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Top clientes VIP</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {top3.map((c, i) => (
+              <div key={c.email || c.phone} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: MEDAL_BG[i], border: `1px solid ${MEDAL_BORDER[i]}`,
+                borderRadius: 14, padding: '12px 14px',
+              }}>
+                {/* Medal + rank */}
+                <div style={{ fontSize: 22, flexShrink: 0, lineHeight: 1 }}>{MEDAL[i]}</div>
+                {/* Avatar */}
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                  background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: F, fontSize: '0.82rem', fontWeight: 900, color: '#fff',
+                  boxShadow: '0 2px 6px rgba(0,0,0,.12)',
+                }}>{initials(c)}</div>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.name || c.email || c.phone}
+                  </div>
+                  {(c.email || c.phone) && c.name && (
+                    <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.phone || c.email}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>{c.orders} pedidos</span>
+                    {c.avgFrequencyDays && <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>c/{c.avgFrequencyDays}d</span>}
+                    <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>⌀{clp(c.avgTicket)}</span>
+                  </div>
+                </div>
+                {/* Total gastado */}
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(c.totalSpent)}</div>
+                  <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 1 }}>gastado</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── 80/20 + Nuevos ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {/* 80/20 */}
+        <Card style={{ padding: '14px' }}>
+          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Regla 80/20</div>
+          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: BLUE, lineHeight: 1 }}>{pct80clients}%</div>
+          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4 }}>
+            de tus clientes genera el <strong>80%</strong> de los ingresos
+          </div>
+          <div style={{ marginTop: 10, height: 6, borderRadius: 999, background: 'var(--sunk)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct80clients}%`, background: `linear-gradient(90deg,${BLUE},${PURPLE})`, borderRadius: 999 }} />
+          </div>
+          <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 4 }}>{count80} de {allRows.length} clientes</div>
+        </Card>
+
+        {/* Nuevos este mes */}
+        <Card style={{ padding: '14px' }}>
+          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Nuevos clientes</div>
+          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: GREEN, lineHeight: 1 }}>{nuevosEsteMes}</div>
+          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4 }}>
+            clientes con su <strong>primer pedido</strong> registrado
+          </div>
+          <div style={{ marginTop: 10, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {(['active','at_risk','churned','new'] as ClientStatus[]).map(s => (
+              <span key={s} style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: STATUS_BG[s], color: STATUS_COLOR[s] }}>
+                {STATUS_LABEL[s]} {cd.byStatus[s]}
+              </span>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Los más fieles ── */}
+      {fieles.length > 0 && (
+        <Card style={{ padding: '14px 14px' }}>
+          <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Los más fieles</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {fieles.map((c) => (
+              <div key={c.email || c.phone} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '0.72rem', fontWeight: 900, color: '#fff' }}>{initials(c)}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email || c.phone}</div>
+                  <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>{c.orders} pedidos · {clp(c.totalSpent)}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 900, color: GREEN }}>c/{c.avgFrequencyDays}d</div>
+                  <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)' }}>frec.</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Clientes a recuperar ── */}
+      {aRecuperar.length > 0 && (
+        <Card style={{ padding: '14px', borderLeft: '3px solid #ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '.08em' }}>Clientes a recuperar</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {aRecuperar.map((c) => (
+              <div key={c.email || c.phone} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fef2f2', borderRadius: 10, padding: '8px 10px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '0.72rem', fontWeight: 900, color: '#fff' }}>{initials(c)}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email || c.phone}</div>
+                  <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>{c.orders} pedidos · {clp(c.totalSpent)}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: '#ef4444' }}>Hace {c.daysSinceLastOrder}d</div>
+                  <span style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: STATUS_BG[c.status], color: STATUS_COLOR[c.status] }}>{STATUS_LABEL[c.status]}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Distribución de salud ── */}
+      <Card style={{ padding: '14px' }}>
+        <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Salud de la base</div>
+        {/* Barra compuesta */}
+        <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', marginBottom: 12, gap: 1 }}>
+          {(['active','new','at_risk','churned'] as ClientStatus[]).map(s => {
+            const pct = Math.round((cd.byStatus[s] / totalForPct) * 100)
+            return pct > 0 ? <div key={s} style={{ width: `${pct}%`, background: STATUS_COLOR[s], transition: 'width .3s' }} /> : null
+          })}
+        </div>
+        {/* Leyenda + botones filtro */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+          <button onClick={() => setFilterStatus('all')}
+            style={{ background: filterStatus === 'all' ? 'var(--surface)' : 'var(--sunk)', border: `1.5px solid ${filterStatus === 'all' ? 'var(--ink-3)' : 'var(--line)'}`, borderRadius: 10, padding: '8px 4px', cursor: 'pointer', textAlign: 'center' }}>
+            <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
+            <div style={{ fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>Todos</div>
+          </button>
+          {(['active','at_risk','churned','new'] as ClientStatus[]).map(s => {
+            const pct = Math.round((cd.byStatus[s] / totalForPct) * 100)
+            return (
+              <button key={s} onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
+                style={{ background: filterStatus === s ? STATUS_BG[s] : 'var(--sunk)', border: `1.5px solid ${filterStatus === s ? STATUS_COLOR[s] : 'var(--line)'}`, borderRadius: 10, padding: '8px 4px', cursor: 'pointer', textAlign: 'center' }}>
+                <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: STATUS_COLOR[s] }}>{cd.byStatus[s]}</div>
+                <div style={{ fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 1 }}>{STATUS_LABEL[s]}</div>
+                <div style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-3)' }}>{pct}%</div>
+              </button>
+            )
+          })}
+        </div>
+      </Card>
 
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Clientes</span>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Directorio de clientes</span>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{cd.total} únicos</span>
-      </div>
-
-      {/* Resumen por estado */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 16 }}>
-        <button onClick={() => setFilterStatus('all')}
-          style={{ background: filterStatus === 'all' ? 'var(--surface)' : 'var(--sunk)', border: `1.5px solid ${filterStatus === 'all' ? 'var(--ink-3)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-          <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
-          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>Todos</div>
-        </button>
-        {(['active', 'at_risk', 'churned', 'new'] as ClientStatus[]).map(s => (
-          <button key={s} onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
-            style={{ background: filterStatus === s ? STATUS_BG[s] : 'var(--sunk)', border: `1.5px solid ${filterStatus === s ? STATUS_COLOR[s] : 'var(--line)'}`, borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-            <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: STATUS_COLOR[s] }}>{cd.byStatus[s]}</div>
-            <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>{STATUS_LABEL[s]}</div>
-          </button>
-        ))}
       </div>
 
       {/* Buscador */}
