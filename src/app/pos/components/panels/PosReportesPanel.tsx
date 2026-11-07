@@ -1287,16 +1287,16 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
       {/* ── KPIs fila ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {[
           { label: 'Total clientes', value: cd.total.toLocaleString('es-CL'), color: BLUE },
           { label: 'Total gastado', value: clpShort(totalGastado), color: GREEN },
           { label: 'Gasto prom. cliente', value: clp(avgGastoCliente), color: PURPLE },
           { label: 'Ticket promedio', value: clp(avgTicketGlobal), color: 'var(--amber)' },
         ].map(k => (
-          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px', borderTop: `3px solid ${k.color}` }}>
-            <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>{k.label}</div>
-            <div style={{ fontFamily: F, fontSize: '1.15rem', fontWeight: 900, color: 'var(--ink)' }}>{k.value}</div>
+          <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '16px 18px', borderTop: `4px solid ${k.color}` }}>
+            <div style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>{k.label}</div>
+            <div style={{ fontFamily: F, fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1 }}>{k.value}</div>
           </div>
         ))}
       </div>
