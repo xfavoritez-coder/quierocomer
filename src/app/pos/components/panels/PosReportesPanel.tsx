@@ -1159,7 +1159,267 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
   )
 }
 
-type ReportSubSection = 'dashboard' | 'delivery' | 'platos' | 'clientes' | 'comportamiento'
+// ── Satisfacción — tab completa ───────────────────────────────────
+interface SurveyFullResponse {
+  id: string; orderId: string | null; orderNumber: number | null
+  orderTotal: number | null; orderType: string | null; orderItems: string[]
+  customerName: string | null; customerPhone: string | null
+  comment: string | null; createdAt: string
+  answers: { id: string; text: string; v: number }[]
+}
+interface SurveyFullData {
+  total: number
+  averages: { id: string; text: string; avg: number; count: number }[]
+  responses: SurveyFullResponse[]
+  starDist: Record<string, number>
+  weeklyTrend: { label: string; avg: number; count: number }[]
+}
+
+function MiniStars({ avg, size = 11 }: { avg: number; size?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 1 }}>
+      {[1,2,3,4,5].map(s => (
+        <svg key={s} width={size} height={size} viewBox="0 0 24 24"
+          fill={s <= Math.round(avg) ? 'var(--amber)' : 'none'}
+          stroke="var(--amber)" strokeWidth="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      ))}
+    </span>
+  )
+}
+
+function SatisfaccionTabSection({ restaurantId }: { restaurantId: string }) {
+  const [data, setData] = useState<SurveyFullData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [filterStar, setFilterStar] = useState<number | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setData(d))
+      .finally(() => setLoading(false))
+  }, [restaurantId])
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 80, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      Cargando…
+    </div>
+  )
+
+  if (!data || data.total === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '48px 0', fontSize: '0.84rem' }}>Aún no hay encuestas respondidas.</p></Card>
+  )
+
+  const withData = data.averages.filter(a => a.count > 0)
+  const overall = withData.length > 0 ? withData.reduce((s, a) => s + a.avg, 0) / withData.length : 0
+  const withComment = data.responses.filter(r => r.comment).length
+  const pctComment = data.total > 0 ? Math.round((withComment / data.total) * 100) : 0
+
+  // Trend: comparar última semana vs anterior
+  const trend = data.weeklyTrend
+  const lastWeek = trend[trend.length - 1]
+  const prevWeek = trend[trend.length - 2]
+  const trendDiff = lastWeek && prevWeek && prevWeek.avg > 0 ? Math.round((lastWeek.avg - prevWeek.avg) * 10) / 10 : null
+
+  // Feed filtrado
+  const filtered = filterStar !== null
+    ? data.responses.filter(r => {
+        const vs = r.answers.map(a => a.v).filter(v => v >= 1 && v <= 5)
+        if (!vs.length) return false
+        return Math.round(vs.reduce((s,v) => s+v,0) / vs.length) === filterStar
+      })
+    : data.responses
+
+  const trendMax = Math.max(1, ...trend.map(w => w.avg))
+  const starKeys = [5, 4, 3, 2, 1]
+  const starTotal = Object.values(data.starDist).reduce((s, v) => s + v, 0)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: '3px solid var(--amber)' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Promedio global</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: F, fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1 }}>{overall.toFixed(1)}</span>
+            <MiniStars avg={overall} size={13} />
+          </div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${BLUE}` }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Respuestas</div>
+          <div style={{ fontFamily: F, fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1 }}>{data.total}</div>
+          <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{pctComment}% con comentario</div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${trendDiff !== null && trendDiff >= 0 ? GREEN : '#ef4444'}` }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>Esta semana</div>
+          <div style={{ fontFamily: F, fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1 }}>{lastWeek?.avg > 0 ? lastWeek.avg.toFixed(1) : '—'}</div>
+          {trendDiff !== null && (
+            <div style={{ fontFamily: F, fontSize: '0.68rem', color: trendDiff >= 0 ? GREEN : '#ef4444', marginTop: 3 }}>
+              {trendDiff >= 0 ? '+' : ''}{trendDiff} vs semana anterior
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tendencia semanal */}
+      <Card>
+        <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 14 }}>Tendencia — últimas 8 semanas</div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
+          {trend.map((w, i) => {
+            const pct = w.avg > 0 ? Math.max(4, Math.round((w.avg / 5) * 100)) : 0
+            const isLast = i === trend.length - 1
+            return (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
+                <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                  <div style={{ position: 'relative', width: '70%', height: `${pct}%`, background: isLast ? 'var(--amber)' : 'var(--amber-tint)', borderRadius: '4px 4px 0 0', minHeight: w.count > 0 ? 4 : 0 }}>
+                    {w.avg > 0 && (
+                      <span style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 2, fontFamily: F, fontSize: '0.58rem', fontWeight: 800, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{w.avg.toFixed(1)}</span>
+                    )}
+                  </div>
+                </div>
+                <span style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-3)', marginTop: 4, textAlign: 'center', lineHeight: 1.2 }}>{w.label}</span>
+                {w.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-3)' }}>{w.count}r</span>}
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+
+      {/* Por pregunta + distribución en fila */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {withData.length > 0 && (
+          <Card style={{ flex: '2 1 240px', minWidth: 0 }}>
+            <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 14 }}>Por pregunta</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {withData.map(a => (
+                <div key={a.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                      <MiniStars avg={a.avg} size={10} />
+                      <span style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 800, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{a.avg.toFixed(1)}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 5, borderRadius: 999, background: 'var(--sunk)', overflow: 'hidden' }}>
+                    <div style={{ width: `${(a.avg / 5) * 100}%`, height: '100%', background: a.avg >= 4 ? GREEN : a.avg >= 3 ? 'var(--amber)' : '#ef4444', borderRadius: 999, transition: 'width .3s' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Distribución ★ */}
+        <Card style={{ flex: '1 1 160px', minWidth: 0 }}>
+          <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 14 }}>Distribución ★</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {starKeys.map(s => {
+              const cnt = data.starDist[s] ?? 0
+              const pct = starTotal > 0 ? Math.round((cnt / starTotal) * 100) : 0
+              const isActive = filterStar === s
+              return (
+                <button key={s} onClick={() => setFilterStar(isActive ? null : s)}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: isActive ? 'var(--amber)' : 'var(--ink-2)', minWidth: 12 }}>{s}★</span>
+                    <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'var(--sunk)', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: isActive ? 'var(--amber)' : 'var(--amber-tint)', borderRadius: 999 }} />
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', minWidth: 28, textAlign: 'right' }}>{cnt}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          {filterStar !== null && (
+            <button onClick={() => setFilterStar(null)} style={{ marginTop: 10, fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', width: '100%' }}>
+              Ver todas
+            </button>
+          )}
+        </Card>
+      </div>
+
+      {/* Feed de respuestas */}
+      <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 6 }}>
+        {filterStar !== null ? `Respuestas ${filterStar}★ — ${filtered.length}` : `Todas las respuestas — ${filtered.length}`}
+      </div>
+
+      {filtered.length === 0 && (
+        <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.84rem' }}>Sin respuestas para este filtro.</p></Card>
+      )}
+
+      {filtered.slice(0, 100).map(resp => {
+        const validVs = resp.answers.map(a => a.v).filter(v => v >= 1 && v <= 5)
+        const avgResp = validVs.length > 0 ? validVs.reduce((s, v) => s + v, 0) / validVs.length : null
+        const dateStr = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: '2-digit' }).format(new Date(resp.createdAt))
+        const initials = (resp.customerName || '?').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+        const orderTypeLabel = resp.orderType === 'delivery' ? 'Delivery' : resp.orderType === 'pickup' ? 'Retiro' : resp.orderType === 'dine-in' ? 'Mesa' : null
+
+        return (
+          <Card key={resp.id} style={{ padding: '14px 16px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: avgResp !== null && avgResp >= 4 ? 'var(--jade-tint)' : avgResp !== null && avgResp >= 3 ? 'var(--amber-tint)' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontFamily: F, fontSize: '0.75rem', fontWeight: 800, color: avgResp !== null && avgResp >= 4 ? 'var(--jade)' : avgResp !== null && avgResp >= 3 ? 'var(--amber)' : '#ef4444' }}>{initials}</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{resp.customerName || 'Sin nombre'}</span>
+                  {resp.customerPhone && <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)' }}>{resp.customerPhone}</span>}
+                  {avgResp !== null && <MiniStars avg={avgResp} size={12} />}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{dateStr}</span>
+                  {resp.orderNumber && <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>· Pedido #{resp.orderNumber}</span>}
+                  {orderTypeLabel && <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: BLUE, background: `${BLUE}18`, padding: '1px 7px', borderRadius: 999 }}>{orderTypeLabel}</span>}
+                  {resp.orderTotal && <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-2)' }}>{clp(resp.orderTotal)}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Lo que pidió */}
+            {resp.orderItems.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {resp.orderItems.map((item, i) => (
+                  <span key={i} style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-2)', background: 'var(--sunk)', borderRadius: 8, padding: '3px 10px' }}>{item}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Ratings por pregunta */}
+            {resp.answers.filter(a => a.v >= 1 && a.v <= 5).length > 1 && (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: resp.comment ? 10 : 0 }}>
+                {resp.answers.filter(a => a.v >= 1 && a.v <= 5).map(a => (
+                  <div key={a.id} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: 100 }}>{a.text}</span>
+                    <MiniStars avg={a.v} size={10} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Comentario */}
+            {resp.comment && (
+              <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px', borderLeft: '3px solid var(--amber)' }}>
+                <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink)', fontStyle: 'italic' }}>"{resp.comment}"</span>
+              </div>
+            )}
+          </Card>
+        )
+      })}
+
+      {filtered.length > 100 && (
+        <p style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', textAlign: 'center', margin: '4px 0' }}>Mostrando 100 de {filtered.length}</p>
+      )}
+    </div>
+  )
+}
+
+type ReportSubSection = 'dashboard' | 'delivery' | 'platos' | 'clientes' | 'comportamiento' | 'satisfaccion'
 
 const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode }[] = [
   {
@@ -1207,6 +1467,15 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'satisfaccion',
+    label: 'Satisfacción',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
       </svg>
     ),
   },
@@ -1343,6 +1612,11 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
         {/* Clientes sub-section */}
         {subSection === 'clientes' && (
           <ClientsSection restaurantId={restaurantId} />
+        )}
+
+        {/* Satisfacción sub-section */}
+        {subSection === 'satisfaccion' && (
+          <SatisfaccionTabSection restaurantId={restaurantId} />
         )}
 
         {/* Comportamiento sub-section */}
