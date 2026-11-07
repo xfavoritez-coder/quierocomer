@@ -152,7 +152,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-        <span style={{ fontSize: 12.5, color: '#3b82f6', fontWeight: 600 }}>Cargando…</span>
+        <span style={{ fontSize: 12.5, color: '#f59e0b', fontWeight: 600 }}>Cargando…</span>
       </div>
     </div>
   )
@@ -164,7 +164,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
           <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
           <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-          <span style={{ fontSize: 12.5, color: '#3b82f6', fontWeight: 600 }}>Sin asignar</span>
+          <span style={{ fontSize: 12.5, color: '#f59e0b', fontWeight: 600 }}>Sin asignar</span>
         </div>
       </div>
     )
@@ -200,7 +200,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
     ? `Llega en ${etaMin} min`
     : null
   const displayStatus = etaDisplay ?? statusLabel(t.status)
-  const displayColor = '#3b82f6'
+  const displayColor = '#f59e0b'
 
   return (
     <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
