@@ -80,10 +80,13 @@ export async function GET(req: NextRequest) {
     const dayName = ["dom","lun","mar","mié","jue","vie","sáb"][day];
     const results: Record<string, any> = { chileHour: hour, chileDay: dayName, campaignId };
 
-    // Verificar que estamos en la hora correcta en Chile (±1h de tolerancia)
+    // Verificar que estamos en la hora correcta en Chile
+    // activate: tolerancia ±1h (cron puede llegar tarde)
+    // deactivate: tolerancia 0 (evitar doble disparo a las 21h y 22h)
     const defaultHour = action === "activate" ? 16 : 22;
     const expectedHour = hourParam ? parseInt(hourParam, 10) : defaultHour;
-    if (Math.abs(hour - expectedHour) > 1) {
+    const tolerance = action === "activate" ? 1 : 0;
+    if (Math.abs(hour - expectedHour) > tolerance) {
       console.log(`[meta-ads] Skip — hora Chile actual: ${hour}:xx, esperada: ${expectedHour}:xx`);
       await prisma.cronLog.create({
         data: { jobName, status: "success", durationMs: Date.now() - start, details: { skipped: true, reason: "wrong_hour", chileHour: hour, expectedHour } as any },
@@ -92,15 +95,11 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === "activate") {
-      // 1. Activar campaña
-      results.status = await metaPost(campaignId, { status: "ACTIVE" });
-
-      // 2. Presupuesto: usa el param ?budget si viene, si no calcula según día
+      // Activar + presupuesto en una sola llamada para evitar rate limit #613
       const isWeekend = day === 5 || day === 6;
       const budget = budgetParam ? parseInt(budgetParam, 10) : (isWeekend ? BUDGET_WEEKEND : BUDGET_WEEKDAY);
-      results.budget = await metaPost(campaignId, { daily_budget: budget });
+      results.status = await metaPost(campaignId, { status: "ACTIVE", daily_budget: budget });
       results.budgetSet = budget;
-
       console.log(`[meta-ads] Activada + presupuesto $${budget.toLocaleString("es-CL")} (${dayName})`);
     } else {
       results.status = await metaPost(campaignId, { status: "PAUSED" });
