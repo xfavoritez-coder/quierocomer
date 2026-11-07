@@ -225,9 +225,11 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 
       {/* Link público */}
       {t.statusUrl && (
-        <a href={t.statusUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
-          Ver seguimiento en vivo ↗
-        </a>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <a href={t.statusUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
+            Ver seguimiento en vivo ↗
+          </a>
+        </div>
       )}
     </TrackingBox>
   )
