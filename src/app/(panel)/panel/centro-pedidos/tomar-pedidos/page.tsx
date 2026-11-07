@@ -494,7 +494,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           <ArrowLeft size={15} /> {backLabel}
         </Link>
         <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{tenant.name}</span>
-        <button onClick={() => window.open("/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
+        <button onClick={() => window.open(backHref.startsWith("/pos") ? "/pos/tomar-pedido" : "/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
           <ExternalLink size={14} /> Nueva ventana
         </button>
@@ -543,7 +543,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
               <p style={{ fontFamily: FB, fontSize: "0.86rem", color: C.text2, margin: "4px 0 0" }}>Registrado. Aparece en Pedidos.</p>
             </div>
             <button onClick={reset} style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: C.text, color: "#fff", fontFamily: F, fontWeight: 700, cursor: "pointer" }}>Nuevo pedido</button>
-            <Link href="/panel/centro-pedidos" style={{ fontFamily: FB, fontSize: "0.8rem", color: C.text2, textDecoration: "none" }}>Ver pedidos →</Link>
+            <Link href={backHref} style={{ fontFamily: FB, fontSize: "0.8rem", color: C.text2, textDecoration: "none" }}>Ver pedidos →</Link>
           </div>
         </Overlay>
       )}
