@@ -998,6 +998,8 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
   const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts?: AddressParts; hasNumber?: boolean } | null>(null);
   const [feeResult, setFeeResult] = useState<DistanceFeeResult | null>(null);
   const [feeLoading, setFeeLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   // Calcula el costo para un destino: por distancia (local) o cotizando a Uber
   // Direct en vivo (modo "uber"), vía el endpoint del servidor.
@@ -1018,6 +1020,37 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
+
+  // Usa la ubicación del dispositivo para pre-rellenar la dirección vía reverse geocoding.
+  const handleGeolocate = useCallback(async () => {
+    if (!tenant.googleMapsKey || !navigator.geolocation) return;
+    setGeoLoading(true); setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        try {
+          const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${tenant.googleMapsKey}&language=es&region=cl`);
+          const j = await r.json();
+          const result = j.results?.[0];
+          if (!result) { setGeoError("No se pudo obtener tu dirección."); setGeoLoading(false); return; }
+          const components: { types: string[]; long_name: string; short_name: string }[] = result.address_components ?? [];
+          const hasNumber = components.some((c) => c.types.includes("street_number"));
+          const cleanAddr = formatPlaceAddress({ address_components: components, formatted_address: result.formatted_address }, result.formatted_address);
+          const parts = placeAddressParts({ address_components: components }, result.formatted_address);
+          const d = { lat, lng, address: cleanAddr, parts, hasNumber };
+          setDest(d);
+          if (inputRef.current) inputRef.current.value = cleanAddr;
+          computeFeeFor(d);
+        } catch { setGeoError("Error al obtener tu dirección."); }
+        setGeoLoading(false);
+      },
+      (err) => {
+        setGeoError(err.code === 1 ? "Permiso de ubicación denegado." : "No se pudo obtener tu ubicación.");
+        setGeoLoading(false);
+      },
+      { timeout: 10000, maximumAge: 60000 },
+    );
+  }, [tenant.googleMapsKey, computeFeeFor]);
 
   // Adjunta el autocompletado cuando el SDK está listo y estamos en delivery+distancia.
   useEffect(() => {
@@ -1150,10 +1183,25 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Dirección de entrega</span>
                 <input ref={inputRef} defaultValue={deliveryAddress?.address ?? ""} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
-                {dest && !dest.hasNumber
-                  ? <span className="text-[11px] text-red-500 font-semibold">Falta la numeración: elige la dirección con su número de calle.</span>
-                  : <span className="text-[11px] text-gray-400">Elige una opción de la lista para calcular el despacho.</span>}
+                {dest && !dest.hasNumber && <span className="text-[11px] text-red-500 font-semibold">Falta la numeración: elige la dirección con su número de calle.</span>}
               </label>
+              {tenant.googleMapsKey && (
+                <button
+                  type="button"
+                  onClick={handleGeolocate}
+                  disabled={geoLoading}
+                  className="flex items-center gap-2 text-sm font-semibold transition disabled:opacity-50 self-start -mt-1"
+                  style={{ color: primaryColor }}
+                >
+                  {geoLoading ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2z" strokeDasharray="2 4" strokeDashoffset="2"/></svg>
+                  )}
+                  {geoLoading ? "Obteniendo ubicación…" : "Usar mi ubicación actual"}
+                </button>
+              )}
+              {geoError && <span className="text-[11px] text-red-500 font-semibold -mt-1">{geoError}</span>}
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Depto / casa / referencia</span>
                 <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Opcional" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
