@@ -70,6 +70,12 @@ export async function GET(req: NextRequest) {
     select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true },
   });
   const unmirroredOnline = onlineOrders.filter((o) => !mirroredOnlineIds.has(o.id));
+  // Mapa de items de OnlineOrder para recuperar precios en PosOrders espejados
+  // que fueron creados antes de que centroMirror propagara el unit_price.
+  const onlineItemsFallback = new Map<string, unknown[]>();
+  for (const o of onlineOrders) {
+    if (Array.isArray(o.items)) onlineItemsFallback.set(o.id, o.items as unknown[]);
+  }
 
   let productSales = 0; // total con IVA, sin delivery ni propinas
   let deliveryTotal = 0;
@@ -112,6 +118,20 @@ export async function GET(req: NextRequest) {
     typeMap[type].orders += 1;
 
     // Ranking de productos vendidos.
+    // Para PosOrders espejados desde ecommerce (externalId "oo-*") que no tienen
+    // precio en sus ítems (creados antes del fix de centroMirror), usar los ítems
+    // de la OnlineOrder original como fuente de precio.
+    const ooId = o.externalId?.startsWith("oo-") ? o.externalId.slice(3) : null;
+    const fallbackItems = ooId ? (onlineItemsFallback.get(ooId) ?? []) : [];
+    const fallbackPriceMap = new Map<string, number>();
+    for (const fi of fallbackItems) {
+      if (!fi || typeof fi !== "object") continue;
+      const fln = fi as Record<string, any>;
+      const fname = String(fln.name ?? fln.dishName ?? "").trim();
+      const fprice = Number(fln.unit_price ?? fln.unitTotal ?? fln.price ?? 0);
+      if (fname && fprice > 0) fallbackPriceMap.set(fname, fprice);
+    }
+
     const items = Array.isArray(o.items) ? (o.items as unknown[]) : [];
     for (const raw of items) {
       if (!raw || typeof raw !== "object") continue;
@@ -135,6 +155,8 @@ export async function GET(req: NextRequest) {
       else if (ln.price != null && Number(ln.price) > 0) rev = Number(ln.price) * qty;
       else if (ln.amount != null && Number(ln.amount) > 0) rev = Number(ln.amount);
       else if (ln.total != null && Number(ln.total) > 0) rev = Number(ln.total);
+      // Fallback: buscar precio en la OnlineOrder original (pedidos espejados sin precio)
+      else if (fallbackPriceMap.has(pname)) rev = fallbackPriceMap.get(pname)! * qty;
       const p = productMap.get(pname) || { name: pname, qty: 0, revenue: 0 };
       p.qty += qty;
       p.revenue += Number.isFinite(rev) ? rev : 0;
