@@ -310,7 +310,10 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
               <button key={b.id} onClick={() => onChoose(b, "pickup")} disabled={switching} style={{ textAlign: "left", background: b.slug === currentSlug ? `${accent}10` : "#fff", border: `1px solid ${b.slug === currentSlug ? `${accent}55` : "#eee"}`, borderRadius: 14, padding: 14, cursor: "pointer", opacity: switching ? 0.6 : 1 }}>
                 <p style={{ fontSize: "1rem", fontWeight: 800, color: "#111", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                   <Store size={15} style={{ color: accent }} /> {b.branchName || b.name}
-                  {!b.open ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#ef4444" }}>Cerrada ahora</span> : <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#16a34a" }}>Abierta</span>}
+                  {!b.open
+                    ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: b.opensAt ? "#d97706" : "#ef4444" }}>{b.opensAt ? `Abre a las ${b.opensAt}` : "Cerrada ahora"}</span>
+                    : <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#16a34a" }}>Abierta</span>
+                  }
                 </p>
                 {b.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "2px 0 0 21px" }}>{b.address}</p>}
               </button>
