@@ -616,12 +616,12 @@ function OrderDetailPanel({
                 onClick={() => setPrintOpen(o => !o)}
                 disabled={!!printing}
                 title="Imprimir"
-                style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--surface)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
+                style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--line)', background: printOpen ? 'var(--amber-tint)' : 'var(--surface)', color: printOpen ? 'var(--amber)' : 'var(--ink-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', opacity: printing ? 0.5 : 1, transition: 'background .15s, color .15s' }}
               >
                 {printing ? (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                 ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
                   </svg>
                 )}
@@ -666,7 +666,7 @@ function OrderDetailPanel({
               {displayName(order.customerName || 'Cliente')}
             </div>
             {order.customerPhone && (
-              <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>{order.customerPhone}</div>
+              <div style={{ fontSize: 15, color: 'var(--ink-3)', marginTop: 2 }}>{order.customerPhone}</div>
             )}
           </div>
           {order.customerPhone && customerCount !== null && (
