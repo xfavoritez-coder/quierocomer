@@ -6,6 +6,7 @@ import { usePosRestaurant } from '../lib/usePosRestaurant'
 import {
   usePosSync,
   useOpenCashSession,
+  useOpenShift,
   useOpenAccounts,
   useSessionSummary,
   setRestaurantId,
@@ -18,6 +19,7 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import PosHeader from '../components/PosHeader'
 import StaleAccountsCleanup from '../components/StaleAccountsCleanup'
+import TurnoBar from '../components/TurnoBar'
 import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
@@ -40,6 +42,7 @@ export default function CajaPage() {
   const { restaurantId, restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
+  const shift = useOpenShift(restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
@@ -278,6 +281,10 @@ export default function CajaPage() {
         <PosHeader mode="back" eyebrow="Caja" subtitle="Sin sesión activa" syncing={syncing} onBack={goHome} rightSlot={historialBtn} />
         <div className="pos-scroll">
           <div className="pos-caja-wrap">
+            <TurnoBar restaurantId={restaurantId} hasOpenCaja={false} />
+
+            {!shift ? null : (
+            <>
             <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
               <div className="ring">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -319,6 +326,8 @@ export default function CajaPage() {
                 {opening ? 'Abriendo...' : 'Abrir caja'}
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
       </div>
@@ -340,6 +349,8 @@ export default function CajaPage() {
 
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
+
+          <TurnoBar restaurantId={restaurantId} hasOpenCaja={true} />
 
           {/* ── Apertura ───────────────────────────── */}
           <div className="pos-caja-open">

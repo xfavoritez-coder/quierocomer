@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync, subscribePosReady } from './sync'
 import { getRestaurantId } from './events'
-import type { Account, CashSession, PosTable, PosSector, PosStaff } from './types'
+import type { Account, CashSession, Shift, PosTable, PosSector, PosStaff } from './types'
 import type { CachedProduct } from './types'
 import { refreshCatalog, getCachedProducts, getCachedCategories } from './catalog'
 import { notifyDbChange, getDbVersion, subscribeDbChange } from './notify'
@@ -155,6 +155,25 @@ export function useOpenCashSession(restaurantId?: string): CashSession | null | 
     },
     [rid],
     undefined  // loading sentinel — nunca renderizar UI dependiente de cashSession hasta que salga de undefined
+  )
+}
+
+// Turno abierto de este local (capa externa sobre las cajas), o null si no hay.
+// undefined = cargando. Mismo patrón y scoping por restaurant_id que la caja.
+export function useOpenShift(restaurantId?: string): Shift | null | undefined {
+  const rid = restaurantId ?? getRestaurantId()
+  return useDexieQuery(
+    async () => {
+      if (!rid) return undefined
+      const open = await posDb.shifts.filter(s => s.is_open).toArray()
+      if (open.length === 0) return null
+      const mine = open.filter(s => !s.restaurant_id || s.restaurant_id === rid)
+      if (mine.length === 0) return null
+      mine.sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''))
+      return mine[0]
+    },
+    [rid],
+    undefined
   )
 }
 

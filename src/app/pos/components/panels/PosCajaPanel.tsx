@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   usePosSync,
   useOpenCashSession,
+  useOpenShift,
   useOpenAccounts,
   useSessionSummary,
   setRestaurantId,
@@ -20,6 +21,7 @@ import { toast } from 'sonner'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
 import PosCajaHistorial from '../PosCajaHistorial'
 import StaleAccountsCleanup from '../StaleAccountsCleanup'
+import TurnoBar from '../TurnoBar'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -38,6 +40,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   const { restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const cashSession = useOpenCashSession(restaurantId)
+  const shift = useOpenShift(restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
@@ -289,6 +292,11 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
             {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
             {historialBtn}
           </div>
+
+          <TurnoBar restaurantId={restaurantId} hasOpenCaja={false} />
+
+          {!shift ? null : (
+          <>
           <div className="pos-empty" style={{ minHeight: 120, marginBottom: 28 }}>
             <div className="ring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -330,6 +338,8 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
               {opening ? 'Abriendo...' : 'Abrir caja'}
             </button>
           </div>
+          </>
+          )}
         </div>
       </div>
     )
@@ -342,6 +352,9 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
           {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
           {historialBtn}
         </div>
+
+        <TurnoBar restaurantId={restaurantId} hasOpenCaja={true} />
+
         {/* ── Apertura ───────────────────────────── */}
         <div className="pos-caja-open">
           <div className="co-l">

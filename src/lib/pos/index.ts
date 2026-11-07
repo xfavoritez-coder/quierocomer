@@ -24,12 +24,14 @@ export {
   openCashSession,
   closeCashSession,
   deleteCashSession,
+  openShift,
+  closeShift,
   requestBill,
   projectEvent,
   rebuildFromEvents,
 } from './events'
 
-export { startSync, stopSync, forceSyncNow } from './sync'
+export { startSync, stopSync, forceSyncNow, flushAndVerify } from './sync'
 export { refreshCatalog, getCachedCategories, getCachedProducts } from './catalog'
 
 export { notifyDbChange } from './notify'
@@ -40,6 +42,7 @@ export {
   useOpenAccounts,
   useAccount,
   useOpenCashSession,
+  useOpenShift,
   useClosedCashSessions,
   useSessionSummary,
   useRecentEvents,

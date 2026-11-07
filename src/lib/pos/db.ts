@@ -6,6 +6,7 @@ import type {
   Round,
   Payment,
   CashSession,
+  Shift,
   PosTable,
   PosSector,
   PosStaff,
@@ -43,6 +44,7 @@ export class PosDatabase extends Dexie {
   rounds!: EntityTable<Round, 'id'>
   payments!: EntityTable<Payment, 'id'>
   cashSessions!: EntityTable<CashSession, 'id'>
+  shifts!: EntityTable<Shift, 'id'>
   posTables!: EntityTable<PosTable, 'id'>
   posSectors!: EntityTable<PosSector, 'id'>
   staff!: EntityTable<PosStaff, 'id'>
@@ -72,6 +74,11 @@ export class PosDatabase extends Dexie {
     this.version(2).stores({
       posTables: 'id, restaurant_id, number, sector_id',
       posSectors: 'id, restaurant_id',
+    })
+
+    // Turno (capa externa sobre las cajas).
+    this.version(3).stores({
+      shifts: 'id, is_open, [restaurant_id+is_open]',
     })
   }
 }

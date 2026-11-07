@@ -193,6 +193,38 @@ export async function forceSyncNow() {
   await syncCycle()
 }
 
+/**
+ * Barrera de sincronización para CERRAR TURNO: fuerza la subida de TODOS los
+ * eventos locales del restaurante a la nube y confirma que no quede ninguno
+ * pendiente. Devuelve { ok, pending }. ok=true solo cuando pending===0 (todo
+ * subido). Si está offline o el push falla, ok=false y pending > 0 → el turno
+ * NO debe cerrarse (garantía de cero pérdida de datos).
+ */
+export async function flushAndVerify(restaurantId: string): Promise<{ ok: boolean; pending: number }> {
+  const countPending = () =>
+    posDb.events.where('[restaurant_id+synced]').equals([restaurantId, 0]).count()
+
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return { ok: false, pending: await countPending() }
+  }
+
+  // Red de seguridad: re-encolar cualquier evento local no sincronizado que se
+  // haya quedado fuera de la cola, y drenar la cola hasta vaciarla o estancarse.
+  await requeueUnsyncedEvents(restaurantId)
+  let prev = -1
+  for (let i = 0; i < 40; i++) {
+    const q = await posDb.syncQueue.count()
+    if (q === 0) break
+    await pushEvents()
+    const now = await posDb.syncQueue.count()
+    if (now === q && now === prev) break // dos pasadas sin progreso → estancado
+    prev = q
+  }
+
+  const pending = await countPending()
+  return { ok: pending === 0, pending }
+}
+
 // ── Sync cycle: push then pull ───────────────────────────────────
 
 // Small delay after 'online' event — browser fires it before DNS/TCP is truly ready

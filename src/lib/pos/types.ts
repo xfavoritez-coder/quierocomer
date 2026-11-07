@@ -18,6 +18,8 @@ export type PosEventType =
   | 'cash_session_opened'
   | 'cash_session_closed'
   | 'cash_session_deleted'
+  | 'shift_opened'
+  | 'shift_closed'
   | 'bill_requested'
   | 'tables_configured'
   | 'sectors_configured'
@@ -134,6 +136,18 @@ export interface CashSessionClosedPayload {
 
 // Tombstone: borra una sesión de caja del historial (en todos los equipos vía
 // sync). Event-sourcing no tiene borrado nativo; este evento lo provee.
+// ── Turno (capa externa que agrupa cajas) ────────────────────────
+export interface ShiftOpenedPayload {
+  shift_id: string
+  opened_by_name?: string
+}
+export interface ShiftClosedPayload {
+  shift_id: string
+  caja_count?: number   // cuántas cajas se cerraron en el turno
+  total_sales?: number  // venta total del turno (suma de cajas)
+  note?: string
+}
+
 export interface CashSessionDeletedPayload {
   session_id: string
   reason?: string
@@ -213,6 +227,22 @@ export interface Payment {
   split_index?: number
   recorded_at: string
   recorded_by: string
+}
+
+// Turno: capa externa que envuelve una o más cajas (CashSession). El día:
+// abrir turno → (abrir caja → cerrar caja)* → cerrar turno. Cerrar turno fuerza
+// y verifica la subida de todos los eventos a la nube.
+export interface Shift {
+  id: string
+  restaurant_id?: string
+  opened_at: string
+  opened_by: string
+  closed_at?: string
+  closed_by?: string
+  caja_count?: number
+  total_sales?: number
+  note?: string
+  is_open: boolean
 }
 
 export interface CashSession {

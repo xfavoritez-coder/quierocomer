@@ -12,6 +12,8 @@ import type {
   AccountVoidedPayload,
   CashSessionOpenedPayload,
   CashSessionClosedPayload,
+  ShiftOpenedPayload,
+  ShiftClosedPayload,
   CashSessionDeletedPayload,
   BillRequestedPayload,
   TablesConfiguredPayload,
@@ -125,6 +127,15 @@ export async function closeCashSession(payload: CashSessionClosedPayload) {
 
 export async function deleteCashSession(payload: CashSessionDeletedPayload) {
   return createEvent('cash_session_deleted', payload as unknown as Record<string, unknown>)
+}
+
+// ── Turno (capa externa sobre las cajas) ─────────────────────────
+export async function openShift(payload: ShiftOpenedPayload) {
+  return createEvent('shift_opened', payload as unknown as Record<string, unknown>)
+}
+
+export async function closeShift(payload: ShiftClosedPayload) {
+  return createEvent('shift_closed', payload as unknown as Record<string, unknown>)
 }
 
 // Mapea un método de pago (del POS o de un pago online: webpay, mercadopago,
@@ -406,6 +417,61 @@ export async function projectEvent(event: PosEvent): Promise<void> {
       break
     }
 
+    case 'shift_opened': {
+      const d = p as unknown as ShiftOpenedPayload
+      const existing = await posDb.shifts.get(d.shift_id)
+      // Si el turno YA figura cerrado (cierre proyectado antes por seq menor) NO
+      // se reabre; solo se rellenan metadatos de apertura (igual que las cajas).
+      if (existing && existing.is_open === false) {
+        await posDb.shifts.update(d.shift_id, {
+          opened_at: event.created_at_local,
+          opened_by: event.user_id,
+        })
+        break
+      }
+      // Invariante: un solo turno abierto por local → al abrir, cerrar los demás.
+      const openOthers = await posDb.shifts
+        .filter(s => !!s.is_open && s.restaurant_id === event.restaurant_id && s.id !== d.shift_id)
+        .toArray()
+      for (const s of openOthers) {
+        await posDb.shifts.update(s.id, { is_open: false })
+      }
+      await posDb.shifts.put({
+        id: d.shift_id,
+        restaurant_id: event.restaurant_id,
+        opened_at: event.created_at_local,
+        opened_by: event.user_id,
+        is_open: true,
+      })
+      break
+    }
+
+    case 'shift_closed': {
+      const d = p as unknown as ShiftClosedPayload
+      const closedFields = {
+        closed_at: event.created_at_local,
+        closed_by: event.user_id,
+        caja_count: d.caja_count,
+        total_sales: d.total_sales,
+        note: d.note,
+        is_open: false as const,
+      }
+      const existing = await posDb.shifts.get(d.shift_id)
+      if (existing) {
+        await posDb.shifts.update(d.shift_id, closedFields)
+      } else {
+        // El cierre llegó antes que la apertura (seq invertido): tombstone cerrado.
+        await posDb.shifts.put({
+          id: d.shift_id,
+          restaurant_id: event.restaurant_id,
+          opened_at: event.created_at_local,
+          opened_by: event.user_id,
+          ...closedFields,
+        })
+      }
+      break
+    }
+
     case 'bill_requested': {
       const d = p as unknown as BillRequestedPayload
       await posDb.accounts.update(d.account_id, { status: 'cuenta_pedida' })
@@ -446,6 +512,7 @@ export async function rebuildFromEvents(restaurantId: string): Promise<void> {
   // Limpiar proyecciones
   await posDb.accounts.clear()
   await posDb.cashSessions.clear()
+  await posDb.shifts.clear()
 
   // Eventos sincronizados, en orden de servidor (fuente de verdad)
   const synced = await posDb.events
