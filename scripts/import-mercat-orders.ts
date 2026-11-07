@@ -131,7 +131,7 @@ async function main() {
       }
 
       const isDelivery = metodo.toLowerCase().includes("domicilio");
-      const isPickup   = metodo.toLowerCase().includes("retiro");
+      const isPickup   = metodo.toLowerCase().includes("retiro") || metodo.toLowerCase().includes("recoger") || metodo.toLowerCase().includes("local");
       const saleType   = isDelivery ? "delivery" : isPickup ? "pickup" : "dine-in";
       const posStatus  = mapStatus(estatusOrden);
       // Todos los pedidos históricos de Mercat se marcan como "delivered"
