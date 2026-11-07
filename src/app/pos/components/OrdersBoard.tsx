@@ -578,15 +578,7 @@ function OrderDetailPanel({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
-      {/* Botón cerrar — solo mobile, esquina superior derecha sin diseño */}
-      <button
-        onClick={onClose}
-        className="pos-detail-close-mobile"
-        style={{ position: 'absolute', top: 10, right: 12, zIndex: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--ink-3)' }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {showCustomerHistory && order.customerPhone && (
         <CustomerOrdersDrawer
           restaurantId={restaurantId}
@@ -687,6 +679,13 @@ function OrderDetailPanel({
               {customerCount} pedido{customerCount !== 1 ? 's' : ''}
             </button>
           )}
+          <button
+            onClick={onClose}
+            className="pos-detail-close-mobile"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--ink-3)', flexShrink: 0 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
       </div>
 
