@@ -879,9 +879,9 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
               const convColor = r.convRate === null ? 'var(--ink-3)' : r.convRate >= 20 ? GREEN : r.convRate >= 10 ? 'var(--amber)' : '#ef4444'
               return (
                 <tr key={r.name} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
-                  <td style={{ padding: '7px 8px 7px 0', fontSize: '0.82rem', fontWeight: 600, color: r.sold === 0 ? 'var(--ink-3)' : 'var(--ink)', maxWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 5, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontSize: '0.6rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                  <td style={{ padding: '7px 8px 7px 0', fontSize: '0.82rem', fontWeight: 600, color: r.sold === 0 ? 'var(--ink-3)' : 'var(--ink)', width: '50%' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 5 }}>
+                      <span style={{ flexShrink: 0, marginTop: 1, width: 18, height: 18, borderRadius: 5, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontSize: '0.6rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
                       {r.name}
                     </span>
                   </td>
