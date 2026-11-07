@@ -464,15 +464,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               </>
             )}
           </button>
-          {brandControls && (
-            <button
-              type="button"
-              onClick={() => brandControls.onRequireBranch(null)}
-              className="w-full bg-gray-800 hover:bg-gray-700 transition text-white text-center py-2.5 px-4 border-t border-gray-700"
-            >
-              <span className="text-sm font-semibold text-gray-300">Ver otras sucursales →</span>
-            </button>
-          )}
+
         </>
       )}
 
