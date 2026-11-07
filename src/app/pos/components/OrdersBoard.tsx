@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { setRestaurantId, setUserId, useOpenCashSession } from '@/lib/pos'
+import { setRestaurantId, setUserId } from '@/lib/pos'
+import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
 import { getBridgeStatus, printComanda, printKitchenComanda } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
@@ -914,8 +915,8 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   }, [])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
-  const cashSession = useOpenCashSession(restaurantId)
-  const cajaOpen = !!cashSession
+  const { caja } = usePosCash(restaurantId)
+  const cajaOpen = !!caja
 
   // Cobrar: si la caja está cerrada se redirige a abrirla; si no, abre el modal.
   const handleCobro = useCallback((o: PosOrderLite) => {

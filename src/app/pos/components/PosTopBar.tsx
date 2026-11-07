@@ -5,7 +5,7 @@ import PosHeader from './PosHeader'
 import PosMenuDrawer from './PosMenuDrawer'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import { usePosNav } from '../lib/usePosNav'
-import { useOpenCashSession } from '@/lib/pos'
+import { usePosCash } from '@/lib/pos/cashApi'
 import { supabase } from '@/lib/supabase'
 
 type Section = 'mesas' | 'retiro' | 'delivery' | 'centro' | 'none'
@@ -15,7 +15,7 @@ type Section = 'mesas' | 'retiro' | 'delivery' | 'centro' | 'none'
 export default function PosTopBar({ active, mesasCount }: { active: Section; mesasCount?: number }) {
   const { restaurantId, restaurant } = usePosRestaurant()
   const navigate = usePosNav()
-  const cashSession = useOpenCashSession(restaurantId)
+  const { caja: cashSession } = usePosCash(restaurantId)
   const [menuOpen, setMenuOpen] = useState(false)
   const [counts, setCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
 

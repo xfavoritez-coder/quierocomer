@@ -1,28 +1,24 @@
 'use client'
 
-// ── Turno: capa externa sobre las cajas ──────────────────────────────
-// Flujo diario: abrir turno → (abrir caja → cerrar caja)* → cerrar turno.
-// Cerrar turno fuerza y VERIFICA la subida de todos los eventos a la nube
-// (flushAndVerify): si algo no subió, NO cierra (cero pérdida de datos).
+// ── Turno (capa externa sobre las cajas) — SERVER-AUTHORITATIVE ──────
+// El estado (turno abierto) llega por props desde la página de caja, que lo lee
+// del servidor (/api/pos/cash). Flujo: abrir turno → (abrir caja → cerrar caja)*
+// → cerrar turno. Al cerrar turno se corre la barrera de sync (flushAndVerify)
+// para subir los eventos event-sourced que aún existen (cuentas/pedidos); si algo
+// no sube, NO cierra (cero pérdida). La caja ya es server-authoritative aparte.
 
 import { useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
-import {
-  useOpenShift,
-  useClosedCashSessions,
-  openShift,
-  closeShift,
-  flushAndVerify,
-} from '@/lib/pos'
+import { flushAndVerify } from '@/lib/pos'
+import { cashApi, type ServerShift } from '@/lib/pos/cashApi'
 
 const clp = (n: number) => '$' + Math.round(n || 0).toLocaleString('es-CL')
 
-function fmtTime(iso?: string): string {
+function fmtTime(iso?: string | null): string {
   if (!iso) return '--:--'
   return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
 }
-function fmtDayIfNotToday(iso?: string): string {
+function fmtDayIfNotToday(iso?: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (d.toDateString() === new Date().toDateString()) return ''
@@ -31,24 +27,26 @@ function fmtDayIfNotToday(iso?: string): string {
 
 export default function TurnoBar({
   restaurantId,
+  shift,
   hasOpenCaja,
+  onChanged,
 }: {
   restaurantId?: string
+  shift: ServerShift | null
   hasOpenCaja: boolean
+  onChanged: () => void
 }) {
-  const shift = useOpenShift(restaurantId)
-  const closedCajas = useClosedCashSessions(restaurantId, 90)
   const [busy, setBusy] = useState(false)
 
-  // Cargando la proyección → no renderizar nada (evita parpadeo).
-  if (shift === undefined || !restaurantId) return null
+  if (!restaurantId) return null
 
   const handleOpenTurno = async () => {
     setBusy(true)
     try {
-      await openShift({ shift_id: uuidv4() })
-    } catch {
-      toast.error('No se pudo abrir el turno')
+      await cashApi.openShift(restaurantId, 'pos')
+      onChanged()
+    } catch (e) {
+      toast.error((e as Error).message || 'No se pudo abrir el turno')
     } finally {
       setBusy(false)
     }
@@ -63,7 +61,8 @@ export default function TurnoBar({
     setBusy(true)
     const tid = toast.loading('Cerrando turno: sincronizando con la nube…')
     try {
-      // Barrera de sincronización: sube TODO y confirma que no quede nada local.
+      // Barrera de sync para los eventos event-sourced (cuentas/pedidos) que
+      // todavía viven en pos_events. La caja ya está persistida en el servidor.
       const res = await flushAndVerify(restaurantId)
       if (!res.ok) {
         toast.error(
@@ -72,18 +71,16 @@ export default function TurnoBar({
         )
         return
       }
-      // Resumen del turno: cajas cerradas desde que se abrió el turno.
-      const cajasTurno = closedCajas.filter(c => (c.closed_at || '') >= (shift.opened_at || ''))
-      const total = cajasTurno.reduce((s, c) => s + (c.total_sales || 0), 0)
-      await closeShift({ shift_id: shift.id, caja_count: cajasTurno.length, total_sales: total })
-      // Confirmar que el propio cierre de turno también subió.
-      await flushAndVerify(restaurantId)
+      const out = await cashApi.closeShift(restaurantId, shift.id)
+      onChanged()
+      const n = out?.shift?.cajaCount ?? 0
+      const total = out?.shift?.totalSales ?? 0
       toast.success(
-        `Turno cerrado · ${cajasTurno.length} caja${cajasTurno.length === 1 ? '' : 's'} · ${clp(total)} · todo sincronizado ✓`,
+        `Turno cerrado · ${n} caja${n === 1 ? '' : 's'} · ${clp(total)} · todo sincronizado ✓`,
         { id: tid, duration: 6000 },
       )
-    } catch {
-      toast.error('No se pudo cerrar el turno', { id: tid })
+    } catch (e) {
+      toast.error((e as Error).message || 'No se pudo cerrar el turno', { id: tid })
     } finally {
       setBusy(false)
     }
@@ -134,7 +131,7 @@ export default function TurnoBar({
         <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--jade)', flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>Turno abierto</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>Desde {fmtTime(shift.opened_at)}{fmtDayIfNotToday(shift.opened_at)}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>Desde {fmtTime(shift.openedAt)}{fmtDayIfNotToday(shift.openedAt)}</div>
         </div>
       </div>
       <button

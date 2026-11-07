@@ -3,17 +3,14 @@
 import { useEffect, useState } from 'react'
 import {
   usePosSync,
-  useOpenCashSession,
-  useOpenShift,
   useOpenAccounts,
   useSessionSummary,
   setRestaurantId,
   setUserId,
-  openCashSession,
-  closeCashSession,
   toPaymentMethod,
   deliveryPlatformLabel,
 } from '@/lib/pos'
+import { usePosCash, cashApi, toLegacyCashSession } from '@/lib/pos/cashApi'
 import { v4 as uuidv4 } from 'uuid'
 import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
@@ -39,8 +36,8 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 export default function PosCajaPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
   const { restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
-  const cashSession = useOpenCashSession(restaurantId)
-  const shift = useOpenShift(restaurantId)
+  const { caja: serverCaja, shift, loading: cashLoading, refresh: refreshCash } = usePosCash(restaurantId)
+  const cashSession = toLegacyCashSession(serverCaja, restaurantId)
   const openAccounts = useOpenAccounts(restaurantId)
   const summary = useSessionSummary(cashSession ?? undefined, restaurantId)
 
@@ -139,7 +136,8 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     const amount = Number.isFinite(parsed) ? parsed : 0
     setOpening(true)
     try {
-      await openCashSession({ session_id: uuidv4(), initial_amount: amount })
+      await cashApi.openCaja(restaurantId, amount, 'pos')
+      await refreshCash()
     } catch (err) {
     } finally {
       setOpening(false)
@@ -160,7 +158,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
     }
     setClosing(true)
     try {
-      if (cashSession) {
+      if (serverCaja) {
         const counted_amounts = [...ALL_METHODS, ...extraMethods].reduce((acc, m) => {
           acc[m] = m === 'efectivo' ? (hasCounted ? counted : expectedCash) : (byMethod[m]?.amount ?? 0)
           return acc
@@ -174,16 +172,16 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
 
         const closePayload = buildClosePayload()
 
-        await closeCashSession({
-          session_id: cashSession.id,
-          counted_amounts,
-          expected_amounts,
+        await cashApi.closeCaja(restaurantId, serverCaja.id, {
+          countedAmounts: counted_amounts,
+          expectedAmounts: expected_amounts,
           difference: hasCounted ? difference : 0,
           note: closingNote || undefined,
-          total_sales: totalSales,
-          total_tips: totalTips,
-          closed_accounts: closedAccounts,
+          totalSales,
+          totalTips,
+          closedAccounts,
         })
+        await refreshCash()
 
         if (getBridgeUrl()) {
           const pr = await printCashClose(closePayload)
@@ -272,7 +270,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
 
   // Mientras carga el local o aún no termina la primera sincronización, mostramos
   // un spinner en vez del "Abrir caja" (evita el falso cerrado al cambiar de local).
-  if ((restLoading || !syncReady) && !cashSession) {
+  if ((restLoading || !syncReady || cashLoading) && !cashSession) {
     return (
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
@@ -293,7 +291,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
             {historialBtn}
           </div>
 
-          <TurnoBar restaurantId={restaurantId} hasOpenCaja={false} />
+          <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
 
           {!shift ? null : (
           <>
@@ -353,7 +351,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
           {historialBtn}
         </div>
 
-        <TurnoBar restaurantId={restaurantId} hasOpenCaja={true} />
+        <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
 
         {/* ── Apertura ───────────────────────────── */}
         <div className="pos-caja-open">
