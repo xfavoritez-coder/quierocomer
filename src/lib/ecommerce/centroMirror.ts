@@ -14,6 +14,7 @@ import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
 interface StoredItemOpt { value?: string; optionName?: string }
 interface StoredItem {
   name?: string; dishName?: string; quantity?: number;
+  unit_price?: number; unitTotal?: number; price?: number;
   options?: StoredItemOpt[]; selectedOptions?: StoredItemOpt[];
   comment?: string; note?: string;
 }
@@ -55,6 +56,7 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
     ? (order.items as unknown as StoredItem[]).map((it) => ({
         productName: it.name || it.dishName || "Ítem",
         quantity: Number(it.quantity) || 1,
+        unit_price: Number(it.unit_price || it.unitTotal || it.price) || undefined,
         // Conservar las opciones/modificadores elegidos (antes se descartaban, por
         // eso no salían en el Centro de pedidos ni en la comanda).
         options: (it.options ?? it.selectedOptions ?? []).map((o) => o?.value || o?.optionName).filter(Boolean),

@@ -76,9 +76,9 @@ export async function POST(req: NextRequest) {
       const startWall = new Date(chileWall); startWall.setHours(0, 0, 0, 0);
       const startUtc = new Date(startWall.getTime() + offsetMs);
       const todayCount = await prisma.onlineOrder.count({
-        where: { restaurantId, customerName: { startsWith: "Rápida #" }, createdAt: { gte: startUtc } },
+        where: { restaurantId, customerName: { startsWith: "Venta rápida #" }, createdAt: { gte: startUtc } },
       });
-      effectiveName = `Rápida #${todayCount + 1}`;
+      effectiveName = `Venta rápida #${todayCount + 1}`;
     }
 
     // Subtotal server-side (nunca confiar en el total del cliente). El staff sí

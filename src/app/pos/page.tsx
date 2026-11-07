@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import {
   usePosSync,
@@ -21,7 +21,6 @@ import {
 import type { Account, PosStaff, PosTable } from '@/lib/pos'
 import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
-import { supabase } from '@/lib/supabase'
 import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant, switchPosBranch } from './lib/usePosRestaurant'
 import type { PosRestaurant } from './lib/usePosRestaurant'
@@ -336,36 +335,34 @@ export default function PosHomePage() {
   const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
   const [readyAlertMin, setReadyAlertMin] = useState<number | null>(null)
   const refreshOrdersRef = useRef<() => void>(() => {})
+
+  // Callback que recibe la lista de pedidos activos directamente desde OrdersBoard
+  // (que ya tiene polling cada 15s + realtime). Así los counts siempre están en sync
+  // con lo que muestra el tablero, sin necesitar una suscripción paralela.
+  const handleOrdersUpdate = useCallback((orders: any[]) => {
+    const delivery = orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
+    const retiro = orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
+    setOrderCounts({ retiro, delivery })
+    setActiveOrders(orders)
+  }, [])
+
+  // prepAlertMin / readyAlertMin: se cargan una vez al montar (no cambian frecuentemente)
   useEffect(() => {
     if (!restaurantId) return
-    const fetchCounts = async () => {
+    const fetchAlertConfig = async () => {
       try {
-        const ids = allBranches && allBranches.length > 1 ? allBranches.map(b => b.id) : [restaurantId]
-        const results = await Promise.all(
-          ids.map(id =>
-            fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${id}&scope=activos`, { cache: 'no-store' })
-              .then(r => r.ok ? r.json() : null).catch(() => null)
-          )
-        )
-        const allOrders = results.flatMap(d => Array.isArray(d?.orders) ? d.orders : [])
-        const delivery = allOrders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
-        const retiro = allOrders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
-        setOrderCounts({ retiro, delivery })
-        setActiveOrders(allOrders)
-        const first = results.find(d => d != null)
-        if (first && typeof first.prepAlertMinutes === 'number') setPrepAlertMin(first.prepAlertMinutes)
-        if (first && typeof first.readyAlertMinutes === 'number') setReadyAlertMin(first.readyAlertMinutes)
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+        if (!r.ok) return
+        const d = await r.json()
+        if (typeof d.prepAlertMinutes === 'number') setPrepAlertMin(d.prepAlertMinutes)
+        if (typeof d.readyAlertMinutes === 'number') setReadyAlertMin(d.readyAlertMinutes)
       } catch { /* noop */ }
     }
-    refreshOrdersRef.current = fetchCounts
-    fetchCounts()
-    if (!supabase) return
-    const channel = supabase
-      .channel(`pos-order-counts-${restaurantId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'PosOrder', filter: `restaurantId=eq.${restaurantId}` }, fetchCounts)
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [restaurantId, allBranches])
+    fetchAlertConfig()
+  }, [restaurantId])
+
+  // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
+  // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
 
   const totalOnline = orderCounts.retiro + orderCounts.delivery
   const tabCounts: Partial<Record<Tab, number>> = {
@@ -581,7 +578,7 @@ export default function PosHomePage() {
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
-        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} />
+        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} />
       )}
 
       {/* ── Mesas en modo Todas: mensaje para seleccionar sucursal ── */}

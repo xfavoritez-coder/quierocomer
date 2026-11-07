@@ -56,6 +56,14 @@ interface PosOrderLite {
 
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 const toName = (s: string) => s.trim().replace(/\S+/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase())
+// Venta rápida: nombre almacenado puede ser "Rápida #N" (formato viejo) o
+// "Venta rápida #N" (nuevo). Siempre mostramos "Venta rápida #N" sin pasar por
+// toName (que capitalizaría "rápida" a "Rápida").
+const displayName = (s: string) => {
+  const m = s.trim().match(/^(Venta\s+)?[Rr][aá]pida\s+#(\d+)$/i)
+  if (m) return `Venta rápida #${m[2]}`
+  return toName(s)
+}
 
 function cleanAddr(addr: string): string {
   return addr
@@ -238,7 +246,7 @@ function OrderCard({
               overflow: 'hidden', wordBreak: 'break-word',
             }}>
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-              {toName(order.customerName || 'Cliente')}
+              {displayName(order.customerName || 'Cliente')}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', rowGap: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
@@ -263,7 +271,7 @@ function OrderCard({
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
               }}>
                 {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-                {toName(order.customerName || 'Cliente')}
+                {displayName(order.customerName || 'Cliente')}
               </div>
               {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
               {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
@@ -560,7 +568,7 @@ function OrderDetailPanel({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
             {order.orderReference && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference}</span>}
-            {toName(order.customerName || 'Cliente')}
+            {displayName(order.customerName || 'Cliente')}
           </div>
           <div style={{ fontSize: 14, color: 'var(--ink-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -796,7 +804,7 @@ function SortIcon({ dir }: { dir: 'asc' | 'desc' }) {
 
 // ── Main component ──────────────────────────────────────────────────
 
-export default function OrdersBoard({ restaurantId, type, allBranches }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[] }) {
+export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersUpdate, refreshRef }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[]; onOrdersUpdate?: (orders: PosOrderLite[]) => void; refreshRef?: React.MutableRefObject<() => void> }) {
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
@@ -892,6 +900,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
         )
         const merged = results.flat()
         setOrders(merged)
+        onOrdersUpdate?.(merged)
         setDelifastEnabled(false)
         setSelected(prev => prev ? (merged.find(o => o.id === prev.id) ?? null) : null)
       } else {
@@ -899,6 +908,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
         const d = await r.json()
         if (r.ok && Array.isArray(d.orders)) {
           setOrders(d.orders)
+          onOrdersUpdate?.(d.orders)
           setDelifastEnabled(!!d.delifastEnabled)
           setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
         }
@@ -906,6 +916,12 @@ export default function OrdersBoard({ restaurantId, type, allBranches }: { resta
     } catch { }
     setLoading(false)
   }, [restaurantId, allBranches])
+
+  // Exponer fetchOrders al padre para que PrepAlertWatcher/DelifastCancelWatcher
+  // puedan forzar un re-fetch inmediato.
+  useEffect(() => {
+    if (refreshRef) refreshRef.current = fetchOrders
+  }, [refreshRef, fetchOrders])
 
   useEffect(() => {
     setLoading(true)
@@ -1237,7 +1253,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
           <button onClick={onClose} aria-label="Cerrar" style={closeXStyle}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
-          <div className="pos-modal-title" style={{ marginBottom: 14, paddingRight: 32 }}>{toName(order.customerName || 'Cliente')}</div>
+          <div className="pos-modal-title" style={{ marginBottom: 14, paddingRight: 32 }}>{displayName(order.customerName || 'Cliente')}</div>
           <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 10, marginBottom: 10 }}>
             <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
             <span style={{ ...num, fontWeight: 800, fontSize: 22, color: 'var(--ink)' }}>{clp(total)}</span>
@@ -1268,7 +1284,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
         <button onClick={onClose} aria-label="Cerrar" style={closeXStyle}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
-        <div className="pos-modal-title" style={{ marginBottom: 10, paddingRight: 32 }}>Cobrar · {toName(order.customerName || 'Cliente')}</div>
+        <div className="pos-modal-title" style={{ marginBottom: 10, paddingRight: 32 }}>Cobrar · {displayName(order.customerName || 'Cliente')}</div>
 
         <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 8, marginBottom: 8 }}>
           <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
