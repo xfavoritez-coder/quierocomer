@@ -642,9 +642,9 @@ function OrderDetailPanel({
           </div>
         </div>
 
-        {/* Fila 2: nombre del cliente + chip pedidos abajo */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, marginTop: -4 }}>
-          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2 }}>
+        {/* Fila 2: nombre del cliente + chip pedidos a la derecha */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: -4, minWidth: 0, width: '100%' }}>
+          <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName(order.customerName || 'Cliente')}
           </div>
           {order.customerPhone && customerCount !== null && (
