@@ -152,7 +152,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-        <span style={{ fontSize: 12.5, color: '#f59e0b', fontWeight: 600 }}>Cargando…</span>
+        <span style={{ fontSize: 12.5, color: '#64748b', fontWeight: 600 }}>Cargando…</span>
       </div>
     </div>
   )
@@ -164,7 +164,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
           <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
           <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-          <span style={{ fontSize: 12.5, color: '#f59e0b', fontWeight: 600 }}>Sin asignar</span>
+          <span style={{ fontSize: 12.5, color: '#64748b', fontWeight: 600 }}>Sin asignar</span>
         </div>
       </div>
     )
@@ -203,11 +203,11 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const displayColor = '#f59e0b'
 
   return (
-    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       {/* Always-visible toggle row */}
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 12 }}
       >
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1, textAlign: 'left' }}>Motorista Delifast</span>
@@ -218,9 +218,8 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         </svg>
       </button>
 
-      {/* Expandable details */}
-      {open && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 14px 14px', borderTop: '1px solid var(--line)' }}>
+      {/* Expandable details — siempre en DOM, ocultado con display para evitar clipping */}
+      <div style={{ display: open ? 'flex' : 'none', flexDirection: 'column', gap: 12, padding: '12px 14px 14px', borderTop: '1px solid var(--line)' }}>
           {/* Repartidor */}
           {t.driver && (t.driver.name || t.driver.phone) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -284,7 +283,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
