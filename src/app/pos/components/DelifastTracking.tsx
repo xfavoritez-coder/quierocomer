@@ -199,8 +199,14 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
     : etaMin != null && etaMin > 0
     ? `Entrega en ${etaMin} min`
     : null
-  const displayStatus = etaDisplay ?? statusLabel(t.status)
-  const displayColor = '#f59e0b'
+  // Corregir status: Delifast mantiene "dropoff" aunque ya llegó al cliente
+  const effectiveStatus = t.timeline.llegadaCasa && /dropoff|camino|ruta|transit/.test((t.status || '').toLowerCase())
+    ? 'at_dropoff'
+    : (t.status || '')
+  const isPickupStatus = /pickup/.test((t.status || '').toLowerCase())
+  const correctedLabel = (isPickupStatus && !t.timeline.llegadaLocal) ? 'Camino al local' : statusLabel(effectiveStatus)
+  const displayStatus = etaDisplay ?? correctedLabel
+  const displayColor = '#64748b'
 
   return (
     <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
