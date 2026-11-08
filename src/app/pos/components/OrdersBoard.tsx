@@ -590,7 +590,7 @@ function OrderDetailPanel({
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
         {/* Fila superior: nro pedido · X close */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 2px' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 800, color: 'var(--ink-2)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
             {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
           </span>
@@ -608,7 +608,7 @@ function OrderDetailPanel({
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 22px 14px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0px 22px 14px', minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName(order.customerName || 'Cliente')}
