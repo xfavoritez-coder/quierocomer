@@ -597,30 +597,77 @@ function DeliveryTimesSection({ dt, restaurantId }: { dt: DeliveryTimes; restaur
       </div>
 
       {/* Tabla por pedido */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {/* header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '4px 6px', marginBottom: 2 }}>
-          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Pedido</span>
-          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Prep.</span>
-          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Tránsito</span>
-          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
-          <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Delivery</span>
-        </div>
-        {dt.orders.map((o, i) => (
-          <div key={i} onClick={() => setSelected(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: 'pointer' }}>
-            <div style={{ minWidth: 0 }}>
-              <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                {o.ref ? `#${o.ref}` : '—'}
-              </span>
-              {o.name && <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{o.name}</span>}
+      {(() => {
+        const totalDelivery = dt.orders.reduce((s, o) => s + (o.deliveryFee || 0), 0)
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {/* header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '4px 6px', marginBottom: 2 }}>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase' }}>Pedido</span>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Prep.</span>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Tránsito</span>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', textAlign: 'right' }}>Delivery</span>
             </div>
-            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
-            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.transitMin != null ? `${o.transitMin}m` : '—'}</span>
-            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: o.totalMin != null ? timeColor(o.totalMin) : 'var(--ink-3)', textAlign: 'right', alignSelf: 'center' }}>{o.totalMin != null ? `${o.totalMin}m` : '—'}</span>
-            <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.deliveryFee > 0 ? clp(o.deliveryFee) : '—'}</span>
+            {dt.orders.map((o, i) => (
+              <div key={i} onClick={() => setSelected(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '6px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: 'pointer' }}>
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                    {o.ref ? `#${o.ref}` : '—'}
+                  </span>
+                  {o.name && <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{o.name}</span>}
+                </div>
+                <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
+                <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.transitMin != null ? `${o.transitMin}m` : '—'}</span>
+                <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: o.totalMin != null ? timeColor(o.totalMin) : 'var(--ink-3)', textAlign: 'right', alignSelf: 'center' }}>{o.totalMin != null ? `${o.totalMin}m` : '—'}</span>
+                <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.deliveryFee > 0 ? clp(o.deliveryFee) : '—'}</span>
+              </div>
+            ))}
+            {/* Fila total */}
+            {totalDelivery > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 52px 52px 56px', gap: 8, padding: '8px 6px', borderTop: '1px solid var(--line)', marginTop: 4 }}>
+                <span style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)' }}>Total</span>
+                <span /><span /><span />
+                <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 900, color: 'var(--ink)', textAlign: 'right' }}>{clp(totalDelivery)}</span>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        )
+      })()}
+
+      {/* Gráfico: costo delivery por día */}
+      {(() => {
+        const byDay = new Map<string, number>()
+        for (const o of dt.orders) {
+          if (!o.createdAt || !o.deliveryFee) continue
+          const day = o.createdAt.slice(0, 10)
+          byDay.set(day, (byDay.get(day) ?? 0) + o.deliveryFee)
+        }
+        const days = Array.from(byDay.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+        if (days.length < 2) return null
+        const maxFee = Math.max(1, ...days.map(d => d[1]))
+        return (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Costo delivery por día</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120, overflowX: 'auto', overflowY: 'hidden', paddingTop: 20 }}>
+              {days.map(([date, fee]) => {
+                const pct = Math.max(4, Math.round((fee / maxFee) * 100))
+                const label = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', timeZone: 'America/Santiago' }).format(new Date(date + 'T12:00:00'))
+                return (
+                  <div key={date} style={{ flex: '1 0 44px', minWidth: 44, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }} title={`${label} · ${clp(fee)}`}>
+                    <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      <div style={{ position: 'relative', width: '70%', maxWidth: 32, height: `${pct}%`, background: `linear-gradient(180deg,${BLUE},${BLUE}bb)`, borderRadius: '4px 4px 0 0', minHeight: 4 }}>
+                        <span style={{ position: 'absolute', bottom: '100%', marginBottom: 2, left: '50%', transform: 'translateX(-50%)', fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{clpShort(fee)}</span>
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 4, whiteSpace: 'nowrap' }}>{label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {selected && <DeliveryOrderModal order={selected} restaurantId={restaurantId} onClose={() => setSelected(null)} />}
     </Card>
