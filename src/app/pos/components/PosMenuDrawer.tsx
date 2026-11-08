@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import type { PosRestaurant } from '../lib/usePosRestaurant'
 import PosTiemposInline from './PosTiemposInline'
 
@@ -20,6 +21,7 @@ const INLINE_FALLBACK_URLS: Record<string, string> = {
 // Drawer de Ajustes del POS (caja, mesas, garzones, impresora). Compartido por
 // todas las pantallas del POS para que el menú del header sea idéntico.
 export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavigate, onInline }: { cashSession: boolean; restaurant: PosRestaurant | null; onClose: () => void; onNavigate: (url: string) => void; onInline?: (id: string) => void }) {
+  const router = useRouter()
   const items: DrawerItem[] = [
     {
       label: 'Historial pedidos',
@@ -100,7 +102,9 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
                     if (fallback) onNavigate(fallback)
                   }
                 } else if (item.href) {
-                  onNavigate(item.href)
+                  // Usar router.push (SPA) para evitar que location.assign
+                  // pase por el SW y sirva contenido cacheado incorrecto
+                  router.push(item.href)
                 }
               }}
             >
