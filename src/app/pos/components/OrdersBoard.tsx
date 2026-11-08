@@ -655,9 +655,9 @@ function OrderDetailPanel({
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Seguimiento del reparto (Delifast) — cinta full-width */}
+        {/* Seguimiento del reparto (Delifast) — cinta full-width, pegada al header */}
         {isDelivery && (
-          <div style={{ margin: '0 -22px', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
+          <div style={{ margin: '-16px -22px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
             <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />
           </div>
         )}
@@ -696,8 +696,8 @@ function OrderDetailPanel({
             )}
             {/* Hora — "Realizado a las HH:MM p.m." */}
             {order.createdAt && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-3)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 0, flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Realizado a las {fmtTimeAmPm(order.createdAt)}
               </div>
             )}

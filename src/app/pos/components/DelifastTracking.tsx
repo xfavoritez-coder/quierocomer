@@ -103,12 +103,11 @@ function hm(ts?: string | null): string | null {
 function StatusBadge({ label, color }: { label: string; color: string }) {
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
+      display: 'inline-flex', alignItems: 'center',
       fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
       padding: '3px 9px', borderRadius: 20,
       background: color + '18', color, border: `1px solid ${color}40`,
     }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
       {label}
     </span>
   )
