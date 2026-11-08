@@ -1757,7 +1757,14 @@ interface ClientRow {
 }
 interface ClientsData {
   total: number
+  filtered: number
   byStatus: { active: number; at_risk: number; churned: number; new: number }
+  avgTicketGlobal: number
+  top3: ClientRow[]
+  fieles: ClientRow[]
+  aRecuperar: ClientRow[]
+  count80: number
+  pct80clients: number
   clients: ClientRow[]
 }
 
@@ -1767,45 +1774,197 @@ const STATUS_LABEL: Record<ClientStatus, string> = { active: 'Activo', at_risk: 
 const STATUS_COLOR: Record<ClientStatus, string> = { active: 'var(--jade)', at_risk: 'var(--amber)', churned: '#ef4444', new: 'var(--slate)' }
 const STATUS_BG: Record<ClientStatus, string>    = { active: 'var(--jade-tint)', at_risk: 'var(--amber-tint)', churned: '#fef2f2', new: 'var(--slate-tint)' }
 
+// ── Detalle de un cliente ─────────────────────────────────────────────
+function ClientDetailModal({ client, restaurantId, onClose }: {
+  client: ClientRow; restaurantId: string; onClose: () => void
+}) {
+  interface COrder {
+    id: string; orderReference?: string | null; customerName: string; customerPhone: string
+    addressLine: string; saleType: string; isDelivery: boolean
+    totalAmount: number; paidAmount: number; deliveryFee: number; tipAmount: number
+    changeAmount: number; items: unknown; createdAt: string; posStatus: string
+    vendorName?: string | null; rawPayload?: unknown
+    surveySentAt?: string | null; surveyEmailOpenedAt?: string | null; surveyAnsweredAt?: string | null
+    opsReadyForDeliveryAt?: string | null; opsDispatchedAt?: string | null; opsDeliveredAt?: string | null
+  }
+  const [orders, setOrders] = useState<COrder[]>([])
+  const [loadingOrders, setLoadingOrders] = useState(true)
+  const [selectedOrder, setSelectedOrder] = useState<PastOrder | null>(null)
+
+  useEffect(() => {
+    if (!client.phone) { setLoadingOrders(false); return }
+    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(client.phone)}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.orders) setOrders(d.orders) })
+      .catch(() => {})
+      .finally(() => setLoadingOrders(false))
+  }, [restaurantId, client.phone])
+
+  const h = (client.email + client.phone).split('').reduce((a, ch) => a + ch.charCodeAt(0), 0)
+  const avatarColor = ['#3b82f6','#8b5cf6','#ec4899','#06b6d4','#10b981','#f59e0b','#ef4444'][h % 7]
+  const initials = (() => {
+    const n = client.name || client.email || client.phone || '?'
+    return n.split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('') || '?'
+  })()
+
+  function itemQty(items: unknown): number {
+    if (!Array.isArray(items)) return 0
+    return items.reduce((s, it) => s + (Number((it as any)?.quantity ?? (it as any)?.qty ?? 1) || 1), 0)
+  }
+
+  return (
+    <div className="pos-modal-overlay" onClick={onClose} style={{ alignItems: 'flex-end', padding: 0 }}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 520, height: '90dvh', background: 'var(--surface)', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
+      >
+        {selectedOrder ? (
+          <PastOrderDetail order={selectedOrder} restaurantId={restaurantId} onClose={() => setSelectedOrder(null)} />
+        ) : (
+          <>
+            {/* Header cliente */}
+            <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                {/* Avatar */}
+                <div style={{ width: 54, height: 54, borderRadius: '50%', background: avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: '#fff', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,.15)' }}>
+                  {initials}
+                </div>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontWeight: 800, fontSize: 18, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {client.name || client.email || client.phone}
+                  </div>
+                  {client.phone && <div style={{ fontFamily: F, fontSize: 14, color: 'var(--ink-2)', marginTop: 3 }}>{client.phone}</div>}
+                  {client.email && <div style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</div>}
+                  <div style={{ marginTop: 6 }}>
+                    <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: STATUS_BG[client.status], color: STATUS_COLOR[client.status], textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                      {STATUS_LABEL[client.status]}
+                    </span>
+                  </div>
+                </div>
+                {/* Close */}
+                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0, flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              {/* Stats grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 14 }}>
+                {[
+                  { label: 'Pedidos',   value: String(client.orders) },
+                  { label: 'Gastado',   value: clpShort(client.totalSpent) },
+                  { label: '⌀ Ticket',  value: clp(client.avgTicket) },
+                  { label: 'Frecuencia', value: client.avgFrequencyDays ? `c/${client.avgFrequencyDays}d` : '—' },
+                ].map(s => (
+                  <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 3 }}>{s.label}</div>
+                    <div style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Lista de pedidos */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>
+                Pedidos{orders.length > 0 ? ` · ${orders.length}` : ''}
+              </div>
+              {loadingOrders && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  Cargando…
+                </div>
+              )}
+              {!loadingOrders && orders.length === 0 && (
+                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Sin pedidos registrados</div>
+              )}
+              {orders.map(o => {
+                const canceled = o.posStatus === 'canceled'
+                const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
+                const isDelivery = o.isDelivery || o.saleType === 'delivery'
+                const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+                const qty = itemQty(o.items)
+                const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+                const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
+                return (
+                  <div
+                    key={o.id}
+                    onClick={() => setSelectedOrder(o as unknown as PastOrder)}
+                    style={{ border: '1.5px solid var(--line)', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, opacity: canceled ? 0.7 : 1 }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
+                        {o.orderReference && (
+                          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 12 }}>#{o.orderReference}</span>
+                        )}
+                        <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>
+                          {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: typeColor + '20', color: typeColor }}>{typeLabel}</span>
+                        {qty > 0 && <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
+                        {o.surveyAnsweredAt && <span style={{ fontFamily: F, fontSize: 11, color: 'var(--jade)' }}>⭐ Encuesta</span>}
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                      <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+                        {clp(o.totalAmount)}
+                      </span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: canceled ? '#6b728020' : paid ? '#16a34a20' : '#f59e0b20', color: canceled ? '#6b7280' : paid ? '#16a34a' : '#f59e0b' }}>
+                        {canceled ? 'Anulado' : paid ? 'Pagado' : 'Sin cobro'}
+                      </span>
+                    </div>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Sección clientes ──────────────────────────────────────────────────
 function ClientsSection({ restaurantId }: { restaurantId: string }) {
   const [cd, setCd] = useState<ClientsData | null>(null)
   const [clLoading, setClLoading] = useState(true)
   const [sortKey, setSortKey] = useState<ClientSortKey>('riskScore')
   const [sortAsc, setSortAsc] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<ClientStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(0)
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null)
+  const PAGE_SIZE = 10
 
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(0) }, 350)
+    return () => clearTimeout(t)
+  }, [search])
+
+  // Fetch when params change
   useEffect(() => {
     setClLoading(true)
-    fetch(`/api/panel/ecommerce/pos-orders/clients?restaurantId=${restaurantId}&limit=500`)
+    const params = new URLSearchParams({
+      restaurantId, pageSize: String(PAGE_SIZE), page: String(page),
+      sortKey, sortAsc: sortAsc ? '1' : '0',
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    })
+    fetch(`/api/panel/ecommerce/pos-orders/clients?${params}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setCd(d) })
       .finally(() => setClLoading(false))
-  }, [restaurantId])
+  }, [restaurantId, page, debouncedSearch, sortKey, sortAsc])
 
   const toggleSort = (key: ClientSortKey) => {
     if (sortKey === key) setSortAsc(a => !a)
     else { setSortKey(key); setSortAsc(false) }
   }
 
-  const rows = cd?.clients ?? []
-  const filtered = rows.filter(c => {
-    if (filterStatus !== 'all' && c.status !== filterStatus) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q)
-    }
-    return true
-  })
-  const sorted = filtered.slice().sort((a, b) => {
-    let av: number, bv: number
-    if (sortKey === 'lastOrderAt') {
-      av = new Date(a.lastOrderAt).getTime(); bv = new Date(b.lastOrderAt).getTime()
-    } else {
-      av = a[sortKey] ?? 0; bv = b[sortKey] ?? 0
-    }
-    return sortAsc ? av - bv : bv - av
-  })
+  const pageRows = cd?.clients ?? []
 
   const SortArrow = ({ col }: { col: ClientSortKey }) => (
     <svg width="10" height="10" viewBox="0 0 10 10" style={{ marginLeft: 3, opacity: sortKey === col ? 1 : 0.3 }}>
@@ -1823,38 +1982,8 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
   if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
   if (!cd) return null
 
-  const allRows = cd.clients
-  const totalGastado = allRows.reduce((s, c) => s + c.totalSpent, 0)
-  const avgGastoCliente = allRows.length > 0 ? Math.round(totalGastado / allRows.length) : 0
-  const avgTicketGlobal = allRows.length > 0 ? Math.round(allRows.reduce((s, c) => s + c.avgTicket, 0) / allRows.length) : 0
-
-  // Podio VIP: top 3 por gasto total
-  const bySpend = allRows.slice().sort((a, b) => b.totalSpent - a.totalSpent)
-  const top3 = bySpend.slice(0, 3)
-
-  // 80/20: cuántos clientes generan el 80% del ingreso
-  const target80 = totalGastado * 0.8
-  let acc80 = 0, count80 = 0
-  for (const c of bySpend) { acc80 += c.totalSpent; count80++; if (acc80 >= target80) break }
-  const pct80clients = allRows.length > 0 ? Math.round((count80 / allRows.length) * 100) : 0
-
-  // Más fieles: top 5 por frecuencia (menor avgFrequencyDays)
-  const fieles = allRows
-    .filter(c => c.avgFrequencyDays !== null && c.orders >= 3)
-    .sort((a, b) => (a.avgFrequencyDays ?? 999) - (b.avgFrequencyDays ?? 999))
-    .slice(0, 5)
-
-  // Clientes a recuperar: at_risk o churned con 3+ pedidos, ordenados por gasto desc
-  const aRecuperar = allRows
-    .filter(c => (c.status === 'at_risk' || c.status === 'churned') && c.orders >= 3)
-    .sort((a, b) => b.totalSpent - a.totalSpent)
-    .slice(0, 5)
-
-  // Nuevos este mes (status new)
-  const nuevosEsteMes = cd.byStatus.new
-
-  // Distribución de salud: porcentajes
-  const totalForPct = cd.total || 1
+  const { top3, fieles, aRecuperar, count80, pct80clients } = cd
+  const totalPages = Math.ceil(cd.filtered / PAGE_SIZE)
 
   // Avatar helper
   const initials = (c: ClientRow) => {
@@ -1878,9 +2007,7 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {[
           { label: 'Total clientes', value: cd.total.toLocaleString('es-CL'), color: BLUE },
-          { label: 'Total gastado', value: clpShort(totalGastado), color: GREEN },
-          { label: 'Gasto prom. cliente', value: clp(avgGastoCliente), color: PURPLE },
-          { label: 'Ticket promedio', value: clp(avgTicketGlobal), color: 'var(--amber)' },
+          { label: 'Ticket promedio', value: clp(cd.avgTicketGlobal), color: 'var(--amber)' },
         ].map(k => (
           <div key={k.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '16px 18px', borderTop: `4px solid ${k.color}` }}>
             <div style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>{k.label}</div>
@@ -1948,13 +2075,13 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
           <div style={{ marginTop: 10, height: 6, borderRadius: 999, background: 'var(--sunk)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${pct80clients}%`, background: `linear-gradient(90deg,${BLUE},${PURPLE})`, borderRadius: 999 }} />
           </div>
-          <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 4 }}>{count80} de {allRows.length} clientes</div>
+          <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 4 }}>{count80} de {cd.total} clientes</div>
         </Card>
 
         {/* Nuevos este mes */}
         <Card style={{ padding: '14px' }}>
           <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Nuevos clientes</div>
-          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: GREEN, lineHeight: 1 }}>{nuevosEsteMes}</div>
+          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: GREEN, lineHeight: 1 }}>{cd.byStatus.new}</div>
           <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4 }}>
             clientes con su <strong>primer pedido</strong> registrado
           </div>
@@ -2015,41 +2142,10 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
         </Card>
       )}
 
-      {/* ── Distribución de salud ── */}
-      <Card style={{ padding: '14px' }}>
-        <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Salud de la base</div>
-        {/* Barra compuesta */}
-        <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', marginBottom: 12, gap: 1 }}>
-          {(['active','new','at_risk','churned'] as ClientStatus[]).map(s => {
-            const pct = Math.round((cd.byStatus[s] / totalForPct) * 100)
-            return pct > 0 ? <div key={s} style={{ width: `${pct}%`, background: STATUS_COLOR[s], transition: 'width .3s' }} /> : null
-          })}
-        </div>
-        {/* Leyenda + botones filtro */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-          <button onClick={() => setFilterStatus('all')}
-            style={{ background: filterStatus === 'all' ? 'var(--surface)' : 'var(--sunk)', border: `1.5px solid ${filterStatus === 'all' ? 'var(--ink-3)' : 'var(--line)'}`, borderRadius: 10, padding: '8px 4px', cursor: 'pointer', textAlign: 'center' }}>
-            <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: 'var(--ink)' }}>{cd.total}</div>
-            <div style={{ fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 2 }}>Todos</div>
-          </button>
-          {(['active','at_risk','churned','new'] as ClientStatus[]).map(s => {
-            const pct = Math.round((cd.byStatus[s] / totalForPct) * 100)
-            return (
-              <button key={s} onClick={() => setFilterStatus(filterStatus === s ? 'all' : s)}
-                style={{ background: filterStatus === s ? STATUS_BG[s] : 'var(--sunk)', border: `1.5px solid ${filterStatus === s ? STATUS_COLOR[s] : 'var(--line)'}`, borderRadius: 10, padding: '8px 4px', cursor: 'pointer', textAlign: 'center' }}>
-                <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: STATUS_COLOR[s] }}>{cd.byStatus[s]}</div>
-                <div style={{ fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', marginTop: 1 }}>{STATUS_LABEL[s]}</div>
-                <div style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-3)' }}>{pct}%</div>
-              </button>
-            )
-          })}
-        </div>
-      </Card>
-
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Directorio de clientes</span>
-        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{cd.total} únicos</span>
+        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{debouncedSearch ? `${cd.filtered} de ${cd.total}` : `${cd.total} únicos`}</span>
       </div>
 
       {/* Buscador */}
@@ -2094,8 +2190,8 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.slice(0, 100).map((c, i) => (
-              <tr key={c.email || c.phone} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', borderRadius: 8 }}>
+            {pageRows.map((c, i) => (
+              <tr key={c.email || c.phone} onClick={() => setSelectedClient(c)} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', borderRadius: 8, cursor: 'pointer' }}>
                 {/* Riesgo */}
                 <td style={{ padding: '8px 6px 8px 0', textAlign: 'center', width: 56 }}>
                   <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -2130,16 +2226,32 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
             ))}
           </tbody>
         </table>
-        {sorted.length > 100 && (
-          <p style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', textAlign: 'center', margin: '12px 0 0' }}>
-            Mostrando 100 de {sorted.length} clientes filtrados
-          </p>
-        )}
-        {sorted.length === 0 && (
-          <p style={{ fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0' }}>Sin clientes para los filtros actuales.</p>
+        {pageRows.length === 0 && (
+          <p style={{ fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0' }}>Sin clientes para la búsqueda actual.</p>
         )}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+            style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: page === 0 ? 'var(--ink-3)' : 'var(--ink)', cursor: page === 0 ? 'not-allowed' : 'pointer', opacity: page === 0 ? 0.5 : 1 }}>
+            ← Anterior
+          </button>
+          <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)' }}>
+            Página {page + 1} de {totalPages}
+          </span>
+          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+            style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: page >= totalPages - 1 ? 'var(--ink-3)' : 'var(--ink)', cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer', opacity: page >= totalPages - 1 ? 0.5 : 1 }}>
+            Siguiente →
+          </button>
+        </div>
+      )}
     </Card>
+
+    {selectedClient && (
+      <ClientDetailModal client={selectedClient} restaurantId={restaurantId} onClose={() => setSelectedClient(null)} />
+    )}
     </div>
   )
 }

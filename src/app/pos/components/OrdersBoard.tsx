@@ -106,8 +106,8 @@ function nextAction(stage: string, isDelivery: boolean, delifastVentaId?: string
   if (stage === 'ready' && isDelivery && delifastVentaId) return null
   if (stage === 'ready' && isDelivery) return { label: 'Enviar a reparto', stage: 'out_for_delivery' }
   if (stage === 'ready' && !isDelivery) return { label: 'Entregado', stage: 'delivered' }
-  // Aunque Delifast esté asignado, siempre permitir marcar entregado manualmente
-  // (si Delifast falla el pedido no puede quedar bloqueado sin salida).
+  // Con Delifast activo en reparto: Delifast controla la entrega, no mostrar botón.
+  if (stage === 'out_for_delivery' && delifastVentaId) return null
   if (stage === 'out_for_delivery') return { label: 'Entregado', stage: 'delivered' }
   return null
 }
