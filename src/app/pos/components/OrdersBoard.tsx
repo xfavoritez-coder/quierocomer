@@ -670,16 +670,16 @@ function OrderDetailPanel({
         {/* Dirección + hora */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {order.createdAt && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Realizado a las {fmtTimeAmPm(order.createdAt)}
-              </div>
-            )}
             {isDelivery && order.addressLine && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 {cleanAddr(order.addressLine)}
+              </div>
+            )}
+            {order.createdAt && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Realizado a las {fmtTimeAmPm(order.createdAt)}
               </div>
             )}
           </div>

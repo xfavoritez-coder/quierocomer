@@ -293,8 +293,8 @@ export default function PosHomePage() {
     window.history.replaceState(null, '', id ? `/pos/${id}` : '/pos')
   }, [])
 
-  const handleReportesStateChange = useCallback((tab: string, from: string, to: string, chart: string) => {
-    const params = new URLSearchParams({ tab, from, to, chart })
+  const handleReportesStateChange = useCallback((tab: string, from: string, to: string, chart: string, branch: string) => {
+    const params = new URLSearchParams({ tab, from, to, chart, branch })
     window.history.replaceState(null, '', `/pos/reportes?${params.toString()}`)
   }, [])
 

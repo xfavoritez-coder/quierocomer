@@ -29,8 +29,8 @@ function ReportesContent() {
   const to = searchParams.get('to') || undefined
   const chart = searchParams.get('chart') || undefined
 
-  const handleStateChange = (tab: string, from: string, to: string, chart: string) => {
-    const params = new URLSearchParams({ tab, from, to, chart })
+  const handleStateChange = (tab: string, from: string, to: string, chart: string, branch: string) => {
+    const params = new URLSearchParams({ tab, from, to, chart, branch })
     router.replace(`/pos/reportes?${params.toString()}`, { scroll: false })
   }
 

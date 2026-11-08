@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import { fmtElapsed } from '../OrderClock'
-import DelifastTracking from '../DelifastTracking'
 import { deliveryPlatformLabel } from '@/lib/pos'
+import PastOrderDetail from '../PastOrderDetail'
+import type { PastOrder } from '../PastOrderDetail'
 
 // Origen del pedido (por dónde entró): plataforma de delivery, Uber Eats directo,
 // Toteat, tienda ecommerce o tomado a mano en el POS.
@@ -165,104 +166,6 @@ function ymd(offset: number): string {
   const d = new Date()
   d.setDate(d.getDate() + offset)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// ── Detail panel (read-only) ─────────────────────────────────────────
-function HistorialDetailPanel({ order, onClose, restaurantId }: { order: HistorialOrder; onClose: () => void; restaurantId: string }) {
-  const canceled = order.posStatus === 'canceled'
-  const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
-  const isDelivery = order.isDelivery || order.saleType === 'delivery'
-  const lines = itemLines(order.items)
-  const payMethod = order.rawPayload && typeof order.rawPayload === 'object' ? (order.rawPayload as any)?.posPayment?.method : null
-  const cancelReason = canceled && order.rawPayload && typeof order.rawPayload === 'object' ? (order.rawPayload as any)?.posCancel?.reason : null
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexShrink: 0 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, marginBottom: 4 }}>
-            {(order.orderReference || order.dailyNumber != null) && (
-              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 8 }}>#{order.orderReference ?? order.dailyNumber}</span>
-            )}
-            {displayName(order.customerName || 'Cliente')}
-          </div>
-          {order.customerPhone && <div style={{ fontSize: 15, color: 'var(--ink-2)', marginBottom: 2 }}>{order.customerPhone}</div>}
-          {isDelivery && order.addressLine && <div style={{ fontSize: 15, color: 'var(--ink-2)' }}>{order.addressLine}</div>}
-          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {(() => { const s = sourceTag(order); return <span style={chip(s.color)}>{s.label}</span> })()}
-            <span>{new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-            {(() => { const ms = frozenElapsedMs(order); return ms != null ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontWeight: 700 }} title="Tiempo total del pedido">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                {fmtElapsed(ms)}
-              </span>
-            ) : null })()}
-          </div>
-        </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-
-      {/* Body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Seguimiento Delifast del pedido entregado (repartidor, timeline, foto). */}
-        {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} />}
-
-        {/* Items */}
-        {lines.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {lines.map((l, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, color: 'var(--ink)' }}>
-                <span>{l.qty > 1 && <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, marginRight: 6, color: 'var(--ink-2)' }}>{l.qty}×</span>}{l.name}</span>
-                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-2)', flexShrink: 0, marginLeft: 12 }}>{clp(l.price * l.qty)}</span>}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Total + despacho + pago */}
-        <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {order.deliveryFee > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
-              <span>Despacho</span>
-              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.deliveryFee)}</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
-            <span>Total</span>
-            <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
-          </div>
-          {/* Estado de pago integrado */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
-              {payMethod ? payMethod.charAt(0).toUpperCase() + payMethod.slice(1) : 'Pago'}
-            </span>
-            {canceled ? (
-              <span style={{ ...chip('#6b7280'), fontSize: 11 }}>
-                {cancelReason ? `Anulado · ${cancelReason}` : 'Anulado'}
-              </span>
-            ) : paid ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 800, color: 'var(--jade)',
-                background: 'var(--jade-tint)', padding: '4px 10px', borderRadius: 8 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                {clp(order.paidAmount)}
-              </span>
-            ) : (
-              <span style={{ ...chip('#f59e0b'), fontSize: 11 }}>Sin cobro registrado</span>
-            )}
-          </div>
-        </div>
-
-        {/* Timeline */}
-        <div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Historial</div>
-          <OrderTimeline order={order} />
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // ── Order card ────────────────────────────────────────────────────────
@@ -444,7 +347,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
   )
 
   const detailSection = selected ? (
-    <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} restaurantId={restaurantId} />
+    <PastOrderDetail order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} />
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
@@ -477,7 +380,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
             style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
           >
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
-            <HistorialDetailPanel order={selected} onClose={() => setSelected(null)} restaurantId={restaurantId} />
+            <PastOrderDetail order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} />
           </div>
         </div>
       )}

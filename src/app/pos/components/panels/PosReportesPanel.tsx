@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import DelifastTracking from '../DelifastTracking'
 import StoreEventsPanel from '@/components/ecommerce/StoreEventsPanel'
+import PastOrderDetail from '../PastOrderDetail'
+import type { PastOrder } from '../PastOrderDetail'
 
 const DeliveryHeatmap = dynamic(() => import('../DeliveryHeatmap'), { ssr: false, loading: () => <div style={{ height: 340, borderRadius: 14, background: 'var(--sunk)', border: '1px solid var(--line)' }} /> })
 
@@ -68,6 +70,32 @@ interface DeliveryTimeRow {
   prepMin: number | null; transitMin: number | null; totalMin: number | null;
   items: unknown; delifastVentaId: string | null;
 }
+function rowToPastOrder(row: DeliveryTimeRow): PastOrder {
+  return {
+    id: row.orderId,
+    orderReference: row.ref,
+    customerName: row.name,
+    customerPhone: row.phone,
+    addressLine: row.addressLine,
+    saleType: 'delivery',
+    isDelivery: true,
+    vendorName: row.vendorName,
+    posStatus: 'done',
+    totalAmount: row.totalAmount,
+    paidAmount: row.paidAmount,
+    deliveryFee: row.deliveryFee,
+    tipAmount: row.tipAmount,
+    items: row.items,
+    createdAt: row.createdAt,
+    opsReadyForDeliveryAt: row.readyAt,
+    opsDispatchedAt: row.dispatchedAt,
+    opsDeliveredAt: row.deliveredAt,
+    prepMin: row.prepMin,
+    transitMin: row.transitMin,
+    totalMin: row.totalMin,
+  }
+}
+
 interface DeliveryTimes {
   count: number
   avgTotal: number | null; avgPrep: number | null; avgTransit: number | null
@@ -585,7 +613,7 @@ function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
     byDay.set(day, (byDay.get(day) ?? 0) + o.deliveryFee)
   }
   const days = Array.from(byDay.entries()).sort((a, b) => a[0].localeCompare(b[0]))
-  if (days.length < 2) return null
+  if (days.length < 1) return null
   const maxFee = Math.max(1, ...days.map(d => d[1]))
   const totalDelivery = orders.reduce((s, o) => s + (o.deliveryFee || 0), 0)
 
@@ -713,12 +741,7 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
 
   return (
     <Card>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Detalle deliverys</span>
-        <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>
-          {dt.orders.filter((o: any) => o.totalMin != null).length} de {dt.count} entregados
-        </span>
-      </div>
+      <div style={{ marginBottom: 12 }} />
 
       {/* KPI summary pills */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
@@ -726,7 +749,6 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
           { label: 'Promedio total', value: minLabel(kpiAvgTotal), color: kpiAvgTotal != null ? timeColor(kpiAvgTotal) : 'var(--ink-3)' },
           { label: 'Preparación', value: minLabel(kpiAvgPrep), color: BLUE },
           { label: 'En tránsito', value: minLabel(kpiAvgTransit), color: PURPLE },
-          { label: 'Costo total', value: kpiCostoTotal > 0 ? clp(kpiCostoTotal) : '—', color: 'var(--amber)' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', borderLeft: `3px solid ${s.color}` }}>
             <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{s.label}</div>
@@ -823,7 +845,27 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
         </div>
       )}
 
-      {selected && <DeliveryOrderModal order={selected} restaurantId={restaurantId} onClose={() => setSelected(null)} />}
+      {selected && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          className="delivery-modal-backdrop"
+          onClick={() => setSelected(null)}
+        >
+          <style>{`
+            @media (min-width: 600px) {
+              .delivery-modal-backdrop { align-items: center !important; padding: 24px !important; }
+              .delivery-modal-sheet { border-radius: 20px !important; max-height: 88dvh !important; }
+            }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            className="delivery-modal-sheet"
+            style={{ width: '100%', maxWidth: 520, maxHeight: '92dvh', background: 'var(--surface)', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
+          >
+            <PastOrderDetail order={rowToPastOrder(selected)} restaurantId={restaurantId} onClose={() => setSelected(null)} />
+          </div>
+        </div>
+      )}
     </Card>
   )
 }
@@ -897,7 +939,19 @@ function CancellationsSection({ data }: { data: CancellationData }) {
 
 // ── Satisfacción / NPS ────────────────────────────────────────────
 interface SurveyAvg { id: string; text: string; avg: number; count: number }
-interface SurveyResp { id: string; customerName: string | null; comment: string | null; createdAt: string; answers: { id: string; text: string; v: number }[] }
+interface SurveyResp {
+  id: string
+  orderId?: string | null
+  orderNumber?: string | null
+  orderTotal?: number | null
+  orderType?: string | null
+  orderItems?: string[]
+  customerName: string | null
+  customerPhone?: string | null
+  comment: string | null
+  createdAt: string
+  answers: { id: string; text: string; v: number }[]
+}
 
 function StarBar({ avg }: { avg: number }) {
   const stars = [1, 2, 3, 4, 5]
@@ -912,10 +966,12 @@ function StarBar({ avg }: { avg: number }) {
   )
 }
 
-function SatisfaccionSection({ restaurantId }: { restaurantId: string }) {
+function SatisfaccionSection({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
   const [averages, setAverages] = useState<SurveyAvg[]>([])
   const [responses, setResponses] = useState<SurveyResp[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [detailOrder, setDetailOrder] = useState<PastOrder | null>(null)
+  const [loadingOrder, setLoadingOrder] = useState(false)
 
   useEffect(() => {
     fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
@@ -928,41 +984,108 @@ function SatisfaccionSection({ restaurantId }: { restaurantId: string }) {
 
   const withData = averages.filter(a => a.count > 0)
   const overall = withData.reduce((s, a) => s + a.avg, 0) / (withData.length || 1)
-  const lastComments = responses.filter(r => r.comment).slice(0, 3)
+  const lastComments = responses.filter(r => r.comment).slice(0, 5)
+
+  function handleCommentClick(resp: SurveyResp) {
+    if (!resp.orderId || !resp.customerPhone) return
+    setLoadingOrder(true)
+    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(resp.customerPhone)}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.orders) {
+          const found = d.orders.find((o: any) => o.id === resp.orderId)
+          if (found) setDetailOrder(found as PastOrder)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingOrder(false))
+  }
+
+  const branchName = allBranches && allBranches.length > 1
+    ? (allBranches.find(b => b.id === restaurantId)?.branchName ?? null)
+    : null
 
   return (
-    <Card>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Satisfacción</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <StarBar avg={overall} />
-          <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{overall.toFixed(1)}</span>
-          <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{withData[0]?.count ?? 0} resp.</span>
-        </div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: lastComments.length > 0 ? 14 : 0 }}>
-        {withData.map(a => (
-          <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <StarBar avg={a.avg} />
-              <span style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{a.avg.toFixed(1)}</span>
-            </div>
+    <>
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Satisfacción</span>
+            {branchName && <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginLeft: 8 }}>{branchName}</span>}
           </div>
-        ))}
-      </div>
-      {lastComments.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Últimos comentarios</div>
-          {lastComments.map(r => (
-            <div key={r.id} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px' }}>
-              <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', fontStyle: 'italic', marginBottom: 2 }}>"{r.comment}"</div>
-              {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <StarBar avg={overall} />
+            <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{overall.toFixed(1)}</span>
+            <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{withData[0]?.count ?? 0} resp.</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: lastComments.length > 0 ? 14 : 0 }}>
+          {withData.map(a => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <StarBar avg={a.avg} />
+                <span style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', minWidth: 24, textAlign: 'right' }}>{a.avg.toFixed(1)}</span>
+              </div>
             </div>
           ))}
         </div>
+        {lastComments.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Últimos comentarios</div>
+            {lastComments.map(r => {
+              const avgR = r.answers.length > 0 ? r.answers.reduce((s, a) => s + a.v, 0) / r.answers.length : null
+              const canClick = !!(r.orderId && r.customerPhone)
+              return (
+                <div
+                  key={r.id}
+                  onClick={canClick ? () => handleCommentClick(r) : undefined}
+                  style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px', cursor: canClick ? 'pointer' : 'default' }}
+                >
+                  {avgR !== null && (
+                    <div style={{ marginBottom: 4 }}><StarBar avg={avgR} /></div>
+                  )}
+                  <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', fontStyle: 'italic', marginBottom: 2 }}>"{r.comment}"</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
+                    {canClick && (
+                      <span style={{ fontFamily: F, fontSize: '0.62rem', color: 'var(--ink-4)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                        Ver pedido
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Detalle de pedido desde comentario de encuesta */}
+      {(detailOrder || loadingOrder) && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 2000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          className="delivery-modal-backdrop"
+          onClick={() => { setDetailOrder(null) }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="delivery-modal-sheet"
+            style={{ width: '100%', maxWidth: 520, maxHeight: '92dvh', background: 'var(--surface)', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
+          >
+            {loadingOrder && !detailOrder ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', gap: 10 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Cargando…
+              </div>
+            ) : detailOrder ? (
+              <PastOrderDetail order={detailOrder} restaurantId={restaurantId} onClose={() => setDetailOrder(null)} />
+            ) : null}
+          </div>
+        </div>
       )}
-    </Card>
+    </>
   )
 }
 
@@ -2343,7 +2466,7 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
   },
 ]
 
-export default function PosReportesPanel({ restaurantId, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string) => void }) {
+export default function PosReportesPanel({ restaurantId, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string, branch: string) => void }) {
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
@@ -2358,7 +2481,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const _stateChangeRef = useRef(false)
   useEffect(() => {
     if (!_stateChangeRef.current) { _stateChangeRef.current = true; return }
-    onStateChange?.(subSection, fromDate, toDate, chartView)
+    onStateChange?.(subSection, fromDate, toDate, chartView, allBranches && allBranches.length > 1 ? 'todas' : restaurantId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subSection, fromDate, toDate, chartView])
 
@@ -2532,15 +2655,15 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {data.deliveryTimes ? (
                   <>
-                    <DeliveryCostChart
-                      orders={data.deliveryTimes.orders}
-                      selectedDate={chartSelectedDate}
-                      onDateClick={d => setChartSelectedDate(d || null)}
-                    />
                     <SectionLabel>Tiempos de entrega</SectionLabel>
                     <DeliveryTimesSection
                       dt={data.deliveryTimes}
                       restaurantId={restaurantId}
+                      selectedDate={chartSelectedDate}
+                      onDateClick={d => setChartSelectedDate(d || null)}
+                    />
+                    <DeliveryCostChart
+                      orders={data.deliveryTimes.orders}
                       selectedDate={chartSelectedDate}
                       onDateClick={d => setChartSelectedDate(d || null)}
                     />
@@ -2576,13 +2699,6 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           onRange={(f, t) => { setFromDate(f); setToDate(t) }}
           onRefresh={fetchReport} />
 
-        {allBranches && allBranches.length > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <span style={{ padding: '4px 12px', borderRadius: 999, background: 'var(--amber-tint-2)', border: '1px solid var(--amber)', color: 'var(--amber-press)', fontSize: 12, fontWeight: 700, fontFamily: F }}>
-              Todas las sucursales · {allBranches.length}
-            </span>
-          </div>
-        )}
 
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
@@ -2679,7 +2795,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
 
             {/* Satisfacción */}
             <SectionLabel>Satisfacción</SectionLabel>
-            <SatisfaccionSection restaurantId={restaurantId} />
+            <SatisfaccionSection restaurantId={restaurantId} allBranches={allBranches} />
 
           </div>
         )}
