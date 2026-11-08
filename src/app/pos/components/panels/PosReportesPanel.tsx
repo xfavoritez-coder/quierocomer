@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import DelifastTracking from '../DelifastTracking'
 import StoreEventsPanel from '@/components/ecommerce/StoreEventsPanel'
@@ -2260,16 +2260,24 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
   },
 ]
 
-export default function PosReportesPanel({ restaurantId, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
-  const [subSection, setSubSection] = useState<ReportSubSection>('dashboard')
+export default function PosReportesPanel({ restaurantId, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string) => void }) {
+  const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
-  const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>('hora')
+  const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
   const today = chileTodayLocal()
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
+  const [fromDate, setFromDate] = useState(initialFrom ?? today)
+  const [toDate, setToDate] = useState(initialTo ?? today)
+
+  // Sincronizar estado con URL cuando se usa como página standalone
+  const _stateChangeRef = useRef(false)
+  useEffect(() => {
+    if (!_stateChangeRef.current) { _stateChangeRef.current = true; return }
+    onStateChange?.(subSection, fromDate, toDate, chartView)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subSection, fromDate, toDate, chartView])
 
   const fetchReport = useCallback(async () => {
     if (!restaurantId) return
