@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import PosHeader from '../components/PosHeader'
@@ -9,7 +9,14 @@ import PosReportesPanel from '../components/panels/PosReportesPanel'
 function ReportesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { restaurantId } = usePosRestaurant()
+  const { restaurantId, loading } = usePosRestaurant()
+
+  // Auth guard — mismo patrón que la página principal del POS
+  useEffect(() => {
+    if (!loading && !restaurantId) {
+      window.location.href = '/pos/login'
+    }
+  }, [loading, restaurantId])
 
   const tab = searchParams.get('tab') || undefined
   const from = searchParams.get('from') || undefined
@@ -29,24 +36,23 @@ function ReportesContent() {
         subtitle="Ventas del período"
         onBack={() => router.back()}
       />
-      <div className="pos-scroll">
-        <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '0 0 48px' }}>
-          {restaurantId ? (
-            <PosReportesPanel
-              restaurantId={restaurantId}
-              initialTab={tab}
-              initialFrom={from}
-              initialTo={to}
-              initialChart={chart}
-              onStateChange={handleStateChange}
-            />
-          ) : (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-3)', fontSize: '0.84rem' }}>
-              Cargando…
-            </div>
-          )}
+      {/* PosReportesPanel ya incluye pos-scroll — no anidar otro */}
+      {restaurantId ? (
+        <PosReportesPanel
+          restaurantId={restaurantId}
+          initialTab={tab}
+          initialFrom={from}
+          initialTo={to}
+          initialChart={chart}
+          onStateChange={handleStateChange}
+        />
+      ) : (
+        <div className="pos-scroll">
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-3)', fontSize: '0.84rem' }}>
+            Cargando…
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
