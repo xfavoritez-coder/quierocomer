@@ -295,23 +295,28 @@ export default function CartaRouter(props: Props) {
               history.pushState({ lobby: true }, "");
               setLobbyDismissed(true);
               const scrollToCategory = () => {
-                const el = document.querySelector(`[id$="-cat-${catId}"]`);
-                if (el) {
-                  // Measure actual fixed headers at top of viewport (accounts for announcement banners)
-                  let topOffset = 70;
-                  const fixedEls = document.querySelectorAll('[style*="position: fixed"]');
-                  for (const fixed of Array.from(fixedEls)) {
-                    const r = (fixed as HTMLElement).getBoundingClientRect();
-                    // Only count wide top-anchored elements (the main header bar, not floating buttons)
-                    if (r.top <= 4 && r.width > window.innerWidth * 0.5) {
-                      topOffset = Math.max(topOffset, r.bottom + 16);
-                    }
+                // CartaPremium/CartaBasic use id="cat-{id}"; other views use "prefix-cat-{id}"
+                const el = document.querySelector(`[id$="-cat-${catId}"], [id="cat-${catId}"]`) as HTMLElement | null;
+                if (!el) return false;
+
+                // Measure all top-pinned elements: both fixed AND sticky
+                let topOffset = 0;
+                const allEls = document.querySelectorAll<HTMLElement>('[style*="position: fixed"], [style*="position: sticky"]');
+                for (const pinned of Array.from(allEls)) {
+                  const r = pinned.getBoundingClientRect();
+                  // Wide element anchored at top of viewport
+                  if (r.top <= 4 && r.width > window.innerWidth * 0.5) {
+                    topOffset = Math.max(topOffset, r.bottom);
                   }
-                  const y = el.getBoundingClientRect().top + window.scrollY - topOffset;
-                  window.scrollTo({ top: y, behavior: "smooth" });
-                  return true;
                 }
-                return false;
+                // Category nav pill bar (may not yet be sticky at y=0, measure its height directly)
+                const catNav = document.querySelector<HTMLElement>('[data-category-nav]');
+                if (catNav) topOffset = Math.max(topOffset, catNav.getBoundingClientRect().bottom);
+
+                topOffset = Math.max(topOffset + 12, 16); // minimum gap
+                const y = el.getBoundingClientRect().top + window.scrollY - topOffset;
+                window.scrollTo({ top: y, behavior: "smooth" });
+                return true;
               };
               // Retry until element is rendered
               let attempts = 0;
