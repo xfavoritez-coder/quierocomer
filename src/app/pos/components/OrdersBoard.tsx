@@ -631,7 +631,7 @@ function OrderDetailPanel({
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0px 22px 14px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0px 22px 14px', minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName(order.customerName || 'Cliente')}
