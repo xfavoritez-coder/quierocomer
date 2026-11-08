@@ -639,9 +639,13 @@ function OrderDetailPanel({
             {order.customerPhone && (
               <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
             )}
-            {order.customerEmail && (
-              <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 1 }}>{order.customerEmail}</div>
-            )}
+            {(() => {
+              const email = order.customerEmail ||
+                (order.rawPayload && typeof order.rawPayload === 'object'
+                  ? (order.rawPayload as Record<string, unknown>)?.customerEmail as string | null
+                  : null)
+              return email ? <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 1 }}>{email}</div> : null
+            })()}
           </div>
           {order.customerPhone && customerCount !== null && (
             <button
