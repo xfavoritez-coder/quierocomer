@@ -580,15 +580,17 @@ function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
           <button onClick={() => onDateClick('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 0, lineHeight: 0, fontSize: 14 }}>✕</button>
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 130, overflowX: 'auto', overflowY: 'hidden', paddingTop: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 145, overflowX: 'auto', overflowY: 'hidden', paddingTop: 22 }}>
         {days.map(([date, fee]) => {
           const pct = Math.max(4, Math.round((fee / maxFee) * 100))
-          const label = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', timeZone: 'America/Santiago' }).format(new Date(date + 'T12:00:00'))
+          const d = new Date(date + 'T12:00:00')
+          const dayLabel = new Intl.DateTimeFormat('es-CL', { weekday: 'short', timeZone: 'America/Santiago' }).format(d)
+          const dateLabel = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', timeZone: 'America/Santiago' }).format(d)
           const isActive = selectedDate === date
           return (
             <div key={date} onClick={() => onDateClick(isActive ? '' : date)}
               style={{ flex: '1 0 44px', minWidth: 44, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', cursor: 'pointer' }}
-              title={`${label} · ${clp(fee)}`}>
+              title={`${dayLabel} ${dateLabel} · ${clp(fee)}`}>
               <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                 <div style={{
                   position: 'relative', width: '70%', maxWidth: 32, height: `${pct}%`, minHeight: 4,
@@ -600,7 +602,8 @@ function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
                   <span style={{ position: 'absolute', bottom: '100%', marginBottom: 3, left: '50%', transform: 'translateX(-50%)', fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: isActive ? BLUE : 'var(--ink-2)', whiteSpace: 'nowrap' }}>{clpShort(fee)}</span>
                 </div>
               </div>
-              <span style={{ fontFamily: F, fontSize: '0.6rem', color: isActive ? BLUE : 'var(--ink-3)', marginTop: 4, whiteSpace: 'nowrap', fontWeight: isActive ? 700 : 400 }}>{label}</span>
+              <span style={{ fontFamily: F, fontSize: '0.62rem', color: isActive ? BLUE : 'var(--ink)', marginTop: 3, whiteSpace: 'nowrap', fontWeight: 700, textTransform: 'capitalize' }}>{dayLabel}</span>
+              <span style={{ fontFamily: F, fontSize: '0.56rem', color: isActive ? BLUE : 'var(--ink-3)', whiteSpace: 'nowrap', fontWeight: isActive ? 700 : 400 }}>{dateLabel}</span>
             </div>
           )
         })}
@@ -628,7 +631,7 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
   if (dt.count === 0) return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Detalle deliverys</span>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>Delivery</span>
       </div>
       <p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 0', fontSize: '0.82rem' }}>Sin entregas completadas en el período.</p>
@@ -660,7 +663,6 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const totalDelivery = filtered.reduce((s, o) => s + (o.deliveryFee || 0), 0)
 
   const toggleSort = (col: SortCol) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -678,10 +680,18 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
     </svg>
   )
 
+  // KPIs computed from filtered rows when a date filter is active
+  const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : null
+  const filteredCompleted = filtered.filter(o => o.totalMin != null)
+  const kpiAvgTotal = selectedDate ? avg(filteredCompleted.map(o => o.totalMin!)) : dt.avgTotal
+  const kpiAvgPrep  = selectedDate ? avg(filtered.filter(o => o.prepMin != null).map(o => o.prepMin!)) : dt.avgPrep
+  const kpiAvgTransit = selectedDate ? avg(filtered.filter(o => o.transitMin != null).map(o => o.transitMin!)) : dt.avgTransit
+  const kpiCostoTotal = filtered.reduce((s, o) => s + (o.deliveryFee || 0), 0)
+
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Detalle deliverys</span>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>
           {dt.orders.filter((o: any) => o.totalMin != null).length} de {dt.count} entregados
         </span>
@@ -690,24 +700,15 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
       {/* KPI summary pills */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
         {[
-          { label: 'Promedio total', value: minLabel(dt.avgTotal), color: dt.avgTotal != null ? timeColor(dt.avgTotal) : 'var(--ink-3)' },
-          { label: 'Preparación', value: minLabel(dt.avgPrep), color: BLUE },
-          { label: 'En tránsito', value: minLabel(dt.avgTransit), color: PURPLE },
+          { label: 'Promedio total', value: minLabel(kpiAvgTotal), color: kpiAvgTotal != null ? timeColor(kpiAvgTotal) : 'var(--ink-3)' },
+          { label: 'Preparación', value: minLabel(kpiAvgPrep), color: BLUE },
+          { label: 'En tránsito', value: minLabel(kpiAvgTransit), color: PURPLE },
+          { label: 'Costo total', value: kpiCostoTotal > 0 ? clp(kpiCostoTotal) : '—', color: 'var(--amber)' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', borderLeft: `3px solid ${s.color}` }}>
             <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
           </div>
-        ))}
-      </div>
-
-      {/* % bajo umbral */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-        {([['≤30 min', dt.pctUnder30, GREEN], ['≤45 min', dt.pctUnder45, BLUE], ['≤60 min', dt.pctUnder60, 'var(--amber)']] as [string, number | null, string][]).map(([label, pct, color]) => (
-          <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: F, fontSize: '0.74rem', fontWeight: 700, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 999, padding: '4px 10px' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-            {pct ?? '—'}% {label}
-          </span>
         ))}
       </div>
 
@@ -755,9 +756,16 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
           <div key={o.orderId || i} onClick={() => setSelected(o)}
             style={{ display: 'grid', gridTemplateColumns: '1fr 52px 60px 52px 60px', gap: 8, padding: '8px 6px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: 'pointer' }}>
             <div style={{ minWidth: 0 }}>
-              <span style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                {o.ref ? `#${o.ref}` : '—'}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {o.ref ? `#${o.ref}` : '—'}
+                </span>
+                {o.createdAt && (
+                  <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-4)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {new Date(o.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}
+                  </span>
+                )}
+              </div>
               {o.name && <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', marginTop: 1 }}>{o.name}</span>}
             </div>
             <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-2)', textAlign: 'right', alignSelf: 'center' }}>{o.prepMin != null ? `${o.prepMin}m` : '—'}</span>
@@ -768,13 +776,13 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
         ))}
 
         {/* Fila total */}
-        {totalDelivery > 0 && (
+        {kpiCostoTotal > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 60px 52px 60px', gap: 8, padding: '8px 6px', borderTop: '1px solid var(--line)', marginTop: 4 }}>
             <span style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)' }}>
               {selectedDate || q ? `Total filtrado (${filtered.length})` : `Total (${filtered.length})`}
             </span>
             <span /><span /><span />
-            <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 900, color: 'var(--ink)', textAlign: 'right' }}>{clp(totalDelivery)}</span>
+            <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 900, color: 'var(--ink)', textAlign: 'right' }}>{clp(kpiCostoTotal)}</span>
           </div>
         )}
       </div>
@@ -2225,7 +2233,7 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
                     <SectionLabel>Dónde salen los pedidos</SectionLabel>
                     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 14 }}>
                       <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: F, marginBottom: 10 }}>
-                        {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación — las zonas más calientes concentran más pedidos
+                        {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación
                       </div>
                       <DeliveryHeatmap points={heatPoints} />
                     </div>

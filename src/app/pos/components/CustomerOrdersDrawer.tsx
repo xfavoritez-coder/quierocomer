@@ -68,6 +68,9 @@ interface CustomerOrder {
   vendorName?: string | null
   tableLabel?: string | null
   rawPayload?: unknown
+  surveySentAt?: string | null
+  surveyEmailOpenedAt?: string | null
+  surveyAnsweredAt?: string | null
 }
 
 // ── Timeline ──────────────────────────────────────────────────────────
@@ -118,11 +121,30 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
   const canceled = order.posStatus === 'canceled'
   const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const isDineIn = !isDelivery && (order.saleType === 'dine-in' || order.saleType === 'dinein')
   const lines = itemLines(order.items)
   const payMethod = order.rawPayload && typeof order.rawPayload === 'object'
     ? (order.rawPayload as any)?.posPayment?.method : null
   const cancelReason = canceled && order.rawPayload && typeof order.rawPayload === 'object'
     ? (order.rawPayload as any)?.posCancel?.reason : null
+
+  const tagStyle: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', borderRadius: 6, padding: '3px 9px', display: 'inline-flex', alignItems: 'center' }
+  const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+  const typeColors: Record<string, { bg: string; fg: string }> = {
+    Delivery: { bg: '#f1f5f9', fg: '#475569' },
+    Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
+    Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
+  }
+  const tc = typeColors[typeLabel]
+
+  const fmtDate = (d: string) => new Date(d).toLocaleString('es-CL', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+  const fmtDateShort = (d: string) => new Date(d).toLocaleString('es-CL', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+
+  const orderLabel = order.orderReference ?? order.id.slice(-6)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -133,38 +155,68 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
           Volver
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {order.orderReference && (
-              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference}</span>
-            )}
-            {new Date(order.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Pedido #{orderLabel}
           </div>
         </div>
         {canceled
           ? <span style={chip('#6b7280')}>Anulado</span>
-          : paid
-            ? <span style={{ ...chip('#16a34a') }}>Pagado</span>
-            : <span style={chip('#f59e0b')}>Sin cobro</span>}
+          : !paid
+            ? <span style={chip('#f59e0b')}>Sin cobro</span>
+            : null}
       </div>
 
       {/* Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Tags + fecha + dirección */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Pagado + tipo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {paid && !canceled && (
+              <span style={{ ...tagStyle, background: '#f0fdf4', color: '#16a34a', gap: 4 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Pagado
+              </span>
+            )}
+            <span style={{ ...tagStyle, background: tc.bg, color: tc.fg }}>{typeLabel}</span>
+          </div>
+          {/* Fecha con día/mes/año */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-2)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {fmtDate(order.createdAt)}
+          </div>
+          {/* Dirección */}
+          {isDelivery && order.addressLine && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--ink-2)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 1, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {cleanAddr(order.addressLine)}
+            </div>
+          )}
+        </div>
+
+        {/* Delifast */}
         {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} />}
 
+        {/* Items */}
         {lines.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {lines.map((l, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, color: 'var(--ink)' }}>
-                <span>
-                  {l.qty > 1 && <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, marginRight: 6, color: 'var(--ink-2)' }}>{l.qty}×</span>}
-                  {l.name}
-                </span>
-                {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink-2)', flexShrink: 0, marginLeft: 12 }}>{clp(l.price * l.qty)}</span>}
-              </div>
-            ))}
+          <div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 8 }}>Ítems</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {lines.map((l, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 15, color: 'var(--ink)' }}>
+                  <span>
+                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber-press)', marginRight: 6 }}>{l.qty}×</span>
+                    {l.name}
+                  </span>
+                  {l.price > 0 && <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(l.price * l.qty)}</span>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Totales */}
         <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {order.deliveryFee > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--ink-2)' }}>
@@ -176,23 +228,53 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
             <span>Total</span>
             <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
-              {payMethod ? payMethod.charAt(0).toUpperCase() + payMethod.slice(1) : 'Pago'}
-            </span>
-            {canceled ? (
-              <span style={{ ...chip('#6b7280'), fontSize: 11 }}>{cancelReason ? `Anulado · ${cancelReason}` : 'Anulado'}</span>
-            ) : paid ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 800, color: 'var(--jade)', background: 'var(--jade-tint)', padding: '4px 10px', borderRadius: 8 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                {clp(order.paidAmount)}
+          {(payMethod || canceled) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid var(--line)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
+                {payMethod ? payMethod.charAt(0).toUpperCase() + payMethod.slice(1) : 'Pago'}
               </span>
-            ) : (
-              <span style={{ ...chip('#f59e0b'), fontSize: 11 }}>Sin cobro registrado</span>
-            )}
-          </div>
+              {canceled ? (
+                <span style={{ ...chip('#6b7280'), fontSize: 11 }}>{cancelReason ? `Anulado · ${cancelReason}` : 'Anulado'}</span>
+              ) : paid ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 800, color: 'var(--jade)', background: 'var(--jade-tint)', padding: '4px 10px', borderRadius: 8 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {clp(order.paidAmount)}
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
 
+        {/* Encuesta */}
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 2 }}>Encuesta</div>
+          {([
+            {
+              label: 'Email enviado',
+              value: order.surveySentAt ? fmtDateShort(order.surveySentAt) : null,
+              yes: !!order.surveySentAt,
+            },
+            {
+              label: 'Email abierto',
+              value: order.surveyEmailOpenedAt ? fmtDateShort(order.surveyEmailOpenedAt) : null,
+              yes: !!order.surveyEmailOpenedAt,
+            },
+            {
+              label: 'Respondió',
+              value: order.surveyAnsweredAt ? fmtDateShort(order.surveyAnsweredAt) : null,
+              yes: !!order.surveyAnsweredAt,
+            },
+          ] as { label: string; value: string | null; yes: boolean }[]).map(row => (
+            <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{row.label}</span>
+              <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: row.yes ? '#16a34a' : 'var(--ink-4)' }}>
+                {row.yes ? (row.value ?? 'Sí') : '—'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Historial */}
         <div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Historial</div>
           <OrderTimeline order={order} />

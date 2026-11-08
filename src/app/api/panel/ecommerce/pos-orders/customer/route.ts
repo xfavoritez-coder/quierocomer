@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ count });
   }
 
-  const orders = await prisma.posOrder.findMany({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orders = await (prisma.posOrder.findMany as any)({
     where,
     select: {
       id: true,
@@ -58,10 +59,35 @@ export async function GET(req: NextRequest) {
       vendorName: true,
       tableLabel: true,
       rawPayload: true,
+      surveySentAt: true,
+      surveyEmailOpenedAt: true,
     },
     orderBy: { createdAt: "desc" },
     take: 60,
-  });
+  }) as Array<{
+    id: string; orderReference: string | null; customerName: string; customerPhone: string;
+    addressLine: string; saleType: string; isDelivery: boolean; opsStage: string;
+    opsReadyForDeliveryAt: string | null; opsDispatchedAt: string | null; opsDeliveredAt: string | null;
+    totalAmount: number; paidAmount: number; tipAmount: number; changeAmount: number;
+    deliveryFee: number; items: unknown; createdAt: Date; posStatus: string;
+    vendorName: string | null; tableLabel: string | null; rawPayload: unknown;
+    surveySentAt: Date | null; surveyEmailOpenedAt: Date | null;
+  }>;
 
-  return NextResponse.json({ count: orders.length, orders });
+  // Check which orders have a survey response
+  const orderIds = orders.map(o => o.id);
+  const responses = orderIds.length > 0
+    ? await prisma.ecommerceSurveyResponse.findMany({
+        where: { orderId: { in: orderIds } },
+        select: { orderId: true, createdAt: true },
+      })
+    : [];
+  const responseMap = new Map(responses.map(r => [r.orderId, r.createdAt]));
+
+  const enriched = orders.map(o => ({
+    ...o,
+    surveyAnsweredAt: responseMap.get(o.id) ?? null,
+  }));
+
+  return NextResponse.json({ count: enriched.length, orders: enriched });
 }

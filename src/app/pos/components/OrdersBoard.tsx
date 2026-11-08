@@ -591,7 +591,7 @@ function OrderDetailPanel({
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
         {/* Fila superior: nro pedido · X close */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 2px' }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 800, color: 'var(--ink-2)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
             {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
           </span>
           {/* X close button — mobile only */}
@@ -647,7 +647,7 @@ function OrderDetailPanel({
         {/* Customer info */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Tipo de pedido pill */}
+            {/* Hora + tags inline */}
             {(() => {
               const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
               const colors: Record<string, { bg: string; fg: string }> = {
@@ -656,16 +656,26 @@ function OrderDetailPanel({
                 Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
               }
               const c = colors[label]
+              const tagStyle = { fontSize: 11, fontWeight: 700, letterSpacing: '.05em' as const, textTransform: 'uppercase' as const, borderRadius: 6, padding: '3px 9px' }
               return (
-                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '3px 9px' }}>
-                  {label}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, color: 'var(--ink-3)' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span style={{ fontSize: 15, color: 'var(--ink-2)' }}>
+                    {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <div style={{ flex: 1 }} />
+                  {paid && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f0fdf4', color: '#16a34a', ...tagStyle }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      Pagado
+                    </span>
+                  )}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', background: c.bg, color: c.fg, ...tagStyle }}>
+                    {label}
+                  </span>
+                </div>
               )
             })()}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-            </div>
             {isDelivery && order.addressLine && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -711,15 +721,7 @@ function OrderDetailPanel({
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {paid && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#16a34a18', border: '1px solid #16a34a40', color: '#16a34a', fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '2px 9px' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                  Pagado
-                </span>
-              )}
-              <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
-            </div>
+            <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
           </div>
           {paid && order.tipAmount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a' }}>

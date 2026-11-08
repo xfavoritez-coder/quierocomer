@@ -487,6 +487,7 @@ model OnlineOrder {
   uberDeliveryId       String?
   courier              Json?
   surveySentAt         DateTime?
+  surveyEmailOpenedAt  DateTime?
   printedAt            DateTime?
   printRequestedAt     DateTime?
   scheduledFor         DateTime?

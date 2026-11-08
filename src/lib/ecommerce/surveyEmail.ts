@@ -30,6 +30,7 @@ interface SendSurveyArgs {
   accent: string; // color de marca de la tienda
   customerName?: string | null;
   survey: Pick<SurveyConfig, "subject" | "intro">;
+  trackOpenUrl?: string | null; // pixel de tracking de apertura (opcional)
 }
 
 /** Construye y envía el correo de encuesta vía Resend. Devuelve true si se envió. */
@@ -70,6 +71,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     <span style="font-size:11px;color:#aaa;">Powered by QuieroComer.cl</span>
   </td></tr>
 </table>
+${args.trackOpenUrl ? `<img src="${esc(args.trackOpenUrl)}" width="1" height="1" style="display:none" alt="" />` : ''}
 </td></tr></table>
 </body></html>`;
 
