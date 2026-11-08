@@ -36,6 +36,7 @@ interface PosOrderLite {
   dailyNumber?: number | null
   orderReference?: string | null
   customerName: string
+  customerEmail?: string | null
   customerPhone: string
   addressLine: string
   tableLabel?: string | null
@@ -625,6 +626,9 @@ function OrderDetailPanel({
             </div>
             {order.customerPhone && (
               <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
+            )}
+            {order.customerEmail && (
+              <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 1 }}>{order.customerEmail}</div>
             )}
           </div>
           {order.customerPhone && customerCount !== null && (

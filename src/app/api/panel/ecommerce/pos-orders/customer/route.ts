@@ -72,12 +72,13 @@ export async function GET(req: NextRequest) {
   const orderIds = orders.map(o => o.id);
   let responses: { orderId: string; createdAt: Date }[] = [];
   try {
-    responses = orderIds.length > 0
+    const raw = orderIds.length > 0
       ? await prisma.ecommerceSurveyResponse.findMany({
           where: { orderId: { in: orderIds } },
           select: { orderId: true, createdAt: true },
         })
       : [];
+    responses = raw.filter((r): r is { orderId: string; createdAt: Date } => r.orderId !== null);
   } catch {
     // survey response table may not exist yet — return orders without survey data
   }
