@@ -1151,9 +1151,9 @@ function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, on
     color: 'var(--ink-3)', cursor: 'pointer', flexShrink: 0,
   }
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '8px 10px', marginBottom: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-      {/* Date inputs + arrows — DOM primero, visual derecha (desktop) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 200px', minWidth: 0 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '8px 10px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* Date inputs + arrows */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
         <button onClick={() => onShift(-1)} style={navBtn}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -1162,7 +1162,7 @@ function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, on
           <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
             {new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' }).format(new Date(fromDate + 'T12:00:00Z')).replace('.', '')}
           </span>
-          <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+          <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} tabIndex={-1} />
         </div>
         <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)', flexShrink: 0 }}>–</span>
         <div className="pos-date-box" style={{ position: 'relative' }}>

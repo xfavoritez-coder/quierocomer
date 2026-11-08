@@ -380,11 +380,10 @@
 .pos-modal-label:first-of-type{margin-top:0}
 .pos-modal-input{width:100%;border:1px solid var(--line);border-radius:var(--r-btn);background:var(--sunk);font-family:var(--sans);font-size:15px;color:var(--ink);padding:11px 14px;outline:none;transition:.14s;min-height:44px}
 .pos-modal-input:focus{border-color:var(--amber);background:var(--surface)}
-.pos-date-box{position:relative;display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--sunk);padding:6px;gap:4px;flex:1 1 0;min-width:0}
+.pos-date-box{position:relative;display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--sunk);padding:6px;gap:4px;flex:1 1 0;min-width:0;overflow:hidden}
 .pos-date-box input[type=date]{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--sans);font-size:.82rem;color:var(--ink);cursor:pointer;padding:6px 0}
 .pos-date-box input[type=date]::-webkit-calendar-picker-indicator{opacity:0;position:absolute;inset:0;width:100%;height:100%;cursor:pointer}
 .pos-date-preset{flex:0 0 auto;order:-1}
-@media(max-width:520px){.pos-date-preset{order:0;width:100%;display:flex;justify-content:center}}
 .pos-modal-actions{display:flex;gap:10px;margin-top:22px}
 .pos-modal-cancel{flex:1;border:1px solid var(--line);background:var(--sunk);color:var(--ink-2);font-family:var(--sans);font-weight:600;font-size:14px;padding:12px;border-radius:var(--r-btn);cursor:pointer;transition:.14s;min-height:44px}
 .pos-modal-cancel:hover{background:var(--surface);border-color:var(--line-strong)}
@@ -429,6 +428,13 @@
   .pos-actions{grid-template-columns:1fr}
   .pos-desktop{display:none!important}
   .pos-new-btn{width:100%}
+}
+@media(max-width:480px){
+  .pos-caja-wrap{padding:14px 14px}
+  .pos-step-label{display:none}
+  .pos-mgrid{grid-template-columns:1fr 1fr}
+  .pos-caja-btns{flex-direction:column}
+  .pos-caja-btns .print{justify-content:center}
 }
 @media(max-width:380px){
   .pos-tab{padding:7px 11px;font-size:13px}
