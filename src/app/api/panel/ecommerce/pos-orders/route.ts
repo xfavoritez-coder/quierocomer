@@ -156,7 +156,25 @@ export async function GET(req: NextRequest) {
     ? orders.filter((o) => o.opsStage !== "delivered" || (o.paidAmount || 0) < (o.totalAmount || 0))
     : orders;
   const nums = await dailyOrderNumbers(restaurantId, visible.map((o) => ({ id: o.id, createdAt: o.createdAt })));
-  const ordersOut = visible.map((o) => ({ ...o, dailyNumber: nums[o.id] ?? null, driverTime, pickupTime, deliveryTime }));
+
+  // Enriquecer customerEmail desde OnlineOrder para pedidos sin email (pedidos anteriores al fix).
+  const withoutEmail = visible.filter((o) => !o.customerEmail && o.externalId.startsWith("oo-"));
+  const emailMap = new Map<string, string>();
+  if (withoutEmail.length > 0) {
+    const ooIds = withoutEmail.map((o) => o.externalId.slice(3));
+    const oos = await prisma.onlineOrder.findMany({
+      where: { id: { in: ooIds } },
+      select: { id: true, customerEmail: true },
+    });
+    for (const oo of oos) if (oo.customerEmail) emailMap.set(oo.id, oo.customerEmail);
+  }
+
+  const ordersOut = visible.map((o) => ({
+    ...o,
+    customerEmail: o.customerEmail || emailMap.get(o.externalId.slice(3)) || "",
+    dailyNumber: nums[o.id] ?? null,
+    driverTime, pickupTime, deliveryTime,
+  }));
   return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes, readyAlertMinutes });
 }
 
