@@ -39,19 +39,14 @@ export default function PosMenuDrawer({ cashSession, restaurant, onClose, onNavi
       inline: 'caja',
     },
     {
-      label: 'Deportes',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/><circle cx="12" cy="12" r="2.5"/></svg>,
-      href: '/pos/deportes',
+      label: 'Reportes',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+      inline: 'reportes',
     },
     {
       label: 'KDS',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
       href: '/pos/kds',
-    },
-    {
-      label: 'Reportes',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
-      href: '/pos/reportes',
     },
     {
       label: 'Configuración',

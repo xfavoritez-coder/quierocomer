@@ -1,7 +1,7 @@
-// POS QuieroComer — Service Worker v9
+// POS QuieroComer — Service Worker v10
 // Siempre location.assign() en el cliente → todas las navs llegan como 'navigate' → SW controla todo.
 
-const CACHE_NAME = 'pos-qc-v9'
+const CACHE_NAME = 'pos-qc-v10'
 const APP_SHELL = [
   '/pos',
   '/pos/comandero',

@@ -22,6 +22,27 @@ function addDaysYmd(ymd: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days)
   return d.toISOString().slice(0, 10)
 }
+function startOfWeekYmd(ymd: string): string {
+  const d = new Date(`${ymd}T12:00:00Z`)
+  const day = d.getUTCDay() // 0=Dom,1=Lun…6=Sáb
+  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day))
+  return d.toISOString().slice(0, 10)
+}
+function startOfMonthYmd(ymd: string): string { return ymd.slice(0, 8) + '01' }
+const DATE_PRESETS = (today: string) => {
+  const ayer = addDaysYmd(today, -1)
+  const semStart = startOfWeekYmd(today)
+  const semPasadaFin = addDaysYmd(semStart, -1)
+  const semPasadaIni = startOfWeekYmd(semPasadaFin)
+  const mesIni = startOfMonthYmd(today)
+  return [
+    { id: 'hoy',          label: 'Hoy',          from: today,         to: today },
+    { id: 'ayer',         label: 'Ayer',          from: ayer,          to: ayer },
+    { id: 'semana',       label: 'Esta semana',   from: semStart,      to: today },
+    { id: 'sem_pasada',   label: 'Sem. pasada',   from: semPasadaIni,  to: semPasadaFin },
+    { id: 'mes',          label: 'Este mes',      from: mesIni,        to: today },
+  ]
+}
 function weekdayShort(month: string, day: number): string {
   try {
     const d = new Date(`${month}-${String(day).padStart(2, '0')}T12:00:00`)
@@ -1102,41 +1123,103 @@ function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]
 }
 
 // ── Date range picker ─────────────────────────────────────────────
-function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onShift, onReset }: {
+function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onShift, onRange }: {
   fromDate: string; toDate: string; today: string
   onFromChange: (v: string) => void; onToChange: (v: string) => void
   onShift: (days: number) => void; onReset: () => void; onRefresh?: () => void
+  onRange?: (from: string, to: string) => void
 }) {
+  const [dropOpen, setDropOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
   const singleDay = fromDate === toDate
-  const inputSt: React.CSSProperties = {
-    fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)',
-    background: 'var(--surface)', border: '1px solid var(--line)',
-    borderRadius: 8, padding: '7px 6px', cursor: 'pointer', minWidth: 0, flex: '1 1 0',
-  }
+  const presets = DATE_PRESETS(today)
+  const activePreset = presets.find(p => p.from === fromDate && p.to === toDate) ?? null
+
+  useEffect(() => {
+    if (!dropOpen) return
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setDropOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dropOpen])
+
+  const calIcon = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   const navBtn: React.CSSProperties = {
-    width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)',
-    color: 'var(--ink-2)', cursor: 'pointer', flexShrink: 0,
+    width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 8, border: '1px solid var(--line)', background: 'transparent',
+    color: 'var(--ink-3)', cursor: 'pointer', flexShrink: 0,
   }
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '10px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      {singleDay && (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '8px 10px', marginBottom: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+      {/* Preset dropdown — izquierda */}
+      <div ref={dropRef} className="pos-date-preset" style={{ position: 'relative' }}>
+        <button
+          onClick={() => setDropOpen(o => !o)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: F, fontSize: '0.82rem', fontWeight: 600,
+            color: 'var(--ink-2)',
+            background: 'rgba(222,124,0,.06)',
+            border: '1px solid rgba(222,124,0,.22)',
+            borderRadius: 20, padding: '5px 10px 5px 8px', cursor: 'pointer',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          {activePreset?.label ?? 'Rango'}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        {dropOpen && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,.10)',
+            minWidth: 148, padding: '4px 0', overflow: 'hidden',
+          }}>
+            {presets.map(p => {
+              const active = activePreset?.id === p.id
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => { onRange ? onRange(p.from, p.to) : (onFromChange(p.from), onToChange(p.to)); setDropOpen(false) }}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    fontFamily: F, fontSize: '0.82rem', fontWeight: active ? 700 : 400,
+                    color: 'var(--ink)',
+                    background: active ? 'var(--sunk)' : 'transparent',
+                    border: 'none', padding: '8px 14px', cursor: 'pointer',
+                  }}
+                >{p.label}</button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Date inputs + arrows — derecha */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '1 1 200px', minWidth: 0 }}>
         <button onClick={() => onShift(-1)} style={navBtn}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-      )}
-      <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={inputSt} />
-      <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)', flexShrink: 0 }}>–</span>
-      <input type="date" value={toDate} min={fromDate} onChange={e => onToChange(e.target.value || today)} style={inputSt} />
-      {singleDay && (
-        <button onClick={() => onShift(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.4 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <div className="pos-date-box" style={{ position: 'relative' }}>
+          {calIcon}
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+            {new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' }).format(new Date(fromDate + 'T12:00:00Z')).replace('.', '')}
+          </span>
+          <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+        </div>
+        <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)', flexShrink: 0 }}>–</span>
+        <div className="pos-date-box" style={{ position: 'relative' }}>
+          {calIcon}
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+            {new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' }).format(new Date(toDate + 'T12:00:00Z')).replace('.', '')}
+          </span>
+          <input type="date" value={toDate} min={fromDate} onChange={e => onToChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+        </div>
+        <button onClick={() => onShift(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.35 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-      )}
-      {(fromDate !== today || toDate !== today) && (
-        <button onClick={onReset} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--amber)', background: 'var(--amber-tint)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>Hoy</button>
-      )}
+      </div>
     </div>
   )
 }
@@ -2393,6 +2476,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
               onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onRange={(f, t) => { setFromDate(f); setToDate(t) }}
               onRefresh={fetchReport} />
             <PlatosSection
               restaurantId={restaurantId}
@@ -2420,7 +2504,8 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
-              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }} />
+              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onRange={(f, t) => { setFromDate(f); setToDate(t) }} />
             <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
           </>
         )}
@@ -2432,6 +2517,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
               onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onRange={(f, t) => { setFromDate(f); setToDate(t) }}
               onRefresh={fetchReport} />
             {loading ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
@@ -2487,6 +2573,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
           onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
           onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+          onRange={(f, t) => { setFromDate(f); setToDate(t) }}
           onRefresh={fetchReport} />
 
         {allBranches && allBranches.length > 1 && (

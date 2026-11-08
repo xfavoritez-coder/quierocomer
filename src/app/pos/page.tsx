@@ -280,8 +280,23 @@ export default function PosHomePage() {
     if (typeof window === 'undefined') return null
     const saved = localStorage.getItem('pos:restoreInnerPage')
     if (saved) { localStorage.removeItem('pos:restoreInnerPage'); return saved }
+    // Read from URL path: /pos/reportes → 'reportes'
+    const path = window.location.pathname
+    for (const key of Object.keys(INNER_PAGES)) {
+      if (path === `/pos/${key}`) return key
+    }
     return null
   })
+
+  const openInnerPage = useCallback((id: string | null) => {
+    setInnerPage(id)
+    window.history.replaceState(null, '', id ? `/pos/${id}` : '/pos')
+  }, [])
+
+  const handleReportesStateChange = useCallback((tab: string, from: string, to: string, chart: string) => {
+    const params = new URLSearchParams({ tab, from, to, chart })
+    window.history.replaceState(null, '', `/pos/reportes?${params.toString()}`)
+  }, [])
 
   useState(() => {
     setRestaurantId(restaurantId)
@@ -541,7 +556,19 @@ export default function PosHomePage() {
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
       {innerPage && INNER_PAGES[innerPage] && (
         <>
-          {React.createElement(INNER_PAGES[innerPage].component, { restaurantId, title: INNER_PAGES[innerPage].title, onDone: () => setInnerPage(null), allBranches })}
+          {React.createElement(INNER_PAGES[innerPage].component, {
+              restaurantId,
+              title: INNER_PAGES[innerPage].title,
+              onDone: () => openInnerPage(null),
+              allBranches,
+              ...(innerPage === 'reportes' ? {
+                initialTab: new URLSearchParams(window.location.search).get('tab') || undefined,
+                initialFrom: new URLSearchParams(window.location.search).get('from') || undefined,
+                initialTo: new URLSearchParams(window.location.search).get('to') || undefined,
+                initialChart: new URLSearchParams(window.location.search).get('chart') || undefined,
+                onStateChange: handleReportesStateChange,
+              } : {}),
+            })}
         </>
       )}
 
@@ -719,7 +746,7 @@ export default function PosHomePage() {
       </>}{/* /!innerPage */}
 
       {/* ── Drawer ── */}
-      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={setInnerPage} />}
+      {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={openInnerPage} />}
     </div>
   )
 }
