@@ -119,7 +119,7 @@ function TrackingBox({ children, eta, etaLabel = 'Llega en' }: { children: React
   )
 }
 
-export default function DelifastTracking({ restaurantId, posOrderId, live = true }: { restaurantId: string; posOrderId: string; live?: boolean }) {
+export default function DelifastTracking({ restaurantId, posOrderId, live = true, ribbon = false }: { restaurantId: string; posOrderId: string; live?: boolean; ribbon?: boolean }) {
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -147,12 +147,16 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   // No mostrar nada si Delifast no está configurado para el local.
   if (state === 'off') return null
 
+  const outerSt: React.CSSProperties = ribbon
+    ? {}
+    : { borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }
+
   if (state === 'loading') return (
-    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+    <div style={outerSt}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-        <span style={{ fontSize: 12.5, color: '#64748b', fontWeight: 600 }}>Cargando…</span>
+        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Cargando…</span>
       </div>
     </div>
   )
@@ -160,21 +164,21 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   if (state === 'pending') {
     if (!live) return null
     return (
-      <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+      <div style={outerSt}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
           <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
           <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-          <span style={{ fontSize: 12.5, color: '#64748b', fontWeight: 600 }}>Sin asignar</span>
+          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Sin asignar</span>
         </div>
       </div>
     )
   }
   if (state === 'error' || !t) return (
-    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+    <div style={outerSt}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px' }}>
         <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1 }}>Motorista Delifast</span>
-        <span style={{ fontSize: 12.5, color: 'var(--ink-3)', fontWeight: 600 }}>Sin datos</span>
+        <span style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600 }}>Sin datos</span>
       </div>
     </div>
   )
@@ -207,22 +211,35 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const correctedLabel = (isPickupStatus && !t.timeline.llegadaLocal) ? 'Camino al local' : statusLabel(effectiveStatus)
   const displayStatus = etaDisplay ?? correctedLabel
   const displayColor = '#64748b'
+  // Estado desconocido: status vacío/null y sin progreso en timeline → motorista colgado
+  const isStuck = !effectiveStatus && !t.timeline.confirmacion && !t.timeline.inicioPickup
 
   return (
-    <div style={{ borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+    <div style={ribbon ? {} : { borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
       {/* Always-visible toggle row */}
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 12 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: ribbon ? 0 : 12 }}
       >
-        <Motorbike size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+        <Motorbike size={18} style={{ color: isStuck ? '#f59e0b' : 'var(--ink-2)', flexShrink: 0 }} />
         <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)', flex: 1, textAlign: 'left' }}>Motorista Delifast</span>
-        <span style={{ fontSize: 12.5, color: displayColor, fontWeight: 600, whiteSpace: 'nowrap' }}>{displayStatus}</span>
+        <span style={{ fontSize: 11, color: isStuck ? '#f59e0b' : displayColor, fontWeight: 600, whiteSpace: 'nowrap' }}>{displayStatus}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
           style={{ color: 'var(--ink-3)', flexShrink: 0, marginLeft: 4, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <path d="M6 9l6 6 6-6"/>
         </svg>
       </button>
+
+      {/* Alerta estado colgado — visible siempre, sin necesidad de expandir */}
+      {isStuck && (
+        <div style={{ margin: '0 14px 12px', padding: '10px 12px', borderRadius: 10, background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.35)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.2" style={{ flexShrink: 0, marginTop: 1 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 12.5, color: '#92400e', lineHeight: 1.3 }}>Motorista sin asignar</div>
+            <div style={{ fontSize: 11.5, color: '#b45309', marginTop: 3, lineHeight: 1.4 }}>Delifast no pudo asignar un repartidor. Avisa al cliente y contacta soporte Delifast.</div>
+          </div>
+        </div>
+      )}
 
       {/* Expandable details — siempre en DOM, ocultado con display para evitar clipping */}
       <div style={{ display: open ? 'flex' : 'none', flexDirection: 'column', gap: 12, padding: '12px 14px 14px', borderTop: '1px solid var(--line)' }}>

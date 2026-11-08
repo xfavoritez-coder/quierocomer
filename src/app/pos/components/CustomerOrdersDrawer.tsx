@@ -40,6 +40,15 @@ function itemLines(items: unknown): { name: string; qty: number; price: number }
 function fmt(d: string) {
   return new Date(d).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
 }
+function fmtTimeAmPm(d: string) {
+  return new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).format(new Date(d))
+    .toLowerCase()
+    .replace(/\s*p\.\s*m\.?/i, ' p.m.')
+    .replace(/\s*a\.\s*m\.?/i, ' a.m.')
+}
 function diffMin(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000)
 }
@@ -169,22 +178,17 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
       {/* Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Tags + fecha + dirección */}
+        {/* Tags + dirección + hora */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Pagado + tipo */}
+          {/* Tipo + Pagado */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ ...tagStyle, background: tc.bg, color: tc.fg }}>{typeLabel}</span>
             {paid && !canceled && (
               <span style={{ ...tagStyle, background: '#f0fdf4', color: '#16a34a', gap: 4 }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
                 Pagado
               </span>
             )}
-            <span style={{ ...tagStyle, background: tc.bg, color: tc.fg }}>{typeLabel}</span>
-          </div>
-          {/* Fecha con día/mes/año */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-2)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            {fmtDate(order.createdAt)}
           </div>
           {/* Dirección */}
           {isDelivery && order.addressLine && (
@@ -193,10 +197,24 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
               {cleanAddr(order.addressLine)}
             </div>
           )}
+          {/* Hora — "Realizado a las HH:MM p.m." */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ink-3)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Realizado a las {fmtTimeAmPm(order.createdAt)}
+          </div>
         </div>
 
-        {/* Delifast */}
-        {isDelivery && <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} />}
+        {/* Delifast — cinta full-width */}
+        {isDelivery && (
+          <div style={{
+            margin: '0 -20px',
+            borderTop: '1px solid var(--line)',
+            borderBottom: '1px solid var(--line)',
+            background: 'var(--sunk)',
+          }}>
+            <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} ribbon />
+          </div>
+        )}
 
         {/* Items */}
         {lines.length > 0 && (

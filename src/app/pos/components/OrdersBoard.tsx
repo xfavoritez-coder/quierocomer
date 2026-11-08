@@ -663,7 +663,6 @@ function OrderDetailPanel({
                   <span style={{ fontSize: 15, color: 'var(--ink-2)' }}>
                     {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <div style={{ flex: 1 }} />
                   {paid && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f0fdf4', color: '#16a34a', ...tagStyle }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>

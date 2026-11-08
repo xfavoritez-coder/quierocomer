@@ -33,38 +33,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ count });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const orders = await (prisma.posOrder.findMany as any)({
-    where,
-    select: {
-      id: true,
-      orderReference: true,
-      customerName: true,
-      customerPhone: true,
-      addressLine: true,
-      saleType: true,
-      isDelivery: true,
-      opsStage: true,
-      opsReadyForDeliveryAt: true,
-      opsDispatchedAt: true,
-      opsDeliveredAt: true,
-      totalAmount: true,
-      paidAmount: true,
-      tipAmount: true,
-      changeAmount: true,
-      deliveryFee: true,
-      items: true,
-      createdAt: true,
-      posStatus: true,
-      vendorName: true,
-      tableLabel: true,
-      rawPayload: true,
-      surveySentAt: true,
-      surveyEmailOpenedAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  }) as Array<{
+  type OrderRow = {
     id: string; orderReference: string | null; customerName: string; customerPhone: string;
     addressLine: string; saleType: string; isDelivery: boolean; opsStage: string;
     opsReadyForDeliveryAt: string | null; opsDispatchedAt: string | null; opsDeliveredAt: string | null;
@@ -72,7 +41,32 @@ export async function GET(req: NextRequest) {
     deliveryFee: number; items: unknown; createdAt: Date; posStatus: string;
     vendorName: string | null; tableLabel: string | null; rawPayload: unknown;
     surveySentAt: Date | null; surveyEmailOpenedAt: Date | null;
-  }>;
+  };
+  const baseSelect = {
+    id: true, orderReference: true, customerName: true, customerPhone: true,
+    addressLine: true, saleType: true, isDelivery: true, opsStage: true,
+    opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true,
+    totalAmount: true, paidAmount: true, tipAmount: true, changeAmount: true,
+    deliveryFee: true, items: true, createdAt: true, posStatus: true,
+    vendorName: true, tableLabel: true, rawPayload: true, surveySentAt: true,
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let orders: OrderRow[];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    orders = await (prisma.posOrder.findMany as any)({
+      where, orderBy: { createdAt: "desc" }, take: 60,
+      select: { ...baseSelect, surveyEmailOpenedAt: true },
+    }) as OrderRow[];
+  } catch {
+    // surveyEmailOpenedAt may not exist in generated client yet — fallback without it
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    orders = await (prisma.posOrder.findMany as any)({
+      where, orderBy: { createdAt: "desc" }, take: 60,
+      select: baseSelect,
+    }) as OrderRow[];
+    orders = orders.map(o => ({ ...o, surveyEmailOpenedAt: null }));
+  }
 
   // Check which orders have a survey response
   const orderIds = orders.map(o => o.id);

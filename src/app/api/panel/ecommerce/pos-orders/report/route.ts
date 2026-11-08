@@ -538,6 +538,36 @@ export async function GET(req: NextRequest) {
     return { dow, avg: a ? Math.round(a.sum / a.count) : 0, count: a?.count ?? 0 };
   });
 
+  // Venta agrupada por mes y por año dentro del rango from/to.
+  const rangeMonthMap = new Map<string, { sales: number; orders: number }>();
+  for (const o of orders) {
+    const ym = chileYmd(o.createdAt).slice(0, 7);
+    const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const e = rangeMonthMap.get(ym) || { sales: 0, orders: 0 };
+    e.sales += net; e.orders += 1;
+    rangeMonthMap.set(ym, e);
+  }
+  for (const o of unmirroredOnline) {
+    const ym = chileYmd(o.createdAt).slice(0, 7);
+    const net = Math.max(0, (o.total || 0) - (o.deliveryFee || 0));
+    const e = rangeMonthMap.get(ym) || { sales: 0, orders: 0 };
+    e.sales += net; e.orders += 1;
+    rangeMonthMap.set(ym, e);
+  }
+  const byMonth = Array.from(rangeMonthMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([ym, v]) => ({ ym, sales: v.sales, orders: v.orders }));
+  const byYear = (() => {
+    const yrMap = new Map<string, { sales: number; orders: number }>();
+    for (const { ym, sales, orders } of byMonth) {
+      const yr = ym.slice(0, 4);
+      const e = yrMap.get(yr) || { sales: 0, orders: 0 };
+      e.sales += sales; e.orders += orders;
+      yrMap.set(yr, e);
+    }
+    return Array.from(yrMap.entries()).sort().map(([yr, v]) => ({ yr, sales: v.sales, orders: v.orders }));
+  })();
+
   return NextResponse.json({
     from: fromYmd,
     to: toYmd,
@@ -553,6 +583,8 @@ export async function GET(req: NextRequest) {
     products,
     byType,
     monthly: { month: monthYm, days: monthlyDays },
+    byMonth,
+    byYear,
     deliveryTimes,
     paymentMethods,
     cancellations,

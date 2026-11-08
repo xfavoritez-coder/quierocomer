@@ -68,6 +68,8 @@ interface Report {
   products: ProductRank[]
   byType: TypeBucket[]
   monthly: { month: string; days: MonthlyDay[] }
+  byMonth?: { ym: string; sales: number; orders: number }[]
+  byYear?: { yr: string; sales: number; orders: number }[]
   deliveryTimes?: DeliveryTimes
   paymentMethods?: PaymentMethod[]
   cancellations?: CancellationData
@@ -1152,7 +1154,231 @@ interface HistoricoData {
   totalRows: number
 }
 
+const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+function ByMonthChart({ data }: { data: { ym: string; sales: number; orders: number }[] }) {
+  const [hovered, setHovered] = useState<string | null>(null)
+  if (!data || data.length === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos en el período.</p></Card>
+  )
+  const maxSales = Math.max(1, ...data.map(d => d.sales))
+  const multiYear = new Set(data.map(d => d.ym.slice(0, 4))).size > 1
+  return (
+    <Card>
+      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por mes</div>
+      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 18 }}>
+        Venta neta con IVA
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, overflowX: 'auto', paddingBottom: 4 }}>
+        {data.map(d => {
+          const pct = d.sales > 0 ? Math.max(8, Math.round((d.sales / maxSales) * 100)) : 0
+          const isHovered = hovered === d.ym
+          const monthIdx = parseInt(d.ym.slice(5, 7), 10) - 1
+          const monthLabel = MONTH_LABELS[monthIdx] ?? d.ym.slice(5, 7)
+          const yearLabel = d.ym.slice(0, 4)
+          return (
+            <div key={d.ym}
+              style={{ flex: '1 0 44px', minWidth: 44, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: d.sales > 0 ? 'pointer' : 'default' }}
+              onMouseEnter={() => d.sales > 0 && setHovered(d.ym)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <div style={{ width: '100%', height: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative' }}>
+                {isHovered && d.sales > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%', transform: 'translateX(-50%) translateY(-6px)',
+                    background: 'var(--ink)', color: 'var(--surface)', borderRadius: 8,
+                    padding: '5px 9px', zIndex: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,.18)',
+                  }}>
+                    <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 900 }}>{clp(d.sales)}</div>
+                    <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'rgba(255,255,255,.65)', marginTop: 1 }}>{monthLabel} {yearLabel} · {d.orders} pedidos</div>
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--ink)' }} />
+                  </div>
+                )}
+                {d.sales > 0 && !isHovered && (
+                  <span style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%',
+                    transform: 'translateX(-50%) translateY(-4px)',
+                    fontFamily: F, fontSize: '0.52rem', fontWeight: 700,
+                    color: 'var(--ink-3)', whiteSpace: 'nowrap', pointerEvents: 'none',
+                  }}>{clpShort(d.sales)}</span>
+                )}
+                <div style={{
+                  width: '70%', maxWidth: 32,
+                  height: `${pct}%`, minHeight: d.sales > 0 ? 4 : 0,
+                  background: isHovered
+                    ? `linear-gradient(180deg,${GREEN},${GREEN}cc)`
+                    : `linear-gradient(180deg,${GREEN}bb,${GREEN}77)`,
+                  borderRadius: '5px 5px 0 0',
+                  transform: isHovered ? 'scaleX(1.12)' : 'scaleX(1)',
+                  transformOrigin: 'bottom',
+                  transition: 'transform .15s ease, background .15s ease',
+                  boxShadow: isHovered ? `0 0 0 2px ${GREEN}55` : 'none',
+                }} />
+              </div>
+              <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: 'var(--ink-2)', marginTop: 5, whiteSpace: 'nowrap' }}>{monthLabel}</span>
+              {multiYear && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-4)', whiteSpace: 'nowrap' }}>{yearLabel}</span>}
+              {d.orders > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-4)' }}>{d.orders}p</span>}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
+function ByYearChart({ data }: { data: { yr: string; sales: number; orders: number }[] }) {
+  const [hovered, setHovered] = useState<string | null>(null)
+  if (!data || data.length === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos en el período.</p></Card>
+  )
+  const maxSales = Math.max(1, ...data.map(d => d.sales))
+  return (
+    <Card>
+      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por año</div>
+      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 18 }}>
+        Venta neta con IVA
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+        {data.map(d => {
+          const pct = d.sales > 0 ? Math.max(8, Math.round((d.sales / maxSales) * 100)) : 0
+          const isHovered = hovered === d.yr
+          return (
+            <div key={d.yr}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: d.sales > 0 ? 'pointer' : 'default' }}
+              onMouseEnter={() => d.sales > 0 && setHovered(d.yr)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <div style={{ width: '100%', height: 110, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative' }}>
+                {isHovered && d.sales > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%', transform: 'translateX(-50%) translateY(-6px)',
+                    background: 'var(--ink)', color: 'var(--surface)', borderRadius: 8,
+                    padding: '5px 9px', zIndex: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,.18)',
+                  }}>
+                    <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 900 }}>{clp(d.sales)}</div>
+                    <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'rgba(255,255,255,.65)', marginTop: 1 }}>{d.yr} · {d.orders} pedidos</div>
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--ink)' }} />
+                  </div>
+                )}
+                {d.sales > 0 && !isHovered && (
+                  <span style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%',
+                    transform: 'translateX(-50%) translateY(-4px)',
+                    fontFamily: F, fontSize: '0.6rem', fontWeight: 700,
+                    color: 'var(--ink-3)', whiteSpace: 'nowrap', pointerEvents: 'none',
+                  }}>{clpShort(d.sales)}</span>
+                )}
+                <div style={{
+                  width: '65%', maxWidth: 48,
+                  height: `${pct}%`, minHeight: d.sales > 0 ? 4 : 0,
+                  background: isHovered
+                    ? `linear-gradient(180deg,${BLUE},${BLUE}cc)`
+                    : `linear-gradient(180deg,${BLUE}bb,${BLUE}77)`,
+                  borderRadius: '6px 6px 0 0',
+                  transform: isHovered ? 'scaleX(1.08)' : 'scaleX(1)',
+                  transformOrigin: 'bottom',
+                  transition: 'transform .15s ease, background .15s ease',
+                  boxShadow: isHovered ? `0 0 0 2px ${BLUE}55` : 'none',
+                }} />
+              </div>
+              <span style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink-2)', marginTop: 5 }}>{d.yr}</span>
+              {d.orders > 0 && <span style={{ fontFamily: F, fontSize: '0.56rem', color: 'var(--ink-4)' }}>{d.orders}p</span>}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
 const DOW_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+function DowStatsChart({ stats }: { stats: DowStat[] }) {
+  const [hovered, setHovered] = useState<number | null>(null)
+  // Reordenar lun→dom
+  const ds = [...stats].sort((a, b) => {
+    const aa = a.dow === 0 ? 7 : a.dow
+    const bb = b.dow === 0 ? 7 : b.dow
+    return aa - bb
+  })
+  const active = ds.filter(d => d.count > 0)
+  const sorted = [...active].sort((a, b) => b.avg - a.avg)
+  const maxAvg = Math.max(1, ...ds.map(x => x.avg))
+  const best = active.reduce((a, b) => a.avg > b.avg ? a : b)
+  const worst = active.reduce((a, b) => a.avg < b.avg ? a : b)
+
+  return (
+    <Card>
+      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
+      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 18 }}>
+        Promedio de venta neta · verde = mejor, rojo = peor
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+        {ds.map(d => {
+          const pct = d.avg > 0 ? Math.max(8, Math.round((d.avg / maxAvg) * 100)) : 0
+          const rank = sorted.findIndex(s => s.dow === d.dow)
+          const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--line)'
+          const isBest = best.dow === d.dow
+          const isWorst = worst.dow === d.dow
+          const isHovered = hovered === d.dow
+          return (
+            <div key={d.dow}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: d.avg > 0 ? 'pointer' : 'default' }}
+              onMouseEnter={() => d.avg > 0 && setHovered(d.dow)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Bar container — valor flota encima de la barra */}
+              <div style={{ width: '100%', height: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative' }}>
+                {/* Tooltip al hacer hover */}
+                {isHovered && d.avg > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%', transform: 'translateX(-50%) translateY(-6px)',
+                    background: 'var(--ink)', color: 'var(--surface)', borderRadius: 8,
+                    padding: '5px 9px', zIndex: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,.18)',
+                  }}>
+                    <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 900 }}>{clp(d.avg)}</div>
+                    <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'rgba(255,255,255,.65)', marginTop: 1 }}>{DOW_LABEL[d.dow]} · {d.count} {d.count === 1 ? 'día' : 'días'}</div>
+                    {/* flecha */}
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--ink)' }} />
+                  </div>
+                )}
+                {/* Valor encima de la barra (posicionado relativo a la barra) */}
+                {d.avg > 0 && !isHovered && (
+                  <span style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%',
+                    transform: 'translateX(-50%) translateY(-4px)',
+                    fontFamily: F, fontSize: '0.52rem', fontWeight: 700,
+                    color: 'var(--ink-3)', whiteSpace: 'nowrap', pointerEvents: 'none',
+                  }}>{clpShort(d.avg)}</span>
+                )}
+                <div style={{
+                  width: '72%', maxWidth: 30,
+                  height: `${pct}%`,
+                  background: isHovered
+                    ? `linear-gradient(180deg,${color},${color}cc)`
+                    : `linear-gradient(180deg,${color}bb,${color}77)`,
+                  borderRadius: '5px 5px 0 0',
+                  minHeight: d.avg > 0 ? 4 : 0,
+                  transform: isHovered ? 'scaleX(1.15)' : 'scaleX(1)',
+                  transformOrigin: 'bottom',
+                  transition: 'transform .15s ease, background .15s ease',
+                  boxShadow: isHovered ? `0 0 0 2px ${color}66` : 'none',
+                }} />
+              </div>
+              <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: isBest ? GREEN : isWorst ? '#ef4444' : 'var(--ink-2)', marginTop: 5 }}>
+                {DOW_LABEL[d.dow]}
+              </span>
+              {d.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-4)' }}>{d.count}d</span>}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
 
 function dowRankColor(rank: number, total: number): string {
   if (total <= 1) return GREEN
@@ -2069,6 +2295,8 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.qty - a.qty),
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
+            byMonth: mergeByKey(valid.flatMap(r => r.byMonth ?? []), 'ym', ['sales', 'orders']).sort((a: any, b: any) => a.ym.localeCompare(b.ym)),
+            byYear: mergeByKey(valid.flatMap(r => r.byYear ?? []), 'yr', ['sales', 'orders']).sort((a: any, b: any) => a.yr.localeCompare(b.yr)),
             deliveryTimes: (() => {
               const allOrders = valid.flatMap(r => r.deliveryTimes?.orders ?? []).sort((a, b) => {
                 if (a.totalMin == null && b.totalMin == null) return 0
@@ -2305,7 +2533,19 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
             <div style={{ marginTop: 8 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
                 {(['hora', 'semana', 'mes', 'año'] as const).map(v => (
-                  <button key={v} onClick={() => setChartView(v)} style={{
+                  <button key={v} onClick={() => {
+                    // Auto-expand date range when switching to multi-period views
+                    if (v === 'mes' && fromDate === toDate) {
+                      const yr = fromDate.slice(0, 4)
+                      setFromDate(`${yr}-01-01`)
+                      setToDate(yr === today.slice(0, 4) ? today : `${yr}-12-31`)
+                    } else if (v === 'año' && fromDate === toDate) {
+                      const yr = fromDate.slice(0, 4)
+                      setFromDate(`${yr}-01-01`)
+                      setToDate(yr === today.slice(0, 4) ? today : `${yr}-12-31`)
+                    }
+                    setChartView(v)
+                  }} style={{
                     fontFamily: F, fontSize: '0.78rem', fontWeight: 700,
                     padding: '6px 14px', borderRadius: 20, border: '1px solid var(--line)',
                     cursor: 'pointer', transition: '.12s',
@@ -2320,50 +2560,14 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               {chartView === 'hora' && <HourlyChart hourly={data.hourly} />}
 
               {chartView === 'semana' && (
-                data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0) ? (() => {
-                  const ds: DowStat[] = data.dowStats
-                  const active = ds.filter(d => d.count > 0)
-                  const sorted = [...active].sort((a, b) => b.avg - a.avg)
-                  const maxAvg = Math.max(1, ...ds.map(x => x.avg))
-                  const best = active.reduce((a, b) => a.avg > b.avg ? a : b)
-                  const worst = active.reduce((a, b) => a.avg < b.avg ? a : b)
-                  return (
-                    <Card>
-                      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
-                      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
-                        Promedio de venta neta · verde = mejor, rojo = peor
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                        {ds.map(d => {
-                          const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
-                          const rank = sorted.findIndex(s => s.dow === d.dow)
-                          const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--line)'
-                          return (
-                            <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              {d.avg > 0 && (
-                                <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>{clpShort(d.avg)}</span>
-                              )}
-                              <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                <div style={{ width: '72%', maxWidth: 30, height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}99)`, borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0 }} />
-                              </div>
-                              <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: best.dow === d.dow ? GREEN : worst.dow === d.dow ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
-                                {DOW_LABEL[d.dow]}
-                              </span>
-                              {d.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-3)' }}>{d.count}d</span>}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </Card>
-                  )
-                })() : (
-                  <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos suficientes por día de semana.</p></Card>
-                )
+                data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0)
+                  ? <DowStatsChart stats={data.dowStats as DowStat[]} />
+                  : <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos suficientes por día de semana.</p></Card>
               )}
 
-              {chartView === 'mes' && <MonthlyChart monthly={data.monthly} />}
+              {chartView === 'mes' && <ByMonthChart data={data.byMonth ?? []} />}
 
-              {chartView === 'año' && <HistoricoAnualSection restaurantId={restaurantId} />}
+              {chartView === 'año' && <ByYearChart data={data.byYear ?? []} />}
             </div>
 
             {/* Ranking */}
