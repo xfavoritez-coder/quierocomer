@@ -362,8 +362,8 @@ function OrderCard({
                 {busy ? '…' : next.label + ' →'}
               </button>
             )}
-            {/* Pill invisible que solo detecta cancelación — sin render visual. */}
-            {paid && !next && order.delifastVentaId && !delifastCancelled && (
+            {/* Pill de estado Delifast — visible en ready y out_for_delivery. */}
+            {paid && order.delifastVentaId && !delifastCancelled && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
