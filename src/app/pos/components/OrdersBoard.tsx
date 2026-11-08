@@ -589,11 +589,16 @@ function OrderDetailPanel({
       )}
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
-        {/* Fila superior: nro pedido · X close */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 2px' }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 800, color: 'var(--ink-2)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
-            {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
-          </span>
+        {/* Fila: pedido # + nombre inline · X close */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 2px', minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 8, overflow: 'hidden' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
+            </span>
+            <span style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName(order.customerName || 'Cliente')}
+            </span>
+          </div>
           {/* X close button — mobile only */}
           <button
             className="pos-detail-close-mobile"
@@ -607,12 +612,10 @@ function OrderDetailPanel({
           </button>
         </div>
 
-        {/* Fila inferior: nombre cliente + pill historial */}
+        {/* Fila inferior: teléfono + pill historial */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0px 22px 14px', minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {displayName(order.customerName || 'Cliente')}
-            </div>
+            <div style={{ display: 'none' }}>{/* nombre movido arriba */}</div>
             {order.customerPhone && (
               <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
             )}
