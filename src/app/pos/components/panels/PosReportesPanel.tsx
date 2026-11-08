@@ -1861,6 +1861,7 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
+  const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>('hora')
   const today = chileTodayLocal()
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
@@ -2111,56 +2112,70 @@ export default function PosReportesPanel({ restaurantId, allBranches }: { restau
               </>
             )}
 
-            {/* Venta por hora */}
-            <SectionLabel>Horarios</SectionLabel>
-            <HourlyChart hourly={data.hourly} />
+            {/* Gráficos por período — pills selector */}
+            <div style={{ marginTop: 8 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                {(['hora', 'semana', 'mes', 'año'] as const).map(v => (
+                  <button key={v} onClick={() => setChartView(v)} style={{
+                    fontFamily: F, fontSize: '0.78rem', fontWeight: 700,
+                    padding: '6px 14px', borderRadius: 20, border: '1px solid var(--line)',
+                    cursor: 'pointer', transition: '.12s',
+                    background: chartView === v ? 'var(--ink)' : 'var(--surface)',
+                    color: chartView === v ? 'var(--surface)' : 'var(--ink-2)',
+                  }}>
+                    {v === 'hora' ? 'Por hora' : v === 'semana' ? 'Por semana' : v === 'mes' ? 'Por mes' : 'Por año'}
+                  </button>
+                ))}
+              </div>
 
-            {/* Día de semana */}
-            {data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0) && (() => {
-              const ds: DowStat[] = data.dowStats
-              const active = ds.filter(d => d.count > 0)
-              const sorted = [...active].sort((a, b) => b.avg - a.avg)
-              const maxAvg = Math.max(1, ...ds.map(x => x.avg))
-              const best = active.reduce((a, b) => a.avg > b.avg ? a : b)
-              const worst = active.reduce((a, b) => a.avg < b.avg ? a : b)
-              return (
-                <Card>
-                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
-                  <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
-                    Promedio de venta neta · verde = mejor, rojo = peor
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                    {ds.map(d => {
-                      const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
-                      const rank = sorted.findIndex(s => s.dow === d.dow)
-                      const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--line)'
-                      return (
-                        <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          {d.avg > 0 && (
-                            <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>{clpShort(d.avg)}</span>
-                          )}
-                          <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                            <div style={{ width: '72%', maxWidth: 30, height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}99)`, borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0 }} />
-                          </div>
-                          <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: best.dow === d.dow ? GREEN : worst.dow === d.dow ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
-                            {DOW_LABEL[d.dow]}
-                          </span>
-                          {d.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-3)' }}>{d.count}d</span>}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </Card>
-              )
-            })()}
+              {chartView === 'hora' && <HourlyChart hourly={data.hourly} />}
 
-            {/* Venta del mes */}
-            <SectionLabel>Mes en curso</SectionLabel>
-            <MonthlyChart monthly={data.monthly} />
+              {chartView === 'semana' && (
+                data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0) ? (() => {
+                  const ds: DowStat[] = data.dowStats
+                  const active = ds.filter(d => d.count > 0)
+                  const sorted = [...active].sort((a, b) => b.avg - a.avg)
+                  const maxAvg = Math.max(1, ...ds.map(x => x.avg))
+                  const best = active.reduce((a, b) => a.avg > b.avg ? a : b)
+                  const worst = active.reduce((a, b) => a.avg < b.avg ? a : b)
+                  return (
+                    <Card>
+                      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día de semana</div>
+                      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
+                        Promedio de venta neta · verde = mejor, rojo = peor
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+                        {ds.map(d => {
+                          const pct = d.avg > 0 ? Math.max(6, Math.round((d.avg / maxAvg) * 100)) : 0
+                          const rank = sorted.findIndex(s => s.dow === d.dow)
+                          const color = d.avg > 0 ? dowRankColor(rank, sorted.length) : 'var(--line)'
+                          return (
+                            <div key={d.dow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              {d.avg > 0 && (
+                                <span style={{ fontFamily: F, fontSize: '0.55rem', color: 'var(--ink-3)', marginBottom: 3, whiteSpace: 'nowrap' }}>{clpShort(d.avg)}</span>
+                              )}
+                              <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                <div style={{ width: '72%', maxWidth: 30, height: `${pct}%`, background: `linear-gradient(180deg,${color},${color}99)`, borderRadius: '4px 4px 0 0', minHeight: d.avg > 0 ? 4 : 0 }} />
+                              </div>
+                              <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: best.dow === d.dow ? GREEN : worst.dow === d.dow ? '#ef4444' : 'var(--ink-2)', marginTop: 4 }}>
+                                {DOW_LABEL[d.dow]}
+                              </span>
+                              {d.count > 0 && <span style={{ fontFamily: F, fontSize: '0.52rem', color: 'var(--ink-3)' }}>{d.count}d</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </Card>
+                  )
+                })() : (
+                  <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos suficientes por día de semana.</p></Card>
+                )
+              )}
 
-            {/* Histórico anual */}
-            <SectionLabel>Histórico del año</SectionLabel>
-            <HistoricoAnualSection restaurantId={restaurantId} />
+              {chartView === 'mes' && <MonthlyChart monthly={data.monthly} />}
+
+              {chartView === 'año' && <HistoricoAnualSection restaurantId={restaurantId} />}
+            </div>
 
             {/* Ranking */}
             <SectionLabel>Productos</SectionLabel>
