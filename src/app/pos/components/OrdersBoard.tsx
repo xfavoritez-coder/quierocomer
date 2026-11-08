@@ -75,6 +75,16 @@ function cleanAddr(addr: string): string {
     .trim()
 }
 
+function fmtTimeAmPm(d: string) {
+  return new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  }).format(new Date(d))
+    .toLowerCase()
+    .replace(/\s*p\.\s*m\.?/i, ' p.m.')
+    .replace(/\s*a\.\s*m\.?/i, ' a.m.')
+}
+
 const STAGE_LABEL: Record<string, string> = {
   preparing: 'En preparación',
   ready: 'Listo',
@@ -641,13 +651,17 @@ function OrderDetailPanel({
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Seguimiento del reparto (Delifast) — solo delivery */}
-        {isDelivery && <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} />}
+        {/* Seguimiento del reparto (Delifast) — cinta full-width */}
+        {isDelivery && (
+          <div style={{ margin: '0 -22px', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
+            <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />
+          </div>
+        )}
 
-        {/* Customer info */}
+        {/* Tags + dirección + hora */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Hora + tags inline */}
+            {/* Tipo + Pagado */}
             {(() => {
               const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
               const colors: Record<string, { bg: string; fg: string }> = {
@@ -656,29 +670,31 @@ function OrderDetailPanel({
                 Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
               }
               const c = colors[label]
-              const tagStyle = { fontSize: 11, fontWeight: 700, letterSpacing: '.05em' as const, textTransform: 'uppercase' as const, borderRadius: 6, padding: '3px 9px' }
+              const tagStyle = { fontSize: 11, fontWeight: 700, letterSpacing: '.05em' as const, textTransform: 'uppercase' as const, borderRadius: 6, padding: '3px 9px', display: 'inline-flex' as const, alignItems: 'center' as const }
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, color: 'var(--ink-3)' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <span style={{ fontSize: 15, color: 'var(--ink-2)' }}>
-                    {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ background: c.bg, color: c.fg, ...tagStyle }}>{label}</span>
                   {paid && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#f0fdf4', color: '#16a34a', ...tagStyle }}>
+                    <span style={{ gap: 4, background: '#f0fdf4', color: '#16a34a', ...tagStyle }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
                       Pagado
                     </span>
                   )}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', background: c.bg, color: c.fg, ...tagStyle }}>
-                    {label}
-                  </span>
                 </div>
               )
             })()}
+            {/* Dirección */}
             {isDelivery && order.addressLine && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 {cleanAddr(order.addressLine)}
+              </div>
+            )}
+            {/* Hora — "Realizado a las HH:MM p.m." */}
+            {order.createdAt && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-3)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Realizado a las {fmtTimeAmPm(order.createdAt)}
               </div>
             )}
           </div>

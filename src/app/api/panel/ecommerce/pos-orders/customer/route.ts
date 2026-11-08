@@ -70,12 +70,17 @@ export async function GET(req: NextRequest) {
 
   // Check which orders have a survey response
   const orderIds = orders.map(o => o.id);
-  const responses = orderIds.length > 0
-    ? await prisma.ecommerceSurveyResponse.findMany({
-        where: { orderId: { in: orderIds } },
-        select: { orderId: true, createdAt: true },
-      })
-    : [];
+  let responses: { orderId: string; createdAt: Date }[] = [];
+  try {
+    responses = orderIds.length > 0
+      ? await prisma.ecommerceSurveyResponse.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { orderId: true, createdAt: true },
+        })
+      : [];
+  } catch {
+    // survey response table may not exist yet — return orders without survey data
+  }
   const responseMap = new Map(responses.map(r => [r.orderId, r.createdAt]));
 
   const enriched = orders.map(o => ({
