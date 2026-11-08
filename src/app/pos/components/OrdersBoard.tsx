@@ -589,27 +589,11 @@ function OrderDetailPanel({
       )}
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
-        {/* Fila superior: nro pedido + tipo · botones imprimir/cerrar */}
+        {/* Fila superior: nro pedido · X close */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '14px 22px 10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
-              {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
-            </span>
-            {(() => {
-              const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-              const colors: Record<string, { bg: string; fg: string }> = {
-                Delivery: { bg: '#f1f5f9', fg: '#64748b' },
-                Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
-                Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
-              }
-              const c = colors[label]
-              return (
-                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>
-                  {label}
-                </span>
-              )
-            })()}
-          </div>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 800, color: 'var(--ink-2)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
+            {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
+          </span>
           {/* X close button — mobile only */}
           <button
             className="pos-detail-close-mobile"
@@ -624,7 +608,7 @@ function OrderDetailPanel({
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 22px 12px', borderTop: '1px solid var(--line)', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 22px 14px', minWidth: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName(order.customerName || 'Cliente')}
@@ -663,6 +647,21 @@ function OrderDetailPanel({
         {/* Customer info */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Tipo de pedido pill */}
+            {(() => {
+              const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+              const colors: Record<string, { bg: string; fg: string }> = {
+                Delivery: { bg: '#f1f5f9', fg: '#475569' },
+                Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
+                Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
+              }
+              const c = colors[label]
+              return (
+                <span style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', background: c.bg, color: c.fg, borderRadius: 6, padding: '3px 9px' }}>
+                  {label}
+                </span>
+              )
+            })()}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}

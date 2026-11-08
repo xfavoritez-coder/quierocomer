@@ -123,7 +123,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -197,7 +197,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const etaDisplay = dropoffEtaMin != null && dropoffEtaMin > 0
     ? `Entrega en ${dropoffEtaMin} min`
     : etaMin != null && etaMin > 0
-    ? `Entrega en ${etaMin} min`
+    ? `Llega al local en ${etaMin} min`
     : null
   // Corregir status: Delifast mantiene "dropoff" aunque ya llegó al cliente
   const effectiveStatus = t.timeline.llegadaCasa && /dropoff|camino|ruta|transit/.test((t.status || '').toLowerCase())
