@@ -602,9 +602,9 @@ function OrderDetailPanel({
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
         {/* Fila superior: nro pedido · tag tipo · X close */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 22px 2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px 0px' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
-            {order.orderReference ? `Pedido #${order.orderReference}` : `Pedido #${order.id.slice(-6)}`}
+            #{order.orderReference ?? order.id.slice(-6)}
           </span>
           {(() => {
             const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
@@ -617,54 +617,43 @@ function OrderDetailPanel({
             return <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', borderRadius: 6, padding: '3px 9px', background: c.bg, color: c.fg, flexShrink: 0 }}>{label}</span>
           })()}
           <span style={{ flex: 1 }} />
-          {/* X close button — mobile only */}
-          <button
-            className="pos-detail-close-mobile"
-            onClick={onClose}
-            title="Cerrar"
-            style={{ width: 32, height: 32, borderRadius: 7, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '0px 22px 14px', minWidth: 0 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 22px 10px', minWidth: 0, gap: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: 0, marginTop: -2 }}>
               {displayName(order.customerName || 'Cliente')}
             </div>
-            {order.customerPhone && (
-              <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
+            {order.customerPhone && customerCount !== null && (
+              <button
+                onClick={() => setShowCustomerHistory(true)}
+                title="Ver historial del cliente"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0,
+                  fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+                  padding: '3px 10px', borderRadius: 20,
+                  background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
+                  color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
+                  border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
+                  cursor: 'pointer', transition: 'opacity .12s',
+                }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                {customerCount} pedido{customerCount !== 1 ? 's' : ''}
+              </button>
             )}
-            {(() => {
-              const email = order.customerEmail ||
-                (order.rawPayload && typeof order.rawPayload === 'object'
-                  ? (order.rawPayload as Record<string, unknown>)?.customerEmail as string | null
-                  : null)
-              return email ? <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 1 }}>{email}</div> : null
-            })()}
           </div>
-          {order.customerPhone && customerCount !== null && (
-            <button
-              onClick={() => setShowCustomerHistory(true)}
-              title="Ver historial del cliente"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
-                padding: '3px 10px', borderRadius: 20,
-                background: customerCount > 1 ? 'var(--amber-tint)' : 'var(--sunk)',
-                color: customerCount > 1 ? 'var(--amber-press)' : 'var(--ink-3)',
-                border: `1px solid ${customerCount > 1 ? 'var(--amber)' : 'var(--line)'}`,
-                cursor: 'pointer', transition: 'opacity .12s',
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-              {customerCount} pedido{customerCount !== 1 ? 's' : ''}
-            </button>
+          {order.customerPhone && (
+            <div style={{ fontSize: 15, color: 'var(--ink-2)', marginTop: 2 }}>{order.customerPhone}</div>
           )}
+          {(() => {
+            const email = order.customerEmail ||
+              (order.rawPayload && typeof order.rawPayload === 'object'
+                ? (order.rawPayload as Record<string, unknown>)?.customerEmail as string | null
+                : null)
+            return email ? <div style={{ fontSize: 14, color: 'var(--ink-3)' }}>{email}</div> : null
+          })()}
         </div>
       </div>
 
@@ -681,16 +670,16 @@ function OrderDetailPanel({
         {/* Dirección + hora */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {isDelivery && order.addressLine && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {cleanAddr(order.addressLine)}
-              </div>
-            )}
             {order.createdAt && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Realizado a las {fmtTimeAmPm(order.createdAt)}
+              </div>
+            )}
+            {isDelivery && order.addressLine && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {cleanAddr(order.addressLine)}
               </div>
             )}
           </div>
