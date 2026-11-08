@@ -82,24 +82,34 @@ export default function DishDetail({
     const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
     const savedScrollY = window.scrollY;
     if (!alreadyLocked) {
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
+      // Use overflow:hidden instead of position:fixed on body.
+      // On iOS WebKit, body.position=fixed creates a new containing block for
+      // position:fixed descendants — the modal ends up offset by scrollY,
+      // leaving white gaps at the top and bottom of the screen.
       document.body.style.overflow = "hidden";
+      document.body.style.width = "100%";
+      document.documentElement.style.overflow = "hidden";
+      document.body.dataset.savedScrollY = String(savedScrollY);
     }
-
+    // Prevent iOS rubber-band scrolling behind the modal.
+    // Allow touchmove only within the modal's own scroll container.
+    const handleTouchMove = (e: TouchEvent) => {
+      if (scrollRef.current && scrollRef.current.contains(e.target as Node)) return;
+      if (e.cancelable) e.preventDefault();
+    };
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
     return () => {
+      document.removeEventListener("touchmove", handleTouchMove);
       if (!alreadyLocked) {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
+        const y = Number(document.body.dataset.savedScrollY || 0);
+        delete document.body.dataset.savedScrollY;
         document.body.style.overflow = "";
-        window.scrollTo(0, savedScrollY);
+        document.body.style.width = "";
+        document.documentElement.style.overflow = "";
+        window.scrollTo(0, y);
       }
     };
-  }, []); // Only on mount/unmount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to dish position when dish changes (including cross-sell navigation)
   const programmaticScrollRef = useRef(false);
@@ -172,7 +182,7 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", inset: -1,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
         zIndex: 120, background: "var(--carta-detail-bg)",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}

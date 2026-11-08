@@ -99,20 +99,28 @@ export default function DishDetailEsencial({
   // Lock scroll
   useEffect(() => {
     const y = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${y}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
+    // Use overflow:hidden instead of position:fixed on body — iOS WebKit bug:
+    // body.position=fixed creates a containing block for fixed descendants.
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-      window.scrollTo(0, y);
+    document.body.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+    document.body.dataset.savedScrollY = String(y);
+    // Prevent iOS rubber-band scroll behind the modal
+    const handleTouchMove = (e: TouchEvent) => {
+      if (scrollRef.current && scrollRef.current.contains(e.target as Node)) return;
+      if (e.cancelable) e.preventDefault();
     };
-  }, []);
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => {
+      document.removeEventListener("touchmove", handleTouchMove);
+      const saved = Number(document.body.dataset.savedScrollY || 0);
+      delete document.body.dataset.savedScrollY;
+      document.body.style.overflow = "";
+      document.body.style.width = "";
+      document.documentElement.style.overflow = "";
+      window.scrollTo(0, saved);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track
   useEffect(() => {
