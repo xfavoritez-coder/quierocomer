@@ -601,26 +601,16 @@ function OrderDetailPanel({
       )}
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
-        {/* Fila superior: nro pedido · tag tipo · X close */}
+        {/* Fila superior: nro pedido · X close */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px 0px' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.02em', whiteSpace: 'nowrap' }}>
-            #{order.orderReference ?? order.id.slice(-6)}
+            {isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'} #{order.orderReference ?? order.id.slice(-6)}
           </span>
-          {(() => {
-            const label = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-            const colors: Record<string, { bg: string; fg: string }> = {
-              Delivery: { bg: '#f1f5f9', fg: '#475569' },
-              Retiro:   { bg: '#f0fdf4', fg: '#4b7a5e' },
-              Salón:    { bg: '#f5f3ff', fg: '#7c6fa0' },
-            }
-            const c = colors[label]
-            return <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', borderRadius: 6, padding: '3px 9px', background: c.bg, color: c.fg, flexShrink: 0 }}>{label}</span>
-          })()}
           <span style={{ flex: 1 }} />
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 22px 10px', minWidth: 0, gap: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '3px 22px 10px', minWidth: 0, gap: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: 0, marginTop: -2 }}>
               {displayName(order.customerName || 'Cliente')}
@@ -677,8 +667,8 @@ function OrderDetailPanel({
               </div>
             )}
             {order.createdAt && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'var(--ink-2)' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-3)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Realizado a las {fmtTimeAmPm(order.createdAt)}
               </div>
             )}
