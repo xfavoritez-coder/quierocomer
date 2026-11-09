@@ -76,6 +76,10 @@ function genSpacingCss(): string {
   css += `.qc-storefront .qc-heart-pop{animation:qc-heart-pop .34s ease}`;
   // Respeta la preferencia de menos movimiento
   css += `@media(prefers-reduced-motion:reduce){.qc-storefront .qc-sheet-in,.qc-storefront .qc-sheet-out,.qc-storefront .qc-fade-in,.qc-storefront .qc-fade-out,.qc-storefront .qc-drawer-left-in,.qc-storefront .qc-drawer-left-out,.qc-storefront .qc-drawer-right-in,.qc-storefront .qc-drawer-right-out,.qc-storefront .qc-modal-in,.qc-storefront .qc-modal-out,.qc-storefront .qc-heart-pop{animation-duration:.01ms}}`;
+  // Nunca mostrar la barra de scroll en el storefront (el scroll sigue funcionando):
+  // la página (html/body) y cualquier contenedor scrollable dentro del storefront.
+  css += `html::-webkit-scrollbar,body::-webkit-scrollbar,.qc-storefront ::-webkit-scrollbar{display:none;width:0;height:0}`;
+  css += `html,body,.qc-storefront,.qc-storefront *{scrollbar-width:none;-ms-overflow-style:none}`;
   return css;
 }
 
