@@ -269,7 +269,7 @@ function OrderCard({
         </div>
         {/* Fila 2: chip tipo + sucursal (siempre debajo del nombre) */}
         {(showTypeChip || branchLabel) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: -4 }}>
             {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
             {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
