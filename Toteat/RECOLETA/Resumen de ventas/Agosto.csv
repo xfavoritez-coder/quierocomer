@@ -1,0 +1,105 @@
+﻿ID,Producto,Cantidad,Valor Venta,Descuentos,Costo
+KN010101,⭐ Deluxe (60 piezas),298,7.639.200,-3.000,0
+KN0250,Suprema (40 piezas premium),133,3.040.700,0,0
+KN0252,Dúo (20 piezas premium + 1 entrada),71,1.224.900,0,0
+KNX00010,Envuelto en panko (*Extra),61,0,0,0
+KNX00040,"Duo Acevichado (Acevichado, Palta parrillera, 4 Arrollados de tofu) (*Extra)",53,0,0,0
+KN0285,⭐Miercoles Mix,50,700.000,0,0
+KN0220,Champi Furai,47,357.300,0,0
+KN0340,Dulce,42,22.950,0,0
+TOTEATDVYCOST,Costo Delivery $3.100,40,124.000,0,0
+KN0310,Acevichada de cilantro,38,20.350,0,0
+KN0293,Tofu bowl,37,396.800,0,0
+KN0300,Acevichada,37,20.750,0,0
+KN0170,Seitán Acevichado,35,359.500,0,0
+KN0370,Jengibre,34,11.000,0,0
+KN0060,Gunkan,33,292.200,0,0
+KN190,Almond,31,215.500,0,0
+KN01111,Tofu Pops,28,183.200,0,0
+TOTEATDVYCOST,Costo Delivery $3.000,26,78.000,0,0
+KN0030,Palta Parrillera,25,223.900,0,0
+KNX00020,Envuelton en palta (*Extra),25,0,0,0
+KN0270,Magnifica (60 piezas premium),23,848.700,0,0
+KN0320,Salsa Huancaina,22,11.900,0,0
+TOTEATDVYCOST,Costo Delivery $3.800,22,83.600,0,0
+TOTEATDVYCOST,Costo Delivery $3.700,22,81.400,0,0
+KN0240,Tofu Finger,22,181.000,0,0
+TOTEATDVYCOST,Costo Delivery $2.800,22,61.600,0,0
+TOTEATDVYCOST,Costo Delivery $3.600,21,75.600,0,0
+KN0209,Golden honey,21,205.590,0,0
+KN0280,Miso Ramen,21,309.900,0,0
+TOTEATDVYCOST,Costo Delivery $3.900,20,78.000,0,0
+KN0210,Gyozas de verdura,20,104.000,0,0
+TOTEATDVYCOST,Costo Delivery $2.700,19,51.300,0,0
+KNX00030,"Duo Huancaina (Huancaina, Amondo, Tofu Pops) (*Extra)",18,0,0,0
+KN0120,Seitán,18,123.000,0,0
+KN0020,Huancaina,18,156.600,0,0
+TOTEATDVYCOST,Costo Delivery $4.000,18,72.000,0,0
+TOTEATDVYCOST,Costo Delivery $5.200,17,88.400,0,0
+KN0230,Arrollados de Tofu,17,111.100,0,0
+KN0040,Kiuri,16,143.700,0,0
+TOTEATDVYCOST,Costo Delivery $3.300,16,52.800,0,0
+KN0291,Seitán Bowl,16,166.700,0,0
+TOTEATDVYCOST,Costo Delivery $4.300,16,68.800,0,0
+KN0292,Sake bowl,16,145.100,0,0
+TOTEATDVYCOST,Costo Delivery $2.900,15,43.500,0,0
+KN0360,Wasabi,15,4.600,0,0
+KN0181,Keto Roll,14,134.800,0,0
+KN0350,Spicy,14,7.750,0,0
+TOTEATDVYCOST,Costo Delivery $5.700,14,79.800,0,0
+TOTEATDVYCOST,Costo Delivery $3.500,14,49.000,0,0
+TOTEATDVYCOST,Costo Delivery $2.500,13,32.500,0,0
+TOTEATDVYCOST,Costo Delivery $4.700,13,61.100,0,0
+KN0051,Parmesano,12,103.320,0,0
+TOTEATDVYCOST,Costo Delivery $3.400,12,40.800,0,0
+TOTEATDVYCOST,Costo Delivery $4.400,12,52.800,0,0
+TOTEATDVYCOST,Costo Delivery $3.200,11,35.200,0,0
+KN0017,Magno Roll,11,103.300,0,0
+TOTEATDVYCOST,Costo Delivery $6.100,11,67.100,0,0
+KN0330,Soya,11,6.400,0,0
+TOTEATDVYCOST,Costo Delivery $4.800,11,52.800,0,0
+KN0200,Not-Shari,10,93.400,0,0
+KN0111,Sake en palta,10,72.000,0,0
+TOTEATDVYCOST,Costo Delivery $4.500,10,45.000,0,0
+KN0050,Amondo,10,84.500,0,0
+TOTEATDVYCOST,Costo Delivery $5.800,10,58.000,0,0
+KN0160,Choclo,9,63.400,0,0
+TOTEATDVYCOST,Costo Delivery $4.200,9,37.800,0,0
+KN0140,Maracuyá,9,62.700,0,0
+TOTEATDVYCOST,Costo Delivery $2.600,9,23.400,0,0
+TOTEATDVYCOST,Costo Delivery $4.900,8,39.200,0,0
+TOTEATDVYCOST,Costo Delivery $5.100,8,40.800,0,0
+TOTEATDVYCOST,Costo Delivery $4.100,8,32.800,0,0
+KN0130,Champi,8,51.500,0,0
+TOTEATDVYCOST,Costo Delivery $4.600,8,36.800,0,0
+TOTEATDVYCOST,Costo Delivery $5.000,7,35.000,0,0
+TOTEATDVYCOST,Costo Delivery $5.500,7,38.500,0,0
+TOTEATDVYCOST,Costo Delivery $5.600,7,39.200,0,0
+TOTEATDVYCOST,Costo Delivery $2.300,7,16.100,0,0
+TOTEATDVYCOST,Costo Delivery $5.300,6,31.800,0,0
+KN0290,Seitán Ramen,6,85.200,0,0
+KN0070,Hummus,6,52.200,0,0
+KN0150,Palmito,6,41.000,0,0
+KN310,Combi del Guerrero,6,184.800,0,0
+KN309,⭐ Combi del Samurai,5,153.500,0,0
+KN0100,Camote Furai,5,34.720,0,0
+TOTEATDVYCOST,Costo Delivery $2.400,4,9.600,0,0
+TOTEATDVYCOST,Costo Delivery $6.800,4,27.200,0,0
+KN0016,Ceviche roll,4,40.900,0,0
+KN0010,Acevichado,4,36.400,0,0
+TOTEATDVYCOST,Costo Delivery $6.000,3,18.000,0,0
+TOTEATDVYCOST,Costo Delivery $5.400,3,16.200,0,0
+KN0091,White Roll,3,21.500,0,0
+TOTEATDVYCOST,Costo Delivery $6.600,2,13.200,0,0
+KN0190,Hiyoko,2,15.800,0,0
+TOTEATDVYCOST,Costo Delivery $6.500,2,13.000,0,0
+KN0015,Samurai,2,18.900,0,0
+TOTEATDVYCOST,Costo Delivery $6.200,2,12.400,0,0
+TOTEATDVYCOST,Costo Delivery $2.200,2,4.400,0,0
+TOTEATDVYCOST,Costo Delivery $6.400,2,12.800,0,0
+TOTEATDVYCOST,Costo Delivery $5.900,2,11.800,0,0
+TOTEATDVYCOST,Costo Delivery $4.058,1,4.058,0,0
+TOTEATDVYCOST,Costo Delivery $4.782,1,4.782,0,0
+TOTEATDVYCOST,Costo Delivery $4.911,1,4.911,0,0
+TOTEATDVYCOST,Costo Delivery $6.300,1,6.300,0,0
+TOTEATDVYCOST,Costo Delivery $2.100,1,2.100,0,0
