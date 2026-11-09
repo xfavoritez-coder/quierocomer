@@ -1928,7 +1928,126 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
 }
 
 // ── Sección clientes ──────────────────────────────────────────────────
-function ClientsSection({ restaurantId }: { restaurantId: string }) {
+type ChartRange = 'today' | '7d' | '30d' | '90d' | '365d'
+interface ChartBucket { date: string; label: string; newClients: number; recurringClients: number }
+
+function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
+  const [chartRange, setChartRange] = useState<ChartRange>('30d')
+  const [chartData, setChartData] = useState<ChartBucket[] | null>(null)
+  const [chartLoading, setChartLoading] = useState(false)
+
+  useEffect(() => {
+    setChartLoading(true)
+    const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
+    const params = new URLSearchParams({ restaurantId, range: chartRange })
+    if (branchIds) params.set('branchIds', branchIds)
+    fetch(`/api/panel/ecommerce/pos-orders/clients/chart?${params}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.buckets) setChartData(d.buckets) })
+      .catch(() => {})
+      .finally(() => setChartLoading(false))
+  }, [restaurantId, chartRange, allBranches])
+
+  const RANGES: { value: ChartRange; label: string }[] = [
+    { value: 'today', label: 'Hoy' },
+    { value: '7d',    label: 'Semana' },
+    { value: '30d',   label: 'Mes' },
+    { value: '90d',   label: '90d' },
+    { value: '365d',  label: '1 año' },
+  ]
+
+  const buckets = chartData ?? []
+  const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients))
+  const hasData = buckets.some(b => b.newClients + b.recurringClients > 0)
+  const count = buckets.length
+  const labelEvery = count <= 12 ? 1 : count <= 20 ? 2 : count <= 31 ? 5 : 7
+  const showCount = count <= 25
+
+  return (
+    <Card style={{ padding: '16px 14px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Nuevos vs recurrentes</span>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {RANGES.map(r => (
+            <button key={r.value} onClick={() => setChartRange(r.value)}
+              style={{
+                fontFamily: F, fontSize: '0.65rem', fontWeight: 700,
+                padding: '3px 9px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                background: chartRange === r.value ? BLUE : 'var(--sunk)',
+                color: chartRange === r.value ? '#fff' : 'var(--ink-3)',
+                transition: 'background .15s',
+              }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: BLUE, flexShrink: 0 }} />
+          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Nuevos</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
+          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Recurrentes</span>
+        </div>
+      </div>
+
+      {/* Chart area */}
+      {chartLoading ? (
+        <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.78rem' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          Cargando…
+        </div>
+      ) : !hasData ? (
+        <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.78rem' }}>
+          Sin datos para este período
+        </div>
+      ) : (
+        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+          {buckets.map((b, i) => {
+            const total = b.newClients + b.recurringClients
+            const totalPct = Math.max(0, Math.round((total / maxTotal) * 148)) // 148px usable bar height
+            const newH = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
+            const recH = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, totalPct - newH) : 0
+            const showLabel = i % labelEvery === 0
+            return (
+              <div key={b.date} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {/* Total count */}
+                {showCount && total > 0 ? (
+                  <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
+                ) : (
+                  <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
+                )}
+                {/* Bar */}
+                <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+                  {newH > 0 && (
+                    <div style={{ height: newH, background: BLUE, borderRadius: recH === 0 ? '3px 3px 0 0' : '3px 3px 0 0', minHeight: 2 }} />
+                  )}
+                  {recH > 0 && (
+                    <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />
+                  )}
+                  {total === 0 && (
+                    <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />
+                  )}
+                </div>
+                {/* Date label */}
+                <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1 }}>
+                  {b.label}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
   const [cd, setCd] = useState<ClientsData | null>(null)
   const [clLoading, setClLoading] = useState(true)
   const [sortKey, setSortKey] = useState<ClientSortKey>('riskScore')
@@ -1982,7 +2101,7 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
   if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
   if (!cd) return null
 
-  const { top3, fieles, aRecuperar, count80, pct80clients } = cd
+  const { top3 } = cd
   const totalPages = Math.ceil(cd.filtered / PAGE_SIZE)
 
   // Avatar helper
@@ -2015,6 +2134,9 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
           </div>
         ))}
       </div>
+
+      {/* ── Gráfico nuevos vs recurrentes ── */}
+      <ClientsAcquisitionChart restaurantId={restaurantId} allBranches={allBranches} />
 
       {/* ── Podio VIP ── */}
       {top3.length > 0 && (
@@ -2056,85 +2178,6 @@ function ClientsSection({ restaurantId }: { restaurantId: string }) {
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontFamily: F, fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(c.totalSpent)}</div>
                   <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 1 }}>gastado</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* ── 80/20 + Nuevos ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        {/* 80/20 */}
-        <Card style={{ padding: '14px' }}>
-          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Regla 80/20</div>
-          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: BLUE, lineHeight: 1 }}>{pct80clients}%</div>
-          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4 }}>
-            de tus clientes genera el <strong>80%</strong> de los ingresos
-          </div>
-          <div style={{ marginTop: 10, height: 6, borderRadius: 999, background: 'var(--sunk)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct80clients}%`, background: `linear-gradient(90deg,${BLUE},${PURPLE})`, borderRadius: 999 }} />
-          </div>
-          <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 4 }}>{count80} de {cd.total} clientes</div>
-        </Card>
-
-        {/* Nuevos este mes */}
-        <Card style={{ padding: '14px' }}>
-          <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Nuevos clientes</div>
-          <div style={{ fontFamily: F, fontSize: '2rem', fontWeight: 900, color: GREEN, lineHeight: 1 }}>{cd.byStatus.new}</div>
-          <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4 }}>
-            clientes con su <strong>primer pedido</strong> registrado
-          </div>
-          <div style={{ marginTop: 10, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {(['active','at_risk','churned','new'] as ClientStatus[]).map(s => (
-              <span key={s} style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: STATUS_BG[s], color: STATUS_COLOR[s] }}>
-                {STATUS_LABEL[s]} {cd.byStatus[s]}
-              </span>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* ── Los más fieles ── */}
-      {fieles.length > 0 && (
-        <Card style={{ padding: '14px 14px' }}>
-          <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Los más fieles</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {fieles.map((c) => (
-              <div key={c.email || c.phone} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '0.72rem', fontWeight: 900, color: '#fff' }}>{initials(c)}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email || c.phone}</div>
-                  <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>{c.orders} pedidos · {clp(c.totalSpent)}</div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 900, color: GREEN }}>c/{c.avgFrequencyDays}d</div>
-                  <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)' }}>frec.</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* ── Clientes a recuperar ── */}
-      {aRecuperar.length > 0 && (
-        <Card style={{ padding: '14px', borderLeft: '3px solid #ef4444' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '.08em' }}>Clientes a recuperar</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {aRecuperar.map((c) => (
-              <div key={c.email || c.phone} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fef2f2', borderRadius: 10, padding: '8px 10px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '0.72rem', fontWeight: 900, color: '#fff' }}>{initials(c)}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email || c.phone}</div>
-                  <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>{c.orders} pedidos · {clp(c.totalSpent)}</div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: '#ef4444' }}>Hace {c.daysSinceLastOrder}d</div>
-                  <span style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: STATUS_BG[c.status], color: STATUS_COLOR[c.status] }}>{STATUS_LABEL[c.status]}</span>
                 </div>
               </div>
             ))}
@@ -2725,7 +2768,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
 
         {/* Clientes sub-section */}
         {subSection === 'clientes' && (
-          <ClientsSection restaurantId={restaurantId} />
+          <ClientsSection restaurantId={restaurantId} allBranches={allBranches} />
         )}
 
         {/* Satisfacción sub-section */}
