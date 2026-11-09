@@ -559,7 +559,7 @@ function OrderDetailPanel({
       try {
         const res = await fetch('/api/panel/ecommerce/print-reenqueue', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ restaurantId: rid, id: onlineId }),
+          body: JSON.stringify({ restaurantId: rid, id: onlineId, ticketOnly: true }),
         })
         const d = await res.json().catch(() => ({}))
         r = res.ok ? { ok: true } : { ok: false, error: d.error || `HTTP ${res.status}` }

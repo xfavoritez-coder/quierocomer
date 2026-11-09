@@ -24,12 +24,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const restaurantId = (body?.restaurantId || "").toString();
   const id = (body?.id || "").toString();
+  // ticketOnly=true: reimprime SOLO el ticket (sin la comanda de cocina aunque el
+  // local la tenga activada). Lo usa el botón "Imprimir ticket" del POS, que tiene
+  // su propio botón aparte para la comanda de cocina.
+  const ticketOnly = body?.ticketOnly === true;
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const res = await prisma.onlineOrder.updateMany({
     where: { id, restaurantId },
-    data: { printedAt: null, printRequestedAt: new Date() },
+    data: { printedAt: null, printRequestedAt: new Date(), reprintTicketOnly: ticketOnly },
   });
   if (res.count === 0) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   return NextResponse.json({ ok: true });

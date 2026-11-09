@@ -89,8 +89,13 @@ export async function GET(req: NextRequest) {
       id: true, orderNumber: true, customerName: true, customerPhone: true,
       orderType: true, deliveryAddress: true, paymentMethod: true, paymentStatus: true, paymentGateway: true,
       items: true, total: true, deliveryFee: true, discount: true, couponCode: true, notes: true, createdAt: true,
+      reprintTicketOnly: true,
     },
   });
+
+  // Pedidos reencolados "solo ticket" (botón Imprimir ticket del POS): no se les
+  // agrega la comanda de cocina aunque el local la tenga activada.
+  const ticketOnlyIds = new Set(orders.filter((o) => o.reprintTicketOnly).map((o) => o.id));
 
   // Excluir intentos de pago online no completados (no son pedidos reales todavía).
   const real = orders.filter((o) => !(o.paymentGateway && o.paymentStatus !== "paid"));
@@ -148,7 +153,7 @@ export async function GET(req: NextRequest) {
     const isTest = typeof o.id === "string" && o.id.startsWith("test-");
     if (isTest) return [o];
     const entries: (typeof mapped)[number][] = cfg.printCopies === 2 ? [o, o] : [o];
-    if (cfg.kitchenComanda) {
+    if (cfg.kitchenComanda && !ticketOnlyIds.has(o.id)) {
       try {
         const escpos = kitchenEscposFor(o);
         entries.push({ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]);

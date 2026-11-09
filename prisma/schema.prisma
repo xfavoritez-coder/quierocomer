@@ -490,6 +490,7 @@ model OnlineOrder {
   surveyEmailOpenedAt  DateTime?
   printedAt            DateTime?
   printRequestedAt     DateTime?
+  reprintTicketOnly    Boolean   @default(false)
   scheduledFor         DateTime?
   scheduledReleasedAt  DateTime?
   pushSubscription     Json?
