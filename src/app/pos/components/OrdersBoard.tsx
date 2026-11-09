@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId } from '@/lib/pos'
 import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
-import { getBridgeStatus, printComanda, printKitchenComanda } from '@/lib/pos/bridge'
+import { getBridgeStatus, printKitchenComanda } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
@@ -35,6 +35,7 @@ interface PosOrderLite {
   id: string
   dailyNumber?: number | null
   orderReference?: string | null
+  externalId?: string | null
   customerName: string
   customerEmail?: string | null
   customerPhone: string
@@ -547,33 +548,41 @@ function OrderDetailPanel({
 
   const handlePrint = async (kind: 'ticket' | 'kitchen') => {
     setPrintOpen(false); setPrinting(kind); setPrintMsg(null)
+    const rid = order._branchId || restaurantId
+    let r: { ok: boolean; error?: string }
+    if (kind === 'ticket') {
+      // "Ticket de caja" = reimprime el MISMO ticket que se imprime solo al llegar
+      // el pedido (el que trae los valores/total), re-encolándolo para el agente de
+      // impresión (print-reenqueue). NO es la comanda simple de mostrador.
+      const onlineId = order.externalId?.startsWith('oo-') ? order.externalId.slice(3) : null
+      if (!onlineId) { setPrintMsg('✗ Sin ticket de caja para este pedido'); setPrinting(null); setTimeout(() => setPrintMsg(null), 3000); return }
+      try {
+        const res = await fetch('/api/panel/ecommerce/print-reenqueue', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantId: rid, id: onlineId }),
+        })
+        const d = await res.json().catch(() => ({}))
+        r = res.ok ? { ok: true } : { ok: false, error: d.error || `HTTP ${res.status}` }
+      } catch { r = { ok: false, error: 'Error de conexión' } }
+      setPrintMsg(r.ok ? '✓ Enviado a impresora' : '✗ ' + (r.error || 'Error'))
+      setPrinting(null)
+      setTimeout(() => setPrintMsg(null), 3000)
+      return
+    }
+    // "Comanda cocina" = comanda de cocina en letra grande, directo por el agente local.
     const status = await getBridgeStatus()
     if (!status.ok) { setPrintMsg('Agente desconectado'); setPrinting(null); return }
     const items = itemLines(order.items).map(l => ({ quantity: l.qty, dish_name: l.name, modifiers: l.options.map(o => ({ name: o, price_adjustment: 0 })), note: l.note }))
-    const bt = bridgeType()
-    // "Ticket de caja" = comanda de caja (printComanda); "Comanda cocina" = comanda
-    // de cocina en letra grande (printKitchenComanda). Antes ambos imprimían cocina.
-    const r = kind === 'ticket'
-      ? await printComanda({
-          jobId: order.id + '-ticket',
-          type: bt === 'delivery' ? 'mostrador' : bt,
-          tableNumber: order.tableLabel || undefined,
-          customerName: order.customerName,
-          accountId: order.id,
-          roundNumber: 1,
-          sentBy: 'caja',
-          items,
-        })
-      : await printKitchenComanda({
-          jobId: order.id + '-kitchen',
-          type: bt,
-          orderLabel,
-          customerName: order.customerName,
-          customerPhone: order.customerPhone,
-          customerAddress: order.addressLine,
-          sentBy: 'cocina',
-          items,
-        })
+    r = await printKitchenComanda({
+      jobId: order.id + '-kitchen',
+      type: bridgeType(),
+      orderLabel,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerAddress: order.addressLine,
+      sentBy: 'cocina',
+      items,
+    })
     setPrintMsg(r.ok ? '✓ Impreso' : '✗ ' + (r.error || 'Error'))
     setPrinting(null)
     setTimeout(() => setPrintMsg(null), 3000)
