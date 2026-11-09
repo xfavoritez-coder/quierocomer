@@ -1108,7 +1108,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
         </div>
 
         {/* Buscador — visible cuando hay 5+ pedidos o hay texto */}
-        {(orders.length >= 5 || search) && (
+        {true && (
           <div style={{ position: 'relative', marginBottom: 14 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input
