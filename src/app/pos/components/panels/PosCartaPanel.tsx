@@ -134,16 +134,20 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
 }
 
 // ── ProductRow ─────────────────────────────────────────────────────
-function ProductRow({ p, onToggleSoldOut, onEdit, onDelete }: {
+function ProductRow({ p, onToggleSoldOut, onToggleDailyBadge, onToggleNewBadge, onEdit, onDelete }: {
   p: Product
   onToggleSoldOut: () => void
+  onToggleDailyBadge: () => void
+  onToggleNewBadge: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
   const isHidden   = !!p.hidden
   const isSoldOut  = !!p.is_sold_out
+  const isDailyBadge = !!p.daily_badge
+  const isNewBadge   = !!p.new_badge
   return (
-    <div style={{ background: isSoldOut ? 'rgba(239,68,68,0.04)' : isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isSoldOut ? 'rgba(239,68,68,0.25)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: isHidden ? 0.5 : 1 }}>
+    <div style={{ background: isSoldOut ? 'rgba(239,68,68,0.04)' : isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isSoldOut ? 'rgba(239,68,68,0.25)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, opacity: isHidden ? 0.5 : 1 }}>
       {/* Thumb */}
       <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', overflow: 'hidden', display: 'grid', placeItems: 'center' }}>
         {p.image_url
@@ -161,6 +165,16 @@ function ProductRow({ p, onToggleSoldOut, onEdit, onDelete }: {
         </div>
         <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>{clp(p.price)}</div>
       </div>
+
+      {/* Cintas */}
+      <button onClick={onToggleDailyBadge} title={isDailyBadge ? 'Quitar cinta Solo hoy' : 'Activar cinta Solo hoy'}
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isDailyBadge ? '#f97316' : 'var(--line)'}`, background: isDailyBadge ? 'rgba(249,115,22,0.12)' : 'transparent', color: isDailyBadge ? '#f97316' : 'var(--ink-3)' }}>
+        🏷 {isDailyBadge ? 'Solo hoy ✓' : 'Solo hoy'}
+      </button>
+      <button onClick={onToggleNewBadge} title={isNewBadge ? 'Quitar cinta Nuevo' : 'Activar cinta Nuevo'}
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isNewBadge ? '#16a34a' : 'var(--line)'}`, background: isNewBadge ? 'rgba(22,163,74,0.12)' : 'transparent', color: isNewBadge ? '#16a34a' : 'var(--ink-3)' }}>
+        ✨ {isNewBadge ? 'Nuevo ✓' : 'Nuevo'}
+      </button>
 
       {/* Agotar / Disponible */}
       <button onClick={onToggleSoldOut}
@@ -311,6 +325,22 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
       const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soldOut: next }) })
       if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d)
     } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d) }
+  }, [])
+
+  const toggleDailyBadge = useCallback(async (id: string, next: boolean) => {
+    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: next } : p) } : d)
+    try {
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dailyBadge: next }) })
+      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: !next } : p) } : d)
+    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: !next } : p) } : d) }
+  }, [])
+
+  const toggleNewBadge = useCallback(async (id: string, next: boolean) => {
+    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: next } : p) } : d)
+    try {
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newBadge: next }) })
+      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: !next } : p) } : d)
+    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: !next } : p) } : d) }
   }, [])
 
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
@@ -513,6 +543,8 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                               ) : (
                                 <ProductRow key={p.id} p={p}
                                   onToggleSoldOut={() => toggleDishSoldOut(p.id, !p.is_sold_out)}
+                                  onToggleDailyBadge={() => toggleDailyBadge(p.id, !p.daily_badge)}
+                                  onToggleNewBadge={() => toggleNewBadge(p.id, !p.new_badge)}
                                   onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
                                   onDelete={() => handleDeleteProduct(p.id)} />
                               )

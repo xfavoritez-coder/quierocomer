@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import { usePosNav } from '../lib/usePosNav'
@@ -12,10 +12,21 @@ import PosReportesPanel from '../components/panels/PosReportesPanel'
 function ReportesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { restaurantId, restaurant, loading } = usePosRestaurant()
+  const { restaurantId, restaurant, restaurants, loading } = usePosRestaurant()
   const { caja: cashSession } = usePosCash(restaurantId)
   const navigate = usePosNav()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Mirror branchMode logic from pos/page.tsx so multi-branch works after reload
+  const [branchMode] = useState<string>(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('pos:branchMode') || ''
+  })
+  const effectiveBranchMode = branchMode || restaurantId
+  const allBranches = useMemo(
+    () => effectiveBranchMode === 'todas' && restaurants.length > 1 ? restaurants : undefined,
+    [effectiveBranchMode, restaurants]
+  )
 
   // Auth guard
   useEffect(() => {
@@ -54,6 +65,7 @@ function ReportesContent() {
       {restaurantId ? (
         <PosReportesPanel
           restaurantId={restaurantId}
+          allBranches={allBranches}
           initialTab={tab}
           initialFrom={from}
           initialTo={to}

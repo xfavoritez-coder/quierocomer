@@ -53,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.tags !== undefined && { tags: body.tags }),
         ...(body.isHero !== undefined && { isHero: body.isHero }),
         ...(body.dailyBadge !== undefined && { dailyBadge: body.dailyBadge }),
+        ...(body.newBadge !== undefined && { newBadge: body.newBadge }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.hideFromOrdering !== undefined && { hideFromOrdering: body.hideFromOrdering }),
         ...(body.soldOut !== undefined && { soldOut: body.soldOut }),

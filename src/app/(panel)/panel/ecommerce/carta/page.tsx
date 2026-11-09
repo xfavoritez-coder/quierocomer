@@ -109,6 +109,15 @@ export default function EcommerceCatalogoPage() {
     } catch { toast.error("Error de conexión"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, daily_badge: !next } : p) } : d); }
   }, []);
 
+  const toggleNewBadge = useCallback(async (id: string, next: boolean) => {
+    setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, new_badge: next } : p) } : d);
+    try {
+      const res = await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newBadge: next }) });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); toast.error(e.error || "No se pudo actualizar"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, new_badge: !next } : p) } : d); return; }
+      toast.success(next ? "Cinta \"Nuevo\" activada" : "Cinta \"Nuevo\" removida");
+    } catch { toast.error("Error de conexión"); setData((d) => d ? { ...d, products: d.products.map((p) => p.id === id ? { ...p, new_badge: !next } : p) } : d); }
+  }, []);
+
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
     const apply = (val: boolean) => setData((d) => d ? {
       ...d,
@@ -231,6 +240,7 @@ export default function EcommerceCatalogoPage() {
                         <Row key={p.id} name={p.name} initial={p.toteat_code} endpoint={`/api/admin/dishes/${p.id}/map-toteat`} toteatMap={toteatMap} qcPrice={p.price}
                           soldOut={p.is_sold_out} onToggleSoldOut={() => toggleSoldOut(p.id, !p.is_sold_out)} hidden={p.hidden}
                           dailyBadge={p.daily_badge} onToggleDailyBadge={() => toggleDailyBadge(p.id, !p.daily_badge)}
+                          newBadge={p.new_badge} onToggleNewBadge={() => toggleNewBadge(p.id, !p.new_badge)}
                           star={{ on: bannerIds.includes(p.id), disabled: !bannerIds.includes(p.id) && bannerIds.length >= BANNER_MAX, onClick: () => toggleBanner(p.id) }} />
                       ))}
                     </div>
@@ -294,7 +304,7 @@ function TabBtn({ active, onClick, icon, label, count, done }: { active: boolean
 
 const clp = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CL");
 
-function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onToggleSoldOut, hidden, dailyBadge, onToggleDailyBadge }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number; soldOut?: boolean; onToggleSoldOut?: () => void; hidden?: boolean; dailyBadge?: boolean; onToggleDailyBadge?: () => void }) {
+function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onToggleSoldOut, hidden, dailyBadge, onToggleDailyBadge, newBadge, onToggleNewBadge }: { name: string; initial: string | null; endpoint: string; star?: { on: boolean; disabled: boolean; onClick: () => void }; toteatMap?: Record<string, { name: string; price: number }> | null; qcPrice?: number; soldOut?: boolean; onToggleSoldOut?: () => void; hidden?: boolean; dailyBadge?: boolean; onToggleDailyBadge?: () => void; newBadge?: boolean; onToggleNewBadge?: () => void }) {
   const [code, setCode] = useState(initial ?? "");
   const norm = code.trim().toUpperCase();
   const tInfo = toteatMap && norm ? toteatMap[norm] : undefined;
@@ -325,6 +335,15 @@ function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onTog
             style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${dailyBadge ? "#f97316" : "var(--adm-card-border)"}`, background: dailyBadge ? "rgba(249,115,22,0.12)" : "transparent", color: dailyBadge ? "#f97316" : "var(--adm-text2)" }}
           >
             🏷 {dailyBadge ? "Solo hoy ✓" : "Solo hoy"}
+          </button>
+        )}
+        {onToggleNewBadge && (
+          <button
+            onClick={onToggleNewBadge}
+            title={newBadge ? "Quitar cinta «Nuevo»" : "Activar cinta «Nuevo»"}
+            style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${newBadge ? "#16a34a" : "var(--adm-card-border)"}`, background: newBadge ? "rgba(22,163,74,0.12)" : "transparent", color: newBadge ? "#16a34a" : "var(--adm-text2)" }}
+          >
+            ✨ {newBadge ? "Nuevo ✓" : "Nuevo"}
           </button>
         )}
         {onToggleSoldOut && (

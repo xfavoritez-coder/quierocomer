@@ -101,6 +101,7 @@ export interface StoreProduct {
   is_sold_out: boolean;
   is_hero: boolean; // destacado (para el banner del tema impact)
   daily_badge: boolean; // cinta "Solo hoy" visible en la tarjeta
+  new_badge: boolean;  // cinta "Nuevo" visible en la tarjeta
   toteat_code: string | null;
   hidden?: boolean; // inactivo/oculto para el cliente (solo en gestión de carta)
   option_groups: StoreOptionGroup[];
@@ -227,7 +228,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
           price: true, discountPrice: true, photos: true, stockCountdown: true, soldOut: true,
-          toteatProductId: true, isHero: true, dailyBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
+          toteatProductId: true, isHero: true, dailyBadge: true, newBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
           modifierTemplates: {
             select: {
               groups: {
@@ -328,6 +329,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         is_sold_out: dishSoldOut(d),
         is_hero: d.isHero === true,
         daily_badge: d.dailyBadge === true,
+        new_badge: d.newBadge === true,
         toteat_code: d.toteatProductId ?? null,
         // Oculto para el cliente: categoría inactiva, plato inactivo u oculto de
         // "Pedidos online". Solo se puebla con includeHidden (gestión de carta).

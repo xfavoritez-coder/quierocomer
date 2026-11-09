@@ -6,6 +6,10 @@ import { isSuperAdmin } from "@/lib/adminAuth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// 60-second server-side cache: avoid re-scanning all orders on every page navigation
+const _cache = new Map<string, { ts: number; data: unknown }>();
+const CACHE_TTL = 60_000;
+
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   if (isSuperAdmin(req)) return true;
   const panelId = req.cookies.get("panel_id")?.value;
@@ -66,56 +70,70 @@ export async function GET(req: NextRequest) {
   const sortKey    = req.nextUrl.searchParams.get("sortKey") ?? "riskScore";
   const sortAsc    = req.nextUrl.searchParams.get("sortAsc") === "1";
 
-  // ── Cargar pedidos ──────────────────────────────────────────────────
-  const posOrders = await prisma.posOrder.findMany({
-    where: {
-      restaurantId,
-      posStatus: { not: "canceled" },
-      OR: [{ customerEmail: { not: "" } }, { customerPhone: { not: "" } }],
-    },
-    select: {
-      externalId: true, customerEmail: true, customerName: true,
-      customerPhone: true, totalAmount: true, deliveryFee: true,
-      tipAmount: true, createdAt: true,
-    },
-    orderBy: { createdAt: "asc" },
-  });
+  // ── Cache key: per restaurant, sort-independent (filtering/sort happens in-memory) ──
+  const cacheKey = restaurantId;
+  const cached = _cache.get(cacheKey);
+  const nowMs = Date.now();
 
   interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date }
-  const orders: NormOrder[] = posOrders.map((o) => ({
-    email: o.customerEmail || "",
-    name:  o.customerName  || "",
-    phone: o.customerPhone || "",
-    net:   Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
-    createdAt: o.createdAt,
-  }));
+  let orders: NormOrder[];
 
-  const mirroredOnlineIds = new Set<string>();
-  for (const o of posOrders) {
-    if (o.externalId?.startsWith("oo-")) mirroredOnlineIds.add(o.externalId.slice(3));
-  }
+  if (cached && nowMs - cached.ts < CACHE_TTL) {
+    orders = cached.data as NormOrder[];
+  } else {
+    // ── Cargar pedidos (en paralelo) ──────────────────────────────────────
+    const [posOrders, onlineOrders] = await Promise.all([
+      prisma.posOrder.findMany({
+        where: {
+          restaurantId,
+          posStatus: { not: "canceled" },
+          OR: [{ customerEmail: { not: "" } }, { customerPhone: { not: "" } }],
+        },
+        select: {
+          externalId: true, customerEmail: true, customerName: true,
+          customerPhone: true, totalAmount: true, deliveryFee: true,
+          tipAmount: true, createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.onlineOrder.findMany({
+        where: {
+          restaurantId, source: "ecommerce",
+          status: { not: "CANCELLED" },
+          OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
+        },
+        select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
 
-  const onlineOrders = await prisma.onlineOrder.findMany({
-    where: {
-      restaurantId, source: "ecommerce",
-      status: { not: "CANCELLED" },
-      OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
-    },
-    select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-  for (const o of onlineOrders) {
-    if (mirroredOnlineIds.has(o.id)) continue;
-    if (!(o.customerEmail?.trim() || o.customerPhone?.trim())) continue;
-    orders.push({
+    const mirroredOnlineIds = new Set<string>();
+    for (const o of posOrders) {
+      if (o.externalId?.startsWith("oo-")) mirroredOnlineIds.add(o.externalId.slice(3));
+    }
+
+    orders = posOrders.map((o) => ({
       email: o.customerEmail || "",
       name:  o.customerName  || "",
       phone: o.customerPhone || "",
-      net:   Math.max(0, (o.total || 0) - (o.deliveryFee || 0)),
+      net:   Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
       createdAt: o.createdAt,
-    });
+    }));
+
+    for (const o of onlineOrders) {
+      if (mirroredOnlineIds.has(o.id)) continue;
+      if (!(o.customerEmail?.trim() || o.customerPhone?.trim())) continue;
+      orders.push({
+        email: o.customerEmail || "",
+        name:  o.customerName  || "",
+        phone: o.customerPhone || "",
+        net:   Math.max(0, (o.total || 0) - (o.deliveryFee || 0)),
+        createdAt: o.createdAt,
+      });
+    }
+    orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    _cache.set(cacheKey, { ts: nowMs, data: orders });
   }
-  orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   // ── Agrupar por cliente ─────────────────────────────────────────────
   const clientMap = new Map<string, {
