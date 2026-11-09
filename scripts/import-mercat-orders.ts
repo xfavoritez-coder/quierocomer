@@ -116,6 +116,12 @@ async function main() {
       // cols[17] = Subvencion, [18] = Cupon
       const fechaEntrega   = cols[19] ?? "";
 
+      // Solo importar órdenes completadas
+      if (estatusOrden.trim().toLowerCase() !== "completed") {
+        skipped++;
+        continue;
+      }
+
       const restaurantId = resolveRestaurant(restaurantName);
       if (!restaurantId) {
         console.warn(`  SKIP sin mapeo: "${restaurantName}" | orden ${ordenId}`);
