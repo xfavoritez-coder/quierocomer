@@ -251,54 +251,27 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 8,
         flex: 1, minWidth: 0,
       }}>
-        {cols === 3 ? (
-          // 3 columnas (tarjeta angosta): nombre + total/pagado en fila superior,
-          // chips de tipo/sucursal en fila inferior.
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-              <div style={{
-                fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
-                display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
-                overflow: 'hidden', wordBreak: 'break-word', flex: 1, minWidth: 0,
-              }}>
-                {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-                {displayName(order.customerName || 'Cliente')}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
-                  {clp(order.totalAmount)}
-                </span>
-                <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
-              </div>
-            </div>
-            {(showTypeChip || branchLabel) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
-                {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
-              </div>
-            )}
-          </>
-        ) : (
-          // 1 y 2 columnas (tarjeta ancha): fila única original
-          // [#nº nombre · chip tipo] ↔ [monto · chip pago], nombre con ellipsis.
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-              <div style={{
-                fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
-              }}>
-                {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
-                {displayName(order.customerName || 'Cliente')}
-              </div>
-              {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
-              {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
-                {clp(order.totalAmount)}
-              </span>
-              <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
-            </div>
+        {/* Fila 1: número + nombre (izq) · total + chip pago (der) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{
+            fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0,
+          }}>
+            {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
+            {displayName(order.customerName || 'Cliente')}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)' }}>
+              {clp(order.totalAmount)}
+            </span>
+            <span style={chip(paid ? '#16a34a' : AMBER)}>{paid ? 'PAGADO' : 'POR PAGAR'}</span>
+          </div>
+        </div>
+        {/* Fila 2: chip tipo + sucursal (siempre debajo del nombre) */}
+        {(showTypeChip || branchLabel) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
+            {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
         )}
 
