@@ -929,6 +929,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
   // primero. También se recuerda por dispositivo.
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
+  const [search, setSearch] = useState('')
   useEffect(() => {
     try {
       const v = localStorage.getItem('pos:boardSort')
@@ -1027,18 +1028,25 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   }, [fetchOrders, restaurantId, allBranches])
 
   const list = useMemo(() => {
+    const q = search.trim().toLowerCase()
     const filtered = orders.filter((o) => {
-      if (type === 'todos') return true
-      const deliv = o.isDelivery || o.saleType === 'delivery'
-      if (type === 'delivery') return deliv
-      return !deliv && o.saleType !== 'dine-in' && o.saleType !== 'dinein'
+      if (type !== 'todos') {
+        const deliv = o.isDelivery || o.saleType === 'delivery'
+        if (type === 'delivery' && !deliv) return false
+        if (type === 'retiro' && (deliv || o.saleType === 'dine-in' || o.saleType === 'dinein')) return false
+      }
+      if (!q) return true
+      const ref = (o.orderReference ?? (o.dailyNumber != null ? String(o.dailyNumber) : '')).toLowerCase()
+      const name = (o.customerName || '').toLowerCase()
+      const phone = (o.customerPhone || '').toLowerCase()
+      return ref.includes(q) || name.includes(q) || phone.includes(q)
     })
     return filtered.sort((a, b) => {
       const ta = new Date(a.createdAt).getTime()
       const tb = new Date(b.createdAt).getTime()
       return sortDir === 'asc' ? ta - tb : tb - ta
     })
-  }, [orders, type, sortDir])
+  }, [orders, type, sortDir, search])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     const rid = order._branchId || restaurantId
@@ -1098,6 +1106,25 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
             )}
           </div>
         </div>
+
+        {/* Buscador — visible cuando hay 5+ pedidos o hay texto */}
+        {(orders.length >= 5 || search) && (
+          <div style={{ position: 'relative', marginBottom: 14 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="search"
+              placeholder="Buscar por número, nombre o teléfono…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 34px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'var(--sans)', fontSize: 14, outline: 'none' }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, display: 'flex' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* List */}
         {loading && orders.length === 0 ? (
