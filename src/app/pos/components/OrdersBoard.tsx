@@ -549,16 +549,31 @@ function OrderDetailPanel({
     setPrintOpen(false); setPrinting(kind); setPrintMsg(null)
     const status = await getBridgeStatus()
     if (!status.ok) { setPrintMsg('Agente desconectado'); setPrinting(null); return }
-    const r = await printKitchenComanda({
-      jobId: order.id + '-' + kind,
-      type: bridgeType(),
-      orderLabel,
-      customerName: order.customerName,
-      customerPhone: order.customerPhone,
-      customerAddress: order.addressLine,
-      sentBy: kind === 'ticket' ? 'caja' : 'cocina',
-      items: itemLines(order.items).map(l => ({ quantity: l.qty, dish_name: l.name, modifiers: l.options.map(o => ({ name: o, price_adjustment: 0 })), note: l.note })),
-    })
+    const items = itemLines(order.items).map(l => ({ quantity: l.qty, dish_name: l.name, modifiers: l.options.map(o => ({ name: o, price_adjustment: 0 })), note: l.note }))
+    const bt = bridgeType()
+    // "Ticket de caja" = comanda de caja (printComanda); "Comanda cocina" = comanda
+    // de cocina en letra grande (printKitchenComanda). Antes ambos imprimían cocina.
+    const r = kind === 'ticket'
+      ? await printComanda({
+          jobId: order.id + '-ticket',
+          type: bt === 'delivery' ? 'mostrador' : bt,
+          tableNumber: order.tableLabel || undefined,
+          customerName: order.customerName,
+          accountId: order.id,
+          roundNumber: 1,
+          sentBy: 'caja',
+          items,
+        })
+      : await printKitchenComanda({
+          jobId: order.id + '-kitchen',
+          type: bt,
+          orderLabel,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          customerAddress: order.addressLine,
+          sentBy: 'cocina',
+          items,
+        })
     setPrintMsg(r.ok ? '✓ Impreso' : '✗ ' + (r.error || 'Error'))
     setPrinting(null)
     setTimeout(() => setPrintMsg(null), 3000)
