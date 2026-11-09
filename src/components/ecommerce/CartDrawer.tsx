@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Plus, Minus, MapPin, Store, ChevronRight, Bike, ShoppingBag, UtensilsCrossed, Lock } from "lucide-react";
+import { X, Plus, Minus, MapPin, Store, ChevronRight, Motorbike, ShoppingCart, UtensilsCrossed, Lock } from "lucide-react";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -60,7 +60,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               <p className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Bike size={13} className="shrink-0" /> Delivery</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Motorbike size={13} className="shrink-0" /> Delivery</p>
                 <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
@@ -76,7 +76,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
         {/* Items */}
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-5 text-center">
-            <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
+            <ShoppingCart className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
             <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           </div>
         ) : (

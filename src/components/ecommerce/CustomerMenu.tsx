@@ -333,7 +333,7 @@ function FavoritesView({ tenant, primaryColor }: { tenant: StoreTenant; primaryC
   }
 
   if (favs === null) return <p className="text-sm text-gray-400">Cargando…</p>;
-  if (favs.length === 0) return <p className="text-sm text-gray-400 text-center py-8">Aún no tienes favoritos. Toca el ♥ en un producto para guardarlo.</p>;
+  if (favs.length === 0) return <p className="text-sm text-gray-400 text-center py-8">Aún no tienes favoritos. Toca el <Heart size={14} className="inline align-middle" /> en un producto para guardarlo.</p>;
 
   return (
     <div className="flex flex-col gap-3">

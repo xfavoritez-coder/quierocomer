@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { Star, Heart } from "lucide-react";
 
 interface Q { id: string; text: string }
 interface Props {
@@ -60,7 +61,7 @@ export default function SurveyForm(props: Props) {
 
         {done ? (
           <div style={{ textAlign: "center", padding: "24px 8px" }}>
-            <div style={{ fontSize: 44, marginBottom: 10 }}>🙏</div>
+            <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Heart size={44} color={accent} fill={accent} /></div>
             <h1 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 6px" }}>{props.thankYou || "¡Gracias por tu respuesta!"}</h1>
             <p style={{ color: "#777", fontSize: 14, margin: 0 }}>Tu opinión nos ayuda a mejorar.</p>
           </div>
@@ -112,8 +113,8 @@ function Stars({ value, accent, onPick }: { value: number; accent: string; onPic
     <div style={{ display: "flex", gap: 6 }} onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" aria-label={`${n} de 5`} onClick={() => onPick(n)} onMouseEnter={() => setHover(n)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 2, lineHeight: 1, fontSize: 32, color: n <= shown ? accent : "#d9d9de", transition: "color .12s", flexShrink: 0 }}>
-          ★
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 2, lineHeight: 0, flexShrink: 0 }}>
+          <Star size={32} color={n <= shown ? accent : "#d9d9de"} fill={n <= shown ? accent : "transparent"} style={{ transition: "color .12s, fill .12s" }} />
         </button>
       ))}
     </div>

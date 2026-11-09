@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight, ShoppingBag, Bike, Lock, Check } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight, ShoppingCart, Motorbike, Lock, Check } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -450,7 +450,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         </div>
       ) : showEmpty ? (
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-          <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
+          <ShoppingCart className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           <StoreLink href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</StoreLink>
         </div>
@@ -525,7 +525,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <div className="min-w-0">
                   {isDelivery && deliveryAddress ? (
                     <>
-                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Bike size={15} className="shrink-0" /> Delivery</p>
+                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Motorbike size={15} className="shrink-0" /> Delivery</p>
                       <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
                     </>
                   ) : (

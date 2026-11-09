@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "sonner";
-import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Bike, Lock, UtensilsCrossed } from "lucide-react";
+import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -625,7 +625,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
           {/* Carrito — plano como el resto; conserva el badge y la animación cart-bump. */}
           <FabBtn label="Ver carrito" color={primaryColor} onClick={goCheckout}>
             <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
-              <ShoppingBag className="w-6 h-6" />
+              <ShoppingCart className="w-6 h-6" />
               {badge > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow" style={{ background: primaryColor }}>{badge}</span>
               )}
@@ -859,7 +859,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
               <p className="text-sm font-semibold text-gray-500">¿Cómo quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Bike size={13} className="shrink-0" /> Delivery</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Motorbike size={13} className="shrink-0" /> Delivery</p>
                 <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
@@ -885,7 +885,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
 
       {!showItems ? (
         <div className="px-5 py-10 text-center">
-          <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
+          <ShoppingCart className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           <p className="text-xs mt-1 text-gray-300">Los productos que agregues aparecerán aquí</p>
         </div>
