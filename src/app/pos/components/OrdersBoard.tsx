@@ -280,12 +280,14 @@ function OrderCard({
           {secondary}
         </div>}
 
-        {/* Fila 3: hora · N ítems · chip pago */}
+        {/* Fila 3: hora · N ítems  |  chip pago derecha */}
         <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
-          <span style={{ color: 'var(--ink-4)' }}>·</span>
-          <span style={{ ...chip(paid ? '#16a34a' : AMBER), fontSize: 10, padding: '2px 8px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', flexShrink: 0,
+            background: paid ? '#dcfce7' : 'var(--sunk)',
+            color: paid ? '#15803d' : 'var(--ink-3)',
+          }}>
             {paid ? 'Pagado' : 'Por pagar'}
           </span>
         </div>
