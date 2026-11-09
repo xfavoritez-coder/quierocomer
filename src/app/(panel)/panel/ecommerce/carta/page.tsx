@@ -341,7 +341,7 @@ function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onTog
           <button
             onClick={onToggleNewBadge}
             title={newBadge ? "Quitar cinta «Nuevo»" : "Activar cinta «Nuevo»"}
-            style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${newBadge ? "#16a34a" : "var(--adm-card-border)"}`, background: newBadge ? "rgba(22,163,74,0.12)" : "transparent", color: newBadge ? "#16a34a" : "var(--adm-text2)" }}
+            style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${newBadge ? "#d97706" : "var(--adm-card-border)"}`, background: newBadge ? "rgba(245,158,11,0.12)" : "transparent", color: newBadge ? "#d97706" : "var(--adm-text2)" }}
           >
             ✨ {newBadge ? "Nuevo ✓" : "Nuevo"}
           </button>

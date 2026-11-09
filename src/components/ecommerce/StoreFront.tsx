@@ -805,7 +805,7 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
         )}
         {!soldOut && !product.daily_badge && product.new_badge && (
           <div className="absolute top-0 left-0 overflow-hidden" style={{ width: 80, height: 80 }}>
-            <div style={{ position: 'absolute', top: 17, left: -18, width: 96, textAlign: 'center', background: 'linear-gradient(90deg,#16a34a,#059669)', color: '#fff', fontSize: 10, fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '4px 0', transform: 'rotate(-45deg)', boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>
+            <div style={{ position: 'absolute', top: 17, left: -18, width: 96, textAlign: 'center', background: 'linear-gradient(90deg,#f59e0b,#d97706)', color: '#fff', fontSize: 10, fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', padding: '4px 0', transform: 'rotate(-45deg)', boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>
               Nuevo
             </div>
           </div>

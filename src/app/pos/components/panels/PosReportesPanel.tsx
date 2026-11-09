@@ -946,6 +946,7 @@ interface SurveyResp {
   orderTotal?: number | null
   orderType?: string | null
   orderItems?: string[]
+  orderCreatedAt?: string | null
   customerName: string | null
   customerPhone?: string | null
   comment: string | null
@@ -966,7 +967,7 @@ function StarBar({ avg }: { avg: number }) {
   )
 }
 
-function SatisfaccionSection({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
+function SatisfaccionSection({ restaurantId, allBranches, onViewAll }: { restaurantId: string; allBranches?: BranchInfo[]; onViewAll?: () => void }) {
   const [averages, setAverages] = useState<SurveyAvg[]>([])
   const [responses, setResponses] = useState<SurveyResp[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -1017,6 +1018,12 @@ function SatisfaccionSection({ restaurantId, allBranches }: { restaurantId: stri
             <StarBar avg={overall} />
             <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{overall.toFixed(1)}</span>
             <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{withData[0]?.count ?? 0} resp.</span>
+            {onViewAll && (
+              <button onClick={onViewAll} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', cursor: 'pointer', fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-2)', flexShrink: 0 }}>
+                Ver todo
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: lastComments.length > 0 ? 14 : 0 }}>
@@ -1042,10 +1049,22 @@ function SatisfaccionSection({ restaurantId, allBranches }: { restaurantId: stri
                   onClick={canClick ? () => handleCommentClick(r) : undefined}
                   style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px', cursor: canClick ? 'pointer' : 'default' }}
                 >
-                  {avgR !== null && (
-                    <div style={{ marginBottom: 4 }}><StarBar avg={avgR} /></div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: avgR !== null ? 4 : 0 }}>
+                    {avgR !== null && <StarBar avg={avgR} />}
+                    {(r.orderCreatedAt || r.createdAt) && (
+                      <span style={{ fontFamily: F, fontSize: '0.62rem', color: 'var(--ink-3)', flexShrink: 0, marginLeft: 'auto' }}>
+                        {new Date(r.orderCreatedAt || r.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', fontStyle: 'italic', marginBottom: 6 }}>"{r.comment}"</div>
+                  {r.orderItems && r.orderItems.length > 0 && (
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 5 }}>
+                      {r.orderItems.map((item, idx) => (
+                        <span key={idx} style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}>{item}</span>
+                      ))}
+                    </div>
                   )}
-                  <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', fontStyle: 'italic', marginBottom: 2 }}>"{r.comment}"</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
                     {canClick && (
@@ -2950,7 +2969,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
 
             {/* Satisfacción */}
             <SectionLabel>Satisfacción</SectionLabel>
-            <SatisfaccionSection restaurantId={restaurantId} allBranches={allBranches} />
+            <SatisfaccionSection restaurantId={restaurantId} allBranches={allBranches} onViewAll={() => setSubSection('satisfaccion')} />
 
           </div>
         )}

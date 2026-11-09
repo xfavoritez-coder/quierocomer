@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const orders = orderIds.length
     ? await prisma.onlineOrder.findMany({
         where: { id: { in: orderIds } },
-        select: { id: true, orderNumber: true, total: true, items: true, customerPhone: true, orderType: true },
+        select: { id: true, orderNumber: true, total: true, items: true, customerPhone: true, orderType: true, createdAt: true },
       })
     : [];
   const orderMap = new Map(orders.map((o) => [o.id, o]));
@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
       orderTotal: order?.total ?? null,
       orderType: order?.orderType ?? null,
       orderItems,
+      orderCreatedAt: order?.createdAt?.toISOString() ?? null,
       customerName: row.customerName,
       customerPhone: order?.customerPhone ?? null,
       comment: row.comment,

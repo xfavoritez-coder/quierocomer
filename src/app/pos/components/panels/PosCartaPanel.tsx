@@ -172,7 +172,7 @@ function ProductRow({ p, onToggleSoldOut, onToggleDailyBadge, onToggleNewBadge, 
         🏷 {isDailyBadge ? 'Solo hoy ✓' : 'Solo hoy'}
       </button>
       <button onClick={onToggleNewBadge} title={isNewBadge ? 'Quitar cinta Nuevo' : 'Activar cinta Nuevo'}
-        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isNewBadge ? '#16a34a' : 'var(--line)'}`, background: isNewBadge ? 'rgba(22,163,74,0.12)' : 'transparent', color: isNewBadge ? '#16a34a' : 'var(--ink-3)' }}>
+        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isNewBadge ? '#d97706' : 'var(--line)'}`, background: isNewBadge ? 'rgba(245,158,11,0.12)' : 'transparent', color: isNewBadge ? '#d97706' : 'var(--ink-3)' }}>
         ✨ {isNewBadge ? 'Nuevo ✓' : 'Nuevo'}
       </button>
 
