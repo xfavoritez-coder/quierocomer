@@ -560,7 +560,7 @@ function PauseModal({ paused, until, busy, onClose, onPause, onReopen }: {
 
   return createPortal(
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 18, padding: 22, fontFamily: FB }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 18, padding: 22, fontFamily: FB, boxShadow: "0 24px 60px rgba(0,0,0,0.28)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 38, height: 38, borderRadius: 11, background: `${RED}14`, display: "flex", alignItems: "center", justifyContent: "center" }}>
