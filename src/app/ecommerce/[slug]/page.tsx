@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       return {
         title: brand.pageTitle || `${brand.brandName} · Pedir online`,
         description: brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
-        ...(brand.logoUrl ? { icons: { icon: brand.logoUrl, shortcut: brand.logoUrl, apple: brand.logoUrl } } : {}),
+        ...((brand.faviconUrl || brand.logoUrl) ? { icons: { icon: brand.faviconUrl || brand.logoUrl!, shortcut: brand.faviconUrl || brand.logoUrl!, apple: brand.faviconUrl || brand.logoUrl! } } : {}),
       };
     }
   }

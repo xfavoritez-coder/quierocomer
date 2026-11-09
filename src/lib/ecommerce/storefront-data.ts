@@ -556,6 +556,7 @@ export interface BrandData {
   brandSlug: string;
   brandName: string;
   logoUrl: string | null;
+  faviconUrl: string | null;
   googleMapsKey: string | null;
   branches: BrandBranch[];
   pageTitle: string | null;
@@ -603,6 +604,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
     brandSlug: key,
     brandName: branches[0]?.name || key,
     logoUrl: branches.find((b) => b.logoUrl)?.logoUrl ?? null,
+    faviconUrl: allCfgs.find((c) => c.faviconUrl)?.faviconUrl ?? null,
     googleMapsKey: gmaps,
     branches,
     pageTitle: firstCfg.pageTitle,
