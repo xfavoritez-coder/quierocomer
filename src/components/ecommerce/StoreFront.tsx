@@ -796,6 +796,13 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
             <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-900/80 text-white">Agotado</span>
           </div>
         )}
+        {!soldOut && product.daily_badge && (
+          <div className="absolute top-0 left-0 overflow-hidden" style={{ width: 68, height: 68 }}>
+            <div style={{ position: 'absolute', top: 14, left: -20, width: 90, textAlign: 'center', background: 'linear-gradient(90deg,#f97316,#ef4444)', color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 0', transform: 'rotate(-45deg)', boxShadow: '0 2px 6px rgba(0,0,0,.18)' }}>
+              Solo hoy
+            </div>
+          </div>
+        )}
       </button>
 
       {/* Texto (nombre · descripción · precio) */}

@@ -555,6 +555,13 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
             <span style={{ fontFamily: "inherit", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#fff", background: "rgba(17,17,17,0.82)", borderRadius: 999, padding: "3px 10px" }}>Agotado</span>
           </div>
         )}
+        {!soldOut && product.daily_badge && (
+          <div style={{ position: "absolute", top: 0, left: 0, overflow: "hidden", width: 72, height: 72 }}>
+            <div style={{ position: "absolute", top: 16, left: -20, width: 96, textAlign: "center", background: "linear-gradient(90deg,#f97316,#ef4444)", color: "#fff", fontSize: 9, fontWeight: 900, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 0", transform: "rotate(-45deg)", boxShadow: "0 2px 6px rgba(0,0,0,.2)" }}>
+              Solo hoy
+            </div>
+          </div>
+        )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingRight: 38 }}>
         <h4 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: "var(--carta-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</h4>

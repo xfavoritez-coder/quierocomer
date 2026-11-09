@@ -932,6 +932,7 @@ model Dish {
   toteatMappedBy        String?
   toteatSynced          Boolean                @default(false)
   toteatNoDirectMapping Boolean                @default(false)
+  dailyBadge            Boolean                @default(false)
   badgeSnapshots        BadgeSnapshot[]
   category              Category               @relation(fields: [categoryId], references: [id])
   restaurant            Restaurant             @relation(fields: [restaurantId], references: [id])
