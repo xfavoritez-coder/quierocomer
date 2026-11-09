@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Store, RefreshCw, X, History, ListChecks, Bike, Phone, ExternalLink, Search, Calendar, Printer, Copy, ChevronRight, CheckCircle2, Power, PowerOff, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 import { supabase } from "@/lib/supabase";
@@ -126,6 +126,10 @@ export default function EcommercePedidosPage() {
   const [agentEnabled, setAgentEnabled] = useState(false); // agente de impresión local (ESC/POS)
   const [paperWidth, setPaperWidth] = useState<58 | 80>(80);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
+  const [pauseOpen, setPauseOpen] = useState(false); // modal cerrar web
+  const [paused, setPaused] = useState(false); // web cerrada momentáneamente
+  const [pausedUntil, setPausedUntil] = useState<string | null>(null); // "YYYY-MM-DDTHH:MM"
+  const [pauseBusy, setPauseBusy] = useState(false);
   const printModeRef = useRef<"off" | "manual" | "auto">("off");
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
@@ -150,6 +154,33 @@ export default function EcommercePedidosPage() {
       .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); setShowWebpayToken(!!d.showWebpayToken); } })
       .catch(() => {});
   }, [restaurantId]);
+
+  // Estado de pausa manual (web cerrada momentáneamente)
+  const loadPause = useCallback(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/ecommerce/pause?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) { setPaused(!!d.paused); setPausedUntil(d.until || null); } })
+      .catch(() => {});
+  }, [restaurantId]);
+  useEffect(() => { loadPause(); }, [loadPause]);
+
+  async function applyPause(opts: { minutes?: number; restOfDay?: boolean; reopen?: boolean }) {
+    if (!restaurantId || pauseBusy) return;
+    setPauseBusy(true);
+    try {
+      const res = await fetch("/api/panel/ecommerce/pause", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, ...opts }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { toast.error(d.error || "No se pudo aplicar"); setPauseBusy(false); return; }
+      setPaused(!!d.paused); setPausedUntil(d.until || null);
+      setPauseOpen(false);
+      toast.success(opts.reopen ? "Web reabierta" : `Web cerrada hasta las ${fmtUntil(d.until)}`);
+    } catch { toast.error("Error de conexión"); }
+    setPauseBusy(false);
+  }
 
   async function requestCourier(id: string) {
     try {
@@ -349,6 +380,17 @@ export default function EcommercePedidosPage() {
             </span>
           </p>
         </div>
+        <button
+          onClick={() => setPauseOpen(true)}
+          title={paused ? `Web cerrada hasta las ${fmtUntil(pausedUntil)}` : "Cerrar la web momentáneamente"}
+          style={{ ...iconBtn, width: "auto", padding: "0 12px", gap: 6, fontFamily: FB, fontSize: "0.82rem", fontWeight: 700,
+            borderColor: paused ? RED : "var(--adm-card-border)",
+            background: paused ? `${RED}14` : "var(--adm-hover)",
+            color: paused ? RED : "var(--adm-text2)" }}
+        >
+          {paused ? <PowerOff size={15} /> : <Power size={15} />}
+          {paused ? `Cerrada · ${fmtUntil(pausedUntil)}` : "Cerrar web"}
+        </button>
         <button onClick={() => fetchOrders(false)} title="Actualizar" style={iconBtn}><RefreshCw size={16} /></button>
       </div>
 
@@ -488,7 +530,92 @@ export default function EcommercePedidosPage() {
 
       {/* Comanda térmica: se imprime en un iframe aislado (solo el ticket) */}
       <ComandaPrinter order={printOrder} storeName={storeName} paperWidth={paperWidth} onDone={() => setPrintOrder(null)} />
+
+      {pauseOpen && (
+        <PauseModal
+          paused={paused}
+          until={pausedUntil}
+          busy={pauseBusy}
+          onClose={() => setPauseOpen(false)}
+          onPause={(opts) => applyPause(opts)}
+          onReopen={() => applyPause({ reopen: true })}
+        />
+      )}
     </div>
+  );
+}
+
+function PauseModal({ paused, until, busy, onClose, onPause, onReopen }: {
+  paused: boolean; until: string | null; busy: boolean;
+  onClose: () => void; onPause: (o: { minutes?: number; restOfDay?: boolean }) => void; onReopen: () => void;
+}) {
+  const [sel, setSel] = useState<"30" | "60" | "day">("60");
+  useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
+
+  const opts: { key: "30" | "60" | "day"; label: string; sub: string }[] = [
+    { key: "30", label: "30 minutos", sub: "Pausa corta" },
+    { key: "60", label: "1 hora", sub: "Pausa estándar" },
+    { key: "day", label: "El resto del día", sub: "Hasta las 23:59" },
+  ];
+
+  return createPortal(
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 18, padding: 22, fontFamily: FB }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 11, background: `${RED}14`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <PowerOff size={18} color={RED} />
+            </div>
+            <h2 style={{ fontFamily: F, fontSize: "1.08rem", fontWeight: 800, color: "var(--adm-text)", margin: 0 }}>Cerrar la web</h2>
+          </div>
+          <button onClick={onClose} style={iconBtn}><X size={16} /></button>
+        </div>
+
+        {paused ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: `${RED}10`, border: `1px solid ${RED}33`, borderRadius: 12, padding: "12px 14px", margin: "10px 0 18px" }}>
+              <Clock size={16} color={RED} />
+              <span style={{ fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600 }}>
+                La web está cerrada hasta las <b>{fmtUntil(until)}</b>.
+              </span>
+            </div>
+            <p style={{ fontSize: "0.8rem", color: "var(--adm-text3)", margin: "0 0 18px" }}>
+              Los clientes ven la tienda cerrada y no pueden hacer pedidos. Puedes reabrir cuando quieras.
+            </p>
+            <button onClick={onReopen} disabled={busy} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: GREEN, color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Power size={16} /> {busy ? "…" : "Reabrir ahora"}
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: "10px 0 16px" }}>
+              La tienda quedará cerrada para nuevos pedidos durante el tiempo que elijas. Se reabre sola al terminar.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+              {opts.map((o) => (
+                <button key={o.key} onClick={() => setSel(o.key)} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left",
+                  padding: "13px 15px", borderRadius: 12, cursor: "pointer", fontFamily: FB,
+                  border: `1.5px solid ${sel === o.key ? ACCENT : "var(--adm-card-border)"}`,
+                  background: sel === o.key ? `${ACCENT}12` : "transparent",
+                }}>
+                  <span>
+                    <span style={{ display: "block", fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>{o.label}</span>
+                    <span style={{ display: "block", fontSize: "0.74rem", color: "var(--adm-text3)", marginTop: 1 }}>{o.sub}</span>
+                  </span>
+                  <span style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${sel === o.key ? ACCENT : "var(--adm-card-border)"}`, background: sel === o.key ? ACCENT : "transparent", flexShrink: 0 }} />
+                </button>
+              ))}
+            </div>
+            <button onClick={() => onPause(sel === "day" ? { restOfDay: true } : { minutes: sel === "30" ? 30 : 60 })} disabled={busy}
+              style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: RED, color: "#fff", fontWeight: 800, fontSize: "0.92rem", cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <PowerOff size={16} /> {busy ? "…" : "Cerrar la web"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -799,6 +926,12 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
 const thStyle: React.CSSProperties = { padding: "10px 12px", fontFamily: F, fontSize: "0.68rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em", color: "var(--adm-text3)", whiteSpace: "nowrap" };
 const tdStyle: React.CSSProperties = { padding: "11px 12px", verticalAlign: "middle" };
 const iconBtn: React.CSSProperties = { width: 38, height: 38, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 };
+
+// "YYYY-MM-DDTHH:MM" → "HH:MM" (hora Chile, tal como se guardó).
+function fmtUntil(wall: string | null): string {
+  if (!wall || wall.length < 16) return "";
+  return wall.slice(11, 16);
+}
 const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input, var(--adm-card))", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.82rem", outline: "none" };
 function viewBtn(on: boolean): React.CSSProperties {
   return { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, border: `1px solid ${on ? ACCENT : "var(--adm-card-border)"}`, background: on ? ACCENT : "var(--adm-hover)", color: on ? "#1a1a1a" : "var(--adm-text2)" };
