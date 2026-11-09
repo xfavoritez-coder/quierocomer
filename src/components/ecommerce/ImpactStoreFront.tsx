@@ -8,7 +8,7 @@
 //  DeliveryModal, CustomerMenu) tematizados en oscuro por ImpactSkin.
 // ═══════════════════════════════════════════════════════════
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight, ChevronLeft } from "lucide-react";
+import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight, ChevronLeft, Lock, UtensilsCrossed } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -282,8 +282,8 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {/* ── Aviso de cierre (programado / horario) ── */}
       {!isOpen && (
         <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: "12px 14px 0" }}>
-          <div style={{ borderRadius: 14, padding: "11px 14px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", textAlign: "center", fontSize: "0.86rem", fontWeight: 700 }}>
-            🔒 {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? `Cerrado · ${tenant.openStatus.closure.reason}` : "Estamos cerrados ahora"}
+          <div style={{ borderRadius: 14, padding: "11px 14px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.14)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: "0.86rem", fontWeight: 700 }}>
+            <Lock size={14} style={{ flexShrink: 0 }} /> <span>{tenant.openStatus.closedByClosure && tenant.openStatus.closure ? `Cerrado · ${tenant.openStatus.closure.reason}` : "Estamos cerrados ahora"}</span>
           </div>
         </div>
       )}
@@ -365,7 +365,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       <div className="imp-menu-grid" style={{ position: "relative", zIndex: 1, padding: `4px 14px ${mounted && itemCount > 0 ? 120 : 48}px` }}>
         {grouped.length === 0 ? (
           <div style={{ padding: "64px 20px", textAlign: "center", color: "#888" }}>
-            <div style={{ fontSize: "2.2rem", marginBottom: 10 }}>🔍</div>
+            <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Search size={34} strokeWidth={1.5} style={{ opacity: 0.4 }} /></div>
             <p style={{ fontSize: "0.95rem" }}>No encontramos productos{q ? ` para “${search}”` : ""}</p>
           </div>
         ) : grouped.map((g) => (
@@ -520,7 +520,7 @@ function CategoriesSection({ grouped, accent, activeId, onTap }: {
             <button key={cat.id} onClick={() => onTap(cat.id)} style={{ width: 128, minWidth: 128, height: 148, borderRadius: 28, position: "relative", overflow: "hidden", padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end", cursor: "pointer", flexShrink: 0, background: "var(--carta-surface)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}>
               {photo
                 ? <img src={photo} alt={cat.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}><span style={{ fontSize: "2rem", opacity: 0.35 }}>🍽️</span></div>}
+                : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}><UtensilsCrossed size={30} strokeWidth={1.5} style={{ opacity: 0.35 }} /></div>}
               <div style={{ position: "absolute", inset: 0, background: photo ? "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.72))" : "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.52))" }} />
               <b style={{ position: "relative", zIndex: 1, fontSize: 14, lineHeight: 1.15, textShadow: "0 2px 14px #000", color: "#fff", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", width: "100%" }}>{cat.name}</b>
             </button>
@@ -549,7 +549,7 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
       <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", borderRadius: 20, overflow: "hidden", flexShrink: 0, alignSelf: "center", background: product.image_url ? "#222" : `linear-gradient(145deg, color-mix(in srgb, ${accent} 15%, var(--carta-surface)), color-mix(in srgb, ${accent} 5%, var(--carta-surface)))` }}>
         {product.image_url
           ? <img src={product.image_url} alt={product.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.2rem" }}>🍽️</div>}
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><UtensilsCrossed size={34} strokeWidth={1.5} style={{ opacity: 0.35 }} /></div>}
         {soldOut && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ fontFamily: "inherit", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#fff", background: "rgba(17,17,17,0.82)", borderRadius: 999, padding: "3px 10px" }}>Agotado</span>

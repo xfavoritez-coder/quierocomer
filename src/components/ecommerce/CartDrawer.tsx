@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Plus, Minus, MapPin, Store, ChevronRight } from "lucide-react";
+import { X, Plus, Minus, MapPin, Store, ChevronRight, Bike, ShoppingBag, UtensilsCrossed, Lock } from "lucide-react";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -60,12 +60,12 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               <p className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700">🛵 Delivery</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Bike size={13} className="shrink-0" /> Delivery</p>
                 <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
               <>
-                <p className="text-xs font-bold text-gray-700">🏠 Retiro en tienda</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Store size={13} className="shrink-0" /> Retiro en tienda</p>
                 {tenant.address && <p className="text-xs text-gray-400 truncate">{tenant.address}</p>}
               </>
             )}
@@ -76,7 +76,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
         {/* Items */}
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-5 text-center">
-            <p className="text-4xl mb-3">🛒</p>
+            <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
             <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           </div>
         ) : (
@@ -86,7 +86,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
                 {item.image_url ? (
                   <img src={item.image_url} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-lg shrink-0">🍱</div>
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0"><UtensilsCrossed size={20} className="text-gray-400" strokeWidth={1.5} /></div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 leading-snug">{item.name}</p>
@@ -121,8 +121,8 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               <span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span>
             </div>
             {!tenant.openStatus.open ? (
-              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">
-                🔒 {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? tenant.openStatus.closure.reason : "Cerrado por ahora"}
+              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs flex items-center justify-center gap-1.5">
+                <Lock size={13} className="shrink-0" /> {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? tenant.openStatus.closure.reason : "Cerrado por ahora"}
               </div>
             ) : !deliverySelected ? (
               <button

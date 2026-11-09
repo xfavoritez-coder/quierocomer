@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "sonner";
-import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock } from "lucide-react";
+import { ShoppingBag, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Bike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -449,7 +449,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
             className={`w-full bg-gray-900 text-white text-center py-3 px-4 ${tenant.weeklyHours ? "cursor-pointer hover:bg-gray-800 transition" : "cursor-default"}`}
           >
             {tenant.openStatus.closedByClosure && tenant.openStatus.closure ? (
-              <span className="text-sm font-bold">🔒 Cerrado · {tenant.openStatus.closure.reason}</span>
+              <span className="text-sm font-bold inline-flex items-center gap-1.5"><Lock size={14} className="shrink-0" /> Cerrado · {tenant.openStatus.closure.reason}</span>
             ) : (
               <>
                 {(() => {
@@ -460,9 +460,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
                   else if (t && t.open) msg = `Horario de hoy: ${t.from} – ${t.to === "00:00" ? "medianoche" : t.to}`;
                   else msg = "Hoy no atendemos";
                   return branch ? (
-                    <span className="text-sm font-bold">🔒 Sucursal {branch} cerrada · <span className="font-normal text-gray-300">{msg}</span></span>
+                    <span className="text-sm font-bold inline-flex items-center gap-1.5"><Lock size={14} className="shrink-0" /> Sucursal {branch} cerrada · <span className="font-normal text-gray-300">{msg}</span></span>
                   ) : (
-                    <><span className="text-sm font-bold">🔒 Estamos cerrados ahora</span><span className="text-sm text-gray-300"> · {msg}</span></>
+                    <><span className="text-sm font-bold inline-flex items-center gap-1.5"><Lock size={14} className="shrink-0" /> Estamos cerrados ahora</span><span className="text-sm text-gray-300"> · {msg}</span></>
                   );
                 })()}
               </>
@@ -558,7 +558,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
 
             {filtered.length === 0 && (
               <div className="text-center py-16 text-gray-400">
-                <p className="text-4xl mb-2">🔍</p>
+                <Search className="mx-auto mb-2 text-gray-300" size={40} strokeWidth={1.5} />
                 <p className="text-sm">No encontramos productos para tu búsqueda</p>
               </div>
             )}
@@ -789,7 +789,7 @@ function ProductCard({ product, primaryColor, onClick, showFav, isFav, onToggleF
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-3xl">🍱</div>
+          <div className="w-full h-full flex items-center justify-center"><UtensilsCrossed size={28} className="text-gray-300" strokeWidth={1.5} /></div>
         )}
         {soldOut && (
           <div className="absolute inset-0 bg-white/55 flex items-center justify-center">
@@ -859,12 +859,12 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
               <p className="text-sm font-semibold text-gray-500">¿Cómo quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700">🛵 Delivery</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Bike size={13} className="shrink-0" /> Delivery</p>
                 <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
               <>
-                <p className="text-xs font-bold text-gray-700">🏠 {tenant.branchName ? `Retiro · ${tenant.branchName}` : "Retiro en tienda"}</p>
+                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Store size={13} className="shrink-0" /> {tenant.branchName ? `Retiro · ${tenant.branchName}` : "Retiro en tienda"}</p>
                 {tenant.address && <p className="text-xs text-gray-400 truncate">{tenant.address}</p>}
               </>
             )}
@@ -885,7 +885,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
 
       {!showItems ? (
         <div className="px-5 py-10 text-center">
-          <p className="text-4xl mb-3">🛒</p>
+          <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           <p className="text-xs mt-1 text-gray-300">Los productos que agregues aparecerán aquí</p>
         </div>
@@ -897,7 +897,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
                 {item.image_url ? (
                   <img src={item.image_url} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-xl object-cover shrink-0" />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-lg shrink-0">🍱</div>
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0"><UtensilsCrossed size={18} className="text-gray-400" strokeWidth={1.5} /></div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
@@ -923,7 +923,7 @@ function CartPanel({ tenant, primaryColor, cartBump, mounted, onOpenDeliveryModa
             )}
             <div className="flex justify-between font-black text-base text-gray-900 pt-1 border-t border-gray-100"><span>Total</span><span style={{ color: primaryColor }}>{clp(total)}</span></div>
             {!tenant.openStatus.open && !tenant.scheduledOrdersEnabled ? (
-              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs text-center">🔒 Cerrado por ahora</div>
+              <div className="mt-1 w-full py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-xs flex items-center justify-center gap-1.5"><Lock size={13} className="shrink-0" /> Cerrado por ahora</div>
             ) : !deliverySelected ? (
               <button onClick={onOpenDeliveryModal} className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90" style={{ background: primaryColor }}>
                 {tenant.pickupEnabled && tenant.deliveryEnabled ? "Elige cómo recibir tu pedido" : tenant.deliveryEnabled ? "Ingresa tu dirección de entrega" : "Confirmar retiro"} →

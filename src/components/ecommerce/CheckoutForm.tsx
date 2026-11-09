@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Banknote, ArrowLeftRight, CreditCard, Wallet, Loader2, X, Minus, Plus, Trash2, ChevronRight, ShoppingBag, Bike, Lock, Check } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -450,7 +450,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         </div>
       ) : showEmpty ? (
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-          <p className="text-4xl mb-3">🛒</p>
+          <ShoppingBag className="mx-auto mb-3 text-gray-300" size={40} strokeWidth={1.5} />
           <p className="text-sm font-semibold text-gray-500">Tu carrito está vacío</p>
           <StoreLink href={storeHref} className="inline-block mt-4 text-sm font-bold underline" style={{ color: primaryColor }}>Volver a la tienda</StoreLink>
         </div>
@@ -461,7 +461,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           {/* Aviso de pago fallido: el cliente volvió sin completar el pago. */}
           {paymentFailed && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-              <span className="text-xl leading-none">❌</span>
+              <X size={18} />
               <div className="min-w-0">
                 <p className="font-black text-sm text-red-700 m-0">Tu pago no se completó</p>
                 <p className="text-xs text-red-600 mt-1 leading-relaxed">Guardamos tu pedido acá. Revisa tus datos y vuelve a intentar el pago cuando quieras.</p>
@@ -496,7 +496,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                   className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${emailNeeded && emailVerifiedOk ? "border-green-400 bg-green-50" : "border-gray-200 focus:border-gray-400"}`} />
                 {emailNeeded && emailOk ? (
                   emailVerifiedOk ? (
-                    <p className="text-xs text-green-600 font-semibold mt-1.5">✓ Email verificado</p>
+                    <p className="text-xs text-green-600 font-semibold mt-1.5 inline-flex items-center gap-1"><Check size={13} className="shrink-0" /> Email verificado</p>
                   ) : otpSent ? (
                     <div className="mt-2 flex flex-col gap-2">
                       <div className="flex gap-2">
@@ -525,12 +525,12 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <div className="min-w-0">
                   {isDelivery && deliveryAddress ? (
                     <>
-                      <p className="text-sm font-bold text-gray-800">🛵 Delivery</p>
+                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Bike size={15} className="shrink-0" /> Delivery</p>
                       <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-bold text-gray-800">🏠 Retiro en tienda</p>
+                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Store size={15} className="shrink-0" /> Retiro en tienda</p>
                       {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
                     </>
                   )}
@@ -713,15 +713,16 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
           </Block>
 
           {!isOpen && !canSchedule && (
-            <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
-              {tenant.openStatus.closedByClosure && tenant.openStatus.closure
-                ? `🔒 Cerrado · ${tenant.openStatus.closure.reason}`
-                : `🔒 Estamos cerrados ahora${tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}`}
+            <div className="rounded-xl bg-gray-900 text-white py-3 px-4 text-sm font-bold flex items-center justify-center gap-1.5">
+              <Lock size={14} className="shrink-0" />
+              <span>{tenant.openStatus.closedByClosure && tenant.openStatus.closure
+                ? `Cerrado · ${tenant.openStatus.closure.reason}`
+                : `Estamos cerrados ahora${tenant.openStatus.opensAt ? ` · Abrimos hoy a las ${tenant.openStatus.opensAt}` : tenant.openStatus.today?.open ? ` · Horario de hoy: ${tenant.openStatus.today.from} – ${tenant.openStatus.today.to}` : " · Hoy no atendemos"}`}</span>
             </div>
           )}
           {!isOpen && canSchedule && scheduleMode !== "scheduled" && (
-            <div className="rounded-xl bg-gray-900 text-white text-center py-3 px-4 text-sm font-bold">
-              🔒 Cerrado ahora · puedes <button type="button" onClick={() => setScheduleMode("scheduled")} className="underline">programar tu pedido</button>
+            <div className="rounded-xl bg-gray-900 text-white py-3 px-4 text-sm font-bold flex items-center justify-center gap-1.5">
+              <Lock size={14} className="shrink-0" /> <span>Cerrado ahora · puedes <button type="button" onClick={() => setScheduleMode("scheduled")} className="underline">programar tu pedido</button></span>
             </div>
           )}
           {belowMin && (

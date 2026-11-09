@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -134,7 +134,7 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
       )}
     </div>
   ) : (
-    <div className={`${scrollImage ? "h-[50vh] shrink-0" : "h-32 shrink-0"} sm:rounded-t-3xl bg-gray-100 flex items-center justify-center text-5xl`}>🍱</div>
+    <div className={`${scrollImage ? "h-[50vh] shrink-0" : "h-32 shrink-0"} sm:rounded-t-3xl bg-gray-100 flex items-center justify-center`}><UtensilsCrossed size={44} className="text-gray-300" strokeWidth={1.5} /></div>
   );
 
   const details = (
