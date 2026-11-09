@@ -927,22 +927,26 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   // Columnas efectivas: la preferencia guardada, acotada a lo que cabe.
   const cols = Math.min(viewCols, maxCols) as 1 | 2 | 3
   // Orden de los pedidos: 'desc' = más nuevo primero, 'asc' = más antiguo
-  // primero. También se recuerda por dispositivo.
+  // Ordenamiento: campo + dirección. Se recuerda en localStorage.
+  type SortField = 'hora' | 'total' | 'estado'
+  const [sortField, setSortField] = useState<SortField>('hora')
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
+  const [sortOpen, setSortOpen] = useState(false)
   const [search, setSearch] = useState('')
   useEffect(() => {
     try {
+      const f = localStorage.getItem('pos:boardSortField')
+      if (f === 'hora' || f === 'total' || f === 'estado') setSortField(f)
       const v = localStorage.getItem('pos:boardSort')
       if (v === 'asc' || v === 'desc') setSortDir(v)
     } catch { }
   }, [])
-  const toggleSort = useCallback(() => {
-    setSortDir(prev => {
-      const next = prev === 'desc' ? 'asc' : 'desc'
-      try { localStorage.setItem('pos:boardSort', next) } catch { }
-      return next
-    })
+  const setSort = useCallback((field: SortField, dir: 'asc' | 'desc') => {
+    setSortField(field); setSortDir(dir); setSortOpen(false)
+    try { localStorage.setItem('pos:boardSortField', field); localStorage.setItem('pos:boardSort', dir) } catch { }
   }, [])
+  // orden de stage: más atrasado primero
+  const STAGE_ORDER: Record<string, number> = { new: 0, confirmed: 1, preparing: 2, ready: 3, out_for_delivery: 4, delivered: 5 }
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const navigate = usePosNav()
   const { caja } = usePosCash(restaurantId)
@@ -1042,11 +1046,17 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
       return ref.includes(q) || name.includes(q) || phone.includes(q)
     })
     return filtered.sort((a, b) => {
-      const ta = new Date(a.createdAt).getTime()
-      const tb = new Date(b.createdAt).getTime()
-      return sortDir === 'asc' ? ta - tb : tb - ta
+      let diff = 0
+      if (sortField === 'hora') {
+        diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      } else if (sortField === 'total') {
+        diff = (a.totalAmount ?? 0) - (b.totalAmount ?? 0)
+      } else {
+        diff = (STAGE_ORDER[a.opsStage ?? ''] ?? 0) - (STAGE_ORDER[b.opsStage ?? ''] ?? 0)
+      }
+      return sortDir === 'asc' ? diff : -diff
     })
-  }, [orders, type, sortDir, search])
+  }, [orders, type, sortDir, sortField, search])
 
   const changeStage = async (order: PosOrderLite, stage: string) => {
     const rid = order._branchId || restaurantId
@@ -1071,60 +1081,73 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
-            {type === 'delivery' ? 'Delivery' : type === 'retiro' ? 'Retiro' : 'Todos'} · {list.length}
-          </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={toggleSort}
-              title={`Orden: ${sortDir === 'desc' ? 'más nuevos primero' : 'más antiguos primero'} · toca para invertir`}
-              aria-label="Cambiar orden"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
-            >
-              <SortIcon dir={sortDir} />
-            </button>
-            {maxCols > 1 && (
-              <button
-                onClick={cycleView}
-                title={`Vista: ${cols === 1 ? 'filas' : cols + ' columnas'} · toca para cambiar`}
-                aria-label="Cambiar vista"
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}
-              >
-                <ViewIcon cols={cols} />
-              </button>
-            )}
-            {!allBranches && (
-              <button
-                onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } navigate('/pos/tomar-pedido') }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                {newOrderLabel}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Buscador — visible cuando hay 5+ pedidos o hay texto */}
-        {true && (
-          <div style={{ position: 'relative', marginBottom: 14 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        {/* Header: buscador + botones */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          {/* Buscador */}
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input
               type="search"
-              placeholder="Buscar por número, nombre o teléfono…"
+              placeholder="Buscar pedido…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 34px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'var(--sans)', fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 32px 8px 32px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: 'var(--sans)', fontSize: 14, outline: 'none' }}
             />
             {search && (
-              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, display: 'flex' }}>
+              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, display: 'flex' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
             )}
           </div>
-        )}
+          {/* Botones */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button onClick={() => setSortOpen(o => !o)} aria-label="Ordenar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}>
+              <SortIcon dir={sortDir} />
+            </button>
+            {sortOpen && (
+              <>
+                <div onClick={() => setSortOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+                  {(['hora', 'total', 'estado'] as SortField[]).map(f => {
+                    const labels: Record<SortField, string> = { hora: 'Hora del pedido', total: 'Total', estado: 'Estado' }
+                    const isActive = sortField === f
+                    return (
+                      <div key={f} style={{ borderBottom: '1px solid var(--line)' }}>
+                        <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{labels[f]}</div>
+                        {(['desc', 'asc'] as const).map(d => {
+                          const dirLabel: Record<SortField, [string, string]> = {
+                            hora: ['Más nuevo primero', 'Más antiguo primero'],
+                            total: ['Mayor primero', 'Menor primero'],
+                            estado: ['Más atrasado primero', 'Más avanzado primero'],
+                          }
+                          const active = isActive && sortDir === d
+                          return (
+                            <button key={d} onClick={() => setSort(f, d)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', border: 'none', background: active ? 'var(--sunk)' : 'transparent', cursor: 'pointer', fontSize: 13, color: active ? 'var(--ink)' : 'var(--ink-2)', fontFamily: 'var(--sans)', fontWeight: active ? 700 : 500, textAlign: 'left' }}>
+                              {active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>}
+                              {!active && <span style={{ width: 10 }} />}
+                              {dirLabel[f][d === 'desc' ? 0 : 1]}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+          {maxCols > 1 && (
+            <button onClick={cycleView} title={`Vista: ${cols === 1 ? 'filas' : cols + ' columnas'} · toca para cambiar`} aria-label="Cambiar vista" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer', flexShrink: 0 }}>
+              <ViewIcon cols={cols} />
+            </button>
+          )}
+          {!allBranches && (
+            <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              {newOrderLabel}
+            </button>
+          )}
+        </div>
 
         {/* List */}
         {loading && orders.length === 0 ? (
