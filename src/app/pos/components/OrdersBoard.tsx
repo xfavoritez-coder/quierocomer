@@ -260,25 +260,22 @@ function OrderCard({
               {(order.orderReference || order.dailyNumber != null) && <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', marginRight: 7 }}>#{order.orderReference ?? order.dailyNumber}</span>}
               {displayName(order.customerName || 'Cliente')}
             </div>
-            {showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
-            {branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
+            {cols === 2 && showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
+            {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
           <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)', flexShrink: 0 }}>
             {clp(order.totalAmount)}
           </span>
         </div>
-
-        {/* Fila 2: dirección / mesa / retiro */}
-        {secondary && <div style={{
-          fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.4,
-          display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3,
-          overflow: 'hidden', wordBreak: 'break-word',
-        }}>
-          {isDelivery && order.addressLine && (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4, color: 'var(--ink-3)', position: 'relative', top: -1 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
-          )}
-          {secondary}
-        </div>}
+        {/* Fila 2: chips inline + dirección (el texto fluye y envuelve debajo) */}
+        {(secondary || (cols !== 2 && (showTypeChip || branchLabel))) && (
+          <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word' }}>
+            {cols !== 2 && showTypeChip && <span style={{ ...chip(typeColor), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{typeLabel}</span>}
+            {cols !== 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{branchLabel}</span>}
+            {isDelivery && order.addressLine && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3, color: 'var(--ink-4)', position: 'relative', top: -1 }}><path d="M12 21C12 21 5 13.5 5 9a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>}
+            {secondary}
+          </div>
+        )}
 
         {/* Fila 3: hora · N ítems  |  chip pago derecha */}
         <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
