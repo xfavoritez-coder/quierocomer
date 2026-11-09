@@ -70,6 +70,8 @@ export default function PosConfigImpresionPanel({ restaurantId, title, onBack }:
   const [picking,  setPicking]  = useState(false)
   const [dlMsg,    setDlMsg]    = useState('')
   const [kitchen,  setKitchen]  = useState(false)
+  const [clearing, setClearing] = useState(false)
+  const [clearMsg, setClearMsg] = useState('')
 
   // Print config state
   const [printCfg,     setPrintCfg]     = useState<PrintCfg>(PRINT_CFG_DEFAULTS)
@@ -184,6 +186,22 @@ export default function PosConfigImpresionPanel({ restaurantId, title, onBack }:
     setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
 
+  const clearPrintQueue = async () => {
+    if (!restaurantId || clearing) return
+    if (!window.confirm('¿Vaciar la cola de impresión de este local?\n\nTodos los pedidos pendientes quedarán marcados como impresos y el agente dejará de imprimirlos. No se borra ningún pedido.')) return
+    setClearing(true); setClearMsg('')
+    try {
+      const r = await fetch('/api/panel/ecommerce/print-clear-queue', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setClearMsg(d?.error || 'No se pudo vaciar la cola'); setClearing(false); return }
+      setClearMsg(d.count > 0 ? `Cola vaciada: ${d.count} pedido${d.count === 1 ? '' : 's'} marcado${d.count === 1 ? '' : 's'} como impreso${d.count === 1 ? '' : 's'}.` : 'La cola ya estaba vacía.')
+    } catch { setClearMsg('Error de conexión') }
+    setClearing(false)
+  }
+
   const generatePrintToken = async () => {
     if (!restaurantId) return
     const rnd = crypto?.randomUUID?.().replace(/-/g, '') ?? Math.random().toString(36).slice(2).repeat(2)
@@ -235,12 +253,20 @@ export default function PosConfigImpresionPanel({ restaurantId, title, onBack }:
                 </div>
               ) : <button onClick={openPicker} style={ghostBtn}>{hasPrinter ? 'Cambiar impresora' : 'Elegir impresora'}</button>}
               <button onClick={autoDetect} style={ghostBtn}>Verificar de nuevo</button>
+              <button onClick={clearPrintQueue} disabled={clearing} style={{ ...ghostBtn, color: 'var(--red, #dc2626)', borderColor: 'var(--red, #dc2626)', opacity: clearing ? 0.6 : 1 }}>
+                {clearing ? 'Vaciando…' : 'Vaciar cola de impresión'}
+              </button>
+              {clearMsg && <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-2)', margin: 0 }}>{clearMsg}</p>}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={downloadInstaller} style={amberBtn}>⬇️  Descargar agente de impresión</button>
               {dlMsg && <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-2)', margin: 0 }}>{dlMsg}</p>}
               <button onClick={autoDetect} style={ghostBtn}>Buscar de nuevo</button>
+              <button onClick={clearPrintQueue} disabled={clearing} style={{ ...ghostBtn, color: 'var(--red, #dc2626)', borderColor: 'var(--red, #dc2626)', opacity: clearing ? 0.6 : 1 }}>
+                {clearing ? 'Vaciando…' : 'Vaciar cola de impresión'}
+              </button>
+              {clearMsg && <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--ink-2)', margin: 0 }}>{clearMsg}</p>}
             </div>
           )}
 
