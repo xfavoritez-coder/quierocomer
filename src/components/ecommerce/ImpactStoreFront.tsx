@@ -542,7 +542,7 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
     <div style={{ position: "relative" }}>
       {/* Ribbon "Solo hoy" — sale de la esquina superior izquierda de la tarjeta */}
       {!soldOut && product.daily_badge && (
-        <div aria-hidden style={{ position: "absolute", top: -5, left: -28, width: 114, zIndex: 10, pointerEvents: "none", textAlign: "center", background: "linear-gradient(135deg,#fb923c,#ef4444)", color: "#fff", fontSize: 9, fontWeight: 900, letterSpacing: "0.07em", textTransform: "uppercase", padding: "4px 0", transform: "rotate(-45deg)", transformOrigin: "center", boxShadow: "0 2px 8px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18)" }}>
+        <div aria-hidden style={{ position: "absolute", top: 22, left: -12, width: 96, zIndex: 10, pointerEvents: "none", textAlign: "center", background: "linear-gradient(135deg,#fb923c,#ef4444)", color: "#fff", fontSize: 9, fontWeight: 900, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 0", transform: "rotate(-45deg)", transformOrigin: "center", boxShadow: "0 2px 6px rgba(0,0,0,.22)" }}>
           Solo hoy
         </div>
       )}
