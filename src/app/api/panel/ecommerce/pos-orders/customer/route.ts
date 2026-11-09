@@ -42,31 +42,22 @@ export async function GET(req: NextRequest) {
     vendorName: string | null; tableLabel: string | null; rawPayload: unknown;
     surveySentAt: Date | null; surveyEmailOpenedAt: Date | null;
   };
+  // surveySentAt and surveyEmailOpenedAt live on OnlineOrder, not PosOrder — always null here
   const baseSelect = {
     id: true, orderReference: true, customerName: true, customerPhone: true,
     addressLine: true, saleType: true, isDelivery: true, opsStage: true,
     opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true,
     totalAmount: true, paidAmount: true, tipAmount: true, changeAmount: true,
     deliveryFee: true, items: true, createdAt: true, posStatus: true,
-    vendorName: true, tableLabel: true, rawPayload: true, surveySentAt: true,
+    vendorName: true, tableLabel: true, rawPayload: true,
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let orders: OrderRow[];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    orders = await (prisma.posOrder.findMany as any)({
-      where, orderBy: { createdAt: "desc" }, take: 60,
-      select: { ...baseSelect, surveyEmailOpenedAt: true },
-    }) as OrderRow[];
-  } catch {
-    // surveyEmailOpenedAt may not exist in generated client yet — fallback without it
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    orders = await (prisma.posOrder.findMany as any)({
-      where, orderBy: { createdAt: "desc" }, take: 60,
-      select: baseSelect,
-    }) as OrderRow[];
-    orders = orders.map(o => ({ ...o, surveyEmailOpenedAt: null }));
-  }
+  orders = await prisma.posOrder.findMany({
+    where, orderBy: { createdAt: "desc" }, take: 60,
+    select: baseSelect,
+  }) as unknown as OrderRow[];
+  orders = orders.map(o => ({ ...o, surveySentAt: null, surveyEmailOpenedAt: null }));
 
   // Check which orders have a survey response
   const orderIds = orders.map(o => o.id);

@@ -539,6 +539,13 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
   const discountPct = product.original_price && product.original_price > product.price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0;
   const hasOpts = (product.option_groups?.length ?? 0) > 0;
   return (
+    <div style={{ position: "relative" }}>
+      {/* Ribbon "Solo hoy" — sale de la esquina superior izquierda de la tarjeta */}
+      {!soldOut && product.daily_badge && (
+        <div aria-hidden style={{ position: "absolute", top: -5, left: -28, width: 114, zIndex: 10, pointerEvents: "none", textAlign: "center", background: "linear-gradient(135deg,#fb923c,#ef4444)", color: "#fff", fontSize: 9, fontWeight: 900, letterSpacing: "0.07em", textTransform: "uppercase", padding: "4px 0", transform: "rotate(-45deg)", transformOrigin: "center", boxShadow: "0 2px 8px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18)" }}>
+          Solo hoy
+        </div>
+      )}
     <button onClick={soldOut ? undefined : onClick} style={{
       width: "100%", display: "grid", gridTemplateColumns: "152px 1fr", gap: 14, padding: 8, borderRadius: 26, minHeight: 164, alignItems: "center",
       background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
@@ -553,13 +560,6 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
         {soldOut && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ fontFamily: "inherit", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#fff", background: "rgba(17,17,17,0.82)", borderRadius: 999, padding: "3px 10px" }}>Agotado</span>
-          </div>
-        )}
-        {!soldOut && product.daily_badge && (
-          <div style={{ position: "absolute", top: 0, left: 0, overflow: "hidden", width: 72, height: 72 }}>
-            <div style={{ position: "absolute", top: 16, left: -20, width: 96, textAlign: "center", background: "linear-gradient(90deg,#f97316,#ef4444)", color: "#fff", fontSize: 9, fontWeight: 900, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 0", transform: "rotate(-45deg)", boxShadow: "0 2px 6px rgba(0,0,0,.2)" }}>
-              Solo hoy
-            </div>
           </div>
         )}
       </div>
@@ -583,5 +583,6 @@ function ImpactCard({ product, accent, onClick, onAdd }: {
         </span>
       )}
     </button>
+    </div>
   );
 }
