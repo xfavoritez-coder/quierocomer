@@ -2053,7 +2053,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                     right: leftPct > 80 ? 0 : 'auto',
                     transform: leftPct >= 20 && leftPct <= 80 ? 'translateX(-50%)' : 'none',
                     background: 'var(--ink)', color: '#fff', borderRadius: 8,
-                    padding: '6px 10px', zIndex: 50, whiteSpace: 'nowrap',
+                    padding: '6px 10px', zIndex: 1000, whiteSpace: 'nowrap',
                     fontFamily: F, fontSize: 11, lineHeight: 1.5, pointerEvents: 'none',
                     boxShadow: '0 4px 12px rgba(0,0,0,.2)',
                   }}>
