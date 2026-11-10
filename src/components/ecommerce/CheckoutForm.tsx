@@ -357,6 +357,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          restaurantId: cartRestaurantId || undefined,
           restaurantSlug: tenant.slug,
           customerName: name.trim(),
           customerPhone: phone.trim(),
