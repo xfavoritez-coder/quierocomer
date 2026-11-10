@@ -1043,7 +1043,8 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
       const ref = (o.orderReference ?? (o.dailyNumber != null ? String(o.dailyNumber) : '')).toLowerCase()
       const name = (o.customerName || '').toLowerCase()
       const phone = (o.customerPhone || '').toLowerCase()
-      return ref.includes(q) || name.includes(q) || phone.includes(q)
+      const address = (o.addressLine || '').toLowerCase()
+      return ref.includes(q) || name.includes(q) || phone.includes(q) || address.includes(q)
     })
     return filtered.sort((a, b) => {
       let diff = 0
