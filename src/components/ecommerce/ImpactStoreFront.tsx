@@ -49,6 +49,16 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   useEffect(() => {
     try { setNoBanner(new URLSearchParams(window.location.search).has("nobanner")); } catch {}
   }, []);
+  // Abrir producto directamente si se llega con ?p=<id> (link compartido de un plato).
+  useEffect(() => {
+    try {
+      const pid = new URLSearchParams(window.location.search).get("p");
+      if (!pid) return;
+      const product = products.find((p) => p.id === pid);
+      if (product && !product.is_sold_out) openProduct(product);
+    } catch { /* noop */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setRestaurantId = useCartStore((s) => s.setRestaurantId);
   const repriceItems = useCartStore((s) => s.repriceItems);
@@ -169,6 +179,11 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
     if (p.is_sold_out) return;
     if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
     setSelectedProduct(p);
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      sp.set("p", p.id);
+      window.history.replaceState(null, "", window.location.pathname + "?" + sp.toString() + window.location.hash);
+    } catch { /* noop */ }
   }, [deliverySelected]);
 
   const canOrderNow = isOpen || tenant.scheduledOrdersEnabled;
@@ -402,7 +417,15 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       )}
 
       {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
-      {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => setSelectedProduct(null)} />}
+      {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => {
+        setSelectedProduct(null);
+        try {
+          const sp = new URLSearchParams(window.location.search);
+          sp.delete("p");
+          const qs = sp.toString();
+          window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
+        } catch { /* noop */ }
+      }} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
     </div>

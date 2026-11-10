@@ -100,6 +100,12 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     dishAddedToCartRef.current = false;
     dishesViewedRef.current += 1;
     setSelectedProduct(p);
+    // Actualizar URL para que el link sea compartible
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      sp.set("p", p.id);
+      window.history.replaceState(null, "", window.location.pathname + "?" + sp.toString() + window.location.hash);
+    } catch { /* noop */ }
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
     if (p.option_groups && p.option_groups.length > 0) trackModifierOpen(tenant.id, p.id, p.name);
   }, [tenant.id]);
@@ -215,6 +221,17 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
     } catch { /* noop */ }
   }, [openMenu]);
+
+  // Abrir producto directamente si se llega con ?p=<id> (link compartido de un plato).
+  useEffect(() => {
+    try {
+      const pid = new URLSearchParams(window.location.search).get("p");
+      if (!pid) return;
+      const product = products.find((p) => p.id === pid);
+      if (product) openProduct(product);
+    } catch { /* noop */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Favorito que el usuario intentó marcar sin sesión: se aplica automáticamente
   // en cuanto inicia sesión.
@@ -599,6 +616,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               trackDishView(tenant.id, p.id, p.name, dwellMs > 500 ? dwellMs : undefined, dishAddedToCartRef.current);
             }
             setSelectedProduct(null);
+            // Limpiar ?p= de la URL al cerrar
+            try {
+              const sp = new URLSearchParams(window.location.search);
+              sp.delete("p");
+              const qs = sp.toString();
+              window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
+            } catch { /* noop */ }
           }}
           scrollImage
           intercept={brandMode && !hasBranch}
