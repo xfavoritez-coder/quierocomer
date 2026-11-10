@@ -2392,7 +2392,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
     textTransform: 'uppercase', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', padding: '0 6px 8px 0',
   })
 
-  if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
+  if (clLoading && !cd) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
   if (!cd) return null
 
   const { top5 } = cd
@@ -2414,7 +2414,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
   const MEDAL_BORDER = ['#F59E0B','#94A3B8','#B45309']
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, opacity: clLoading ? 0.5 : 1, transition: 'opacity 0.15s', pointerEvents: clLoading ? 'none' : 'auto' }}>
 
       {/* ── KPIs fila ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
@@ -2506,8 +2506,11 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
       )}
 
     <Card>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Directorio de clientes</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Directorio de clientes</span>
+          {clLoading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5" style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+        </div>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{debouncedSearch ? `${cd.filtered} de ${cd.total}` : `${cd.total} únicos`}</span>
       </div>
 
