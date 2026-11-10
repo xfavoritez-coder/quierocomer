@@ -117,6 +117,14 @@ export async function denyUberOrder(orderId: string, reason: UberDenyReason = "S
   if (!res.ok) throw new Error(`Uber deny ${res.status}: ${await res.text()}`);
 }
 
+/** Cancela un pedido YA aceptado. ⚠️ Requiere scope propio (solo prod); en sandbox 401. */
+export async function cancelUberOrder(orderId: string, reason: UberDenyReason = "OTHER"): Promise<{ ok: boolean; status: number; body: string }> {
+  const code = UBER_DENY_REASONS[reason] ? reason : "OTHER";
+  const res = await authed(EP.cancel(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
+  const body = await res.text();
+  return { ok: res.ok, status: res.status, body };
+}
+
 /** Marca el pedido como listo/finalizado de preparación. */
 export async function markUberOrderReady(orderId: string): Promise<void> {
   const res = await authed(EP.restaurantStatus(orderId), {

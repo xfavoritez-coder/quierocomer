@@ -1553,6 +1553,21 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setUeSyncing(false);
   }
 
+  async function setUberStoreStatus(status: "ONLINE" | "PAUSED") {
+    if (ueSyncing) return;
+    setUeSyncing(true); setMsg(null);
+    try {
+      const res = await fetch("/api/admin/ubereats/store-status", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: restaurant.id, status }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) setMsg({ type: "ok", text: status === "ONLINE" ? "Tienda reactivada en Uber Eats." : "Tienda pausada en Uber Eats." });
+      else setMsg({ type: "err", text: d.error || "No se pudo cambiar el estado (¿scope de producción?)" });
+    } catch { setMsg({ type: "err", text: "Error de conexión" }); }
+    setUeSyncing(false);
+  }
+
   useEffect(() => {
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
     setWpEnv(c.webpay?.env || "integration"); setWpCode(c.webpay?.commerceCode || ""); setWpKey(c.webpay?.apiKey || "");
@@ -1743,7 +1758,13 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
                   {ueSyncing ? "Sincronizando menú…" : "Sincronizar menú con Uber Eats"}
                 </button>
               )}
-              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#9ca3af", margin: "2px 0 0" }}>Sube la carta actual del local a Uber Eats (categorías, platos y precios). Guarda primero el Store ID.</p>
+              {ueStoreId.trim() && (
+                <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
+                  <button onClick={() => setUberStoreStatus("ONLINE")} disabled={ueSyncing} style={{ padding: "8px 14px", background: "transparent", color: "#22c55e", border: "1px solid #22c55e", borderRadius: 8, fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: ueSyncing ? "wait" : "pointer", opacity: ueSyncing ? 0.6 : 1 }}>Tienda Online</button>
+                  <button onClick={() => setUberStoreStatus("PAUSED")} disabled={ueSyncing} style={{ padding: "8px 14px", background: "transparent", color: "#f59e0b", border: "1px solid #f59e0b", borderRadius: 8, fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: ueSyncing ? "wait" : "pointer", opacity: ueSyncing ? 0.6 : 1 }}>Pausar tienda</button>
+                </div>
+              )}
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#9ca3af", margin: "2px 0 0" }}>Sube la carta actual del local a Uber Eats (categorías, platos y precios). Pausar/reactivar requiere el scope de producción. Guarda primero el Store ID.</p>
             </>}
           </IntegrationGroup>
 

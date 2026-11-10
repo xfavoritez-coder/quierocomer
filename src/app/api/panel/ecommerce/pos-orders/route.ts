@@ -8,7 +8,7 @@ import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
-import { markUberOrderReady } from "@/lib/ubereats/client";
+import { markUberOrderReady, denyUberOrder, cancelUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
 
 // Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
 // reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
@@ -253,7 +253,7 @@ export async function PATCH(req: NextRequest) {
   // Lo marca como cancelado (posStatus "canceled") → sale de los activos y pasa
   // al historial. Guarda el motivo en rawPayload. No borra el registro.
   if (body?.action === "cancel") {
-    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, rawPayload: true } });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, rawPayload: true, provider: true, externalId: true } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     const reason = String(body?.reason || "").trim().slice(0, 200);
     const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
@@ -264,6 +264,16 @@ export async function PATCH(req: NextRequest) {
       data: { posStatus: "canceled", rawPayload },
     });
     void syncOnlineOrderFromPos(updated).catch(() => {});
+    // Pedido de Uber Eats: avisar a Uber. Código de rechazo enumerado desde la UI
+    // (body.denyReason) con fallback "OTHER". Se intenta DENY (si aún no aceptado);
+    // si ya estaba aceptado, Uber lo rechaza y recurrimos a CANCEL.
+    if (order.provider === "ubereats" && order.externalId?.startsWith("ue-")) {
+      const uberId = order.externalId.slice(3);
+      const code: UberDenyReason = UBER_DENY_REASONS[body?.denyReason] ? body.denyReason : "OTHER";
+      void denyUberOrder(uberId, code)
+        .catch(() => cancelUberOrder(uberId, code))
+        .catch((e) => console.error("[ubereats] deny/cancel:", (e as Error).message));
+    }
     return NextResponse.json({ order: updated });
   }
 
