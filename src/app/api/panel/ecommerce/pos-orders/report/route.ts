@@ -48,6 +48,11 @@ export async function GET(req: NextRequest) {
   const toYmd = req.nextUrl.searchParams.get("to") || fromYmd;
   const start = chileDayRangeUtc(fromYmd).start;
   const end = chileDayRangeUtc(toYmd).end;
+  // untilHour: si se pasa, solo se acumulan órdenes hasta esa hora Chile (inclusive).
+  // Usado para comparación justa: "hoy hasta las 14h vs semana pasada hasta las 14h".
+  const _untilHourRaw = req.nextUrl.searchParams.get("untilHour");
+  const untilHour: number | null = _untilHourRaw !== null ? parseInt(_untilHourRaw, 10) : null;
+  const passHour = (d: Date) => untilHour === null || chileHour(d) <= untilHour;
 
   const orders = await prisma.posOrder.findMany({
     where: { restaurantId, posStatus: { not: "canceled" }, createdAt: { gte: start, lte: end } },
@@ -82,6 +87,7 @@ export async function GET(req: NextRequest) {
   let tipsTotal = 0;
   let grossTotal = 0; // lo que pagó el cliente (referencia)
   let ordersWithTip = 0;
+  let filteredCount = 0; // contador cuando untilHour está activo
   const hourly = Array.from({ length: 24 }, (_, h) => ({ hour: h, sales: 0, orders: 0 }));
   const dowMap = new Map<number, { sum: number; count: number }>();
   const channelMap = new Map<string, { name: string; sales: number; orders: number }>();
@@ -102,6 +108,8 @@ export async function GET(req: NextRequest) {
   };
 
   for (const o of orders) {
+    if (!passHour(o.createdAt)) continue;
+    filteredCount++;
     const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
     productSales += net;
     deliveryTotal += o.deliveryFee || 0;
@@ -188,6 +196,8 @@ export async function GET(req: NextRequest) {
   // ── Agregación de OnlineOrder no-espejados (locales sin Centro/POS) ──
   // total = subtotal + deliveryFee - discount (checkout) → neto = total - deliveryFee.
   for (const o of unmirroredOnline) {
+    if (!passHour(o.createdAt)) continue;
+    filteredCount++;
     const fee = o.deliveryFee || 0;
     const net = Math.max(0, (o.total || 0) - fee);
     productSales += net;
@@ -572,7 +582,7 @@ export async function GET(req: NextRequest) {
     from: fromYmd,
     to: toYmd,
     today,
-    ordersCount: orders.length + unmirroredOnline.length,
+    ordersCount: untilHour !== null ? filteredCount : orders.length + unmirroredOnline.length,
     productSales,
     deliveryTotal,
     tipsTotal,

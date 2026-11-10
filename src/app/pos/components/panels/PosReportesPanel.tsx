@@ -19,6 +19,11 @@ function clpShort(n: number): string {
 function chileTodayLocal(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 }
+function chileHourNow(): number {
+  const h = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(new Date())
+  const n = parseInt(h, 10)
+  return n === 24 ? 0 : n
+}
 function addDaysYmd(ymd: string, days: number): string {
   const d = new Date(`${ymd}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() + days)
@@ -161,11 +166,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Stat({ label, value, hint, color, big, span, delta, deltaHint }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; delta?: number | null; deltaHint?: string }) {
+function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, prevValue, prevValueHint }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; delta?: number | null; deltaHint?: string; badge?: string; prevValue?: string; prevValueHint?: string }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
-      <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+        <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
+        {badge && <span style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 600, color: 'var(--ink-3)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge}</span>}
+      </div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
       {delta != null && (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
@@ -177,6 +185,11 @@ function Stat({ label, value, hint, color, big, span, delta, deltaHint }: { labe
             {delta > 0 ? '↑' : delta < 0 ? '↓' : '='}{delta !== 0 ? ` ${Math.abs(delta)}%` : ' igual'}
           </span>
           {deltaHint && <span style={{ fontSize: '0.68rem', fontWeight: 400, fontFamily: F, color: 'var(--ink-3)' }}>{deltaHint}</span>}
+        </div>
+      )}
+      {prevValue && (
+        <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', marginTop: 3 }}>
+          {deltaHint ?? 'anterior'}: <span style={{ fontWeight: 600 }}>{prevValue}</span>{prevValueHint ? ` · ${prevValueHint}` : ''}
         </div>
       )}
     </div>
@@ -2985,7 +2998,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
-  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number } | null>(null)
+  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; cutHour?: number } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
@@ -3076,6 +3089,10 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   useEffect(() => {
     if (!restaurantId) return
     const { prevFrom, prevTo } = prevPeriod(fromDate, toDate)
+    // Para un solo día que es hoy: cortar en la hora actual para que la comparación sea justa
+    const isToday = fromDate === toDate && fromDate === chileTodayLocal()
+    const cutHour = isToday ? chileHourNow() : undefined
+    const hourParam = cutHour !== undefined ? `&untilHour=${cutHour}` : ''
     setPrevData(null)
     let cancelled = false
     const run = async () => {
@@ -3083,7 +3100,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
         if (allBranches && allBranches.length > 1) {
           const results = await Promise.all(
             allBranches.map(b =>
-              fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${prevFrom}&to=${prevTo}`)
+              fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${prevFrom}&to=${prevTo}${hourParam}`)
                 .then(r => r.ok ? r.json() : null).catch(() => null)
             )
           )
@@ -3092,12 +3109,13 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           if (valid.length > 0) setPrevData({
             ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
             productSales: valid.reduce((s, r) => s + r.productSales, 0),
+            cutHour,
           })
         } else {
-          const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}`)
+          const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}${hourParam}`)
           if (cancelled || !r.ok) return
           const d = await r.json()
-          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales })
+          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales, cutHour })
         }
       } catch { /* noop */ }
     }
@@ -3265,15 +3283,21 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             {/* KPIs */}
             <SectionLabel>{singleDay ? 'Resumen del día' : 'Resumen del período'}</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
-              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} hint="Productos con IVA" color={GREEN} big span={2}
+              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big span={2}
                 delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
-                deltaHint={deltaLabel(fromDate, toDate)} />
+                deltaHint={deltaLabel(fromDate, toDate)}
+                prevValue={prevData ? clp(prevData.productSales) : undefined}
+                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'}
                 delta={prevData ? computeDelta(data.ordersCount, prevData.ordersCount) : null}
-                deltaHint={deltaLabel(fromDate, toDate)} />
+                deltaHint={deltaLabel(fromDate, toDate)}
+                prevValue={prevData ? prevData.ordersCount.toLocaleString('es-CL') : undefined}
+                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE}
                 delta={prevData && prevData.ordersCount > 0 ? computeDelta(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0, prevData.productSales / prevData.ordersCount) : null}
-                deltaHint={deltaLabel(fromDate, toDate)} />
+                deltaHint={deltaLabel(fromDate, toDate)}
+                prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined}
+                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
               <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
