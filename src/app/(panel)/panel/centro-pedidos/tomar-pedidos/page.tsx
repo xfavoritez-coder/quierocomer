@@ -166,7 +166,9 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const discount = useMemo(() => {
     const v = parseFloat(discountInput) || 0;
     if (v <= 0) return 0;
-    return discountType === "percent" ? Math.round((subtotal * v) / 100) : Math.round(v);
+    const raw = discountType === "percent" ? Math.round((subtotal * v) / 100) : Math.round(v);
+    // El descuento nunca puede superar el subtotal (evita total negativo/$0 por error de tipeo).
+    return Math.max(0, Math.min(raw, subtotal));
   }, [discountInput, discountType, subtotal]);
   const fee = deliveryType === "DELIVERY" ? deliveryFee : 0;
   const total = Math.max(0, subtotal + fee - discount);

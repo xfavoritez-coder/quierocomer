@@ -84,7 +84,9 @@ export async function POST(req: NextRequest) {
     // Subtotal server-side (nunca confiar en el total del cliente). El staff sí
     // define descuento y envío manualmente (endpoint autenticado por panel).
     const subtotal = Math.round(items.reduce((s, it) => s + Number(it.unit_price) * Number(it.quantity), 0));
-    const disc = Math.max(0, Math.round(Number(discount) || 0));
+    // El descuento nunca puede superar el subtotal (defensa contra un valor mal tipeado
+    // que dejaría el total en $0, como pasó con un pedido real).
+    const disc = Math.min(Math.max(0, Math.round(Number(discount) || 0)), subtotal);
     const fee = isDelivery ? Math.max(0, Math.round(Number(deliveryFee) || 0)) : 0;
     const total = Math.max(0, subtotal + fee - disc);
 
