@@ -66,6 +66,9 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Rutas de seguimiento de pedidos — independientes del dominio, no reescribir.
+  if (pathname.startsWith("/pedido/")) return NextResponse.next();
+
   // ── Dominio de ECOMMERCE ──────────────────────────────────
   // Reescribir todas las rutas de dominios de ecommerce a /ecommerce/{host}{pathname}
   const url = req.nextUrl.clone();
