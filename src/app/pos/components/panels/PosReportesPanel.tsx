@@ -53,6 +53,23 @@ function weekdayShort(month: string, day: number): string {
   } catch { return '' }
 }
 
+// ── Comparación período anterior ───────────────────────────────────
+function prevPeriod(from: string, to: string): { prevFrom: string; prevTo: string } {
+  const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
+  return { prevFrom: addDaysYmd(from, -days), prevTo: addDaysYmd(to, -days) }
+}
+function deltaLabel(from: string, to: string): string {
+  const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
+  if (days === 1) return 'vs ayer'
+  if (days === 7) return 'vs sem. ant.'
+  if (days >= 28 && days <= 31) return 'vs mes ant.'
+  return 'vs período ant.'
+}
+function computeDelta(current: number, prev: number): number | null {
+  if (prev === 0) return null
+  return Math.round(((current - prev) / prev) * 100)
+}
+
 const F = 'var(--sans)'
 const GREEN = '#16a34a'
 const BLUE = '#3b82f6'
@@ -142,12 +159,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Stat({ label, value, hint, color, big, span }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number }) {
+function Stat({ label, value, hint, color, big, span, delta, deltaHint }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; delta?: number | null; deltaHint?: string }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
       <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
+      {delta != null && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+          background: delta > 0 ? 'rgba(22,163,74,.1)' : delta < 0 ? 'rgba(220,38,38,.1)' : 'var(--sunk)',
+          color: delta > 0 ? GREEN : delta < 0 ? '#dc2626' : 'var(--ink-3)',
+          borderRadius: 20, padding: '2px 8px',
+        }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 800, fontFamily: F }}>
+            {delta > 0 ? '↑' : delta < 0 ? '↓' : '='}{delta !== 0 ? ` ${Math.abs(delta)}%` : ' igual'}
+          </span>
+          {deltaHint && <span style={{ fontSize: '0.68rem', fontWeight: 400, fontFamily: F, color: 'var(--ink-3)' }}>{deltaHint}</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -2300,13 +2329,12 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               const newH  = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
               const recH  = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, Math.round((b.recurringClients / total) * totalPct)) : 0
               const unkH  = total > 0 ? Math.max(unk > 0 ? 2 : 0, totalPct - newH - recH) : 0
-              const showLabel = i % labelEvery === 0
               const isHovered = tooltipIdx === i
               const topRadius = newH > 0 ? '3px 3px 0 0' : recH > 0 ? '3px 3px 0 0' : '3px 3px 0 0'
               return (
                 <div
                   key={b.date}
-                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default' }}
+                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', cursor: total > 0 ? 'pointer' : 'default' }}
                   onMouseEnter={() => total > 0 && setTooltipIdx(i)}
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
@@ -2322,7 +2350,17 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                     {unkH > 0 && <div style={{ height: unkH, background: 'var(--ink-4)', borderRadius: newH === 0 && recH === 0 ? topRadius : '0', minHeight: 2, opacity: 0.6 }} />}
                     {total === 0 && <div style={{ height: 2, opacity: 0 }} />}
                   </div>
-                  <div style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1, fontWeight: 500 }}>
+                </div>
+              )
+            })}
+          </div>
+          {/* Etiquetas de fecha — fila separada para que las barras toquen el fondo */}
+          <div style={{ display: 'flex', gap: 2, padding: '4px 4px 0', overflowX: 'hidden' }}>
+            {buckets.map((b, i) => {
+              const showLabel = i % labelEvery === 0
+              return (
+                <div key={b.date} style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-2)', whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1, fontWeight: 500 }}>
                     {b.label}
                   </div>
                 </div>
@@ -2947,6 +2985,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
+  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
@@ -3032,6 +3071,39 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   }, [restaurantId, fromDate, toDate, allBranches])
 
   useEffect(() => { fetchReport() }, [fetchReport])
+
+  // Fetch del período anterior en paralelo para los deltas del dashboard
+  useEffect(() => {
+    if (!restaurantId) return
+    const { prevFrom, prevTo } = prevPeriod(fromDate, toDate)
+    setPrevData(null)
+    let cancelled = false
+    const run = async () => {
+      try {
+        if (allBranches && allBranches.length > 1) {
+          const results = await Promise.all(
+            allBranches.map(b =>
+              fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${prevFrom}&to=${prevTo}`)
+                .then(r => r.ok ? r.json() : null).catch(() => null)
+            )
+          )
+          if (cancelled) return
+          const valid = results.filter(Boolean) as Report[]
+          if (valid.length > 0) setPrevData({
+            ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
+            productSales: valid.reduce((s, r) => s + r.productSales, 0),
+          })
+        } else {
+          const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}`)
+          if (cancelled || !r.ok) return
+          const d = await r.json()
+          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales })
+        }
+      } catch { /* noop */ }
+    }
+    run()
+    return () => { cancelled = true }
+  }, [restaurantId, fromDate, toDate, allBranches])
 
   const singleDay = fromDate === toDate
   const shiftBoth = (days: number) => {
@@ -3193,9 +3265,15 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             {/* KPIs */}
             <SectionLabel>{singleDay ? 'Resumen del día' : 'Resumen del período'}</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
-              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} hint="Productos con IVA" color={GREEN} big span={2} />
-              <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'} />
-              <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE} />
+              <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} hint="Productos con IVA" color={GREEN} big span={2}
+                delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
+                deltaHint={deltaLabel(fromDate, toDate)} />
+              <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'}
+                delta={prevData ? computeDelta(data.ordersCount, prevData.ordersCount) : null}
+                deltaHint={deltaLabel(fromDate, toDate)} />
+              <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE}
+                delta={prevData && prevData.ordersCount > 0 ? computeDelta(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0, prevData.productSales / prevData.ordersCount) : null}
+                deltaHint={deltaLabel(fromDate, toDate)} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
               <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
