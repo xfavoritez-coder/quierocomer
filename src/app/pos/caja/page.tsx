@@ -342,7 +342,7 @@ export default function CajaPage() {
         <div className="pos-caja-wrap">
 
           <CajaStepper step={step} />
-          <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
+          {!isOwner && <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />}
 
           {/* ── Apertura ───────────────────────────── */}
           <div className="pos-caja-open">
