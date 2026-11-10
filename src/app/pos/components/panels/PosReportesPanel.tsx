@@ -182,14 +182,16 @@ function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, p
       </div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
       {hasCompare && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 9, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: `${pillColor}18`, color: pillColor, borderRadius: 20, padding: '2px 8px', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
-            {noBase ? '↑ nuevo' : isPos ? `↑ ${Math.abs(delta!)}%` : isNeg ? `↓ ${Math.abs(delta!)}%` : '= igual'}
-          </span>
-          <span style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-4)', lineHeight: 1.3 }}>
-            {deltaHint ?? 'anterior'}
-            {prevValue && <span style={{ color: 'var(--ink-3)', marginLeft: 3 }}>{prevValue}</span>}
-          </span>
+        <div style={{ marginTop: 9 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: `${pillColor}18`, color: pillColor, borderRadius: 20, padding: '2px 8px', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
+              {noBase ? '↑ nuevo' : isPos ? `↑ ${Math.abs(delta!)}%` : isNeg ? `↓ ${Math.abs(delta!)}%` : '= igual'}
+            </span>
+            <span style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-4)', lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {deltaHint ?? 'anterior'}
+            </span>
+          </div>
+          {prevValue && <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-3)', marginTop: 3 }}>{prevValue}</div>}
         </div>
       )}
     </div>
