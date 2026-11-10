@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { loadEcommerceTenant, loadEcommerceBrandByDomain } from "@/lib/ecommerce/storefront-data";
 import CheckoutForm from "@/components/ecommerce/CheckoutForm";
@@ -19,7 +20,15 @@ async function resolveTenant(slug: string) {
   let tenant = await loadEcommerceTenant(slug);
   if (!tenant && slug.includes(".")) {
     const brand = await loadEcommerceBrandByDomain(slug);
-    if (brand?.branches.length) tenant = await loadEcommerceTenant(brand.branches[0].slug);
+    if (brand?.branches.length) {
+      // Leer la sucursal que el usuario tenía seleccionada (cookie grabada por BrandStore).
+      const cookieStore = await cookies();
+      const savedSlug = cookieStore.get(`qc-bb:${brand.brandSlug}`)?.value;
+      const branchSlug = (savedSlug && brand.branches.find((b) => b.slug === savedSlug))
+        ? savedSlug
+        : brand.branches[0].slug;
+      tenant = await loadEcommerceTenant(branchSlug);
+    }
   }
   return tenant;
 }

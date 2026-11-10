@@ -38,6 +38,11 @@ export default function BrandStore({ brand, representative, basePath, initialPro
   const confirmPickup = useCartStore((s) => s.confirmPickup);
 
   const PERSIST_KEY = `qc-brand-branch:${brand.brandSlug}`;
+  const COOKIE_KEY = `qc-bb:${brand.brandSlug}`;
+  const saveBranch = useCallback((slug: string) => {
+    try { localStorage.setItem(PERSIST_KEY, slug); } catch {}
+    try { document.cookie = `${COOKIE_KEY}=${slug}; path=/; max-age=86400; SameSite=Lax`; } catch {}
+  }, [PERSIST_KEY, COOKIE_KEY]);
   const cache = useRef<Map<string, StorefrontData>>(new Map());
   cache.current.set(representative.tenant.slug, representative);
 
@@ -72,6 +77,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
         const bd = only.slug === representative.tenant.slug ? representative : await fetchStorefront(only.slug);
         if (!bd) { setResolving(false); return; }
         adoptRestaurant(bd.tenant.id, bd.products);
+        saveBranch(only.slug);
         setData(bd); setBranchSlug(only.slug);
         setResolving(false);
       })();
@@ -84,6 +90,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
       const bd = br.slug === representative.tenant.slug ? representative : await fetchStorefront(br.slug);
       if (!bd) { setResolving(false); return; }
       adoptRestaurant(bd.tenant.id, bd.products); // carrito ya ligado → solo re-cotiza
+      saveBranch(br.slug);
       setData(bd);
       setBranchSlug(br.slug);
       setResolving(false);
@@ -102,7 +109,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
       else if (mode === "pickup") confirmPickup();
       setData(bd);
       setBranchSlug(branch.slug);
-      try { localStorage.setItem(PERSIST_KEY, branch.slug); } catch {}
+      saveBranch(branch.slug);
       setPickerOpen(false);
       toast.success(`Pidiendo en ${branch.branchName || branch.name}`);
     } finally {
