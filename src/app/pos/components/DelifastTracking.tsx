@@ -133,11 +133,12 @@ function TrackingBox({ children, eta, etaLabel = 'Llega en' }: { children: React
   )
 }
 
-export default function DelifastTracking({ restaurantId, posOrderId, live = true, ribbon = false }: { restaurantId: string; posOrderId: string; live?: boolean; ribbon?: boolean }) {
+export default function DelifastTracking({ restaurantId, posOrderId, live = true, ribbon = false, onCancelDetected }: { restaurantId: string; posOrderId: string; live?: boolean; ribbon?: boolean; onCancelDetected?: () => void }) {
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [open, setOpen] = useState(false)
+  const cancelFiredRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -150,6 +151,14 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         if (d.pending) { setState('pending'); return }
         if (d.error || !d.tracking) { setState(prev => prev === 'ok' ? 'ok' : 'error'); return }
         setT(d.tracking); setState('ok')
+        // Notificar cancelación al padre (una sola vez)
+        if (onCancelDetected && !cancelFiredRef.current) {
+          const s = (d.tracking.status || '').toLowerCase()
+          if (/cancel|anul/.test(s) || d.tracking.timeline?.cancelado) {
+            cancelFiredRef.current = true
+            onCancelDetected()
+          }
+        }
       } catch { if (!cancelled) setState(prev => prev === 'ok' ? 'ok' : 'error') }
     }
     load()

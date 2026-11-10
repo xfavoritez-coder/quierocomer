@@ -337,8 +337,10 @@ function OrderCard({
                 {busy ? '…' : next.label + ' →'}
               </button>
             )}
-            {/* Pill de estado Delifast — visible en ready y out_for_delivery. */}
-            {paid && order.delifastVentaId && !delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+            {/* Pill de estado Delifast — visible en ready y out_for_delivery.
+                Se muestra también sin delifastVentaId para detectar cancelaciones
+                de órdenes rastreadas antes de que se guardara el ventaId. */}
+            {paid && order.isDelivery && !delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
@@ -504,6 +506,11 @@ function OrderDetailPanel({
   const [printMsg, setPrintMsg] = useState<string | null>(null)
   const [customerCount, setCustomerCount] = useState<number | null>(null)
   const [showCustomerHistory, setShowCustomerHistory] = useState(false)
+  const [delifastCancelled, setDelifastCancelled] = useState(false)
+  const [editCustomer, setEditCustomer] = useState(false)
+  const [editName, setEditName] = useState(order.customerName || '')
+  const [editPhone, setEditPhone] = useState(order.customerPhone || '')
+  const [savingCustomer, setSavingCustomer] = useState(false)
 
   // Cargar solo el conteo de pedidos del cliente (countOnly=1 → solo count(), muy rápido)
   useEffect(() => {
@@ -587,6 +594,19 @@ function OrderDetailPanel({
     setFinalizing(false)
   }
 
+  const handleSaveCustomer = async () => {
+    if (!editName.trim() && !editPhone.trim()) return
+    setSavingCustomer(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: order.id, action: 'editCustomer', customerName: editName.trim(), customerPhone: editPhone.trim() }),
+      })
+      if (r.ok) { setEditCustomer(false); onPaid() }
+    } catch { }
+    setSavingCustomer(false)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {showCustomerHistory && order.customerPhone && (
@@ -596,6 +616,27 @@ function OrderDetailPanel({
           customerPhone={order.customerPhone}
           onClose={() => setShowCustomerHistory(false)}
         />
+      )}
+      {editCustomer && (
+        <div className="pos-modal-overlay" onClick={() => setEditCustomer(false)}>
+          <div className="pos-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360, width: '100%' }}>
+            <div className="pos-modal-title">Editar cliente</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', display: 'block', marginBottom: 5 }}>Nombre</label>
+                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nombre del cliente" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--line)', fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', display: 'block', marginBottom: 5 }}>Teléfono</label>
+                <input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="+56 9 1234 5678" type="tel" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--line)', fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="pos-modal-cancel" style={{ flex: 1 }} onClick={() => setEditCustomer(false)}>Cancelar</button>
+              <button className="pos-modal-ok" style={{ flex: 1, opacity: savingCustomer ? 0.6 : 1 }} disabled={savingCustomer} onClick={handleSaveCustomer}>{savingCustomer ? 'Guardando…' : 'Guardar'}</button>
+            </div>
+          </div>
+        </div>
       )}
       {/* Header */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid var(--line)' }}>
@@ -613,6 +654,13 @@ function OrderDetailPanel({
             <div style={{ fontWeight: 800, fontSize: 20, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: 0, marginTop: -2 }}>
               {displayName(order.customerName || 'Cliente')}
             </div>
+            <button
+              onClick={() => { setEditName(order.customerName || ''); setEditPhone(order.customerPhone || ''); setEditCustomer(true) }}
+              title="Editar cliente"
+              style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
             {order.customerPhone && customerCount !== null && (
               <button
                 onClick={() => setShowCustomerHistory(true)}
@@ -659,8 +707,23 @@ function OrderDetailPanel({
         {/* Seguimiento del reparto (Delifast) — cinta full-width, pegada al header */}
         {isDelivery && (
           <div style={{ margin: '-16px -22px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
-            <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />
+            <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon onCancelDetected={() => setDelifastCancelled(true)} />
           </div>
+        )}
+        {/* Cuando Delifast cancela: botón manual para marcar como entregado */}
+        {isDelivery && delifastCancelled && order.opsStage !== 'delivered' && paid && (
+          <button
+            disabled={finalizing}
+            onClick={handleFinalize}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+              padding: '12px 14px', borderRadius: 10, border: 'none',
+              background: '#dc2626', color: '#fff', cursor: finalizing ? 'default' : 'pointer',
+              fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: finalizing ? 0.6 : 1,
+            }}
+          >
+            {finalizing ? '…' : 'Marcar como entregado'}
+          </button>
         )}
 
         {/* Dirección + hora */}

@@ -277,6 +277,21 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ order: updated });
   }
 
+  // ── Editar datos del cliente ──────────────────────────────────────────
+  if (body?.action === "editCustomer") {
+    const newName = String(body?.customerName || "").trim();
+    const newPhone = String(body?.customerPhone || "").trim();
+    if (!newName && !newPhone) return NextResponse.json({ error: "Sin cambios" }, { status: 400 });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true } });
+    if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    const data: Record<string, string> = {};
+    if (newName) data.customerName = newName;
+    if (newPhone) data.customerPhone = newPhone;
+    const updated = await prisma.posOrder.update({ where: { id }, data });
+    void syncOnlineOrderFromPos(updated).catch(() => {});
+    return NextResponse.json({ order: updated });
+  }
+
   const opsStage = (body?.opsStage || "").toString();
   if (!STAGES.includes(opsStage)) return NextResponse.json({ error: "Etapa inválida" }, { status: 400 });
 
