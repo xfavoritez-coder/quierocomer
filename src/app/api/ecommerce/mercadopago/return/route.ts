@@ -28,7 +28,7 @@ async function handle(req: NextRequest) {
   let paid = order.paymentStatus === "paid";
   if (!paid && paymentId) paid = await confirmMercadoPagoPayment(orderId, paymentId).catch(() => false);
 
-  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain });
+  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain });
   const checkout = `${baseUrl}${base}/checkout`;
   if (paid) return NextResponse.redirect(`${checkout}?pago=exito&order=${orderId}`, 303);
 

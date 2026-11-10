@@ -32,7 +32,7 @@ async function handle(req: NextRequest) {
   // Confirmar como respaldo (por si el webhook aún no llegó).
   const paid = order.paymentStatus === "paid" ? true : await confirmFlowPayment(token).catch(() => false);
 
-  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain });
+  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain });
   const checkout = `${baseUrl}${base}/checkout`;
   if (paid) return NextResponse.redirect(`${checkout}?pago=exito&order=${order.id}`, 303);
 

@@ -227,10 +227,12 @@ export function normalizeDomain(v: unknown): string | null {
 
 /** Ruta base de la tienda según el host de la request:
  *  - dominio propio (host === customDomain) → "" (URLs limpias: haruna.cl/checkout)
+ *  - dominio de marca (host === brandDomain) → "" (kojo.cl/checkout)
  *  - dominio principal → "/ecommerce/<slug>" (quierocomer.com/ecommerce/haruna) */
-export function storeBasePath(opts: { host?: string | null; slug: string; customDomain?: string | null }): string {
+export function storeBasePath(opts: { host?: string | null; slug: string; customDomain?: string | null; brandDomain?: string | null }): string {
   const host = (opts.host || "").split(":")[0].toLowerCase().replace(/^www\./, "");
   if (opts.customDomain && host === opts.customDomain) return "";
+  if (opts.brandDomain && host === opts.brandDomain) return "";
   return `/ecommerce/${opts.slug}`;
 }
 

@@ -66,7 +66,7 @@ async function handle(req: NextRequest) {
       where: { id: order.id },
       data: { paymentStatus: "failed", statusHistory: withPaymentLog(order.statusHistory, { category, reason, secondsOnForm: secs }) },
     });
-    const base = order ? storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain }) : "";
+    const base = order ? storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain }) : "";
     return NextResponse.redirect(order ? checkoutFor(base, "pago=fallido") : `${baseUrl}/?pago=cancelado`, 303);
   }
 
@@ -74,7 +74,7 @@ async function handle(req: NextRequest) {
 
   const order = await prisma.onlineOrder.findFirst({ where: { webpayToken: tokenWs }, include: { restaurant: { select: { slug: true, ecommerceConfig: true, ecommerceStoreConfig: true } } } });
   if (!order) return NextResponse.redirect(`${baseUrl}/?pago=error`, 303);
-  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain });
+  const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain });
 
   // Si ya se confirmó antes, redirigir según su estado (idempotente)
   if (order.paymentStatus === "paid") {
