@@ -20,8 +20,8 @@ type Granularity = "day" | "week" | "month";
 type RangeParam = "today" | "7d" | "30d" | "90d" | "365d";
 
 function chileDate(d: Date): string {
-  // Approximate Chile time (UTC-3)
-  return new Date(d.getTime() - 3 * 3600000).toISOString().slice(0, 10);
+  // Use proper IANA timezone so DST is handled correctly
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(d);
 }
 
 function getGranularity(range: RangeParam): Granularity {
@@ -36,7 +36,13 @@ function getRangeDates(range: RangeParam): { from: Date; to: Date } {
   let from: Date;
   if (range === "today") {
     const todayStr = chileDate(now);
-    from = new Date(`${todayStr}T03:00:00Z`); // midnight Chile = UTC-3 = 03:00 UTC
+    // Find the first UTC hour where the Santiago date == todayStr
+    // Chile is UTC-3 (DST) or UTC-4 (standard), so midnight Santiago = 03:00 or 04:00 UTC
+    from = new Date(`${todayStr}T05:00:00Z`); // safe fallback
+    for (let h = 0; h <= 5; h++) {
+      const candidate = new Date(`${todayStr}T0${h}:00:00Z`);
+      if (chileDate(candidate) === todayStr) { from = candidate; break; }
+    }
     return { from, to };
   }
   const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : 365;
@@ -45,11 +51,13 @@ function getRangeDates(range: RangeParam): { from: Date; to: Date } {
 }
 
 function bucketExprForCol(col: string, gran: Granularity): string {
-  if (gran === "day")
-    return `(${col} AT TIME ZONE 'America/Santiago')::date`;
-  if (gran === "week")
-    return `date_trunc('week', ${col} AT TIME ZONE 'America/Santiago')::date`;
-  return `date_trunc('month', ${col} AT TIME ZONE 'America/Santiago')::date`;
+  // Prisma stores DateTime as TIMESTAMP(3) (no tz) with UTC values.
+  // AT TIME ZONE 'UTC' first casts TIMESTAMP → TIMESTAMPTZ (telling PG it's UTC),
+  // then AT TIME ZONE 'America/Santiago' converts to Santiago local time.
+  const localTs = `(${col} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santiago')`;
+  if (gran === "day") return `${localTs}::date`;
+  if (gran === "week") return `date_trunc('week', ${localTs})::date`;
+  return `date_trunc('month', ${localTs})::date`;
 }
 
 function generateExpectedBuckets(range: RangeParam, gran: Granularity): string[] {
