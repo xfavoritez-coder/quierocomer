@@ -1980,7 +1980,7 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
         style={{ width: '100%', maxWidth: 520, height: '90dvh', background: 'var(--surface)', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
       >
         {selectedOrder ? (
-          <PastOrderDetail order={selectedOrder} restaurantId={restaurantId} onClose={() => setSelectedOrder(null)} />
+          <PastOrderDetail order={selectedOrder} restaurantId={restaurantId} onClose={() => setSelectedOrder(null)} backLabel="Ficha de cliente" />
         ) : (
           <>
             {/* Header cliente */}
