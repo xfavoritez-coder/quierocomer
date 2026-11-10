@@ -557,7 +557,9 @@ export default function PosHomePage() {
       {innerPage && INNER_PAGES[innerPage] && (
         <>
           {React.createElement(INNER_PAGES[innerPage].component, {
-              restaurantId,
+              // Si hay una sucursal específica seleccionada con los pills, pasarla como restaurantId.
+              // Para "todas" se mantiene el primario + allBranches para fetch en paralelo.
+              restaurantId: effectiveBranchMode !== 'todas' ? effectiveBranchMode : restaurantId,
               title: INNER_PAGES[innerPage].title,
               onDone: () => openInnerPage(null),
               allBranches,

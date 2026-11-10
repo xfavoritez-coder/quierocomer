@@ -1,11 +1,117 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import { fmtElapsed } from '../OrderClock'
 import { deliveryPlatformLabel } from '@/lib/pos'
 import PastOrderDetail from '../PastOrderDetail'
 import type { PastOrder } from '../PastOrderDetail'
+
+const F = 'var(--sans)'
+
+function addDaysYmd(ymd: string, n: number): string {
+  const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+function startOfWeekYmd(ymd: string): string {
+  const d = new Date(`${ymd}T12:00:00Z`); const dow = d.getUTCDay(); d.setUTCDate(d.getUTCDate() - ((dow + 6) % 7)); return d.toISOString().slice(0, 10)
+}
+function startOfMonthYmd(ymd: string): string { return `${ymd.slice(0, 7)}-01` }
+
+const DATE_PRESETS = (today: string) => {
+  const ayer = addDaysYmd(today, -1)
+  const semStart = startOfWeekYmd(today)
+  const semPasadaFin = addDaysYmd(semStart, -1)
+  const semPasadaIni = startOfWeekYmd(semPasadaFin)
+  const mesIni = startOfMonthYmd(today)
+  return [
+    { id: 'hoy',       label: 'Hoy',         from: today,        to: today },
+    { id: 'ayer',      label: 'Ayer',         from: ayer,         to: ayer },
+    { id: 'semana',    label: 'Esta semana',  from: semStart,     to: today },
+    { id: 'sem_past',  label: 'Sem. pasada',  from: semPasadaIni, to: semPasadaFin },
+    { id: 'mes',       label: 'Este mes',     from: mesIni,       to: today },
+  ]
+}
+
+function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onRange }: {
+  fromDate: string; toDate: string; today: string
+  onFromChange: (v: string) => void; onToChange: (v: string) => void
+  onRange: (from: string, to: string) => void
+}) {
+  const [dropOpen, setDropOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
+  const presets = DATE_PRESETS(today)
+  const activePreset = presets.find(p => p.from === fromDate && p.to === toDate) ?? null
+
+  useEffect(() => {
+    if (!dropOpen) return
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setDropOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dropOpen])
+
+  const fmtDate = (ymd: string) =>
+    new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' })
+      .format(new Date(ymd + 'T12:00:00Z')).replace('.', '')
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '8px 10px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="pos-date-box" style={{ position: 'relative', flex: '1 1 0' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{fmtDate(fromDate)}</span>
+          <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} tabIndex={-1} />
+        </div>
+        <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-4)', flexShrink: 0 }}>→</span>
+        <div className="pos-date-box" style={{ position: 'relative', flex: '1 1 0' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{fmtDate(toDate)}</span>
+          <input type="date" value={toDate} min={fromDate} onChange={e => onToChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+        </div>
+      </div>
+      <div ref={dropRef} className="pos-date-preset" style={{ position: 'relative' }}>
+        <button
+          onClick={() => setDropOpen(o => !o)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: F, fontSize: '0.82rem', fontWeight: 600,
+            color: 'var(--ink-2)',
+            background: 'rgba(222,124,0,.06)',
+            border: '1px solid rgba(222,124,0,.22)',
+            borderRadius: 20, padding: '5px 10px 5px 8px', cursor: 'pointer',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          {activePreset?.label ?? 'Rango'}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        {dropOpen && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50,
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,.10)',
+            minWidth: 148, padding: '4px 0', overflow: 'hidden',
+          }}>
+            {presets.map(p => {
+              const active = activePreset?.id === p.id
+              return (
+                <button key={p.id} onClick={() => { onRange(p.from, p.to); setDropOpen(false) }} style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  fontFamily: F, fontSize: '0.82rem', fontWeight: active ? 700 : 400,
+                  color: 'var(--ink)',
+                  background: active ? 'var(--sunk)' : 'transparent',
+                  border: 'none', padding: '8px 14px', cursor: 'pointer',
+                }}>{p.label}</button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // Origen del pedido (por dónde entró): plataforma de delivery, Uber Eats directo,
 // Toteat, tienda ecommerce o tomado a mano en el POS.
@@ -44,6 +150,7 @@ interface HistorialOrder {
   completedAt?: string | null
   updatedAt?: string | null
   rawPayload?: unknown
+  _branchName?: string
 }
 
 // Tiempo total (congelado) que tomó el pedido. En retiro el tiempo se detiene
@@ -162,14 +269,8 @@ function todayYmd(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function ymd(offset: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + offset)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
 // ── Order card ────────────────────────────────────────────────────────
-function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder; isSelected: boolean; onSelect: () => void }) {
+function HistorialCard({ order, isSelected, onSelect, showBranch }: { order: HistorialOrder; isSelected: boolean; onSelect: () => void; showBranch?: boolean }) {
   const isDesktop = useIsDesktop()
   const canceled = order.posStatus === 'canceled'
   const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
@@ -225,6 +326,7 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
               {clp(order.totalAmount)}
             </span>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {showBranch && order._branchName && <span style={chip('#6366f1')}>{order._branchName}</span>}
               {(() => { const s = sourceTag(order); return <span style={chip(s.color)}>{s.label}</span> })()}
               <span style={chip(typeColor)}>{typeLabel}</span>
               <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Sin cobro'}</span>
@@ -255,72 +357,55 @@ function HistorialCard({ order, isSelected, onSelect }: { order: HistorialOrder;
   )
 }
 
+interface BranchInfo { id: string; name: string; branchName?: string | null }
+
 // ── Main component ────────────────────────────────────────────────────
-export default function PosHistorialPanel({ restaurantId, title }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosHistorialPanel({ restaurantId, title, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
   const isDesktop = useIsDesktop()
-  const [from, setFrom] = useState(todayYmd())
-  const [to, setTo] = useState(todayYmd())
+  const today = todayYmd()
+  const [from, setFrom] = useState(today)
+  const [to, setTo] = useState(today)
   const [orders, setOrders] = useState<HistorialOrder[]>([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<HistorialOrder | null>(null)
+
+  // Branches to fetch: all branches when multi-mode, otherwise just the single restaurantId
+  const branches: BranchInfo[] = allBranches && allBranches.length > 1
+    ? allBranches
+    : [{ id: restaurantId, name: '', branchName: null }]
+  const isMultiBranch = branches.length > 1
 
   useEffect(() => {
     if (!restaurantId) return
     setLoading(true)
     setSelected(null)
-    fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=historial&from=${from}&to=${to}`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d.orders)) setOrders(d.orders) })
-      .catch(() => {})
+    Promise.all(
+      branches.map(b =>
+        fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${b.id}&scope=historial&from=${from}&to=${to}`, { cache: 'no-store' })
+          .then(r => r.ok ? r.json() : { orders: [] })
+          .then(d => (Array.isArray(d.orders) ? d.orders : []).map((o: HistorialOrder) => ({ ...o, _branchName: b.branchName || b.name })))
+          .catch(() => [] as HistorialOrder[])
+      )
+    )
+      .then(results => {
+        const combined = results.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        setOrders(combined)
+      })
       .finally(() => setLoading(false))
-  }, [restaurantId, from, to])
-
-  const presets: { label: string; f: string; t: string }[] = [
-    { label: 'Hoy', f: ymd(0), t: ymd(0) },
-    { label: 'Ayer', f: ymd(-1), t: ymd(-1) },
-    { label: '7 días', f: ymd(-6), t: ymd(0) },
-    { label: '30 días', f: ymd(-29), t: ymd(0) },
-  ]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId, from, to, allBranches])
 
   const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
         {title && <p className="pos-inner-title">{title}</p>}
 
-        {/* Selector de rango de fechas */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          {presets.map(p => {
-            const active = from === p.f && to === p.t
-            return (
-              <button key={p.label} onClick={() => { setFrom(p.f); setTo(p.t) }} style={{
-                padding: '7px 14px', borderRadius: 10, border: '1px solid var(--line)',
-                background: active ? 'var(--amber)' : 'var(--sunk)',
-                color: active ? '#fff' : 'var(--ink-2)',
-                fontWeight: 600, fontSize: 13, fontFamily: 'var(--sans)', cursor: 'pointer',
-              }}>
-                {p.label}
-              </button>
-            )
-          })}
-        </div>
-        <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
-            Desde
-            <input type="date" value={from} max={to} onChange={e => { const v = e.target.value; if (!v) return; setFrom(v); if (v > to) setTo(v) }} style={{
-              padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)',
-              background: 'var(--sunk)', color: 'var(--ink)', fontSize: 13,
-              fontFamily: 'var(--sans)', cursor: 'pointer', outline: 'none',
-            }} />
-          </label>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-3)', fontWeight: 600 }}>
-            Hasta
-            <input type="date" value={to} min={from} onChange={e => { const v = e.target.value; if (!v) return; setTo(v); if (v < from) setFrom(v) }} style={{
-              padding: '6px 10px', borderRadius: 10, border: '1px solid var(--line)',
-              background: 'var(--sunk)', color: 'var(--ink)', fontSize: 13,
-              fontFamily: 'var(--sans)', cursor: 'pointer', outline: 'none',
-            }} />
-          </label>
-        </div>
+        <DateRangePicker
+          fromDate={from} toDate={to} today={today}
+          onFromChange={v => { setFrom(v); if (v > to) setTo(v) }}
+          onToChange={v => { setTo(v); if (v < from) setFrom(v) }}
+          onRange={(f, t) => { setFrom(f); setTo(t) }}
+        />
 
         {loading ? (
           <div className="pos-empty" style={{ minHeight: 200 }}>
@@ -338,6 +423,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
                 order={o}
                 isSelected={selected?.id === o.id}
                 onSelect={() => setSelected(prev => prev?.id === o.id && isDesktop ? null : o)}
+                showBranch={isMultiBranch}
               />
             ))}
           </div>
@@ -380,7 +466,7 @@ export default function PosHistorialPanel({ restaurantId, title }: { restaurantI
             style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--surface)', borderRadius: '18px 18px 0 0', maxHeight: '90dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 -4px 32px rgba(0,0,0,.18)' }}
           >
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--line)', margin: '10px auto 0', flexShrink: 0 }} />
-            <PastOrderDetail order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} />
+            <PastOrderDetail order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} mobileClose />
           </div>
         </div>
       )}

@@ -111,12 +111,15 @@ export function usePosRestaurant(): State {
   return state
 }
 
-/** Cambia a otra sucursal: actualiza localStorage y recarga la página para reinicializar el POS. */
+/** Cambia a otra sucursal: actualiza localStorage y navega a /pos para reinicializar el POS.
+ *  IMPORTANTE: NO usar window.location.reload() porque el POS usa replaceState para URLs
+ *  virtuales como /pos/historial que no existen como rutas de Next.js → causa 404.
+ */
 export function switchPosBranch(id: string): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(PANEL_KEY, id)
   _fetched = false
-  window.location.reload()
+  window.location.href = '/pos'
 }
 
 /** Get the restaurant ID synchronously (from module-level cache, no re-render) */

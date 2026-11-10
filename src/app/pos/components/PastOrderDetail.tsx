@@ -169,13 +169,15 @@ const GREEN = '#16a34a'
 
 // ── Componente principal ───────────────────────────────────────────────
 export default function PastOrderDetail({
-  order, restaurantId, onClose, branchName, backLabel,
+  order, restaurantId, onClose, branchName, backLabel, mobileClose,
 }: {
   order: PastOrder
   restaurantId: string
   onClose: () => void
   branchName?: string | null
   backLabel?: string
+  /** Muestra la X sutil arriba a la derecha (para bottom sheets en mobile) */
+  mobileClose?: boolean
 }) {
   const canceled = order.posStatus === 'canceled'
   const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
@@ -215,7 +217,20 @@ export default function PastOrderDetail({
   const elapsedMs = frozenElapsedMs(order)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      {mobileClose && (
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          style={{
+            position: 'absolute', top: 8, right: 12, zIndex: 10,
+            background: 'none', border: 'none', cursor: 'pointer', padding: 6,
+            color: 'var(--ink-3)', lineHeight: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      )}
       {showCustomerHistory && order.customerPhone && (
         <CustomerOrdersDrawer
           restaurantId={restaurantId}
