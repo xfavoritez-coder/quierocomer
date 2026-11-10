@@ -56,11 +56,13 @@ function weekdayShort(month: string, day: number): string {
 // ── Comparación período anterior ───────────────────────────────────
 function prevPeriod(from: string, to: string): { prevFrom: string; prevTo: string } {
   const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
-  return { prevFrom: addDaysYmd(from, -days), prevTo: addDaysYmd(to, -days) }
+  // Un solo día → comparar vs mismo día de semana anterior (más comparable que ayer)
+  const shift = days === 1 ? 7 : days
+  return { prevFrom: addDaysYmd(from, -shift), prevTo: addDaysYmd(to, -shift) }
 }
 function deltaLabel(from: string, to: string): string {
   const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
-  if (days === 1) return 'vs ayer'
+  if (days === 1) return 'vs sem. ant.'
   if (days === 7) return 'vs sem. ant.'
   if (days >= 28 && days <= 31) return 'vs mes ant.'
   return 'vs período ant.'
@@ -2325,27 +2327,28 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               const unk = b.unknownOrders ?? 0
               const total = b.newClients + b.recurringClients + unk
               const totalPct = Math.max(0, Math.round((total / maxTotal) * 148))
-              // Alturas proporcionales dentro de la barra total
               const newH  = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
               const recH  = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, Math.round((b.recurringClients / total) * totalPct)) : 0
               const unkH  = total > 0 ? Math.max(unk > 0 ? 2 : 0, totalPct - newH - recH) : 0
               const isHovered = tooltipIdx === i
-              const topRadius = '3px 3px 0 0'
               return (
                 <div
                   key={b.date}
-                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', cursor: total > 0 ? 'pointer' : 'default' }}
+                  style={{ flex: 1, minWidth: 0, position: 'relative', cursor: total > 0 ? 'pointer' : 'default' }}
                   onMouseEnter={() => total > 0 && setTooltipIdx(i)}
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
                 >
                   {showCount && total > 0 && (
-                    <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
+                    <div style={{ position: 'absolute', bottom: totalPct + 3, left: 0, right: 0, textAlign: 'center', fontFamily: F, fontSize: 8, color: 'var(--ink-3)', lineHeight: 1 }}>
+                      {total}
+                    </div>
                   )}
-                  <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
-                    {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: topRadius, minHeight: 2 }} />}
-                    {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? topRadius : '0', minHeight: 2 }} />}
-                    {unkH > 0 && <div style={{ height: unkH, background: 'var(--ink-4)', borderRadius: newH === 0 && recH === 0 ? topRadius : '0', minHeight: 2, opacity: 0.6 }} />}
+                  {/* position: absolute bottom:0 garantiza que las barras toquen el fondo sin importar su altura */}
+                  <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
+                    {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: '3px 3px 0 0', minHeight: 2 }} />}
+                    {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
+                    {unkH > 0 && <div style={{ height: unkH, background: 'var(--ink-4)', borderRadius: newH === 0 && recH === 0 ? '3px 3px 0 0' : '0', minHeight: 2, opacity: 0.6 }} />}
                   </div>
                 </div>
               )
