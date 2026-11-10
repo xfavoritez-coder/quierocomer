@@ -96,19 +96,19 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const dishAddedToCartRef = useRef<boolean>(false);
   const sessionStartRef = useRef<number>(Date.now());
   const dishesViewedRef = useRef<number>(0);
+  const catById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const openProduct = useCallback((p: StoreProduct) => {
     selectedProductRef.current = p;
     dishOpenAtRef.current = Date.now();
     dishAddedToCartRef.current = false;
     dishesViewedRef.current += 1;
     setSelectedProduct(p);
-    // Actualizar URL con slug amigable del producto
+    // Actualizar URL con slug amigable: /commune/categoria/producto
     try {
+      const catSlug = slugify(catById.get(p.category_id) ?? "");
       const productSlug = slugify(p.name);
-      const productPath = communeSlug
-        ? `${storeBase}/${communeSlug}/${productSlug}`
-        : `${storeBase}/${productSlug}`;
-      window.history.replaceState(null, "", productPath);
+      const segments = [communeSlug, catSlug, productSlug].filter(Boolean);
+      window.history.replaceState(null, "", `${storeBase}/${segments.join("/")}`);
     } catch { /* noop */ }
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
     if (p.option_groups && p.option_groups.length > 0) trackModifierOpen(tenant.id, p.id, p.name);

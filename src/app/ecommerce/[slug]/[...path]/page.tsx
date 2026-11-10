@@ -16,11 +16,16 @@ import PageHitTracker from "@/components/PageHitTracker";
 
 export const dynamic = "force-dynamic";
 
-/** Extrae communeSlug y productSlug del path. */
-function parsePath(path: string[]): { productSlug: string; communeSlug: string | null } {
-  if (path.length === 1) return { productSlug: path[0], communeSlug: null };
-  if (path.length === 2) return { productSlug: path[1], communeSlug: path[0] };
-  return { productSlug: path[path.length - 1], communeSlug: path[path.length - 2] };
+/** Extrae communeSlug, categorySlug y productSlug del path.
+ *  Formatos soportados:
+ *  - [producto]
+ *  - [commune, producto]
+ *  - [commune, categoria, producto]
+ */
+function parsePath(path: string[]): { productSlug: string; communeSlug: string | null; categorySlug: string | null } {
+  if (path.length === 1) return { productSlug: path[0], communeSlug: null, categorySlug: null };
+  if (path.length === 2) return { productSlug: path[1], communeSlug: path[0], categorySlug: null };
+  return { productSlug: path[path.length - 1], categorySlug: path[path.length - 2], communeSlug: path[path.length - 3] ?? null };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; path: string[] }> }): Promise<Metadata> {

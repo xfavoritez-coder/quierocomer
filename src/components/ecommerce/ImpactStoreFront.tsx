@@ -174,19 +174,19 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   // y se abre solo cuando el cliente completa la selección.
   const [pendingProduct, setPendingProduct] = useState<StoreProduct | null>(null);
 
+  const catById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const openProduct = useCallback((p: StoreProduct) => {
     if (p.is_sold_out) return;
     if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
     setSelectedProduct(p);
-    // Actualizar URL con slug amigable del producto
+    // Actualizar URL con slug amigable: /commune/categoria/producto
     try {
+      const catSlug = slugify(catById.get(p.category_id) ?? "");
       const productSlug = slugify(p.name);
-      const productPath = communeSlug
-        ? `${storeBase}/${communeSlug}/${productSlug}`
-        : `${storeBase}/${productSlug}`;
-      window.history.replaceState(null, "", productPath);
+      const segments = [communeSlug, catSlug, productSlug].filter(Boolean);
+      window.history.replaceState(null, "", `${storeBase}/${segments.join("/")}`);
     } catch { /* noop */ }
-  }, [deliverySelected, communeSlug, storeBase]);
+  }, [deliverySelected, communeSlug, storeBase, catById]);
 
   const canOrderNow = isOpen || tenant.scheduledOrdersEnabled;
   const directAdd = useCallback((p: StoreProduct) => {
