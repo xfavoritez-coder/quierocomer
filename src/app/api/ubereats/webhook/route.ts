@@ -92,25 +92,36 @@ export async function POST(req: NextRequest) {
 
     // El webhook no trae el store id; se obtiene del detalle del pedido (getOrder
     // usa el token de la app, no depende de la tienda). De ahí se resuelve el local.
+    // Si getOrder falla (transitorio), se propaga al catch → 5xx → Uber reintenta.
     const order = await getUberOrder(orderId);
     const st = obj(order.store);
     const storeId = str(st.id || st.store_id || st.merchant_store_id || order.store_id);
     const restaurantId = await restaurantForStore(storeId);
+    // Tienda sin local mapeado: NO es un error nuestro → 200 (no reintentar).
     if (!restaurantId) return NextResponse.json({ ok: true, ignored: true, reason: "tienda sin local", storeId, orderId }, { status: 200 });
 
+    // Inyección IDEMPOTENTE: crea el PosOrder solo si es nuevo (dedup por externalId).
+    // En un reintento, devuelve el existente sin duplicar.
     const result = await createPosOrderFromUberOrder(restaurantId, order);
-    if (result?.isNew) {
-      const cfg = parseEcommerceConfig(
-        (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } }))?.ecommerceConfig,
-      );
-      // Aceptar automáticamente en Uber (salvo que el local lo desactive).
-      if (cfg.ubereats?.autoAccept !== false) await acceptUberOrder(orderId).catch((e) => console.error("[ubereats] accept:", (e as Error).message));
+
+    // Auto-aceptar en Uber, de forma IDEMPOTENTE según current_state: si el pedido ya
+    // está aceptado (p. ej. en un reintento tras aceptar OK pero fallar la respuesta),
+    // no se re-acepta. Si la aceptación falla, se propaga → 5xx → Uber reintenta.
+    const cfg = parseEcommerceConfig(
+      (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } }))?.ecommerceConfig,
+    );
+    const state = str(order.current_state).toUpperCase();
+    const alreadyFinal = state === "ACCEPTED" || state === "CANCELLED" || state === "DENIED";
+    if (cfg.ubereats?.autoAccept !== false && !alreadyFinal) {
+      await acceptUberOrder(orderId);
     }
-    return NextResponse.json({ ok: true, posOrderId: result?.posOrderId, isNew: result?.isNew }, { status: 200 });
+    return NextResponse.json({ ok: true, posOrderId: result?.posOrderId, isNew: result?.isNew, accepted: !alreadyFinal }, { status: 200 });
   } catch (e) {
-    console.error("[ubereats/webhook]", (e as Error)?.message);
-    // 200 igual para no gatillar reintentos infinitos por un error nuestro.
-    return NextResponse.json({ ok: false, error: "procesamiento" }, { status: 200 });
+    // Fallo de procesamiento (getOrder/BD/accept): devolvemos 5xx para que Uber
+    // REINTENTE (meta de inyección 99.9%). La creación es idempotente (externalId
+    // único) → el reintento no duplica el pedido.
+    console.error("[ubereats/webhook] processing_failed", JSON.stringify({ orderId, eventType, message: (e as Error)?.message }));
+    return NextResponse.json({ ok: false, error: "processing_failed", orderId }, { status: 503 });
   }
 }
 
