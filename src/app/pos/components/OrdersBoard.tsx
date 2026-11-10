@@ -263,7 +263,7 @@ function OrderCard({
             {cols === 2 && showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
             {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
-          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 17, color: 'var(--ink)', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', flexShrink: 0 }}>
             {clp(order.totalAmount)}
           </span>
         </div>
