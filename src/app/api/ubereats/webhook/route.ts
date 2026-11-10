@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, menuRefresh: true, storeId, synced: !!restaurantId }, { status: 200 });
   }
 
+  // Uber resolvió un fulfillment issue (ítem agotado/sustitución). Reconocemos el
+  // evento (el POS ya refleja el pedido; el ajuste de ítems se hace vía updateUberOrderCart).
+  if (/fulfillment[._]issue/i.test(eventType)) {
+    return NextResponse.json({ ok: true, fulfillmentResolved: true, eventType }, { status: 200 });
+  }
+
   // El id del pedido viene en order.id (y como fallback en meta.resource_id).
   const orderId = str(obj(body.order).id || meta.resource_id || body.resource_id || obj(body.resource).id);
   if (!orderId) return NextResponse.json({ ok: true, ignored: true, reason: "sin orderId" }, { status: 200 });

@@ -36,6 +36,7 @@ const EP = {
   accept: (id: string) => `${BASE}/v1/eats/orders/${id}/accept_pos_order`,
   deny: (id: string) => `${BASE}/v1/eats/orders/${id}/deny_pos_order`,
   cancel: (id: string) => `${BASE}/v1/eats/orders/${id}/cancel`,
+  cart: (id: string) => `${BASE}/v2/eats/orders/${id}/cart`,
   // "Listo"/estado de reparto. Requiere scope extra `eats.store.orders.restaurant_delivery`
   // (no incluido en SCOPE abajo) → markReady fallará con 401 hasta agregarlo; no
   // bloquea recibir/aceptar el pedido en la verificación.
@@ -121,6 +122,15 @@ export async function denyUberOrder(orderId: string, reason: UberDenyReason = "S
 export async function cancelUberOrder(orderId: string, reason: UberDenyReason = "OTHER"): Promise<{ ok: boolean; status: number; body: string }> {
   const code = UBER_DENY_REASONS[reason] ? reason : "OTHER";
   const res = await authed(EP.cancel(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
+  const body = await res.text();
+  return { ok: res.ok, status: res.status, body };
+}
+
+/** Actualiza el carrito del pedido: mecanismo de resolución de *fulfillment issues*
+ *  (ítem agotado/sustitución). Uber responde el webhook order.fulfillment_issues
+ *  .resolved. Path verificado (`/v2/eats/orders/{id}/cart`). ⚠️ puede requerir scope. */
+export async function updateUberOrderCart(orderId: string, cart: unknown): Promise<{ ok: boolean; status: number; body: string }> {
+  const res = await authed(EP.cart(orderId), { method: "PATCH", body: JSON.stringify(cart) });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };
 }
