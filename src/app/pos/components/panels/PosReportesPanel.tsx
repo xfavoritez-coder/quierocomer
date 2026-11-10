@@ -1975,6 +1975,8 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
     { value: '365d',  label: '1 año' },
   ]
 
+  const [tooltipIdx, setTooltipIdx] = useState<number | null>(null)
+
   const buckets = chartData ?? []
   const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients))
   const hasData = buckets.some(b => b.newClients + b.recurringClients > 0)
@@ -2026,15 +2028,46 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
           Sin datos para este período
         </div>
       ) : (
-        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden', position: 'relative' }}>
           {buckets.map((b, i) => {
             const total = b.newClients + b.recurringClients
-            const totalPct = Math.max(0, Math.round((total / maxTotal) * 148)) // 148px usable bar height
+            const totalPct = Math.max(0, Math.round((total / maxTotal) * 148))
             const newH = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
             const recH = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, totalPct - newH) : 0
             const showLabel = i % labelEvery === 0
+            const isHovered = tooltipIdx === i
+            const leftPct = count > 1 ? (i / (count - 1)) * 100 : 50
             return (
-              <div key={b.date} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                key={b.date}
+                style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default', position: 'relative' }}
+                onMouseEnter={() => total > 0 && setTooltipIdx(i)}
+                onMouseLeave={() => setTooltipIdx(null)}
+                onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
+              >
+                {/* Tooltip */}
+                {isHovered && (
+                  <div style={{
+                    position: 'absolute', bottom: 'calc(100% + 6px)',
+                    left: leftPct < 20 ? 0 : leftPct > 80 ? 'auto' : '50%',
+                    right: leftPct > 80 ? 0 : 'auto',
+                    transform: leftPct >= 20 && leftPct <= 80 ? 'translateX(-50%)' : 'none',
+                    background: 'var(--ink)', color: '#fff', borderRadius: 8,
+                    padding: '6px 10px', zIndex: 50, whiteSpace: 'nowrap',
+                    fontFamily: F, fontSize: 11, lineHeight: 1.5, pointerEvents: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,.2)',
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}>{b.label}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: BLUE, display: 'inline-block', flexShrink: 0 }} />
+                      Nuevos: <strong>{b.newClients}</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
+                      Recurrentes: <strong>{b.recurringClients}</strong>
+                    </div>
+                  </div>
+                )}
                 {/* Total count */}
                 {showCount && total > 0 ? (
                   <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
@@ -2042,16 +2075,10 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                   <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
                 )}
                 {/* Bar */}
-                <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-                  {newH > 0 && (
-                    <div style={{ height: newH, background: BLUE, borderRadius: recH === 0 ? '3px 3px 0 0' : '3px 3px 0 0', minHeight: 2 }} />
-                  )}
-                  {recH > 0 && (
-                    <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />
-                  )}
-                  {total === 0 && (
-                    <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />
-                  )}
+                <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
+                  {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: '3px 3px 0 0', minHeight: 2 }} />}
+                  {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
+                  {total === 0 && <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />}
                 </div>
                 {/* Date label */}
                 <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1 }}>
