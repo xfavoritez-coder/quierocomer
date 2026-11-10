@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     // es menor, o price) más los ajustes reales de las opciones elegidas.
     const productIds = Array.from(new Set(items.map((it) => String(it.product_id)).filter(Boolean)));
     const dishes = await prisma.dish.findMany({
-      where: { id: { in: productIds }, restaurantId: restaurant.id, isActive: true, deletedAt: null },
+      where: { id: { in: productIds }, restaurantId: restaurant.id, isActive: true, deletedAt: null, hideFromOrdering: false },
       select: {
         id: true, categoryId: true, price: true, discountPrice: true, appOnly: true, name: true,
         modifierTemplates: { select: { groups: { select: { options: { select: { id: true, priceAdjustment: true } } } } } },
