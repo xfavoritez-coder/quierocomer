@@ -1547,7 +1547,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         body: JSON.stringify({ restaurantId: restaurant.id }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok) setMsg({ type: "ok", text: `Menú sincronizado con Uber Eats: ${d.counts?.categories ?? "?"} categorías, ${d.counts?.items ?? "?"} platos.` });
+      if (res.ok) setMsg({ type: "ok", text: `Menú sincronizado con Uber Eats: ${d.counts?.categories ?? "?"} categorías, ${d.counts?.items ?? "?"} platos, ${d.counts?.options ?? 0} opciones.` });
       else setMsg({ type: "err", text: d.error || "No se pudo sincronizar el menú" });
     } catch { setMsg({ type: "err", text: "Error de conexión" }); }
     setUeSyncing(false);
