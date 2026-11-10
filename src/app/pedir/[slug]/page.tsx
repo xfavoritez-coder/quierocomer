@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Pedir en ${restaurant.name} | QuieroComer`,
     description: `Arma tu pedido de ${restaurant.name} y envíalo directo por WhatsApp. Sin apps, sin comisiones.`,
+    alternates: { canonical: `https://quierocomer.com/pedir/${slug}` },
     openGraph: {
       title: `🛍️ Pide en ${restaurant.name}`,
       description: `Elige tus platos y envía tu pedido por WhatsApp. Rápido, sin apps.`,

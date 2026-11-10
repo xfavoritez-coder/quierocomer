@@ -12,6 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   return {
     title: `${data.brandName} · Pedir online`,
     description: `Haz tu pedido en ${data.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
+    alternates: { canonical: `https://quierocomer.com/ecommerce/marca/${brand}` },
     ...(data.logoUrl ? { icons: { icon: data.logoUrl } } : {}),
   };
 }
