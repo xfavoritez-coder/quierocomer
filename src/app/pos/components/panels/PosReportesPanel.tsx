@@ -67,10 +67,10 @@ function prevPeriod(from: string, to: string): { prevFrom: string; prevTo: strin
 }
 function deltaLabel(from: string, to: string): string {
   const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
-  if (days === 1) return 'vs sem. ant.'
-  if (days === 7) return 'vs sem. ant.'
-  if (days >= 28 && days <= 31) return 'vs mes ant.'
-  return 'vs período ant.'
+  if (days === 1) return 'sem. ant.'
+  if (days === 7) return 'sem. ant.'
+  if (days >= 28 && days <= 31) return 'mes ant.'
+  return 'período ant.'
 }
 function computeDelta(current: number, prev: number): number | null {
   if (prev === 0) return null
@@ -167,29 +167,41 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, prevValue, prevValueHint }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; delta?: number | null; deltaHint?: string; badge?: string; prevValue?: string; prevValueHint?: string }) {
+  const hasCompare = delta != null
+  const cardBg = hasCompare && delta !== 0
+    ? delta! > 0 ? 'rgba(22,163,74,.05)' : 'rgba(220,38,38,.05)'
+    : 'var(--surface)'
+  const pillBg = hasCompare
+    ? delta! > 0 ? GREEN : delta! < 0 ? '#dc2626' : 'var(--ink-3)'
+    : 'var(--ink-3)'
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
-      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
-        <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
-        {badge && <span style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 600, color: 'var(--ink-3)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge}</span>}
+    <div style={{ background: cardBg, border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined, transition: 'background .3s' }}>
+      {/* Etiqueta + badge IVA al lado del título */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</span>
+        {badge && <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 500, color: 'var(--ink-4)', letterSpacing: '.02em' }}>{badge}</span>}
       </div>
+      {/* Valor principal */}
+      <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
-      {delta != null && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
-          background: delta > 0 ? 'rgba(22,163,74,.1)' : delta < 0 ? 'rgba(220,38,38,.1)' : 'var(--sunk)',
-          color: delta > 0 ? GREEN : delta < 0 ? '#dc2626' : 'var(--ink-3)',
-          borderRadius: 20, padding: '2px 8px',
-        }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 800, fontFamily: F }}>
-            {delta > 0 ? '↑' : delta < 0 ? '↓' : '='}{delta !== 0 ? ` ${Math.abs(delta)}%` : ' igual'}
+      {/* Comparativa */}
+      {hasCompare && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
+          {/* Píldora con color sólido */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 2,
+            background: pillBg, color: '#fff',
+            borderRadius: 20, padding: '3px 9px',
+            fontFamily: F, fontSize: '0.76rem', fontWeight: 800, flexShrink: 0,
+          }}>
+            {delta! > 0 ? '↑' : delta! < 0 ? '↓' : '—'}{delta !== 0 ? ` ${Math.abs(delta!)}%` : ' igual'}
           </span>
-          {deltaHint && <span style={{ fontSize: '0.68rem', fontWeight: 400, fontFamily: F, color: 'var(--ink-3)' }}>{deltaHint}</span>}
-        </div>
-      )}
-      {prevValue && (
-        <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', marginTop: 3 }}>
-          {deltaHint ?? 'anterior'}: <span style={{ fontWeight: 600 }}>{prevValue}</span>{prevValueHint ? ` · ${prevValueHint}` : ''}
+          {/* Referencia al período anterior */}
+          <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', lineHeight: 1.3 }}>
+            {deltaHint ?? 'anterior'}
+            {prevValue && <strong style={{ color: 'var(--ink-2)', marginLeft: 4, fontWeight: 600 }}>{prevValue}</strong>}
+            {prevValueHint && <span style={{ color: 'var(--ink-4)', marginLeft: 4 }}>{prevValueHint}</span>}
+          </span>
         </div>
       )}
     </div>
@@ -3268,18 +3280,18 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big span={2}
                 delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
-                prevValue={prevData ? clp(prevData.productSales) : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
+                prevValue={prevData && prevData.productSales > 0 ? clp(prevData.productSales) : undefined}
+                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'}
                 delta={prevData ? computeDelta(data.ordersCount, prevData.ordersCount) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
-                prevValue={prevData ? prevData.ordersCount.toLocaleString('es-CL') : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
+                prevValue={prevData && prevData.ordersCount > 0 ? prevData.ordersCount.toLocaleString('es-CL') : undefined}
+                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE}
                 delta={prevData && prevData.ordersCount > 0 ? computeDelta(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0, prevData.productSales / prevData.ordersCount) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
                 prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `hasta las ${prevData.cutHour}h` : undefined} />
+                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
               <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
