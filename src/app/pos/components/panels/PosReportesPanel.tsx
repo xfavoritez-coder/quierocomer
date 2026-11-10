@@ -1374,15 +1374,14 @@ function mergeByKey(items: Record<string, any>[], key: string, sumKeys: string[]
 }
 
 // ── Date range picker ─────────────────────────────────────────────
-function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onShift, onRange }: {
+function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, onRange }: {
   fromDate: string; toDate: string; today: string
   onFromChange: (v: string) => void; onToChange: (v: string) => void
-  onShift: (days: number) => void; onReset: () => void; onRefresh?: () => void
+  onReset: () => void; onRefresh?: () => void
   onRange?: (from: string, to: string) => void
 }) {
   const [dropOpen, setDropOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
-  const singleDay = fromDate === toDate
   const presets = DATE_PRESETS(today)
   const activePreset = presets.find(p => p.from === fromDate && p.to === toDate) ?? null
 
@@ -1395,37 +1394,25 @@ function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, on
     return () => document.removeEventListener('mousedown', handleClick)
   }, [dropOpen])
 
-  const calIcon = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-  const navBtn: React.CSSProperties = {
-    width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 8, border: '1px solid var(--line)', background: 'transparent',
-    color: 'var(--ink-3)', cursor: 'pointer', flexShrink: 0,
-  }
+  const fmtDate = (ymd: string) =>
+    new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' })
+      .format(new Date(ymd + 'T12:00:00Z')).replace('.', '')
+
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '8px 10px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-      {/* Date inputs + arrows */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
-        <button onClick={() => onShift(-1)} style={navBtn}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div className="pos-date-box" style={{ position: 'relative' }}>
-          {calIcon}
-          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
-            {new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' }).format(new Date(fromDate + 'T12:00:00Z')).replace('.', '')}
-          </span>
+      {/* Rango de fechas */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="pos-date-box" style={{ position: 'relative', flex: '1 1 0' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{fmtDate(fromDate)}</span>
           <input type="date" value={fromDate} max={toDate} onChange={e => onFromChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} tabIndex={-1} />
         </div>
-        <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink-3)', flexShrink: 0 }}>–</span>
-        <div className="pos-date-box" style={{ position: 'relative' }}>
-          {calIcon}
-          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
-            {new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' }).format(new Date(toDate + 'T12:00:00Z')).replace('.', '')}
-          </span>
+        <span style={{ fontFamily: F, fontSize: '0.75rem', color: 'var(--ink-4)', flexShrink: 0 }}>→</span>
+        <div className="pos-date-box" style={{ position: 'relative', flex: '1 1 0' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" style={{ flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{fmtDate(toDate)}</span>
           <input type="date" value={toDate} min={fromDate} onChange={e => onToChange(e.target.value || today)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
         </div>
-        <button onClick={() => onShift(1)} disabled={fromDate >= today} style={{ ...navBtn, opacity: fromDate >= today ? 0.35 : 1, cursor: fromDate >= today ? 'default' : 'pointer' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
       </div>
 
       {/* Preset dropdown — order:-1 en desktop lo mueve a la izquierda, en mobile va debajo centrado */}
@@ -3124,11 +3111,6 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   }, [restaurantId, fromDate, toDate, allBranches])
 
   const singleDay = fromDate === toDate
-  const shiftBoth = (days: number) => {
-    setFromDate(f => addDaysYmd(f, days))
-    setToDate(t => addDaysYmd(t, days))
-  }
-
   return (
     <div className="pos-scroll">
       <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
@@ -3165,7 +3147,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
-              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onReset={() => { setFromDate(today); setToDate(today) }}
               onRange={(f, t) => { setFromDate(f); setToDate(t) }}
               onRefresh={fetchReport} />
             <PlatosSection
@@ -3194,7 +3176,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
-              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onReset={() => { setFromDate(today); setToDate(today) }}
               onRange={(f, t) => { setFromDate(f); setToDate(t) }} />
             <StoreEventsPanel restaurantId={restaurantId} fromDate={fromDate} toDate={toDate} />
           </>
@@ -3206,7 +3188,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
               onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
               onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
-              onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+              onReset={() => { setFromDate(today); setToDate(today) }}
               onRange={(f, t) => { setFromDate(f); setToDate(t) }}
               onRefresh={fetchReport} />
             {loading ? (
@@ -3263,7 +3245,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
         <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
           onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
           onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
-          onShift={shiftBoth} onReset={() => { setFromDate(today); setToDate(today) }}
+          onReset={() => { setFromDate(today); setToDate(today) }}
           onRange={(f, t) => { setFromDate(f); setToDate(t) }}
           onRefresh={fetchReport} />
 
