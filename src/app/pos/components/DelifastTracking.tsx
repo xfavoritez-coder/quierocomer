@@ -366,20 +366,28 @@ export function DelifastStatusPill({
         setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
         setTimelineCancelado(!!(d.tracking.timeline?.cancelado))
+        // Notificar cancelación desde el effect (antes del guard !status)
+        if (onCancelDetected && !cancelFiredRef.current) {
+          const s = (d.tracking.status || '').toLowerCase()
+          if (/cancel|anul/.test(s) || d.tracking.timeline?.cancelado) {
+            cancelFiredRef.current = true
+            onCancelDetected()
+          }
+        }
       } catch { /* fail-silent */ }
     }
     load()
     timer.current = setInterval(load, 15000)
     return () => { cancelled = true; if (timer.current) clearInterval(timer.current) }
-  }, [restaurantId, posOrderId])
+  }, [restaurantId, posOrderId, onCancelDetected])
 
-  if (!status) return null
+  if (!status && !timelineCancelado) return null
 
   // Delifast mantiene status="dropoff" aunque el motorista ya llegó al cliente.
   // Detectamos la llegada por timeline.llegadaCasa.
   const effectiveStatus = llegadaCasa && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
     ? 'at_dropoff'
-    : status
+    : status ?? ''
   // "pickup" en Delifast significa tanto "en camino al local" como "en el local".
   // Usamos timeline.llegadaLocal para distinguir: si no llegó → Camino al local.
   const isPickupStatus = /pickup/.test((status || '').toLowerCase())
@@ -389,12 +397,6 @@ export function DelifastStatusPill({
   // Va en camino al cliente (no "ya llegó" ni entregado) → anexar la hora estimada.
   const enCamino = effectiveStatus !== 'at_dropoff' && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
   const isCancelled = /cancel|anul/.test(effectiveStatus.toLowerCase()) || timelineCancelado
-
-  // Notificar al padre la primera vez que se detecta cancelación.
-  if (isCancelled && !cancelFiredRef.current) {
-    cancelFiredRef.current = true
-    onCancelDetected?.()
-  }
 
   if (isCancelled) {
     // Cuando hay callback de detección el pill es invisible (el padre maneja la UI).
