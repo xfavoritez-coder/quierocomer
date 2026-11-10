@@ -2085,7 +2085,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                     {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
                     {total === 0 && <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />}
                   </div>
-                  <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1 }}>
+                  <div style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1, fontWeight: 500 }}>
                     {b.label}
                   </div>
                 </div>

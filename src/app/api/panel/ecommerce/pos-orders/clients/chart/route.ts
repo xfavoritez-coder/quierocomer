@@ -136,39 +136,50 @@ export async function GET(req: NextRequest) {
   // Build safe SQL literal for IN clause
   const idsLiteral = allIds.map(id => `'${id.replace(/'/g, "''")}'`).join(", ");
 
-  const bucketExpr = bucketExprForCol(`"createdAt"`, gran);
+  const bucketExprCreatedAt = bucketExprForCol(`"createdAt"`, gran);
   const firstBucketExpr = bucketExprForCol(`fo.first_at`, gran);
 
+  // Combina PosOrder + OnlineOrder usando email (preferido) o teléfono como clave de cliente
   const sql = `
     WITH
-    first_orders AS (
-      SELECT "customerPhone", MIN("createdAt") as first_at
+    all_orders AS (
+      SELECT
+        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,
+        "createdAt"
       FROM "PosOrder"
       WHERE "restaurantId" IN (${idsLiteral})
         AND "posStatus" != 'canceled'
-        AND "customerPhone" != ''
-        AND "customerPhone" IS NOT NULL
-      GROUP BY "customerPhone"
+        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
+      UNION ALL
+      SELECT
+        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,
+        "createdAt"
+      FROM "OnlineOrder"
+      WHERE "restaurantId" IN (${idsLiteral})
+        AND "status" != 'CANCELLED'
+        AND "source" = 'ecommerce'
+        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
+    ),
+    first_orders AS (
+      SELECT client_key, MIN("createdAt") as first_at
+      FROM all_orders
+      GROUP BY client_key
     ),
     range_data AS (
-      SELECT "customerPhone", ${bucketExpr} as order_bucket
-      FROM "PosOrder"
-      WHERE "restaurantId" IN (${idsLiteral})
-        AND "createdAt" >= $1::timestamptz
+      SELECT client_key, ${bucketExprCreatedAt} as order_bucket
+      FROM all_orders
+      WHERE "createdAt" >= $1::timestamptz
         AND "createdAt" <= $2::timestamptz
-        AND "posStatus" != 'canceled'
-        AND "customerPhone" != ''
-        AND "customerPhone" IS NOT NULL
     ),
-    phone_buckets AS (SELECT DISTINCT "customerPhone", order_bucket FROM range_data)
+    client_buckets AS (SELECT DISTINCT client_key, order_bucket FROM range_data)
     SELECT
-      pb.order_bucket::text as bucket,
-      COUNT(CASE WHEN ${firstBucketExpr} = pb.order_bucket THEN 1 END)::int as new_clients,
-      COUNT(CASE WHEN ${firstBucketExpr} < pb.order_bucket THEN 1 END)::int as recurring_clients
-    FROM phone_buckets pb
-    JOIN first_orders fo ON pb."customerPhone" = fo."customerPhone"
-    GROUP BY pb.order_bucket
-    ORDER BY pb.order_bucket
+      cb.order_bucket::text as bucket,
+      COUNT(CASE WHEN ${firstBucketExpr} = cb.order_bucket THEN 1 END)::int as new_clients,
+      COUNT(CASE WHEN ${firstBucketExpr} < cb.order_bucket THEN 1 END)::int as recurring_clients
+    FROM client_buckets cb
+    JOIN first_orders fo ON cb.client_key = fo.client_key
+    GROUP BY cb.order_bucket
+    ORDER BY cb.order_bucket
   `;
 
   interface RawRow {
