@@ -506,7 +506,6 @@ function OrderDetailPanel({
   const [printMsg, setPrintMsg] = useState<string | null>(null)
   const [customerCount, setCustomerCount] = useState<number | null>(null)
   const [showCustomerHistory, setShowCustomerHistory] = useState(false)
-  const [delifastCancelled, setDelifastCancelled] = useState(false)
   const [editCustomer, setEditCustomer] = useState(false)
   const [editName, setEditName] = useState(order.customerName || '')
   const [editPhone, setEditPhone] = useState(order.customerPhone || '')
@@ -707,25 +706,9 @@ function OrderDetailPanel({
         {/* Seguimiento del reparto (Delifast) — cinta full-width, pegada al header */}
         {isDelivery && (
           <div style={{ margin: '-16px -22px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
-            <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon onCancelDetected={() => setDelifastCancelled(true)} />
+            <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />
           </div>
         )}
-        {/* Cuando Delifast cancela: botón manual para marcar como entregado */}
-        {isDelivery && delifastCancelled && order.opsStage !== 'delivered' && paid && (
-          <button
-            disabled={finalizing}
-            onClick={handleFinalize}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
-              padding: '12px 14px', borderRadius: 10, border: 'none',
-              background: '#dc2626', color: '#fff', cursor: finalizing ? 'default' : 'pointer',
-              fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: finalizing ? 0.6 : 1,
-            }}
-          >
-            {finalizing ? '…' : 'Marcar como entregado'}
-          </button>
-        )}
-
         {/* Dirección + hora */}
         {(order.createdAt || (isDelivery && order.addressLine)) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
