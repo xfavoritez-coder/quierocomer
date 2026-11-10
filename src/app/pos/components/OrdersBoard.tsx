@@ -749,6 +749,19 @@ function OrderDetailPanel({
           </div>
         )}
 
+        {/* Notas del pedido */}
+        {(() => {
+          const orderNotes = (order.rawPayload && typeof order.rawPayload === 'object')
+            ? (order.rawPayload as Record<string, unknown>).orderNotes as string | undefined
+            : undefined
+          return orderNotes ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 13px', borderRadius: 9, background: 'var(--amber-tint)', border: '1px solid var(--amber)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span style={{ fontSize: 14, color: 'var(--ink)', fontStyle: 'italic', lineHeight: 1.45 }}>{orderNotes}</span>
+            </div>
+          ) : null
+        })()}
+
         {/* Items */}
         <div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 10 }}>Ítems</div>

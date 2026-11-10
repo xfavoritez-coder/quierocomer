@@ -87,7 +87,10 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         addressParts: isDelivery && order.deliveryAddressParts ? (order.deliveryAddressParts as object) : undefined,
         totalAmount: total,
         paidAmount: alreadyPaid ? total : 0,
-        rawPayload: alreadyPaid ? ({ webPayment: { method: payMethod || "online", at: new Date().toISOString() } } as object) : undefined,
+        rawPayload: ({
+          ...(alreadyPaid ? { webPayment: { method: payMethod || "online", at: new Date().toISOString() } } : {}),
+          ...(order.notes?.trim() ? { orderNotes: order.notes.trim() } : {}),
+        } as object),
         deliveryFee: order.deliveryFee || 0,
         discountAmount: order.discount || 0,
         currency: "CLP",
