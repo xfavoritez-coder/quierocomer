@@ -22,11 +22,18 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
   const phone = req.nextUrl.searchParams.get("phone") || "";
+  const email = req.nextUrl.searchParams.get("email") || "";
+  const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
+  const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
   const countOnly = req.nextUrl.searchParams.get("countOnly") === "1";
-  if (!restaurantId || !phone) return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
+  if (!restaurantId || (!phone && !email)) return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const where = { restaurantId, customerPhone: phone, posStatus: { not: "canceled" } } as const;
+  const orClauses: { customerPhone?: string; customerEmail?: string }[] = [];
+  if (phone) orClauses.push({ customerPhone: phone });
+  if (email) orClauses.push({ customerEmail: email });
+  const where = { restaurantId: { in: allIds }, posStatus: { not: "canceled" as const }, ...(orClauses.length > 0 ? { OR: orClauses } : {}) };
 
   if (countOnly) {
     const count = await prisma.posOrder.count({ where });
@@ -61,24 +68,23 @@ export async function GET(req: NextRequest) {
 
   // Check which orders have a survey response
   const orderIds = orders.map(o => o.id);
-  let responses: { orderId: string; createdAt: Date }[] = [];
+  let raw: { orderId: string | null; createdAt: Date; ratings: unknown; comment: string | null }[] = [];
   try {
-    const raw = orderIds.length > 0
+    raw = orderIds.length > 0
       ? await prisma.ecommerceSurveyResponse.findMany({
           where: { orderId: { in: orderIds } },
-          select: { orderId: true, createdAt: true },
+          select: { orderId: true, createdAt: true, ratings: true, comment: true },
         })
       : [];
-    responses = raw.filter((r): r is { orderId: string; createdAt: Date } => r.orderId !== null);
   } catch {
     // survey response table may not exist yet — return orders without survey data
   }
-  const responseMap = new Map(responses.map(r => [r.orderId, r.createdAt]));
+  const responseMap = new Map(raw.filter(r => r.orderId != null).map(r => [r.orderId as string, { answeredAt: r.createdAt, ratings: r.ratings, comment: r.comment }]));
 
-  const enriched = orders.map(o => ({
-    ...o,
-    surveyAnsweredAt: responseMap.get(o.id) ?? null,
-  }));
+  const enriched = orders.map(o => {
+    const sr = responseMap.get(o.id);
+    return { ...o, surveyAnsweredAt: sr?.answeredAt ?? null, surveyRatings: sr?.ratings ?? null, surveyComment: sr?.comment ?? null };
+  });
 
   return NextResponse.json({ count: enriched.length, orders: enriched });
 }

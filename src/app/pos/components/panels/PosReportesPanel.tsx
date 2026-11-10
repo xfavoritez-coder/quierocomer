@@ -1843,13 +1843,15 @@ interface ClientRow {
   avgFrequencyDays: number | null
   status: ClientStatus; riskScore: number
   topProduct: string | null
+  firstOrderAt?: string
+  score?: number
 }
 interface ClientsData {
   total: number
   filtered: number
   byStatus: { active: number; at_risk: number; churned: number; new: number }
   avgTicketGlobal: number
-  top3: ClientRow[]
+  top5: ClientRow[]
   fieles: ClientRow[]
   aRecuperar: ClientRow[]
   count80: number
@@ -1864,8 +1866,8 @@ const STATUS_COLOR: Record<ClientStatus, string> = { active: 'var(--jade)', at_r
 const STATUS_BG: Record<ClientStatus, string>    = { active: 'var(--jade-tint)', at_risk: 'var(--amber-tint)', churned: '#fef2f2', new: 'var(--slate-tint)' }
 
 // ── Detalle de un cliente ─────────────────────────────────────────────
-function ClientDetailModal({ client, restaurantId, onClose }: {
-  client: ClientRow; restaurantId: string; onClose: () => void
+function FichaCliente({ client, restaurantId, allBranches, onClose }: {
+  client: ClientRow; restaurantId: string; allBranches?: BranchInfo[]; onClose: () => void
 }) {
   interface COrder {
     id: string; orderReference?: string | null; customerName: string; customerPhone: string
@@ -1873,7 +1875,8 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
     totalAmount: number; paidAmount: number; deliveryFee: number; tipAmount: number
     changeAmount: number; items: unknown; createdAt: string; posStatus: string
     vendorName?: string | null; rawPayload?: unknown
-    surveySentAt?: string | null; surveyEmailOpenedAt?: string | null; surveyAnsweredAt?: string | null
+    surveySentAt?: string | null; surveyEmailOpenedAt?: string | null
+    surveyAnsweredAt?: string | null; surveyRatings?: unknown; surveyComment?: string | null
     opsReadyForDeliveryAt?: string | null; opsDispatchedAt?: string | null; opsDeliveredAt?: string | null
   }
   const [orders, setOrders] = useState<COrder[]>([])
@@ -1881,13 +1884,18 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
   const [selectedOrder, setSelectedOrder] = useState<PastOrder | null>(null)
 
   useEffect(() => {
-    if (!client.phone) { setLoadingOrders(false); return }
-    fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(client.phone)}`, { cache: 'no-store' })
+    if (!client.phone && !client.email) { setLoadingOrders(false); return }
+    const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
+    const params = new URLSearchParams({ restaurantId })
+    if (client.phone) params.set('phone', client.phone)
+    if (client.email) params.set('email', client.email)
+    if (branchIds) params.set('branchIds', branchIds)
+    fetch(`/api/panel/ecommerce/pos-orders/customer?${params}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.orders) setOrders(d.orders) })
       .catch(() => {})
       .finally(() => setLoadingOrders(false))
-  }, [restaurantId, client.phone])
+  }, [restaurantId, client.phone, client.email, allBranches])
 
   const h = (client.email + client.phone).split('').reduce((a, ch) => a + ch.charCodeAt(0), 0)
   const avatarColor = ['#3b82f6','#8b5cf6','#ec4899','#06b6d4','#10b981','#f59e0b','#ef4444'][h % 7]
@@ -1900,6 +1908,70 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
     if (!Array.isArray(items)) return 0
     return items.reduce((s, it) => s + (Number((it as any)?.quantity ?? (it as any)?.qty ?? 1) || 1), 0)
   }
+
+  // Fecha primera compra (desde orders cargados o desde firstOrderAt en ClientRow)
+  const firstOrderDate: Date | null = (() => {
+    if (orders.length > 0) return new Date(orders[orders.length - 1].createdAt)
+    if (client.firstOrderAt) return new Date(client.firstOrderAt)
+    return null
+  })()
+  const clientSinceLabel = (() => {
+    if (!firstOrderDate) return null
+    const days = Math.round((Date.now() - firstOrderDate.getTime()) / 86400000)
+    if (days < 30) return `${days} día${days !== 1 ? 's' : ''}`
+    const months = Math.floor(days / 30)
+    if (months < 12) return `${months} mes${months !== 1 ? 'es' : ''}`
+    const years = Math.floor(months / 12)
+    const remMonths = months % 12
+    return remMonths > 0 ? `${years} año${years !== 1 ? 's' : ''} y ${remMonths} mes${remMonths !== 1 ? 'es' : ''}` : `${years} año${years !== 1 ? 's' : ''}`
+  })()
+
+  // Productos favoritos (desde orders)
+  const topProducts: [string, number][] = (() => {
+    const counts = new Map<string, number>()
+    for (const o of orders) {
+      if (!Array.isArray(o.items)) continue
+      for (const it of o.items as any[]) {
+        const name = String(it?.name ?? it?.productName ?? it?.dishName ?? '').trim()
+        if (!name) continue
+        counts.set(name, (counts.get(name) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+  })()
+
+  // Dirección habitual (más frecuente en delivery)
+  const habitualAddress: string | null = (() => {
+    const counts = new Map<string, number>()
+    for (const o of orders) {
+      const addr = o.addressLine?.trim()
+      if (addr && o.isDelivery) counts.set(addr, (counts.get(addr) ?? 0) + 1)
+    }
+    if (counts.size === 0) return null
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+  })()
+
+  // Proyección mensual de gasto
+  const projectedMonthly = client.avgFrequencyDays && client.avgFrequencyDays > 0 && client.avgTicket > 0
+    ? Math.round((30 / client.avgFrequencyDays) * client.avgTicket)
+    : null
+
+  // Mejor mes (mes con más gasto)
+  const bestMonth: string | null = (() => {
+    const monthMap = new Map<string, number>()
+    for (const o of orders) {
+      const ym = o.createdAt.slice(0, 7)
+      const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0))
+      monthMap.set(ym, (monthMap.get(ym) ?? 0) + net)
+    }
+    if (monthMap.size === 0) return null
+    const [ym] = [...monthMap.entries()].sort((a, b) => b[1] - a[1])[0]
+    const d = new Date(`${ym}-01T12:00:00Z`)
+    return new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d)
+  })()
+
+  // Encuestas respondidas
+  const surveyOrders = orders.filter(o => o.surveyAnsweredAt)
 
   return (
     <div className="pos-modal-overlay" onClick={onClose} style={{ alignItems: 'flex-end', padding: 0 }}>
@@ -1914,100 +1986,185 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
             {/* Header cliente */}
             <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                {/* Avatar */}
                 <div style={{ width: 54, height: 54, borderRadius: '50%', background: avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: '#fff', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,.15)' }}>
                   {initials}
                 </div>
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontWeight: 800, fontSize: 18, color: 'var(--ink)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {client.name || client.email || client.phone}
                   </div>
-                  {client.phone && <div style={{ fontFamily: F, fontSize: 14, color: 'var(--ink-2)', marginTop: 3 }}>{client.phone}</div>}
+                  {client.phone && <div style={{ fontFamily: F, fontSize: 13, color: 'var(--ink-2)', marginTop: 3 }}>{client.phone}</div>}
                   {client.email && <div style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</div>}
-                  <div style={{ marginTop: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                     <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: STATUS_BG[client.status], color: STATUS_COLOR[client.status], textTransform: 'uppercase', letterSpacing: '.04em' }}>
                       {STATUS_LABEL[client.status]}
                     </span>
+                    {clientSinceLabel && (
+                      <span style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-3)', fontWeight: 500 }}>
+                        Cliente desde hace {clientSinceLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
-                {/* Close */}
                 <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-3)', lineHeight: 0, flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
 
               {/* Stats grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 14 }}>
                 {[
-                  { label: 'Pedidos',   value: String(client.orders) },
-                  { label: 'Gastado',   value: clpShort(client.totalSpent) },
-                  { label: '⌀ Ticket',  value: clp(client.avgTicket) },
+                  { label: 'Pedidos',    value: String(client.orders) },
+                  { label: 'Total',      value: clpShort(client.totalSpent) },
+                  { label: 'Ticket',     value: clp(client.avgTicket) },
                   { label: 'Frecuencia', value: client.avgFrequencyDays ? `c/${client.avgFrequencyDays}d` : '—' },
                 ].map(s => (
-                  <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 3 }}>{s.label}</div>
-                    <div style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
+                  <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 6px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 3 }}>{s.label}</div>
+                    <div style={{ fontFamily: F, fontSize: 13, fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Lista de pedidos */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-              <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>
-                Pedidos{orders.length > 0 ? ` · ${orders.length}` : ''}
-              </div>
-              {loadingOrders && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                  Cargando…
+              {/* Fila extra: proyección + mejor mes */}
+              {(projectedMonthly || bestMonth) && (
+                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                  {projectedMonthly && (
+                    <div style={{ flex: 1, background: 'var(--sunk)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div>
+                        <div style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Proyección mensual</div>
+                        <div style={{ fontFamily: F, fontSize: 14, fontWeight: 900, color: 'var(--ink)', marginTop: 2 }}>{clp(projectedMonthly)}</div>
+                      </div>
+                    </div>
+                  )}
+                  {bestMonth && (
+                    <div style={{ flex: 1, background: 'var(--sunk)', borderRadius: 10, padding: '8px 10px' }}>
+                      <div style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Mejor mes</div>
+                      <div style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: 'var(--ink)', marginTop: 2, textTransform: 'capitalize' }}>{bestMonth}</div>
+                    </div>
+                  )}
                 </div>
               )}
-              {!loadingOrders && orders.length === 0 && (
-                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Sin pedidos registrados</div>
+            </div>
+
+            {/* Scroll body */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+              {/* Productos favoritos */}
+              {!loadingOrders && topProducts.length > 0 && (
+                <div style={{ padding: '14px 16px 0' }}>
+                  <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Productos favoritos</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {topProducts.map(([name, count], idx) => (
+                      <span key={name} style={{ fontFamily: F, fontSize: '0.72rem', background: idx === 0 ? '#fef9c3' : 'var(--sunk)', color: idx === 0 ? '#92400e' : 'var(--ink-2)', border: `1px solid ${idx === 0 ? '#fde68a' : 'var(--line)'}`, borderRadius: 20, padding: '3px 9px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {idx === 0 && '⭐ '}{name}
+                        <span style={{ opacity: 0.6, fontSize: '0.62rem' }}>×{count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
-              {orders.map(o => {
-                const canceled = o.posStatus === 'canceled'
-                const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
-                const isDelivery = o.isDelivery || o.saleType === 'delivery'
-                const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
-                const qty = itemQty(o.items)
-                const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
-                const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
-                return (
-                  <div
-                    key={o.id}
-                    onClick={() => setSelectedOrder(o as unknown as PastOrder)}
-                    style={{ border: '1.5px solid var(--line)', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, opacity: canceled ? 0.7 : 1 }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
-                        {o.orderReference && (
-                          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 12 }}>#{o.orderReference}</span>
-                        )}
-                        <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>
-                          {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+
+              {/* Dirección habitual */}
+              {!loadingOrders && habitualAddress && (
+                <div style={{ padding: '14px 16px 0' }}>
+                  <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Dirección habitual</div>
+                  <div style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink-2)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 2, color: 'var(--ink-4)' }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {habitualAddress}
+                  </div>
+                </div>
+              )}
+
+              {/* Encuestas */}
+              {!loadingOrders && surveyOrders.length > 0 && (
+                <div style={{ padding: '14px 16px 0' }}>
+                  <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Encuestas respondidas</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {surveyOrders.slice(0, 3).map(o => {
+                      const ratings = o.surveyRatings && typeof o.surveyRatings === 'object' ? Object.entries(o.surveyRatings as Record<string, unknown>) : []
+                      return (
+                        <div key={o.id} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px' }}>
+                          <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)', marginBottom: 6 }}>
+                            {new Date(o.surveyAnsweredAt!).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                          {ratings.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: o.surveyComment ? 6 : 0 }}>
+                              {ratings.map(([k, v]) => (
+                                <span key={k} style={{ fontFamily: F, fontSize: '0.68rem', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 7px', color: 'var(--ink-2)', fontWeight: 600 }}>
+                                  {k}: {typeof v === 'number' ? '★'.repeat(Math.round(v as number)) || String(v) : String(v)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {o.surveyComment && (
+                            <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink)', fontStyle: 'italic', borderLeft: '2px solid var(--line)', paddingLeft: 8 }}>
+                              "{o.surveyComment}"
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Historial de pedidos */}
+              <div style={{ padding: '14px 16px 20px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>
+                  Pedidos{orders.length > 0 ? ` · ${orders.length}` : ''}
+                </div>
+                {loadingOrders && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    Cargando…
+                  </div>
+                )}
+                {!loadingOrders && orders.length === 0 && (
+                  <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>Sin pedidos registrados</div>
+                )}
+                {orders.map(o => {
+                  const canceled = o.posStatus === 'canceled'
+                  const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
+                  const isDelivery = o.isDelivery || o.saleType === 'delivery'
+                  const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+                  const qty = itemQty(o.items)
+                  const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
+                  const typeColor = isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b'
+                  return (
+                    <div
+                      key={o.id}
+                      onClick={() => setSelectedOrder(o as unknown as PastOrder)}
+                      style={{ border: '1.5px solid var(--line)', borderRadius: 12, padding: '11px 13px', cursor: 'pointer', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, opacity: canceled ? 0.7 : 1 }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
+                          {o.orderReference && (
+                            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 12 }}>#{o.orderReference}</span>
+                          )}
+                          <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>
+                            {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: typeColor + '20', color: typeColor }}>{typeLabel}</span>
+                          {qty > 0 && <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
+                          {o.surveyAnsweredAt && <span style={{ fontFamily: F, fontSize: 11, color: 'var(--jade)' }}>⭐ Encuesta</span>}
+                        </div>
+                      </div>
+                      <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+                          {clp(o.totalAmount)}
+                        </span>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: canceled ? '#6b728020' : paid ? '#16a34a20' : '#f59e0b20', color: canceled ? '#6b7280' : paid ? '#16a34a' : '#f59e0b' }}>
+                          {canceled ? 'Anulado' : paid ? 'Pagado' : 'Sin cobro'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: typeColor + '20', color: typeColor }}>{typeLabel}</span>
-                        {qty > 0 && <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
-                        {o.surveyAnsweredAt && <span style={{ fontFamily: F, fontSize: 11, color: 'var(--jade)' }}>⭐ Encuesta</span>}
-                      </div>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                     </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-                      <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
-                        {clp(o.totalAmount)}
-                      </span>
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: canceled ? '#6b728020' : paid ? '#16a34a20' : '#f59e0b20', color: canceled ? '#6b7280' : paid ? '#16a34a' : '#f59e0b' }}>
-                        {canceled ? 'Anulado' : paid ? 'Pagado' : 'Sin cobro'}
-                      </span>
-                    </div>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </>
         )}
@@ -2202,16 +2359,18 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
   // Fetch when params change
   useEffect(() => {
     setClLoading(true)
+    const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
     const params = new URLSearchParams({
       restaurantId, pageSize: String(PAGE_SIZE), page: String(page),
       sortKey, sortAsc: sortAsc ? '1' : '0',
       ...(debouncedSearch ? { search: debouncedSearch } : {}),
     })
+    if (branchIds) params.set('branchIds', branchIds)
     fetch(`/api/panel/ecommerce/pos-orders/clients?${params}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setCd(d) })
       .finally(() => setClLoading(false))
-  }, [restaurantId, page, debouncedSearch, sortKey, sortAsc])
+  }, [restaurantId, allBranches, page, debouncedSearch, sortKey, sortAsc])
 
   const toggleSort = (key: ClientSortKey) => {
     if (sortKey === key) setSortAsc(a => !a)
@@ -2236,7 +2395,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
   if (clLoading) return <Card><div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Cargando clientes…</div></Card>
   if (!cd) return null
 
-  const { top3 } = cd
+  const { top5 } = cd
   const totalPages = Math.ceil(cd.filtered / PAGE_SIZE)
 
   // Avatar helper
@@ -2274,15 +2433,16 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
       <ClientsAcquisitionChart restaurantId={restaurantId} allBranches={allBranches} />
 
       {/* ── Top 5 VIP ── */}
-      {top3.length > 0 && (
+      {top5.length > 0 && (
         <Card style={{ padding: '16px 14px' }}>
           <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Top 5 clientes</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {top3.map((c, i) => {
+            {top5.map((c, i) => {
               const lastDate = new Date(c.lastOrderAt)
               const lastLabel = lastDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
               return (
-                <div key={c.email || c.phone} style={{
+                <div key={c.email || c.phone} onClick={() => setSelectedClient(c)} style={{
+                  cursor: 'pointer',
                   display: 'flex', alignItems: 'flex-start', gap: 10,
                   background: i < 3 ? MEDAL_BG[i] : 'var(--sunk)',
                   border: `1px solid ${i < 3 ? MEDAL_BORDER[i] : 'var(--line)'}`,
@@ -2453,7 +2613,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
     </Card>
 
     {selectedClient && (
-      <ClientDetailModal client={selectedClient} restaurantId={restaurantId} onClose={() => setSelectedClient(null)} />
+      <FichaCliente client={selectedClient} restaurantId={restaurantId} allBranches={allBranches} onClose={() => setSelectedClient(null)} />
     )}
     </div>
   )

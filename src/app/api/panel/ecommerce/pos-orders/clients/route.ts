@@ -28,10 +28,12 @@ export interface ClientRow {
   totalSpent: number;
   avgTicket: number;
   lastOrderAt: string; // ISO
+  firstOrderAt: string; // ISO
   daysSinceLastOrder: number;
   avgFrequencyDays: number | null;
   status: "active" | "at_risk" | "churned" | "new";
   riskScore: number;
+  score: number;
   topProduct: string | null;
 }
 
@@ -71,8 +73,12 @@ export async function GET(req: NextRequest) {
   const sortKey    = req.nextUrl.searchParams.get("sortKey") ?? "riskScore";
   const sortAsc    = req.nextUrl.searchParams.get("sortAsc") === "1";
 
-  // ── Cache key: per restaurant, sort-independent (filtering/sort happens in-memory) ──
-  const cacheKey = restaurantId;
+  const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
+  const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
+
+  // ── Cache key: per restaurant + branches, sort-independent (filtering/sort happens in-memory) ──
+  const cacheKey = allIds.sort().join(',');
   const cached = _cache.get(cacheKey);
   const nowMs = Date.now();
 
@@ -86,7 +92,7 @@ export async function GET(req: NextRequest) {
     const [posOrders, onlineOrders] = await Promise.all([
       prisma.posOrder.findMany({
         where: {
-          restaurantId,
+          restaurantId: { in: allIds },
           posStatus: { not: "canceled" },
           OR: [{ customerEmail: { not: "" } }, { customerPhone: { not: "" } }],
         },
@@ -99,7 +105,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.onlineOrder.findMany({
         where: {
-          restaurantId, source: "ecommerce",
+          restaurantId: { in: allIds }, source: "ecommerce",
           status: { not: "CANCELLED" },
           OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
         },
@@ -202,15 +208,19 @@ export async function GET(req: NextRequest) {
     }
     const lastCalendar = new Date(`${fmtDate(c.lastAt)}T12:00:00Z`);
     const daysSince = Math.round((nowCalendar.getTime() - lastCalendar.getTime()) / 86400000);
+    const totalSpent = c.totalSpent;
+    const orders = c.orders;
     return {
       email: c.email, name: c.name, phone: c.phone,
-      orders: c.orders, totalSpent: c.totalSpent,
-      avgTicket: c.orders > 0 ? Math.round(c.totalSpent / c.orders) : 0,
+      orders, totalSpent,
+      avgTicket: orders > 0 ? Math.round(totalSpent / orders) : 0,
       lastOrderAt: c.lastAt.toISOString(),
+      firstOrderAt: c.firstAt.toISOString(),
       daysSinceLastOrder: Math.max(0, daysSince),
       avgFrequencyDays: avgFreq,
       status: computeStatus(daysSince, avgFreq),
-      riskScore: computeRisk(daysSince, avgFreq, c.orders),
+      riskScore: computeRisk(daysSince, avgFreq, orders),
+      score: Math.round(totalSpent * Math.log(orders + 1)),
       topProduct: c.productCounts.size > 0
         ? [...c.productCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
         : null,
@@ -230,14 +240,14 @@ export async function GET(req: NextRequest) {
     : 0;
 
   // Top 5 VIP
-  const bySpend = allClients.slice().sort((a, b) => b.totalSpent - a.totalSpent);
-  const top3 = bySpend.slice(0, 5);
+  const top5 = allClients.slice().sort((a, b) => b.score - a.score).slice(0, 5);
 
   // 80/20
+  const bySpendFor80 = allClients.slice().sort((a, b) => b.totalSpent - a.totalSpent);
   const totalSpentAll = allClients.reduce((s, c) => s + c.totalSpent, 0);
   const target80 = totalSpentAll * 0.8;
   let acc80 = 0, count80 = 0;
-  for (const c of bySpend) { acc80 += c.totalSpent; count80++; if (acc80 >= target80) break; }
+  for (const c of bySpendFor80) { acc80 += c.totalSpent; count80++; if (acc80 >= target80) break; }
   const pct80clients = total > 0 ? Math.round((count80 / total) * 100) : 0;
 
   // Los más fieles
@@ -280,7 +290,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     total, filtered, byStatus, avgTicketGlobal,
-    top3, fieles, aRecuperar, count80, pct80clients,
+    top5, fieles, aRecuperar, count80, pct80clients,
     clients,
   });
 }
