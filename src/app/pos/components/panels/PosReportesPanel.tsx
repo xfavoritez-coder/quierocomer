@@ -176,13 +176,13 @@ function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, p
     : 'var(--ink-3)'
   return (
     <div style={{ background: cardBg, border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined, transition: 'background .3s' }}>
-      {/* Etiqueta + badge IVA al lado del título */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</span>
-        {badge && <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 500, color: 'var(--ink-4)', letterSpacing: '.02em' }}>{badge}</span>}
+      {/* Etiqueta */}
+      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 5 }}>{label}</div>
+      {/* Valor principal + badge a la derecha */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+        <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
+        {badge && <span style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 500, color: 'var(--ink-4)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge}</span>}
       </div>
-      {/* Valor principal */}
-      <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
       {/* Comparativa */}
       {hasCompare && (
@@ -2997,7 +2997,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
-  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; cutHour?: number } | null>(null)
+  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
@@ -3088,10 +3088,6 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   useEffect(() => {
     if (!restaurantId) return
     const { prevFrom, prevTo } = prevPeriod(fromDate, toDate)
-    // Para un solo día que es hoy: cortar en la hora actual para que la comparación sea justa
-    const isToday = fromDate === toDate && fromDate === chileTodayLocal()
-    const cutHour = isToday ? chileHourNow() : undefined
-    const hourParam = cutHour !== undefined ? `&untilHour=${cutHour}` : ''
     setPrevData(null)
     let cancelled = false
     const run = async () => {
@@ -3099,7 +3095,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
         if (allBranches && allBranches.length > 1) {
           const results = await Promise.all(
             allBranches.map(b =>
-              fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${prevFrom}&to=${prevTo}${hourParam}`)
+              fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${b.id}&from=${prevFrom}&to=${prevTo}`)
                 .then(r => r.ok ? r.json() : null).catch(() => null)
             )
           )
@@ -3108,13 +3104,12 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           if (valid.length > 0) setPrevData({
             ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
             productSales: valid.reduce((s, r) => s + r.productSales, 0),
-            cutHour,
           })
         } else {
-          const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}${hourParam}`)
+          const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}`)
           if (cancelled || !r.ok) return
           const d = await r.json()
-          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales, cutHour })
+          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales })
         }
       } catch { /* noop */ }
     }
@@ -3280,18 +3275,15 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big span={2}
                 delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
-                prevValue={prevData && prevData.productSales > 0 ? clp(prevData.productSales) : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
+                prevValue={prevData && prevData.productSales > 0 ? clp(prevData.productSales) : undefined} />
               <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'}
                 delta={prevData ? computeDelta(data.ordersCount, prevData.ordersCount) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
-                prevValue={prevData && prevData.ordersCount > 0 ? prevData.ordersCount.toLocaleString('es-CL') : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
+                prevValue={prevData && prevData.ordersCount > 0 ? prevData.ordersCount.toLocaleString('es-CL') : undefined} />
               <Stat label="Ticket promedio" value={clp(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0)} hint="Por pedido" color={BLUE}
                 delta={prevData && prevData.ordersCount > 0 ? computeDelta(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0, prevData.productSales / prevData.ordersCount) : null}
                 deltaHint={deltaLabel(fromDate, toDate)}
-                prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined}
-                prevValueHint={prevData?.cutHour !== undefined ? `· hasta las ${prevData.cutHour}h` : undefined} />
+                prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined} />
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
               <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
