@@ -2028,65 +2028,69 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
           Sin datos para este período
         </div>
       ) : (
-        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden', position: 'relative' }}>
-          {buckets.map((b, i) => {
-            const total = b.newClients + b.recurringClients
-            const totalPct = Math.max(0, Math.round((total / maxTotal) * 148))
-            const newH = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
-            const recH = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, totalPct - newH) : 0
-            const showLabel = i % labelEvery === 0
-            const isHovered = tooltipIdx === i
-            const leftPct = count > 1 ? (i / (count - 1)) * 100 : 50
+        /* Wrapper con position:relative para anclar el tooltip FUERA del chart area */
+        <div style={{ position: 'relative' }}>
+          {/* Tooltip flotante — sibling del chart area, escapa su overflow:hidden */}
+          {tooltipIdx !== null && buckets[tooltipIdx] && (() => {
+            const b = buckets[tooltipIdx]
+            const leftPct = count > 1 ? (tooltipIdx / (count - 1)) * 100 : 50
             return (
-              <div
-                key={b.date}
-                style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default', position: 'relative' }}
-                onMouseEnter={() => total > 0 && setTooltipIdx(i)}
-                onMouseLeave={() => setTooltipIdx(null)}
-                onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
-              >
-                {/* Tooltip */}
-                {isHovered && (
-                  <div style={{
-                    position: 'absolute', bottom: 'calc(100% + 6px)',
-                    left: leftPct < 20 ? 0 : leftPct > 80 ? 'auto' : '50%',
-                    right: leftPct > 80 ? 0 : 'auto',
-                    transform: leftPct >= 20 && leftPct <= 80 ? 'translateX(-50%)' : 'none',
-                    background: 'var(--ink)', color: '#fff', borderRadius: 8,
-                    padding: '6px 10px', zIndex: 1000, whiteSpace: 'nowrap',
-                    fontFamily: F, fontSize: 11, lineHeight: 1.5, pointerEvents: 'none',
-                    boxShadow: '0 4px 12px rgba(0,0,0,.2)',
-                  }}>
-                    <div style={{ fontWeight: 700, marginBottom: 2 }}>{b.label}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: BLUE, display: 'inline-block', flexShrink: 0 }} />
-                      Nuevos: <strong>{b.newClients}</strong>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
-                      Recurrentes: <strong>{b.recurringClients}</strong>
-                    </div>
-                  </div>
-                )}
-                {/* Total count */}
-                {showCount && total > 0 ? (
-                  <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
-                ) : (
-                  <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
-                )}
-                {/* Bar */}
-                <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
-                  {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: '3px 3px 0 0', minHeight: 2 }} />}
-                  {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
-                  {total === 0 && <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />}
+              <div style={{
+                position: 'absolute',
+                bottom: 'calc(100% - 148px)', // se ancla sobre la barra más alta
+                left: leftPct < 20 ? 0 : leftPct > 80 ? 'auto' : `${leftPct}%`,
+                right: leftPct > 80 ? 0 : 'auto',
+                transform: leftPct >= 20 && leftPct <= 80 ? 'translateX(-50%)' : 'none',
+                background: 'var(--ink)', color: '#fff', borderRadius: 8,
+                padding: '7px 11px', zIndex: 200, whiteSpace: 'nowrap',
+                fontFamily: F, fontSize: 11, lineHeight: 1.6, pointerEvents: 'none',
+                boxShadow: '0 4px 16px rgba(0,0,0,.25)',
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: 3 }}>{b.label}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: BLUE, display: 'inline-block', flexShrink: 0 }} />
+                  Nuevos: <strong>{b.newClients}</strong>
                 </div>
-                {/* Date label */}
-                <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1 }}>
-                  {b.label}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
+                  Recurrentes: <strong>{b.recurringClients}</strong>
                 </div>
               </div>
             )
-          })}
+          })()}
+          <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+            {buckets.map((b, i) => {
+              const total = b.newClients + b.recurringClients
+              const totalPct = Math.max(0, Math.round((total / maxTotal) * 148))
+              const newH = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
+              const recH = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, totalPct - newH) : 0
+              const showLabel = i % labelEvery === 0
+              const isHovered = tooltipIdx === i
+              return (
+                <div
+                  key={b.date}
+                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default' }}
+                  onMouseEnter={() => total > 0 && setTooltipIdx(i)}
+                  onMouseLeave={() => setTooltipIdx(null)}
+                  onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
+                >
+                  {showCount && total > 0 ? (
+                    <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
+                  ) : (
+                    <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
+                  )}
+                  <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
+                    {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: '3px 3px 0 0', minHeight: 2 }} />}
+                    {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
+                    {total === 0 && <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />}
+                  </div>
+                  <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1 }}>
+                    {b.label}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </Card>
