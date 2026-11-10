@@ -40,9 +40,15 @@ const EP = {
   // (no incluido en SCOPE abajo) → markReady fallará con 401 hasta agregarlo; no
   // bloquea recibir/aceptar el pedido en la verificación.
   restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurantdelivery/status`,
+  storeStatus: (storeId: string) => `${BASE}/v1/eats/store/${storeId}/status`,
 };
-// getOrder (v2) y accept/deny (v1) funcionan con eats.store + eats.order (verificado).
-const SCOPE = "eats.store eats.order";
+// Scopes del token. getOrder (v2) y accept/deny (v1) funcionan con `eats.store eats.order`
+// (verificado en sandbox). Las ESCRITURAS necesitan scopes extra que Uber concede recién
+// en producción: store toggle → eats.store.status.write; mark-ready → eats.store.orders
+// .restaurant_delivery; etc. OJO: pedir un scope NO concedido rompe TODO el token
+// (400 invalid_scope), así que el default es el mínimo y en prod se amplía por env
+// UBEREATS_SCOPES (p. ej. "eats.store eats.order eats.store.status.write ...").
+const SCOPE = process.env.UBEREATS_SCOPES || "eats.store eats.order";
 
 // Token OAuth cacheado (client_credentials de la app global).
 let cachedToken: { token: string; exp: number } | null = null;
@@ -91,9 +97,23 @@ export async function acceptUberOrder(orderId: string, prepTimeMin = 15): Promis
   if (!res.ok) throw new Error(`Uber accept ${res.status}: ${await res.text()}`);
 }
 
-/** Rechaza el pedido (cuando el local no puede prepararlo). */
-export async function denyUberOrder(orderId: string, reason = "store_closed"): Promise<void> {
-  const res = await authed(EP.deny(orderId), { method: "POST", body: JSON.stringify({ reason }) });
+// Motivos de rechazo enumerados (Uber espera un código, no texto libre). Mapa
+// código → etiqueta en español para la UI del POS.
+export const UBER_DENY_REASONS: Record<string, string> = {
+  STORE_CLOSED: "Local cerrado",
+  POS_NOT_READY: "POS no disponible",
+  KITCHEN_BUSY: "Cocina saturada",
+  ITEM_OUT_OF_STOCK: "Producto agotado",
+  OUT_OF_DELIVERY_RANGE: "Fuera del rango de reparto",
+  PRICING_MISMATCH: "Diferencia de precios",
+  OTHER: "Otro",
+};
+export type UberDenyReason = keyof typeof UBER_DENY_REASONS;
+
+/** Rechaza el pedido con un código de motivo enumerado (no texto libre). */
+export async function denyUberOrder(orderId: string, reason: UberDenyReason = "STORE_CLOSED"): Promise<void> {
+  const code = UBER_DENY_REASONS[reason] ? reason : "OTHER";
+  const res = await authed(EP.deny(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
   if (!res.ok) throw new Error(`Uber deny ${res.status}: ${await res.text()}`);
 }
 
@@ -120,4 +140,24 @@ export async function getStoreMenu(storeId: string): Promise<Record<string, unkn
   const res = await authed(`${BASE}/v2/eats/stores/${storeId}/menus`);
   if (!res.ok) throw new Error(`Uber getMenu ${res.status}: ${await res.text()}`);
   return (await res.json()) as Record<string, unknown>;
+}
+
+// ── Store status (online/offline) ────────────────────────────────
+// El operador puede pausar/reactivar la tienda en Uber desde el POS.
+export type UberStoreStatus = "ONLINE" | "PAUSED" | "OFFLINE";
+
+/** Lee el estado actual de la tienda en Uber (funciona con eats.store). */
+export async function getStoreStatus(storeId: string): Promise<string | null> {
+  const res = await authed(EP.storeStatus(storeId));
+  if (!res.ok) return null;
+  const j = (await res.json().catch(() => ({}))) as { status?: string };
+  return j.status ?? null;
+}
+
+/** Cambia el estado de la tienda en Uber. ⚠️ Requiere scope `eats.store.status.write`
+ *  (solo en producción); en sandbox devuelve 401. */
+export async function setStoreStatus(storeId: string, status: UberStoreStatus): Promise<{ ok: boolean; status: number; body: string }> {
+  const res = await authed(EP.storeStatus(storeId), { method: "POST", body: JSON.stringify({ status }) });
+  const body = await res.text();
+  return { ok: res.ok, status: res.status, body };
 }
