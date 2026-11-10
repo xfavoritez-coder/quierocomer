@@ -2320,7 +2320,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               </div>
             )
           })()}
-          <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+          <div style={{ height: 180, display: 'flex', alignItems: 'stretch', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
             {buckets.map((b, i) => {
               const unk = b.unknownOrders ?? 0
               const total = b.newClients + b.recurringClients + unk
@@ -2330,7 +2330,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               const recH  = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, Math.round((b.recurringClients / total) * totalPct)) : 0
               const unkH  = total > 0 ? Math.max(unk > 0 ? 2 : 0, totalPct - newH - recH) : 0
               const isHovered = tooltipIdx === i
-              const topRadius = newH > 0 ? '3px 3px 0 0' : recH > 0 ? '3px 3px 0 0' : '3px 3px 0 0'
+              const topRadius = '3px 3px 0 0'
               return (
                 <div
                   key={b.date}
@@ -2339,16 +2339,13 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
                 >
-                  {showCount && total > 0 ? (
+                  {showCount && total > 0 && (
                     <div style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)', marginBottom: 2, lineHeight: 1 }}>{total}</div>
-                  ) : (
-                    <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
                   )}
                   <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
                     {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: topRadius, minHeight: 2 }} />}
                     {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? topRadius : '0', minHeight: 2 }} />}
                     {unkH > 0 && <div style={{ height: unkH, background: 'var(--ink-4)', borderRadius: newH === 0 && recH === 0 ? topRadius : '0', minHeight: 2, opacity: 0.6 }} />}
-                    {total === 0 && <div style={{ height: 2, opacity: 0 }} />}
                   </div>
                 </div>
               )
