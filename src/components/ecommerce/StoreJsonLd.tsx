@@ -75,18 +75,20 @@ export default function StoreJsonLd({
     url: canonicalUrl,
     ...(imageArray.length ? { image: imageArray } : {}),
     ...(tenant.address
-      ? { address: { "@type": "PostalAddress", streetAddress: tenant.address, addressCountry: "CL" } }
+      ? { address: { "@type": "PostalAddress", streetAddress: tenant.address, addressLocality: tenant.commune ?? undefined, addressCountry: "CL" } }
       : {}),
     ...(tenant.phone || tenant.whatsapp ? { telephone: tenant.phone || tenant.whatsapp } : {}),
     ...(priceRange ? { priceRange } : {}),
+    ...(tenant.primaryCategory ? { servesCuisine: tenant.primaryCategory } : {}),
     ...(sameAs.length ? { sameAs } : {}),
+    ...(tenant.metaDescription ? { description: tenant.metaDescription } : {}),
     ...(menuSections.length
       ? { hasMenu: { "@type": "Menu", name: "Menú", url: canonicalUrl, hasMenuSection: menuSections } }
       : {}),
-    potentialAction: {
-      "@type": "OrderAction",
-      target: canonicalUrl,
-    },
+    potentialAction: [
+      { "@type": "OrderAction", target: { "@type": "EntryPoint", urlTemplate: canonicalUrl, actionAccessibilityRequirement: { "@type": "ActionAccessSpecification", eligibleRegion: { "@type": "Country", name: "CL" } } } },
+      { "@type": "ViewAction", target: canonicalUrl },
+    ],
   };
 
   const breadcrumbLd = {

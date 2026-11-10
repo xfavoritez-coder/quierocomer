@@ -63,6 +63,8 @@ export interface StoreTenant {
   scheduledOrdersEnabled: boolean; // el local acepta pedidos programados
   scheduleMaxDaysAhead: number; // días hacia adelante que se puede programar
   showTableMenu: boolean; // mostrar "Carta mesa" en el menú (link a /qr/<slug>)
+  primaryCategory: string | null; // categoría culinaria principal (para JSON-LD servesCuisine)
+  commune: string | null; // comuna del local (para JSON-LD)
 }
 
 export interface StoreCategory {
@@ -153,7 +155,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     where: restaurantByKey(slug),
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
-      cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
+      cartaAccentColor: true, address: true, commune: true, primaryCategory: true, whatsapp: true, phone: true, instagram: true, website: true,
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
@@ -180,6 +182,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,
+    primaryCategory: r.primaryCategory ?? null,
+    commune: r.commune ?? null,
   };
 }
 
@@ -201,7 +205,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     where: restaurantByKey(slug),
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
-      cartaAccentColor: true, address: true, whatsapp: true, phone: true, instagram: true, website: true,
+      cartaAccentColor: true, address: true, commune: true, whatsapp: true, phone: true, instagram: true, website: true,
+      primaryCategory: true,
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
@@ -395,6 +400,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,
+    primaryCategory: restaurant.primaryCategory ?? null,
+    commune: restaurant.commune ?? null,
     },
     categories: storeCategories,
     products,

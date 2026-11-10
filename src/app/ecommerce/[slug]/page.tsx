@@ -118,6 +118,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
             <GtmScript id={brand.gtmId ?? representative.tenant.gtmId} />
             <MetaPixelScript id={brand.metaPixelId ?? representative.tenant.metaPixelId} />
             <PageHitTracker restaurantId={representative.tenant.id} page="ecommerce" />
+            <StoreJsonLd tenant={representative.tenant} categories={representative.categories} products={representative.products} />
             <BrandStore brand={brand} representative={representative} />
           </>
         );
