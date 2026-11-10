@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
   const cached = _cache.get(cacheKey);
   const nowMs = Date.now();
 
-  interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date }
+  interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date; items?: unknown }
   let orders: NormOrder[];
 
   if (cached && nowMs - cached.ts < CACHE_TTL) {

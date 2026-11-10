@@ -663,6 +663,152 @@ function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
   )
 }
 
+// ── Gráfico de tiempos de entrega ───────────────────────────────────
+function DeliveryTimesChart({ orders }: { orders: DeliveryTimeRow[] }) {
+  const [view, setView] = useState<'scatter' | 'dist'>('scatter')
+
+  const completed = orders.filter(o => o.totalMin != null && o.totalMin > 0 && o.totalMin < 240)
+  if (completed.length === 0) return null
+
+  const avgTotal = Math.round(completed.reduce((s, o) => s + o.totalMin!, 0) / completed.length)
+  const maxMin = Math.min(180, Math.max(60, ...completed.map(o => o.totalMin!)))
+
+  function dotColor(min: number) {
+    if (min <= 30) return '#16a34a'
+    if (min <= 45) return BLUE
+    if (min <= 60) return '#f59e0b'
+    return '#ef4444'
+  }
+
+  // ── Scatter ──────────────────────────────────────────────────────
+  const scatterH = 160
+  const scatterW_pct = (createdAt: string) => {
+    const d = new Date(createdAt)
+    const mins = d.getHours() * 60 + d.getMinutes()
+    return (mins / (24 * 60)) * 100
+  }
+  const dotY = (min: number) => {
+    const pct = Math.min(1, min / maxMin)
+    return scatterH - 8 - pct * (scatterH - 20) // 8px bottom padding, 20px top
+  }
+  const avgY = dotY(avgTotal)
+
+  // ── Distribución ─────────────────────────────────────────────────
+  const BUCKETS = [
+    { label: '≤ 30m', max: 30, color: '#16a34a' },
+    { label: '31–45m', max: 45, color: BLUE },
+    { label: '46–60m', max: 60, color: '#f59e0b' },
+    { label: '61–90m', max: 90, color: '#f97316' },
+    { label: '> 90m',  max: Infinity, color: '#ef4444' },
+  ]
+  const bucketCounts = BUCKETS.map((b, i) => {
+    const prev = i === 0 ? 0 : BUCKETS[i - 1].max
+    return { ...b, count: completed.filter(o => o.totalMin! > prev && o.totalMin! <= b.max).length }
+  })
+  const maxCount = Math.max(1, ...bucketCounts.map(b => b.count))
+  const distH = 110
+
+  // Hora labels para el scatter
+  const HOUR_LABELS = [0, 6, 12, 18, 24]
+
+  return (
+    <Card style={{ padding: '14px 14px 12px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
+          <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginLeft: 8 }}>promedio <strong style={{ color: dotColor(avgTotal) }}>{avgTotal} min</strong> · {completed.length} pedidos</span>
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {(['scatter', 'dist'] as const).map(v => (
+            <button key={v} onClick={() => setView(v)} style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, padding: '3px 9px', borderRadius: 999, border: 'none', cursor: 'pointer', background: view === v ? 'var(--ink)' : 'var(--sunk)', color: view === v ? '#fff' : 'var(--ink-3)', transition: 'background .15s' }}>
+              {v === 'scatter' ? 'Por hora' : 'Distribución'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Scatter */}
+      {view === 'scatter' && (
+        <div style={{ position: 'relative', height: scatterH, userSelect: 'none' }}>
+          {/* Y axis labels */}
+          {[0, Math.round(maxMin / 2), maxMin].map(m => {
+            const y = dotY(m)
+            return (
+              <div key={m} style={{ position: 'absolute', right: 'calc(100% - 24px)', top: y - 6, fontFamily: F, fontSize: 9, color: 'var(--ink-4)', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                {m}m
+              </div>
+            )
+          })}
+          {/* Grid lines */}
+          {[0, Math.round(maxMin / 2), maxMin].map(m => (
+            <div key={m} style={{ position: 'absolute', left: 28, right: 0, top: dotY(m), borderTop: '1px dashed var(--line)', opacity: .6 }} />
+          ))}
+          {/* Avg line */}
+          <div style={{ position: 'absolute', left: 28, right: 0, top: avgY, borderTop: `2px solid ${dotColor(avgTotal)}`, opacity: .7 }}>
+            <span style={{ position: 'absolute', right: 0, top: -16, fontFamily: F, fontSize: 9, fontWeight: 700, color: dotColor(avgTotal), background: 'var(--surface)', padding: '1px 4px', borderRadius: 4 }}>⌀ {avgTotal}m</span>
+          </div>
+          {/* Dots */}
+          <div style={{ position: 'absolute', left: 28, right: 0, top: 0, bottom: 0 }}>
+            {completed.map((o, i) => {
+              const x = scatterW_pct(o.createdAt)
+              const y = dotY(o.totalMin!)
+              const color = dotColor(o.totalMin!)
+              return (
+                <div key={i} title={`${o.name || o.ref} · ${o.totalMin}min · ${new Date(o.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}`}
+                  style={{ position: 'absolute', left: `${x}%`, top: y, width: 7, height: 7, borderRadius: '50%', background: color, opacity: .75, transform: 'translate(-50%,-50%)', cursor: 'default', boxShadow: `0 0 0 1px ${color}44` }} />
+              )
+            })}
+          </div>
+          {/* X axis (hora) */}
+          <div style={{ position: 'absolute', left: 28, right: 0, bottom: 0, display: 'flex', justifyContent: 'space-between' }}>
+            {HOUR_LABELS.map(h => (
+              <span key={h} style={{ fontFamily: F, fontSize: 9, color: 'var(--ink-4)' }}>{h === 24 ? '24h' : `${h}h`}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Distribución */}
+      {view === 'dist' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: distH, padding: '0 4px' }}>
+            {bucketCounts.map(b => {
+              const pct = b.count > 0 ? Math.max(8, Math.round((b.count / maxCount) * (distH - 24))) : 0
+              const pctOfTotal = completed.length > 0 ? Math.round((b.count / completed.length) * 100) : 0
+              return (
+                <div key={b.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: 4 }}>
+                  {b.count > 0 && <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color: b.color }}>{pctOfTotal}%</span>}
+                  {b.count === 0 && <span style={{ fontFamily: F, fontSize: 9, color: 'var(--ink-4)' }}>0</span>}
+                  <div style={{ width: '70%', height: b.count > 0 ? pct : 3, background: b.count > 0 ? b.color : 'var(--line)', borderRadius: '4px 4px 0 0', opacity: b.count > 0 ? .85 : 1 }} />
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 6, padding: '0 4px' }}>
+            {bucketCounts.map(b => (
+              <div key={b.label} style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ fontFamily: F, fontSize: 9.5, fontWeight: 700, color: b.color, whiteSpace: 'nowrap' }}>{b.label}</div>
+                <div style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-3)', fontWeight: 600 }}>{b.count} ped.</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Leyenda colores */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+        {[['≤ 30m', '#16a34a'], ['≤ 45m', BLUE], ['≤ 60m', '#f59e0b'], ['> 60m', '#ef4444']].map(([label, color]) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
+            <span style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-3)' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 // ── Tabla de tiempos de entrega ─────────────────────────────────────
 const PAGE_SIZE = 10
 type SortCol = 'ref' | 'prep' | 'transit' | 'total' | 'delivery'
@@ -2886,6 +3032,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {data.deliveryTimes ? (
                   <>
+                    <DeliveryTimesChart orders={data.deliveryTimes.orders} />
                     <SectionLabel>Tiempos de entrega</SectionLabel>
                     <DeliveryTimesSection
                       dt={data.deliveryTimes}
