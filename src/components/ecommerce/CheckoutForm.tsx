@@ -45,7 +45,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const primaryColor = tenant.primaryColor;
   const impact = tenant.theme === "impact";
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
-  const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart, updateQty, removeItem } = useCartStore();
+  const { items, deliveryType, deliveryAddress, deliverySelected, notes, setNotes, clearCart, updateQty, removeItem, restaurantId: cartRestaurantId } = useCartStore();
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const subtotal = useCartStore((s) => s.subtotal());
@@ -156,7 +156,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       try {
         const res = await fetch("/api/ecommerce/coupons/validate", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
+          body: JSON.stringify({ restaurantId: cartRestaurantId || undefined, restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
         });
         const data = await res.json().catch(() => ({}));
         if (!data.valid) { setCoupon(null); setCouponCode(""); setCouponMsg("El cupón guardado ya no está disponible"); return; }
@@ -326,7 +326,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
     try {
       const res = await fetch("/api/ecommerce/coupons/validate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
+        body: JSON.stringify({ restaurantId: cartRestaurantId || undefined, restaurantSlug: tenant.slug, code, subtotal, deliveryFee, orderType: isDelivery ? "DELIVERY" : "PICKUP", phone: phone.trim() || null, fromApp: isInApp() }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.valid) {
