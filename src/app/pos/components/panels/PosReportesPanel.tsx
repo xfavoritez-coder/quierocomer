@@ -2322,7 +2322,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               </div>
             )
           })()}
-          <div style={{ height: 180, display: 'flex', alignItems: 'stretch', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
             {buckets.map((b, i) => {
               const unk = b.unknownOrders ?? 0
               const total = b.newClients + b.recurringClients + unk
@@ -2334,7 +2334,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               return (
                 <div
                   key={b.date}
-                  style={{ flex: 1, minWidth: 0, position: 'relative', cursor: total > 0 ? 'pointer' : 'default' }}
+                  style={{ flex: 1, minWidth: 0, height: 180, position: 'relative', cursor: total > 0 ? 'pointer' : 'default' }}
                   onMouseEnter={() => total > 0 && setTooltipIdx(i)}
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
