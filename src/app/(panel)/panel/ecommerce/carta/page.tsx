@@ -331,7 +331,7 @@ function Row({ name, initial, endpoint, star, toteatMap, qcPrice, soldOut, onTog
         {onToggleDailyBadge && (
           <button
             onClick={onToggleDailyBadge}
-            title={dailyBadge ? "Quitar cinta «Solo hoy»" : "Activar cinta «Solo hoy»"}
+            title={dailyBadge ? "Quitar cinta «Solo hoy» (actualmente se ocultará mañana a las 8am)" : "Marcar como Solo hoy — aparece con cinta en la tienda y se oculta automáticamente mañana a las 8am"}
             style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, border: `1px solid ${dailyBadge ? "#f97316" : "var(--adm-card-border)"}`, background: dailyBadge ? "rgba(249,115,22,0.12)" : "transparent", color: dailyBadge ? "#f97316" : "var(--adm-text2)" }}
           >
             🏷 {dailyBadge ? "Solo hoy ✓" : "Solo hoy"}

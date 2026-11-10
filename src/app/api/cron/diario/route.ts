@@ -469,7 +469,22 @@ export async function GET(req: NextRequest) {
       console.error("[diario] QR nudge error:", e);
     }
 
-    // 7. Compute daily stats snapshot for monitoring
+    // 7. Auto-ocultar platos con cinta "Solo hoy" del día anterior.
+    // Si un plato tiene dailyBadge: true al correr el cron de la mañana, significa
+    // que fue marcado ayer (o antes) como promoción de un día y ya no debe mostrarse.
+    let dailyBadgeHidden = 0;
+    try {
+      const expiredBadge = await prisma.dish.updateMany({
+        where: { dailyBadge: true },
+        data: { dailyBadge: false, hideFromOrdering: true },
+      });
+      dailyBadgeHidden = expiredBadge.count;
+      if (dailyBadgeHidden > 0) console.log(`[diario] dailyBadge expired: ${dailyBadgeHidden} platos ocultados`);
+    } catch (e) {
+      console.error("[diario] dailyBadge expiry error:", e);
+    }
+
+    // 8. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const [totalSessions, totalGuests, totalRegistered] = await Promise.all([
@@ -501,6 +516,7 @@ export async function GET(req: NextRequest) {
           birthdayPushMembers,
           translationsBackfilled,
           qrNudgeSent,
+          dailyBadgeHidden,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,

@@ -167,7 +167,7 @@ function ProductRow({ p, onToggleSoldOut, onToggleDailyBadge, onToggleNewBadge, 
       </div>
 
       {/* Cintas */}
-      <button onClick={onToggleDailyBadge} title={isDailyBadge ? 'Quitar cinta Solo hoy' : 'Activar cinta Solo hoy'}
+      <button onClick={onToggleDailyBadge} title={isDailyBadge ? 'Quitar cinta «Solo hoy» (actualmente se ocultará mañana a las 8am)' : 'Marcar como Solo hoy — aparece con cinta en la tienda y se oculta automáticamente mañana a las 8am'}
         style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isDailyBadge ? '#f97316' : 'var(--line)'}`, background: isDailyBadge ? 'rgba(249,115,22,0.12)' : 'transparent', color: isDailyBadge ? '#f97316' : 'var(--ink-3)' }}>
         🏷 {isDailyBadge ? 'Solo hoy ✓' : 'Solo hoy'}
       </button>
