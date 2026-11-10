@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { processAutomations } from "@/lib/automations/processor";
 import { runBirthdayPushes } from "@/lib/loyalty/birthdayPush";
 import { sendAdminEmail, qrNudgeEmailHtml } from "@/lib/email/sendAdminEmail";
+import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -529,6 +530,8 @@ export async function GET(req: NextRequest) {
           if (dailyBadgeActivated > 0) {
             console.log(`[diario] dailyBadge activado: ${dailyBadgeActivated} platos desde ${promosToday.length} promos (día ${chileDayOfWeek})`);
           }
+          // Invalidar caché del ecommerce para que el badge aparezca de inmediato
+          try { revalidateQrCache(); } catch {}
         }
       }
     } catch (e) {
