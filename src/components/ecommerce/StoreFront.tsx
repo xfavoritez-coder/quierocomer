@@ -5,7 +5,7 @@ import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Chevr
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
-import { clp } from "@/lib/ecommerce/format";
+import { clp, slugify } from "@/lib/ecommerce/format";
 import { computeDistanceFee, type DistanceFeeResult } from "@/lib/ecommerce/delivery";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { formatPlaceAddress, placeAddressParts, type AddressParts } from "@/lib/ecommerce/address";
@@ -35,6 +35,7 @@ interface Props {
   basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
   brandControls?: BrandControls;
   siblings?: BrandBranch[]; // otras sucursales de la misma marca (para mostrar en pickup)
+  initialProductSlug?: string;
 }
 
 // Muestra solo hasta la primera coma de la dirección
@@ -70,8 +71,9 @@ function isDarkHex(hex?: string): boolean {
   return (r * 299 + g * 587 + b * 114) / 1000 < 140;
 }
 
-export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings }: Props) {
+export default function StoreFront({ tenant, categories, products, basePath, brandControls, siblings, initialProductSlug }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  const communeSlug = tenant.commune ? slugify(tenant.commune) : "";
   const brandMode = !!brandControls;
   const hasBranch = brandControls?.hasBranch ?? false;
   const primaryColor = tenant.primaryColor;
@@ -100,11 +102,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     dishAddedToCartRef.current = false;
     dishesViewedRef.current += 1;
     setSelectedProduct(p);
-    // Actualizar URL para que el link sea compartible
+    // Actualizar URL con slug amigable del producto
     try {
-      const sp = new URLSearchParams(window.location.search);
-      sp.set("p", p.id);
-      window.history.replaceState(null, "", window.location.pathname + "?" + sp.toString() + window.location.hash);
+      const productSlug = slugify(p.name);
+      const productPath = communeSlug
+        ? `${storeBase}/${communeSlug}/${productSlug}`
+        : `${storeBase}/${productSlug}`;
+      window.history.replaceState(null, "", productPath);
     } catch { /* noop */ }
     fbTrack("ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency: "CLP" });
     if (p.option_groups && p.option_groups.length > 0) trackModifierOpen(tenant.id, p.id, p.name);
@@ -222,14 +226,11 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     } catch { /* noop */ }
   }, [openMenu]);
 
-  // Abrir producto directamente si se llega con ?p=<id> (link compartido de un plato).
+  // Abrir producto directamente si se llega con link de producto compartido.
   useEffect(() => {
-    try {
-      const pid = new URLSearchParams(window.location.search).get("p");
-      if (!pid) return;
-      const product = products.find((p) => p.id === pid);
-      if (product) openProduct(product);
-    } catch { /* noop */ }
+    if (!initialProductSlug) return;
+    const product = products.find((p) => slugify(p.name) === initialProductSlug);
+    if (product) openProduct(product);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -616,12 +617,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               trackDishView(tenant.id, p.id, p.name, dwellMs > 500 ? dwellMs : undefined, dishAddedToCartRef.current);
             }
             setSelectedProduct(null);
-            // Limpiar ?p= de la URL al cerrar
+            // Restaurar URL base al cerrar
             try {
-              const sp = new URLSearchParams(window.location.search);
-              sp.delete("p");
-              const qs = sp.toString();
-              window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
+              window.history.replaceState(null, "", storeBase || "/");
             } catch { /* noop */ }
           }}
           scrollImage

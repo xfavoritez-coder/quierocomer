@@ -67,9 +67,7 @@ export function middleware(req: NextRequest) {
   }
 
   // ── Dominio de ECOMMERCE ──────────────────────────────────
-  const isStorePage = pathname === "/" || pathname === "/checkout" || pathname.startsWith("/checkout/") || pathname === "/privacidad";
-  if (!isStorePage) return NextResponse.next();
-
+  // Reescribir todas las rutas de dominios de ecommerce a /ecommerce/{host}{pathname}
   const url = req.nextUrl.clone();
   url.pathname = `/ecommerce/${host}${pathname === "/" ? "" : pathname}`;
   return NextResponse.rewrite(url);

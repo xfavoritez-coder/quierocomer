@@ -26,7 +26,7 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
-export default function BrandStore({ brand, representative }: { brand: BrandData; representative: StorefrontData }) {
+export default function BrandStore({ brand, representative, basePath, initialProductSlug }: { brand: BrandData; representative: StorefrontData; basePath?: string; initialProductSlug?: string }) {
   const [data, setData] = useState<StorefrontData>(representative);
   const [branchSlug, setBranchSlug] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -138,6 +138,8 @@ export default function BrandStore({ brand, representative }: { brand: BrandData
         categories={data.categories}
         products={data.products}
         brandControls={brandControls}
+        basePath={basePath}
+        initialProductSlug={initialProductSlug}
       />
       {pickerOpen && (
         <BranchPicker

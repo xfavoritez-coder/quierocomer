@@ -3,7 +3,6 @@ import { requestIsFromApp } from "@/lib/ecommerce/appRequest";
 import type { Metadata } from "next";
 import { getEcommerceStorefront, getEcommerceStorefrontBaseCached, loadEcommerceBrandByDomain, loadEcommerceBrand, loadBrandSlugForSlug } from "@/lib/ecommerce/storefront-data";
 import type { BrandBranch } from "@/lib/ecommerce/storefront-data";
-import { prisma } from "@/lib/prisma";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
@@ -25,10 +24,8 @@ export const viewport = {
   viewportFit: "cover" as const,
 };
 
-export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const sp = await searchParams;
-  const productId = typeof sp.p === "string" ? sp.p : undefined;
   // Dominio de marca (ej. kojo.cl): metadata de la marca.
   if (slug.includes(".")) {
     const brand = await loadEcommerceBrandByDomain(slug);
@@ -36,23 +33,14 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
       const brandIcon = brand.faviconUrl || brand.logoUrl;
       const brandTitle = brand.pageTitle || `${brand.brandName} · Pedir online`;
       const brandDesc = brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`;
-      // Si se comparte un producto específico, usar su imagen como og:image
-      let ogImages: { url: string; width?: number; height?: number; alt?: string }[] = brandIcon
+      const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = brandIcon
         ? [{ url: brandIcon, width: 400, height: 400, alt: brand.brandName }]
         : [];
-      let ogTitle = brand.pageTitle || brand.brandName;
-      if (productId) {
-        const dish = await prisma.dish.findUnique({ where: { id: productId }, select: { name: true, photos: true } });
-        if (dish?.photos?.[0]) {
-          ogImages = [{ url: dish.photos[0] }];
-          ogTitle = dish.name;
-        }
-      }
       return {
         title: brandTitle,
         description: brandDesc,
         ...(brandIcon ? { icons: { icon: brandIcon, shortcut: brandIcon, apple: brandIcon } } : {}),
-        openGraph: { title: ogTitle, description: brandDesc, images: ogImages, type: "website" },
+        openGraph: { title: brand.pageTitle || brand.brandName, description: brandDesc, images: ogImages, type: "website" },
       };
     }
   }
@@ -61,14 +49,8 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   if (!data) return {};
   const { tenant } = data;
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
-  // Si se comparte un producto específico, cargarlo para og:image y título
-  const sharedDish = productId
-    ? await prisma.dish.findUnique({ where: { id: productId }, select: { name: true, photos: true } })
-    : null;
   // Logo primero (WhatsApp toma la primera), luego fotos de productos (Google Search preview).
-  // Si hay producto compartido, su foto va primera.
   const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = [
-    ...(sharedDish?.photos?.[0] ? [{ url: sharedDish.photos[0] }] : []),
     ...(tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : []),
     ...data.products
       .map((p) => p.image_url)
@@ -89,7 +71,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     appleWebApp: { capable: true, title: tenant.name, statusBarStyle: "default" },
     ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
     openGraph: {
-      title: sharedDish ? sharedDish.name : (tenant.pageTitle || tenant.name),
+      title: tenant.pageTitle || tenant.name,
       description: tenant.metaDescription || `Haz tu pedido en ${tenant.name}.`,
       images: ogImages,
       type: "website",
@@ -119,7 +101,7 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
             <MetaPixelScript id={brand.metaPixelId ?? representative.tenant.metaPixelId} />
             <PageHitTracker restaurantId={representative.tenant.id} page="ecommerce" />
             <StoreJsonLd tenant={representative.tenant} categories={representative.categories} products={representative.products} />
-            <BrandStore brand={brand} representative={representative} />
+            <BrandStore brand={brand} representative={representative} basePath="" />
           </>
         );
       }

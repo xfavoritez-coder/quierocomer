@@ -11,7 +11,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { ShoppingCart, Search, X, Menu as MenuIcon, Plus, MapPin, ChevronRight, ChevronLeft, Lock, UtensilsCrossed } from "lucide-react";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
-import { clp } from "@/lib/ecommerce/format";
+import { clp, slugify } from "@/lib/ecommerce/format";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
 import ProductModal from "./ProductModal";
 import CustomerMenu from "./CustomerMenu";
@@ -25,14 +25,16 @@ interface Props {
   products: StoreProduct[];
   basePath?: string; // ruta base de la tienda ("" en dominio propio, /ecommerce/<slug> en el principal)
   siblings?: BrandBranch[];
+  initialProductSlug?: string;
 }
 
 const FB = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const DISPLAY = "'Bebas Neue', Impact, sans-serif";
 
-export default function ImpactStoreFront({ tenant, categories, products, basePath, siblings }: Props) {
+export default function ImpactStoreFront({ tenant, categories, products, basePath, siblings, initialProductSlug }: Props) {
   const accent = tenant.primaryColor;
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
+  const communeSlug = tenant.commune ? slugify(tenant.commune) : "";
   const goCheckout = () => { window.location.href = `${storeBase}/checkout`; };
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
@@ -49,14 +51,11 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   useEffect(() => {
     try { setNoBanner(new URLSearchParams(window.location.search).has("nobanner")); } catch {}
   }, []);
-  // Abrir producto directamente si se llega con ?p=<id> (link compartido de un plato).
+  // Abrir producto directamente si se llega con link de producto compartido.
   useEffect(() => {
-    try {
-      const pid = new URLSearchParams(window.location.search).get("p");
-      if (!pid) return;
-      const product = products.find((p) => p.id === pid);
-      if (product && !product.is_sold_out) openProduct(product);
-    } catch { /* noop */ }
+    if (!initialProductSlug) return;
+    const product = products.find((p) => slugify(p.name) === initialProductSlug);
+    if (product && !product.is_sold_out) openProduct(product);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -179,12 +178,15 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
     if (p.is_sold_out) return;
     if (!deliverySelected) { setPendingProduct(p); setDeliveryModalOpen(true); return; }
     setSelectedProduct(p);
+    // Actualizar URL con slug amigable del producto
     try {
-      const sp = new URLSearchParams(window.location.search);
-      sp.set("p", p.id);
-      window.history.replaceState(null, "", window.location.pathname + "?" + sp.toString() + window.location.hash);
+      const productSlug = slugify(p.name);
+      const productPath = communeSlug
+        ? `${storeBase}/${communeSlug}/${productSlug}`
+        : `${storeBase}/${productSlug}`;
+      window.history.replaceState(null, "", productPath);
     } catch { /* noop */ }
-  }, [deliverySelected]);
+  }, [deliverySelected, communeSlug, storeBase]);
 
   const canOrderNow = isOpen || tenant.scheduledOrdersEnabled;
   const directAdd = useCallback((p: StoreProduct) => {
@@ -419,11 +421,9 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {/* ── Flujos reutilizados (oscuros por ImpactSkin) ── */}
       {selectedProduct && <ProductModal product={selectedProduct} primaryColor={accent} onClose={() => {
         setSelectedProduct(null);
+        // Restaurar URL base al cerrar
         try {
-          const sp = new URLSearchParams(window.location.search);
-          sp.delete("p");
-          const qs = sp.toString();
-          window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash);
+          window.history.replaceState(null, "", storeBase || "/");
         } catch { /* noop */ }
       }} />}
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />}
