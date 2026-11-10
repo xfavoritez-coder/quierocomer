@@ -105,3 +105,19 @@ export async function markUberOrderReady(orderId: string): Promise<void> {
   });
   if (!res.ok) throw new Error(`Uber ready ${res.status}: ${await res.text()}`);
 }
+
+// ── Menu API (v2) ────────────────────────────────────────────────
+// Sube el menú COMPLETO de la tienda. Verificado en sandbox: PUT devuelve 204 y
+// el procesamiento es asíncrono. Body = { menus, categories, items, modifier_groups }.
+export async function putStoreMenu(storeId: string, menu: unknown): Promise<{ ok: boolean; status: number; body: string }> {
+  const res = await authed(`${BASE}/v2/eats/stores/${storeId}/menus`, { method: "PUT", body: JSON.stringify(menu) });
+  const body = await res.text();
+  return { ok: res.ok, status: res.status, body };
+}
+
+/** Lee el menú vigente de la tienda en Uber (para verificar la sincronización). */
+export async function getStoreMenu(storeId: string): Promise<Record<string, unknown>> {
+  const res = await authed(`${BASE}/v2/eats/stores/${storeId}/menus`);
+  if (!res.ok) throw new Error(`Uber getMenu ${res.status}: ${await res.text()}`);
+  return (await res.json()) as Record<string, unknown>;
+}

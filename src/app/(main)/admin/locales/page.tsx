@@ -1535,7 +1535,23 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [ueEnabled, setUeEnabled] = useState(false);
   const [ueStoreId, setUeStoreId] = useState("");
   const [ueAutoAccept, setUeAutoAccept] = useState(true);
+  const [ueSyncing, setUeSyncing] = useState(false);
   const [showToken, setShowToken] = useState(false);
+
+  async function syncUberMenu() {
+    if (ueSyncing) return;
+    setUeSyncing(true); setMsg(null);
+    try {
+      const res = await fetch("/api/admin/ubereats/sync-menu", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: restaurant.id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) setMsg({ type: "ok", text: `Menú sincronizado con Uber Eats: ${d.counts?.categories ?? "?"} categorías, ${d.counts?.items ?? "?"} platos.` });
+      else setMsg({ type: "err", text: d.error || "No se pudo sincronizar el menú" });
+    } catch { setMsg({ type: "err", text: "Error de conexión" }); }
+    setUeSyncing(false);
+  }
 
   useEffect(() => {
     const c = (restaurant.ecommerceConfig || {}) as EcommerceConfig;
@@ -1722,6 +1738,12 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
             {ueEnabled && <>
               <Input label="Store ID (tienda en Uber Eats)" value={ueStoreId} onChange={setUeStoreId} placeholder="uuid de la tienda" />
               <EnvSelect label="Aceptar automáticamente" value={ueAutoAccept ? "on" : "off"} onChange={(v) => setUeAutoAccept(v === "on")} options={[{ value: "on", label: "Sí (recomendado)" }, { value: "off", label: "No" }]} />
+              {ueStoreId.trim() && (
+                <button onClick={syncUberMenu} disabled={ueSyncing} style={{ padding: "9px 16px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: ueSyncing ? "wait" : "pointer", opacity: ueSyncing ? 0.6 : 1, marginTop: 4 }}>
+                  {ueSyncing ? "Sincronizando menú…" : "Sincronizar menú con Uber Eats"}
+                </button>
+              )}
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#9ca3af", margin: "2px 0 0" }}>Sube la carta actual del local a Uber Eats (categorías, platos y precios). Guarda primero el Store ID.</p>
             </>}
           </IntegrationGroup>
 

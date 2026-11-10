@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { getUberOrder, acceptUberOrder, uberAppConfigured } from "@/lib/ubereats/client";
 import { createPosOrderFromUberOrder } from "@/lib/ubereats/ingest";
+import { syncStoreMenu } from "@/lib/ubereats/menu";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +63,16 @@ export async function POST(req: NextRequest) {
 
   const eventType = str(body.event_type || body.type);
   const meta = obj(body.meta);
+
+  // Uber pide reenviar el menú (store.menu_refresh_request): lo reconstruimos y
+  // lo volvemos a subir. El id de la tienda viene en el evento (no hay orderId).
+  if (/menu[._]refresh/i.test(eventType)) {
+    const storeId = str(obj(body.store).id || meta.resource_id || body.store_id || obj(body.resource).store_id);
+    const restaurantId = storeId ? await restaurantForStore(storeId) : null;
+    if (restaurantId) await syncStoreMenu(restaurantId).catch((e) => console.error("[ubereats] menu refresh:", (e as Error).message));
+    return NextResponse.json({ ok: true, menuRefresh: true, storeId, synced: !!restaurantId }, { status: 200 });
+  }
+
   // El id del pedido viene en order.id (y como fallback en meta.resource_id).
   const orderId = str(obj(body.order).id || meta.resource_id || body.resource_id || obj(body.resource).id);
   if (!orderId) return NextResponse.json({ ok: true, ignored: true, reason: "sin orderId" }, { status: 200 });
