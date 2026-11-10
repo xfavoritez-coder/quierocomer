@@ -139,7 +139,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
         products={data.products}
         brandControls={brandControls}
         basePath={basePath}
-        initialProductSlug={initialProductSlug}
+        initialProductSlug={resolving ? undefined : initialProductSlug}
       />
       {pickerOpen && (
         <BranchPicker

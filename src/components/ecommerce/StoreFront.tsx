@@ -227,12 +227,19 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   }, [openMenu]);
 
   // Abrir producto directamente si se llega con link de producto compartido.
+  // Depende de initialProductSlug para que en BrandStore pueda pasar undefined
+  // mientras resuelve la sucursal (evita el flash de nombre original → promo).
+  const initialProductOpenedRef = useRef(false);
   useEffect(() => {
+    if (initialProductOpenedRef.current) return;
     if (!initialProductSlug) return;
     const product = products.find((p) => slugify(p.name) === initialProductSlug);
-    if (product) openProduct(product);
+    if (product) {
+      initialProductOpenedRef.current = true;
+      openProduct(product);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialProductSlug]);
 
   // Favorito que el usuario intentó marcar sin sesión: se aplica automáticamente
   // en cuanto inicia sesión.
