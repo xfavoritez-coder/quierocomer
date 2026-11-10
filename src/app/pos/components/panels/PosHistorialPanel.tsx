@@ -433,7 +433,7 @@ export default function PosHistorialPanel({ restaurantId, title, allBranches }: 
   )
 
   const detailSection = selected ? (
-    <PastOrderDetail order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} />
+    <PastOrderDetail key={(selected as any).id} order={selected as unknown as PastOrder} onClose={() => setSelected(null)} restaurantId={restaurantId} />
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
