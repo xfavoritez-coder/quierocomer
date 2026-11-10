@@ -1,12 +1,21 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { loadEcommerceTenant } from "@/lib/ecommerce/storefront-data";
+import { loadEcommerceTenant, loadEcommerceBrandByDomain } from "@/lib/ecommerce/storefront-data";
 
 export const dynamic = "force-dynamic";
 
+async function resolveTenant(slug: string) {
+  let t = await loadEcommerceTenant(slug);
+  if (!t && slug.includes(".")) {
+    const brand = await loadEcommerceBrandByDomain(slug);
+    if (brand?.branches.length) t = await loadEcommerceTenant(brand.branches[0].slug);
+  }
+  return t;
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const t = await loadEcommerceTenant(slug);
+  const t = await resolveTenant(slug);
   const name = t?.name || "la tienda";
   return {
     title: `Política de Privacidad · ${name}`,
@@ -19,7 +28,7 @@ const UPDATED = "octubre de 2026";
 
 export default async function PrivacidadPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const t = await loadEcommerceTenant(slug);
+  const t = await resolveTenant(slug);
   if (!t) notFound();
 
   const name = t.name;
