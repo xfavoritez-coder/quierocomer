@@ -552,6 +552,11 @@ function PauseModal({ paused, until, busy, onClose, onPause, onReopen }: {
   const [sel, setSel] = useState<"30" | "60" | "day">("60");
   useEffect(() => { const prev = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = prev; }; }, []);
 
+  // El portal debe montarse dentro del contenedor con las variables de tema
+  // (--adm-*); document.body NO las tiene → el modal saldría sin fondo.
+  if (typeof document === "undefined") return null;
+  const target = document.querySelector(".theme-dark, .theme-light") ?? document.body;
+
   const opts: { key: "30" | "60" | "day"; label: string; sub: string }[] = [
     { key: "30", label: "30 minutos", sub: "Pausa corta" },
     { key: "60", label: "1 hora", sub: "Pausa estándar" },
@@ -615,7 +620,7 @@ function PauseModal({ paused, until, busy, onClose, onPause, onReopen }: {
         )}
       </div>
     </div>,
-    document.body,
+    target,
   );
 }
 
