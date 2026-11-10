@@ -606,10 +606,12 @@ function DeliveryOrderModal({ order, restaurantId, onClose }: { order: DeliveryT
 function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
   orders: DeliveryTimeRow[]; selectedDate: string | null; onDateClick: (date: string) => void
 }) {
+  const toChileDate = (iso: string) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date(iso))
   const byDay = new Map<string, number>()
   for (const o of orders) {
     if (!o.createdAt || !o.deliveryFee) continue
-    const day = o.createdAt.slice(0, 10)
+    const day = toChileDate(o.createdAt)
     byDay.set(day, (byDay.get(day) ?? 0) + o.deliveryFee)
   }
   const days = Array.from(byDay.entries()).sort((a, b) => a[0].localeCompare(b[0]))
