@@ -504,7 +504,7 @@ export default function PosHomePage() {
           (syncReady). Así no parpadea en cada sync incremental ni al cambiar de
           sucursal (mientras sincroniza el nuevo local, syncReady=false → no se
           muestra el falso "caja cerrada"). */}
-      {!isOwner && cashSession === null && syncReady && !cashLoading && (() => {
+      {!isOwner && restaurants.length <= 1 && cashSession === null && syncReady && !cashLoading && (() => {
         // Guía del paso pendiente (flujo obligatorio): 1 abrir turno · 2 abrir
         // caja · 4 cerrar turno. (En 3 la caja está abierta → no se muestra.)
         const msg = cajaStep === 1 ? 'Abre el turno para empezar'
