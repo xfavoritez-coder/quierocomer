@@ -172,14 +172,9 @@ function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, p
   const noBase = delta === DELTA_NO_BASE          // current > 0 pero prev = 0
   const isPos = !noBase && delta! > 0
   const isNeg = !noBase && delta! < 0
-  const cardBg = hasCompare
-    ? (isPos || noBase) ? 'rgba(22,163,74,.05)' : isNeg ? 'rgba(220,38,38,.05)' : 'var(--surface)'
-    : 'var(--surface)'
-  const pillBg = hasCompare
-    ? (isPos || noBase) ? GREEN : isNeg ? '#dc2626' : 'var(--ink-3)'
-    : 'var(--ink-3)'
+  const pillColor = (isPos || noBase) ? '#16a34a' : isNeg ? '#dc2626' : 'var(--ink-3)'
   return (
-    <div style={{ background: cardBg, border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined, transition: 'background .3s' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 5 }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
         <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
@@ -187,13 +182,13 @@ function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, p
       </div>
       {hint && <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 3 }}>{hint}</div>}
       {hasCompare && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: pillBg, color: '#fff', borderRadius: 20, padding: '3px 9px', fontFamily: F, fontSize: '0.76rem', fontWeight: 800, flexShrink: 0 }}>
-            {noBase ? '↑ primero' : isPos ? `↑ ${Math.abs(delta!)}%` : isNeg ? `↓ ${Math.abs(delta!)}%` : '= igual'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 9, flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: `${pillColor}18`, color: pillColor, borderRadius: 20, padding: '2px 8px', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
+            {noBase ? '↑ nuevo' : isPos ? `↑ ${Math.abs(delta!)}%` : isNeg ? `↓ ${Math.abs(delta!)}%` : '= igual'}
           </span>
-          <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', lineHeight: 1.3 }}>
+          <span style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-4)', lineHeight: 1.3 }}>
             {deltaHint ?? 'anterior'}
-            {prevValue && <strong style={{ color: 'var(--ink-2)', marginLeft: 4, fontWeight: 600 }}>{prevValue}</strong>}
+            {prevValue && <span style={{ color: 'var(--ink-3)', marginLeft: 3 }}>{prevValue}</span>}
           </span>
         </div>
       )}
