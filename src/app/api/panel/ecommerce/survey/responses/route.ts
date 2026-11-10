@@ -12,11 +12,15 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
+  const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
+  const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
+
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceStoreConfig: true, cartaAccentColor: true } });
   const cfg = parseStoreConfig(r?.ecommerceStoreConfig, { accent: r?.cartaAccentColor });
 
   const rows = await prisma.ecommerceSurveyResponse.findMany({
-    where: { restaurantId },
+    where: { restaurantId: { in: allIds } },
     orderBy: { createdAt: "desc" },
     take: 500,
     select: { id: true, orderId: true, customerName: true, ratings: true, comment: true, createdAt: true },

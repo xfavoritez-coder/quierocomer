@@ -1044,11 +1044,14 @@ function SatisfaccionSection({ restaurantId, allBranches, onViewAll }: { restaur
   const [loadingOrder, setLoadingOrder] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
+    const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
+    const params = new URLSearchParams({ restaurantId })
+    if (branchIds) params.set('branchIds', branchIds)
+    fetch(`/api/panel/ecommerce/survey/responses?${params}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && d.total > 0) { setAverages(d.averages); setResponses(d.responses) } })
       .finally(() => setLoaded(true))
-  }, [restaurantId])
+  }, [restaurantId, allBranches])
 
   if (!loaded || averages.length === 0 || averages.every(a => a.count === 0)) return null
 
@@ -2652,18 +2655,21 @@ function MiniStars({ avg, size = 11 }: { avg: number; size?: number }) {
   )
 }
 
-function SatisfaccionTabSection({ restaurantId }: { restaurantId: string }) {
+function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
   const [data, setData] = useState<SurveyFullData | null>(null)
   const [loading, setLoading] = useState(true)
   const [filterStar, setFilterStar] = useState<number | null>(null)
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${restaurantId}`)
+    const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
+    const params = new URLSearchParams({ restaurantId })
+    if (branchIds) params.set('branchIds', branchIds)
+    fetch(`/api/panel/ecommerce/survey/responses?${params}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => setData(d))
       .finally(() => setLoading(false))
-  }, [restaurantId])
+  }, [restaurantId, allBranches])
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 80, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
@@ -3096,7 +3102,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
 
         {/* Satisfacción sub-section */}
         {subSection === 'satisfaccion' && (
-          <SatisfaccionTabSection restaurantId={restaurantId} />
+          <SatisfaccionTabSection restaurantId={restaurantId} allBranches={allBranches} />
         )}
 
         {/* Comportamiento sub-section */}
