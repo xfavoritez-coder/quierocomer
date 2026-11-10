@@ -1773,6 +1773,7 @@ interface ClientRow {
   lastOrderAt: string; daysSinceLastOrder: number
   avgFrequencyDays: number | null
   status: ClientStatus; riskScore: number
+  topProduct: string | null
 }
 interface ClientsData {
   total: number
@@ -2188,49 +2189,74 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
       {/* ── Gráfico nuevos vs recurrentes ── */}
       <ClientsAcquisitionChart restaurantId={restaurantId} allBranches={allBranches} />
 
-      {/* ── Podio VIP ── */}
+      {/* ── Top 5 VIP ── */}
       {top3.length > 0 && (
         <Card style={{ padding: '16px 14px' }}>
-          <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Top clientes VIP</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {top3.map((c, i) => (
-              <div key={c.email || c.phone} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: MEDAL_BG[i], border: `1px solid ${MEDAL_BORDER[i]}`,
-                borderRadius: 14, padding: '12px 14px',
-              }}>
-                {/* Medal + rank */}
-                <div style={{ fontSize: 22, flexShrink: 0, lineHeight: 1 }}>{MEDAL[i]}</div>
-                {/* Avatar */}
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                  background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: F, fontSize: '0.82rem', fontWeight: 900, color: '#fff',
-                  boxShadow: '0 2px 6px rgba(0,0,0,.12)',
-                }}>{initials(c)}</div>
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {c.name || c.email || c.phone}
+          <div style={{ fontFamily: F, fontSize: '0.7rem', fontWeight: 800, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Top 5 clientes</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {top3.map((c, i) => {
+              const lastDate = new Date(c.lastOrderAt)
+              const lastLabel = lastDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+              return (
+                <div key={c.email || c.phone} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  background: i < 3 ? MEDAL_BG[i] : 'var(--sunk)',
+                  border: `1px solid ${i < 3 ? MEDAL_BORDER[i] : 'var(--line)'}`,
+                  borderRadius: 14, padding: '12px 14px',
+                }}>
+                  {/* Posición */}
+                  <div style={{ fontSize: i < 3 ? 20 : 13, flexShrink: 0, lineHeight: 1, minWidth: 24, textAlign: 'center', paddingTop: i < 3 ? 0 : 2, fontFamily: F, fontWeight: 800, color: 'var(--ink-3)' }}>
+                    {i < 3 ? MEDAL[i] : `${i + 1}°`}
                   </div>
-                  {(c.email || c.phone) && c.name && (
-                    <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.phone || c.email}
+                  {/* Avatar */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    background: avatarBg(c), display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: F, fontSize: '0.78rem', fontWeight: 900, color: '#fff',
+                    boxShadow: '0 2px 6px rgba(0,0,0,.1)',
+                  }}>{initials(c)}</div>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.name || c.email || c.phone}
                     </div>
-                  )}
-                  <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>{c.orders} pedidos</span>
-                    {c.avgFrequencyDays && <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>c/{c.avgFrequencyDays}d</span>}
-                    <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-2)' }}>⌀{clp(c.avgTicket)}</span>
+                    {c.name && (c.phone || c.email) && (
+                      <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>
+                        {c.phone || c.email}
+                      </div>
+                    )}
+                    {/* Stats row */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                      <span style={{ fontFamily: F, fontSize: '0.68rem', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, padding: '1px 6px', color: 'var(--ink-2)', fontWeight: 600 }}>
+                        {c.orders} {c.orders === 1 ? 'pedido' : 'pedidos'}
+                      </span>
+                      {c.avgFrequencyDays && (
+                        <span style={{ fontFamily: F, fontSize: '0.68rem', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, padding: '1px 6px', color: 'var(--ink-2)', fontWeight: 600 }}>
+                          cada {c.avgFrequencyDays}d
+                        </span>
+                      )}
+                      <span style={{ fontFamily: F, fontSize: '0.68rem', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, padding: '1px 6px', color: 'var(--ink-2)', fontWeight: 600 }}>
+                        ticket {clp(c.avgTicket)}
+                      </span>
+                      <span style={{ fontFamily: F, fontSize: '0.68rem', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, padding: '1px 6px', color: 'var(--ink-3)', fontWeight: 600 }}>
+                        último {lastLabel}
+                      </span>
+                    </div>
+                    {c.topProduct && (
+                      <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        Favorito: <strong>{c.topProduct}</strong>
+                      </div>
+                    )}
+                  </div>
+                  {/* Total gastado */}
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(c.totalSpent)}</div>
+                    <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 1 }}>gastado</div>
                   </div>
                 </div>
-                {/* Total gastado */}
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>{clpShort(c.totalSpent)}</div>
-                  <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'var(--ink-3)', marginTop: 1 }}>gastado</div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </Card>
       )}

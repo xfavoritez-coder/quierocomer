@@ -32,6 +32,7 @@ export interface ClientRow {
   avgFrequencyDays: number | null;
   status: "active" | "at_risk" | "churned" | "new";
   riskScore: number;
+  topProduct: string | null;
 }
 
 function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
         select: {
           externalId: true, customerEmail: true, customerName: true,
           customerPhone: true, totalAmount: true, deliveryFee: true,
-          tipAmount: true, createdAt: true,
+          tipAmount: true, createdAt: true, items: true,
         },
         orderBy: { createdAt: "asc" },
       }),
@@ -102,7 +103,7 @@ export async function GET(req: NextRequest) {
           status: { not: "CANCELLED" },
           OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
         },
-        select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true },
+        select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true, items: true },
         orderBy: { createdAt: "asc" },
       }),
     ]);
@@ -118,6 +119,7 @@ export async function GET(req: NextRequest) {
       phone: o.customerPhone || "",
       net:   Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
       createdAt: o.createdAt,
+      items: o.items,
     }));
 
     for (const o of onlineOrders) {
@@ -129,6 +131,7 @@ export async function GET(req: NextRequest) {
         phone: o.customerPhone || "",
         net:   Math.max(0, (o.total || 0) - (o.deliveryFee || 0)),
         createdAt: o.createdAt,
+        items: o.items,
       });
     }
     orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -136,15 +139,27 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Agrupar por cliente ─────────────────────────────────────────────
+  function extractItemNames(items: unknown): string[] {
+    if (!Array.isArray(items)) return [];
+    return items.map((it) => {
+      const o = (it || {}) as Record<string, unknown>;
+      const qty = Number(o.quantity ?? o.qty ?? 1) || 1;
+      const name = String(o.name ?? o.productName ?? o.title ?? o.description ?? '');
+      return name ? Array(qty).fill(name) : [];
+    }).flat();
+  }
+
   const clientMap = new Map<string, {
     email: string; name: string; phone: string;
     orders: number; totalSpent: number;
     firstAt: Date; lastAt: Date; dates: Date[];
+    productCounts: Map<string, number>;
   }>();
 
   for (const o of orders) {
     const key = o.email.trim().toLowerCase() || o.phone.trim() || "";
     if (!key) continue;
+    const itemNames = extractItemNames(o.items);
     const existing = clientMap.get(key);
     if (existing) {
       existing.orders++;
@@ -155,7 +170,10 @@ export async function GET(req: NextRequest) {
         if (o.phone) existing.phone = o.phone;
       }
       existing.dates.push(o.createdAt);
+      for (const n of itemNames) existing.productCounts.set(n, (existing.productCounts.get(n) ?? 0) + 1);
     } else {
+      const productCounts = new Map<string, number>();
+      for (const n of itemNames) productCounts.set(n, (productCounts.get(n) ?? 0) + 1);
       clientMap.set(key, {
         email: o.email.trim().toLowerCase() || "",
         name:  o.name  || "",
@@ -163,6 +181,7 @@ export async function GET(req: NextRequest) {
         orders: 1, totalSpent: o.net,
         firstAt: o.createdAt, lastAt: o.createdAt,
         dates: [o.createdAt],
+        productCounts,
       });
     }
   }
@@ -192,6 +211,9 @@ export async function GET(req: NextRequest) {
       avgFrequencyDays: avgFreq,
       status: computeStatus(daysSince, avgFreq),
       riskScore: computeRisk(daysSince, avgFreq, c.orders),
+      topProduct: c.productCounts.size > 0
+        ? [...c.productCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+        : null,
     };
   });
 
@@ -207,9 +229,9 @@ export async function GET(req: NextRequest) {
     ? Math.round(allClients.reduce((s, c) => s + c.avgTicket, 0) / total)
     : 0;
 
-  // Top 3 VIP
+  // Top 5 VIP
   const bySpend = allClients.slice().sort((a, b) => b.totalSpent - a.totalSpent);
-  const top3 = bySpend.slice(0, 3);
+  const top3 = bySpend.slice(0, 5);
 
   // 80/20
   const totalSpentAll = allClients.reduce((s, c) => s + c.totalSpent, 0);
