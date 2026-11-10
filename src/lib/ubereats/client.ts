@@ -42,6 +42,7 @@ const EP = {
   // bloquea recibir/aceptar el pedido en la verificación.
   restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurantdelivery/status`,
   storeStatus: (storeId: string) => `${BASE}/v1/eats/store/${storeId}/status`,
+  posData: (storeId: string) => `${BASE}/v1/eats/stores/${storeId}/pos_data`,
 };
 // Scopes del token. getOrder (v2) y accept/deny (v1) funcionan con `eats.store eats.order`
 // (verificado en sandbox). Las ESCRITURAS necesitan scopes extra que Uber concede recién
@@ -158,6 +159,35 @@ export async function getStoreMenu(storeId: string): Promise<Record<string, unkn
   const res = await authed(`${BASE}/v2/eats/stores/${storeId}/menus`);
   if (!res.ok) throw new Error(`Uber getMenu ${res.status}: ${await res.text()}`);
   return (await res.json()) as Record<string, unknown>;
+}
+
+// ── Integration Configuration (provisioning de la integración POS por tienda) ──
+// Ciclo activar/consultar/actualizar/eliminar que exige el estándar de Uber.
+// Endpoints verificados en sandbox: GET/POST/DELETE /v1/eats/stores/{id}/pos_data.
+// GET funciona con eats.store; POST/DELETE requieren scope `eats.pos_provisioning`
+// (solo en producción). pos_data trae: pos_integration_enabled, online_status,
+// auto_accept_enabled, order_release_enabled, order_manager_client_id.
+
+/** Consulta la config de integración POS de la tienda. null si no hay acceso. */
+export async function getStorePosData(storeId: string): Promise<Record<string, unknown> | null> {
+  const res = await authed(EP.posData(storeId));
+  if (!res.ok) return null;
+  return (await res.json().catch(() => null)) as Record<string, unknown> | null;
+}
+
+/** Activa/actualiza la integración POS de la tienda. ⚠️ Requiere `eats.pos_provisioning`. */
+export async function setStorePosIntegration(storeId: string, opts: { enabled: boolean; autoAccept?: boolean; orderManagerClientId?: string }): Promise<{ ok: boolean; status: number; body: string }> {
+  const body: Record<string, unknown> = { pos_integration_enabled: opts.enabled };
+  if (opts.autoAccept != null) body.auto_accept_enabled = opts.autoAccept;
+  if (opts.orderManagerClientId) body.order_manager_client_id = opts.orderManagerClientId;
+  const res = await authed(EP.posData(storeId), { method: "POST", body: JSON.stringify(body) });
+  return { ok: res.ok, status: res.status, body: await res.text() };
+}
+
+/** Elimina/desvincula la integración POS de la tienda. ⚠️ Requiere `eats.pos_provisioning`. */
+export async function removeStorePosIntegration(storeId: string): Promise<{ ok: boolean; status: number; body: string }> {
+  const res = await authed(EP.posData(storeId), { method: "DELETE" });
+  return { ok: res.ok, status: res.status, body: await res.text() };
 }
 
 // ── Store status (online/offline) ────────────────────────────────
