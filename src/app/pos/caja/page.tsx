@@ -37,7 +37,7 @@ const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transfer
 
 export default function CajaPage() {
   const navigate = usePosNav()
-  const { restaurantId, restaurant, loading: restLoading } = usePosRestaurant()
+  const { restaurantId, restaurant, loading: restLoading, isOwner } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const { caja: serverCaja, shift, step, loading: cashLoading, refresh: refreshCash } = usePosCash(restaurantId)
   const cashSession = toLegacyCashSession(serverCaja, restaurantId)
@@ -264,7 +264,7 @@ export default function CajaPage() {
         <div className="pos-scroll">
           <div className="pos-caja-wrap">
             <CajaStepper step={step} />
-            <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />
+            {!isOwner && <TurnoBar restaurantId={restaurantId} shift={shift} hasOpenCaja={!!serverCaja} onChanged={refreshCash} />}
 
             {step === 4 && (
               <div style={{ background: 'var(--jade-tint)', border: '1px solid var(--jade)', borderRadius: 'var(--r-card)', padding: '14px 16px', marginBottom: 18 }}>
