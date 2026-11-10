@@ -45,14 +45,19 @@ export async function GET(req: NextRequest) {
     const dishes = allDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: allDishIds } },
       select: {
-        id: true, name: true, photos: true, price: true,
+        id: true, name: true, photos: true, price: true, ecommerceOnly: true,
         modifierTemplates: { include: modifierInclude },
       },
     }) : [];
     const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
 
+    // Excluir ofertas cuyo producto es "solo ecommerce" (Dish.ecommerceOnly): su
+    // banner no debe mostrarse en la carta QR, igual que el plato ya se oculta.
+    const visiblePromos = promos.filter(p => !(p.dishIds.length > 0 && p.dishIds.every(id => (dishMap[id] as any)?.ecommerceOnly)));
+    if (!visiblePromos.length) return NextResponse.json({ promo: null });
+
     // If we have a guestId, try to match with guest preferences
-    let bestPromo = promos[0]; // Default: most recent
+    let bestPromo = visiblePromos[0]; // Default: most recent
 
     if (guestId) {
       const guest = await prisma.guestProfile.findUnique({
@@ -73,7 +78,7 @@ export async function GET(req: NextRequest) {
         }
 
         let bestScore = -1;
-        for (const promo of promos) {
+        for (const promo of visiblePromos) {
           let score = 0;
           // Bonus if promo includes dishes the guest has viewed
           for (const dishId of promo.dishIds) {

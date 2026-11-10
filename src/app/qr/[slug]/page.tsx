@@ -233,10 +233,15 @@ export default async function CartaPage({
   const promoDishIds = filteredPromos.flatMap(p => p.dishIds);
   const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
     where: { id: { in: promoDishIds } },
-    select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true },
+    select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true, ecommerceOnly: true },
   }).catch(() => []) : [];
   const promoDishMap = Object.fromEntries(promoDishes.map(d => [d.id, d]));
-  const marketingPromos = filteredPromos.map(p => ({
+  // Ocultar el banner en la carta QR si el producto está marcado "solo ecommerce"
+  // (Dish.ecommerceOnly): el plato ya se oculta de la carta, su banner también debe.
+  const ecomOnlyDishIds = new Set(promoDishes.filter(d => (d as any).ecommerceOnly).map(d => d.id));
+  const marketingPromos = filteredPromos
+    .filter(p => !(p.dishIds.length > 0 && p.dishIds.every(id => ecomOnlyDishIds.has(id))))
+    .map(p => ({
     id: p.id, name: p.name, description: p.description,
     promoType: p.promoType, imageUrl: p.imageUrl,
     discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,

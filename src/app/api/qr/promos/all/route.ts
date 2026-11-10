@@ -39,13 +39,17 @@ export async function GET(req: NextRequest) {
     const dishes = allDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: allDishIds } },
       select: {
-        id: true, name: true, description: true, price: true, photos: true, ingredients: true,
+        id: true, name: true, description: true, price: true, photos: true, ingredients: true, ecommerceOnly: true,
         modifierTemplates: { include: modifierInclude },
       },
     }) : [];
     const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
 
-    const promos = promotions.map(p => {
+    const promos = promotions
+      // Ocultar ofertas cuyo producto es "solo ecommerce" (Dish.ecommerceOnly): su
+      // banner no va en la carta QR, igual que el plato ya se oculta.
+      .filter(p => !(p.dishIds.length > 0 && p.dishIds.every(id => (dishMap[id] as any)?.ecommerceOnly)))
+      .map(p => {
       const promoDishes = p.dishIds.map(id => dishMap[id]).filter(Boolean);
       // Single-dish product promos inherit modifiers from the dish;
       // multi-dish or graphic promos use their own modifierTemplates.
