@@ -14,13 +14,13 @@ type J = Record<string, unknown>;
 const obj = (v: unknown): J => (v && typeof v === "object" && !Array.isArray(v) ? (v as J) : {});
 const str = (v: unknown): string => (v == null ? "" : String(v)).trim();
 
-// Monto de Uber: suele venir como { amount, currency_code } en la unidad MENOR de
-// la moneda. CLP no usa decimales; se confirma el factor con datos reales del
-// sandbox (por ahora se toma el amount tal cual).
+// Monto de Uber: viene como { amount, currency_code } en la unidad MENOR (1/100).
+// VERIFICADO en sandbox 2026-11-10: amount 100 → formatted "CLP 1". Se divide por
+// 100 para obtener el valor en CLP (p. ej. CLP 1000 llega como amount 100000).
 function money(v: unknown): number {
   const o = obj(v);
-  const n = Number(o.amount ?? o.amount_e5 ?? v);
-  return Number.isFinite(n) ? Math.round(n) : 0;
+  const n = Number(o.amount ?? v);
+  return Number.isFinite(n) ? Math.round(n / 100) : 0;
 }
 
 export interface UberIngestResult { posOrderId: string; isNew: boolean }
@@ -53,7 +53,9 @@ export async function createPosOrderFromUberOrder(restaurantId: string, order: J
   const items = rawItems.map((it) => {
     const groups = Array.isArray(it.selected_modifier_groups) ? (it.selected_modifier_groups as J[]) : [];
     const options = groups.flatMap((g) => (Array.isArray(g.selected_items) ? (g.selected_items as J[]) : []).map((s) => str(s.title || s.name))).filter(Boolean);
-    return { productName: str(it.title || it.name || "Ítem"), quantity: Number(it.quantity) || 1, options, note: str(it.special_instructions) || undefined };
+    const price = obj(it.price);
+    const unitTotal = money(price.total_price || price.unit_price) || undefined;
+    return { productName: str(it.title || it.name || "Ítem"), quantity: Number(it.quantity) || 1, options, unitTotal, note: str(it.special_instructions) || undefined };
   });
 
   const payment = obj(order.payment);
