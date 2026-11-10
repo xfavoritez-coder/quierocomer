@@ -328,7 +328,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         image_url: d.photos?.[0] ?? null,
         is_sold_out: dishSoldOut(d),
         is_hero: d.isHero === true,
-        daily_badge: d.dailyBadge === true,
+        daily_badge: d.dailyBadge === true || (activePromo != null && (activePromo as any).daysOfWeek?.length > 0),
         new_badge: d.newBadge === true,
         toteat_code: d.toteatProductId ?? null,
         // Oculto para el cliente: categoría inactiva, plato inactivo u oculto de
@@ -457,7 +457,7 @@ export interface StorefrontLive {
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   // id de plato → precio/disponibilidad vigentes (solo los que difieren se mezclan)
-  products: Record<string, { price: number; original_price: number | null; is_happy_hour: boolean; is_sold_out: boolean; promo_name?: string | null; promo_id?: string | null }>;
+  products: Record<string, { price: number; original_price: number | null; is_happy_hour: boolean; is_sold_out: boolean; promo_name?: string | null; promo_id?: string | null; daily_badge?: boolean }>;
 }
 
 /**
@@ -494,7 +494,7 @@ export async function loadEcommerceLive(key: string): Promise<StorefrontLive | n
     if (p.daysOfWeek?.length > 0 && !p.daysOfWeek.includes(todayDow)) return false;
     return true;
   }));
-  const promoByDishIdLive = new Map<string, { id: string; promoName: string | null; promoPrice: number | null; originalPrice: number | null }>();
+  const promoByDishIdLive = new Map<string, { id: string; promoName: string | null; promoPrice: number | null; originalPrice: number | null; daysOfWeek: number[] }>();
   for (const p of livePromos) promoByDishIdLive.set(p.dishId, p);
 
   const products: StorefrontLive["products"] = {};
@@ -503,7 +503,7 @@ export async function loadEcommerceLive(key: string): Promise<StorefrontLive | n
     const pricing = promo?.promoPrice != null
       ? { price: promo.promoPrice, original_price: promo.originalPrice ?? d.price, is_happy_hour: false }
       : dishEffectivePricing(d, activeHHs);
-    products[d.id] = { ...pricing, is_sold_out: dishSoldOut(d), promo_name: promo?.promoName ?? null, promo_id: promo?.id ?? null };
+    products[d.id] = { ...pricing, is_sold_out: dishSoldOut(d), promo_name: promo?.promoName ?? null, promo_id: promo?.id ?? null, daily_badge: promo != null && (promo.daysOfWeek?.length ?? 0) > 0 };
   }
   return { openStatus: avail.openStatus, deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled, products };
 }
@@ -530,6 +530,7 @@ export async function getEcommerceStorefront(key: string, opts?: { fromApp?: boo
       is_happy_hour: o.is_happy_hour,
       is_sold_out: o.is_sold_out,
       promo_id: o.promo_id ?? p.promo_id,
+      daily_badge: o.daily_badge !== undefined ? o.daily_badge || p.daily_badge : p.daily_badge,
     };
   });
   return { tenant, categories: base.categories, products };

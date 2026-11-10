@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { processAutomations } from "@/lib/automations/processor";
 import { runBirthdayPushes } from "@/lib/loyalty/birthdayPush";
 import { sendAdminEmail, qrNudgeEmailHtml } from "@/lib/email/sendAdminEmail";
-import { revalidateQrCache } from "@/lib/qr/revalidateQrCache";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -485,59 +484,6 @@ export async function GET(req: NextRequest) {
       console.error("[diario] dailyBadge expiry error:", e);
     }
 
-    // 7b. Auto-activar cinta "Solo hoy" en platos de promociones activas para hoy.
-    // Si una promoción tiene daysOfWeek con el día actual y está ACTIVE (y en rango de fechas),
-    // sus platos reciben dailyBadge=true + hideFromOrdering=false para que aparezcan en la tienda.
-    let dailyBadgeActivated = 0;
-    try {
-      // Día de la semana en hora Chile (0=Dom, 1=Lun, …, 6=Sáb)
-      const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
-      const chileDayOfWeek = chileNow.getDay();
-
-      // Promociones activas con días configurados
-      const promosTodayRaw = await prisma.promotion.findMany({
-        where: {
-          status: "ACTIVE",
-          daysOfWeek: { isEmpty: false },
-          OR: [{ validFrom: null }, { validFrom: { lte: now } }],
-          AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: now } }] }],
-        },
-        select: { id: true, dishIds: true, dishId: true, daysOfWeek: true },
-      });
-
-      // Filtrar solo las de hoy
-      const promosToday = promosTodayRaw.filter(p => p.daysOfWeek.includes(chileDayOfWeek));
-
-      if (promosToday.length > 0) {
-        // Reunir todos los dishIds únicos
-        const dishIdSet = new Set<string>();
-        for (const p of promosToday) {
-          for (const id of p.dishIds) dishIdSet.add(id);
-          if (p.dishId) dishIdSet.add(p.dishId);
-        }
-        const dishIdsToday = [...dishIdSet];
-
-        if (dishIdsToday.length > 0) {
-          const activated = await prisma.dish.updateMany({
-            where: {
-              id: { in: dishIdsToday },
-              isActive: true,
-              deletedAt: null,
-            },
-            data: { dailyBadge: true, hideFromOrdering: false },
-          });
-          dailyBadgeActivated = activated.count;
-          if (dailyBadgeActivated > 0) {
-            console.log(`[diario] dailyBadge activado: ${dailyBadgeActivated} platos desde ${promosToday.length} promos (día ${chileDayOfWeek})`);
-          }
-          // Invalidar caché del ecommerce para que el badge aparezca de inmediato
-          try { revalidateQrCache(); } catch {}
-        }
-      }
-    } catch (e) {
-      console.error("[diario] dailyBadge activation error:", e);
-    }
-
     // 8. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -571,7 +517,6 @@ export async function GET(req: NextRequest) {
           translationsBackfilled,
           qrNudgeSent,
           dailyBadgeHidden,
-          dailyBadgeActivated,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,
