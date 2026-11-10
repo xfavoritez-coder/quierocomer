@@ -30,10 +30,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (slug.includes(".")) {
     const brand = await loadEcommerceBrandByDomain(slug);
     if (brand) {
+      const brandIcon = brand.faviconUrl || brand.logoUrl;
+      const brandTitle = brand.pageTitle || `${brand.brandName} · Pedir online`;
+      const brandDesc = brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`;
       return {
-        title: brand.pageTitle || `${brand.brandName} · Pedir online`,
-        description: brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`,
-        ...((brand.faviconUrl || brand.logoUrl) ? { icons: { icon: brand.faviconUrl || brand.logoUrl!, shortcut: brand.faviconUrl || brand.logoUrl!, apple: brand.faviconUrl || brand.logoUrl! } } : {}),
+        title: brandTitle,
+        description: brandDesc,
+        ...(brandIcon ? { icons: { icon: brandIcon, shortcut: brandIcon, apple: brandIcon } } : {}),
+        openGraph: {
+          title: brand.pageTitle || brand.brandName,
+          description: brandDesc,
+          images: brandIcon ? [{ url: brandIcon, width: 400, height: 400, alt: brand.brandName }] : [],
+          type: "website",
+        },
       };
     }
   }
@@ -42,13 +51,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return {};
   const { tenant } = data;
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
-  // Fotos de productos para el preview al compartir (OpenGraph): varias, no solo el logo.
+  // Logo primero para que WhatsApp lo tome como imagen principal del preview.
   const ogImages = [
-    ...data.products
-      .map((p) => p.image_url)
-      .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
-      .slice(0, 4)
-      .map((url) => ({ url })),
     ...(tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : []),
   ];
   // PWA: manifest por local. base "" en dominio propio, "/ecommerce/<slug>" en el principal.
