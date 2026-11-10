@@ -301,21 +301,11 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view])
 
-  const wrapperStyle: React.CSSProperties = fullscreen
-    ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#000', display: 'flex', flexDirection: 'column' }
-    : { position: 'relative', width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }
-
-  const mapStyle: React.CSSProperties = fullscreen
-    ? { flex: 1, width: '100%' }
-    : { width: '100%', height: '100%' }
-
-  return (
-    <div style={wrapperStyle}>
-      <div ref={divRef} style={mapStyle} />
-
+  const controls = (
+    <>
       {/* Toggle Calor / Sectores */}
       <div style={{
-        position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 10000,
+        position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10000,
         display: 'flex', background: 'rgba(255,255,255,0.95)', borderRadius: 8,
         border: '1px solid rgba(0,0,0,0.12)', overflow: 'hidden',
         boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
@@ -325,12 +315,9 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
             key={v}
             onClick={() => setView(v)}
             style={{
-              padding: '5px 10px',
-              border: 'none',
+              padding: '5px 10px', border: 'none',
               borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 700,
+              cursor: 'pointer', fontSize: 11, fontWeight: 700,
               fontFamily: 'system-ui,sans-serif',
               background: view === v ? '#3b82f6' : 'transparent',
               color: view === v ? '#fff' : '#444',
@@ -366,6 +353,26 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
           </svg>
         )}
       </button>
+    </>
+  )
+
+  if (fullscreen) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#000' }}>
+        <div ref={divRef} style={{ width: '100%', height: '100%' }} />
+        {controls}
+      </div>
+    )
+  }
+
+  return (
+    // Outer wrapper: position:relative but NO overflow:hidden so bottom:12 works reliably
+    <div style={{ position: 'relative', width: '100%' }}>
+      {/* Inner map container: overflow:hidden for border-radius clipping */}
+      <div style={{ width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }}>
+        <div ref={divRef} style={{ width: '100%', height: '100%' }} />
+      </div>
+      {controls}
     </div>
   )
 }

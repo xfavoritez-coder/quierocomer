@@ -652,11 +652,11 @@ function DeliveryCostChart({ orders, selectedDate, onDateClick }: {
                   outline: isActive ? `2px solid ${BLUE}` : 'none', outlineOffset: 2,
                   transition: 'background .15s',
                 }}>
-                  <span style={{ position: 'absolute', bottom: '100%', marginBottom: 3, left: '50%', transform: 'translateX(-50%)', fontFamily: F, fontSize: '0.56rem', fontWeight: 700, color: isActive ? BLUE : 'var(--ink-2)', whiteSpace: 'nowrap' }}>{clpShort(fee)}</span>
+                  <span style={{ position: 'absolute', bottom: '100%', marginBottom: 3, left: '50%', transform: 'translateX(-50%)', fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: isActive ? BLUE : 'var(--ink-2)', whiteSpace: 'nowrap' }}>{clpShort(fee)}</span>
                 </div>
               </div>
-              <span style={{ fontFamily: F, fontSize: '0.62rem', color: isActive ? BLUE : 'var(--ink)', marginTop: 3, whiteSpace: 'nowrap', fontWeight: 700, textTransform: 'capitalize' }}>{dayLabel}</span>
-              <span style={{ fontFamily: F, fontSize: '0.56rem', color: isActive ? BLUE : 'var(--ink-3)', whiteSpace: 'nowrap', fontWeight: isActive ? 700 : 400 }}>{dateLabel}</span>
+              <span style={{ fontFamily: F, fontSize: '0.72rem', color: isActive ? BLUE : 'var(--ink)', marginTop: 3, whiteSpace: 'nowrap', fontWeight: 700, textTransform: 'capitalize' }}>{dayLabel}</span>
+              <span style={{ fontFamily: F, fontSize: '0.64rem', color: isActive ? BLUE : 'var(--ink-3)', whiteSpace: 'nowrap', fontWeight: isActive ? 700 : 400 }}>{dateLabel}</span>
             </div>
           )
         })}
@@ -696,14 +696,6 @@ function DeliveryTimesChart({ orders }: { orders: DeliveryTimeRow[] }) {
 
   return (
     <Card style={{ padding: '14px 14px 12px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
-          <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Tiempos de entrega</span>
-          <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginLeft: 8 }}>promedio <strong style={{ color: dotColor(avgTotal) }}>{avgTotal} min</strong> · {completed.length} pedidos</span>
-        </div>
-      </div>
-
       {/* Distribución */}
       <div>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: distH, padding: '0 4px' }}>
@@ -813,15 +805,16 @@ function DeliveryTimesSection({ dt, restaurantId, selectedDate, onDateClick }: {
       <div style={{ marginBottom: 12 }} />
 
       {/* KPI summary pills */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
         {[
+          { label: 'Costo total', value: kpiCostoTotal > 0 ? clp(kpiCostoTotal) : '—', color: '#10b981' },
           { label: 'Promedio total', value: minLabel(kpiAvgTotal), color: kpiAvgTotal != null ? timeColor(kpiAvgTotal) : 'var(--ink-3)' },
           { label: 'Preparación', value: minLabel(kpiAvgPrep), color: BLUE },
           { label: 'En tránsito', value: minLabel(kpiAvgTransit), color: PURPLE },
         ].map(s => (
-          <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', borderLeft: `3px solid ${s.color}` }}>
-            <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
+          <div key={s.label} style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 8px', borderLeft: `3px solid ${s.color}` }}>
+            <div style={{ fontFamily: F, fontSize: '0.6rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontFamily: F, fontSize: '1rem', fontWeight: 900, color: 'var(--ink)' }}>{s.value}</div>
           </div>
         ))}
       </div>
