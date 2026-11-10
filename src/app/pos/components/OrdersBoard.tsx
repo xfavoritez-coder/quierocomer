@@ -209,6 +209,9 @@ function OrderCard({
   const isRetiro = !isDelivery && !isDineIn
   const typeLabel = isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'
   const typeColor = isDelivery ? '#64748b' : isDineIn ? '#8b5cf6' : '#64748b'
+  // Pedido de Uber Eats (puede ser delivery o retiro): pill verde adicional, sin
+  // reemplazar el de tipo (delivery/retiro).
+  const isUberEats = (order.vendorName || '').toLowerCase().includes('uber eats')
   const next = nextAction(order.opsStage, isDelivery, order.delifastVentaId)
   const busy = stageBusy === order.id
   // Cuando Delifast cancela el reparto el footer pasa a rojo aunque opsStage=ready.
@@ -261,6 +264,7 @@ function OrderCard({
               {displayName(order.customerName || 'Cliente')}
             </div>
             {cols === 2 && showTypeChip && <span style={{ ...chip(typeColor), flexShrink: 0 }}>{typeLabel}</span>}
+            {cols === 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), flexShrink: 0 }}>UberEats</span>}
             {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
           <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', flexShrink: 0 }}>
@@ -271,6 +275,7 @@ function OrderCard({
         {(secondary || (cols !== 2 && (showTypeChip || branchLabel))) && (
           <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word' }}>
             {cols !== 2 && showTypeChip && <span style={{ ...chip(typeColor), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{typeLabel}</span>}
+            {cols !== 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>UberEats</span>}
             {cols !== 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{branchLabel}</span>}
             {isDelivery && order.addressLine && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3, color: 'var(--ink-4)', position: 'relative', top: -1 }}><path d="M12 21C12 21 5 13.5 5 9a7 7 0 0 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>}
             {secondary}
