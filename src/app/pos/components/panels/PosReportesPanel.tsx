@@ -2018,7 +2018,7 @@ function ClientDetailModal({ client, restaurantId, onClose }: {
 
 // ── Sección clientes ──────────────────────────────────────────────────
 type ChartRange = 'today' | '7d' | '30d' | '90d' | '365d'
-interface ChartBucket { date: string; label: string; newClients: number; recurringClients: number }
+interface ChartBucket { date: string; label: string; newClients: number; recurringClients: number; unknownOrders: number }
 
 function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: string; allBranches?: BranchInfo[] }) {
   const [chartRange, setChartRange] = useState<ChartRange>('30d')
@@ -2048,8 +2048,8 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
   const [tooltipIdx, setTooltipIdx] = useState<number | null>(null)
 
   const buckets = chartData ?? []
-  const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients))
-  const hasData = buckets.some(b => b.newClients + b.recurringClients > 0)
+  const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients + (b.unknownOrders ?? 0)))
+  const hasData = buckets.some(b => b.newClients + b.recurringClients + (b.unknownOrders ?? 0) > 0)
   const count = buckets.length
   const labelEvery = count <= 12 ? 1 : count <= 20 ? 2 : count <= 31 ? 5 : 7
   const showCount = count <= 25
@@ -2076,7 +2076,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: BLUE, flexShrink: 0 }} />
           <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Nuevos</span>
@@ -2084,6 +2084,10 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
           <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Recurrentes</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ink-4)', flexShrink: 0 }} />
+          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Sin contacto</span>
         </div>
       </div>
 
@@ -2116,7 +2120,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                 fontFamily: F, fontSize: 11, lineHeight: 1.6, pointerEvents: 'none',
                 boxShadow: '0 4px 16px rgba(0,0,0,.25)',
               }}>
-                <div style={{ fontWeight: 700, marginBottom: 3 }}>{b.label}</div>
+                <div style={{ fontWeight: 700, marginBottom: 3 }}>{b.label} · {b.newClients + b.recurringClients + (b.unknownOrders ?? 0)} ped.</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: BLUE, display: 'inline-block', flexShrink: 0 }} />
                   Nuevos: <strong>{b.newClients}</strong>
@@ -2125,17 +2129,27 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
                   Recurrentes: <strong>{b.recurringClients}</strong>
                 </div>
+                {(b.unknownOrders ?? 0) > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-4)', display: 'inline-block', flexShrink: 0 }} />
+                    Sin contacto: <strong>{b.unknownOrders}</strong>
+                  </div>
+                )}
               </div>
             )
           })()}
           <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
             {buckets.map((b, i) => {
-              const total = b.newClients + b.recurringClients
+              const unk = b.unknownOrders ?? 0
+              const total = b.newClients + b.recurringClients + unk
               const totalPct = Math.max(0, Math.round((total / maxTotal) * 148))
-              const newH = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
-              const recH = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, totalPct - newH) : 0
+              // Alturas proporcionales dentro de la barra total
+              const newH  = total > 0 ? Math.max(b.newClients > 0 ? 2 : 0, Math.round((b.newClients / total) * totalPct)) : 0
+              const recH  = total > 0 ? Math.max(b.recurringClients > 0 ? 2 : 0, Math.round((b.recurringClients / total) * totalPct)) : 0
+              const unkH  = total > 0 ? Math.max(unk > 0 ? 2 : 0, totalPct - newH - recH) : 0
               const showLabel = i % labelEvery === 0
               const isHovered = tooltipIdx === i
+              const topRadius = newH > 0 ? '3px 3px 0 0' : recH > 0 ? '3px 3px 0 0' : '3px 3px 0 0'
               return (
                 <div
                   key={b.date}
@@ -2150,8 +2164,9 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                     <div style={{ fontSize: 8, lineHeight: 1, visibility: 'hidden' }}>0</div>
                   )}
                   <div style={{ width: '80%', maxWidth: 28, display: 'flex', flexDirection: 'column', alignItems: 'stretch', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
-                    {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: '3px 3px 0 0', minHeight: 2 }} />}
-                    {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? '3px 3px 0 0' : '0', minHeight: 2 }} />}
+                    {newH > 0 && <div style={{ height: newH, background: BLUE, borderRadius: topRadius, minHeight: 2 }} />}
+                    {recH > 0 && <div style={{ height: recH, background: '#10b981', borderRadius: newH === 0 ? topRadius : '0', minHeight: 2 }} />}
+                    {unkH > 0 && <div style={{ height: unkH, background: 'var(--ink-4)', borderRadius: newH === 0 && recH === 0 ? topRadius : '0', minHeight: 2, opacity: 0.6 }} />}
                     {total === 0 && <div style={{ height: 2, background: 'var(--line)', borderRadius: 2 }} />}
                   </div>
                   <div style={{ fontFamily: F, fontSize: 10, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'nowrap', visibility: showLabel ? 'visible' : 'hidden', lineHeight: 1, fontWeight: 500 }}>

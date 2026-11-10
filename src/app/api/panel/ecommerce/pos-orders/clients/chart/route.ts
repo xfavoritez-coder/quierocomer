@@ -149,7 +149,6 @@ export async function GET(req: NextRequest) {
       FROM "PosOrder"
       WHERE "restaurantId" IN (${idsLiteral})
         AND "posStatus" != 'canceled'
-        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
       UNION ALL
       SELECT
         COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,
@@ -158,11 +157,11 @@ export async function GET(req: NextRequest) {
       WHERE "restaurantId" IN (${idsLiteral})
         AND "status" != 'CANCELLED'
         AND "source" = 'ecommerce'
-        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
     ),
     first_orders AS (
       SELECT client_key, MIN("createdAt") as first_at
       FROM all_orders
+      WHERE client_key IS NOT NULL
       GROUP BY client_key
     ),
     range_data AS (
@@ -170,28 +169,30 @@ export async function GET(req: NextRequest) {
       FROM all_orders
       WHERE "createdAt" >= $1::timestamptz
         AND "createdAt" <= $2::timestamptz
-    ),
-    client_buckets AS (SELECT DISTINCT client_key, order_bucket FROM range_data)
+    )
     SELECT
-      cb.order_bucket::text as bucket,
-      COUNT(CASE WHEN ${firstBucketExpr} = cb.order_bucket THEN 1 END)::int as new_clients,
-      COUNT(CASE WHEN ${firstBucketExpr} < cb.order_bucket THEN 1 END)::int as recurring_clients
-    FROM client_buckets cb
-    JOIN first_orders fo ON cb.client_key = fo.client_key
-    GROUP BY cb.order_bucket
-    ORDER BY cb.order_bucket
+      rd.order_bucket::text as bucket,
+      COUNT(CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} = rd.order_bucket THEN 1 END)::int as new_clients,
+      COUNT(CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} < rd.order_bucket THEN 1 END)::int as recurring_clients,
+      COUNT(CASE WHEN rd.client_key IS NULL THEN 1 END)::int as unknown_orders
+    FROM range_data rd
+    LEFT JOIN first_orders fo ON rd.client_key = fo.client_key
+    GROUP BY rd.order_bucket
+    ORDER BY rd.order_bucket
   `;
 
   interface RawRow {
     bucket: string;
     new_clients: number;
     recurring_clients: number;
+    unknown_orders: number;
   }
 
   const rows = (await prisma.$queryRawUnsafe<RawRow[]>(sql, from, to)).map(r => ({
     bucket: r.bucket,
     newClients: Number(r.new_clients),
     recurringClients: Number(r.recurring_clients),
+    unknownOrders: Number(r.unknown_orders),
   }));
 
   // Fill in missing buckets
@@ -206,6 +207,7 @@ export async function GET(req: NextRequest) {
       label: formatLabel(dateStr, gran, prevDateStr),
       newClients: existing?.newClients ?? 0,
       recurringClients: existing?.recurringClients ?? 0,
+      unknownOrders: existing?.unknownOrders ?? 0,
     };
   });
 
