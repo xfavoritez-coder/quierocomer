@@ -3,7 +3,35 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-interface Pt { lat: number; lng: number }
+interface Pt { lat: number; lng: number; net?: number }
+
+interface Cluster {
+  lat: number; lng: number;
+  count: number; avgNet: number;
+}
+
+// Agrupa puntos en celdas de ~700m usando una cuadrícula de coordenadas
+function clusterPoints(points: Pt[], gridDeg = 0.007): Cluster[] {
+  const grid = new Map<string, { latSum: number; lngSum: number; count: number; netSum: number }>()
+  for (const p of points) {
+    const key = `${Math.round(p.lat / gridDeg)},${Math.round(p.lng / gridDeg)}`
+    const e = grid.get(key)
+    if (e) { e.latSum += p.lat; e.lngSum += p.lng; e.count++; e.netSum += p.net ?? 0 }
+    else grid.set(key, { latSum: p.lat, lngSum: p.lng, count: 1, netSum: p.net ?? 0 })
+  }
+  return Array.from(grid.values()).map(c => ({
+    lat: c.latSum / c.count,
+    lng: c.lngSum / c.count,
+    count: c.count,
+    avgNet: c.count > 0 ? Math.round(c.netSum / c.count) : 0,
+  }))
+}
+
+function clpShort(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1000) return `$${Math.round(n / 1000)}k`
+  return `$${Math.round(n)}`
+}
 
 // Paleta de colores: frío (azul) → cálido (rojo). Array de 256 RGBA.
 function buildPalette(): Uint8ClampedArray {
@@ -59,9 +87,9 @@ function drawHeatmap(canvas: HTMLCanvasElement, map: L.Map, points: Pt[], radius
   const palette = buildPalette()
 
   for (let i = 0; i < data.length; i += 4) {
-    const v = data[i]            // intensidad (canal R, igual R=G=B en blanco)
+    const v = data[i]
     if (v === 0) continue
-    const idx = v * 4            // lookup en la paleta
+    const idx = v * 4
     data[i]     = palette[idx]
     data[i + 1] = palette[idx + 1]
     data[i + 2] = palette[idx + 2]
@@ -71,11 +99,63 @@ function drawHeatmap(canvas: HTMLCanvasElement, map: L.Map, points: Pt[], radius
   ctx.putImageData(imgData, 0, 0)
 }
 
+function buildClusterIcon(count: number, maxCount: number): L.DivIcon {
+  const ratio = count / Math.max(1, maxCount)
+  const size = Math.round(Math.max(32, Math.min(60, 28 + ratio * 32)))
+  // Color: azul para pocos pedidos, naranja para muchos
+  const hue = Math.round(220 - ratio * 160) // 220 = azul, 60 = amarillo→naranja
+  const fontSize = size > 42 ? 13 : 11
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:hsla(${hue},80%,48%,0.88);
+      border:2.5px solid rgba(255,255,255,0.9);
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:800;font-size:${fontSize}px;
+      font-family:system-ui,sans-serif;
+    ">${count}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  })
+}
+
+function buildClusterLayer(map: L.Map, points: Pt[]): L.LayerGroup {
+  const clusters = clusterPoints(points)
+  const maxCount = Math.max(1, ...clusters.map(c => c.count))
+  const hasNetData = points.some(p => (p.net ?? 0) > 0)
+
+  const layer = L.layerGroup()
+
+  for (const c of clusters) {
+    const marker = L.marker([c.lat, c.lng], {
+      icon: buildClusterIcon(c.count, maxCount),
+      zIndexOffset: 500,
+    })
+
+    const countLine = `<strong>${c.count} pedido${c.count !== 1 ? 's' : ''}</strong>`
+    const spendLine = hasNetData && c.avgNet > 0
+      ? `<br><span style="color:#6b7280;font-size:11px;">Ticket prom. </span><strong style="color:#111;">${clpShort(c.avgNet)}</strong>`
+      : ''
+
+    marker.bindTooltip(
+      `<div style="font-family:system-ui,sans-serif;font-size:12px;line-height:1.5;padding:1px 2px;">${countLine}${spendLine}</div>`,
+      { sticky: false, direction: 'top', offset: [0, -8] }
+    )
+    marker.addTo(layer)
+  }
+
+  return layer
+}
+
 export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
-  const divRef    = useRef<HTMLDivElement>(null)
-  const mapRef    = useRef<L.Map | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const divRef         = useRef<HTMLDivElement>(null)
+  const mapRef         = useRef<L.Map | null>(null)
+  const canvasRef      = useRef<HTMLCanvasElement | null>(null)
+  const clusterLayerRef = useRef<L.LayerGroup | null>(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const [view, setView] = useState<'heat' | 'sectors'>('heat')
 
   // Inicializar mapa una sola vez
   useEffect(() => {
@@ -89,6 +169,7 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
     Object.assign(canvas.style, {
       position: 'absolute', top: '0', left: '0',
       pointerEvents: 'none', zIndex: '400',
+      transition: 'opacity .2s',
     })
     map.getPanes().overlayPane.appendChild(canvas)
     canvasRef.current = canvas
@@ -97,7 +178,6 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
 
     const redraw = () => {
       if (!canvasRef.current || !mapRef.current) return
-      // Reposicionar canvas: el overlayPane puede tener un transform aplicado por Leaflet
       const topLeft = map.containerPointToLayerPoint([0, 0])
       L.DomUtil.setPosition(canvas, topLeft)
       drawHeatmap(canvas, map, points, getRadius(map.getZoom()))
@@ -124,28 +204,26 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
       map.remove()
       mapRef.current = null
       canvasRef.current = null
+      clusterLayerRef.current = null
     }
-    // Solo en mount — los puntos se actualizan con el efecto de abajo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Ajustar tamaño del mapa al cambiar modo pantalla completa
+  // Ajustar tamaño al cambiar modo pantalla completa
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    // Leaflet necesita un frame para que el DOM haya actualizado su tamaño
     const t = setTimeout(() => {
       map.invalidateSize()
-      // Forzar redibujado del heatmap con el nuevo tamaño
       const canvas = canvasRef.current
-      if (canvas) {
+      if (canvas && view === 'heat') {
         const topLeft = map.containerPointToLayerPoint([0, 0])
         L.DomUtil.setPosition(canvas, topLeft)
         drawHeatmap(canvas, map, points, getRadius(map.getZoom()))
       }
     }, 50)
     return () => clearTimeout(t)
-  }, [fullscreen, points])
+  }, [fullscreen, points, view])
 
   // Cerrar pantalla completa con Escape
   useEffect(() => {
@@ -179,8 +257,49 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
       drawHeatmap(canvas, map, points, getRadius(map.getZoom()))
     }
     map.on('moveend zoomend resize', redraw)
-    setTimeout(() => redraw(), 50)
-  }, [points])
+
+    // Actualizar la vista actual
+    if (view === 'heat') {
+      canvas.style.opacity = '1'
+      setTimeout(() => redraw(), 50)
+      if (clusterLayerRef.current) {
+        map.removeLayer(clusterLayerRef.current)
+        clusterLayerRef.current = null
+      }
+    } else {
+      canvas.style.opacity = '0'
+      if (clusterLayerRef.current) map.removeLayer(clusterLayerRef.current)
+      const layer = buildClusterLayer(map, points)
+      layer.addTo(map)
+      clusterLayerRef.current = layer
+    }
+  }, [points, view])
+
+  // Cambio de vista (heat ↔ sectors)
+  useEffect(() => {
+    const map = mapRef.current
+    const canvas = canvasRef.current
+    if (!map || !canvas) return
+
+    if (view === 'heat') {
+      canvas.style.opacity = '1'
+      if (clusterLayerRef.current) {
+        map.removeLayer(clusterLayerRef.current)
+        clusterLayerRef.current = null
+      }
+      // Redibujar heatmap
+      const topLeft = map.containerPointToLayerPoint([0, 0])
+      L.DomUtil.setPosition(canvas, topLeft)
+      drawHeatmap(canvas, map, points, getRadius(map.getZoom()))
+    } else {
+      canvas.style.opacity = '0'
+      if (clusterLayerRef.current) map.removeLayer(clusterLayerRef.current)
+      const layer = buildClusterLayer(map, points)
+      layer.addTo(map)
+      clusterLayerRef.current = layer
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view])
 
   const wrapperStyle: React.CSSProperties = fullscreen
     ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#000', display: 'flex', flexDirection: 'column' }
@@ -193,6 +312,37 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
   return (
     <div style={wrapperStyle}>
       <div ref={divRef} style={mapStyle} />
+
+      {/* Toggle Calor / Sectores */}
+      <div style={{
+        position: 'absolute', top: 10, left: 10, zIndex: 10000,
+        display: 'flex', background: 'rgba(255,255,255,0.95)', borderRadius: 8,
+        border: '1px solid rgba(0,0,0,0.12)', overflow: 'hidden',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
+      }}>
+        {(['heat', 'sectors'] as const).map((v, i) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            style={{
+              padding: '5px 10px',
+              border: 'none',
+              borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 700,
+              fontFamily: 'system-ui,sans-serif',
+              background: view === v ? '#3b82f6' : 'transparent',
+              color: view === v ? '#fff' : '#444',
+              transition: 'background .15s, color .15s',
+            }}
+          >
+            {v === 'heat' ? 'Calor' : 'Sectores'}
+          </button>
+        ))}
+      </div>
+
+      {/* Botón pantalla completa */}
       <button
         onClick={() => setFullscreen(f => !f)}
         title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
@@ -205,13 +355,11 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
         }}
       >
         {fullscreen ? (
-          // Ícono "contraer"
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.2">
             <path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
             <path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
           </svg>
         ) : (
-          // Ícono "expandir"
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.2">
             <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
             <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
@@ -223,7 +371,6 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
 }
 
 function getRadius(zoom: number): number {
-  // Radio en píxeles según el nivel de zoom
   if (zoom >= 16) return 40
   if (zoom >= 14) return 32
   if (zoom >= 12) return 24

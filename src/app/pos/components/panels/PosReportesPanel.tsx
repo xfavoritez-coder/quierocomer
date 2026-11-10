@@ -1832,7 +1832,7 @@ function HistoricoAnualSection({ restaurantId }: { restaurantId: string }) {
 // ── Main panel ────────────────────────────────────────────────────────
 interface BranchInfo { id: string; name: string; branchName?: string | null }
 
-interface HeatPt { lat: number; lng: number }
+interface HeatPt { lat: number; lng: number; net: number }
 
 // ── Tipos para sección Clientes ──────────────────────────────────────
 type ClientStatus = 'active' | 'at_risk' | 'churned' | 'new'

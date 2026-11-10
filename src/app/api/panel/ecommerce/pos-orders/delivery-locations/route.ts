@@ -38,12 +38,16 @@ export async function GET(req: NextRequest) {
       customerLng: { not: null },
       createdAt: { gte: start, lte: end },
     },
-    select: { customerLat: true, customerLng: true },
+    select: { customerLat: true, customerLng: true, totalAmount: true, deliveryFee: true, tipAmount: true },
   });
 
   const points = orders
     .filter(o => o.customerLat != null && o.customerLng != null)
-    .map(o => ({ lat: o.customerLat as number, lng: o.customerLng as number }));
+    .map(o => ({
+      lat: o.customerLat as number,
+      lng: o.customerLng as number,
+      net: Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
+    }));
 
   return NextResponse.json({ points });
 }
