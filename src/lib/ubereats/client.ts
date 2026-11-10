@@ -27,16 +27,22 @@ export function uberAppConfigured(): boolean {
 const SANDBOX = (process.env.UBEREATS_ENV || "sandbox").toLowerCase() !== "production";
 const BASE = SANDBOX ? "https://test-api.uber.com" : "https://api.uber.com";
 const TOKEN_URL = SANDBOX ? "https://sandbox-login.uber.com/oauth/v2/token" : "https://login.uber.com/oauth/v2/token";
-// Endpoints de la Orders API (paths confirmados con la guía de sandbox de Uber).
+// Endpoints de la Order API de Eats Marketplace. Paths VERIFICADOS empíricamente
+// contra test-api.uber.com (2026-11-10): hay mezcla de versiones. OJO: los paths
+// `/v1/delivery/orders/...` de la guía de sandbox dan 404 (son del suite Delivery
+// BYOC, no del de Eats). getOrder es v2 singular; las acciones son v1 plural.
 const EP = {
-  getOrder: (id: string) => `${BASE}/v1/delivery/orders/${id}`,
-  accept: (id: string) => `${BASE}/v1/delivery/orders/${id}/accept_pos_order`,
-  deny: (id: string) => `${BASE}/v1/delivery/orders/${id}/deny_pos_order`,
-  cancel: (id: string) => `${BASE}/v1/delivery/orders/${id}/cancel`,
-  // Estado de preparación (listo). Path a confirmar con un pedido real del sandbox.
-  restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurant_status`,
+  getOrder: (id: string) => `${BASE}/v2/eats/order/${id}`,
+  accept: (id: string) => `${BASE}/v1/eats/orders/${id}/accept_pos_order`,
+  deny: (id: string) => `${BASE}/v1/eats/orders/${id}/deny_pos_order`,
+  cancel: (id: string) => `${BASE}/v1/eats/orders/${id}/cancel`,
+  // "Listo"/estado de reparto. Requiere scope extra `eats.store.orders.restaurant_delivery`
+  // (no incluido en SCOPE abajo) → markReady fallará con 401 hasta agregarlo; no
+  // bloquea recibir/aceptar el pedido en la verificación.
+  restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurantdelivery/status`,
 };
-const SCOPE = "eats.order";
+// getOrder (v2) y accept/deny (v1) funcionan con eats.store + eats.order (verificado).
+const SCOPE = "eats.store eats.order";
 
 // Token OAuth cacheado (client_credentials de la app global).
 let cachedToken: { token: string; exp: number } | null = null;
