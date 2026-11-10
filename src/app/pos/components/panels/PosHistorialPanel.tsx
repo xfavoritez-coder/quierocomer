@@ -132,6 +132,7 @@ interface HistorialOrder {
   orderReference?: string | null
   customerName: string
   customerPhone: string
+  customerEmail?: string | null
   addressLine: string
   saleType: string
   isDelivery: boolean

@@ -13,6 +13,7 @@ export interface PastOrder {
   dailyNumber?: number | null
   customerName: string
   customerPhone?: string | null
+  customerEmail?: string | null
   addressLine?: string | null
   saleType: string
   isDelivery: boolean
@@ -197,6 +198,7 @@ export default function PastOrderDetail({
   const [editCustomer, setEditCustomer] = useState(false)
   const [editName, setEditName] = useState(order.customerName || '')
   const [editPhone, setEditPhone] = useState(order.customerPhone || '')
+  const [editEmail, setEditEmail] = useState(order.customerEmail || '')
   const [savingCustomer, setSavingCustomer] = useState(false)
 
   useEffect(() => {
@@ -222,12 +224,12 @@ export default function PastOrderDetail({
   }
 
   const handleSaveCustomer = async () => {
-    if (!editName.trim() && !editPhone.trim()) return
+    if (!editName.trim() && !editPhone.trim() && !editEmail.trim()) return
     setSavingCustomer(true)
     try {
       const r = await fetch('/api/panel/ecommerce/pos-orders', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId, id: order.id, action: 'editCustomer', customerName: editName.trim(), customerPhone: editPhone.trim() }),
+        body: JSON.stringify({ restaurantId, id: order.id, action: 'editCustomer', customerName: editName.trim(), customerPhone: editPhone.trim(), customerEmail: editEmail.trim() }),
       })
       if (r.ok) { setEditCustomer(false); onRefresh?.() }
     } catch { }
@@ -279,12 +281,16 @@ export default function PastOrderDetail({
             <div className="pos-modal-title">Editar cliente</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', display: 'block', marginBottom: 5 }}>Nombre</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 5 }}>Nombre</label>
                 <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nombre del cliente" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--line)', fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', display: 'block', marginBottom: 5 }}>Teléfono</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 5 }}>Teléfono</label>
                 <input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder="+56 9 1234 5678" type="tel" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--line)', fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 5 }}>Email</label>
+                <input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="correo@ejemplo.com" type="email" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--line)', fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--ink)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>

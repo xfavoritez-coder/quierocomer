@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client"; // regenerated
 
 // Build connection URL for Supabase PgBouncer (transaction mode)
 function getDbUrl(): string {

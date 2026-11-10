@@ -349,6 +349,7 @@ export function DelifastStatusPill({
   const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
   const [llegadaLocal, setLlegadaLocal] = useState<string | null>(null)
   const [dropoffEta, setDropoffEta] = useState<string | null>(null)
+  const [timelineCancelado, setTimelineCancelado] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelFiredRef = useRef(false)
 
@@ -364,6 +365,7 @@ export function DelifastStatusPill({
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
         setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
+        setTimelineCancelado(!!(d.tracking.timeline?.cancelado))
       } catch { /* fail-silent */ }
     }
     load()
@@ -386,7 +388,7 @@ export function DelifastStatusPill({
     : statusLabel(effectiveStatus)
   // Va en camino al cliente (no "ya llegó" ni entregado) → anexar la hora estimada.
   const enCamino = effectiveStatus !== 'at_dropoff' && /dropoff|camino|ruta|transit/.test((status || '').toLowerCase())
-  const isCancelled = /cancel|anul/.test(effectiveStatus.toLowerCase())
+  const isCancelled = /cancel|anul/.test(effectiveStatus.toLowerCase()) || timelineCancelado
 
   // Notificar al padre la primera vez que se detecta cancelación.
   if (isCancelled && !cancelFiredRef.current) {
