@@ -322,7 +322,20 @@ function OrderCard({
               </span>
               <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
             </span>
-            {/* Impago: botón cobrar como acción principal */}
+            {/* Impago: botón cobrar + botón listo (neutro) */}
+            {!paid && next && (
+              <button
+                onClick={() => onBlock(order)}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
+                  border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                {next.label}
+              </button>
+            )}
             {!paid && (
               <button
                 onClick={(e) => { e.stopPropagation(); onCobro(order) }}
@@ -330,7 +343,7 @@ function OrderCard({
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
                   background: 'var(--amber)', color: '#fff',
                   cursor: 'pointer',
-                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                  fontFamily: 'var(--sans)', flexShrink: 0, ...(!next ? { marginLeft: 'auto' } : {}),
                 }}
               >
                 Cobrar
