@@ -49,7 +49,7 @@ function TabBtn({ active, onClick, label }: { active: boolean; onClick: () => vo
 function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
   restaurantId: string
   categories: Category[]
-  initial?: { id: string; name: string; price: number; description?: string | null; category_id: string; hidden?: boolean }
+  initial?: { id: string; name: string; price: number; description?: string | null; category_id: string; hidden?: boolean; daily_badge?: boolean; new_badge?: boolean }
   onSave: (p: Partial<Product> & { id: string }) => void
   onCancel: () => void
 }) {
@@ -58,6 +58,8 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
   const [desc,   setDesc]   = useState(initial?.description ?? '')
   const [catId,  setCatId]  = useState(initial?.category_id ?? (categories[0]?.id ?? ''))
   const [hidden, setHidden] = useState(initial?.hidden ?? false)
+  const [dailyBadge, setDailyBadge] = useState(initial?.daily_badge ?? false)
+  const [newBadge, setNewBadge] = useState(initial?.new_badge ?? false)
   const [busy,   setBusy]   = useState(false)
   const [err,    setErr]    = useState('')
 
@@ -119,6 +121,19 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
         </label>
       )}
 
+      {isEdit && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => { const next = !dailyBadge; setDailyBadge(next); fetch(`/api/admin/dishes/${initial!.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dailyBadge: next }) }); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${dailyBadge ? '#f97316' : 'var(--line)'}`, background: dailyBadge ? 'rgba(249,115,22,0.12)' : 'transparent', color: dailyBadge ? '#f97316' : 'var(--ink-3)' }}>
+            🏷 {dailyBadge ? 'Solo hoy ✓' : 'Solo hoy'}
+          </button>
+          <button type="button" onClick={() => { const next = !newBadge; setNewBadge(next); fetch(`/api/admin/dishes/${initial!.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newBadge: next }) }); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, border: `1px solid ${newBadge ? '#d97706' : 'var(--line)'}`, background: newBadge ? 'rgba(245,158,11,0.12)' : 'transparent', color: newBadge ? '#d97706' : 'var(--ink-3)' }}>
+            ✨ {newBadge ? 'Nuevo ✓' : 'Nuevo'}
+          </button>
+        </div>
+      )}
+
       {err && <div style={{ color: '#ef4444', fontFamily: F, fontSize: '0.78rem' }}>{err}</div>}
 
       <div style={{ display: 'flex', gap: 8 }}>
@@ -134,18 +149,14 @@ function ProductForm({ restaurantId, categories, initial, onSave, onCancel }: {
 }
 
 // ── ProductRow ─────────────────────────────────────────────────────
-function ProductRow({ p, onToggleSoldOut, onToggleDailyBadge, onToggleNewBadge, onEdit, onDelete }: {
+function ProductRow({ p, onToggleSoldOut, onEdit, onDelete }: {
   p: Product
   onToggleSoldOut: () => void
-  onToggleDailyBadge: () => void
-  onToggleNewBadge: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
   const isHidden   = !!p.hidden
   const isSoldOut  = !!p.is_sold_out
-  const isDailyBadge = !!p.daily_badge
-  const isNewBadge   = !!p.new_badge
   return (
     <div style={{ background: isSoldOut ? 'rgba(239,68,68,0.04)' : isHidden ? 'var(--sunk)' : 'var(--surface)', border: `1px solid ${isSoldOut ? 'rgba(239,68,68,0.25)' : 'var(--line)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, opacity: isHidden ? 0.5 : 1 }}>
       {/* Thumb */}
@@ -165,16 +176,6 @@ function ProductRow({ p, onToggleSoldOut, onToggleDailyBadge, onToggleNewBadge, 
         </div>
         <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>{clp(p.price)}</div>
       </div>
-
-      {/* Cintas */}
-      <button onClick={onToggleDailyBadge} title={isDailyBadge ? 'Quitar cinta «Solo hoy» (actualmente se ocultará mañana a las 8am)' : 'Marcar como Solo hoy — aparece con cinta en la tienda y se oculta automáticamente mañana a las 8am'}
-        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isDailyBadge ? '#f97316' : 'var(--line)'}`, background: isDailyBadge ? 'rgba(249,115,22,0.12)' : 'transparent', color: isDailyBadge ? '#f97316' : 'var(--ink-3)' }}>
-        🏷 {isDailyBadge ? 'Solo hoy ✓' : 'Solo hoy'}
-      </button>
-      <button onClick={onToggleNewBadge} title={isNewBadge ? 'Quitar cinta Nuevo' : 'Activar cinta Nuevo'}
-        style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: F, fontSize: '0.69rem', fontWeight: 700, border: `1px solid ${isNewBadge ? '#d97706' : 'var(--line)'}`, background: isNewBadge ? 'rgba(245,158,11,0.12)' : 'transparent', color: isNewBadge ? '#d97706' : 'var(--ink-3)' }}>
-        ✨ {isNewBadge ? 'Nuevo ✓' : 'Nuevo'}
-      </button>
 
       {/* Agotar / Disponible */}
       <button onClick={onToggleSoldOut}
@@ -325,22 +326,6 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
       const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soldOut: next }) })
       if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d)
     } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, is_sold_out: !next } : p) } : d) }
-  }, [])
-
-  const toggleDailyBadge = useCallback(async (id: string, next: boolean) => {
-    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: next } : p) } : d)
-    try {
-      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dailyBadge: next }) })
-      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: !next } : p) } : d)
-    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, daily_badge: !next } : p) } : d) }
-  }, [])
-
-  const toggleNewBadge = useCallback(async (id: string, next: boolean) => {
-    setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: next } : p) } : d)
-    try {
-      const res = await fetch(`/api/admin/dishes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newBadge: next }) })
-      if (!res.ok) setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: !next } : p) } : d)
-    } catch { setData(d => d ? { ...d, products: d.products.map(p => p.id === id ? { ...p, new_badge: !next } : p) } : d) }
   }, [])
 
   const toggleModSoldOut = useCallback(async (id: string, next: boolean) => {
@@ -538,13 +523,11 @@ export default function PosCartaPanel({ restaurantId, title, onBack }: { restaur
                             {catProds.map(p => (
                               editingProdId === p.id ? (
                                 <ProductForm key={p.id} restaurantId={restaurantId} categories={categories}
-                                  initial={{ id: p.id, name: p.name, price: p.price, description: p.description, category_id: p.category_id, hidden: p.hidden }}
+                                  initial={{ id: p.id, name: p.name, price: p.price, description: p.description, category_id: p.category_id, hidden: p.hidden, daily_badge: p.daily_badge, new_badge: p.new_badge }}
                                   onSave={handleProductSaved} onCancel={() => setEditingProdId(null)} />
                               ) : (
                                 <ProductRow key={p.id} p={p}
                                   onToggleSoldOut={() => toggleDishSoldOut(p.id, !p.is_sold_out)}
-                                  onToggleDailyBadge={() => toggleDailyBadge(p.id, !p.daily_badge)}
-                                  onToggleNewBadge={() => toggleNewBadge(p.id, !p.new_badge)}
                                   onEdit={() => { setEditingProdId(p.id); setAddingProduct(false) }}
                                   onDelete={() => handleDeleteProduct(p.id)} />
                               )
