@@ -157,6 +157,7 @@ interface Report {
   products: ProductRank[]
   byType: TypeBucket[]
   monthly: { month: string; days: MonthlyDay[] }
+  byDay?: { ymd: string; sales: number; orders: number }[]
   byMonth?: { ym: string; sales: number; orders: number }[]
   byYear?: { yr: string; sales: number; orders: number }[]
   deliveryTimes?: DeliveryTimes
@@ -1493,6 +1494,76 @@ interface HistoricoData {
 }
 
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+function ByDayChart({ data }: { data: { ymd: string; sales: number; orders: number }[] }) {
+  const [hovered, setHovered] = useState<string | null>(null)
+  if (!data || data.length === 0) return (
+    <Card><p style={{ fontFamily: F, color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: '0.82rem' }}>Sin datos en el período.</p></Card>
+  )
+  const maxSales = Math.max(1, ...data.map(d => d.sales))
+  const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  const multiMonth = new Set(data.map(d => d.ymd.slice(0, 7))).size > 1
+  // Show label every N bars to avoid overlap
+  const labelEvery = data.length <= 15 ? 1 : data.length <= 31 ? 2 : 5
+  return (
+    <Card>
+      <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 2 }}>Por día</div>
+      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 18 }}>
+        Venta neta con IVA
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, overflowX: 'auto', paddingBottom: 4 }}>
+        {data.map((d, i) => {
+          const pct = d.sales > 0 ? Math.max(8, Math.round((d.sales / maxSales) * 100)) : 0
+          const isHovered = hovered === d.ymd
+          const dt = new Date(d.ymd + 'T12:00:00')
+          const dayNum = dt.getDate()
+          const dowLabel = DOW[dt.getDay()] ?? ''
+          const monthLabel = MONTH_LABELS[dt.getMonth()] ?? ''
+          const showLabel = i % labelEvery === 0
+          return (
+            <div key={d.ymd}
+              style={{ flex: '1 0 18px', minWidth: 18, maxWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: d.sales > 0 ? 'pointer' : 'default' }}
+              onMouseEnter={() => d.sales > 0 && setHovered(d.ymd)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <div style={{ width: '100%', height: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative' }}>
+                {isHovered && d.sales > 0 && (
+                  <div style={{
+                    position: 'absolute', bottom: `${pct}%`, left: '50%', transform: 'translateX(-50%) translateY(-6px)',
+                    background: 'var(--ink)', color: 'var(--surface)', borderRadius: 8,
+                    padding: '5px 9px', zIndex: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,.18)',
+                  }}>
+                    <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 900 }}>{clp(d.sales)}</div>
+                    <div style={{ fontFamily: F, fontSize: '0.6rem', color: 'rgba(255,255,255,.65)', marginTop: 1 }}>{dowLabel} {dayNum} {monthLabel} · {d.orders} pedidos</div>
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--ink)' }} />
+                  </div>
+                )}
+                <div style={{
+                  width: '80%', maxWidth: 28,
+                  height: `${pct}%`, minHeight: d.sales > 0 ? 4 : 0,
+                  background: isHovered
+                    ? `linear-gradient(180deg,${BLUE},${BLUE}cc)`
+                    : `linear-gradient(180deg,${BLUE}bb,${BLUE}77)`,
+                  borderRadius: '4px 4px 0 0',
+                  transform: isHovered ? 'scaleX(1.15)' : 'scaleX(1)',
+                  transformOrigin: 'bottom',
+                  transition: 'transform .15s ease, background .15s ease',
+                  boxShadow: isHovered ? `0 0 0 2px ${BLUE}55` : 'none',
+                }} />
+              </div>
+              {showLabel && (
+                <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'nowrap' }}>
+                  {dayNum}{multiMonth ? ` ${monthLabel.slice(0, 3)}` : ''}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
 
 function ByMonthChart({ data }: { data: { ym: string; sales: number; orders: number }[] }) {
   const [hovered, setHovered] = useState<string | null>(null)
@@ -3007,7 +3078,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const [loading, setLoading] = useState(true)
   const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; isHourly: boolean } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
-  const [chartView, setChartView] = useState<'hora' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'semana' | 'mes' | 'año') ?? 'hora')
+  const [chartView, setChartView] = useState<'hora' | 'día' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'día' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
   const today = chileTodayLocal()
   const [fromDate, setFromDate] = useState(initialFrom ?? today)
@@ -3045,6 +3116,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             products: mergeByKey(valid.flatMap(r => r.products), 'name', ['qty', 'revenue']).sort((a, b) => b.qty - a.qty),
             byType: mergeByKey(valid.flatMap(r => r.byType), 'type', ['sales', 'orders']).map(x => ({ ...x, label: valid[0].byType.find((t: TypeBucket) => t.type === x.type)?.label ?? x.type })),
             monthly: { month: valid[0].monthly.month, days: mergeByKey(valid.flatMap(r => r.monthly.days), 'day', ['sales', 'orders']).sort((a, b) => a.day - b.day) },
+            byDay: mergeByKey(valid.flatMap(r => r.byDay ?? []), 'ymd', ['sales', 'orders']).sort((a: any, b: any) => a.ymd.localeCompare(b.ymd)),
             byMonth: mergeByKey(valid.flatMap(r => r.byMonth ?? []), 'ym', ['sales', 'orders']).sort((a: any, b: any) => a.ym.localeCompare(b.ym)),
             byYear: mergeByKey(valid.flatMap(r => r.byYear ?? []), 'yr', ['sales', 'orders']).sort((a: any, b: any) => a.yr.localeCompare(b.yr)),
             deliveryTimes: (() => {
@@ -3326,7 +3398,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             {/* Gráficos por período — pills selector */}
             <div style={{ marginTop: 8 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-                {(['hora', 'semana', 'mes', 'año'] as const).map(v => (
+                {(['hora', 'día', 'semana', 'mes', 'año'] as const).map(v => (
                   <button key={v} onClick={() => {
                     // Auto-expand date range when switching to multi-period views
                     if (v === 'mes' && fromDate === toDate) {
@@ -3346,12 +3418,14 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                     background: chartView === v ? 'var(--ink)' : 'var(--surface)',
                     color: chartView === v ? 'var(--surface)' : 'var(--ink-2)',
                   }}>
-                    {v === 'hora' ? 'Por hora' : v === 'semana' ? 'Por semana' : v === 'mes' ? 'Por mes' : 'Por año'}
+                    {v === 'hora' ? 'Por hora' : v === 'día' ? 'Por día' : v === 'semana' ? 'Por semana' : v === 'mes' ? 'Por mes' : 'Por año'}
                   </button>
                 ))}
               </div>
 
               {chartView === 'hora' && <HourlyChart hourly={data.hourly} />}
+
+              {chartView === 'día' && <ByDayChart data={data.byDay ?? []} />}
 
               {chartView === 'semana' && (
                 data.dowStats && data.dowStats.some((d: DowStat) => d.count > 0)

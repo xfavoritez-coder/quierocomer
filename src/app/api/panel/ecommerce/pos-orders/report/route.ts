@@ -548,6 +548,28 @@ export async function GET(req: NextRequest) {
     return { dow, avg: a ? Math.round(a.sum / a.count) : 0, count: a?.count ?? 0 };
   });
 
+  // Venta agrupada por día dentro del rango from/to.
+  const rangeDayMap = new Map<string, { sales: number; orders: number }>();
+  for (const o of orders) {
+    if (!passHour(o.createdAt)) continue;
+    const ymd = chileYmd(o.createdAt);
+    const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const e = rangeDayMap.get(ymd) || { sales: 0, orders: 0 };
+    e.sales += net; e.orders += 1;
+    rangeDayMap.set(ymd, e);
+  }
+  for (const o of unmirroredOnline) {
+    if (!passHour(o.createdAt)) continue;
+    const ymd = chileYmd(o.createdAt);
+    const net = Math.max(0, (o.total || 0) - (o.deliveryFee || 0));
+    const e = rangeDayMap.get(ymd) || { sales: 0, orders: 0 };
+    e.sales += net; e.orders += 1;
+    rangeDayMap.set(ymd, e);
+  }
+  const byDay = Array.from(rangeDayMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([ymd, v]) => ({ ymd, sales: v.sales, orders: v.orders }));
+
   // Venta agrupada por mes y por año dentro del rango from/to.
   const rangeMonthMap = new Map<string, { sales: number; orders: number }>();
   for (const o of orders) {
@@ -593,6 +615,7 @@ export async function GET(req: NextRequest) {
     products,
     byType,
     monthly: { month: monthYm, days: monthlyDays },
+    byDay,
     byMonth,
     byYear,
     deliveryTimes,
