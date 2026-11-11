@@ -349,7 +349,7 @@ function OrderCard({
               />
             )}
             {/* Sin tracking real de Delifast ("Reparto"): botón entrega manual */}
-            {paid && delifastNoTracking && !delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+            {paid && delifastNoTracking && !delifastCancelled && order.opsStage === 'out_for_delivery' && (
               <button
                 onClick={() => onStageChange(order, 'delivered')}
                 disabled={busy}
@@ -364,7 +364,7 @@ function OrderCard({
               </button>
             )}
             {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
-            {paid && delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+            {paid && delifastCancelled && order.opsStage === 'out_for_delivery' && (
               <button
                 onClick={() => {
                   if (window.confirm('¿Estás seguro que quieres marcar este pedido como entregado?')) {
