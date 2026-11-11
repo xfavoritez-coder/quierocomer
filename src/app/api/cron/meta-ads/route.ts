@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
     // Verificar que estamos en la hora correcta en Chile
     // activate: tolerancia ±1h (cron puede llegar tarde)
     // deactivate: tolerancia 0 (evitar doble disparo a las 21h y 22h)
-    const defaultHour = action === "activate" ? 13 : 22;
+    const defaultHour = action === "activate" ? 16 : 22;
     const expectedHour = hourParam ? parseInt(hourParam, 10) : defaultHour;
     const tolerance = 1;
     if (Math.abs(hour - expectedHour) > tolerance) {
