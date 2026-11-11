@@ -340,7 +340,7 @@ function OrderCard({
             {/* Pill de estado Delifast — visible en ready y out_for_delivery.
                 Se muestra también sin delifastVentaId para detectar cancelaciones
                 de órdenes rastreadas antes de que se guardara el ventaId. */}
-            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'delivered' && (
+            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
@@ -349,7 +349,7 @@ function OrderCard({
               />
             )}
             {/* Sin tracking real de Delifast ("Reparto"): botón entrega manual */}
-            {paid && delifastNoTracking && !delifastCancelled && order.opsStage !== 'delivered' && (
+            {paid && delifastNoTracking && !delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <button
                 onClick={() => onStageChange(order, 'delivered')}
                 disabled={busy}
@@ -364,7 +364,7 @@ function OrderCard({
               </button>
             )}
             {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
-            {paid && delifastCancelled && order.opsStage !== 'delivered' && (
+            {paid && delifastCancelled && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <button
                 onClick={() => {
                   if (window.confirm('¿Estás seguro que quieres marcar este pedido como entregado?')) {
