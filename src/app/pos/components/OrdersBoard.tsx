@@ -340,7 +340,7 @@ function OrderCard({
             {/* Pill de estado Delifast — visible en ready y out_for_delivery.
                 Se muestra también sin delifastVentaId para detectar cancelaciones
                 de órdenes rastreadas antes de que se guardara el ventaId. */}
-            {paid && order.isDelivery && !delifastCancelled && order.opsStage !== 'delivered' && (
+            {paid && order.isDelivery && !delifastCancelled && !next && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
