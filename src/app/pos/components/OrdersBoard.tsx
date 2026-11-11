@@ -287,8 +287,9 @@ function OrderCard({
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', flexShrink: 0,
-            background: paid ? '#dcfce7' : 'var(--sunk)',
-            color: paid ? '#15803d' : 'var(--ink-3)',
+            background: paid ? '#dcfce7' : 'transparent',
+            color: paid ? '#15803d' : AMBER,
+            border: paid ? 'none' : `1px solid ${AMBER}55`,
           }}>
             {paid ? 'Pagado' : 'Por pagar'}
           </span>
@@ -834,9 +835,9 @@ function OrderDetailPanel({
         </div>
 
 
-        {/* Cobro — franja ámbar/roja, misma lógica y botones que la tarjeta */}
-        {!paid && (
-          <div style={{ borderRadius: 12, overflow: 'hidden', border: `1.5px solid ${blocked ? RED : AMBER + 'cc'}` }}>
+        {/* Cobro — solo si está bloqueado (intentó avanzar sin cobrar) */}
+        {!paid && blocked && (
+          <div style={{ borderRadius: 12, overflow: 'hidden', border: `1.5px solid ${RED}` }}>
             <CobroStrip
               order={order} next={next} blocked={blocked} busy={busy}
               onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
