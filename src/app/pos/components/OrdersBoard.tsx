@@ -216,6 +216,8 @@ function OrderCard({
   const busy = stageBusy === order.id
   // Cuando Delifast cancela el reparto el footer pasa a rojo aunque opsStage=ready.
   const [delifastCancelled, setDelifastCancelled] = useState(false)
+  // Cuando Delifast no tiene tracking real (status vacío = "Reparto"): permitir entrega manual.
+  const [delifastNoTracking, setDelifastNoTracking] = useState(false)
 
   // Realce de la tarjeta: rojo si está bloqueada (intento de avanzar sin cobrar),
   // ámbar si está impaga, normal si está pagada.
@@ -351,12 +353,28 @@ function OrderCard({
             {/* Pill de estado Delifast — visible en ready y out_for_delivery.
                 Se muestra también sin delifastVentaId para detectar cancelaciones
                 de órdenes rastreadas antes de que se guardara el ventaId. */}
-            {paid && order.isDelivery && !delifastCancelled && !next && order.opsStage !== 'delivered' && (
+            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && !next && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
                 onCancelDetected={() => setDelifastCancelled(true)}
+                onNoTracking={() => setDelifastNoTracking(true)}
               />
+            )}
+            {/* Sin tracking real de Delifast ("Reparto"): botón entrega manual */}
+            {paid && delifastNoTracking && !delifastCancelled && order.opsStage !== 'delivered' && (
+              <button
+                onClick={() => onStageChange(order, 'delivered')}
+                disabled={busy}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: STAGE_COLOR.out_for_delivery ?? '#3b82f6', color: '#fff',
+                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                {busy ? '…' : 'Entregar →'}
+              </button>
             )}
             {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
             {paid && delifastCancelled && order.opsStage !== 'delivered' && (

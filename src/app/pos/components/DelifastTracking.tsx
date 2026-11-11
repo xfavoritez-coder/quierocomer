@@ -339,11 +339,12 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
 /** Pill compacto del estado Delifast para embeber en la tarjeta del board.
  *  Solo renderiza algo cuando Delifast está configurado y hay estado disponible. */
 export function DelifastStatusPill({
-  restaurantId, posOrderId, onCancelDetected,
+  restaurantId, posOrderId, onCancelDetected, onNoTracking,
 }: {
   restaurantId: string
   posOrderId: string
   onCancelDetected?: () => void
+  onNoTracking?: () => void
 }) {
   const [status, setStatus] = useState<string | null>(null)
   const [llegadaCasa, setLlegadaCasa] = useState<string | null>(null)
@@ -352,6 +353,7 @@ export function DelifastStatusPill({
   const [timelineCancelado, setTimelineCancelado] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelFiredRef = useRef(false)
+  const noTrackingFiredRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -360,12 +362,20 @@ export function DelifastStatusPill({
         const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${restaurantId}&posOrderId=${posOrderId}`, { cache: 'no-store' })
         const d = await res.json()
         if (cancelled) return
-        if (!d.configured || d.pending || !d.tracking) return
+        // Sin configurar, pendiente, o sin tracking → notificar "sin tracking"
+        if (!d.configured || d.pending || !d.tracking) {
+          if (onNoTracking && !noTrackingFiredRef.current) { noTrackingFiredRef.current = true; onNoTracking() }
+          return
+        }
         setStatus(d.tracking.status ?? null)
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
         setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
         setTimelineCancelado(!!(d.tracking.timeline?.cancelado))
+        // Status vacío = "Reparto" = Delifast nunca conectó
+        if (onNoTracking && !noTrackingFiredRef.current && !d.tracking.status) {
+          noTrackingFiredRef.current = true; onNoTracking()
+        }
         // Notificar cancelación desde el effect (antes del guard !status)
         if (onCancelDetected && !cancelFiredRef.current) {
           const s = (d.tracking.status || '').toLowerCase()
@@ -379,7 +389,7 @@ export function DelifastStatusPill({
     load()
     timer.current = setInterval(load, 15000)
     return () => { cancelled = true; if (timer.current) clearInterval(timer.current) }
-  }, [restaurantId, posOrderId, onCancelDetected])
+  }, [restaurantId, posOrderId, onCancelDetected, onNoTracking])
 
   if (!status && !timelineCancelado) return null
 
