@@ -1524,13 +1524,6 @@ function ByDayChart({ data }: { data: { ymd: string; sales: number; orders: numb
                 onMouseEnter={() => d.sales > 0 && setHovered(d.ymd)}
                 onMouseLeave={() => setHovered(null)}
               >
-                {/* Monto encima de la barra */}
-                {d.sales > 0 && (
-                  <span style={{
-                    fontFamily: F, fontSize: '0.48rem', fontWeight: 700,
-                    color: 'var(--ink-3)', whiteSpace: 'nowrap', marginBottom: 2, lineHeight: 1,
-                  }}>{clpShort(d.sales)}</span>
-                )}
                 <div style={{
                   width: '80%', maxWidth: 28,
                   height: barH, minHeight: d.sales > 0 ? 4 : 0,
