@@ -360,7 +360,7 @@ function OrderCard({
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
               >
-                {busy ? '…' : 'Entregar →'}
+                {busy ? '…' : 'Entregado →'}
               </button>
             )}
             {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
