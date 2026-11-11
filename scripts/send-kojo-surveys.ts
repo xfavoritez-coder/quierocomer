@@ -61,7 +61,7 @@ async function sendSurveyEmail(args: {
     ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
   const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo todo?` : "¿Cómo estuvo todo?";
-  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti. Solo toma un momento.`;
+  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti.`;
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>

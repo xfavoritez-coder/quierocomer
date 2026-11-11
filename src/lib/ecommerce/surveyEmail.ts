@@ -47,7 +47,7 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
   const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo todo?` : `¿Cómo estuvo todo?`;
-  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti. Solo toma un momento.`;
+  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>. Así sabemos cómo lo estamos haciendo y si hay algo que podamos mejorar para ti.`;
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
