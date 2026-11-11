@@ -356,20 +356,15 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
     </>
   )
 
-  if (fullscreen) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: '#000' }}>
-        <div ref={divRef} style={{ width: '100%', height: '100%' }} />
-        {controls}
-      </div>
-    )
-  }
-
   return (
-    // Outer wrapper: position:relative but NO overflow:hidden so bottom:12 works reliably
-    <div style={{ position: 'relative', width: '100%' }}>
-      {/* Inner map container: overflow:hidden for border-radius clipping */}
-      <div style={{ width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }}>
+    <div style={fullscreen
+      ? { position: 'fixed', inset: 0, zIndex: 9999, background: '#000' }
+      : { position: 'relative', width: '100%' }
+    }>
+      <div style={fullscreen
+        ? { width: '100%', height: '100%' }
+        : { width: '100%', height: 340, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--line)' }
+      }>
         <div ref={divRef} style={{ width: '100%', height: '100%' }} />
       </div>
       {controls}
