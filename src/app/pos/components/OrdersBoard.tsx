@@ -830,10 +830,14 @@ function OrderDetailPanel({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
             <span>Total</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {paid && (
+              {paid ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', borderRadius: 6, padding: '3px 9px', background: '#f0fdf4', color: '#16a34a' }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
                   Pagado
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', borderRadius: 6, padding: '3px 9px', background: 'transparent', color: AMBER, border: `1px solid ${AMBER}55` }}>
+                  Por pagar
                 </span>
               )}
               <span style={{ fontFamily: 'var(--mono)' }}>{clp(order.totalAmount)}</span>
