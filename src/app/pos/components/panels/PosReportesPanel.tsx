@@ -61,15 +61,30 @@ function weekdayShort(month: string, day: number): string {
 // ── Comparación período anterior ───────────────────────────────────
 function prevPeriod(from: string, to: string): { prevFrom: string; prevTo: string } {
   const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
-  // Un solo día → comparar vs mismo día de semana anterior (más comparable que ayer)
-  const shift = days === 1 ? 7 : days
-  return { prevFrom: addDaysYmd(from, -shift), prevTo: addDaysYmd(to, -shift) }
+  // Un solo día → comparar vs mismo día de semana anterior
+  if (days === 1) return { prevFrom: addDaysYmd(from, -7), prevTo: addDaysYmd(to, -7) }
+  // Rango que empieza el día 1 del mes → comparar con mismo rango del mes anterior
+  // Ej: 1-10 nov → 1-10 oct
+  if (from.endsWith('-01')) {
+    const [y, m] = from.split('-').map(Number)
+    const pm = m === 1 ? 12 : m - 1
+    const py = m === 1 ? y - 1 : y
+    const prevFrom = `${py}-${String(pm).padStart(2, '0')}-01`
+    // Mismo día del mes para el to, o último día del mes anterior si ese día no existe
+    const toDay = parseInt(to.slice(8, 10), 10)
+    const lastDayPrevMonth = new Date(py, pm, 0).getDate()
+    const prevToDay = Math.min(toDay, lastDayPrevMonth)
+    const prevTo = `${py}-${String(pm).padStart(2, '0')}-${String(prevToDay).padStart(2, '0')}`
+    return { prevFrom, prevTo }
+  }
+  // Semana u otro rango → desplazar la misma cantidad de días
+  return { prevFrom: addDaysYmd(from, -days), prevTo: addDaysYmd(to, -days) }
 }
 function deltaLabel(from: string, to: string): string {
   const days = Math.round((new Date(`${to}T12:00:00Z`).getTime() - new Date(`${from}T12:00:00Z`).getTime()) / 86400000) + 1
   if (days === 1) return 'sem. ant.'
   if (days === 7) return 'sem. ant.'
-  if (days >= 28 && days <= 31) return 'mes ant.'
+  if (from.endsWith('-01')) return 'mes ant.'
   return 'período ant.'
 }
 const DELTA_NO_BASE = 9999 // sentinel: current > 0 pero prev = 0 (sin referencia en ese período)
