@@ -1512,18 +1512,15 @@ function ByDayChart({ data }: { data: { ymd: string; sales: number; orders: numb
         Venta neta con IVA
       </div>
       <div style={{ position: 'relative', overflowX: 'auto', paddingBottom: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+        {/* Barras */}
+        <div style={{ display: 'flex', gap: 2 }}>
           {data.map((d, i) => {
             const pct = d.sales > 0 ? Math.max(8, Math.round((d.sales / maxSales) * 100)) : 0
+            const barH = Math.round(pct * 1.2)
             const isHovered = hovered === d.ymd
-            const dt = new Date(d.ymd + 'T12:00:00')
-            const dayNum = dt.getDate()
-            const dowLabel = DOW[dt.getDay()] ?? ''
-            const monthLabel = MONTH_LABELS[dt.getMonth()] ?? ''
-            const showLabel = i % labelEvery === 0
             return (
               <div key={d.ymd}
-                style={{ flex: '1 0 18px', minWidth: 18, maxWidth: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: d.sales > 0 ? 'pointer' : 'default' }}
+                style={{ flex: '1 0 18px', minWidth: 18, maxWidth: 40, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', cursor: d.sales > 0 ? 'pointer' : 'default' }}
                 onMouseEnter={() => d.sales > 0 && setHovered(d.ymd)}
                 onMouseLeave={() => setHovered(null)}
               >
@@ -1531,23 +1528,34 @@ function ByDayChart({ data }: { data: { ymd: string; sales: number; orders: numb
                 {d.sales > 0 && (
                   <span style={{
                     fontFamily: F, fontSize: '0.48rem', fontWeight: 700,
-                    color: 'var(--ink-3)', whiteSpace: 'nowrap', marginBottom: 2,
+                    color: 'var(--ink-3)', whiteSpace: 'nowrap', marginBottom: 2, lineHeight: 1,
                   }}>{clpShort(d.sales)}</span>
                 )}
-                <div style={{ width: '100%', height: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                  <div style={{
-                    width: '80%', maxWidth: 28,
-                    height: `${pct}%`, minHeight: d.sales > 0 ? 4 : 0,
-                    background: isHovered
-                      ? `linear-gradient(180deg,${BLUE},${BLUE}cc)`
-                      : `linear-gradient(180deg,${BLUE}bb,${BLUE}77)`,
-                    borderRadius: '4px 4px 0 0',
-                    transform: isHovered ? 'scaleX(1.15)' : 'scaleX(1)',
-                    transformOrigin: 'bottom',
-                    transition: 'transform .15s ease, background .15s ease',
-                    boxShadow: isHovered ? `0 0 0 2px ${BLUE}55` : 'none',
-                  }} />
-                </div>
+                <div style={{
+                  width: '80%', maxWidth: 28,
+                  height: barH, minHeight: d.sales > 0 ? 4 : 0,
+                  background: isHovered
+                    ? `linear-gradient(180deg,${BLUE},${BLUE}cc)`
+                    : `linear-gradient(180deg,${BLUE}bb,${BLUE}77)`,
+                  borderRadius: '4px 4px 0 0',
+                  transform: isHovered ? 'scaleX(1.15)' : 'scaleX(1)',
+                  transformOrigin: 'bottom',
+                  transition: 'transform .15s ease, background .15s ease',
+                  boxShadow: isHovered ? `0 0 0 2px ${BLUE}55` : 'none',
+                }} />
+              </div>
+            )
+          })}
+        </div>
+        {/* Etiquetas de fecha — fila separada para que las barras queden alineadas */}
+        <div style={{ display: 'flex', gap: 2 }}>
+          {data.map((d, i) => {
+            const dt = new Date(d.ymd + 'T12:00:00')
+            const dayNum = dt.getDate()
+            const monthLabel = MONTH_LABELS[dt.getMonth()] ?? ''
+            const showLabel = i % labelEvery === 0
+            return (
+              <div key={d.ymd} style={{ flex: '1 0 18px', minWidth: 18, maxWidth: 40, display: 'flex', justifyContent: 'center' }}>
                 {showLabel && (
                   <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, color: 'var(--ink-2)', marginTop: 4, whiteSpace: 'nowrap' }}>
                     {dayNum}{multiMonth ? ` ${monthLabel.slice(0, 3)}` : ''}
