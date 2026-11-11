@@ -305,7 +305,7 @@ export default function DeliveryHeatmap({ points }: { points: Pt[] }) {
     <>
       {/* Toggle Calor / Sectores */}
       <div style={{
-        position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10000,
+        position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 10000,
         display: 'flex', background: 'rgba(255,255,255,0.95)', borderRadius: 8,
         border: '1px solid rgba(0,0,0,0.12)', overflow: 'hidden',
         boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
