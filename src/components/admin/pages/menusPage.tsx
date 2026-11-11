@@ -867,6 +867,7 @@ export default function AdminMenus() {
   const [respectAllergens, setRespectAllergens] = useState<Set<string>>(new Set());
   const [allergenToast, setAllergenToast] = useState<string | null>(null);
   const [eTags, setETags] = useState<string[]>([]);
+  const [eDailyBadge, setEDailyBadge] = useState(false);
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
@@ -978,6 +979,7 @@ export default function AdminMenus() {
     setEIngredients(d.ingredients || "");
     setRespectAllergens(new Set()); // reset al abrir un plato distinto
     setETags([...d.tags]);
+    setEDailyBadge(!!(d as any).dailyBadge);
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
@@ -1026,6 +1028,7 @@ export default function AdminMenus() {
       ingredients: eIngredients || null,
       tags: eTags,
       isHero: eTags.includes("RECOMMENDED"),
+      dailyBadge: eDailyBadge,
       dishDiet: eDiet,
       isSpicy: eSpicy,
       isGlutenFree: eGlutenFree,
@@ -1116,6 +1119,9 @@ export default function AdminMenus() {
                     </button>
                   );
                 })}
+                <button onClick={() => { const next = !eDailyBadge; setEDailyBadge(next); if (selectedDish) { fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dailyBadge: next }) }); setDishes(prev => prev.map(x => x.id === selectedDish.id ? { ...x, dailyBadge: next } as any : x)); } }} style={{ padding: "5px 12px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eDailyBadge ? "#f97316" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: "white", opacity: eDailyBadge ? 1 : 0.7, transition: "all 0.15s" }}>
+                  🏷 Solo hoy{eDailyBadge ? " ✓" : ""}
+                </button>
               </div>
             </div>
           </div>
