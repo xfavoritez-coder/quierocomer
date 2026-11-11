@@ -355,7 +355,7 @@ function OrderCard({
                 disabled={busy}
                 style={{
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: STAGE_COLOR.out_for_delivery ?? '#3b82f6', color: '#fff',
+                  background: STAGE_COLOR.delivered ?? '#6b7280', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
