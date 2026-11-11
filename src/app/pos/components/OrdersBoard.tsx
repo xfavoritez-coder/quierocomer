@@ -322,41 +322,14 @@ function OrderCard({
               </span>
               <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
             </span>
-            {/* Impago: botón cobrar + botón listo (neutro) */}
-            {!paid && next && (
+            {/* Botón de avance de etapa — mismo para pagado e impago */}
+            {next && (
               <button
-                onClick={() => onBlock(order)}
-                style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
-                  border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-3)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
-                }}
-              >
-                {next.label}
-              </button>
-            )}
-            {!paid && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onCobro(order) }}
-                style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: 'var(--amber)', color: '#fff',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--sans)', flexShrink: 0, ...(!next ? { marginLeft: 'auto' } : {}),
-                }}
-              >
-                Cobrar
-              </button>
-            )}
-            {/* Pagado: avanzar etapa — estilo neutro */}
-            {paid && next && (
-              <button
-                onClick={() => onStageChange(order, next.stage)}
+                onClick={() => paid ? onStageChange(order, next.stage) : onBlock(order)}
                 disabled={busy}
                 style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
-                  border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)',
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
@@ -860,6 +833,22 @@ function OrderDetailPanel({
               onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
             />
           </div>
+        )}
+
+        {/* Botón Cobrar — visible cuando el pedido no está pagado */}
+        {!paid && (
+          <button
+            onClick={() => onCobro(order)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+              padding: '13px 14px', borderRadius: 10, border: 'none',
+              background: 'var(--amber)', color: '#fff',
+              cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 800,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            Cobrar {clp(Math.max(0, (order.totalAmount || 0) - (order.paidAmount || 0)) || order.totalAmount)}
+          </button>
         )}
 
         {/* Acciones finales: Imprimir + Anular — mismo contenedor, botones hermanos */}
