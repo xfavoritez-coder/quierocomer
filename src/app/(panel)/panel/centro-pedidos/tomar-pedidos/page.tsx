@@ -259,13 +259,15 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const invalid = useMemo(() => {
     if (!cart.length) return "Agrega productos";
     if (deliveryType !== "QUICK" && !customerName.trim()) return "Falta el nombre del cliente";
+    // Teléfono obligatorio en retiro y delivery (no en venta rápida, que no pide cliente).
+    if (deliveryType !== "QUICK" && !customerPhone.trim()) return "Falta el teléfono del cliente";
     if (deliveryType === "DELIVERY") {
       if (deliveryMode === "zones") { if (!selectedZone) return "Selecciona la zona de reparto"; if (selectedZone.minOrder && subtotal < selectedZone.minOrder) return `Mínimo en ${selectedZone.name}: ${fmt(selectedZone.minOrder)}`; }
       else if (geo.status !== "ok") return "Ingresa una dirección válida";
     }
     if (!paymentMethod) return "Selecciona el medio de pago";
     return null;
-  }, [cart, customerName, deliveryType, deliveryMode, selectedZone, subtotal, geo.status, paymentMethod]);
+  }, [cart, customerName, customerPhone, deliveryType, deliveryMode, selectedZone, subtotal, geo.status, paymentMethod]);
 
   async function submit() {
     setSending(true);
@@ -361,7 +363,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           <Section icon={<User size={13} />} title="Cliente">
             <div style={{ display: "flex", gap: 8 }}>
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre *" style={{ ...inp, flex: 1, minWidth: 0 }} />
-              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Teléfono" type="tel" style={{ ...inp, flex: 1, minWidth: 0 }} />
+              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Teléfono *" type="tel" style={{ ...inp, flex: 1, minWidth: 0 }} />
             </div>
           </Section>
         )}
