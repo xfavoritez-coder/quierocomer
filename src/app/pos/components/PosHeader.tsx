@@ -57,6 +57,7 @@ export default function PosHeader({
 }: PosHeaderProps) {
   const pendingCount = usePendingSyncCount()
   const [dropOpen, setDropOpen] = useState(false)
+  const [logoSpin, setLogoSpin] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -94,10 +95,21 @@ export default function PosHeader({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <a
                 href="/pos"
-                onClick={onBrandClick ? (e) => { e.preventDefault(); onBrandClick() } : undefined}
+                onClick={(e) => {
+                  if (onBrandClick) { e.preventDefault(); onBrandClick() }
+                  setLogoSpin(true)
+                  setTimeout(() => setLogoSpin(false), 600)
+                }}
                 style={{ display: 'contents' }}
               >
-                <img src="/logo.png" alt="QuieroComer" className="mk-logo" style={{ cursor: 'pointer' }} />
+                <img
+                  src="/logo.png" alt="QuieroComer" className="mk-logo"
+                  style={{
+                    cursor: 'pointer',
+                    transition: 'transform .5s cubic-bezier(.34,1.56,.64,1)',
+                    transform: logoSpin ? 'rotate(360deg) scale(1.1)' : 'rotate(0deg) scale(1)',
+                  }}
+                />
               </a>
               {storeName && (
                 <div
