@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
  *
  * Horario CLT (UTC-3 verano):
  *   activate:   16:00 CLT lun-sáb  → 19:00 UTC
- *   deactivate: 22:00 CLT lun-sáb  → 01:00 UTC día siguiente
+ *   deactivate: 22:00 CLT lun-sáb  → 01:00 UTC día siguiente (tolerancia ±1h por DST)
  *
  * Presupuesto diario (CLP):
  *   Lun-Jue: $10.000
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     // deactivate: tolerancia 0 (evitar doble disparo a las 21h y 22h)
     const defaultHour = action === "activate" ? 13 : 22;
     const expectedHour = hourParam ? parseInt(hourParam, 10) : defaultHour;
-    const tolerance = action === "activate" ? 1 : 0;
+    const tolerance = 1;
     if (Math.abs(hour - expectedHour) > tolerance) {
       console.log(`[meta-ads] Skip — hora Chile actual: ${hour}:xx, esperada: ${expectedHour}:xx`);
       await prisma.cronLog.create({

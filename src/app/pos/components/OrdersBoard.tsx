@@ -221,9 +221,7 @@ function OrderCard({
   // ámbar si está impaga, normal si está pagada.
   const shell: React.CSSProperties = blocked
     ? { border: `1.5px solid ${RED}`, boxShadow: `0 0 0 1px ${RED}, 0 8px 22px rgba(220,38,38,.22)` }
-    : !paid
-      ? { border: `1.5px solid ${AMBER}cc`, boxShadow: `0 0 0 1px ${AMBER}73, 0 8px 22px rgba(245,158,11,.20)` }
-      : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
+    : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
 
   // Texto secundario (dirección / mesa / retiro) uniforme para todas las tarjetas.
   const secondary = (isDelivery && order.addressLine)
@@ -321,15 +319,28 @@ function OrderCard({
               </span>
               <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
             </span>
-            {/* Pagado: avanzar es la acción principal. Impago: el avance vive en la
-                franja de cobro de abajo (interceptado). */}
+            {/* Impago: botón cobrar como acción principal */}
+            {!paid && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onCobro(order) }}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: 'var(--amber)', color: '#fff',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                Cobrar
+              </button>
+            )}
+            {/* Pagado: avanzar etapa — estilo neutro */}
             {paid && next && (
               <button
                 onClick={() => onStageChange(order, next.stage)}
                 disabled={busy}
                 style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
+                  border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
@@ -370,8 +381,8 @@ function OrderCard({
         )
       })()}
 
-      {/* Franja de cobro — solo si está impago. Cobrar es la acción principal. */}
-      {!paid && (
+      {/* Franja de cobro bloqueada — solo si se intentó avanzar sin cobrar */}
+      {!paid && blocked && (
         <CobroStrip
           order={order} next={next} blocked={blocked} busy={busy}
           onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
