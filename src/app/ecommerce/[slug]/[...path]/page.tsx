@@ -7,6 +7,7 @@ import { slugify } from "@/lib/ecommerce/format";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
+import ModernStoreFront from "@/components/ecommerce/ModernStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
 import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
@@ -121,6 +122,9 @@ export default async function EcommerceProductPage({ params }: { params: Promise
   const appSync = <AppFlagSync active={fromApp} />;
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
 
+  if (data.tenant.theme === "modern") {
+    return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<ModernStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} initialProductSlug={productSlug} /></>;
+  }
   if (data.tenant.theme === "impact") {
     return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} initialProductSlug={productSlug} /></>;
   }
