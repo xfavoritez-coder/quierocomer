@@ -26,8 +26,10 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   };
 }
 
-export default async function BrandPage({ params }: { params: Promise<{ brand: string }> }) {
+export default async function BrandPage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { brand } = await params;
+  const sp = await searchParams;
+  const themeOverride = typeof sp.theme === "string" ? sp.theme : undefined;
   const data = await loadEcommerceBrand(brand);
   if (!data || data.branches.length === 0) return notFound();
   // Menú compartido: se muestra directo el catálogo de una sucursal "representante"
@@ -35,5 +37,5 @@ export default async function BrandPage({ params }: { params: Promise<{ brand: s
   // recién al agregar algo al carrito (ver BrandStore).
   const representative = await getEcommerceStorefront(data.branches[0].slug);
   if (!representative) return notFound();
-  return <BrandStore brand={data} representative={representative} />;
+  return <BrandStore brand={data} representative={representative} themeOverride={themeOverride} />;
 }

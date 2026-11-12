@@ -6,6 +6,7 @@ import type { BrandBranch } from "@/lib/ecommerce/storefront-data";
 import StoreFront from "@/components/ecommerce/StoreFront";
 import BrandStore from "@/components/ecommerce/BrandStore";
 import ImpactStoreFront from "@/components/ecommerce/ImpactStoreFront";
+import ModernStoreFront from "@/components/ecommerce/ModernStoreFront";
 import GtmScript from "@/components/ecommerce/GtmScript";
 import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
@@ -79,8 +80,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function EcommerceStorePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function EcommerceStorePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const themeOverride = typeof sp.theme === "string" ? sp.theme : null;
   // ¿La request viene desde la app nativa? Por User-Agent (token de la app, ya en
   // el PRIMER render) o por la cookie qc_app (fallback). Solo entonces se cargan los
   // platos appOnly. Ver src/lib/ecommerce/appRequest.ts.
@@ -135,7 +138,11 @@ export default async function EcommerceStorePage({ params }: { params: Promise<{
   const appSync = <AppFlagSync active={fromApp} />;
   // Datos estructurados para que Google muestre las fotos de los productos.
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
-  if (data.tenant.theme === "impact") {
+  const effectiveTheme = themeOverride || data.tenant.theme;
+  if (effectiveTheme === "modern") {
+    return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<ModernStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
+  }
+  if (effectiveTheme === "impact") {
     return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<ImpactStoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;
   }
   return <>{gtm}{metaPixel}{pwa}{hit}{appSync}{jsonLd}<StoreFront tenant={data.tenant} categories={data.categories} products={data.products} basePath={basePath} siblings={siblings} /></>;

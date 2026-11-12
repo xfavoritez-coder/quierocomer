@@ -337,7 +337,7 @@ export default function EcommerceConfiguracionPage() {
           {tab === "tienda" && (
           <section style={card}>
             <SectionTitle icon={Palette} title="Tema de la tienda" sub="El diseño con el que se ve tu tienda online." />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}>
               <ThemeOption
                 active={(cfg.theme ?? "base") === "base"}
                 onClick={() => patch({ theme: "base" })}
@@ -352,6 +352,14 @@ export default function EcommerceConfiguracionPage() {
                 title="Impact"
                 desc="Oscuro, con fotos y acento de marca."
                 swatch={<div style={{ display: "flex", height: "100%", background: "#111" }}><div style={{ flex: 1 }} /><div style={{ width: 26, background: cfg.primaryColor }} /></div>}
+                accent={cfg.primaryColor}
+              />
+              <ThemeOption
+                active={cfg.theme === "modern"}
+                onClick={() => patch({ theme: "modern" })}
+                title="Modern"
+                desc="Premium, elegante y minimalista."
+                swatch={<div style={{ display: "flex", height: "100%", background: "#f5f3ee" }}><div style={{ flex: 1 }} /><div style={{ width: 26, background: cfg.primaryColor }} /></div>}
                 accent={cfg.primaryColor}
               />
             </div>

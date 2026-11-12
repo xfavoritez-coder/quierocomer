@@ -29,7 +29,7 @@ export interface EcommerceStoreConfig {
   showTableMenu: boolean; // mostrar "Carta mesa" en el menú del storefront (link a /qr/<slug>)
   posRetryEnabled: boolean; // reintentar automáticamente el envío al POS (Toteat) si falla (p. ej. caja cerrada)
   favoritesEnabled: boolean; // permitir que el cliente marque favoritos
-  theme: "base" | "impact"; // tema visual del storefront ("base" claro | "impact" oscuro)
+  theme: "base" | "impact" | "modern"; // tema visual del storefront ("base" claro | "impact" oscuro | "modern" moderno)
   bannerProductIds: string[]; // hasta 5 productos destacados en el banner del tema impact
   customDomain: string | null; // dominio propio (ej: "haruna.cl"); null = quierocomer.com/ecommerce/<slug>
   brandSlug: string | null; // marca multisucursal: varias tiendas con el mismo brandSlug son sucursales de una misma marca (entrada /ecommerce/marca/<brandSlug>)
@@ -178,7 +178,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     showTableMenu: o.showTableMenu === true,
     posRetryEnabled: o.posRetryEnabled === true,
     favoritesEnabled: o.favoritesEnabled !== false, // ON por defecto en todos los locales (se apaga explícitamente)
-    theme: o.theme === "impact" ? "impact" : "base",
+    theme: o.theme === "impact" ? "impact" : o.theme === "modern" ? "modern" : "base",
     bannerProductIds: Array.isArray(o.bannerProductIds)
       ? (o.bannerProductIds as unknown[]).map(String).filter(Boolean).slice(0, 5)
       : [],

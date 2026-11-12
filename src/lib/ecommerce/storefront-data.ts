@@ -36,7 +36,7 @@ export interface StoreTenant {
   privacyPhone: string | null;
   privacyAddress: string | null;
   favoritesEnabled: boolean;
-  theme: "base" | "impact"; // tema visual del storefront
+  theme: "base" | "impact" | "modern"; // tema visual del storefront
   bannerProductIds: string[]; // productos destacados del banner (tema impact)
   customDomain: string | null; // dominio propio de la tienda (null = usa quierocomer.com/ecommerce/<slug>)
   faviconUrl: string | null; // favicon propio (null = usa el logo)

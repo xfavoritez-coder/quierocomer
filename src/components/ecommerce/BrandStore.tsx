@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bike, Store, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import StoreFront, { type BrandControls } from "./StoreFront";
+import ModernStoreFront from "./ModernStoreFront";
 import type { BrandData, BrandBranch, StorefrontData } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
@@ -26,7 +27,7 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
-export default function BrandStore({ brand, representative, basePath, initialProductSlug }: { brand: BrandData; representative: StorefrontData; basePath?: string; initialProductSlug?: string }) {
+export default function BrandStore({ brand, representative, basePath, initialProductSlug, themeOverride }: { brand: BrandData; representative: StorefrontData; basePath?: string; initialProductSlug?: string; themeOverride?: string }) {
   const [data, setData] = useState<StorefrontData>(representative);
   const [branchSlug, setBranchSlug] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -139,15 +140,28 @@ export default function BrandStore({ brand, representative, basePath, initialPro
 
   return (
     <>
-      <StoreFront
-        key={data.tenant.id}
-        tenant={data.tenant}
-        categories={data.categories}
-        products={data.products}
-        brandControls={brandControls}
-        basePath={basePath}
-        initialProductSlug={resolving ? undefined : initialProductSlug}
-      />
+      {(themeOverride ?? data.tenant.theme) === "modern" ? (
+        <ModernStoreFront
+          key={data.tenant.id}
+          tenant={data.tenant}
+          categories={data.categories}
+          products={data.products}
+          brandControls={brandControls}
+          basePath={basePath}
+          siblings={brand.branches}
+          initialProductSlug={resolving ? undefined : initialProductSlug}
+        />
+      ) : (
+        <StoreFront
+          key={data.tenant.id}
+          tenant={data.tenant}
+          categories={data.categories}
+          products={data.products}
+          brandControls={brandControls}
+          basePath={basePath}
+          initialProductSlug={resolving ? undefined : initialProductSlug}
+        />
+      )}
       {pickerOpen && (
         <BranchPicker
           brand={brand}
@@ -174,7 +188,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const accent = brand.branches[0]?.primaryColor || "#F4A623";
   const hasDelivery = brand.branches.some((b) => b.deliveryEnabled);
   const hasPickup = brand.branches.some((b) => b.pickupEnabled);
-  const [tab, setTab] = useState<"delivery" | "pickup">(hasDelivery ? "delivery" : "pickup");
+  const currentType = useCartStore((s) => s.deliveryType);
+  const currentSelected = useCartStore((s) => s.deliverySelected);
+  const [tab, setTab] = useState<"delivery" | "pickup">(currentSelected && currentType === "pickup" && hasPickup ? "pickup" : hasDelivery ? "delivery" : "pickup");
   const gmapsReady = useGoogleMaps(tab === "delivery" ? brand.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts; hasNumber: boolean } | null>(null);
