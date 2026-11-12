@@ -11,6 +11,7 @@ import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
 import { trackStoreView, trackDishView, trackCartAdd, trackCartView, trackSessionEnd, trackScrollCategory, trackSearch, trackModifierOpen } from "@/lib/ecommerce/storeAnalytics";
 import { type BrandControls, shortAddr, DeliveryModal } from "./StoreFront";
+import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 
 const MODERN_SANS = "'DM Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const modernFontVars: React.CSSProperties = {
@@ -811,7 +812,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" />
                 </span>
                 {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
-                {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition">Ver horarios</span>}
+                {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition mr-1">Ver horarios</span>}
               </>
             )}
           </button>
@@ -962,33 +963,13 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           </h2>
           <p className="text-[13px] text-gray-400 mb-5">{siblings && siblings.length > 1 ? "Encuentra la sucursal más cercana a ti" : "Encuéntranos aquí"}</p>
 
-          {/* Map with all branches */}
-          {siblings && siblings.length > 0 && siblings.some(b => b.lat && b.lng) && (() => {
-            const pts = siblings.filter(b => b.lat && b.lng);
-            if (pts.length === 0) return null;
-            // Build Google Maps link with all markers
-            const mapsUrl = pts.length === 1
-              ? `https://www.google.com/maps/search/?api=1&query=${pts[0].lat},${pts[0].lng}`
-              : `https://www.google.com/maps/dir/${pts.map(b => `${b.lat},${b.lng}`).join("/")}`;
-            const key = tenant.googleMapsKey;
-            const staticUrl = key
-              ? `https://maps.googleapis.com/maps/api/staticmap?size=800x300&scale=2${pts.map(b => `&markers=color:0x${primaryColor.replace("#", "")}%7C${b.lat},${b.lng}`).join("")}&style=feature:all%7Celement:labels.text.fill%7Ccolor:0x616161&style=feature:water%7Celement:geometry%7Ccolor:0xc9c9c9&key=${key}`
-              : null;
-            return (
-              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="block mb-5 rounded-xl overflow-hidden shadow-sm bg-gray-200 relative group cursor-pointer">
-                {staticUrl ? (
-                  <img src={staticUrl} alt="Mapa de sucursales" loading="lazy" className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300" />
-                ) : (
-                  <div className="w-full h-48 sm:h-56 flex items-center justify-center">
-                    <MapPin className="w-8 h-8 text-gray-400" />
-                  </div>
-                )}
-                <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur rounded-full px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm flex items-center gap-1.5 cursor-pointer">
-                  <MapPin className="w-3 h-3" /> Ver en Google Maps
-                </div>
-              </a>
-            );
-          })()}
+          {/* Interactive map with all branches */}
+          <LocalesMap
+            googleMapsKey={tenant.googleMapsKey}
+            siblings={siblings ?? []}
+            tenant={tenant}
+            primaryColor={primaryColor}
+          />
 
           <div className="flex flex-col gap-4">
             {siblings && siblings.length > 0 ? (
@@ -999,8 +980,6 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                   address={b.address}
                   phone={null}
                   whatsapp={null}
-                  lat={b.lat}
-                  lng={b.lng}
                   open={b.open}
                   opensAt={b.opensAt}
                   weeklyHours={b.id === tenant.id ? tenant.weeklyHours : null}
@@ -1016,8 +995,6 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 address={tenant.address}
                 phone={tenant.phone}
                 whatsapp={tenant.whatsapp}
-                lat={null}
-                lng={null}
                 open={tenant.openStatus.open}
                 opensAt={tenant.openStatus.opensAt ?? null}
                 weeklyHours={tenant.weeklyHours}
@@ -1568,45 +1545,163 @@ function ModernLoginModal({ tenant, primaryColor, onClose, onLogged }: {
   );
 }
 
-function BranchCard({ name, address, phone, whatsapp, lat, lng, open, opensAt, weeklyHours, primaryColor, onViewHours, current, logoUrl }: {
+function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
+  googleMapsKey: string | null; siblings: BrandBranch[]; tenant: StoreTenant; primaryColor: string;
+}) {
+  const mapReady = useGoogleMaps(googleMapsKey);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const deliveryAddress = useCartStore((s) => s.deliveryAddress);
+
+  const pts = useMemo(() => siblings.filter(b => b.lat && b.lng), [siblings]);
+  // Fallback to tenant origin if no siblings have coords
+  const hasPoints = pts.length > 0 || (tenant.deliveryConfig.origin != null);
+
+  useEffect(() => {
+    if (!mapReady || !containerRef.current || !hasPoints) return;
+    if (mapRef.current) return; // already initialized
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const G = (window as any).google?.maps;
+    if (!G) return;
+
+    const bounds = new G.LatLngBounds();
+
+    // Default center
+    const defaultCenter = pts.length > 0
+      ? { lat: pts[0].lat!, lng: pts[0].lng! }
+      : tenant.deliveryConfig.origin ?? { lat: -33.45, lng: -70.65 };
+
+    const map = new G.Map(containerRef.current, {
+      center: defaultCenter,
+      zoom: 14,
+      disableDefaultUI: true,
+      zoomControl: true,
+      gestureHandling: "greedy",
+      styles: [
+        { featureType: "all", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
+      ],
+    });
+    mapRef.current = map;
+
+    // Branch markers
+    pts.forEach(b => {
+      const marker = new G.Marker({
+        position: { lat: b.lat!, lng: b.lng! },
+        map,
+        title: b.branchName || b.name,
+        icon: {
+          path: G.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: primaryColor,
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+        },
+      });
+      bounds.extend(marker.getPosition());
+    });
+
+    // Delivery polygon
+    const poly = tenant.deliveryConfig.polygonIncluded;
+    if (poly && poly.length >= 3) {
+      const polygon = new G.Polygon({
+        paths: poly,
+        strokeColor: primaryColor,
+        strokeOpacity: 0.7,
+        strokeWeight: 2,
+        fillColor: primaryColor,
+        fillOpacity: 0.08,
+        map,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      polygon.getPath().forEach((p: any) => bounds.extend(p));
+    }
+
+    // User delivery address marker (blue)
+    if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
+      const userMarker = new G.Marker({
+        position: { lat: deliveryAddress.lat, lng: deliveryAddress.lng },
+        map,
+        title: deliveryAddress.address,
+        icon: {
+          path: G.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#3b82f6",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+        },
+      });
+      bounds.extend(userMarker.getPosition());
+    }
+
+    // Fit bounds if multiple points
+    if (pts.length > 1 || (poly && poly.length >= 3)) {
+      map.fitBounds(bounds, 40);
+    }
+  }, [mapReady, hasPoints, pts, tenant.deliveryConfig, deliveryAddress, primaryColor]);
+
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => { if (!document.fullscreenElement) setIsFullscreen(false); };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  if (!hasPoints) return null;
+
+  return (
+    <div ref={containerRef} className="relative mb-5 rounded-xl overflow-hidden shadow-sm bg-gray-200 h-[300px] sm:h-[400px]">
+      {!mapReady && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <MapPin className="w-8 h-8 text-gray-400 animate-pulse" />
+        </div>
+      )}
+      <button
+        onClick={toggleFullscreen}
+        className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-lg bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-gray-900 transition"
+        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+      >
+        {isFullscreen ? (
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 4 20 10 20"/><polyline points="20 10 20 4 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        ) : (
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
+function BranchCard({ name, address, phone, whatsapp, open, opensAt, weeklyHours, primaryColor, onViewHours, current, logoUrl }: {
   name: string; address: string | null; phone: string | null; whatsapp: string | null;
-  lat: number | null; lng: number | null; open: boolean; opensAt: string | null;
+  open: boolean; opensAt: string | null;
   weeklyHours: import("@/lib/ecommerce/hours").DayHours[] | null; primaryColor: string;
   onViewHours?: () => void; current?: boolean; logoUrl?: string | null;
 }) {
   const today = (() => { try { return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay(); } catch { return -1; } })();
   const todayHours = weeklyHours?.[today];
-  const hasMap = lat != null && lng != null;
-
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-      {/* Map preview */}
-      {hasMap && (
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full h-32 bg-gray-100 relative group overflow-hidden"
-        >
-          <img
-            src={`https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=16&size=600x240&scale=2&markers=color:0x${primaryColor.replace("#", "")}%7C${lat},${lng}&style=feature:all%7Celement:labels.text.fill%7Ccolor:0x616161&style=feature:water%7Celement:geometry%7Ccolor:0xc9c9c9&key=AIzaSyBs3GBnAu5gBf0TCGCHzHJq-jiiFJCwjNE`}
-            alt={`Mapa ${name}`}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur rounded-full px-2.5 py-1 text-[10px] font-semibold text-gray-600 shadow-sm flex items-center gap-1">
-            <MapPin className="w-3 h-3" /> Abrir mapa
-          </div>
-        </a>
-      )}
-
       <div className="p-4">
         {/* Name + status */}
         <div className="flex items-center gap-2.5 mb-2">
           {logoUrl && (
             <img src={logoUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100" />
           )}
-          <h3 className="text-[15px] font-bold text-gray-900">{name}</h3>
+          <h3 className="text-lg font-bold text-gray-900">{name}</h3>
           {current && <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${primaryColor}15`, color: primaryColor }}>Actual</span>}
           {open ? (
             <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Abierto</span>
@@ -1620,7 +1715,7 @@ function BranchCard({ name, address, phone, whatsapp, lat, lng, open, opensAt, w
           {address && (
             <div className="flex items-start gap-2">
               <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-              <span className="text-[13px] text-gray-600">{address}</span>
+              <span className="text-sm text-gray-600">{address}</span>
             </div>
           )}
 
@@ -1629,12 +1724,12 @@ function BranchCard({ name, address, phone, whatsapp, lat, lng, open, opensAt, w
             <div className="flex items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
               {todayHours.open ? (
-                <span className="text-[13px] text-gray-600">Hoy {todayHours.from} – {todayHours.to === "00:00" ? "00:00" : todayHours.to}</span>
+                <span className="text-sm text-gray-600">Hoy {todayHours.from} – {todayHours.to === "00:00" ? "00:00" : todayHours.to}</span>
               ) : (
-                <span className="text-[13px] text-gray-500">Cerrado hoy{opensAt ? ` · Abre a las ${opensAt}` : ""}</span>
+                <span className="text-sm text-gray-500">Cerrado hoy{opensAt ? ` · Abre a las ${opensAt}` : ""}</span>
               )}
               {onViewHours && weeklyHours && (
-                <button onClick={onViewHours} className="text-[12px] font-medium underline underline-offset-2 text-gray-400 hover:text-gray-600 transition">
+                <button onClick={onViewHours} className="text-[13px] font-medium underline underline-offset-2 text-gray-400 hover:text-gray-600 transition">
                   Ver todos
                 </button>
               )}
@@ -1643,14 +1738,14 @@ function BranchCard({ name, address, phone, whatsapp, lat, lng, open, opensAt, w
           {!todayHours && !open && opensAt && (
             <div className="flex items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span className="text-[13px] text-gray-500">Abre a las {opensAt}</span>
+              <span className="text-sm text-gray-500">Abre a las {opensAt}</span>
             </div>
           )}
 
           {(phone || whatsapp) && (
             <div className="flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              <a href={`tel:${phone || whatsapp}`} className="text-[13px] text-gray-600 hover:text-gray-900 transition">{phone || whatsapp}</a>
+              <a href={`tel:${phone || whatsapp}`} className="text-sm text-gray-600 hover:text-gray-900 transition">{phone || whatsapp}</a>
             </div>
           )}
         </div>
