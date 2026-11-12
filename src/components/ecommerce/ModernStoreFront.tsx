@@ -1606,13 +1606,18 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
 
     // Branch markers
     const bounds = new G.LatLngBounds();
+    const faviconUrl = tenant.faviconUrl || tenant.logoUrl;
     pts.forEach(b => {
       const pos = { lat: b.lat!, lng: b.lng! };
       new G.Marker({
         position: pos,
         map: mapRef.current,
         title: b.branchName || b.name,
-        icon: {
+        icon: faviconUrl ? {
+          url: faviconUrl,
+          scaledSize: new G.Size(24, 24),
+          anchor: new G.Point(12, 12),
+        } : {
           path: G.SymbolPath.CIRCLE,
           scale: 9,
           fillColor: primaryColor,
