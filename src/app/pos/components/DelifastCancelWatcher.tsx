@@ -121,7 +121,7 @@ export default function DelifastCancelWatcher({
             {busy ? 'Marcando…' : 'Marcar entregado'}
           </button>
           <button className="pos-modal-cancel" style={{ width: '100%' }} onClick={postpone}>
-            Gestionar después
+            Entendido
           </button>
         </div>
       </div>
