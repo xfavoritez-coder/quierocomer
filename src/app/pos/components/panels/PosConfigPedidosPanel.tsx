@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import type { PaymentMethodConfig } from '@/lib/ecommerce/config'
 
 interface PedidosCfg {
   autoDeliverPickup?: boolean
@@ -61,6 +62,9 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
   const [savingPed, setSavingPed] = useState(false)
   const [prepMin,   setPrepMin]   = useState('60')
   const [readyMin,  setReadyMin]  = useState('30')
+  const [methods, setMethods] = useState<PaymentMethodConfig[]>([])
+  const [sharkposEnabled, setSharkposEnabled] = useState(false)
+  const [savingMethods, setSavingMethods] = useState(false)
 
   const loadPedidos = useCallback(async () => {
     if (!restaurantId) return
@@ -74,8 +78,26 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
         if (typeof d.posModeEffective === 'boolean') setPosMode(d.posModeEffective)
         if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions)
       }
+      if (r.ok && Array.isArray(d.paymentMethods)) setMethods(d.paymentMethods)
+      if (r.ok && typeof d.sharkposEnabled === 'boolean') setSharkposEnabled(d.sharkposEnabled)
     } catch { /* noop */ }
   }, [restaurantId])
+
+  const setMethodAt = (i: number, patch: Partial<PaymentMethodConfig>) => setMethods(ms => ms.map((m, idx) => idx === i ? { ...m, ...patch } : m))
+  const addMethod = () => setMethods(ms => [...ms, { key: '', label: '', emitsFiscal: false }])
+  const removeMethod = (i: number) => setMethods(ms => ms.filter((_, idx) => idx !== i))
+  const saveMethods = async () => {
+    if (!restaurantId) return
+    const clean = methods.map(m => ({ ...m, label: (m.label || '').trim() })).filter(m => m.label)
+    if (!clean.length) return
+    setSavingMethods(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: { paymentMethods: clean } }) })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok && Array.isArray(d.config?.paymentMethods)) setMethods(d.config.paymentMethods)
+    } catch { /* noop */ }
+    setSavingMethods(false)
+  }
   useEffect(() => { loadPedidos() }, [loadPedidos])
 
   const saveMinutes = async (field: 'prepAlertMinutes' | 'readyAlertMinutes', raw: string, setRaw: (s: string) => void) => {
@@ -156,6 +178,36 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
             value={readyMin} disabled={savingPed}
             onInput={setReadyMin} onCommit={() => saveMinutes('readyAlertMinutes', readyMin, setReadyMin)}
           />
+
+          {/* Métodos de pago */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', marginBottom: 4 }}>Métodos de pago</div>
+            <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 10 }}>
+              {sharkposEnabled
+                ? 'Agrega o quita métodos. «Emite documento fiscal» = al cobrar con ese método se emite la boleta.'
+                : '«Emite documento fiscal» solo tiene efecto cuando el local tiene la boleta electrónica configurada.'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {methods.map((m, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px' }}>
+                  <input value={m.label} onChange={e => setMethodAt(i, { label: e.target.value })} placeholder="Nombre del método"
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '0.88rem' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--ink-2)', fontWeight: 600, maxWidth: 88, lineHeight: 1.2 }}>Emite documento fiscal</span>
+                    <PosToggle checked={m.emitsFiscal} onChange={() => setMethodAt(i, { emitsFiscal: !m.emitsFiscal })} />
+                  </div>
+                  <button type="button" aria-label="Eliminar método" onClick={() => removeMethod(i)}
+                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  </button>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={addMethod} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px dashed var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>+ Agregar método</button>
+                <button type="button" disabled={savingMethods} onClick={saveMethods} style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: savingMethods ? 'wait' : 'pointer', opacity: savingMethods ? 0.6 : 1 }}>{savingMethods ? 'Guardando…' : 'Guardar métodos'}</button>
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>
