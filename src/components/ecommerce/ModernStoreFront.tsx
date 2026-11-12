@@ -1614,14 +1614,23 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
     });
     mapRef.current = map;
 
-    // Branch markers (real pins)
+    // Branch markers — círculos del primaryColor
     pts.forEach(b => {
-      const marker = new G.Marker({
-        position: { lat: b.lat!, lng: b.lng! },
+      const pos = { lat: b.lat!, lng: b.lng! };
+      new G.Marker({
+        position: pos,
         map,
         title: b.branchName || b.name,
+        icon: {
+          path: G.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: primaryColor,
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2.5,
+        },
       });
-      bounds.extend(marker.getPosition());
+      bounds.extend(pos);
     });
 
     // Delivery polygons for ALL branches
@@ -1629,27 +1638,48 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       const gPoly = new G.Polygon({
         paths: polygon,
         strokeColor: primaryColor,
-        strokeOpacity: 0.6,
+        strokeOpacity: 0.7,
         strokeWeight: 2,
         fillColor: primaryColor,
-        fillOpacity: 0.06,
+        fillOpacity: 0.08,
         map,
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gPoly.getPath().forEach((p: any) => bounds.extend(p));
     });
 
-    // User delivery address (blue pin)
+    // User location — círculo azul tipo GPS
     if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
-      const userMarker = new G.Marker({
-        position: { lat: deliveryAddress.lat, lng: deliveryAddress.lng },
+      const userPos = { lat: deliveryAddress.lat, lng: deliveryAddress.lng };
+      // Outer pulse circle
+      new G.Marker({
+        position: userPos,
         map,
         title: deliveryAddress.address,
         icon: {
-          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          path: G.SymbolPath.CIRCLE,
+          scale: 14,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.15,
+          strokeColor: "#3b82f6",
+          strokeOpacity: 0.3,
+          strokeWeight: 1,
         },
       });
-      bounds.extend(userMarker.getPosition());
+      // Inner solid circle
+      new G.Marker({
+        position: userPos,
+        map,
+        icon: {
+          path: G.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#3b82f6",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2.5,
+        },
+      });
+      bounds.extend(userPos);
     }
 
     if (pts.length > 1 || allPolygons.length > 0) {
