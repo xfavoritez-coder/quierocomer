@@ -619,14 +619,14 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           {/* Nav links */}
           <button
             onClick={() => { setActiveView("carta"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            className={`shrink-0 relative text-[13px] font-semibold px-2 pb-2 transition cursor-pointer ${activeView === "carta" ? (headerDark ? "text-white" : "text-gray-900") : (headerDark ? "text-white/50 hover:text-white" : "text-gray-400 hover:text-gray-700")}`}
+            className={`shrink-0 relative text-[15px] font-semibold px-2 pb-2 transition cursor-pointer ${activeView === "carta" ? (headerDark ? "text-white" : "text-gray-900") : (headerDark ? "text-white/50 hover:text-white" : "text-gray-400 hover:text-gray-700")}`}
           >
             Carta
             {activeView === "carta" && <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: headerDark ? "#fff" : primaryColor }} />}
           </button>
           <button
             onClick={() => { setActiveView("locales"); window.scrollTo({ top: 0 }); }}
-            className={`shrink-0 relative text-[13px] font-semibold px-2 pb-2 transition cursor-pointer ${activeView === "locales" ? (headerDark ? "text-white" : "text-gray-900") : (headerDark ? "text-white/50 hover:text-white" : "text-gray-400 hover:text-gray-700")}`}
+            className={`shrink-0 relative text-[15px] font-semibold px-2 pb-2 transition cursor-pointer ${activeView === "locales" ? (headerDark ? "text-white" : "text-gray-900") : (headerDark ? "text-white/50 hover:text-white" : "text-gray-400 hover:text-gray-700")}`}
           >
             Locales
             {activeView === "locales" && <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: headerDark ? "#fff" : primaryColor }} />}
