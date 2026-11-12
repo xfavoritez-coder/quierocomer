@@ -20,7 +20,18 @@ const CP850: Record<string, number> = {
   "¿": 0xa8, "¡": 0xad, "ç": 0x87, "Ç": 0x80, "°": 0xf8,
   "à": 0x85, "è": 0x8a, "ì": 0x8d, "ò": 0x95, "ù": 0x97,
   "ä": 0x84, "ë": 0x89, "ï": 0x8b, "ö": 0x94,
+  // Recuadro (líneas simples) de la tabla PC850.
+  "─": 0xc4, "│": 0xb3, "┌": 0xda, "┐": 0xbf, "└": 0xc0, "┘": 0xd9,
 };
+
+/** Formatea un RUT chileno con puntos y guion (12345678-9 → 12.345.678-9). */
+function fmtRut(rut: string): string {
+  const s = (rut || "").replace(/[^0-9kK]/g, "").toUpperCase();
+  if (s.length < 2) return rut || "";
+  const dv = s.slice(-1);
+  const num = s.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return num + "-" + dv;
+}
 
 // Normaliza comillas tipográficas; el resto de caracteres se resuelve en text().
 function normQuotes(s: string): string {
@@ -242,43 +253,57 @@ export function encodeBoleta(b: BoletaPayload): Uint8Array {
   const e = new Enc();
   e.init().alignCenter();
   if (b.sandbox) e.boldOn().line("*** SANDBOX - SIN VALIDEZ TRIBUTARIA ***").boldOff();
-  e.boldOn().line((b.emisorName || "").toUpperCase()).boldOff();
+
+  // Emisor (razón social destacada, giro y dirección).
+  e.boldOn().doubleOn().line(b.emisorName || "").doubleOff().boldOff();
   if (b.emisorGiro) e.line(wrapText(b.emisorGiro, WIDTH));
   if (b.emisorAddress) e.line(wrapText(b.emisorAddress, WIDTH));
   e.lf();
-  e.boldOn().line("R.U.T.: " + b.emisorRut).line("BOLETA ELECTRONICA").line("N " + String(b.folio)).boldOff();
 
-  e.alignLeft().line("=".repeat(WIDTH));
-  e.line("Fecha: " + b.fecha);
+  // Recuadro: R.U.T. + BOLETA ELECTRONICA + N° (centrado en el papel).
+  const BOXW = 42;
+  const inner = BOXW - 2;
+  const pad = " ".repeat(Math.max(0, Math.floor((WIDTH - BOXW) / 2)));
+  const boxRow = (s: string) => {
+    const c = s.length > inner ? s.slice(0, inner) : s;
+    const t = inner - c.length, l = Math.floor(t / 2), r = t - l;
+    e.alignLeft().text(pad + "│" + " ".repeat(l)).boldOn().text(c).boldOff().text(" ".repeat(r) + "│").lf();
+  };
+  e.alignLeft().line(pad + "┌" + "─".repeat(inner) + "┐");
+  boxRow("R.U.T. " + fmtRut(b.emisorRut));
+  boxRow("BOLETA ELECTRONICA");
+  boxRow("N° " + String(b.folio));
+  e.line(pad + "└" + "─".repeat(inner) + "┘");
+  e.alignCenter().line(b.siiOffice || (b.sandbox ? "S.I.I. - SANDBOX" : "S.I.I."));
+
+  // Fecha (etiqueta izquierda, valor derecha).
+  e.alignLeft().lf().line(lineColumns("Fecha", b.fecha));
   e.line("-".repeat(WIDTH));
 
-  // Detalle: "cant x nombre .............. $monto"
+  // Detalle: nombre en una línea y "cant x $unitario .......... $total" debajo.
   for (const it of b.items || []) {
-    const amount = clp(it.qty * it.price);
-    const left = `${it.qty} x ${it.name}`;
-    const maxLeft = WIDTH - amount.length - 1;
-    if (left.length <= maxLeft) {
-      e.line(lineColumns(left, amount));
-    } else {
-      // Nombre largo: nombre envuelto y el monto en su propia línea a la derecha.
-      e.line(wrapText(left, WIDTH));
-      e.line(lineColumns("", amount));
-    }
+    e.alignLeft().line(wrapText(it.name, WIDTH));
+    e.line(lineColumns(`${it.qty} x ${clp(it.price)}`, clp(it.qty * it.price)));
   }
   e.line("-".repeat(WIDTH));
-  // TOTAL en doble tamaño (24 columnas efectivas).
+
+  // Desglose Neto / IVA / TOTAL (boleta afecta 39: el total incluye IVA).
+  const neto = Math.round(b.total / 1.19);
+  const iva = b.total - neto;
+  e.line(lineColumns("Neto", clp(neto)));
+  e.line(lineColumns("IVA 19%", clp(iva)));
   e.boldOn().doubleOn().line(lineColumns("TOTAL", clp(b.total), 24)).doubleOff().boldOff();
-  e.line("IVA incluido (19%)");
   e.lf();
 
-  // Timbre electrónico SII (PDF417 rasterizado) centrado.
+  // Timbre electrónico SII (PDF417 rasterizado) centrado + pie legal.
   if (b.tedRaster && b.tedRaster.data && b.tedRaster.data.length) {
     e.alignCenter();
     e.rasterImage(b.tedRaster.width, b.tedRaster.height, b.tedRaster.data);
-    e.line("Timbre Electronico SII");
-    e.line("Verifique en www.sii.cl");
+    e.lf().line("Timbre Electronico SII");
+    if (b.resolution) e.line(b.resolution);
+    e.line("Verifique documento en: www.sii.cl");
+    if (b.verifyUrl) e.line(wrapText("Consulte su boleta en: " + b.verifyUrl, WIDTH));
   }
-  if (b.verifyUrl) e.alignCenter().line(wrapText(b.verifyUrl, WIDTH));
 
   e.alignLeft().lf().lf().lf().cut();
   return e.toBytes();

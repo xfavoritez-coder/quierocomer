@@ -53,6 +53,8 @@ export interface BoletaPayload {
   fecha: string          // "12/11/2026 16:09"
   items: BoletaLine[]
   total: number
+  siiOffice?: string     // "S.I.I. - Santiago Oriente"; default según entorno
+  resolution?: string    // "Res. 80 de 2014" (datos del emisor, para el pie legal)
   tedRaster?: { width: number; height: number; data: number[] } // timbre PDF417 rasterizado (GS v 0)
   verifyUrl?: string     // consulta pública (public_url)
   sandbox?: boolean
@@ -248,6 +250,7 @@ export async function printBoletaForOrder(posOrderId: string, opts?: { retries?:
       const pr = await printBoleta({
         jobId: 'bol_' + posOrderId, emisorName: b.emisorName, emisorRut: b.emisorRut,
         emisorGiro: b.emisorGiro, emisorAddress: b.emisorAddress,
+        siiOffice: b.siiOffice, resolution: b.resolution,
         folio: b.folio, fecha: b.fecha, items: b.items, total: b.total,
         tedRaster: tedRaster || undefined, verifyUrl: b.verifyUrl, sandbox: b.sandbox,
       })
