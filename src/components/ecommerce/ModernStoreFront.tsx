@@ -1637,7 +1637,6 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       bounds.extend(userPos);
     }
 
-    if (pts.length > 1) mapRef.current.fitBounds(bounds, 40);
   }, [mapReady, hasPoints, pts, deliveryAddress, primaryColor, tenant.deliveryConfig.origin]);
 
   // Draw polygons when they load (async)
