@@ -69,6 +69,26 @@ type DetailTab = "general" | "pilares" | "credenciales" | "marca" | "avanzado";
 // Da de alta el RUT del local en SharkPOS (una llamada → su propia API key,
 // guardada cifrada en el servidor) y habilita la emisión de boletas al cobrar.
 const SK = "#a78bfa";
+// Regiones de Chile con el nombre oficial (lo que espera SharkPOS en location_region;
+// su ejemplo es "Región Metropolitana de Santiago").
+const REGIONES_CHILE = [
+  "Región de Arica y Parinacota",
+  "Región de Tarapacá",
+  "Región de Antofagasta",
+  "Región de Atacama",
+  "Región de Coquimbo",
+  "Región de Valparaíso",
+  "Región Metropolitana de Santiago",
+  "Región del Libertador General Bernardo O'Higgins",
+  "Región del Maule",
+  "Región de Ñuble",
+  "Región del Biobío",
+  "Región de La Araucanía",
+  "Región de Los Ríos",
+  "Región de Los Lagos",
+  "Región de Aysén del General Carlos Ibáñez del Campo",
+  "Región de Magallanes y de la Antártica Chilena",
+];
 function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
   const [platformReady, setPlatformReady] = useState<boolean | null>(null);
   const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
@@ -209,8 +229,11 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
               <input value={pf.businessActivity || ""} onChange={(e) => setF("businessActivity", e.target.value)} placeholder="Giro" disabled={disabled} style={inp} />
             </div>
             <input value={pf.address || ""} onChange={(e) => setF("address", e.target.value)} placeholder="Dirección" disabled={disabled} style={inp} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              <input value={pf.locationRegion || ""} onChange={(e) => setF("locationRegion", e.target.value)} placeholder="Región" disabled={disabled} style={inp} />
+            <select value={pf.locationRegion || ""} onChange={(e) => setF("locationRegion", e.target.value)} disabled={disabled} style={{ ...inp, color: pf.locationRegion ? "white" : "#777" }}>
+              <option value="" disabled>Región…</option>
+              {REGIONES_CHILE.map((reg) => <option key={reg} value={reg} style={{ color: "white", background: "#111" }}>{reg}</option>)}
+            </select>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <input value={pf.commune || ""} onChange={(e) => setF("commune", e.target.value)} placeholder="Comuna" disabled={disabled} style={inp} />
               <input value={pf.city || ""} onChange={(e) => setF("city", e.target.value)} placeholder="Ciudad" disabled={disabled} style={inp} />
             </div>
