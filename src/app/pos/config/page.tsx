@@ -6,7 +6,7 @@ import PosHeader from '../components/PosHeader'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, printKitchenComanda, listPrinters, setupPrinter, getKitchenMode, setKitchenMode } from '@/lib/pos/bridge'
 import { buildPrintAgentInstaller } from '@/lib/ecommerce/printAgentScript'
-import type { PaymentMethodConfig } from '@/lib/ecommerce/config'
+import type { PaymentMethodConfig, SharkposEmisor } from '@/lib/ecommerce/config'
 import { toast } from 'sonner'
 
 interface PedidosCfg {
@@ -33,6 +33,8 @@ export default function PosConfigPage() {
   const [methods, setMethods] = useState<PaymentMethodConfig[]>([])
   const [sharkposEnabled, setSharkposEnabled] = useState(false)
   const [savingMethods, setSavingMethods] = useState(false)
+  const [emisor, setEmisor] = useState<SharkposEmisor>({})
+  const [savingEmisor, setSavingEmisor] = useState(false)
 
   useEffect(() => { autoDetect() }, [])
   useEffect(() => { setKitchen(getKitchenMode()) }, [])
@@ -45,8 +47,20 @@ export default function PosConfigPage() {
       if (r.ok && d.config) { setPedidos(d.config); if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions) }
       if (r.ok && Array.isArray(d.paymentMethods)) setMethods(d.paymentMethods)
       if (r.ok && typeof d.sharkposEnabled === 'boolean') setSharkposEnabled(d.sharkposEnabled)
+      if (r.ok && d.config?.sharkposEmisor) setEmisor(d.config.sharkposEmisor)
     } catch { /* noop */ }
   }, [restaurantId])
+
+  const saveEmisor = async () => {
+    if (!restaurantId) return
+    setSavingEmisor(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: { sharkposEmisor: emisor } }) })
+      if (r.ok) toast.success('Datos de emisor guardados')
+      else { toast.error('No se pudo guardar'); loadPedidos() }
+    } catch { toast.error('Error de conexión'); loadPedidos() }
+    setSavingEmisor(false)
+  }
 
   const setMethodAt = (i: number, patch: Partial<PaymentMethodConfig>) => setMethods(ms => ms.map((m, idx) => idx === i ? { ...m, ...patch } : m))
   const addMethod = () => setMethods(ms => [...ms, { key: '', label: '', emitsFiscal: false }])
@@ -362,6 +376,34 @@ export default function PosConfigPage() {
             </div>
           </div>
         </div>
+
+        {/* Datos de boleta (emisor) — solo relevante con SharkPOS */}
+        {sharkposEnabled && (
+          <div style={{ marginTop: 24 }}>
+            <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Datos de boleta (emisor)</div>
+            <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', marginBottom: 12, lineHeight: 1.5 }}>Lo que aparece en la cabecera y el pie de la boleta impresa. El RUT sale del timbre electrónico, no se configura aquí.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {([
+                { key: 'razonSocial', label: 'Razón social', ph: 'Comercial El Suculento SpA' },
+                { key: 'giro', label: 'Giro', ph: 'Restaurante / comida rápida' },
+                { key: 'direccion', label: 'Dirección', ph: 'Av. Siempre Viva 742, Santiago' },
+                { key: 'siiOffice', label: 'Unidad S.I.I.', ph: 'S.I.I. - Santiago Oriente' },
+                { key: 'resolucion', label: 'Resolución boleta electrónica', ph: 'Res. 80 de 2014' },
+              ] as { key: keyof SharkposEmisor; label: string; ph: string }[]).map(({ key, label, ph }) => (
+                <div key={key}>
+                  <label style={{ fontSize: '0.72rem', color: 'var(--ink-3)', fontWeight: 700, display: 'block', marginBottom: 4 }}>{label}</label>
+                  <input
+                    value={emisor[key] || ''}
+                    onChange={e => setEmisor(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={ph}
+                    style={{ width: '100%', padding: '9px 11px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontSize: '0.88rem', boxSizing: 'border-box' }}
+                  />
+                </div>
+              ))}
+              <button type="button" disabled={savingEmisor} onClick={saveEmisor} style={{ padding: '10px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: savingEmisor ? 'wait' : 'pointer', opacity: savingEmisor ? 0.6 : 1 }}>{savingEmisor ? 'Guardando…' : 'Guardar datos de emisor'}</button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

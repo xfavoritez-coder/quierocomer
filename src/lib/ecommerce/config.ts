@@ -144,6 +144,21 @@ export interface CentroPedidosConfig {
    *  `emitsFiscal` = al cobrar con este método se emite boleta (requiere además que
    *  el local tenga SharkPOS habilitado). */
   paymentMethods?: PaymentMethodConfig[];
+  /** Datos del emisor para la boleta impresa (el RUT sale del timbre, no de aquí). */
+  sharkposEmisor?: SharkposEmisor;
+}
+
+export interface SharkposEmisor {
+  /** Razón social (encabezado de la boleta). */
+  razonSocial?: string;
+  /** Giro comercial. */
+  giro?: string;
+  /** Dirección de la casa matriz. */
+  direccion?: string;
+  /** Unidad del SII (ej: "S.I.I. - Santiago Oriente"). */
+  siiOffice?: string;
+  /** Resolución de boleta electrónica (ej: "Res. 80 de 2014"). */
+  resolucion?: string;
 }
 
 export interface PaymentMethodConfig {

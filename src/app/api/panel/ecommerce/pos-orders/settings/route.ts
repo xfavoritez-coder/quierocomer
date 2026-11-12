@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, effectivePaymentMethods, normalizePaymentKey, type CentroPedidosConfig, type PaymentMethodConfig } from "@/lib/ecommerce/config";
+import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, effectivePaymentMethods, normalizePaymentKey, type CentroPedidosConfig, type PaymentMethodConfig, type SharkposEmisor } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +76,18 @@ export async function PUT(req: NextRequest) {
       });
     }
     if (clean.length) merged.paymentMethods = clean;
+  }
+  // Datos del emisor para la boleta impresa.
+  if (incoming.sharkposEmisor && typeof incoming.sharkposEmisor === "object") {
+    const e = incoming.sharkposEmisor as SharkposEmisor;
+    const s = (v: unknown, max: number) => { const t = String(v ?? "").trim().slice(0, max); return t || undefined; };
+    merged.sharkposEmisor = {
+      razonSocial: s(e.razonSocial, 100),
+      giro: s(e.giro, 100),
+      direccion: s(e.direccion, 120),
+      siiOffice: s(e.siiOffice, 60),
+      resolucion: s(e.resolucion, 60),
+    };
   }
 
   const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };

@@ -11,6 +11,7 @@ import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { getBoletaTed, getBoletaTedPngBase64, sharkposEnv } from "@/lib/sharkpos/client";
 import { buildLines } from "@/lib/sharkpos/emit-sale";
+import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,8 +41,8 @@ export async function GET(req: NextRequest) {
     select: {
       id: true, restaurantId: true, totalAmount: true, deliveryFee: true, items: true,
       orderReference: true, externalId: true,
-      boletaDteId: true, boletaFolio: true, boletaStatus: true, boletaEmittedAt: true,
-      restaurant: { select: { name: true, sharkposEnabled: true, toteatWebhookSecret: true } },
+      boletaDteId: true, boletaFolio: true, boletaStatus: true, boletaEmittedAt: true, boletaPublicUrl: true,
+      restaurant: { select: { name: true, sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true } },
     },
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
@@ -78,17 +79,23 @@ export async function GET(req: NextRequest) {
   const total = order.totalAmount || 0;
   const ref = order.orderReference || order.externalId || order.id.slice(-6);
   const { lines } = buildLines(order.items, total, `Venta ${ref}`, order.deliveryFee || 0);
+  const emi = parseCentroPedidosConfig(order.restaurant?.centroPedidosConfig).sharkposEmisor || {};
 
   return NextResponse.json({
     ready: true,
     boleta: {
       folio: order.boletaFolio,
       fecha: fechaChile(order.boletaEmittedAt || new Date()),
-      emisorName: order.restaurant?.name || "",
+      emisorName: emi.razonSocial || order.restaurant?.name || "",
       emisorRut,
+      emisorGiro: emi.giro,
+      emisorAddress: emi.direccion,
+      siiOffice: emi.siiOffice,
+      resolution: emi.resolucion,
       items: lines.map((l) => ({ name: l.name, qty: l.qty, price: l.price })),
       total,
       tedPngBase64,
+      verifyUrl: order.boletaPublicUrl || undefined,
       sandbox: sharkposEnv() === "sandbox",
     },
   });

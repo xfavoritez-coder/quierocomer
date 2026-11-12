@@ -87,6 +87,7 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
           boletaFolio: r.folio ?? null,
           boletaStatus: r.publicStatus || r.dteStatus || r.status || "emitida",
           boletaPdfUrl: r.pdfUrl || r.links?.pdf || null,
+          boletaPublicUrl: r.publicUrl || null,
           boletaEmittedAt: new Date(),
         },
       });

@@ -546,6 +546,7 @@ model PosOrder {
   boletaFolio     Int?
   boletaStatus    String?
   boletaPdfUrl    String?
+  boletaPublicUrl String? // consulta pública (public_url de SharkPOS, para el pie de la boleta)
   boletaEmittedAt DateTime?
 
   vendorName      String?
