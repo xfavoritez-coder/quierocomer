@@ -226,7 +226,8 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
               Certificado digital (.pfx / .p12, ≤2 MB)
               <input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setCert(e.target.files?.[0] || null)} disabled={disabled} style={{ ...inp, padding: 6 }} />
             </label>
-            <input value={pf.certificatePassword || ""} onChange={(e) => setF("certificatePassword", e.target.value)} placeholder="Clave del certificado" type="password" autoComplete="new-password" disabled={disabled} style={inp} />
+            <input value={pf.certificatePassword || ""} onChange={(e) => setF("certificatePassword", e.target.value)} placeholder="Clave del certificado (.pfx — NO la del SII)" type="password" autoComplete="new-password" disabled={disabled} style={inp} />
+            <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#777", margin: "-2px 0 0" }}>Es la contraseña del archivo del certificado digital, no la Clave Tributaria del SII (esa no se necesita).</p>
             <button onClick={darDeAlta} disabled={disabled} style={{ padding: "9px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, opacity: busy ? 0.6 : 1 }}>{busy ? "Dando de alta ante el SII…" : "Dar de alta RUT (producción)"}</button>
           </div>
         );
