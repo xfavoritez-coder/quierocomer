@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { emitBoletaForPosOrder } from "@/lib/sharkpos/emit-sale";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
@@ -246,6 +247,9 @@ export async function PATCH(req: NextRequest) {
       data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },
     });
     void syncOnlineOrderFromPos(updated).catch(() => {});
+    // Boleta SII (SharkPOS): venta recién cobrada → emite en segundo plano (no
+    // bloquea el cobro). El gate (local habilitado + sin Toteat) va dentro.
+    after(() => emitBoletaForPosOrder(id).catch((e) => console.error("[sharkpos] emit venta", id, e)));
     return NextResponse.json({ order: updated });
   }
 

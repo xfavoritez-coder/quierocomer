@@ -384,6 +384,7 @@ model Restaurant {
   deliveryBalance            Int                       @default(0) // saldo prepago (CLP) para solicitar repartidores externos
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
+  sharkposEnabled            Boolean                   @default(false) // piloto: emitir boletas SII vía SharkPOS (solo locales sin Toteat)
   viewerSections             Json? // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
   automationRules            AutomationRule[]
@@ -538,6 +539,14 @@ model PosOrder {
   deliveryFee    Int    @default(0)
   discountAmount Int    @default(0)
   currency       String @default("CLP")
+
+  // Boleta electrónica SII (SharkPOS). Se emite al cobrar; el folio/estado final
+  // llega por webhook. boletaStatus = public_status de SharkPOS.
+  boletaDteId     String?
+  boletaFolio     Int?
+  boletaStatus    String?
+  boletaPdfUrl    String?
+  boletaEmittedAt DateTime?
 
   vendorName      String?
   orderReference  String?
