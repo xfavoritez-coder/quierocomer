@@ -1702,6 +1702,12 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
     });
 
     mapRef.current.fitBounds(bounds, 40);
+    // Zoom in 1 level after fitBounds settles
+    const listener = mapRef.current.addListener("idle", () => {
+      const z = mapRef.current.getZoom();
+      if (z != null) mapRef.current.setZoom(z + 1);
+      listener.remove();
+    });
   }, [allPolygons, pts, primaryColor]);
 
   // Fullscreen toggle
