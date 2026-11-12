@@ -538,7 +538,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   const estimatedTime = deliverySelected ? ((deliveryType === "delivery" ? tenant.waitTimeDelivery : tenant.waitTimePickup) || tenant.waitTime || "") : "";
 
   return (
-    <div className="qc-storefront min-h-screen" style={{ ...modernFontVars, paddingTop: "env(safe-area-inset-top)", background: "#f5f3ee" }}>
+    <div className="qc-storefront min-h-screen flex flex-col" style={{ ...modernFontVars, paddingTop: "env(safe-area-inset-top)", background: "#f5f3ee" }}>
       {/* Load DM Sans from Google Fonts */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" />
@@ -728,7 +728,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 style={activeView === "locales" ? { background: `${primaryColor}10` } : {}}
               >
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[15px] font-semibold">{brandMode ? "Locales" : "Local"}</span>
+                  <span className="text-[15px] font-semibold">Locales</span>
                   <span className="text-[12px] text-gray-400">Área de reparto y horarios</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -962,12 +962,12 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Locales view ────── */}
       {activeView === "locales" && (
-        <div className="max-w-5xl mx-auto px-4 pt-4 pb-10">
+        <div className="max-w-5xl mx-auto px-4 pt-4 pb-10 flex-1">
           <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
             <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
-            {siblings && siblings.length > 1 ? "Nuestros locales" : "Nuestro local"}
+            Nuestros locales
           </h2>
-          <p className="text-[13px] text-gray-400 mb-5">{siblings && siblings.length > 1 ? "Encuentra la sucursal más cercana a ti" : "Encuéntranos aquí"}</p>
+          <p className="text-[13px] text-gray-400 mb-5">Encuentra la sucursal más cercana a ti</p>
 
           {/* Interactive map with all branches */}
           <LocalesMap
@@ -1014,7 +1014,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       )}
 
       {/* ── Footer ────── */}
-      <footer className="mt-6 pb-28 sm:pb-8" style={{ background: "#1e293b" }}>
+      <footer className="mt-auto pb-28 sm:pb-8" style={{ background: "#1e293b" }}>
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-center">
           <span className="text-[13px] text-gray-500">Creado por <a href="https://quierocomer.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-400 hover:text-white transition">QuieroComer.com</a> · © {new Date().getFullYear()}</span>
         </div>
@@ -1589,19 +1589,18 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
   const pts = useMemo(() => siblings.filter(b => b.lat && b.lng), [siblings]);
   const hasPoints = pts.length > 0 || (tenant.deliveryConfig.origin != null);
 
+  // Initialize map once
   useEffect(() => {
-    if (!mapReady || !containerRef.current || !hasPoints) return;
-    if (mapRef.current) return;
+    if (!mapReady || !containerRef.current || !hasPoints || mapRef.current) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const G = (window as any).google?.maps;
     if (!G) return;
 
-    const bounds = new G.LatLngBounds();
     const defaultCenter = pts.length > 0
       ? { lat: pts[0].lat!, lng: pts[0].lng! }
       : tenant.deliveryConfig.origin ?? { lat: -33.45, lng: -70.65 };
 
-    const map = new G.Map(containerRef.current, {
+    mapRef.current = new G.Map(containerRef.current, {
       center: defaultCenter,
       zoom: 14,
       disableDefaultUI: true,
@@ -1612,14 +1611,14 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
         { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
       ],
     });
-    mapRef.current = map;
 
-    // Branch markers — círculos del primaryColor
+    // Branch markers
+    const bounds = new G.LatLngBounds();
     pts.forEach(b => {
       const pos = { lat: b.lat!, lng: b.lng! };
       new G.Marker({
         position: pos,
-        map,
+        map: mapRef.current,
         title: b.branchName || b.name,
         icon: {
           path: G.SymbolPath.CIRCLE,
@@ -1633,7 +1632,30 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       bounds.extend(pos);
     });
 
-    // Delivery polygons for ALL branches
+    // User location
+    if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
+      const userPos = { lat: deliveryAddress.lat, lng: deliveryAddress.lng };
+      new G.Marker({ position: userPos, map: mapRef.current, title: deliveryAddress.address, icon: { path: G.SymbolPath.CIRCLE, scale: 14, fillColor: "#3b82f6", fillOpacity: 0.15, strokeColor: "#3b82f6", strokeOpacity: 0.3, strokeWeight: 1 } });
+      new G.Marker({ position: userPos, map: mapRef.current, icon: { path: G.SymbolPath.CIRCLE, scale: 7, fillColor: "#3b82f6", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2.5 } });
+      bounds.extend(userPos);
+    }
+
+    if (pts.length > 1) mapRef.current.fitBounds(bounds, 40);
+  }, [mapReady, hasPoints, pts, deliveryAddress, primaryColor, tenant.deliveryConfig.origin]);
+
+  // Draw polygons when they load (async)
+  const polygonsDrawnRef = useRef(false);
+  useEffect(() => {
+    if (!mapRef.current || allPolygons.length === 0 || polygonsDrawnRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const G = (window as any).google?.maps;
+    if (!G) return;
+    polygonsDrawnRef.current = true;
+
+    const bounds = new G.LatLngBounds();
+    // Re-add branch points to bounds
+    pts.forEach(b => bounds.extend({ lat: b.lat!, lng: b.lng! }));
+
     allPolygons.forEach(({ polygon }) => {
       const gPoly = new G.Polygon({
         paths: polygon,
@@ -1642,50 +1664,14 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
         strokeWeight: 2,
         fillColor: primaryColor,
         fillOpacity: 0.08,
-        map,
+        map: mapRef.current,
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gPoly.getPath().forEach((p: any) => bounds.extend(p));
     });
 
-    // User location — círculo azul tipo GPS
-    if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
-      const userPos = { lat: deliveryAddress.lat, lng: deliveryAddress.lng };
-      // Outer pulse circle
-      new G.Marker({
-        position: userPos,
-        map,
-        title: deliveryAddress.address,
-        icon: {
-          path: G.SymbolPath.CIRCLE,
-          scale: 14,
-          fillColor: "#3b82f6",
-          fillOpacity: 0.15,
-          strokeColor: "#3b82f6",
-          strokeOpacity: 0.3,
-          strokeWeight: 1,
-        },
-      });
-      // Inner solid circle
-      new G.Marker({
-        position: userPos,
-        map,
-        icon: {
-          path: G.SymbolPath.CIRCLE,
-          scale: 7,
-          fillColor: "#3b82f6",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2.5,
-        },
-      });
-      bounds.extend(userPos);
-    }
-
-    if (pts.length > 1 || allPolygons.length > 0) {
-      map.fitBounds(bounds, 40);
-    }
-  }, [mapReady, hasPoints, pts, allPolygons, deliveryAddress, primaryColor, tenant.deliveryConfig.origin]);
+    mapRef.current.fitBounds(bounds, 40);
+  }, [allPolygons, pts, primaryColor]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
