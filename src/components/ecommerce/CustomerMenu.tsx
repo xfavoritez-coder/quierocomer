@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, MapPin, LogOut, Camera, Globe, Mail, RotateCcw, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreTenant, StoreProduct } from "@/lib/ecommerce/storefront-data";
@@ -44,15 +44,41 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
   const needsLogin = (v: View) => (v === "profile" || v === "orders" || v === "favorites") && !user;
   const go = (v: View) => { if (needsLogin(v)) { setLoginExpanded(true); return; } setView(v); };
 
+  // ── Deslizar hacia abajo para cerrar ──────────────────────────────
+  // Un deslizamiento vertical hacia abajo (pasado el umbral) cierra el menú. Solo
+  // se arma si el contenido está arriba del todo (scrollTop <= 0), para no
+  // interrumpir el scroll normal del menú.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ startX: number; startY: number; active: boolean }>({ startX: 0, startY: 0, active: false });
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const atTop = (scrollRef.current?.scrollTop ?? 0) <= 0;
+    const t = e.touches[0];
+    drag.current = { startX: t.clientX, startY: t.clientY, active: atTop };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    const t = e.changedTouches[0];
+    const dy = t.clientY - drag.current.startY;
+    const dx = Math.abs(t.clientX - drag.current.startX);
+    // Deslizamiento hacia abajo, vertical y suficientemente largo → cerrar.
+    if (dy > 70 && dy > dx * 1.3) requestClose();
+  };
+
   return (
     <div className={`fixed inset-0 z-50 flex ${sheet ? "justify-center items-end sm:items-center" : side === "left" ? "justify-start" : "justify-end"}`}>
       {/* Overlay oscuro SIN backdrop-blur: animar la opacidad de un overlay con
           blur(18px) saturaba la GPU y trababa la animación de cierre del drawer en
           escritorio. Un overlay sólido se desvanece de forma fluida. */}
       <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.5)" }} />
-      <div className={`${sheet
+      <div
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className={`${sheet
         ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`} style={{ willChange: "transform" }}>
+        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`}
+        style={{ willChange: "transform" }}>
         {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
@@ -65,7 +91,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 active:scale-90 transition"><X className="w-5 h-5" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {view === "root" && (
             <>
               {/* Usuario / login */}
