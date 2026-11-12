@@ -552,7 +552,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
         {/* ── Mobile header ── */}
         <div className="lg:hidden max-w-5xl mx-auto px-4 h-14 flex items-center justify-between relative">
           <button onClick={() => setDrawerOpen(true)} aria-label="Menú" className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
-            <MenuIcon className="w-5 h-5" />
+            <MenuIcon className="w-[22px] h-[22px]" />
           </button>
           <a href={storeBase || "/"} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center" onClick={(e) => { e.preventDefault(); setActiveView("carta"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
             {tenant.logoUrl ? (
@@ -561,13 +561,13 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
               <span className={`font-black text-xl ${headerDark ? "text-white" : "text-gray-900"}`}>{tenant.name}</span>
             )}
           </a>
-          <div className="flex items-center gap-0">
+          <div className="flex items-center gap-1">
             <button onClick={() => loggedIn ? openMenu("root") : setLoginModalOpen(true)} aria-label="Mi cuenta" className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
-              <User className="w-5 h-5" />
+              <User className="w-[22px] h-[22px]" />
             </button>
             <button onClick={goCheckout} aria-label="Ver carrito" className={`w-10 h-10 flex items-center justify-center rounded-lg transition relative ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
               <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
-                <ShoppingCart className="w-5 h-5" />
+                <ShoppingCart className="w-[22px] h-[22px]" />
                 {badge > 0 && <span className="absolute -top-1.5 -right-2 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow bg-red-500">{badge}</span>}
               </span>
             </button>

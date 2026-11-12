@@ -346,9 +346,9 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
-            {/* Botón "Entregado" — SIEMPRE visible en out_for_delivery, sin importar
-                el estado de Delifast. Si Delifast canceló se pide confirmación extra. */}
-            {paid && order.opsStage === 'out_for_delivery' && (
+            {/* Botón "Entregado" — visible en out_for_delivery O en ready con delivery
+                asignado a Delifast (el opsStage puede no haber avanzado aún). */}
+            {paid && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId)) && (
               <button
                 onClick={() => {
                   if (delifastCancelled) {
