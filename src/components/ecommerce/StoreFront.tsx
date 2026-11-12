@@ -1236,7 +1236,6 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings, variant
                     );
                   })}
                   {refLat == null && allBranches.length > 1 && (
-                    <p className="text-xs text-gray-400 px-1">Ingresa tu dirección en delivery para ver la distancia a cada sucursal.</p>
                   )}
                 </div>
               );
