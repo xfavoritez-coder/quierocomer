@@ -1536,8 +1536,6 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
         <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
         Nuestros locales
       </h2>
-      <p className="text-[13px] text-gray-400 mb-5">Encuentra la sucursal más cercana a ti</p>
-
       <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gray-500 mb-3">Área de reparto</h3>
       <LocalesMap
         googleMapsKey={tenant.googleMapsKey}
