@@ -351,9 +351,7 @@ function OrderCard({
             {paid && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId)) && (
               <button
                 onClick={() => {
-                  if (delifastCancelled) {
-                    if (!window.confirm('Delifast canceló el reparto. ¿Marcar como entregado?')) return
-                  }
+                  if (!window.confirm('¿Estás seguro que deseas marcar este pedido como entregado?')) return
                   onStageChange(order, 'delivered')
                 }}
                 disabled={busy}
