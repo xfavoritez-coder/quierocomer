@@ -710,7 +710,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 className={`flex items-center gap-3 px-3 py-3.5 rounded-xl transition text-left ${activeView === "carta" ? "text-gray-900" : "text-gray-700 hover:bg-gray-50"}`}
                 style={activeView === "carta" ? { background: `${primaryColor}10` } : {}}
               >
-                <span className="text-sm font-semibold flex-1">Carta</span>
+                <span className="text-[15px] font-semibold flex-1">Carta</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
               {tenant.favoritesEnabled && (
@@ -718,7 +718,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                   onClick={() => { closeDrawer(); if (loggedIn === false) { promptLogin(""); return; } openMenu("favorites"); }}
                   className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-gray-700 hover:bg-gray-50 transition text-left"
                 >
-                  <span className="text-sm font-semibold flex-1">Favoritos</span>
+                  <span className="text-[15px] font-semibold flex-1">Favoritos</span>
                   <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                 </button>
               )}
@@ -728,8 +728,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 style={activeView === "locales" ? { background: `${primaryColor}10` } : {}}
               >
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-sm font-semibold">{brandMode ? "Locales" : "Local"}</span>
-                  <span className="text-[11px] text-gray-400">Ver área de reparto y horarios</span>
+                  <span className="text-[15px] font-semibold">{brandMode ? "Locales" : "Local"}</span>
+                  <span className="text-[12px] text-gray-400">Área de reparto y horarios</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
