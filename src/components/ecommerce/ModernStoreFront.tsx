@@ -1538,16 +1538,13 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
       </h2>
       <p className="text-[13px] text-gray-400 mb-5">Encuentra la sucursal más cercana a ti</p>
 
+      <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gray-500 mb-3">Área de reparto</h3>
       <LocalesMap
         googleMapsKey={tenant.googleMapsKey}
         siblings={siblings}
         tenant={tenant}
         primaryColor={primaryColor}
       />
-      <p className="text-[12px] text-gray-400 mb-5 flex items-center gap-1.5">
-        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: primaryColor, opacity: 0.3 }} />
-        Área de reparto
-      </p>
 
       <div className="flex flex-col gap-4">
         {siblings.length > 0 ? (
