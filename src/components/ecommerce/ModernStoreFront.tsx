@@ -962,55 +962,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Locales view ────── */}
       {activeView === "locales" && (
-        <div className="max-w-5xl mx-auto px-4 pt-4 pb-10 flex-1">
-          <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
-            Nuestros locales
-          </h2>
-          <p className="text-[13px] text-gray-400 mb-5">Encuentra la sucursal más cercana a ti</p>
-
-          {/* Interactive map with all branches */}
-          <LocalesMap
-            googleMapsKey={tenant.googleMapsKey}
-            siblings={siblings ?? []}
-            tenant={tenant}
-            primaryColor={primaryColor}
-          />
-
-          <div className="flex flex-col gap-4">
-            {siblings && siblings.length > 0 ? (
-              siblings.map(b => (
-                <BranchCard
-                  key={b.id}
-                  name={b.branchName || b.name}
-                  address={b.address}
-                  phone={null}
-                  whatsapp={null}
-                  open={b.open}
-                  opensAt={b.opensAt}
-                  weeklyHours={b.id === tenant.id ? tenant.weeklyHours : null}
-                  primaryColor={primaryColor}
-                  logoUrl={tenant.faviconUrl || b.logoUrl}
-                  onViewHours={b.id === tenant.id ? () => setHoursModalOpen(true) : undefined}
-                  current={b.id === tenant.id}
-                />
-              ))
-            ) : (
-              <BranchCard
-                name={tenant.branchName || tenant.name}
-                address={tenant.address}
-                phone={tenant.phone}
-                whatsapp={tenant.whatsapp}
-                open={tenant.openStatus.open}
-                opensAt={tenant.openStatus.opensAt ?? null}
-                weeklyHours={tenant.weeklyHours}
-                primaryColor={primaryColor}
-                logoUrl={tenant.faviconUrl || tenant.logoUrl}
-                onViewHours={() => setHoursModalOpen(true)}
-              />
-            )}
-          </div>
-        </div>
+        <LocalesViewContent tenant={tenant} siblings={siblings ?? []} primaryColor={primaryColor} onViewHours={() => setHoursModalOpen(true)} />
       )}
 
       {/* ── Footer ────── */}
@@ -1546,6 +1498,85 @@ function ModernLoginModal({ tenant, primaryColor, onClose, onLogged }: {
           )}
           {msg && <p className={`text-[12px] text-center ${msg.includes("incorrecto") || msg.includes("No se pudo") || msg.includes("Error") ? "text-red-500" : "text-gray-500"}`}>{msg}</p>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Locales View Content ──────────────────────
+function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
+  tenant: StoreTenant; siblings: BrandBranch[]; primaryColor: string; onViewHours: () => void;
+}) {
+  const [branchHours, setBranchHours] = useState<Map<string, import("@/lib/ecommerce/hours").DayHours[] | null>>(new Map());
+
+  // Fetch hours for all branches
+  useEffect(() => {
+    (async () => {
+      const hours = new Map<string, import("@/lib/ecommerce/hours").DayHours[] | null>();
+      // Current tenant hours
+      hours.set(tenant.id, tenant.weeklyHours);
+      // Fetch sibling hours
+      for (const b of siblings) {
+        if (b.id === tenant.id) continue;
+        try {
+          const r = await fetch(`/api/ecommerce/storefront/${encodeURIComponent(b.slug)}`);
+          if (r.ok) {
+            const d = await r.json();
+            hours.set(b.id, d?.tenant?.weeklyHours ?? null);
+          }
+        } catch {}
+      }
+      setBranchHours(hours);
+    })();
+  }, [siblings, tenant.id, tenant.slug, tenant.weeklyHours]);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 pt-4 pb-10">
+      <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+        <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
+        Nuestros locales
+      </h2>
+      <p className="text-[13px] text-gray-400 mb-5">Encuentra la sucursal más cercana a ti</p>
+
+      <LocalesMap
+        googleMapsKey={tenant.googleMapsKey}
+        siblings={siblings}
+        tenant={tenant}
+        primaryColor={primaryColor}
+      />
+
+      <div className="flex flex-col gap-4">
+        {siblings.length > 0 ? (
+          siblings.map(b => (
+            <BranchCard
+              key={b.id}
+              name={b.branchName || b.name}
+              address={b.address}
+              phone={null}
+              whatsapp={null}
+              open={b.open}
+              opensAt={b.opensAt}
+              weeklyHours={branchHours.get(b.id) ?? null}
+              primaryColor={primaryColor}
+              logoUrl={tenant.faviconUrl || b.logoUrl}
+              onViewHours={b.id === tenant.id ? onViewHours : undefined}
+              current={b.id === tenant.id}
+            />
+          ))
+        ) : (
+          <BranchCard
+            name={tenant.branchName || tenant.name}
+            address={tenant.address}
+            phone={tenant.phone}
+            whatsapp={tenant.whatsapp}
+            open={tenant.openStatus.open}
+            opensAt={tenant.openStatus.opensAt ?? null}
+            weeklyHours={tenant.weeklyHours}
+            primaryColor={primaryColor}
+            logoUrl={tenant.faviconUrl || tenant.logoUrl}
+            onViewHours={onViewHours}
+          />
+        )}
       </div>
     </div>
   );
