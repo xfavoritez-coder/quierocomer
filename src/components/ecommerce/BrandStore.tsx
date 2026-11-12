@@ -170,6 +170,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
           fetchStorefront={fetchStorefront}
           onChoose={choose}
           onClose={() => setPickerOpen(false)}
+          variant={(themeOverride ?? data.tenant.theme) === "modern" ? "modern" : "default"}
         />
       )}
     </>
@@ -177,14 +178,16 @@ export default function BrandStore({ brand, representative, basePath, initialPro
 }
 
 // ── Modal: elegir sucursal (delivery por dirección → más cercana · retiro) ──
-function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose, onClose }: {
+function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose, onClose, variant = "default" }: {
   brand: BrandData;
   currentSlug: string | null;
   switching: boolean;
   fetchStorefront: (slug: string) => Promise<StorefrontData | null>;
   onChoose: (branch: BrandBranch, mode: "delivery" | "pickup", addr?: { address: string; details: string; lat: number | null; lng: number | null; fee: number; parts?: AddressParts | null }) => void;
   onClose: () => void;
+  variant?: "default" | "modern";
 }) {
+  const modern = variant === "modern";
   const accent = brand.branches[0]?.primaryColor || "#F4A623";
   const hasDelivery = brand.branches.some((b) => b.deliveryEnabled);
   const hasPickup = brand.branches.some((b) => b.pickupEnabled);
@@ -279,17 +282,18 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
     onChoose(chosen.branch, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: chosen.fee, parts: dest.parts });
   }
 
-  const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
+  const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: modern ? 999 : 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: modern ? 700 : 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-5 py-6" style={{ fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.5)" }} />
-      <div className="relative w-full" style={{ maxWidth: 420, background: "#fff", borderRadius: 24, padding: 18, maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-5 py-6" style={{ fontFamily: modern ? "'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,Arial" : "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: modern ? "rgba(0,0,0,.4)" : "rgba(0,0,0,.5)" }} />
+      <div className="relative w-full" style={{ maxWidth: 420, background: "#fff", borderRadius: modern ? 16 : 24, padding: modern ? 24 : 18, maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: modern ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
-            <h2 style={{ fontSize: "1.15rem", fontWeight: 900, color: "#111", margin: 0 }}>¿Cómo quieres pedir?</h2>
+            <h2 style={{ fontSize: modern ? "1.1rem" : "1.15rem", fontWeight: modern ? 700 : 900, color: "#111", margin: 0 }}>¿Cómo quieres tu pedido?</h2>
+            {modern && <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: 2 }}>Elige delivery o retiro en tienda</p>}
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 36, height: 36, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999, border: "none", background: "#f3f4f6", color: "#374151", cursor: "pointer" }}><X size={18} /></button>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999, border: modern ? "1px solid #e5e7eb" : "none", background: modern ? "#fff" : "#f3f4f6", color: modern ? "#9ca3af" : "#374151", cursor: "pointer", flexShrink: 0 }}><X size={modern ? 16 : 18} /></button>
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
