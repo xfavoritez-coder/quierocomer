@@ -171,6 +171,17 @@ export async function getBoletaTed(dteId: string): Promise<TedResult> {
   return { folio: d.folio, tedBase64: d.ted_base64, ted: d.ted, raw: d };
 }
 
+/** Trae el PNG del timbre (PDF417) de un documento, en base64, para rasterizarlo. */
+export async function getBoletaTedPngBase64(dteId: string): Promise<string | undefined> {
+  const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/ted.png`, {
+    headers: authHeaders(),
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) return undefined;
+  const buf = Buffer.from(await res.arrayBuffer());
+  return buf.toString("base64");
+}
+
 /** Consulta el estado de un documento por su dte_id (alternativa al webhook). */
 export async function getDocument(dteId: string): Promise<SharkposResult> {
   const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/`, {

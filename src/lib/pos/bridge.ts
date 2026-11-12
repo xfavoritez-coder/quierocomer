@@ -53,7 +53,7 @@ export interface BoletaPayload {
   fecha: string          // "12/11/2026 16:09"
   items: BoletaLine[]
   total: number
-  tedBase64?: string     // bytes del TED (SII) para el PDF417 nativo
+  tedRaster?: { width: number; height: number; data: number[] } // timbre PDF417 rasterizado (GS v 0)
   verifyUrl?: string     // consulta pública (public_url)
   sandbox?: boolean
 }
@@ -196,6 +196,36 @@ export async function printBoleta(payload: BoletaPayload): Promise<{ ok: boolean
  * en la caja. Reintenta mientras la boleta se está emitiendo (emisión async al
  * cobrar). Para reimprimir desde el historial basta retries=1.
  */
+// Convierte el PNG del timbre (base64) a un raster 1-bit para ESC/POS (GS v 0),
+// escalado para caber en el papel (80mm = 576 puntos). Sin librerías: usa canvas.
+async function pngToRaster(pngBase64: string, maxWidth = 576): Promise<{ width: number; height: number; data: number[] } | null> {
+  if (typeof document === 'undefined') return null
+  try {
+    const img = new Image()
+    await new Promise<void>((resolve, reject) => { img.onload = () => resolve(); img.onerror = () => reject(new Error('img')); img.src = 'data:image/png;base64,' + pngBase64 })
+    const w0 = img.naturalWidth, h0 = img.naturalHeight
+    if (!w0 || !h0) return null
+    const scale = w0 > maxWidth ? maxWidth / w0 : 1
+    const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale))
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h
+    const ctx = canvas.getContext('2d'); if (!ctx) return null
+    ctx.imageSmoothingEnabled = false
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(img, 0, 0, w, h)
+    const px = ctx.getImageData(0, 0, w, h).data
+    const bytesPerRow = Math.ceil(w / 8)
+    const data: number[] = new Array(bytesPerRow * h).fill(0)
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        const lum = px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114
+        if (px[i + 3] > 128 && lum < 128) data[y * bytesPerRow + (x >> 3)] |= (0x80 >> (x & 7))
+      }
+    }
+    return { width: w, height: h, data }
+  } catch { return null }
+}
+
 export async function printBoletaForOrder(posOrderId: string, opts?: { retries?: number; intervalMs?: number }): Promise<{ ok: boolean; printed?: boolean; error?: string; notReady?: boolean }> {
   const retries = opts?.retries ?? 1
   const interval = opts?.intervalMs ?? 2000
@@ -214,11 +244,12 @@ export async function printBoletaForOrder(posOrderId: string, opts?: { retries?:
     if (data.failed) return { ok: false, error: 'La emisión de la boleta falló' }
     if (data.ready && data.boleta) {
       const b = data.boleta
+      const tedRaster = b.tedPngBase64 ? await pngToRaster(b.tedPngBase64) : undefined
       const pr = await printBoleta({
         jobId: 'bol_' + posOrderId, emisorName: b.emisorName, emisorRut: b.emisorRut,
         emisorGiro: b.emisorGiro, emisorAddress: b.emisorAddress,
         folio: b.folio, fecha: b.fecha, items: b.items, total: b.total,
-        tedBase64: b.tedBase64, verifyUrl: b.verifyUrl, sandbox: b.sandbox,
+        tedRaster: tedRaster || undefined, verifyUrl: b.verifyUrl, sandbox: b.sandbox,
       })
       return { ...pr, printed: pr.ok }
     }

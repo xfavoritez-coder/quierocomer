@@ -51,22 +51,14 @@ class Enc {
   doubleOff() { return this.raw(GS, 0x21, 0x00); }
   lf() { return this.raw(0x0a); }
   cut() { return this.raw(GS, 0x56, 0x42, 0x05); }
-  // Código de barras 2D PDF417 nativo (ESC/POS GS ( k), para el timbre SII (TED).
-  // Nivel de corrección 5 (el que exige el SII). `data` = bytes crudos del TED.
-  pdf417(data: number[]) {
-    const fn = (f: number, ...args: number[]) => {
-      const body = [0x30, f, ...args];
-      this.raw(GS, 0x28, 0x6b, body.length & 0xff, (body.length >> 8) & 0xff, ...body);
-    };
-    fn(0x41, 0x00);        // columnas: auto
-    fn(0x42, 0x00);        // filas: auto
-    fn(0x43, 0x03);        // ancho de módulo
-    fn(0x44, 0x03);        // alto de fila
-    fn(0x45, 0x30, 0x35);  // corrección de errores nivel 5
-    // Guardar datos (fn 0x50, m 0x30): pL/pH = len(data)+3
-    const storeLen = data.length + 3;
-    this.raw(GS, 0x28, 0x6b, storeLen & 0xff, (storeLen >> 8) & 0xff, 0x30, 0x50, 0x30, ...data);
-    fn(0x51, 0x30);        // imprimir
+  // Imagen raster (ESC/POS GS v 0), estándar en toda térmica. `data` = filas de
+  // `ceil(width/8)` bytes, MSB a la izquierda, 1 = negro. Se usa para el timbre
+  // SII (PDF417 rasterizado). La longitud de datos debe ser EXACTA (si no, la
+  // impresora espera más bytes y avanza papel): por eso width/height/data cuadran.
+  rasterImage(width: number, height: number, data: number[]) {
+    const bytesPerRow = Math.ceil(width / 8);
+    this.raw(GS, 0x76, 0x30, 0x00, bytesPerRow & 0xff, (bytesPerRow >> 8) & 0xff, height & 0xff, (height >> 8) & 0xff);
+    for (const b of data) this.bytes.push(b & 0xff);
     return this;
   }
   toBytes(): Uint8Array { return Uint8Array.from(this.bytes); }
@@ -74,14 +66,6 @@ class Enc {
 
 // $ con separador de miles chileno.
 function clp(n: number): string { return "$" + Math.round(n).toLocaleString("es-CL"); }
-
-// base64 → bytes (para el TED del PDF417). Funciona en navegador (atob) y server.
-function base64ToBytes(b64: string): number[] {
-  const bin = typeof atob !== "undefined" ? atob(b64) : Buffer.from(b64, "base64").toString("binary");
-  const out: number[] = [];
-  for (let i = 0; i < bin.length; i++) out.push(bin.charCodeAt(i) & 0xff);
-  return out;
-}
 
 function lineColumns(left: string, right: string, width = WIDTH): string {
   const maxLeft = width - right.length - 1;
@@ -287,10 +271,10 @@ export function encodeBoleta(b: BoletaPayload): Uint8Array {
   e.line("IVA incluido (19%)");
   e.lf();
 
-  // Timbre electrónico SII (PDF417) centrado.
-  if (b.tedBase64) {
+  // Timbre electrónico SII (PDF417 rasterizado) centrado.
+  if (b.tedRaster && b.tedRaster.data && b.tedRaster.data.length) {
     e.alignCenter();
-    e.pdf417(base64ToBytes(b.tedBase64));
+    e.rasterImage(b.tedRaster.width, b.tedRaster.height, b.tedRaster.data);
     e.line("Timbre Electronico SII");
     e.line("Verifique en www.sii.cl");
   }

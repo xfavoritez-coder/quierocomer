@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { getBoletaTed, sharkposEnv } from "@/lib/sharkpos/client";
+import { getBoletaTed, getBoletaTedPngBase64, sharkposEnv } from "@/lib/sharkpos/client";
 import { buildLines } from "@/lib/sharkpos/emit-sale";
 
 export const runtime = "nodejs";
@@ -59,12 +59,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ready: false, enabled: true, failed: !!failed, reason: failed ? "emisión falló" : "emitiendo" });
   }
 
-  // TED para el PDF417. Si falla transitorio, que el POS reintente.
-  let tedBase64: string | undefined;
+  // Timbre: PNG del PDF417 (para rasterizar en la caja) + TED XML (para el RUT emisor).
+  // Si falla transitorio, que el POS reintente.
+  let tedPngBase64: string | undefined;
   let emisorRut = "";
   try {
-    const ted = await getBoletaTed(order.boletaDteId);
-    tedBase64 = ted.tedBase64;
+    const [ted, png] = await Promise.all([
+      getBoletaTed(order.boletaDteId),
+      getBoletaTedPngBase64(order.boletaDteId),
+    ]);
+    tedPngBase64 = png;
     const m = (ted.ted || "").match(/<RE>([^<]+)<\/RE>/i);
     if (m) emisorRut = m[1].trim();
   } catch {
@@ -84,7 +88,7 @@ export async function GET(req: NextRequest) {
       emisorRut,
       items: lines.map((l) => ({ name: l.name, qty: l.qty, price: l.price })),
       total,
-      tedBase64,
+      tedPngBase64,
       sandbox: sharkposEnv() === "sandbox",
     },
   });
