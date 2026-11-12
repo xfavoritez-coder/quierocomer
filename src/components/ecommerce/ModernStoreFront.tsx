@@ -1532,10 +1532,6 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
 
   return (
     <div className="max-w-5xl mx-auto px-4 pt-4 pb-10 w-full flex-1">
-      <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-        <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
-        Nuestros locales
-      </h2>
       <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gray-500 mb-3">Área de reparto</h3>
       <LocalesMap
         googleMapsKey={tenant.googleMapsKey}
@@ -1544,6 +1540,7 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
         primaryColor={primaryColor}
       />
 
+      <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-gray-500 mb-3 mt-6">Nuestros locales</h2>
       <div className="flex flex-col gap-4">
         {siblings.length > 0 ? (
           siblings.map(b => (
@@ -1767,7 +1764,6 @@ function BranchCard({ name, address, phone, whatsapp, open, opensAt, weeklyHours
             <img src={logoUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100" />
           )}
           <h3 className="text-lg font-bold text-gray-900">{name}</h3>
-          {current && <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${primaryColor}15`, color: primaryColor }}>Actual</span>}
           {open ? (
             <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Abierto</span>
           ) : (
