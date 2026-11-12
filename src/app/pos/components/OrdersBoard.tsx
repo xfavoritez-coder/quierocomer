@@ -106,7 +106,7 @@ function nextAction(stage: string, isDelivery: boolean, delifastVentaId?: string
   if (stage === 'preparing') return { label: 'Listo', stage: 'ready' }
   // Órdenes con Delifast asignado: Delifast controla los estados de reparto y entrega
   if (stage === 'ready' && isDelivery && delifastVentaId) return null
-  if (stage === 'ready' && isDelivery) return { label: 'Enviar a reparto', stage: 'out_for_delivery' }
+  if (stage === 'ready' && isDelivery) return { label: 'Enviado a reparto', stage: 'out_for_delivery' }
   if (stage === 'ready' && !isDelivery) return { label: 'Entregado', stage: 'delivered' }
   // Con Delifast activo en reparto: Delifast controla la entrega, no mostrar botón.
   if (stage === 'out_for_delivery' && delifastVentaId) return null
