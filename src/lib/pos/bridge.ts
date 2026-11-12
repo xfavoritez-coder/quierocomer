@@ -2,7 +2,8 @@
 // El POS llama al agente local (http://localhost:7777) para imprimir comandas.
 // El POS renderiza la comanda a bytes ESC/POS y se los manda crudos (base64);
 // el agente solo los imprime. Mismo agente que el del ecommerce (unificado).
-import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, encodeBoleta, bytesToBase64 } from "./escpos";
+import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, encodeBoleta, encodeRasterReceipt, bytesToBase64 } from "./escpos";
+import { pdfBase64ToRaster } from "./pdfRaster";
 
 export interface BridgeConfig {
   url: string  // ej: "http://192.168.1.10:7777" o "http://localhost:7777"
@@ -246,6 +247,25 @@ export async function printBoletaForOrder(posOrderId: string, opts?: { retries?:
     if (data.failed) return { ok: false, error: 'La emisión de la boleta falló' }
     if (data.ready && data.boleta) {
       const b = data.boleta
+      // Preferido: imprimir el PDF EXACTO de SharkPOS (rasterizado). Trae todos sus
+      // datos (Res., razón social, etc.) sin que nosotros reconstruyamos nada.
+      if (b.pdfBase64) {
+        const raster = await pdfBase64ToRaster(b.pdfBase64, 576)
+        if (raster) {
+          const url = getBridgeUrl()
+          try {
+            const escpos = bytesToBase64(encodeRasterReceipt(raster))
+            const res = await fetch(`${url}/print`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: 'bol_' + posOrderId, escpos }), signal: AbortSignal.timeout(12000) })
+            const d = await res.json().catch(() => ({}))
+            if (res.ok) return { ok: true, printed: true }
+            return { ok: false, error: d.error || `HTTP ${res.status}` }
+          } catch (err) {
+            return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
+          }
+        }
+        // si no se pudo rasterizar el PDF, cae al respaldo en texto
+      }
+      // Respaldo: boleta en texto ESC/POS (timbre desde el ted.png).
       const tedRaster = b.tedPngBase64 ? await pngToRaster(b.tedPngBase64, 420) : undefined
       const pr = await printBoleta({
         jobId: 'bol_' + posOrderId, emisorName: b.emisorName, emisorRut: b.emisorRut,

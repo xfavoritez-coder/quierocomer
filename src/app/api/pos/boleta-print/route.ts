@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { getBoletaTed, getBoletaTedPngBase64, sharkposEnv } from "@/lib/sharkpos/client";
+import { getBoletaTed, getBoletaTedPngBase64, getBoletaPdfBase64, sharkposEnv } from "@/lib/sharkpos/client";
 import { buildLines } from "@/lib/sharkpos/emit-sale";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
@@ -63,13 +63,16 @@ export async function GET(req: NextRequest) {
   // Timbre: PNG del PDF417 (para rasterizar en la caja) + TED XML (para el RUT emisor).
   // Si falla transitorio, que el POS reintente.
   let tedPngBase64: string | undefined;
+  let pdfBase64: string | undefined;
   let emisorRut = "";
   try {
-    const [ted, png] = await Promise.all([
+    const [ted, png, pdf] = await Promise.all([
       getBoletaTed(order.boletaDteId),
       getBoletaTedPngBase64(order.boletaDteId),
+      getBoletaPdfBase64(order.boletaDteId, 80),
     ]);
     tedPngBase64 = png;
+    pdfBase64 = pdf;
     const m = (ted.ted || "").match(/<RE>([^<]+)<\/RE>/i);
     if (m) emisorRut = m[1].trim();
   } catch {
@@ -84,6 +87,8 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ready: true,
     boleta: {
+      // PDF de SharkPOS (se imprime tal cual). Lo demás es respaldo por si falla el render.
+      pdfBase64,
       folio: order.boletaFolio,
       fecha: fechaChile(order.boletaEmittedAt || new Date()),
       emisorName: emi.razonSocial || order.restaurant?.name || "",

@@ -308,6 +308,14 @@ export function encodeBoleta(b: BoletaPayload): Uint8Array {
   return e.toBytes();
 }
 
+/** Recibo a partir de un raster ya listo (p. ej. el PDF de SharkPOS rasterizado). */
+export function encodeRasterReceipt(r: { width: number; height: number; data: number[] }): Uint8Array {
+  const e = new Enc();
+  e.init().alignCenter().rasterImage(r.width, r.height, r.data);
+  e.alignLeft().lf().lf().lf().cut();
+  return e.toBytes();
+}
+
 /** Comanda de prueba (para el botón "Imprimir prueba"). */
 export function encodeTest(): Uint8Array {
   return encodeComanda({
