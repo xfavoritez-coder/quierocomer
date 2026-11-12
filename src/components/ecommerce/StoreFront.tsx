@@ -1235,8 +1235,6 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings, variant
                       </div>
                     );
                   })}
-                  {refLat == null && allBranches.length > 1 && (
-                  )}
                 </div>
               );
             })()
@@ -1252,7 +1250,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings, variant
                   type="button"
                   onClick={handleGeolocate}
                   disabled={geoLoading}
-                  className="flex items-center gap-2 text-sm font-semibold transition disabled:opacity-50 self-start -mt-1"
+                  className="flex items-center gap-2 text-sm font-semibold transition disabled:opacity-50 self-start"
                   style={{ color: primaryColor }}
                 >
                   {geoLoading ? (
