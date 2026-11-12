@@ -72,6 +72,7 @@ const SK = "#a78bfa";
 function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
   const [platformReady, setPlatformReady] = useState<boolean | null>(null);
   const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
+  const [encReady, setEncReady] = useState<boolean>(true);
   const [rut, setRut] = useState("");
   const [pf, setPf] = useState<Record<string, string>>({});
   const [cert, setCert] = useState<File | null>(null);
@@ -84,7 +85,7 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
     setErr(null); setRut(""); setPf({}); setCert(null);
     fetch(`/api/admin/locales/${selected.id}/sharkpos`)
       .then(r => r.json())
-      .then(d => { if (alive) { setPlatformReady(!!d.platformConfigured); setPlatformEnv(d.platformEnv || "sandbox"); } })
+      .then(d => { if (alive) { setPlatformReady(!!d.platformConfigured); setPlatformEnv(d.platformEnv || "sandbox"); setEncReady(d.encryptionKeyConfigured !== false); } })
       .catch(() => { if (alive) setPlatformReady(false); });
     return () => { alive = false; };
   }, [selected.id]);
@@ -171,6 +172,10 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
 
       {usesToteat && (
         <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f59e0b", margin: "8px 0 0" }}>⚠️ Este local usa Toteat; su fiscal va por ahí. No se emitirán boletas por SharkPOS aunque esté habilitado.</p>
+      )}
+
+      {!encReady && platformReady && (
+        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f87171", margin: "8px 0 0" }}>🔒 Falta <code>SECRET_ENCRYPTION_KEY</code> en el servidor: la api_key del RUT no se guardaría cifrada. Cárgala en Vercel antes de dar de alta.</p>
       )}
 
       {!registered && (() => {

@@ -22,6 +22,9 @@ async function status(id: string) {
   return {
     platformConfigured: platformConfigured(),
     platformEnv: platformEnv(),
+    // Prueba que SECRET_ENCRYPTION_KEY está en el runtime: si está, encryptSecret
+    // devuelve un valor con prefijo "enc:v1:"; si no, devuelve el texto tal cual.
+    encryptionKeyConfigured: encryptSecret("probe").startsWith("enc:v1:"),
     enabled: !!r?.sharkposEnabled,
     registered: !!r?.sharkposTenantId,
     tenantRut: r?.sharkposTenantRut || null,
