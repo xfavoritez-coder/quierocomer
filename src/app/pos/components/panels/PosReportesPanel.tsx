@@ -16,6 +16,14 @@ function clpShort(n: number): string {
   if (n >= 1000) return `$${Math.round(n / 1000)}k`
   return `$${Math.round(n)}`
 }
+function fmtDateLabel(from: string, to: string): string {
+  const fmt = (d: string) => {
+    const [y, m, dd] = d.split('-')
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+    return `${parseInt(dd)} ${months[parseInt(m) - 1]} ${y}`
+  }
+  return from === to ? fmt(from) : `${fmt(from)} — ${fmt(to)}`
+}
 function chileTodayLocal(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 }
@@ -3444,6 +3452,10 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                     {v === 'hora' ? 'Por hora' : v === 'día' ? 'Por día' : v === 'semana' ? 'Por semana' : v === 'mes' ? 'Por mes' : 'Por año'}
                   </button>
                 ))}
+              </div>
+
+              <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginBottom: 8 }}>
+                {fmtDateLabel(fromDate, toDate)}
               </div>
 
               {chartView === 'hora' && <HourlyChart hourly={data.hourly} />}
