@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { X, Plus, Minus, UtensilsCrossed } from "lucide-react";
+import { X, Plus, Minus, UtensilsCrossed, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -283,8 +283,8 @@ export default function ProductModal({ product, primaryColor, onClose, scrollIma
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={handleAdd} className="flex-1 py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90 active:scale-[0.98]" style={{ background: primaryColor }}>
-            Agregar · {clp(unitPrice * qty)}
+          <button onClick={handleAdd} className="flex-1 py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90 active:scale-[0.98] inline-flex items-center justify-center gap-2" style={{ background: primaryColor }}>
+            <ShoppingCart className="w-4 h-4" /> Agregar · {clp(unitPrice * qty)}
           </button>
         </div>
       </div>
