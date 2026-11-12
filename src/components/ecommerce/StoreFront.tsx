@@ -1198,7 +1198,8 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
                     return (
                       <div key={b.id} className={`rounded-xl border p-4 ${b.open ? "bg-gray-50 border-gray-100" : "bg-gray-50/60 border-gray-100 opacity-75"}`}>
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
+                          {tenant.faviconUrl && <img src={tenant.faviconUrl} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />}
+                          <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-gray-700">{b.branchName ? `${b.name} — ${b.branchName}` : b.name}</p>
                             {b.address ? <p className="text-sm text-gray-500 mt-0.5">{b.address}</p> : <p className="text-sm text-gray-400 mt-0.5">Dirección disponible al confirmar.</p>}
                             {!b.open && (

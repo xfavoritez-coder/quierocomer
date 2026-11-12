@@ -602,7 +602,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 <span className={`text-left text-sm font-semibold truncate ${headerDark ? "text-white" : "text-gray-700"}`}>{shortAddr(deliveryAddress.address)}</span>
                 <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${headerDark ? "text-white/40" : "text-gray-400"}`} />
                 <span className="flex-1" />
-                {estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-sm font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-[13px] font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             ) : (
               <>
@@ -611,7 +611,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 {!tenant.openStatus.open && <span className="text-[10px] font-semibold text-red-400 bg-red-50 px-2 py-px rounded-full shrink-0">Cerrado</span>}
                 <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${headerDark ? "text-white/40" : "text-gray-400"}`} />
                 <span className="flex-1" />
-                {tenant.openStatus.open && estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-sm font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {tenant.openStatus.open && estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-[13px] font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             )}
           </button>
@@ -805,7 +805,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
               <>
                 <Motorbike className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
                 <span className="flex-1 text-left text-[15px] font-semibold text-gray-700 truncate flex items-center gap-1.5">{shortAddr(deliveryAddress.address)} <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" /></span>
-                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[15px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[14px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             ) : (
               <>
@@ -815,7 +815,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                   {!tenant.openStatus.open && <span className="shrink-0 text-[12px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2.5 py-px rounded-full">Cerrado</span>}
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" />
                 </span>
-                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[15px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[14px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
                 {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition mr-2">Ver horarios</span>}
               </>
             )}
