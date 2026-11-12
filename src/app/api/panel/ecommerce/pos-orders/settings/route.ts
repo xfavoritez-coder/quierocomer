@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, sharkposEnabled: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, sharkposEnabled: true, facturaEnabled: true } });
   const config = parseCentroPedidosConfig(r?.centroPedidosConfig);
   const ecom = parseEcommerceConfig(r?.ecommerceConfig);
   const hasPos = ecom.pos?.provider === "toteat";
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     posShowDescriptions: store.posShowDescriptions === true,
     paymentMethods: effectivePaymentMethods(config),
     sharkposEnabled: r?.sharkposEnabled === true,
+    facturaEnabled: r?.facturaEnabled === true,
   });
 }
 

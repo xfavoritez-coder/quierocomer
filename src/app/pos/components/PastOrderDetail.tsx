@@ -39,11 +39,19 @@ export interface PastOrder {
   prepMin?: number | null
   transitMin?: number | null
   totalMin?: number | null
+  // Documento tributario (SharkPOS)
+  boletaDteId?: string | null
+  boletaFolio?: number | null
+  fiscalDocType?: number | null // 39 boleta | 33 factura
+  notaCreditoDteId?: string | null
+  notaCreditoFolio?: number | null
+  anuladaAt?: string | null
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 const toName = (s: string) => s.trim().replace(/\S+/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase())
+const ncInp: React.CSSProperties = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontFamily: 'var(--sans)', fontSize: 13, width: '100%', boxSizing: 'border-box' }
 function displayName(s: string) {
   const m = s.trim().match(/^(Venta\s+)?[Rr][aá]pida\s+#(\d+)$/i)
   if (m) return `Venta rápida #${m[2]}`
@@ -211,6 +219,52 @@ export default function PastOrderDetail({
     else if (r.ok) setBoletaMsg('Este pedido no tiene boleta')
     else setBoletaMsg(r.error || 'No se pudo imprimir la boleta')
     setPrintingBoleta(false)
+  }
+
+  // ── Nota de crédito (anular) ─────────────────────────────────────────
+  const esFactura = (order.fiscalDocType || 39) === 33
+  const [ncOpen, setNcOpen] = useState(false)
+  const [ncBusy, setNcBusy] = useState(false)
+  const [ncErr, setNcErr] = useState<string | null>(null)
+  const [ncFolio, setNcFolio] = useState<number | null>(order.notaCreditoFolio ?? null)
+  const [ncMotivo, setNcMotivo] = useState('')
+  const [ncR, setNcR] = useState({ rut: '', name: '', giro: '', direccion: '', comuna: '', ciudad: '' })
+  const anulada = !!order.notaCreditoDteId || ncFolio != null
+
+  function abrirPdfBase64(b64: string, filename: string) {
+    try {
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }))
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.target = '_blank'; a.rel = 'noopener'
+      document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 30000)
+    } catch { window.alert('No se pudo abrir el PDF de la nota de crédito') }
+  }
+
+  const [descBusy, setDescBusy] = useState<string | null>(null)
+  async function descargarDoc(kind: 'factura' | 'nc') {
+    setDescBusy(kind)
+    try {
+      const res = await fetch(`/api/pos/doc-pdf?posOrderId=${order.id}&kind=${kind}`, { cache: 'no-store' })
+      const d = await res.json().catch(() => ({}))
+      if (d?.ready && d.pdfBase64) abrirPdfBase64(d.pdfBase64, `${kind === 'nc' ? 'nota-credito' : 'factura'}-${d.folio || order.id}.pdf`)
+      else window.alert(d?.reason || d?.error || 'No se pudo obtener el PDF')
+    } catch { window.alert('Error al obtener el PDF') }
+    finally { setDescBusy(null) }
+  }
+
+  const handleAnular = async () => {
+    setNcBusy(true); setNcErr(null)
+    try {
+      const payload: Record<string, unknown> = { posOrderId: order.id, motivo: ncMotivo.trim() || 'Anulación de venta' }
+      if (!esFactura) payload.receptor = ncR
+      const res = await fetch('/api/pos/nota-credito', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok || !d.ok) { setNcErr(d.error || 'No se pudo emitir la nota de crédito'); return }
+      setNcFolio(d.folio ?? 0); setNcOpen(false)
+      if (d.pdfBase64) abrirPdfBase64(d.pdfBase64, `nota-credito-${d.folio || order.id}.pdf`)
+    } catch { setNcErr('Error de red al emitir la nota de crédito') }
+    finally { setNcBusy(false) }
   }
 
   useEffect(() => {
@@ -507,24 +561,83 @@ export default function PastOrderDetail({
           )}
         </div>
 
-        {/* Reimprimir boleta (solo pedidos pagados; si no tiene boleta, lo avisa) */}
+        {/* Documento tributario: factura (33) → descargar PDF; boleta (39) → imprimir térmica */}
         {paid && !canceled && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <button
-              disabled={printingBoleta}
-              onClick={handlePrintBoleta}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
-                padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)',
-                background: 'var(--surface)', color: 'var(--ink)', cursor: printingBoleta ? 'default' : 'pointer',
-                fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingBoleta ? 0.6 : 1,
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              {printingBoleta ? 'Imprimiendo…' : 'Imprimir boleta'}
-            </button>
+            {esFactura ? (
+              <button
+                disabled={descBusy === 'factura'}
+                onClick={() => descargarDoc('factura')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: descBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: descBusy === 'factura' ? 0.6 : 1 }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {descBusy === 'factura' ? 'Obteniendo…' : 'Descargar factura'}
+              </button>
+            ) : (
+              <button
+                disabled={printingBoleta}
+                onClick={handlePrintBoleta}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                  padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)',
+                  background: 'var(--surface)', color: 'var(--ink)', cursor: printingBoleta ? 'default' : 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingBoleta ? 0.6 : 1,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                {printingBoleta ? 'Imprimiendo…' : 'Imprimir boleta'}
+              </button>
+            )}
             {boletaMsg && (
               <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: boletaMsg.startsWith('✓') ? 'var(--jade)' : 'var(--ink-3)' }}>{boletaMsg}</span>
+            )}
+          </div>
+        )}
+
+        {/* Anular con nota de crédito (solo pagados con boleta/factura emitida) */}
+        {paid && !canceled && (order.boletaFolio != null || order.boletaDteId) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', borderRadius: 10, border: `1px solid ${anulada ? 'rgba(239,68,68,0.35)' : 'var(--line)'}`, background: anulada ? 'rgba(239,68,68,0.06)' : 'var(--surface)' }}>
+            {anulada ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', textAlign: 'center' }}>
+                  ⛔ Anulada · Nota de crédito{ncFolio ? ` N° ${ncFolio}` : ''}
+                </span>
+                <button onClick={() => descargarDoc('nc')} disabled={descBusy === 'nc'} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', fontWeight: 700, fontSize: 13, opacity: descBusy === 'nc' ? 0.6 : 1 }}>
+                  {descBusy === 'nc' ? 'Obteniendo…' : 'Descargar nota de crédito'}
+                </button>
+              </div>
+            ) : !ncOpen ? (
+              <button
+                onClick={() => setNcOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.4)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700 }}
+              >
+                Anular ({esFactura ? 'nota de crédito de la factura' : 'nota de crédito'})
+              </button>
+            ) : (
+              <>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)' }}>
+                  {esFactura ? 'Se anulará la factura con una nota de crédito.' : 'Anular boleta: el SII exige el RUT real del cliente (no consumidor final).'}
+                </span>
+                {!esFactura && (
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    <input value={ncR.rut} onChange={e => setNcR({ ...ncR, rut: e.target.value })} placeholder="RUT del cliente (ej. 76.543.210-K)" style={ncInp} />
+                    <input value={ncR.name} onChange={e => setNcR({ ...ncR, name: e.target.value })} placeholder="Razón social / Nombre" style={ncInp} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <input value={ncR.giro} onChange={e => setNcR({ ...ncR, giro: e.target.value })} placeholder="Giro" style={ncInp} />
+                      <input value={ncR.comuna} onChange={e => setNcR({ ...ncR, comuna: e.target.value })} placeholder="Comuna" style={ncInp} />
+                    </div>
+                    <input value={ncR.direccion} onChange={e => setNcR({ ...ncR, direccion: e.target.value })} placeholder="Dirección" style={ncInp} />
+                  </div>
+                )}
+                <input value={ncMotivo} onChange={e => setNcMotivo(e.target.value)} placeholder="Motivo (opcional)" style={ncInp} />
+                {ncErr && <span style={{ fontSize: 12, fontWeight: 600, color: '#ef4444' }}>{ncErr}</span>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setNcOpen(false); setNcErr(null) }} disabled={ncBusy} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>Cancelar</button>
+                  <button onClick={handleAnular} disabled={ncBusy} style={{ flex: 2, padding: '10px', borderRadius: 10, border: 'none', background: '#ef4444', color: 'white', cursor: ncBusy ? 'default' : 'pointer', fontWeight: 800, fontSize: 13, opacity: ncBusy ? 0.6 : 1 }}>
+                    {ncBusy ? 'Emitiendo NC…' : 'Emitir nota de crédito'}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}

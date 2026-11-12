@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 async function status(id: string) {
   const r = await prisma.restaurant.findUnique({
     where: { id },
-    select: { sharkposEnabled: true, sharkposTenantId: true, sharkposTenantRut: true, sharkposTenantName: true, sharkposTenantEnv: true, toteatWebhookSecret: true },
+    select: { sharkposEnabled: true, sharkposTenantId: true, sharkposTenantRut: true, sharkposTenantName: true, sharkposTenantEnv: true, toteatWebhookSecret: true, facturaEnabled: true },
   });
   return {
     platformConfigured: platformConfigured(),
@@ -28,6 +28,7 @@ async function status(id: string) {
     partnerWebhookSecretConfigured: !!process.env.SHARKPOS_PARTNER_WEBHOOK_SECRET,
     enabled: !!r?.sharkposEnabled,
     registered: !!r?.sharkposTenantId,
+    facturaEnabled: !!r?.facturaEnabled,
     tenantRut: r?.sharkposTenantRut || null,
     tenantName: r?.sharkposTenantName || null,
     tenantEnv: r?.sharkposTenantEnv || null,

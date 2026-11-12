@@ -1502,6 +1502,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
   const [curMethod, setCurMethod] = useState<string>('efectivo')
   // Métodos de pago configurados por el local (o los 5 por defecto).
   const [payMethods, setPayMethods] = useState<{ key: string; label: string }[]>(METHODS.map(m => ({ key: m.id, label: m.label })))
+  const [facturaEnabled, setFacturaEnabled] = useState(false)
   useEffect(() => {
     if (!restaurantId) return
     fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
@@ -1512,8 +1513,12 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
           setPayMethods(pm)
           setCurMethod(cur => pm.some((x: { key: string }) => x.key === cur) ? cur : pm[0].key)
         }
+        setFacturaEnabled(d?.facturaEnabled === true)
       }).catch(() => {})
   }, [restaurantId])
+  // Factura: el cliente pide factura → datos de receptor (RUT válido obligatorio).
+  const [factura, setFactura] = useState({ on: false, rut: '', name: '', giro: '', direccion: '', comuna: '', email: '' })
+  const facturaReady = factura.on && factura.rut.trim() && factura.name.trim() && factura.giro.trim() && factura.direccion.trim() && factura.comuna.trim()
   const [curAmount, setCurAmount] = useState<string>('')   // monto de ESTE método (vacío = lo que resta)
   const [curReceived, setCurReceived] = useState<string>('') // efectivo: con cuánto paga (para el vuelto)
   const [tip, setTip] = useState<string>('')
@@ -1589,6 +1594,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
         body: JSON.stringify({
           restaurantId, id: order.id, action: 'pay', tip: tipNum,
           payments: finalParts.map(p => ({ method: p.method, amount: p.amount, received: p.received })),
+          ...(facturaReady ? { factura: { rut: factura.rut.trim(), name: factura.name.trim(), giro: factura.giro.trim(), direccion: factura.direccion.trim(), comuna: factura.comuna.trim(), email: factura.email.trim() || undefined } } : {}),
         }),
       })
       if (r.ok) {
@@ -1733,10 +1739,33 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
         <label className="pos-modal-label">Propina (opcional)</label>
         <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, marginBottom: 14 }} />
 
+        {/* Factura: solo si el local la tiene habilitada. Si no, se emite boleta. */}
+        {facturaEnabled && (
+          <div style={{ marginBottom: 14, padding: 10, borderRadius: 10, border: `1px solid ${factura.on ? 'var(--amber)' : 'var(--line)'}`, background: factura.on ? 'var(--amber-tint)' : 'transparent' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>
+              <input type="checkbox" checked={factura.on} onChange={e => setFactura(f => ({ ...f, on: e.target.checked }))} />
+              El cliente quiere factura
+            </label>
+            {factura.on && (
+              <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+                <input value={factura.rut} onChange={e => setFactura(f => ({ ...f, rut: e.target.value }))} placeholder="RUT (ej. 76.543.210-K)" style={fieldStyle} />
+                <input value={factura.name} onChange={e => setFactura(f => ({ ...f, name: e.target.value }))} placeholder="Razón social" style={fieldStyle} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <input value={factura.giro} onChange={e => setFactura(f => ({ ...f, giro: e.target.value }))} placeholder="Giro" style={fieldStyle} />
+                  <input value={factura.comuna} onChange={e => setFactura(f => ({ ...f, comuna: e.target.value }))} placeholder="Comuna" style={fieldStyle} />
+                </div>
+                <input value={factura.direccion} onChange={e => setFactura(f => ({ ...f, direccion: e.target.value }))} placeholder="Dirección" style={fieldStyle} />
+                <input value={factura.email} onChange={e => setFactura(f => ({ ...f, email: e.target.value }))} placeholder="Correo (opcional, le llega el PDF)" style={fieldStyle} />
+                {!facturaReady && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Completa RUT, razón social, giro, dirección y comuna.</span>}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="pos-modal-actions" style={{ marginTop: 0 }}>
           <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
-          <button className="pos-modal-ok" disabled={!canPay || sending} onClick={handlePay} style={{ opacity: !canPay || sending ? 0.6 : 1 }}>
-            {sending ? 'Cobrando…' : `Cobrar ${clp(total)}`}
+          <button className="pos-modal-ok" disabled={!canPay || sending || (factura.on && !facturaReady)} onClick={handlePay} style={{ opacity: !canPay || sending || (factura.on && !facturaReady) ? 0.6 : 1 }}>
+            {sending ? 'Cobrando…' : factura.on ? `Cobrar y facturar ${clp(total)}` : `Cobrar ${clp(total)}`}
           </button>
         </div>
 

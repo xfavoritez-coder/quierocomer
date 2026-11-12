@@ -288,6 +288,16 @@ export async function getBoletaPdfBase64(dteId: string, paperWidth: 58 | 80 = 80
   return buf.toString("base64");
 }
 
+/** Trae el PDF carta de un documento B2B (factura / nota de crédito) en base64. */
+export async function getB2BPdfBase64(dteId: string, cred?: SharkposCred): Promise<string | undefined> {
+  const res = await fetch(`${sharkposBaseFor(cred?.env)}/api/v1/dte/b2b/${dteId}/pdf/`, {
+    headers: authHeaders(cred),
+    signal: AbortSignal.timeout(25_000),
+  });
+  if (!res.ok) return undefined;
+  return Buffer.from(await res.arrayBuffer()).toString("base64");
+}
+
 /** Trae el PNG del timbre (PDF417) de un documento, en base64, para rasterizarlo. */
 export async function getBoletaTedPngBase64(dteId: string, cred?: SharkposCred): Promise<string | undefined> {
   const res = await fetch(`${sharkposBaseFor(cred?.env)}/api/v1/dte/documents/${dteId}/ted.png`, {

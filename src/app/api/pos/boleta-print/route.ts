@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     select: {
       id: true, restaurantId: true, totalAmount: true, deliveryFee: true, items: true,
       orderReference: true, externalId: true,
-      boletaDteId: true, boletaFolio: true, boletaStatus: true, boletaEmittedAt: true, boletaPublicUrl: true,
+      boletaDteId: true, boletaFolio: true, boletaStatus: true, boletaEmittedAt: true, boletaPublicUrl: true, fiscalDocType: true,
       restaurant: { select: { name: true, sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true, sharkposApiKey: true, sharkposTenantEnv: true } },
     },
   });
@@ -52,6 +52,11 @@ export async function GET(req: NextRequest) {
   // no debe intentar imprimir ni reintentar.
   if (!order.restaurant?.sharkposEnabled || order.restaurant.toteatWebhookSecret) {
     return NextResponse.json({ ready: false, enabled: false });
+  }
+  // La factura (33) es PDF carta → se descarga/imprime aparte (/api/pos/doc-pdf),
+  // no en la impresora térmica. El POS no debe sondear ni reintentar aquí.
+  if (order.fiscalDocType === 33) {
+    return NextResponse.json({ ready: false, enabled: false, isFactura: true });
   }
 
   // Boleta aún no emitida (la emisión corre async al cobrar) → el POS reintenta.

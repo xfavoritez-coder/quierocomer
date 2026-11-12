@@ -51,6 +51,7 @@ interface Restaurant {
   sharkposTenantRut?: string | null;
   sharkposTenantName?: string | null;
   sharkposTenantEnv?: string | null;
+  facturaEnabled?: boolean;
   toteatWebhookSecret?: string | null;
   orderingNavHidden?: boolean;
   bodegaId?: string | null;
@@ -94,6 +95,7 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
   const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
   const [encReady, setEncReady] = useState<boolean>(true);
   const [rut, setRut] = useState("");
+  const [wantsFactura, setWantsFactura] = useState(false);
   const [pf, setPf] = useState<Record<string, string>>({});
   const [cert, setCert] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -132,15 +134,16 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
         fd.append("companyRut", companyRut);
         for (const k of [...req, "certificatePassword"]) fd.append(k, (pf[k] || "").trim());
         fd.append("certificate", cert);
+        fd.append("factura", wantsFactura ? "true" : "false");
         res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, { method: "POST", body: fd });
       } else {
         res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyRut }),
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyRut, factura: wantsFactura }),
         });
       }
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d.ok) { setErr(d.error || "No se pudo dar de alta el RUT"); return; }
-      onUpdate({ sharkposTenantId: "ok", sharkposTenantRut: d.tenantRut, sharkposTenantName: d.tenantName, sharkposTenantEnv: d.tenantEnv, sharkposEnabled: true });
+      onUpdate({ sharkposTenantId: "ok", sharkposTenantRut: d.tenantRut, sharkposTenantName: d.tenantName, sharkposTenantEnv: d.tenantEnv, sharkposEnabled: true, facturaEnabled: wantsFactura });
       setRut(""); setPf({}); setCert(null);
     } catch { setErr("Error de red al dar de alta"); }
     finally { setBusy(false); }
@@ -151,6 +154,13 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
     const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sharkposEnabled: val }) });
     if (!res.ok) { setErr("Error al actualizar"); return; }
     onUpdate({ sharkposEnabled: val });
+  }
+
+  async function toggleFactura() {
+    const val = !selected.facturaEnabled;
+    const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ facturaEnabled: val }) });
+    if (!res.ok) { setErr("Error al actualizar"); return; }
+    onUpdate({ facturaEnabled: val });
   }
 
   async function desvincular() {
@@ -215,6 +225,10 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
                 <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="RUT de la empresa (ej. 76.543.210-K)" disabled={disabled} style={{ ...inp, flex: "1 1 200px", width: "auto", minWidth: 180 }} />
                 <button onClick={darDeAlta} disabled={disabled || !rut.trim()} style={{ padding: "8px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, opacity: busy || !rut.trim() ? 0.6 : 1 }}>{busy ? "Dando de alta…" : "Dar de alta RUT"}</button>
               </div>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", color: "#ccc", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", margin: "8px 0 0" }}>
+                <input type="checkbox" checked={wantsFactura} onChange={(e) => setWantsFactura(e.target.checked)} disabled={disabled} />
+                Este local también emitirá facturas (33)
+              </label>
               <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#777", margin: "6px 0 0" }}>Sandbox: basta el RUT; SharkPOS pone certificado y folios de prueba.</p>
             </div>
           );
@@ -251,13 +265,21 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
             </label>
             <input value={pf.certificatePassword || ""} onChange={(e) => setF("certificatePassword", e.target.value)} placeholder="Clave del certificado (.pfx — NO la del SII)" type="password" autoComplete="new-password" disabled={disabled} style={inp} />
             <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#777", margin: "-2px 0 0" }}>Es la contraseña del archivo del certificado digital, no la Clave Tributaria del SII (esa no se necesita).</p>
+            <label style={{ fontFamily: F, fontSize: "0.72rem", color: "#ccc", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input type="checkbox" checked={wantsFactura} onChange={(e) => setWantsFactura(e.target.checked)} disabled={disabled} />
+              Este local también emitirá <strong>facturas (33)</strong> — pide folios 33 (requiere que tu contrato las incluya)
+            </label>
             <button onClick={darDeAlta} disabled={disabled} style={{ padding: "9px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, opacity: busy ? 0.6 : 1 }}>{busy ? "Dando de alta ante el SII…" : "Dar de alta RUT (producción)"}</button>
           </div>
         );
       })()}
 
       {registered && (
-        <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <label style={{ fontFamily: F, fontSize: "0.72rem", color: "#ccc", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={!!selected.facturaEnabled} onChange={toggleFactura} />
+            Emitir facturas (33) en el POS
+          </label>
           <button onClick={desvincular} disabled={busy} style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #3a2a2a", background: "transparent", color: "#d88", fontFamily: F, fontSize: "0.68rem", cursor: "pointer" }}>Desvincular RUT</button>
         </div>
       )}

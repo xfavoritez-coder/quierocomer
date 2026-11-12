@@ -242,7 +242,18 @@ export async function PATCH(req: NextRequest) {
     // Auditoría del cobro: método(s), montos, instante, quién lo registró (panel_id) y
     // el origen de la confirmación. Se guarda en rawPayload (sin tocar el schema).
     const by = req.cookies.get("panel_id")?.value || "caja";
-    const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 } };
+    // Factura: si el cajero pidió factura, se guardan los datos de receptor para que
+    // emit-sale emita factura (33) en vez de boleta (39). RUT consumidor final no sirve.
+    let posFactura: Record<string, string> | undefined;
+    const fb = (body?.factura && typeof body.factura === "object" ? body.factura : null) as Record<string, unknown> | null;
+    if (fb) {
+      const s = (k: string) => String(fb[k] ?? "").trim();
+      const rut = s("rut");
+      if (rut && !/^66\.?666\.?666-?6$/i.test(rut) && s("name") && s("giro") && s("direccion") && s("comuna")) {
+        posFactura = { rut, name: s("name"), giro: s("giro"), direccion: s("direccion"), comuna: s("comuna"), ...(s("ciudad") ? { ciudad: s("ciudad") } : {}), ...(s("email") ? { email: s("email") } : {}) };
+      }
+    }
+    const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 }, ...(posFactura ? { posFactura } : {}) };
     const updated = await prisma.posOrder.update({
       where: { id },
       data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },
