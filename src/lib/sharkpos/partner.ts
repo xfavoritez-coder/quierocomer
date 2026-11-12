@@ -19,9 +19,15 @@ export function platformConfigured(): boolean {
   return !!process.env.SHARKPOS_PLATFORM_KEY;
 }
 
-/** Entorno del alta: lo decide SHARKPOS_ENV (sandbox por defecto). */
+/**
+ * Entorno de la PLATAFORMA (altas). Independiente del entorno de emisión global
+ * (SHARKPOS_ENV): la llave de plataforma puede ser de producción mientras el
+ * piloto (El Suculento) sigue emitiendo en sandbox con su key global. Se controla
+ * con SHARKPOS_PLATFORM_ENV; si no está, cae a SHARKPOS_ENV; por defecto sandbox.
+ */
 export function platformEnv(): "sandbox" | "production" {
-  return (process.env.SHARKPOS_ENV || "sandbox") !== "production" ? "sandbox" : "production";
+  const e = process.env.SHARKPOS_PLATFORM_ENV || process.env.SHARKPOS_ENV || "sandbox";
+  return e === "production" ? "production" : "sandbox";
 }
 
 /** Campos de producción del alta (en sandbox se omiten todos salvo companyRut). */

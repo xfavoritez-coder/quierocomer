@@ -73,12 +73,15 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
   const [platformReady, setPlatformReady] = useState<boolean | null>(null);
   const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
   const [rut, setRut] = useState("");
+  const [pf, setPf] = useState<Record<string, string>>({});
+  const [cert, setCert] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const setF = (k: string, v: string) => setPf(p => ({ ...p, [k]: v }));
 
   useEffect(() => {
     let alive = true;
-    setErr(null); setRut("");
+    setErr(null); setRut(""); setPf({}); setCert(null);
     fetch(`/api/admin/locales/${selected.id}/sharkpos`)
       .then(r => r.json())
       .then(d => { if (alive) { setPlatformReady(!!d.platformConfigured); setPlatformEnv(d.platformEnv || "sandbox"); } })
@@ -93,15 +96,31 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
   async function darDeAlta() {
     const companyRut = rut.trim();
     if (!companyRut) { setErr("Ingresa el RUT de la empresa"); return; }
+    const prod = (platformEnv === "production");
     setBusy(true); setErr(null);
     try {
-      const res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyRut }),
-      });
+      let res: Response;
+      if (prod) {
+        // Producción: todos los datos del SII + certificado .pfx (multipart).
+        const req = ["businessName", "businessActivity", "address", "locationRegion", "commune", "city", "resolutionNumber", "resolutionDate", "signerName", "signerRut"];
+        const missing = req.filter(k => !(pf[k] || "").trim());
+        if (missing.length) { setErr("Faltan datos del SII (completa todos los campos)"); setBusy(false); return; }
+        if (!cert) { setErr("Sube el certificado .pfx/.p12"); setBusy(false); return; }
+        if (!(pf.certificatePassword || "").trim()) { setErr("Falta la clave del certificado"); setBusy(false); return; }
+        const fd = new FormData();
+        fd.append("companyRut", companyRut);
+        for (const k of [...req, "certificatePassword"]) fd.append(k, (pf[k] || "").trim());
+        fd.append("certificate", cert);
+        res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, { method: "POST", body: fd });
+      } else {
+        res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyRut }),
+        });
+      }
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d.ok) { setErr(d.error || "No se pudo dar de alta el RUT"); return; }
       onUpdate({ sharkposTenantId: "ok", sharkposTenantRut: d.tenantRut, sharkposTenantName: d.tenantName, sharkposTenantEnv: d.tenantEnv, sharkposEnabled: true });
-      setRut("");
+      setRut(""); setPf({}); setCert(null);
     } catch { setErr("Error de red al dar de alta"); }
     finally { setBusy(false); }
   }
@@ -154,35 +173,59 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
         <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f59e0b", margin: "8px 0 0" }}>⚠️ Este local usa Toteat; su fiscal va por ahí. No se emitirán boletas por SharkPOS aunque esté habilitado.</p>
       )}
 
-      {!registered && (
-        <div style={{ marginTop: 10 }}>
-          {platformReady === false ? (
-            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: 0 }}>
+      {!registered && (() => {
+        const inp = { padding: "8px 10px", borderRadius: 8, border: "1px solid #333", background: "#111", color: "white", fontFamily: F, fontSize: "0.76rem", width: "100%", boxSizing: "border-box" as const };
+        const disabled = busy || platformReady === null;
+        if (platformReady === false) {
+          return (
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "10px 0 0" }}>
               Falta <code style={{ color: SK }}>SHARKPOS_PLATFORM_KEY</code> en el servidor para dar de alta RUT. {enabled ? "Este local emite con la llave global (piloto)." : ""}
             </p>
-          ) : (
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <input
-                value={rut}
-                onChange={(e) => setRut(e.target.value)}
-                placeholder="RUT de la empresa (ej. 76.543.210-K)"
-                disabled={busy || platformReady === null}
-                style={{ flex: "1 1 200px", minWidth: 180, padding: "8px 10px", borderRadius: 8, border: "1px solid #333", background: "#111", color: "white", fontFamily: F, fontSize: "0.78rem" }}
-              />
-              <button
-                onClick={darDeAlta}
-                disabled={busy || platformReady === null || !rut.trim()}
-                style={{ padding: "8px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, opacity: busy || !rut.trim() ? 0.6 : 1 }}
-              >
-                {busy ? "Dando de alta…" : "Dar de alta RUT"}
-              </button>
+          );
+        }
+        if (!isProd) {
+          return (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="RUT de la empresa (ej. 76.543.210-K)" disabled={disabled} style={{ ...inp, flex: "1 1 200px", width: "auto", minWidth: 180 }} />
+                <button onClick={darDeAlta} disabled={disabled || !rut.trim()} style={{ padding: "8px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, opacity: busy || !rut.trim() ? 0.6 : 1 }}>{busy ? "Dando de alta…" : "Dar de alta RUT"}</button>
+              </div>
+              <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#777", margin: "6px 0 0" }}>Sandbox: basta el RUT; SharkPOS pone certificado y folios de prueba.</p>
             </div>
-          )}
-          {!isProd && platformReady !== false && (
-            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#777", margin: "6px 0 0" }}>Sandbox: basta el RUT; SharkPOS pone certificado y folios de prueba.</p>
-          )}
-        </div>
-      )}
+          );
+        }
+        // Producción: formulario SII completo + certificado.
+        return (
+          <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#f59e0b", margin: 0 }}>⚠️ Alta REAL ante el SII. El certificado .pfx y su clave viajan a SharkPOS; no se guardan en QuieroComer.</p>
+            <input value={rut} onChange={(e) => setRut(e.target.value)} placeholder="RUT de la empresa (ej. 76.543.210-K)" disabled={disabled} style={inp} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input value={pf.businessName || ""} onChange={(e) => setF("businessName", e.target.value)} placeholder="Razón social" disabled={disabled} style={inp} />
+              <input value={pf.businessActivity || ""} onChange={(e) => setF("businessActivity", e.target.value)} placeholder="Giro" disabled={disabled} style={inp} />
+            </div>
+            <input value={pf.address || ""} onChange={(e) => setF("address", e.target.value)} placeholder="Dirección" disabled={disabled} style={inp} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <input value={pf.locationRegion || ""} onChange={(e) => setF("locationRegion", e.target.value)} placeholder="Región" disabled={disabled} style={inp} />
+              <input value={pf.commune || ""} onChange={(e) => setF("commune", e.target.value)} placeholder="Comuna" disabled={disabled} style={inp} />
+              <input value={pf.city || ""} onChange={(e) => setF("city", e.target.value)} placeholder="Ciudad" disabled={disabled} style={inp} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input value={pf.resolutionNumber || ""} onChange={(e) => setF("resolutionNumber", e.target.value.replace(/[^0-9]/g, ""))} placeholder="N° Resolución SII" inputMode="numeric" disabled={disabled} style={inp} />
+              <input value={pf.resolutionDate || ""} onChange={(e) => setF("resolutionDate", e.target.value)} placeholder="Fecha Resolución" type="date" disabled={disabled} style={inp} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input value={pf.signerName || ""} onChange={(e) => setF("signerName", e.target.value)} placeholder="Nombre del firmante" disabled={disabled} style={inp} />
+              <input value={pf.signerRut || ""} onChange={(e) => setF("signerRut", e.target.value)} placeholder="RUT del firmante" disabled={disabled} style={inp} />
+            </div>
+            <label style={{ fontFamily: F, fontSize: "0.68rem", color: "#aaa", display: "grid", gap: 4 }}>
+              Certificado digital (.pfx / .p12, ≤2 MB)
+              <input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setCert(e.target.files?.[0] || null)} disabled={disabled} style={{ ...inp, padding: 6 }} />
+            </label>
+            <input value={pf.certificatePassword || ""} onChange={(e) => setF("certificatePassword", e.target.value)} placeholder="Clave del certificado" type="password" autoComplete="new-password" disabled={disabled} style={inp} />
+            <button onClick={darDeAlta} disabled={disabled} style={{ padding: "9px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, opacity: busy ? 0.6 : 1 }}>{busy ? "Dando de alta ante el SII…" : "Dar de alta RUT (producción)"}</button>
+          </div>
+        );
+      })()}
 
       {registered && (
         <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>

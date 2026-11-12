@@ -53,12 +53,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!restaurant) return NextResponse.json({ error: "Local no encontrado" }, { status: 404 });
   if (restaurant.sharkposTenantId) return NextResponse.json({ error: "El local ya tiene un RUT dado de alta" }, { status: 409 });
 
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  const companyRut = String(body.companyRut || "").trim();
-  if (!companyRut) return NextResponse.json({ error: "Falta el RUT de la empresa" }, { status: 400 });
+  // Alta: JSON (sandbox, solo RUT) o multipart/form-data (producción, con certificado).
+  const ctype = req.headers.get("content-type") || "";
+  let input: Parameters<typeof registerTenant>[0];
+  if (ctype.includes("multipart/form-data")) {
+    const fd = await req.formData();
+    const s = (k: string) => { const v = fd.get(k); return typeof v === "string" ? v.trim() : ""; };
+    const companyRut = s("companyRut");
+    if (!companyRut) return NextResponse.json({ error: "Falta el RUT de la empresa" }, { status: 400 });
+    const cert = fd.get("certificate");
+    let certificate: { bytes: Buffer; filename: string } | undefined;
+    if (cert && typeof cert !== "string") {
+      const bytes = Buffer.from(await cert.arrayBuffer());
+      if (bytes.length > 2 * 1024 * 1024) return NextResponse.json({ error: "El certificado supera 2 MB" }, { status: 400 });
+      certificate = { bytes, filename: cert.name || "cert.pfx" };
+    }
+    input = {
+      companyRut, externalReference: id,
+      businessName: s("businessName"), businessActivity: s("businessActivity"),
+      address: s("address"), locationRegion: s("locationRegion"), commune: s("commune"), city: s("city"),
+      resolutionNumber: s("resolutionNumber") ? Number(s("resolutionNumber")) : undefined,
+      resolutionDate: s("resolutionDate") || undefined,
+      signerName: s("signerName"), signerRut: s("signerRut"),
+      certificate, certificatePassword: s("certificatePassword") || undefined,
+    };
+    // En producción el certificado y la clave son obligatorios.
+    if (platformEnv() === "production" && (!certificate || !input.certificatePassword)) {
+      return NextResponse.json({ error: "En producción el certificado .pfx y su clave son obligatorios" }, { status: 400 });
+    }
+  } else {
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const companyRut = String(body.companyRut || "").trim();
+    if (!companyRut) return NextResponse.json({ error: "Falta el RUT de la empresa" }, { status: 400 });
+    input = { companyRut, externalReference: id };
+  }
 
   try {
-    const r = await registerTenant({ companyRut, externalReference: id });
+    const r = await registerTenant(input);
     if (!r.ok || !r.apiKey || !r.tenantId) {
       console.error("[sharkpos/partner] alta falló", id, r.httpStatus, r.code, r.message);
       return NextResponse.json({ error: r.message || r.code || `SharkPOS respondió ${r.httpStatus}`, httpStatus: r.httpStatus }, { status: 400 });
@@ -70,7 +101,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         sharkposTenantId: r.tenantId,
         sharkposApiKey: encryptSecret(r.apiKey),
         sharkposTenantEnv: r.environment || (platformEnv() === "production" ? "production" : "certification"),
-        sharkposTenantRut: r.rut || companyRut,
+        sharkposTenantRut: r.rut || input.companyRut,
         sharkposTenantName: r.razonSocial || null,
         sharkposEnabled: true, // al dar de alta, queda listo para emitir
       },
