@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadEcommerceLive } from "@/lib/ecommerce/storefront-data";
+import { requestIsFromApp } from "@/lib/ecommerce/appRequest";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const live = await loadEcommerceLive(slug);
+  const fromApp = await requestIsFromApp();
+  const live = await loadEcommerceLive(slug, { fromApp });
   if (!live) return NextResponse.json({ error: "no encontrado" }, { status: 404 });
   return NextResponse.json(live, { headers: { "Cache-Control": "no-store" } });
 }

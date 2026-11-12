@@ -31,7 +31,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
-  id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null;
+  id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null; appPrice?: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; appOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string; daysOfWeek?: number[];
   toteatProductId?: string | null;
@@ -852,6 +852,7 @@ export default function AdminMenus() {
   const [eDetailedDesc, setEDetailedDesc] = useState("");
   const [ePrice, setEPrice] = useState("");
   const [eDiscountPrice, setEDiscountPrice] = useState("");
+  const [eAppPrice, setEAppPrice] = useState("");
   const [eToteatCode, setEToteatCode] = useState("");
   const [eDaysOfWeek, setEDaysOfWeek] = useState<number[]>([]);
   const [eIngredients, setEIngredients] = useState("");
@@ -974,6 +975,7 @@ export default function AdminMenus() {
     setEDetailedDesc(d.detailedDescription || "");
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
+    setEAppPrice((d as any).appPrice != null ? String((d as any).appPrice) : "");
     setEToteatCode((d as any).toteatProductId || "");
     setEDaysOfWeek(d.daysOfWeek || []);
     setEIngredients(d.ingredients || "");
@@ -1022,6 +1024,7 @@ export default function AdminMenus() {
       detailedDescription: eDetailedDesc || null,
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
+      appPrice: (!selectedDish.appOnly && eAppPrice) ? Number(eAppPrice) : null,
       toteatProductId: eToteatCode.trim() || null,
       daysOfWeek: eDaysOfWeek,
       photos: ePhotoUrl ? [ePhotoUrl] : [],
@@ -1501,6 +1504,16 @@ export default function AdminMenus() {
                   <p style={{ margin: "8px 2px 0", fontSize: "0.76rem", color: "var(--adm-text3)", lineHeight: 1.45 }}>
                     {selectedDish.appOnly ? "Este producto solo aparece y se puede pedir desde la app. Queda oculto en todos lados: web del Ecommerce, carta QR y Pedidos online." : "Si lo activas, el producto será exclusivo de la app: oculto en la web del Ecommerce, la carta QR y Pedidos online. Se guarda al instante."}
                   </p>
+                  {/* Precio exclusivo en la app — solo para productos que NO son solo-app */}
+                  {!selectedDish.appOnly && (
+                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(99,102,241,0.2)" }}>
+                      <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>💲 Precio exclusivo en la app <span style={{ fontWeight: 400, color: "var(--adm-text3)" }}>(opcional)</span></label>
+                      <input type="number" inputMode="numeric" value={eAppPrice} onChange={e => setEAppPrice(e.target.value)} placeholder={`Normal: $${Number(ePrice || selectedDish.price || 0).toLocaleString("es-CL")}`} style={INP} />
+                      <p style={{ margin: "6px 2px 0", fontSize: "0.72rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
+                        Si lo defines, al pedir <strong>desde la app</strong> este producto cuesta ese precio (reemplaza oferta y happy hour). En la web sigue con su precio normal. Vacío = sin precio especial. Se guarda con <strong>Guardar</strong>.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               <div style={{ display: "flex", gap: 8 }}>

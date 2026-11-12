@@ -912,6 +912,7 @@ model Dish {
   description           String?
   price                 Float
   discountPrice         Float?
+  appPrice              Float? // precio exclusivo en la app (si está, es el precio al pedir desde la app)
   photos                String[]
   tags                  DishTag[]
   isHero                Boolean                @default(false)

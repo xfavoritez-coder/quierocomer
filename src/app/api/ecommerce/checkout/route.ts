@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     const dishes = await prisma.dish.findMany({
       where: { id: { in: productIds }, restaurantId: restaurant.id, isActive: true, deletedAt: null, hideFromOrdering: false },
       select: {
-        id: true, categoryId: true, price: true, discountPrice: true, appOnly: true, name: true,
+        id: true, categoryId: true, price: true, discountPrice: true, appPrice: true, appOnly: true, name: true,
         modifierTemplates: { select: { groups: { select: { options: { select: { id: true, priceAdjustment: true } } } } } },
       },
     });
@@ -134,7 +134,11 @@ export async function POST(req: NextRequest) {
     for (const d of dishes) {
       const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
       const hhPrice = activeHHs.length ? bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHHs) : null;
-      const base = Math.min(offer ?? d.price, hhPrice ?? d.price);
+      // Precio exclusivo app: si la request viene de la app y el plato lo tiene, ES
+      // el precio (reemplaza oferta/HH). Debe coincidir con dishEffectivePricing.
+      const base = (fromApp === true && d.appPrice != null && d.appPrice > 0)
+        ? d.appPrice
+        : Math.min(offer ?? d.price, hhPrice ?? d.price);
       const opt = new Map<string, number>();
       for (const t of d.modifierTemplates) for (const g of t.groups) for (const o of g.options) opt.set(o.id, o.priceAdjustment || 0);
       dishMap.set(d.id, { base, opt });

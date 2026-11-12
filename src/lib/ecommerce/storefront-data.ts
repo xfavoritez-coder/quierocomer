@@ -122,9 +122,15 @@ export interface StorefrontData {
 // (cacheada) y la capa "en vivo" (loadEcommerceLive), y que no diverjan.
 type ActiveHHs = ReturnType<typeof activeHappyHours>;
 export function dishEffectivePricing(
-  d: { id: string; categoryId: string; price: number; discountPrice: number | null },
+  d: { id: string; categoryId: string; price: number; discountPrice: number | null; appPrice?: number | null },
   activeHHs: ActiveHHs,
+  fromApp?: boolean,
 ): { price: number; original_price: number | null; is_happy_hour: boolean } {
+  // Precio exclusivo en la app: si existe y la visita viene de la app, ES el precio
+  // (reemplaza oferta/happy hour). Se muestra el precio normal tachado si es menor.
+  if (fromApp === true && d.appPrice != null && d.appPrice > 0) {
+    return { price: d.appPrice, original_price: d.appPrice < d.price ? d.price : null, is_happy_hour: false };
+  }
   // discountPrice = oferta (menor). Happy hour (si activo) compite: gana el menor.
   const offer = d.discountPrice != null && d.discountPrice > 0 && d.discountPrice < d.price ? d.discountPrice : null;
   const hhPrice = activeHHs.length ? bestHappyHourPrice({ id: d.id, categoryId: d.categoryId, price: d.price }, activeHHs) : null;
@@ -232,7 +238,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
-          price: true, discountPrice: true, photos: true, stockCountdown: true, soldOut: true,
+          price: true, discountPrice: true, appPrice: true, photos: true, stockCountdown: true, soldOut: true,
           toteatProductId: true, isHero: true, dailyBadge: true, newBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
           modifierTemplates: {
             select: {
@@ -290,7 +296,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     storeCategories.push({ id: cat.id, name: cat.name, position: cat.position });
     for (const d of visibleDishes) {
       // Precio/oferta/happy hour vigentes (lógica compartida con loadEcommerceLive).
-      const pricing = dishEffectivePricing(d, activeHHs);
+      const pricing = dishEffectivePricing(d, activeHHs, fromApp);
       const activePromo = promoByDishId.get(d.id);
 
       // Override de nombre y precio si hay una oferta activa hoy
@@ -472,7 +478,8 @@ export interface StorefrontLive {
  * disponibles, agotados y precio de happy hour por horario. Consulta mínima
  * (sin modificadores) para no recalcular todo el menú en cada lectura.
  */
-export async function loadEcommerceLive(key: string): Promise<StorefrontLive | null> {
+export async function loadEcommerceLive(key: string, opts?: { fromApp?: boolean }): Promise<StorefrontLive | null> {
+  const fromApp = opts?.fromApp === true;
   const r = await prisma.restaurant.findFirst({
     where: restaurantByKey(key),
     select: {
@@ -480,7 +487,7 @@ export async function loadEcommerceLive(key: string): Promise<StorefrontLive | n
       happyHours: { where: { isActive: true }, select: { id: true, name: true, days: true, startTime: true, endTime: true, discountType: true, discountValue: true, categoryIds: true, dishIds: true, channels: true, bannerText: true, bannerColor: true, isActive: true } },
       categories: {
         where: { isActive: true },
-        select: { dishes: { where: { isActive: true, deletedAt: null, hideFromOrdering: false }, select: { id: true, categoryId: true, price: true, discountPrice: true, soldOut: true, stockCountdown: true } } },
+        select: { dishes: { where: { isActive: true, deletedAt: null, hideFromOrdering: false }, select: { id: true, categoryId: true, price: true, discountPrice: true, appPrice: true, soldOut: true, stockCountdown: true } } },
       },
     },
   });
@@ -509,7 +516,7 @@ export async function loadEcommerceLive(key: string): Promise<StorefrontLive | n
     const promo = promoByDishIdLive.get(d.id);
     const pricing = promo?.promoPrice != null
       ? { price: promo.promoPrice, original_price: promo.originalPrice ?? d.price, is_happy_hour: false }
-      : dishEffectivePricing(d, activeHHs);
+      : dishEffectivePricing(d, activeHHs, fromApp);
     products[d.id] = { ...pricing, is_sold_out: dishSoldOut(d), promo_name: promo?.promoName ?? null, promo_id: promo?.id ?? null, daily_badge: promo != null && (promo.daysOfWeek?.length ?? 0) > 0 };
   }
   return { openStatus: avail.openStatus, deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled, products };
@@ -523,7 +530,7 @@ export async function getEcommerceStorefront(key: string, opts?: { fromApp?: boo
   const base = await getEcommerceStorefrontBaseCached(key, opts);
   if (!base) return null;
   let live: StorefrontLive | null = null;
-  try { live = await loadEcommerceLive(key); } catch { live = null; }
+  try { live = await loadEcommerceLive(key, opts); } catch { live = null; }
   if (!live) return base;
   const tenant: StoreTenant = { ...base.tenant, openStatus: live.openStatus, deliveryEnabled: live.deliveryEnabled, pickupEnabled: live.pickupEnabled };
   const products = base.products.map((p) => {

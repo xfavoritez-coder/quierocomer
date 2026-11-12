@@ -49,6 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.detailedDescription !== undefined && { detailedDescription: body.detailedDescription || null }),
         ...(body.price !== undefined && { price: Number(body.price) }),
         ...(body.discountPrice !== undefined && { discountPrice: body.discountPrice ? Number(body.discountPrice) : null }),
+        ...(body.appPrice !== undefined && { appPrice: body.appPrice ? Number(body.appPrice) : null }),
         ...(body.photos !== undefined && { photos: body.photos }),
         ...(body.tags !== undefined && { tags: body.tags }),
         ...(body.isHero !== undefined && { isHero: body.isHero }),
