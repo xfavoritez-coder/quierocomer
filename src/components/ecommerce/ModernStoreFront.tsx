@@ -65,11 +65,11 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   // Sync URL with view
   useEffect(() => {
     try {
-      const base = storeBase || window.location.pathname.replace(/\/locales$/, "");
+      const base = window.location.pathname.replace(/\/locales$/, "");
       const target = activeView === "locales" ? `${base}/locales` : base;
       if (window.location.pathname !== target) window.history.pushState(null, "", target);
     } catch {}
-  }, [activeView, storeBase]);
+  }, [activeView]);
   // Handle browser back/forward
   useEffect(() => {
     const onPop = () => { setActiveView(window.location.pathname.endsWith("/locales") ? "locales" : "carta"); };
@@ -434,12 +434,6 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       const offset = (catNavRef.current?.offsetHeight ?? 56) + 16;
       let current: string | null = null;
 
-      // Check if suggestions section is visible first
-      const sugEl = document.getElementById("sugeridos");
-      if (sugEl && sugEl.getBoundingClientRect().top - offset <= 0) {
-        current = "sugeridos";
-      }
-
       for (const cat of categories) {
         const el = document.getElementById(`cat-${cat.id}`);
         if (!el) continue;
@@ -447,7 +441,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
         else break;
       }
 
-      if (!current) current = sugEl ? "sugeridos" : categories.length ? categories[0].id : null;
+      if (!current && categories.length) current = categories[0].id;
       if (current) {
         setActiveCat((prev) => {
           if (prev !== current) alignCatChip(current!);
@@ -849,31 +843,6 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           ) : (
             <div className="flex items-center">
               <div ref={catScrollRef} className="no-scrollbar flex overflow-x-auto flex-1 min-w-0 items-center" style={{ scrollbarWidth: "none" }}>
-                {suggestions.length > 0 && (
-                  <button
-                    data-cat="sugeridos"
-                    onClick={() => {
-                      if (activeView !== "carta") setActiveView("carta");
-                      const el = document.getElementById("sugeridos");
-                      if (!el) return;
-                      const offset = (catNavRef.current?.offsetHeight ?? 56) + 8;
-                      const y = el.getBoundingClientRect().top + window.scrollY - offset;
-                      setActiveCat("sugeridos");
-                      lockSpyRef.current = true;
-                      setTimeout(() => { lockSpyRef.current = false; }, 700);
-                      window.scrollTo({ top: y, behavior: "smooth" });
-                    }}
-                    className="shrink-0 relative py-2 transition-colors"
-                    style={{ marginRight: 24 }}
-                  >
-                    <span className={`text-sm tracking-wide transition-all whitespace-nowrap ${activeCat === "sugeridos" ? "font-extrabold" : "font-medium text-gray-400 hover:text-gray-600"}`} style={activeCat === "sugeridos" ? { color: primaryColor } : {}}>
-                      Para ti
-                    </span>
-                    {activeCat === "sugeridos" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full" style={{ background: primaryColor }} />
-                    )}
-                  </button>
-                )}
                 {categories.map((cat) => {
                   const isActive = activeCat === cat.id;
                   return (
@@ -912,10 +881,6 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       </div>}
 
       {activeView === "carta" && (<>
-      {/* ── "Para ti" suggestions carousel ────── */}
-      {suggestions.length > 0 && !search && (
-        <SuggestionsCarousel suggestions={suggestions} primaryColor={primaryColor} onOpenProduct={openProduct} onQuickAdd={quickAddToCart} hasRequiredModifiers={hasRequiredModifiers} brandMode={brandMode} hasBranch={hasBranch} brandControls={brandControls} />
-      )}
 
       {/* ── Main content ────── */}
       <div className="max-w-5xl mx-auto px-4 pt-4 pb-6">
@@ -1697,13 +1662,7 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       gPoly.getPath().forEach((p: any) => bounds.extend(p));
     });
 
-    mapRef.current.fitBounds(bounds, 40);
-    // Zoom in 1 level after fitBounds settles
-    const listener = mapRef.current.addListener("idle", () => {
-      const z = mapRef.current.getZoom();
-      if (z != null) mapRef.current.setZoom(z + 1);
-      listener.remove();
-    });
+    mapRef.current.fitBounds(bounds, 30);
   }, [allPolygons, pts, primaryColor]);
 
   // Fullscreen toggle
