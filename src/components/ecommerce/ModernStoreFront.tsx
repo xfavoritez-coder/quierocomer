@@ -1544,6 +1544,10 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
         tenant={tenant}
         primaryColor={primaryColor}
       />
+      <p className="text-[12px] text-gray-400 mb-5 flex items-center gap-1.5">
+        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: primaryColor, opacity: 0.3 }} />
+        Área de reparto
+      </p>
 
       <div className="flex flex-col gap-4">
         {siblings.length > 0 ? (
@@ -1636,7 +1640,7 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       zoom: 14,
       disableDefaultUI: true,
       zoomControl: true,
-      gestureHandling: "greedy",
+      gestureHandling: "cooperative",
       styles: [
         { featureType: "all", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
         { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
