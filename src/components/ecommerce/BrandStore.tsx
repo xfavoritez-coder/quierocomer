@@ -291,7 +291,6 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
         <div style={{ display: "flex", alignItems: modern ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
             <h2 style={{ fontSize: modern ? "1.1rem" : "1.15rem", fontWeight: modern ? 700 : 900, color: "#111", margin: 0 }}>¿Cómo quieres pedir?</h2>
-            {modern && <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: 2 }}>Elige delivery o retiro en tienda</p>}
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999, border: modern ? "1px solid #e5e7eb" : "none", background: modern ? "#fff" : "#f3f4f6", color: modern ? "#9ca3af" : "#374151", cursor: "pointer", flexShrink: 0 }}><X size={modern ? 16 : 18} /></button>
         </div>
@@ -305,7 +304,32 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
           <div>
             <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Tu dirección</label>
             <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
-            <p style={{ fontSize: "0.72rem", color: "#9ca3af", margin: "6px 2px 0" }}>Elige una opción de la lista: te asignamos la sucursal que reparte a tu dirección.</p>
+            {brand.googleMapsKey && !dest && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!navigator.geolocation) return;
+                  try {
+                    const pos = await new Promise<GeolocationPosition>((ok, err) => navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy: true, timeout: 8000 }));
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${brand.googleMapsKey}&language=es&region=cl`);
+                    const j = await r.json();
+                    const result = j.results?.[0];
+                    if (result && inputRef.current) {
+                      inputRef.current.value = result.formatted_address;
+                      inputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+                      const parts = placeAddressParts(result);
+                      const hasNumber = (result.address_components ?? []).some((c: any) => c.types.includes("street_number"));
+                      setDest({ lat, lng, address: result.formatted_address, parts, hasNumber });
+                    }
+                  } catch {}
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.82rem", fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: "6px 0", margin: "4px 0 0" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                Usar mi ubicación actual
+              </button>
+            )}
             {dest && !dest.hasNumber && <p style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 700, margin: "8px 2px 0" }}>Falta la numeración: elige la dirección con su número de calle.</p>}
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
             {dest && (
