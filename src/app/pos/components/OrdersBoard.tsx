@@ -369,9 +369,9 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
-            {/* Botón "Entregado" — visible en out_for_delivery O en ready con delivery
-                asignado a Delifast (el opsStage puede no haber avanzado aún). */}
-            {paid && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId)) && (
+            {/* Botón "Entregado" — visible en out_for_delivery O en ready con Delifast
+                stuck (sin motorista asignado). Si Delifast ya asignó motorista, no mostrar. */}
+            {paid && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId && delifastNoTracking)) && (
               <button
                 onClick={() => {
                   if (!window.confirm('¿Estás seguro que deseas marcar este pedido como entregado?')) return
