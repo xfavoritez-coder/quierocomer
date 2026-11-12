@@ -1653,12 +1653,15 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
-    const el = containerRef.current;
+    const el = wrapperRef.current;
     if (!el) return;
     if (!document.fullscreenElement) {
-      el.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+      // Try standard fullscreen, fallback to webkit for iOS
+      const req = el.requestFullscreen?.() || (el as any).webkitRequestFullscreen?.();
+      if (req?.then) req.then(() => setIsFullscreen(true)).catch(() => {});
     } else {
-      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+      const exit = document.exitFullscreen?.() || (document as any).webkitExitFullscreen?.();
+      if (exit?.then) exit.then(() => setIsFullscreen(false)).catch(() => {});
     }
   }, []);
 
@@ -1670,9 +1673,10 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
 
   if (!hasPoints) return null;
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   return (
-    <div className="relative mb-5">
-      <div ref={containerRef} className="rounded-xl overflow-hidden shadow-sm bg-gray-200 h-[300px] sm:h-[400px]">
+    <div ref={wrapperRef} className="relative mb-5">
+      <div ref={containerRef} className={`overflow-hidden shadow-sm bg-gray-200 ${isFullscreen ? "h-full w-full" : "rounded-xl h-[300px] sm:h-[400px]"}`}>
         {!mapReady && (
           <div className="absolute inset-0 flex items-center justify-center">
             <MapPin className="w-8 h-8 text-gray-400 animate-pulse" />
