@@ -246,7 +246,7 @@ export async function printBoletaForOrder(posOrderId: string, opts?: { retries?:
     if (data.failed) return { ok: false, error: 'La emisión de la boleta falló' }
     if (data.ready && data.boleta) {
       const b = data.boleta
-      const tedRaster = b.tedPngBase64 ? await pngToRaster(b.tedPngBase64) : undefined
+      const tedRaster = b.tedPngBase64 ? await pngToRaster(b.tedPngBase64, 420) : undefined
       const pr = await printBoleta({
         jobId: 'bol_' + posOrderId, emisorName: b.emisorName, emisorRut: b.emisorRut,
         emisorGiro: b.emisorGiro, emisorAddress: b.emisorAddress,
