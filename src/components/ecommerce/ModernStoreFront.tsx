@@ -963,7 +963,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Delivery modal ────── */}
       {deliveryModalOpen && (
-        <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />
+        <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} variant="modern" />
       )}
 
       {/* ── Login modal (modern) ────── */}
@@ -978,7 +978,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Customer menu (for logged-in users) ────── */}
       {menuOpen && (
-        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setMenuLoginExpanded(false); loadFavState(); }} products={products} initialView={menuView} initialLoginExpanded={menuLoginExpanded} variant="sheet" />
+        <CustomerMenu tenant={tenant} primaryColor={primaryColor} onClose={() => { setMenuOpen(false); setMenuLoginExpanded(false); loadFavState(); }} products={products} initialView={menuView} initialLoginExpanded={menuLoginExpanded} variant="modern" />
       )}
 
 

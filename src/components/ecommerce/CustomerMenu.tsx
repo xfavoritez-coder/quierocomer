@@ -16,9 +16,9 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "Nuevo", ACCEPTED: "Acep
 export type CustomerMenuView = "root" | "profile" | "orders" | "favorites" | "contact" | "social";
 type View = CustomerMenuView;
 
-export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer", initialLoginExpanded = false }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet"; initialLoginExpanded?: boolean }) {
+export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer", initialLoginExpanded = false }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet" | "modern"; initialLoginExpanded?: boolean }) {
   const [view, setView] = useState<View>(initialView);
-  const sheet = variant === "sheet";
+  const sheet = variant === "sheet" || variant === "modern";
   const { closing, requestClose } = useCloseAnimation(onClose);
   const panelAnim = sheet
     ? (closing ? "qc-sheet-out" : "qc-sheet-in")
@@ -91,7 +91,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
       {/* Overlay oscuro SIN backdrop-blur: animar la opacidad de un overlay con
           blur(18px) saturaba la GPU y trababa la animación de cierre del drawer en
           escritorio. Un overlay sólido se desvanece de forma fluida. */}
-      <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.5)" }} />
+      <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: variant === "modern" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.5)" }} />
       <div
         ref={panelRef}
         onTouchStart={onTouchStart}
@@ -102,19 +102,19 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           : "relative w-[85%] max-w-sm h-full"}
         style={{ transform: dragY > 0 || snapTransition ? `translateY(${dragY}px)` : undefined, transition: snapTransition ? "transform .24s cubic-bezier(.4,0,.2,1)" : "none", willChange: "transform" }}>
       <div className={`${sheet
-        ? "bg-gray-50 w-full h-full rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        ? `${variant === "modern" ? "bg-white" : "bg-gray-50"} w-full h-full ${variant === "modern" ? "rounded-t-2xl sm:rounded-2xl" : "rounded-t-3xl sm:rounded-3xl"} shadow-2xl flex flex-col overflow-hidden`
         : "bg-gray-50 w-full h-full shadow-2xl flex flex-col"} ${panelAnim}`}
         style={{ willChange: "transform" }}>
-        {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
+        {sheet && variant !== "modern" && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 h-14 bg-white border-b border-gray-100 shrink-0">
+        <div className={`flex items-center gap-2 px-4 ${variant === "modern" ? "h-16 px-5" : "h-14"} bg-white border-b border-gray-100 shrink-0`}>
           {view !== "root" ? (
             <button onClick={() => setView("root")} className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-50"><ArrowLeft className="w-5 h-5" /></button>
           ) : <div className="w-9" />}
-          <h2 className="flex-1 text-center font-black text-gray-900">
-            {view === "root" ? "Menú" : view === "profile" ? "Mi perfil" : view === "orders" ? "Mis pedidos" : view === "favorites" ? "Mis favoritos" : view === "contact" ? "Contáctanos" : "Redes sociales"}
+          <h2 className={`flex-1 text-center ${variant === "modern" ? "font-bold" : "font-black"} text-gray-900`}>
+            {view === "root" ? (variant === "modern" ? "Mi cuenta" : "Menú") : view === "profile" ? "Mi perfil" : view === "orders" ? "Mis pedidos" : view === "favorites" ? "Mis favoritos" : view === "contact" ? "Contáctanos" : "Redes sociales"}
           </h2>
-          <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 active:scale-90 transition"><X className="w-5 h-5" /></button>
+          <button onClick={requestClose} className={`w-9 h-9 flex items-center justify-center rounded-full transition active:scale-90 ${variant === "modern" ? "border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300" : "qc-glass-x text-gray-500 hover:bg-gray-50"}`}><X className={variant === "modern" ? "w-4 h-4" : "w-5 h-5"} /></button>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">

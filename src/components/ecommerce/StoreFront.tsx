@@ -1022,7 +1022,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; siblings?: BrandBranch[] }) {
+export function DeliveryModal({ tenant, primaryColor, onClose, siblings, variant = "default" }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; siblings?: BrandBranch[]; variant?: "default" | "modern" }) {
   const { closing, requestClose } = useCloseAnimation(onClose);
   const { deliveryType, deliveryAddress, confirmPickup, setDeliveryAddress } = useCartStore();
   const zones = tenant.deliveryZones;
@@ -1155,22 +1155,33 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings }: { ten
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className={`absolute inset-0 bg-black/50 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
-      <div className={`relative bg-white w-full rounded-3xl max-w-md shadow-2xl flex flex-col max-h-[90dvh] overflow-y-auto ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
-        <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
-          <h2 className="font-black text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
-          <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition active:scale-90"><X className="w-5 h-5" /></button>
-        </div>
+      <div className={`absolute inset-0 ${variant === "modern" ? "bg-black/40" : "bg-black/50"} ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} />
+      <div className={`relative bg-white w-full ${variant === "modern" ? "rounded-2xl" : "rounded-3xl"} max-w-md shadow-2xl flex flex-col max-h-[90dvh] overflow-y-auto ${closing ? "qc-modal-out" : "qc-modal-in"}`}>
+        {/* Header */}
+        {variant === "modern" ? (
+          <div className="px-6 pt-6 pb-4 flex items-start justify-between">
+            <div>
+              <h2 className="font-bold text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
+              <p className="text-[13px] text-gray-400 mt-0.5">Elige delivery o retiro en tienda</p>
+            </div>
+            <button onClick={requestClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 transition shrink-0"><X className="w-4 h-4" /></button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
+            <h2 className="font-black text-lg text-gray-900">¿Cómo quieres tu pedido?</h2>
+            <button onClick={requestClose} className="qc-glass-x w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-50 transition active:scale-90"><X className="w-5 h-5" /></button>
+          </div>
+        )}
 
         {/* Tabs */}
-        <div className="flex gap-2 p-4">
+        <div className={`flex gap-2 ${variant === "modern" ? "px-6 pb-4" : "p-4"}`}>
           {tenant.pickupEnabled && (
-            <button onClick={() => setTab("pickup")} className={`flex-1 py-3 rounded-xl font-bold text-sm border transition flex items-center justify-center gap-2 ${tab === "pickup" ? "text-white border-transparent" : "text-gray-600 border-gray-200 bg-white hover:bg-gray-50"}`} style={tab === "pickup" ? { background: primaryColor } : {}}>
+            <button onClick={() => setTab("pickup")} className={`flex-1 py-3 ${variant === "modern" ? "rounded-full" : "rounded-xl"} font-bold text-sm border transition flex items-center justify-center gap-2 ${tab === "pickup" ? "text-white border-transparent" : "text-gray-600 border-gray-200 bg-white hover:bg-gray-50"}`} style={tab === "pickup" ? { background: primaryColor } : {}}>
               <Store className="w-4 h-4" /> Retiro
             </button>
           )}
           {tenant.deliveryEnabled && (
-            <button onClick={() => setTab("delivery")} className={`flex-1 py-3 rounded-xl font-bold text-sm border transition flex items-center justify-center gap-2 ${tab === "delivery" ? "text-white border-transparent" : "text-gray-600 border-gray-200 bg-white hover:bg-gray-50"}`} style={tab === "delivery" ? { background: primaryColor } : {}}>
+            <button onClick={() => setTab("delivery")} className={`flex-1 py-3 ${variant === "modern" ? "rounded-full" : "rounded-xl"} font-bold text-sm border transition flex items-center justify-center gap-2 ${tab === "delivery" ? "text-white border-transparent" : "text-gray-600 border-gray-200 bg-white hover:bg-gray-50"}`} style={tab === "delivery" ? { background: primaryColor } : {}}>
               <MapPin className="w-4 h-4" /> Delivery
             </button>
           )}
