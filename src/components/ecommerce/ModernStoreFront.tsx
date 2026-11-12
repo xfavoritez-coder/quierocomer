@@ -601,6 +601,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 <Motorbike className="w-4 h-4 shrink-0" style={{ color: headerDark ? "#fff" : primaryColor }} />
                 <span className={`text-left text-sm font-semibold truncate ${headerDark ? "text-white" : "text-gray-700"}`}>{shortAddr(deliveryAddress.address)}</span>
                 <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${headerDark ? "text-white/40" : "text-gray-400"}`} />
+                <span className="flex-1" />
                 {estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-sm font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             ) : (
@@ -609,6 +610,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                 <span className={`text-left text-sm font-semibold truncate ${headerDark ? "text-white" : "text-gray-700"}`}>{tenant.branchName || "Retiro en tienda"}</span>
                 {!tenant.openStatus.open && <span className="text-[10px] font-semibold text-red-400 bg-red-50 px-2 py-px rounded-full shrink-0">Cerrado</span>}
                 <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${headerDark ? "text-white/40" : "text-gray-400"}`} />
+                <span className="flex-1" />
                 {tenant.openStatus.open && estimatedTime && <span className={`shrink-0 flex items-center gap-1 text-sm font-medium ${headerDark ? "text-white/40" : "text-gray-400"}`}><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             )}
