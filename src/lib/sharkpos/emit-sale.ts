@@ -5,9 +5,26 @@
 //  El resultado final del SII llega por /api/sharkpos/webhook.
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
-import { emitBoleta, sharkposConfigured, type BoletaItemInput, type SharkposCred } from "./client";
+import { emitBoleta, emitFactura, sharkposConfigured, type BoletaItemInput, type SharkposCred, type B2BReceptor } from "./client";
 import { parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
 import { decryptSecret } from "@/lib/crypto/secret";
+
+/** Lee los datos de receptor de factura guardados en el cobro (rawPayload.posFactura),
+ *  validando que estén los campos obligatorios y que el RUT no sea consumidor final. */
+export function readFacturaReceptor(rawPayload: unknown): B2BReceptor | null {
+  if (!rawPayload || typeof rawPayload !== "object" || Array.isArray(rawPayload)) return null;
+  const f = (rawPayload as Record<string, unknown>).posFactura;
+  if (!f || typeof f !== "object") return null;
+  const g = f as Record<string, unknown>;
+  const s = (k: string) => String(g[k] ?? "").trim();
+  const rut = s("rut");
+  if (!rut || /^66\.?666\.?666-?6$/i.test(rut)) return null; // consumidor final no sirve para factura
+  if (!s("name") || !s("giro") || !s("direccion") || !s("comuna")) return null;
+  return {
+    rut, name: s("name"), giro: s("giro"), direccion: s("direccion"), comuna: s("comuna"),
+    ciudad: s("ciudad") || undefined, email: s("email") || undefined,
+  };
+}
 
 /** Credencial de emisión del local: su propia key (modo plataforma) o la global (piloto). */
 export function restaurantSharkposCred(r: { sharkposApiKey?: string | null; sharkposTenantEnv?: string | null }): SharkposCred | undefined {
@@ -53,7 +70,7 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
     select: {
       id: true, totalAmount: true, deliveryFee: true, items: true, customerEmail: true,
       orderReference: true, externalId: true, boletaDteId: true, rawPayload: true,
-      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true, sharkposApiKey: true, sharkposTenantEnv: true } },
+      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true, sharkposApiKey: true, sharkposTenantEnv: true, facturaEnabled: true } },
     },
   });
   if (!order) return;
@@ -88,6 +105,14 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
   const { lines, amountTotal } = buildLines(order.items, total, `Venta ${ref}`, order.deliveryFee || 0);
   const email = order.customerEmail && order.customerEmail.includes("@") ? order.customerEmail : undefined;
 
+  // ¿Factura? El cobro guardó datos de receptor válidos y el local puede facturar (33).
+  const facturaReceptor = order.restaurant.facturaEnabled ? readFacturaReceptor(order.rawPayload) : null;
+  const asFactura = !!facturaReceptor;
+  const docType = asFactura ? 33 : 39;
+  const doEmit = () => asFactura
+    ? emitFactura({ idempotencyKey: `venta-${order.id}`, receptor: { ...facturaReceptor!, email: facturaReceptor!.email || email }, items: lines }, cred)
+    : emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+
   try {
     // RUT recién dado de alta: SharkPOS pide folios al SII en segundo plano, así
     // que las primeras ventas pueden devolver 409 FOLIOS_EXHAUSTED. Se reintenta
@@ -95,13 +120,13 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
     // haya folios. Corre dentro de after() (no bloquea el cobro).
     const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
     const FOLIO_DELAYS = [15_000, 30_000, 45_000, 60_000]; // ~2,5 min de margen
-    let r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+    let r = await doEmit();
     for (let i = 0; i < FOLIO_DELAYS.length && !r.dteId; i++) {
       const noFolios = r.httpStatus === 409 && /FOLIOS?_EXHAUSTED|folio/i.test(`${r.code || ""} ${r.message || ""}`);
       if (!noFolios) break;
       await prisma.posOrder.update({ where: { id: order.id }, data: { boletaStatus: "pendiente:folios" } }).catch(() => {});
       await sleep(FOLIO_DELAYS[i]);
-      r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+      r = await doEmit();
     }
     if (r.dteId) {
       await prisma.posOrder.update({
@@ -113,6 +138,7 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
           boletaPdfUrl: r.pdfUrl || r.links?.pdf || null,
           boletaPublicUrl: r.publicUrl || null,
           boletaEmittedAt: new Date(),
+          fiscalDocType: docType,
         },
       });
     } else {

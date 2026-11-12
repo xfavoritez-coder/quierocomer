@@ -390,6 +390,7 @@ model Restaurant {
   sharkposTenantEnv          String? // entorno del alta: "certification" | "production"
   sharkposTenantRut          String? // RUT dado de alta (solo para mostrar en admin)
   sharkposTenantName         String? // razón social del RUT (solo para mostrar en admin)
+  facturaEnabled             Boolean                   @default(false) // el local puede emitir factura (33) en el POS (requiere contrato + CAF 33)
   viewerSections             Json? // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
   automationRules            AutomationRule[]
@@ -553,6 +554,14 @@ model PosOrder {
   boletaPdfUrl    String?
   boletaPublicUrl String? // consulta pública (public_url de SharkPOS, para el pie de la boleta)
   boletaEmittedAt DateTime?
+  fiscalDocType   Int? // tipo del documento tributario emitido para la venta: 39 boleta (default) | 33 factura
+  // Nota de crédito (61) que anula la boleta/factura de esta venta. receptor y motivo en rawPayload.notaCredito.
+  notaCreditoDteId     String?
+  notaCreditoFolio     Int?
+  notaCreditoStatus    String?
+  notaCreditoPdfUrl    String?
+  notaCreditoEmittedAt DateTime?
+  anuladaAt            DateTime? // cuándo se anuló la venta (al emitir la NC)
 
   vendorName      String?
   orderReference  String?

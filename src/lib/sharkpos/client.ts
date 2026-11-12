@@ -171,6 +171,93 @@ export async function emitBoleta(input: EmitBoletaInput, cred?: SharkposCred): P
   throw new Error(`SharkPOS emitBoleta falló tras ${MAX} intentos: ${String(lastErr)}`);
 }
 
+// ─── Documentos B2B: factura (33) y nota de crédito (61) ────────────────────
+// Exigen datos de receptor con RUT válido (consumidor final 66666666-6 NO sirve).
+// La respuesta trae el PDF (carta) en base64 (pdf_data).
+export interface B2BReceptor {
+  rut: string; name: string; giro: string; direccion: string; comuna: string;
+  ciudad?: string; contacto?: string; email?: string;
+}
+export interface B2BResult extends SharkposResult { pdfBase64?: string; }
+
+function receptorBody(r: B2BReceptor): Record<string, string> {
+  return {
+    receptor_rut: (r.rut || "").trim(),
+    receptor_name: (r.name || "").slice(0, 100),
+    receptor_giro: (r.giro || "").slice(0, 40),
+    receptor_direccion: (r.direccion || "").slice(0, 70),
+    receptor_comuna: (r.comuna || "").slice(0, 20),
+    ...(r.ciudad ? { receptor_ciudad: r.ciudad.slice(0, 20) } : {}),
+    ...(r.contacto ? { receptor_contacto: r.contacto.slice(0, 80) } : {}),
+    ...(r.email && r.email.includes("@") ? { receptor_email: r.email } : {}),
+  };
+}
+
+async function b2bEmit(path: string, body: Record<string, any>, idempotencyKey: string, cred?: SharkposCred): Promise<B2BResult> {
+  const base = sharkposBaseFor(cred?.env);
+  const MAX = 4;
+  let lastErr: unknown = null;
+  for (let attempt = 1; attempt <= MAX; attempt++) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        method: "POST",
+        headers: authHeaders(cred, idempotencyKey),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as Record<string, any>;
+      if ((res.status === 429 || res.status >= 500) && attempt < MAX) { await sleep(attempt * 1000); continue; }
+      const r = toResult(res.status, data, base) as B2BResult;
+      r.pdfBase64 = data.pdf_data;
+      return r;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < MAX) { await sleep(attempt * 1000); continue; }
+    }
+  }
+  throw new Error(`SharkPOS b2bEmit ${path} falló tras ${MAX} intentos: ${String(lastErr)}`);
+}
+
+export interface EmitFacturaInput {
+  idempotencyKey: string;
+  receptor: B2BReceptor;
+  items: BoletaItemInput[];
+  /** Precios CON IVA (default true). */
+  pricesIncludeIva?: boolean;
+}
+/** Emite una factura electrónica afecta (33). Idempotente por idempotencyKey. */
+export async function emitFactura(input: EmitFacturaInput, cred?: SharkposCred): Promise<B2BResult> {
+  const body = {
+    ...receptorBody(input.receptor),
+    items: input.items.map((i) => ({ name: (i.name || "").slice(0, 80), qty: i.qty, price: i.price })),
+    prices_include_iva: input.pricesIncludeIva ?? true,
+  };
+  return b2bEmit("/api/v1/dte/factura/emit/", body, input.idempotencyKey, cred);
+}
+
+export interface EmitNotaCreditoInput {
+  idempotencyKey: string;
+  receptor: B2BReceptor;
+  items: BoletaItemInput[];
+  /** Referencia OBLIGATORIA al documento que corrige/anula. */
+  ref: { documentType: number; folio: number; date: string; code?: 1 | 2 | 3; reason: string };
+  pricesIncludeIva?: boolean;
+}
+/** Emite una nota de crédito (61). code 1=anula (default), 2=corrige texto, 3=corrige montos. */
+export async function emitNotaCredito(input: EmitNotaCreditoInput, cred?: SharkposCred): Promise<B2BResult> {
+  const body = {
+    ...receptorBody(input.receptor),
+    items: input.items.map((i) => ({ name: (i.name || "").slice(0, 80), qty: i.qty, price: i.price })),
+    prices_include_iva: input.pricesIncludeIva ?? true,
+    ref_document_type: input.ref.documentType,
+    ref_folio: input.ref.folio,
+    ref_date: input.ref.date,
+    ref_code: input.ref.code ?? 1,
+    ref_reason: (input.ref.reason || "Anulación").slice(0, 90),
+  };
+  return b2bEmit("/api/v1/dte/nota-credito/emit/", body, input.idempotencyKey, cred);
+}
+
 export interface TedResult {
   folio?: number;
   /** Bytes del TED en base64, listos para el PDF417 (nivel de corrección 5). */

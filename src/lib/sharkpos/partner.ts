@@ -36,6 +36,8 @@ export interface RegisterTenantInput {
   companyRut: string;
   /** Referencia nuestra para reconciliar (p. ej. el id del restaurante). */
   externalReference?: string;
+  /** Tipos de documento a mantener con folios (coma-separado), p. ej. "39,61" o "39,33,61". */
+  cafAutoRequestTypes?: string;
   // ── Solo producción ──────────────────────────────────────────────
   businessName?: string;
   businessActivity?: string;
@@ -85,6 +87,8 @@ export async function registerTenant(input: RegisterTenantInput): Promise<Regist
   const form = new FormData();
   form.append("company_rut", input.companyRut.trim());
   if (input.externalReference) form.append("external_reference", input.externalReference.slice(0, 128));
+  // Tipos a mantener con folios automáticos (boleta 39 + NC 61 para anular; 33 si factura).
+  if (input.cafAutoRequestTypes) form.append("caf_auto_request_types", input.cafAutoRequestTypes);
 
   if (!sandbox) {
     // Producción: todos los campos del SII son obligatorios.

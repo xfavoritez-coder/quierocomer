@@ -60,9 +60,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Alta: JSON (sandbox, solo RUT) o multipart/form-data (producción, con certificado).
   const ctype = req.headers.get("content-type") || "";
   let input: Parameters<typeof registerTenant>[0];
+  let wantsFactura = false;
   if (ctype.includes("multipart/form-data")) {
     const fd = await req.formData();
     const s = (k: string) => { const v = fd.get(k); return typeof v === "string" ? v.trim() : ""; };
+    wantsFactura = ["true", "1", "on"].includes(s("factura").toLowerCase());
     const companyRut = s("companyRut");
     if (!companyRut) return NextResponse.json({ error: "Falta el RUT de la empresa" }, { status: 400 });
     const cert = fd.get("certificate");
@@ -89,8 +91,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const companyRut = String(body.companyRut || "").trim();
     if (!companyRut) return NextResponse.json({ error: "Falta el RUT de la empresa" }, { status: 400 });
+    wantsFactura = body.factura === true;
     input = { companyRut, externalReference: id };
   }
+  // Folios: siempre boleta (39) + nota de crédito (61, para poder anular); factura (33) si corresponde.
+  input.cafAutoRequestTypes = wantsFactura ? "39,33,61" : "39,61";
 
   try {
     const r = await registerTenant(input);
@@ -108,6 +113,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         sharkposTenantRut: r.rut || input.companyRut,
         sharkposTenantName: r.razonSocial || null,
         sharkposEnabled: true, // al dar de alta, queda listo para emitir
+        facturaEnabled: wantsFactura,
       },
     });
     return NextResponse.json({ ok: true, ...(await status(id)) });
