@@ -965,19 +965,28 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           {/* Map with all branches */}
           {siblings && siblings.length > 0 && siblings.some(b => b.lat && b.lng) && (() => {
             const pts = siblings.filter(b => b.lat && b.lng);
-            const center = pts.length > 0 ? `${pts.reduce((s, b) => s + b.lat!, 0) / pts.length},${pts.reduce((s, b) => s + b.lng!, 0) / pts.length}` : "";
+            if (pts.length === 0) return null;
+            // Build Google Maps link with all markers
+            const mapsUrl = pts.length === 1
+              ? `https://www.google.com/maps/search/?api=1&query=${pts[0].lat},${pts[0].lng}`
+              : `https://www.google.com/maps/dir/${pts.map(b => `${b.lat},${b.lng}`).join("/")}`;
+            const key = tenant.googleMapsKey;
+            const staticUrl = key
+              ? `https://maps.googleapis.com/maps/api/staticmap?size=800x300&scale=2${pts.map(b => `&markers=color:0x${primaryColor.replace("#", "")}%7C${b.lat},${b.lng}`).join("")}&style=feature:all%7Celement:labels.text.fill%7Ccolor:0x616161&style=feature:water%7Celement:geometry%7Ccolor:0xc9c9c9&key=${key}`
+              : null;
             return (
-              <div className="mb-5 rounded-xl overflow-hidden shadow-sm bg-gray-100">
-                <iframe
-                  title="Mapa de sucursales"
-                  width="100%"
-                  height="280"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps/embed/v1/view?key=AIzaSyBs3GBnAu5gBf0TCGCHzHJq-jiiFJCwjNE&center=${center}&zoom=${pts.length > 1 ? 12 : 15}`}
-                />
-              </div>
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="block mb-5 rounded-xl overflow-hidden shadow-sm bg-gray-200 relative group cursor-pointer">
+                {staticUrl ? (
+                  <img src={staticUrl} alt="Mapa de sucursales" loading="lazy" className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300" />
+                ) : (
+                  <div className="w-full h-48 sm:h-56 flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur rounded-full px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm flex items-center gap-1.5 cursor-pointer">
+                  <MapPin className="w-3 h-3" /> Ver en Google Maps
+                </div>
+              </a>
             );
           })()}
 
