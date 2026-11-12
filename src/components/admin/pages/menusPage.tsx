@@ -2042,7 +2042,19 @@ export default function AdminMenus() {
                     {menuOpenId === d.id && (
                       <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fff", border: "1px solid #eee", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 140, overflow: "hidden" }}>
                         <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "var(--adm-text)", textAlign: "left" }}>{t("promo_action_edit")}</button>
-                        <button style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#999", textAlign: "left" }}>Duplicar</button>{/* TODO: implement duplicate */}
+                        <button onClick={async () => {
+                          setMenuOpenId(null);
+                          try {
+                            const res = await fetch(`/api/admin/dishes/${d.id}/duplicate`, { method: "POST" });
+                            if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || "No se pudo duplicar el producto"); return; }
+                            const nd = await res.json();
+                            setDishes(prev => {
+                              const i = prev.findIndex(x => x.id === d.id);
+                              if (i < 0) return [nd, ...prev];
+                              const copy = [...prev]; copy.splice(i + 1, 0, nd); return copy;
+                            });
+                          } catch { alert("Error al duplicar el producto"); }
+                        }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "var(--adm-text)", textAlign: "left" }}>Duplicar</button>
                         <button onClick={async () => {
                           setMenuOpenId(null);
                           if (!confirm(`¿Eliminar "${d.name}"?`)) return;
