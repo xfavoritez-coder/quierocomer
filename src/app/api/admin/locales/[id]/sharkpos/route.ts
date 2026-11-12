@@ -25,6 +25,7 @@ async function status(id: string) {
     // Prueba que SECRET_ENCRYPTION_KEY está en el runtime: si está, encryptSecret
     // devuelve un valor con prefijo "enc:v1:"; si no, devuelve el texto tal cual.
     encryptionKeyConfigured: encryptSecret("probe").startsWith("enc:v1:"),
+    partnerWebhookSecretConfigured: !!process.env.SHARKPOS_PARTNER_WEBHOOK_SECRET,
     enabled: !!r?.sharkposEnabled,
     registered: !!r?.sharkposTenantId,
     tenantRut: r?.sharkposTenantRut || null,
