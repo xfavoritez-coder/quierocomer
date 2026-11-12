@@ -337,9 +337,7 @@ function OrderCard({
                 {busy ? '…' : next.label + ' →'}
               </button>
             )}
-            {/* Pill de estado Delifast — visible en ready y out_for_delivery.
-                Se muestra también sin delifastVentaId para detectar cancelaciones
-                de órdenes rastreadas antes de que se guardara el ventaId. */}
+            {/* Pill de estado Delifast — visible en ready y out_for_delivery */}
             {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
@@ -348,52 +346,20 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
-            {/* Sin tracking real de Delifast ("Reparto"): botón entrega manual */}
-            {paid && delifastNoTracking && !delifastCancelled && order.opsStage === 'out_for_delivery' && (
-              <button
-                onClick={() => onStageChange(order, 'delivered')}
-                disabled={busy}
-                style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: STAGE_COLOR.delivered ?? '#6b7280', color: '#fff',
-                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
-                }}
-              >
-                {busy ? '…' : 'Entregado →'}
-              </button>
-            )}
-            {/* Con Delifast activo en reparto: botón "Entregado" manual como fallback */}
-            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage === 'out_for_delivery' && (
+            {/* Botón "Entregado" — SIEMPRE visible en out_for_delivery, sin importar
+                el estado de Delifast. Si Delifast canceló se pide confirmación extra. */}
+            {paid && order.opsStage === 'out_for_delivery' && order.opsStage !== 'delivered' && (
               <button
                 onClick={() => {
-                  if (window.confirm('¿Marcar como entregado manualmente?')) {
-                    onStageChange(order, 'delivered')
+                  if (delifastCancelled) {
+                    if (!window.confirm('Delifast canceló el reparto. ¿Marcar como entregado?')) return
                   }
+                  onStageChange(order, 'delivered')
                 }}
                 disabled={busy}
                 style={{
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: STAGE_COLOR.delivered ?? '#6b7280', color: '#fff',
-                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
-                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
-                }}
-              >
-                {busy ? '…' : 'Entregado →'}
-              </button>
-            )}
-            {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
-            {paid && delifastCancelled && order.opsStage === 'out_for_delivery' && (
-              <button
-                onClick={() => {
-                  if (window.confirm('¿Estás seguro que quieres marcar este pedido como entregado?')) {
-                    onStageChange(order, 'delivered')
-                  }
-                }}
-                disabled={busy}
-                style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: RED, color: '#fff',
+                  background: delifastCancelled ? RED : (STAGE_COLOR.delivered ?? '#6b7280'), color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                 }}
