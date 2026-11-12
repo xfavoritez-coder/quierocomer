@@ -46,6 +46,12 @@ interface Restaurant {
   bodegaEnabled?: boolean;
   centroPedidosEnabled?: boolean;
   posEnabled?: boolean;
+  sharkposEnabled?: boolean;
+  sharkposTenantId?: string | null;
+  sharkposTenantRut?: string | null;
+  sharkposTenantName?: string | null;
+  sharkposTenantEnv?: string | null;
+  toteatWebhookSecret?: string | null;
   orderingNavHidden?: boolean;
   bodegaId?: string | null;
   ecommerceConfig?: EcommerceConfig | null;
@@ -58,6 +64,136 @@ interface Restaurant {
 const F = "var(--font-display)";
 
 type DetailTab = "general" | "pilares" | "credenciales" | "marca" | "avanzado";
+
+// ── Boletas SII (SharkPOS, modo plataforma) ───────────────────────────────
+// Da de alta el RUT del local en SharkPOS (una llamada → su propia API key,
+// guardada cifrada en el servidor) y habilita la emisión de boletas al cobrar.
+const SK = "#a78bfa";
+function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
+  const [platformReady, setPlatformReady] = useState<boolean | null>(null);
+  const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
+  const [rut, setRut] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setErr(null); setRut("");
+    fetch(`/api/admin/locales/${selected.id}/sharkpos`)
+      .then(r => r.json())
+      .then(d => { if (alive) { setPlatformReady(!!d.platformConfigured); setPlatformEnv(d.platformEnv || "sandbox"); } })
+      .catch(() => { if (alive) setPlatformReady(false); });
+    return () => { alive = false; };
+  }, [selected.id]);
+
+  const registered = !!selected.sharkposTenantId;
+  const enabled = !!selected.sharkposEnabled;
+  const isProd = (selected.sharkposTenantEnv || platformEnv) === "production";
+
+  async function darDeAlta() {
+    const companyRut = rut.trim();
+    if (!companyRut) { setErr("Ingresa el RUT de la empresa"); return; }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ companyRut }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) { setErr(d.error || "No se pudo dar de alta el RUT"); return; }
+      onUpdate({ sharkposTenantId: "ok", sharkposTenantRut: d.tenantRut, sharkposTenantName: d.tenantName, sharkposTenantEnv: d.tenantEnv, sharkposEnabled: true });
+      setRut("");
+    } catch { setErr("Error de red al dar de alta"); }
+    finally { setBusy(false); }
+  }
+
+  async function toggleEnabled() {
+    const val = !enabled;
+    const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sharkposEnabled: val }) });
+    if (!res.ok) { setErr("Error al actualizar"); return; }
+    onUpdate({ sharkposEnabled: val });
+  }
+
+  async function desvincular() {
+    if (!confirm("¿Desvincular el RUT de este local? Dejará de emitir boletas (no se borra en SharkPOS).")) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/locales/${selected.id}/sharkpos`, { method: "DELETE" });
+    setBusy(false);
+    if (!res.ok) { setErr("Error al desvincular"); return; }
+    onUpdate({ sharkposTenantId: null, sharkposTenantRut: null, sharkposTenantName: null, sharkposTenantEnv: null, sharkposEnabled: false });
+  }
+
+  const usesToteat = !!selected.toteatWebhookSecret;
+  const active = registered || enabled;
+
+  return (
+    <div style={{ padding: "14px 16px", background: active ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${active ? "rgba(167,139,250,0.35)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: active ? SK : "white", margin: 0 }}>
+            🧾 Boletas SII (SharkPOS)
+            <span style={{ fontSize: "0.62rem", fontWeight: 700, color: SK, background: "rgba(167,139,250,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 6 }}>{isProd ? "PROD" : "SANDBOX"}</span>
+          </p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+            {registered
+              ? `RUT dado de alta${selected.sharkposTenantRut ? ` · ${selected.sharkposTenantRut}` : ""}${selected.sharkposTenantName ? ` · ${selected.sharkposTenantName}` : ""}`
+              : "Emite boletas electrónicas de las ventas del POS (solo locales sin Toteat)"}
+          </p>
+        </div>
+        {(registered || enabled) && (
+          <button
+            onClick={toggleEnabled}
+            title={enabled ? "Emitiendo boletas" : "Emisión pausada"}
+            style={{ width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative", background: enabled ? SK : "rgba(255,255,255,0.15)", transition: "background 0.2s", flexShrink: 0 }}
+          >
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3, left: enabled ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+          </button>
+        )}
+      </div>
+
+      {usesToteat && (
+        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f59e0b", margin: "8px 0 0" }}>⚠️ Este local usa Toteat; su fiscal va por ahí. No se emitirán boletas por SharkPOS aunque esté habilitado.</p>
+      )}
+
+      {!registered && (
+        <div style={{ marginTop: 10 }}>
+          {platformReady === false ? (
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: 0 }}>
+              Falta <code style={{ color: SK }}>SHARKPOS_PLATFORM_KEY</code> en el servidor para dar de alta RUT. {enabled ? "Este local emite con la llave global (piloto)." : ""}
+            </p>
+          ) : (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                value={rut}
+                onChange={(e) => setRut(e.target.value)}
+                placeholder="RUT de la empresa (ej. 76.543.210-K)"
+                disabled={busy || platformReady === null}
+                style={{ flex: "1 1 200px", minWidth: 180, padding: "8px 10px", borderRadius: 8, border: "1px solid #333", background: "#111", color: "white", fontFamily: F, fontSize: "0.78rem" }}
+              />
+              <button
+                onClick={darDeAlta}
+                disabled={busy || platformReady === null || !rut.trim()}
+                style={{ padding: "8px 14px", borderRadius: 8, border: "none", cursor: busy ? "default" : "pointer", background: SK, color: "#1a1030", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, opacity: busy || !rut.trim() ? 0.6 : 1 }}
+              >
+                {busy ? "Dando de alta…" : "Dar de alta RUT"}
+              </button>
+            </div>
+          )}
+          {!isProd && platformReady !== false && (
+            <p style={{ fontFamily: F, fontSize: "0.64rem", color: "#777", margin: "6px 0 0" }}>Sandbox: basta el RUT; SharkPOS pone certificado y folios de prueba.</p>
+          )}
+        </div>
+      )}
+
+      {registered && (
+        <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={desvincular} disabled={busy} style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid #3a2a2a", background: "transparent", color: "#d88", fontFamily: F, fontSize: "0.68rem", cursor: "pointer" }}>Desvincular RUT</button>
+        </div>
+      )}
+
+      {err && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#f87171", margin: "8px 0 0" }}>{err}</p>}
+    </div>
+  );
+}
 
 export default function AdminLocales() {
   const { isSuper } = useAdminSession();
@@ -864,6 +1000,18 @@ export default function AdminLocales() {
             </button>
           </div>
           </div>
+        )}
+
+        {/* Boletas SII vía SharkPOS (modo plataforma) — super-admin only */}
+        {isSuper && detailTab === "pilares" && (
+          <SharkposCard
+            selected={selected}
+            onUpdate={(patch) => {
+              const u = { ...selected, ...patch };
+              setSelected(u);
+              setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }}
+          />
         )}
 
         {/* Toggle "Pedidos Online" en el sidebar (legacy) — super-admin only. Default: visible. */}

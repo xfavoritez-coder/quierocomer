@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { getBoletaTed, getBoletaTedPngBase64, getBoletaPdfBase64, sharkposEnv } from "@/lib/sharkpos/client";
-import { buildLines } from "@/lib/sharkpos/emit-sale";
+import { buildLines, restaurantSharkposCred } from "@/lib/sharkpos/emit-sale";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       id: true, restaurantId: true, totalAmount: true, deliveryFee: true, items: true,
       orderReference: true, externalId: true,
       boletaDteId: true, boletaFolio: true, boletaStatus: true, boletaEmittedAt: true, boletaPublicUrl: true,
-      restaurant: { select: { name: true, sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true } },
+      restaurant: { select: { name: true, sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true, sharkposApiKey: true, sharkposTenantEnv: true } },
     },
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
@@ -62,14 +62,15 @@ export async function GET(req: NextRequest) {
 
   // Timbre: PNG del PDF417 (para rasterizar en la caja) + TED XML (para el RUT emisor).
   // Si falla transitorio, que el POS reintente.
+  const cred = restaurantSharkposCred(order.restaurant);
   let tedPngBase64: string | undefined;
   let pdfBase64: string | undefined;
   let emisorRut = "";
   try {
     const [ted, png, pdf] = await Promise.all([
-      getBoletaTed(order.boletaDteId),
-      getBoletaTedPngBase64(order.boletaDteId),
-      getBoletaPdfBase64(order.boletaDteId, 80),
+      getBoletaTed(order.boletaDteId, cred),
+      getBoletaTedPngBase64(order.boletaDteId, cred),
+      getBoletaPdfBase64(order.boletaDteId, 80, cred),
     ]);
     tedPngBase64 = png;
     pdfBase64 = pdf;
@@ -101,7 +102,7 @@ export async function GET(req: NextRequest) {
       total,
       tedPngBase64,
       verifyUrl: order.boletaPublicUrl || undefined,
-      sandbox: sharkposEnv() === "sandbox",
+      sandbox: (cred?.env ?? sharkposEnv()) === "sandbox",
     },
   });
 }

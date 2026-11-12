@@ -134,6 +134,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.centroPedidosEnabled !== undefined && { centroPedidosEnabled: body.centroPedidosEnabled }),
         // Pilar POS / Punto de venta (super-admin only): flag maestro
         ...(body.posEnabled !== undefined && { posEnabled: body.posEnabled }),
+        // Boletas SII vía SharkPOS (super-admin only): habilita emitir (requiere RUT dado de alta o key global)
+        ...(body.sharkposEnabled !== undefined && { sharkposEnabled: body.sharkposEnabled }),
         // Visibilidad en el sidebar del módulo legacy "Pedidos Online" (default visible)
         ...(body.orderingNavHidden !== undefined && { orderingNavHidden: body.orderingNavHidden }),
         ...(body.ecommerceConfig !== undefined && { ecommerceConfig: encryptEcommerceSecrets(body.ecommerceConfig as EcommerceConfig) }),

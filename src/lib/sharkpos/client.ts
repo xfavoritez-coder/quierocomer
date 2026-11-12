@@ -14,6 +14,24 @@
 const SANDBOX = (process.env.SHARKPOS_ENV || "sandbox") !== "production";
 const BASE = SANDBOX ? "https://sandbox.sharkpos.cl" : "https://api.sharkpos.cl";
 
+/**
+ * Credencial de emisión. En MODO PLATAFORMA cada local tiene su propia API key
+ * (del RUT dado de alta) y su entorno. Si no se pasa, se usa la key/entorno
+ * global del env (piloto El Suculento). El RUT emisor lo deriva SharkPOS de la key.
+ */
+export interface SharkposCred {
+  apiKey?: string;
+  env?: "sandbox" | "production";
+}
+
+export function resolveSharkposEnv(env?: "sandbox" | "production"): "sandbox" | "production" {
+  if (env) return env;
+  return SANDBOX ? "sandbox" : "production";
+}
+export function sharkposBaseFor(env?: "sandbox" | "production"): string {
+  return resolveSharkposEnv(env) === "production" ? "https://api.sharkpos.cl" : "https://sandbox.sharkpos.cl";
+}
+
 export function sharkposConfigured(): boolean {
   return !!process.env.SHARKPOS_API_KEY;
 }
@@ -61,8 +79,8 @@ export interface SharkposResult {
   raw: Record<string, unknown>;
 }
 
-function authHeaders(idempotencyKey?: string): Record<string, string> {
-  const key = process.env.SHARKPOS_API_KEY;
+function authHeaders(cred?: SharkposCred, idempotencyKey?: string): Record<string, string> {
+  const key = cred?.apiKey || process.env.SHARKPOS_API_KEY;
   if (!key) throw new Error("SHARKPOS_API_KEY no configurada");
   const h: Record<string, string> = {
     "Content-Type": "application/json",
@@ -76,12 +94,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Los links de SharkPOS vienen como rutas relativas (p. ej. "/api/v1/dte/.../pdf/").
 // Se absolutizan contra el host del entorno para que sean usables tal cual.
-export function sharkposAbsoluteUrl(u?: string): string | undefined {
-  return u && u.startsWith("/") ? `${BASE}${u}` : u;
+export function sharkposAbsoluteUrl(u?: string, base: string = BASE): string | undefined {
+  return u && u.startsWith("/") ? `${base}${u}` : u;
 }
-const abs = sharkposAbsoluteUrl;
 
-function toResult(httpStatus: number, d: Record<string, any>): SharkposResult {
+function toResult(httpStatus: number, d: Record<string, any>, base: string = BASE): SharkposResult {
+  const abs = (u?: string) => sharkposAbsoluteUrl(u, base);
   const l = d.links || {};
   return {
     httpStatus,
@@ -110,7 +128,8 @@ function toResult(httpStatus: number, d: Record<string, any>): SharkposResult {
  * Reintenta SOLO ante fallos transitorios (red, 5xx, 429) con la misma key y
  * el mismo body. Un 400 (body inválido) NO se reintenta: se devuelve el error.
  */
-export async function emitBoleta(input: EmitBoletaInput): Promise<SharkposResult> {
+export async function emitBoleta(input: EmitBoletaInput, cred?: SharkposCred): Promise<SharkposResult> {
+  const base = sharkposBaseFor(cred?.env);
   const body = {
     document_type: input.documentType ?? 39,
     amount_total: input.amountTotal,
@@ -127,9 +146,9 @@ export async function emitBoleta(input: EmitBoletaInput): Promise<SharkposResult
   let lastErr: unknown = null;
   for (let attempt = 1; attempt <= MAX; attempt++) {
     try {
-      const res = await fetch(`${BASE}/api/v1/dte/boleta/emit/`, {
+      const res = await fetch(`${base}/api/v1/dte/boleta/emit/`, {
         method: "POST",
-        headers: authHeaders(input.idempotencyKey),
+        headers: authHeaders(cred, input.idempotencyKey),
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(30_000),
       });
@@ -139,7 +158,7 @@ export async function emitBoleta(input: EmitBoletaInput): Promise<SharkposResult
         await sleep(attempt * 1000);
         continue;
       }
-      return toResult(res.status, data);
+      return toResult(res.status, data, base);
     } catch (e) {
       // Error de red/timeout: reintentar con la misma key.
       lastErr = e;
@@ -162,9 +181,9 @@ export interface TedResult {
 }
 
 /** Trae el timbre electrónico (TED) de un documento, para imprimir el PDF417. */
-export async function getBoletaTed(dteId: string): Promise<TedResult> {
-  const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/ted/`, {
-    headers: authHeaders(),
+export async function getBoletaTed(dteId: string, cred?: SharkposCred): Promise<TedResult> {
+  const res = await fetch(`${sharkposBaseFor(cred?.env)}/api/v1/dte/documents/${dteId}/ted/`, {
+    headers: authHeaders(cred),
     signal: AbortSignal.timeout(20_000),
   });
   const d = (await res.json().catch(() => ({}))) as Record<string, any>;
@@ -172,9 +191,9 @@ export async function getBoletaTed(dteId: string): Promise<TedResult> {
 }
 
 /** Trae el PDF térmico de la boleta en base64 (para imprimir la boleta tal cual). */
-export async function getBoletaPdfBase64(dteId: string, paperWidth: 58 | 80 = 80): Promise<string | undefined> {
-  const res = await fetch(`${BASE}/api/v1/dte/boleta/${dteId}/pdf/?paper_width=${paperWidth}`, {
-    headers: authHeaders(),
+export async function getBoletaPdfBase64(dteId: string, paperWidth: 58 | 80 = 80, cred?: SharkposCred): Promise<string | undefined> {
+  const res = await fetch(`${sharkposBaseFor(cred?.env)}/api/v1/dte/boleta/${dteId}/pdf/?paper_width=${paperWidth}`, {
+    headers: authHeaders(cred),
     signal: AbortSignal.timeout(25_000),
   });
   if (!res.ok) return undefined;
@@ -183,9 +202,9 @@ export async function getBoletaPdfBase64(dteId: string, paperWidth: 58 | 80 = 80
 }
 
 /** Trae el PNG del timbre (PDF417) de un documento, en base64, para rasterizarlo. */
-export async function getBoletaTedPngBase64(dteId: string): Promise<string | undefined> {
-  const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/ted.png`, {
-    headers: authHeaders(),
+export async function getBoletaTedPngBase64(dteId: string, cred?: SharkposCred): Promise<string | undefined> {
+  const res = await fetch(`${sharkposBaseFor(cred?.env)}/api/v1/dte/documents/${dteId}/ted.png`, {
+    headers: authHeaders(cred),
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) return undefined;
@@ -194,11 +213,12 @@ export async function getBoletaTedPngBase64(dteId: string): Promise<string | und
 }
 
 /** Consulta el estado de un documento por su dte_id (alternativa al webhook). */
-export async function getDocument(dteId: string): Promise<SharkposResult> {
-  const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/`, {
-    headers: authHeaders(),
+export async function getDocument(dteId: string, cred?: SharkposCred): Promise<SharkposResult> {
+  const base = sharkposBaseFor(cred?.env);
+  const res = await fetch(`${base}/api/v1/dte/documents/${dteId}/`, {
+    headers: authHeaders(cred),
     signal: AbortSignal.timeout(20_000),
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, any>;
-  return toResult(res.status, data);
+  return toResult(res.status, data, base);
 }

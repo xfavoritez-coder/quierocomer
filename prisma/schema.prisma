@@ -385,6 +385,11 @@ model Restaurant {
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
   sharkposEnabled            Boolean                   @default(false) // piloto: emitir boletas SII vía SharkPOS (solo locales sin Toteat)
+  sharkposTenantId           String? // modo plataforma: id del RUT dado de alta en SharkPOS
+  sharkposApiKey             String? // API key del RUT (cifrada en reposo con SECRET_ENCRYPTION_KEY); si está, emite con esta key en vez de la global
+  sharkposTenantEnv          String? // entorno del alta: "certification" | "production"
+  sharkposTenantRut          String? // RUT dado de alta (solo para mostrar en admin)
+  sharkposTenantName         String? // razón social del RUT (solo para mostrar en admin)
   viewerSections             Json? // secciones del sidebar visibles para el perfil VIEWER (null = todas)
   announcements              Announcement[]
   automationRules            AutomationRule[]

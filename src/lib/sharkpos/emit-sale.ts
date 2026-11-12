@@ -5,8 +5,18 @@
 //  El resultado final del SII llega por /api/sharkpos/webhook.
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
-import { emitBoleta, sharkposConfigured, type BoletaItemInput } from "./client";
+import { emitBoleta, sharkposConfigured, type BoletaItemInput, type SharkposCred } from "./client";
 import { parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
+import { decryptSecret } from "@/lib/crypto/secret";
+
+/** Credencial de emisión del local: su propia key (modo plataforma) o la global (piloto). */
+export function restaurantSharkposCred(r: { sharkposApiKey?: string | null; sharkposTenantEnv?: string | null }): SharkposCred | undefined {
+  if (r.sharkposApiKey) {
+    const apiKey = decryptSecret(r.sharkposApiKey);
+    if (apiKey) return { apiKey, env: r.sharkposTenantEnv === "production" ? "production" : "sandbox" };
+  }
+  return undefined; // sin key propia → el cliente usa la global del env
+}
 
 type RawItem = Record<string, unknown>;
 
@@ -38,14 +48,12 @@ export function buildLines(items: unknown, total: number, fallbackName: string, 
 }
 
 export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
-  if (!sharkposConfigured()) return;
-
   const order = await prisma.posOrder.findUnique({
     where: { id: posOrderId },
     select: {
       id: true, totalAmount: true, deliveryFee: true, items: true, customerEmail: true,
       orderReference: true, externalId: true, boletaDteId: true, rawPayload: true,
-      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true } },
+      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true, sharkposApiKey: true, sharkposTenantEnv: true } },
     },
   });
   if (!order) return;
@@ -54,6 +62,9 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
   if (!order.restaurant?.sharkposEnabled) return;      // local no habilitado
   if (order.restaurant.toteatWebhookSecret) return;    // usa Toteat → su fiscal va por ahí
   if (order.boletaDteId) return;                       // ya tiene boleta
+  // Debe haber una key usable: la del local (modo plataforma) o la global (piloto).
+  const cred = restaurantSharkposCred(order.restaurant);
+  if (!cred && !sharkposConfigured()) return;
   const total = order.totalAmount || 0;
   if (total <= 0) return;
 
@@ -78,7 +89,7 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
   const email = order.customerEmail && order.customerEmail.includes("@") ? order.customerEmail : undefined;
 
   try {
-    const r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email });
+    const r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
     if (r.dteId) {
       await prisma.posOrder.update({
         where: { id: order.id },
