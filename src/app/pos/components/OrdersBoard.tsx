@@ -332,9 +332,11 @@ function OrderCard({
                   background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
                 }}
               >
-                {busy ? '…' : next.label + ' →'}
+                {busy && <span className="animate-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', flexShrink: 0 }} />}
+                {busy ? 'Procesando…' : next.label + ' →'}
               </button>
             )}
             {/* Pill de estado Delifast — visible en ready y out_for_delivery */}
@@ -360,9 +362,11 @@ function OrderCard({
                   background: delifastCancelled ? RED : (STAGE_COLOR.delivered ?? '#6b7280'), color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
                 }}
               >
-                {busy ? '…' : 'Entregado →'}
+                {busy && <span className="animate-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', flexShrink: 0 }} />}
+                {busy ? 'Procesando…' : 'Entregado →'}
               </button>
             )}
           </div>
