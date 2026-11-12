@@ -7,7 +7,7 @@ import { chileTodayYmd, chileDayRangeUtc } from "@/lib/driver/serialize";
 import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
-import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
+import { parseEcommerceConfig, integrationStatus, parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { markUberOrderReady, denyUberOrder, cancelUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
 
@@ -192,9 +192,10 @@ export async function PATCH(req: NextRequest) {
   // Registra el pago sobre el PosOrder usando los campos existentes (sin tocar
   // el schema): paidAmount/tipAmount/changeAmount + el método en rawPayload.
   if (body?.action === "pay") {
-    const VALID_METHODS = ["efectivo", "debito", "credito", "transferencia", "webpay"];
-    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, rawPayload: true } });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, rawPayload: true, restaurant: { select: { centroPedidosConfig: true } } } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    // Métodos de pago válidos = los configurados por el local (o los 5 por defecto).
+    const allowedMethods = new Set(effectivePaymentMethods(parseCentroPedidosConfig(order.restaurant?.centroPedidosConfig)).map((m) => m.key));
     const total = order.totalAmount || 0;
     // Idempotencia: si el pedido ya está cobrado completo, no re-escribir. Evita el
     // doble cobro por doble clic o por dos cajeras cobrando el mismo pedido a la vez.
@@ -222,7 +223,7 @@ export async function PATCH(req: NextRequest) {
         })()];
 
     const partsClean = rawParts.filter((p) => p.amount > 0);
-    if (!partsClean.length || partsClean.some((p) => !VALID_METHODS.includes(p.method))) {
+    if (!partsClean.length || partsClean.some((p) => !allowedMethods.has(p.method))) {
       return NextResponse.json({ error: "Método inválido" }, { status: 400 });
     }
     const applied = partsClean.reduce((s, p) => s + p.amount, 0);

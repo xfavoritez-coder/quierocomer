@@ -6,6 +6,7 @@ import PosHeader from '../components/PosHeader'
 import { usePosRestaurant } from '../lib/usePosRestaurant'
 import { getBridgeUrl, setBridgeUrl, getBridgeStatus, printTest, printKitchenComanda, listPrinters, setupPrinter, getKitchenMode, setKitchenMode } from '@/lib/pos/bridge'
 import { buildPrintAgentInstaller } from '@/lib/ecommerce/printAgentScript'
+import type { PaymentMethodConfig } from '@/lib/ecommerce/config'
 import { toast } from 'sonner'
 
 interface PedidosCfg {
@@ -29,6 +30,9 @@ export default function PosConfigPage() {
   const [pedidos, setPedidos] = useState<PedidosCfg>({})
   const [showDesc, setShowDesc] = useState(false)
   const [savingPed, setSavingPed] = useState(false)
+  const [methods, setMethods] = useState<PaymentMethodConfig[]>([])
+  const [sharkposEnabled, setSharkposEnabled] = useState(false)
+  const [savingMethods, setSavingMethods] = useState(false)
 
   useEffect(() => { autoDetect() }, [])
   useEffect(() => { setKitchen(getKitchenMode()) }, [])
@@ -39,8 +43,27 @@ export default function PosConfigPage() {
       const r = await fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
       const d = await r.json()
       if (r.ok && d.config) { setPedidos(d.config); if (typeof d.posShowDescriptions === 'boolean') setShowDesc(d.posShowDescriptions) }
+      if (r.ok && Array.isArray(d.paymentMethods)) setMethods(d.paymentMethods)
+      if (r.ok && typeof d.sharkposEnabled === 'boolean') setSharkposEnabled(d.sharkposEnabled)
     } catch { /* noop */ }
   }, [restaurantId])
+
+  const setMethodAt = (i: number, patch: Partial<PaymentMethodConfig>) => setMethods(ms => ms.map((m, idx) => idx === i ? { ...m, ...patch } : m))
+  const addMethod = () => setMethods(ms => [...ms, { key: '', label: '', emitsFiscal: false }])
+  const removeMethod = (i: number) => setMethods(ms => ms.filter((_, idx) => idx !== i))
+  const saveMethods = async () => {
+    if (!restaurantId) return
+    const clean = methods.map(m => ({ ...m, label: (m.label || '').trim() })).filter(m => m.label)
+    if (!clean.length) { toast.error('Debe quedar al menos un método'); return }
+    setSavingMethods(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, config: { paymentMethods: clean } }) })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok && Array.isArray(d.config?.paymentMethods)) { setMethods(d.config.paymentMethods); toast.success('Métodos guardados') }
+      else { toast.error('No se pudo guardar'); loadPedidos() }
+    } catch { toast.error('Error de conexión'); loadPedidos() }
+    setSavingMethods(false)
+  }
   useEffect(() => { loadPedidos() }, [loadPedidos])
 
   const updatePedidos = async (patch: Partial<PedidosCfg>) => {
@@ -297,6 +320,45 @@ export default function PosConfigPage() {
               >
                 <span style={{ position: 'absolute', top: 3, left: showDesc ? 23 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Métodos de pago */}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 12 }}>Métodos de pago</div>
+          {!sharkposEnabled && (
+            <div style={{ fontSize: '0.76rem', color: 'var(--ink-2)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', marginBottom: 10, lineHeight: 1.5 }}>
+              «Emite documento fiscal» solo tiene efecto cuando el local tiene la boleta electrónica (SharkPOS) configurada.
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {methods.map((m, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px' }}>
+                <input
+                  value={m.label}
+                  onChange={e => setMethodAt(i, { label: e.target.value })}
+                  placeholder="Nombre del método"
+                  style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '0.88rem' }}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--ink-2)', fontWeight: 600 }}>Emite documento fiscal</span>
+                  <button
+                    type="button" role="switch" aria-checked={m.emitsFiscal}
+                    onClick={() => setMethodAt(i, { emitsFiscal: !m.emitsFiscal })}
+                    style={{ width: 44, height: 26, borderRadius: 999, border: 'none', cursor: 'pointer', background: m.emitsFiscal ? 'var(--amber)' : 'var(--line)', position: 'relative', transition: 'background .2s', flexShrink: 0 }}
+                  >
+                    <span style={{ position: 'absolute', top: 3, left: m.emitsFiscal ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
+                  </button>
+                </label>
+                <button type="button" aria-label="Eliminar método" onClick={() => removeMethod(i)} style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                </button>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={addMethod} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px dashed var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>+ Agregar método</button>
+              <button type="button" disabled={savingMethods} onClick={saveMethods} style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: 'var(--amber)', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: savingMethods ? 'wait' : 'pointer', opacity: savingMethods ? 0.6 : 1 }}>{savingMethods ? 'Guardando…' : 'Guardar métodos'}</button>
             </div>
           </div>
         </div>

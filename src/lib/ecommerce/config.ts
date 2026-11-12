@@ -140,6 +140,56 @@ export interface CentroPedidosConfig {
   /** Minutos que un pedido de RETIRO puede estar "Listo" sin ser retirado antes de
    *  que el POS avise (sugiere llamar al cliente). 0 = desactivado. Sin definir = 30. */
   readyAlertMinutes?: number;
+  /** Métodos de pago de la caja. Si no está definido, se usan los 5 por defecto.
+   *  `emitsFiscal` = al cobrar con este método se emite boleta (requiere además que
+   *  el local tenga SharkPOS habilitado). */
+  paymentMethods?: PaymentMethodConfig[];
+}
+
+export interface PaymentMethodConfig {
+  /** Identificador estable (ej: "efectivo", "mercadopago"). No cambia aunque cambie el label. */
+  key: string;
+  /** Texto que ve la caja. */
+  label: string;
+  /** Si al cobrar con este método se emite documento fiscal (boleta). */
+  emitsFiscal: boolean;
+}
+
+/** Métodos por defecto (los que existían antes de poder configurarlos). Todos emiten. */
+export const DEFAULT_PAYMENT_METHODS: PaymentMethodConfig[] = [
+  { key: "efectivo", label: "Efectivo", emitsFiscal: true },
+  { key: "debito", label: "Débito", emitsFiscal: true },
+  { key: "credito", label: "Crédito", emitsFiscal: true },
+  { key: "transferencia", label: "Transferencia", emitsFiscal: true },
+  { key: "webpay", label: "Webpay", emitsFiscal: true },
+];
+
+/** Normaliza una key de método (minúsculas, sin acentos/espacios → guion bajo). */
+export function normalizePaymentKey(s: string): string {
+  return (s || "")
+    .trim().toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")
+    .slice(0, 40);
+}
+
+/** Lista efectiva de métodos de pago de un local (configurados, o los 5 por defecto). */
+export function effectivePaymentMethods(cfg: CentroPedidosConfig): PaymentMethodConfig[] {
+  const raw = Array.isArray(cfg.paymentMethods) ? cfg.paymentMethods : [];
+  const seen = new Set<string>();
+  const clean: PaymentMethodConfig[] = [];
+  for (const m of raw) {
+    if (!m || typeof m !== "object") continue;
+    const key = normalizePaymentKey(String((m as PaymentMethodConfig).key || ""));
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    clean.push({
+      key,
+      label: String((m as PaymentMethodConfig).label || key).trim().slice(0, 40) || key,
+      emitsFiscal: (m as PaymentMethodConfig).emitsFiscal !== false,
+    });
+  }
+  return clean.length ? clean : DEFAULT_PAYMENT_METHODS;
 }
 
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {

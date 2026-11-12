@@ -6,6 +6,7 @@
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
 import { emitBoleta, sharkposConfigured, type BoletaItemInput } from "./client";
+import { parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
 
 type RawItem = Record<string, unknown>;
 
@@ -43,18 +44,34 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
     where: { id: posOrderId },
     select: {
       id: true, totalAmount: true, deliveryFee: true, items: true, customerEmail: true,
-      orderReference: true, externalId: true, boletaDteId: true,
-      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true } },
+      orderReference: true, externalId: true, boletaDteId: true, rawPayload: true,
+      restaurant: { select: { sharkposEnabled: true, toteatWebhookSecret: true, centroPedidosConfig: true } },
     },
   });
   if (!order) return;
 
-  // Gate del piloto.
+  // Capa 1 — el local emite por SharkPOS.
   if (!order.restaurant?.sharkposEnabled) return;      // local no habilitado
   if (order.restaurant.toteatWebhookSecret) return;    // usa Toteat → su fiscal va por ahí
   if (order.boletaDteId) return;                       // ya tiene boleta
   const total = order.totalAmount || 0;
   if (total <= 0) return;
+
+  // Capa 2 — el método de pago usado emite documento fiscal.
+  const methods = effectivePaymentMethods(parseCentroPedidosConfig(order.restaurant.centroPedidosConfig));
+  const fiscalByKey = new Map(methods.map((m) => [m.key, m.emitsFiscal]));
+  const pp = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
+    ? ((order.rawPayload as Record<string, unknown>).posPayment as { method?: string; parts?: { method?: string }[] } | undefined)
+    : undefined;
+  const usedMethods: string[] = [];
+  if (pp) {
+    if (Array.isArray(pp.parts)) for (const p of pp.parts) { if (p?.method) usedMethods.push(String(p.method)); }
+    else if (pp.method) usedMethods.push(String(pp.method));
+  }
+  // Emite si al menos un método usado emite fiscal. Si no se puede determinar el
+  // método, se mantiene el comportamiento por defecto (los métodos base emiten).
+  const anyFiscal = usedMethods.length ? usedMethods.some((m) => fiscalByKey.get(m) !== false) : true;
+  if (!anyFiscal) return;
 
   const ref = order.orderReference || order.externalId || order.id.slice(-6);
   const { lines, amountTotal } = buildLines(order.items, total, `Venta ${ref}`, order.deliveryFee || 0);

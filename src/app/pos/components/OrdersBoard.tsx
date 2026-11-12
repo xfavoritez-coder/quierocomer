@@ -1380,8 +1380,22 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
   const paid = isPaid(order)
   // Pagos combinados: lista de partes { método, monto aplicado, recibido }. El
   // caso de un solo método es una lista de 1 (o se arma al cobrar desde el form).
-  const [parts, setParts] = useState<{ method: PaymentMethod; amount: number; received: number }[]>([])
-  const [curMethod, setCurMethod] = useState<PaymentMethod>('efectivo')
+  const [parts, setParts] = useState<{ method: string; amount: number; received: number }[]>([])
+  const [curMethod, setCurMethod] = useState<string>('efectivo')
+  // Métodos de pago configurados por el local (o los 5 por defecto).
+  const [payMethods, setPayMethods] = useState<{ key: string; label: string }[]>(METHODS.map(m => ({ key: m.id, label: m.label })))
+  useEffect(() => {
+    if (!restaurantId) return
+    fetch(`/api/panel/ecommerce/pos-orders/settings?restaurantId=${restaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (Array.isArray(d?.paymentMethods) && d.paymentMethods.length) {
+          const pm = d.paymentMethods.map((m: { key: string; label: string }) => ({ key: m.key, label: m.label }))
+          setPayMethods(pm)
+          setCurMethod(cur => pm.some((x: { key: string }) => x.key === cur) ? cur : pm[0].key)
+        }
+      }).catch(() => {})
+  }, [restaurantId])
   const [curAmount, setCurAmount] = useState<string>('')   // monto de ESTE método (vacío = lo que resta)
   const [curReceived, setCurReceived] = useState<string>('') // efectivo: con cuánto paga (para el vuelto)
   const [tip, setTip] = useState<string>('')
@@ -1418,7 +1432,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
   }
 
   const tipNum = parseInt(tip, 10) || 0
-  const mLabel = (m: PaymentMethod) => METHODS.find(x => x.id === m)?.label ?? m
+  const mLabel = (m: string) => payMethods.find(x => x.key === m)?.label ?? m
   const BILLS = [1000, 2000, 5000, 10000, 20000]
 
   const partsTotal = parts.reduce((s, p) => s + p.amount, 0)
@@ -1478,7 +1492,7 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
     const wp = (rp.webPayment as { method?: string } | undefined) || undefined
     const ppParts = Array.isArray(pp?.parts) ? pp!.parts!.filter(p => (Number(p.amount) || 0) > 0) : []
     const payLabel = ppParts.length > 1
-      ? ppParts.map(p => `${METHODS.find(x => x.id === p.method)?.label ?? p.method} ${clp(Number(p.amount) || 0)}`).join(' + ')
+      ? ppParts.map(p => `${payMethods.find(x => x.key === p.method)?.label ?? p.method} ${clp(Number(p.amount) || 0)}`).join(' + ')
       : (pp?.method || wp?.method || '')
     return (
       <div className="pos-modal-overlay" onClick={onClose}>
@@ -1552,12 +1566,12 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
           <>
             <label className="pos-modal-label">{parts.length > 0 ? 'Agregar método' : 'Método de pago'}</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
-              {METHODS.map((m) => (
-                <button key={m.id} onClick={() => setCurMethod(m.id)} style={{
+              {payMethods.map((m) => (
+                <button key={m.key} onClick={() => setCurMethod(m.key)} style={{
                   padding: '8px 4px', borderRadius: 9, cursor: 'pointer', fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 12,
-                  border: curMethod === m.id ? '2px solid var(--amber)' : '1px solid var(--line)',
-                  background: curMethod === m.id ? 'var(--amber-tint)' : 'var(--sunk)',
-                  color: curMethod === m.id ? 'var(--amber-press)' : 'var(--ink-2)',
+                  border: curMethod === m.key ? '2px solid var(--amber)' : '1px solid var(--line)',
+                  background: curMethod === m.key ? 'var(--amber-tint)' : 'var(--sunk)',
+                  color: curMethod === m.key ? 'var(--amber-press)' : 'var(--ink-2)',
                 }}>{m.label}</button>
               ))}
             </div>

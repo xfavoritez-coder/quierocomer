@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, type CentroPedidosConfig } from "@/lib/ecommerce/config";
+import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, effectivePaymentMethods, normalizePaymentKey, type CentroPedidosConfig, type PaymentMethodConfig } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,12 +23,19 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, sharkposEnabled: true } });
   const config = parseCentroPedidosConfig(r?.centroPedidosConfig);
   const ecom = parseEcommerceConfig(r?.ecommerceConfig);
   const hasPos = ecom.pos?.provider === "toteat";
   const store = (r?.ecommerceStoreConfig && typeof r.ecommerceStoreConfig === "object") ? (r.ecommerceStoreConfig as Record<string, unknown>) : {};
-  return NextResponse.json({ config, hasPos, posModeEffective: effectivePosMode(config, ecom), posShowDescriptions: store.posShowDescriptions === true });
+  return NextResponse.json({
+    config,
+    hasPos,
+    posModeEffective: effectivePosMode(config, ecom),
+    posShowDescriptions: store.posShowDescriptions === true,
+    paymentMethods: effectivePaymentMethods(config),
+    sharkposEnabled: r?.sharkposEnabled === true,
+  });
 }
 
 /** PUT /api/panel/ecommerce/pos-orders/settings → guarda la config del pilar.
@@ -52,6 +59,23 @@ export async function PUT(req: NextRequest) {
   }
   if (typeof incoming.readyAlertMinutes === "number" && Number.isFinite(incoming.readyAlertMinutes)) {
     merged.readyAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.readyAlertMinutes)));
+  }
+  // Métodos de pago: se guarda la lista saneada (key normalizada, sin duplicados).
+  if (Array.isArray(incoming.paymentMethods)) {
+    const seen = new Set<string>();
+    const clean: PaymentMethodConfig[] = [];
+    for (const m of incoming.paymentMethods.slice(0, 30)) {
+      if (!m || typeof m !== "object") continue;
+      const key = normalizePaymentKey(String((m as PaymentMethodConfig).key || (m as PaymentMethodConfig).label || ""));
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      clean.push({
+        key,
+        label: String((m as PaymentMethodConfig).label || key).trim().slice(0, 40) || key,
+        emitsFiscal: (m as PaymentMethodConfig).emitsFiscal !== false,
+      });
+    }
+    if (clean.length) merged.paymentMethods = clean;
   }
 
   const data: { centroPedidosConfig: object; ecommerceStoreConfig?: object } = { centroPedidosConfig: merged as unknown as object };
