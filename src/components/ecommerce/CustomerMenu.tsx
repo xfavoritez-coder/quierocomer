@@ -44,26 +44,46 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
   const needsLogin = (v: View) => (v === "profile" || v === "orders" || v === "favorites") && !user;
   const go = (v: View) => { if (needsLogin(v)) { setLoginExpanded(true); return; } setView(v); };
 
-  // ── Deslizar hacia abajo para cerrar ──────────────────────────────
-  // Un deslizamiento vertical hacia abajo (pasado el umbral) cierra el menú. Solo
-  // se arma si el contenido está arriba del todo (scrollTop <= 0), para no
-  // interrumpir el scroll normal del menú.
+  // ── Arrastrar hacia abajo para cerrar (el panel sigue al dedo) ────────
+  // El arrastre vive en un wrapper, aparte de las animaciones CSS del panel, para
+  // no re-dispararlas. Solo se arma si el contenido está arriba del todo
+  // (scrollTop <= 0) y el gesto es claramente vertical hacia abajo.
+  const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ startX: number; startY: number; active: boolean }>({ startX: 0, startY: 0, active: false });
+  const drag = useRef<{ startX: number; startY: number; active: boolean; moved: boolean }>({ startX: 0, startY: 0, active: false, moved: false });
+  const [dragY, setDragY] = useState(0);
+  const [snapTransition, setSnapTransition] = useState(false);
 
   const onTouchStart = (e: React.TouchEvent) => {
     const atTop = (scrollRef.current?.scrollTop ?? 0) <= 0;
     const t = e.touches[0];
-    drag.current = { startX: t.clientX, startY: t.clientY, active: atTop };
+    drag.current = { startX: t.clientX, startY: t.clientY, active: atTop, moved: false };
+    setSnapTransition(false);
   };
-  const onTouchEnd = (e: React.TouchEvent) => {
+  const onTouchMove = (e: React.TouchEvent) => {
     if (!drag.current.active) return;
-    drag.current.active = false;
-    const t = e.changedTouches[0];
+    const t = e.touches[0];
     const dy = t.clientY - drag.current.startY;
     const dx = Math.abs(t.clientX - drag.current.startX);
-    // Deslizamiento hacia abajo, vertical y suficientemente largo → cerrar.
-    if (dy > 70 && dy > dx * 1.3) requestClose();
+    if (!drag.current.moved) {
+      if (dy > 6 && dy > dx) drag.current.moved = true;       // arrastre vertical hacia abajo
+      else if (dx > 8 || dy < -6) { drag.current.active = false; return; } // horizontal / hacia arriba → cancelar
+      else return;
+    }
+    setDragY(Math.max(0, dy));
+  };
+  const onTouchEnd = () => {
+    if (!drag.current.active || !drag.current.moved) { drag.current.active = false; return; }
+    drag.current.active = false;
+    const h = panelRef.current?.offsetHeight ?? 600;
+    setSnapTransition(true);
+    if (dragY > Math.min(130, h * 0.22)) {
+      setDragY(h);                              // desliza fuera y cierra
+      window.setTimeout(onClose, 240);
+    } else {
+      setDragY(0);                              // no alcanzó el umbral: vuelve
+      window.setTimeout(() => setSnapTransition(false), 240);
+    }
   };
 
   return (
@@ -73,11 +93,17 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           escritorio. Un overlay sólido se desvanece de forma fluida. */}
       <div className={`absolute inset-0 ${closing ? "qc-fade-out" : "qc-fade-in"}`} onClick={requestClose} style={{ background: "rgba(0,0,0,0.5)" }} />
       <div
+        ref={panelRef}
         onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={`${sheet
-        ? "relative bg-gray-50 w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        : "relative bg-gray-50 w-[85%] max-w-sm h-full shadow-2xl flex flex-col"} ${panelAnim}`}
+        className={sheet
+          ? "relative w-full max-w-md h-[75vh] sm:h-[80vh] sm:max-h-[640px]"
+          : "relative w-[85%] max-w-sm h-full"}
+        style={{ transform: dragY > 0 || snapTransition ? `translateY(${dragY}px)` : undefined, transition: snapTransition ? "transform .24s cubic-bezier(.4,0,.2,1)" : "none", willChange: "transform" }}>
+      <div className={`${sheet
+        ? "bg-gray-50 w-full h-full rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        : "bg-gray-50 w-full h-full shadow-2xl flex flex-col"} ${panelAnim}`}
         style={{ willChange: "transform" }}>
         {sheet && <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-white"><span className="w-10 h-1.5 rounded-full bg-gray-300" /></div>}
         {/* Header */}
@@ -153,6 +179,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
           {view === "contact" && <ContactView tenant={tenant} primaryColor={primaryColor} />}
           {view === "social" && <SocialView tenant={tenant} primaryColor={primaryColor} />}
         </div>
+      </div>
       </div>
     </div>
   );
