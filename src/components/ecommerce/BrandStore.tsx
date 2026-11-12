@@ -335,18 +335,30 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {brand.branches.filter((b) => b.pickupEnabled).map((b) => (
-              <button key={b.id} onClick={() => onChoose(b, "pickup")} disabled={switching} style={{ textAlign: "left", background: b.slug === currentSlug ? `${accent}10` : "#fff", border: `1px solid ${b.slug === currentSlug ? `${accent}55` : "#eee"}`, borderRadius: 14, padding: 14, cursor: "pointer", opacity: switching ? 0.6 : 1 }}>
-                <p style={{ fontSize: "1rem", fontWeight: 800, color: "#111", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Store size={15} style={{ color: accent }} /> {b.branchName || b.name}
-                  {!b.open
-                    ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: b.opensAt ? "#d97706" : "#ef4444" }}>{b.opensAt ? `Abre a las ${b.opensAt}` : "Cerrada ahora"}</span>
-                    : <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#16a34a" }}>Abierta</span>
-                  }
-                </p>
-                {b.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "2px 0 0 21px" }}>{b.address}</p>}
-              </button>
-            ))}
+            {brand.branches.filter((b) => b.pickupEnabled).map((b) => {
+              const faviconUrl = brand.faviconUrl || b.logoUrl;
+              return (
+                <button key={b.id} onClick={() => onChoose(b, "pickup")} disabled={switching} style={{ textAlign: "left", background: b.slug === currentSlug ? `${accent}10` : "#fff", border: `1px solid ${b.slug === currentSlug ? `${accent}55` : "#eee"}`, borderRadius: modern ? 12 : 14, padding: modern ? 16 : 14, cursor: "pointer", opacity: switching ? 0.6 : 1, display: "flex", alignItems: "center", gap: 12 }}>
+                  {modern && (
+                    faviconUrl
+                      ? <img src={faviconUrl} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                      : <span style={{ width: 28, height: 28, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{(b.branchName || b.name).charAt(0).toUpperCase()}</span>
+                  )}
+                  {!modern && <Store size={15} style={{ color: accent, flexShrink: 0 }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: modern ? "0.95rem" : "1rem", fontWeight: modern ? 600 : 800, color: "#111", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      {b.branchName || b.name}
+                      {b.open ? (
+                        <span style={{ fontSize: "0.65rem", fontWeight: 600, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 8px", borderRadius: 999, flexShrink: 0 }}>Abierto</span>
+                      ) : (
+                        <span style={{ fontSize: "0.65rem", fontWeight: 600, color: "#ef4444", background: "#fef2f2", border: "1px solid #fecaca", padding: "1px 8px", borderRadius: 999, flexShrink: 0 }}>{b.opensAt ? `Abre ${b.opensAt}` : "Cerrado"}</span>
+                      )}
+                    </p>
+                    {b.address && <p style={{ fontSize: "0.82rem", color: "#9ca3af", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.address}</p>}
+                  </div>
+                </button>
+              );
+            })}
             {!hasPickup && <p style={{ fontSize: "0.85rem", color: "#6b7280" }}>Ninguna sucursal tiene retiro habilitado.</p>}
           </div>
         )}
