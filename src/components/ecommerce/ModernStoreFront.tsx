@@ -795,23 +795,23 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             {!deliverySelected ? (
               <>
                 <MapPin className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-                <span className="flex-1 text-left text-sm text-gray-400">¿Dónde enviamos tu pedido?</span>
+                <span className="flex-1 text-left text-[15px] text-gray-400">¿Dónde enviamos tu pedido?</span>
               </>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
                 <Motorbike className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-                <span className="flex-1 text-left text-[13px] font-semibold text-gray-700 truncate flex items-center gap-1.5">{shortAddr(deliveryAddress.address)} <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" /></span>
-                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                <span className="flex-1 text-left text-[15px] font-semibold text-gray-700 truncate flex items-center gap-1.5">{shortAddr(deliveryAddress.address)} <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" /></span>
+                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[15px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             ) : (
               <>
                 <Store className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-                <span className="flex-1 text-left text-[13px] font-semibold text-gray-700 truncate flex items-center gap-1.5">
+                <span className="flex-1 text-left text-[15px] font-semibold text-gray-700 truncate flex items-center gap-1.5">
                   {tenant.branchName || "Retiro en tienda"}
                   {!tenant.openStatus.open && <span className="shrink-0 text-[12px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2.5 py-px rounded-full">Cerrado</span>}
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" />
                 </span>
-                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-[15px] font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
                 {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition mr-2">Ver horarios</span>}
               </>
             )}
