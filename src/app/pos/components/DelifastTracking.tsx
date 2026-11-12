@@ -354,6 +354,8 @@ export function DelifastStatusPill({
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
   const cancelFiredRef = useRef(false)
   const noTrackingFiredRef = useRef(false)
+  // Una vez que detectamos tracking activo (motorista asignado), no volver atrás
+  const hadTrackingRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -362,29 +364,39 @@ export function DelifastStatusPill({
         const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${restaurantId}&posOrderId=${posOrderId}`, { cache: 'no-store' })
         const d = await res.json()
         if (cancelled) return
-        // Sin configurar, pendiente, o sin tracking → notificar "sin tracking"
+        // Sin configurar, pendiente, o sin tracking
         if (!d.configured || d.pending || !d.tracking) {
-          if (onNoTracking && !noTrackingFiredRef.current) { noTrackingFiredRef.current = true; onNoTracking() }
+          // Solo notificar noTracking si NUNCA hubo tracking activo antes
+          if (onNoTracking && !noTrackingFiredRef.current && !hadTrackingRef.current) {
+            noTrackingFiredRef.current = true; onNoTracking()
+          }
           return
         }
-        setStatus(d.tracking.status ?? null)
+        const trackingStatus = d.tracking.status ?? null
+        setStatus(trackingStatus)
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
         setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
         setTimelineCancelado(!!(d.tracking.timeline?.cancelado))
-        // Status vacío = "Reparto" = Delifast nunca conectó
-        if (onNoTracking && !noTrackingFiredRef.current && !d.tracking.status) {
+        // Si hay status real → marcar que ya hubo tracking (no volver atrás)
+        if (trackingStatus) {
+          hadTrackingRef.current = true
+        }
+        // Status vacío = "Reparto" = Delifast nunca conectó motorista
+        if (onNoTracking && !noTrackingFiredRef.current && !trackingStatus && !hadTrackingRef.current) {
           noTrackingFiredRef.current = true; onNoTracking()
         }
-        // Notificar cancelación desde el effect (antes del guard !status)
+        // Notificar cancelación
         if (onCancelDetected && !cancelFiredRef.current) {
-          const s = (d.tracking.status || '').toLowerCase()
+          const s = (trackingStatus || '').toLowerCase()
           if (/cancel|anul/.test(s) || d.tracking.timeline?.cancelado) {
             cancelFiredRef.current = true
             onCancelDetected()
           }
         }
-      } catch { /* fail-silent */ }
+      } catch {
+        // Fetch falló (Delifast caído): mantener último estado, no hacer nada
+      }
     }
     load()
     timer.current = setInterval(load, 15000)
