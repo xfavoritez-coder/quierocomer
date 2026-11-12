@@ -1117,6 +1117,42 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     }
   }, [orders, waitTimeDriver])
 
+  // Check ALL delivery orders with delifastVentaId for stuck status (including preparing)
+  // This runs independently of the DelifastStatusPill which only shows in ready/out_for_delivery
+  useEffect(() => {
+    const delifastOrders = orders.filter(o => o.isDelivery && o.delifastVentaId && o.opsStage !== 'delivered')
+    if (delifastOrders.length === 0) return
+
+    // Check each order via the tracking API
+    let cancelled = false
+    const check = async () => {
+      let noTrackCount = 0
+      for (const o of delifastOrders) {
+        try {
+          const branchId = o._branchId ?? restaurantId
+          const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${branchId}&posOrderId=${o.id}`, { cache: 'no-store' })
+          const d = await res.json()
+          if (cancelled) return
+          const hasActiveTracking = d.tracking?.status && !/cancel|anul/i.test(d.tracking.status)
+          if (!hasActiveTracking) {
+            noTrackCount++
+            const elapsed = (Date.now() - new Date(o.createdAt).getTime()) / 60000
+            if (elapsed >= waitTimeDriver) {
+              setStuckOrderIds(prev => { const n = new Set(prev); n.add(o.id); return n })
+            }
+            setNoTrackingOrderIds(prev => { const n = new Set(prev); n.add(o.id); return n })
+          } else {
+            setNoTrackingOrderIds(prev => { const n = new Set(prev); n.delete(o.id); return n })
+            setStuckOrderIds(prev => { const n = new Set(prev); n.delete(o.id); return n })
+          }
+        } catch { /* Delifast down — count as no tracking */ noTrackCount++ }
+      }
+    }
+    check()
+    const interval = setInterval(check, 30000) // re-check every 30s
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [orders, restaurantId, waitTimeDriver])
+
   // Clean up stuck timers for orders no longer in the list
   useEffect(() => {
     const ids = new Set(orders.map(o => o.id))
