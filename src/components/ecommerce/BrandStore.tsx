@@ -302,8 +302,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
 
         {tab === "delivery" ? (
           <div>
-            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Tu dirección</label>
-            <input ref={inputRef} placeholder={gmapsReady ? "Escribe tu dirección…" : "Cargando mapa…"} style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
+            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6, marginTop: 6 }}>Tu dirección</label>
+            <input ref={inputRef} placeholder={gmapsReady ? "Ej: Av. Providencia 1234, Santiago" : "Cargando mapa…"} className="qc-bp-input" style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
+            <style>{`.qc-bp-input::placeholder{color:#6b7280}`}</style>
             {brand.googleMapsKey && !dest && (
               <button
                 type="button"
