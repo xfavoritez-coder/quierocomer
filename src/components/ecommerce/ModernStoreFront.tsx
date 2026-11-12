@@ -472,9 +472,41 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   const badge = mounted ? itemCount : 0;
 
   // Quick add to cart (no required modifiers)
-  const quickAddToCart = useCallback((p: StoreProduct) => {
+  // Fly-to-cart animation
+  const flyToCart = useCallback((imgUrl: string | null, sourceEl?: HTMLElement | null) => {
+    try {
+      const cartIcon = document.querySelector('[aria-label="Ver carrito"]');
+      if (!cartIcon || !imgUrl) return;
+      const cartRect = cartIcon.getBoundingClientRect();
+      const startX = sourceEl ? sourceEl.getBoundingClientRect().left + sourceEl.getBoundingClientRect().width / 2 : window.innerWidth / 2;
+      const startY = sourceEl ? sourceEl.getBoundingClientRect().top : window.innerHeight / 2;
+      const endX = cartRect.left + cartRect.width / 2;
+      const endY = cartRect.top + cartRect.height / 2;
+
+      const el = document.createElement("div");
+      el.style.cssText = `position:fixed;z-index:9999;width:44px;height:44px;border-radius:50%;overflow:hidden;pointer-events:none;left:${startX - 22}px;top:${startY - 22}px;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:all 0.55s cubic-bezier(0.2,0.8,0.2,1);opacity:1;transform:scale(1);`;
+      const img = document.createElement("img");
+      img.src = imgUrl;
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;";
+      el.appendChild(img);
+      document.body.appendChild(el);
+
+      requestAnimationFrame(() => {
+        el.style.left = `${endX - 10}px`;
+        el.style.top = `${endY - 10}px`;
+        el.style.width = "20px";
+        el.style.height = "20px";
+        el.style.opacity = "0.4";
+        el.style.transform = "scale(0.3)";
+      });
+      setTimeout(() => el.remove(), 600);
+    } catch {}
+  }, []);
+
+  const quickAddToCart = useCallback((p: StoreProduct, sourceEl?: HTMLElement | null) => {
     if (brandMode && !hasBranch) { brandControls!.onRequireBranch(p); return; }
     selectedProductRef.current = p;
+    flyToCart(p.image_url, sourceEl);
     useCartStore.getState().addItem({
       product_id: p.id,
       name: p.name,
@@ -488,7 +520,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       options: [],
     });
     window.dispatchEvent(new Event("cart:item-added"));
-  }, [brandMode, hasBranch, brandControls]);
+  }, [brandMode, hasBranch, brandControls, flyToCart]);
 
   const hasRequiredModifiers = useCallback((p: StoreProduct) => {
     return p.option_groups?.some((g) => g.is_required) ?? false;
@@ -894,7 +926,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                       product={p}
                       primaryColor={primaryColor}
                       onClickDetails={() => openProduct(p)}
-                      onQuickAdd={() => quickAddToCart(p)}
+                      onQuickAdd={(el) => quickAddToCart(p, el)}
                       hasRequired={hasRequiredModifiers(p)}
                       showFav={tenant.favoritesEnabled && loggedIn === true}
                       isFav={favIds.has(p.id)}
@@ -1070,12 +1102,14 @@ function ModernProductCard({
   product, primaryColor, onClickDetails, onQuickAdd, hasRequired, showFav, isFav, onToggleFav, favNeedsLogin, onRequireLogin, brandIntercept, onBrandIntercept,
 }: {
   product: StoreProduct; primaryColor: string;
-  onClickDetails: () => void; onQuickAdd: () => void; hasRequired: boolean;
+  onClickDetails: () => void; onQuickAdd: (el?: HTMLElement | null) => void; hasRequired: boolean;
   showFav?: boolean; isFav?: boolean; onToggleFav?: () => void; favNeedsLogin?: boolean; onRequireLogin?: (dishId: string) => void;
   brandIntercept?: boolean; onBrandIntercept?: () => void;
 }) {
   const soldOut = product.is_sold_out;
   const [heartPop, setHeartPop] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
+  const cartQty = useCartStore((s) => s.items.filter(i => i.product_id === product.id).reduce((sum, i) => sum + i.quantity, 0));
 
   const handleFav = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1092,7 +1126,9 @@ function ModernProductCard({
     if (hasRequired) {
       onClickDetails();
     } else {
-      onQuickAdd();
+      onQuickAdd(e.currentTarget as HTMLElement);
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 600);
     }
   };
 
@@ -1156,10 +1192,17 @@ function ModernProductCard({
             <button
               onClick={handleAdd}
               aria-label={`Agregar ${product.name}`}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm hover:opacity-90 transition active:scale-90 shrink-0 cursor-pointer"
-              style={{ background: primaryColor }}
+              className={`rounded-full flex items-center justify-center shadow-sm hover:opacity-90 transition active:scale-90 shrink-0 cursor-pointer ${justAdded ? "scale-110" : ""}`}
+              style={{ background: cartQty > 0 ? primaryColor : primaryColor, minWidth: 32, height: 32, padding: cartQty > 0 ? "0 10px" : "0", gap: 4 }}
             >
-              <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+              {cartQty > 0 ? (
+                <>
+                  <span className="text-white text-[11px] font-bold">{cartQty}</span>
+                  <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                </>
+              ) : (
+                <Plus className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+              )}
             </button>
           </div>
         )}
