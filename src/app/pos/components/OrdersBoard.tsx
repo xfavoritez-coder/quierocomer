@@ -363,6 +363,25 @@ function OrderCard({
                 {busy ? '…' : 'Entregado →'}
               </button>
             )}
+            {/* Con Delifast activo en reparto: botón "Entregado" manual como fallback */}
+            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage === 'out_for_delivery' && (
+              <button
+                onClick={() => {
+                  if (window.confirm('¿Marcar como entregado manualmente?')) {
+                    onStageChange(order, 'delivered')
+                  }
+                }}
+                disabled={busy}
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  background: STAGE_COLOR.delivered ?? '#6b7280', color: '#fff',
+                  cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
+                  fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                }}
+              >
+                {busy ? '…' : 'Entregado →'}
+              </button>
+            )}
             {/* Cuando Delifast cancela: botón "Entregado" con confirmación. */}
             {paid && delifastCancelled && order.opsStage === 'out_for_delivery' && (
               <button
