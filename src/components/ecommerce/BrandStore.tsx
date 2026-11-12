@@ -290,7 +290,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
       <div className="relative w-full" style={{ maxWidth: 420, background: "#fff", borderRadius: modern ? 16 : 24, padding: modern ? 24 : 18, maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: modern ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
-            <h2 style={{ fontSize: modern ? "1.1rem" : "1.15rem", fontWeight: modern ? 700 : 900, color: "#111", margin: 0 }}>¿Cómo quieres tu pedido?</h2>
+            <h2 style={{ fontSize: modern ? "1.1rem" : "1.15rem", fontWeight: modern ? 700 : 900, color: "#111", margin: 0 }}>¿Cómo quieres pedir?</h2>
             {modern && <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: 2 }}>Elige delivery o retiro en tienda</p>}
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999, border: modern ? "1px solid #e5e7eb" : "none", background: modern ? "#fff" : "#f3f4f6", color: modern ? "#9ca3af" : "#374151", cursor: "pointer", flexShrink: 0 }}><X size={modern ? 16 : 18} /></button>
