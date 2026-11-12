@@ -13,9 +13,25 @@ export interface VerifyResult {
   reason?: string;
 }
 
+/**
+ * Secrets candidatas. En modo plataforma los estados del SII de TODOS los RUT
+ * llegan por el webhook de partner (secret propia), mientras el piloto
+ * (El Suculento) usa su webhook de RUT (secret del sandbox). Se admiten varias:
+ * SHARKPOS_WEBHOOK_SECRET (piloto) + SHARKPOS_PARTNER_WEBHOOK_SECRET (plataforma),
+ * y una lista opcional SHARKPOS_WEBHOOK_SECRETS separada por comas.
+ */
+function candidateSecrets(): string[] {
+  const out: string[] = [];
+  const add = (v?: string | null) => { if (v && v.trim()) out.push(v.trim()); };
+  add(process.env.SHARKPOS_WEBHOOK_SECRET);
+  add(process.env.SHARKPOS_PARTNER_WEBHOOK_SECRET);
+  for (const s of (process.env.SHARKPOS_WEBHOOK_SECRETS || "").split(",")) add(s);
+  return [...new Set(out)];
+}
+
 export function verifySharkposSignature(rawBody: string, headers: Headers): VerifyResult {
-  const secret = process.env.SHARKPOS_WEBHOOK_SECRET;
-  if (!secret) return { ok: false, reason: "SHARKPOS_WEBHOOK_SECRET no configurada" };
+  const secrets = candidateSecrets();
+  if (!secrets.length) return { ok: false, reason: "SHARKPOS_WEBHOOK_SECRET no configurada" };
 
   const id = headers.get("webhook-id");
   const ts = headers.get("webhook-timestamp");
@@ -27,27 +43,18 @@ export function verifySharkposSignature(rawBody: string, headers: Headers): Veri
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - tsNum) > TOLERANCE_SEC) return { ok: false, reason: "timestamp fuera de tolerancia" };
 
-  // Clave = base64 tras el prefijo "whsec_" (si lo trae).
-  const rawSecret = secret.startsWith("whsec_") ? secret.slice(6) : secret;
-  let key: Buffer;
-  try {
-    key = Buffer.from(rawSecret, "base64");
-  } catch {
-    return { ok: false, reason: "secret con formato inválido" };
-  }
-
   const signedContent = `${id}.${tsNum}.${rawBody}`;
-  const expected = crypto.createHmac("sha256", key).update(signedContent, "utf8").digest("base64");
+  const sigs = sigHeader.split(" ").map((part) => { const c = part.indexOf(","); return (c >= 0 ? part.slice(c + 1) : part).trim(); }).filter(Boolean);
 
-  // El header trae una lista separada por espacios de "v1,<firma>". Basta que una coincida.
-  const passed = sigHeader.split(" ").some((part) => {
-    const comma = part.indexOf(",");
-    const sig = comma >= 0 ? part.slice(comma + 1) : part;
-    if (!sig) return false;
-    const a = Buffer.from(sig);
+  // Basta que ALGUNA secret produzca una firma que coincida con alguna del header.
+  for (const secret of secrets) {
+    const rawSecret = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+    let key: Buffer;
+    try { key = Buffer.from(rawSecret, "base64"); } catch { continue; }
+    const expected = crypto.createHmac("sha256", key).update(signedContent, "utf8").digest("base64");
     const b = Buffer.from(expected);
-    return a.length === b.length && crypto.timingSafeEqual(a, b);
-  });
-
-  return passed ? { ok: true } : { ok: false, reason: "firma no coincide" };
+    const passed = sigs.some((sig) => { const a = Buffer.from(sig); return a.length === b.length && crypto.timingSafeEqual(a, b); });
+    if (passed) return { ok: true };
+  }
+  return { ok: false, reason: "firma no coincide" };
 }
