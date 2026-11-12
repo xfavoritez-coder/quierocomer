@@ -89,7 +89,20 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
   const email = order.customerEmail && order.customerEmail.includes("@") ? order.customerEmail : undefined;
 
   try {
-    const r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+    // RUT recién dado de alta: SharkPOS pide folios al SII en segundo plano, así
+    // que las primeras ventas pueden devolver 409 FOLIOS_EXHAUSTED. Se reintenta
+    // con la MISMA idempotency-key (seguro: replay si ya se emitió) hasta que
+    // haya folios. Corre dentro de after() (no bloquea el cobro).
+    const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+    const FOLIO_DELAYS = [15_000, 30_000, 45_000, 60_000]; // ~2,5 min de margen
+    let r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+    for (let i = 0; i < FOLIO_DELAYS.length && !r.dteId; i++) {
+      const noFolios = r.httpStatus === 409 && /FOLIOS?_EXHAUSTED|folio/i.test(`${r.code || ""} ${r.message || ""}`);
+      if (!noFolios) break;
+      await prisma.posOrder.update({ where: { id: order.id }, data: { boletaStatus: "pendiente:folios" } }).catch(() => {});
+      await sleep(FOLIO_DELAYS[i]);
+      r = await emitBoleta({ idempotencyKey: `venta-${order.id}`, amountTotal, items: lines, receptorEmail: email }, cred);
+    }
     if (r.dteId) {
       await prisma.posOrder.update({
         where: { id: order.id },
