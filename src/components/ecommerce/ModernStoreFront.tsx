@@ -165,6 +165,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   const [mounted, setMounted] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const catNavRef = useRef<HTMLDivElement>(null);
   const catScrollRef = useRef<HTMLDivElement>(null);
@@ -274,7 +276,11 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   const loadFavState = useCallback(async () => {
     if (!tenant.favoritesEnabled) return;
     let isLogged = false;
-    try { const d = await fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null)); isLogged = !!d?.user; } catch {}
+    try {
+      const d = await fetch("/api/qr/user/me").then((r) => (r.ok ? r.json() : null));
+      isLogged = !!d?.user;
+      if (d?.user) { setUserName(d.user.name || null); setUserEmail(d.user.email || null); }
+    } catch {}
     setLoggedIn(isLogged);
     const pend = pendingFavRef.current;
     if (pend && isLogged) {
@@ -667,18 +673,18 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             </div>
 
             {/* User account header */}
-            <div className="px-5 pt-4 pb-5" style={{ background: `linear-gradient(135deg, ${primaryColor}08, ${primaryColor}03)` }}>
+            <div className="px-5 pt-6 pb-5" style={{ background: `linear-gradient(135deg, ${primaryColor}08, ${primaryColor}03)` }}>
               {loggedIn ? (
                 <button
                   onClick={() => { closeDrawer(); openMenu("root"); }}
                   className="flex items-center gap-3.5 w-full text-left"
                 >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-white">
-                    <User className="w-6 h-6" style={{ color: primaryColor }} />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-white text-lg font-bold" style={{ color: primaryColor }}>
+                    {userName ? userName.charAt(0).toUpperCase() : <User className="w-6 h-6" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-bold text-gray-900">Mi cuenta</p>
-                    <p className="text-[12px] text-gray-400 mt-0.5">Pedidos, favoritos y más</p>
+                    <p className="text-[15px] font-bold text-gray-900">{userName || "Mi cuenta"}</p>
+                    <p className="text-[12px] text-gray-400 mt-0.5 truncate">{userEmail || "Pedidos, favoritos y más"}</p>
                   </div>
                 </button>
               ) : (
@@ -787,7 +793,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Address/delivery bar (mobile only, desktop has it in header) ────── */}
       <div style={{ background: "#f0ede7" }} className="relative lg:hidden">
-        <div className="max-w-5xl mx-auto px-3 pt-3 pb-2.5">
+        <div className="max-w-5xl mx-auto px-4 pt-3 pb-2.5">
           <button
             onClick={openDelivery}
             className="w-full flex items-center gap-2.5 bg-white rounded-full px-4 py-2.5 shadow-sm hover:shadow transition group cursor-pointer"
@@ -801,7 +807,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
               <>
                 <Motorbike className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
                 <span className="flex-1 text-left text-[13px] font-semibold text-gray-700 truncate flex items-center gap-1.5">{shortAddr(deliveryAddress.address)} <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" /></span>
-                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
               </>
             ) : (
               <>
@@ -811,8 +817,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
                   {!tenant.openStatus.open && <span className="shrink-0 text-[12px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2.5 py-px rounded-full">Cerrado</span>}
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0 inline" />
                 </span>
-                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
-                {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition mr-1">Ver horarios</span>}
+                {tenant.openStatus.open && estimatedTime && <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-400 mr-1"><Clock className="w-3.5 h-3.5" />{estimatedTime} min</span>}
+                {!tenant.openStatus.open && tenant.weeklyHours && <span onClick={(e) => { e.stopPropagation(); setHoursModalOpen(true); }} className="shrink-0 text-[12px] font-medium text-gray-400 underline underline-offset-2 hover:text-gray-600 transition mr-2">Ver horarios</span>}
               </>
             )}
           </button>
@@ -1554,21 +1560,43 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
   const mapRef = useRef<any>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const deliveryAddress = useCartStore((s) => s.deliveryAddress);
+  // Fetch delivery polygons for all branches
+  const [allPolygons, setAllPolygons] = useState<{ slug: string; polygon: { lat: number; lng: number }[] }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const results: { slug: string; polygon: { lat: number; lng: number }[] }[] = [];
+      // Current tenant polygon
+      if (tenant.deliveryConfig.polygonIncluded.length >= 3) {
+        results.push({ slug: tenant.slug, polygon: tenant.deliveryConfig.polygonIncluded });
+      }
+      // Fetch sibling storefronts for their polygons
+      for (const b of siblings) {
+        if (b.slug === tenant.slug) continue;
+        try {
+          const r = await fetch(`/api/ecommerce/storefront/${encodeURIComponent(b.slug)}`);
+          if (r.ok) {
+            const d = await r.json();
+            const poly = d?.tenant?.deliveryConfig?.polygonIncluded;
+            if (poly && poly.length >= 3) results.push({ slug: b.slug, polygon: poly });
+          }
+        } catch {}
+      }
+      setAllPolygons(results);
+    })();
+  }, [siblings, tenant.slug, tenant.deliveryConfig.polygonIncluded]);
 
   const pts = useMemo(() => siblings.filter(b => b.lat && b.lng), [siblings]);
-  // Fallback to tenant origin if no siblings have coords
   const hasPoints = pts.length > 0 || (tenant.deliveryConfig.origin != null);
 
   useEffect(() => {
     if (!mapReady || !containerRef.current || !hasPoints) return;
-    if (mapRef.current) return; // already initialized
+    if (mapRef.current) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const G = (window as any).google?.maps;
     if (!G) return;
 
     const bounds = new G.LatLngBounds();
-
-    // Default center
     const defaultCenter = pts.length > 0
       ? { lat: pts[0].lat!, lng: pts[0].lng! }
       : tenant.deliveryConfig.origin ?? { lat: -33.45, lng: -70.65 };
@@ -1586,63 +1614,48 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
     });
     mapRef.current = map;
 
-    // Branch markers
+    // Branch markers (real pins)
     pts.forEach(b => {
       const marker = new G.Marker({
         position: { lat: b.lat!, lng: b.lng! },
         map,
         title: b.branchName || b.name,
-        icon: {
-          path: G.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: primaryColor,
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
       });
       bounds.extend(marker.getPosition());
     });
 
-    // Delivery polygon
-    const poly = tenant.deliveryConfig.polygonIncluded;
-    if (poly && poly.length >= 3) {
-      const polygon = new G.Polygon({
-        paths: poly,
+    // Delivery polygons for ALL branches
+    allPolygons.forEach(({ polygon }) => {
+      const gPoly = new G.Polygon({
+        paths: polygon,
         strokeColor: primaryColor,
-        strokeOpacity: 0.7,
+        strokeOpacity: 0.6,
         strokeWeight: 2,
         fillColor: primaryColor,
-        fillOpacity: 0.08,
+        fillOpacity: 0.06,
         map,
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      polygon.getPath().forEach((p: any) => bounds.extend(p));
-    }
+      gPoly.getPath().forEach((p: any) => bounds.extend(p));
+    });
 
-    // User delivery address marker (blue)
+    // User delivery address (blue pin)
     if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
       const userMarker = new G.Marker({
         position: { lat: deliveryAddress.lat, lng: deliveryAddress.lng },
         map,
         title: deliveryAddress.address,
         icon: {
-          path: G.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#3b82f6",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
+          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
         },
       });
       bounds.extend(userMarker.getPosition());
     }
 
-    // Fit bounds if multiple points
-    if (pts.length > 1 || (poly && poly.length >= 3)) {
+    if (pts.length > 1 || allPolygons.length > 0) {
       map.fitBounds(bounds, 40);
     }
-  }, [mapReady, hasPoints, pts, tenant.deliveryConfig, deliveryAddress, primaryColor]);
+  }, [mapReady, hasPoints, pts, allPolygons, deliveryAddress, primaryColor, tenant.deliveryConfig.origin]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
