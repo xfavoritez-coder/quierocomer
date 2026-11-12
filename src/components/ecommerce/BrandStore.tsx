@@ -196,8 +196,13 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const [tab, setTab] = useState<"delivery" | "pickup">(currentSelected && currentType === "pickup" && hasPickup ? "pickup" : hasDelivery ? "delivery" : "pickup");
   const gmapsReady = useGoogleMaps(tab === "delivery" ? brand.googleMapsKey : null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts; hasNumber: boolean } | null>(null);
-  const [details, setDetails] = useState("");
+  const savedAddr = useCartStore((s) => s.deliveryAddress);
+  const [dest, setDest] = useState<{ lat: number; lng: number; address: string; parts: AddressParts; hasNumber: boolean } | null>(
+    savedAddr?.lat != null && savedAddr?.lng != null ? { lat: savedAddr.lat, lng: savedAddr.lng, address: savedAddr.address, parts: savedAddr.parts as AddressParts ?? { street: "", comuna: "", city: "", region: "", country: "" }, hasNumber: true } : null
+  );
+  const [details, setDetails] = useState(savedAddr?.details ?? "");
+  // Pre-fill the input with saved address
+  useEffect(() => { if (savedAddr?.address && inputRef.current && !inputRef.current.value) inputRef.current.value = savedAddr.address; }, [savedAddr]);
 
   // Evalúa TODAS las sucursales con delivery para la dirección escrita y determina
   // cuáles la CUBREN (su zona de reparto la incluye), con su costo. Así no se elige
@@ -282,7 +287,9 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
     onChoose(chosen.branch, "delivery", { address: dest.address, details: details.trim(), lat: dest.lat, lng: dest.lng, fee: chosen.fee, parts: dest.parts });
   }
 
-  const tabBtn = (on: boolean): React.CSSProperties => ({ flex: 1, padding: "11px", borderRadius: modern ? 999 : 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: modern ? 700 : 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 });
+  const tabBtn = (on: boolean): React.CSSProperties => modern
+    ? { flex: 1, padding: "11px", borderRadius: 999, border: on ? `2px solid ${accent}` : "2px solid #e5e7eb", background: on ? `${accent}10` : "#fff", color: on ? accent : "#9ca3af", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }
+    : { flex: 1, padding: "11px", borderRadius: 12, border: `1px solid ${on ? "transparent" : "#e5e7eb"}`, background: on ? accent : "#fff", color: on ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.9rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-5 py-6" style={{ fontFamily: modern ? "'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,Arial" : "system-ui,-apple-system,Segoe UI,Roboto,Arial" }}>
@@ -304,7 +311,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
           <div>
             <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6, marginTop: 6 }}>Tu dirección</label>
             <input ref={inputRef} placeholder={gmapsReady ? "Ej: Av. Providencia 1234, Santiago" : "Cargando mapa…"} className="qc-bp-input" style={{ width: "100%", padding: "11px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
-            <style>{`.qc-bp-input::placeholder{color:#6b7280}`}</style>
+            <style>{`.qc-bp-input::placeholder{color:#b0b8c1!important}`}</style>
             {brand.googleMapsKey && !dest && (
               <button
                 type="button"
@@ -334,26 +341,44 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
             {dest && !dest.hasNumber && <p style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 700, margin: "8px 2px 0" }}>Falta la numeración: elige la dirección con su número de calle.</p>}
             {!brand.googleMapsKey && <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: "8px 2px 0" }}>La marca aún no configuró Google Maps.</p>}
             {dest && (
-              <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Depto / casa / referencia (opcional)" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box", marginTop: 10 }} />
+              <label style={{ display: "block", marginTop: 12 }}>
+                <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>Depto / casa / referencia</span>
+                <input value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Opcional" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: "16px", outline: "none", boxSizing: "border-box" }} />
+              </label>
             )}
             {dest && evalLoading && <p style={{ fontSize: "0.82rem", color: "#9ca3af", margin: "12px 2px 0" }}>Buscando sucursal que reparta a tu dirección…</p>}
             {dest && !evalLoading && noCoverage && (
               <p style={{ fontSize: "0.85rem", color: "#ef4444", margin: "12px 2px 0", fontWeight: 600 }}>Ninguna sucursal reparte a esta dirección. Prueba con <b>Retiro</b> o con otra dirección.</p>
             )}
             {chosen && (
-              <div style={{ marginTop: 14, padding: 14, borderRadius: 14, border: `1px solid ${accent}55`, background: `${accent}10` }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: ".04em", margin: 0 }}>Tu sucursal</p>
-                <p style={{ fontSize: "1.05rem", fontWeight: 900, color: "#111", margin: "3px 0 1px" }}>{chosen.branch.branchName || chosen.branch.name}{!chosen.branch.open ? <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#ef4444", marginLeft: 8 }}>Cerrada ahora</span> : null}</p>
-                {chosen.branch.address && <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: "0 0 10px" }}>{chosen.branch.address}</p>}
+              <div style={{ marginTop: 16, padding: 16, borderRadius: modern ? 14 : 14, border: "1px solid #f0f0f0", background: "#fafaf9", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  {(brand.faviconUrl || chosen.branch.logoUrl) ? (
+                    <img src={brand.faviconUrl || chosen.branch.logoUrl!} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <span style={{ width: 32, height: 32, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{(chosen.branch.branchName || chosen.branch.name).charAt(0).toUpperCase()}</span>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                      {chosen.branch.branchName || chosen.branch.name}
+                      {chosen.branch.open ? (
+                        <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 7px", borderRadius: 999 }}>Abierto</span>
+                      ) : (
+                        <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#ef4444", background: "#fef2f2", border: "1px solid #fecaca", padding: "1px 7px", borderRadius: 999 }}>Cerrado</span>
+                      )}
+                    </p>
+                    {chosen.branch.address && <p style={{ fontSize: "0.8rem", color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{chosen.branch.address}</p>}
+                  </div>
+                </div>
                 {chosen.mode !== "zones" && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", margin: "0 2px 10px" }}>
-                    <span style={{ color: "#6b7280" }}>Costo de despacho</span>
-                    <span style={{ fontWeight: 900, color: accent }}>{chosen.fee > 0 ? clp(chosen.fee) : "Gratis"}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", padding: "10px 0", borderTop: "1px solid #f5f5f5", marginBottom: 12 }}>
+                    <span style={{ color: "#6b7280" }}>Despacho</span>
+                    <span style={{ fontWeight: 700, color: chosen.fee > 0 ? "#111" : "#16a34a" }}>{chosen.fee > 0 ? clp(chosen.fee) : "Gratis"}</span>
                   </div>
                 )}
-                <button onClick={confirmDelivery} disabled={evalLoading || switching || !dest?.hasNumber} style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 800, fontSize: "0.95rem", cursor: dest?.hasNumber ? "pointer" : "not-allowed", opacity: evalLoading || switching || !dest?.hasNumber ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <button onClick={confirmDelivery} disabled={evalLoading || switching || !dest?.hasNumber} style={{ width: "100%", padding: "13px", borderRadius: modern ? 999 : 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: "0.95rem", cursor: dest?.hasNumber ? "pointer" : "not-allowed", opacity: evalLoading || switching || !dest?.hasNumber ? 0.5 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   {switching ? <Loader2 size={16} className="animate-spin" /> : null}
-                  Continuar con {chosen.branch.branchName || chosen.branch.name} →
+                  Continuar →
                 </button>
               </div>
             )}
