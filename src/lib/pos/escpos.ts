@@ -302,7 +302,6 @@ export function encodeBoleta(b: BoletaPayload): Uint8Array {
     e.lf().line("Timbre Electronico SII");
     if (b.resolution) e.line(b.resolution);
     e.line("Verifique documento en: www.sii.cl");
-    if (b.verifyUrl) e.line(wrapText("Consulte su boleta en: " + b.verifyUrl, WIDTH));
   }
 
   e.alignLeft().lf().lf().lf().cut();
