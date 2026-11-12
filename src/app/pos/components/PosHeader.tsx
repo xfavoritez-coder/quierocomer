@@ -107,7 +107,7 @@ export default function PosHeader({
                   style={{
                     cursor: 'pointer',
                     transition: 'transform .5s cubic-bezier(.34,1.56,.64,1)',
-                    transform: logoSpin ? 'rotate(360deg) scale(1.1)' : 'rotate(0deg) scale(1)',
+                    transform: logoSpin ? 'rotate(360deg)' : 'rotate(0deg)',
                   }}
                 />
               </a>
