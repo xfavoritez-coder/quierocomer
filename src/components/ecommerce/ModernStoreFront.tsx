@@ -1531,7 +1531,7 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
   }, [siblings, tenant.id, tenant.slug, tenant.weeklyHours]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-4 pb-10">
+    <div className="max-w-5xl mx-auto px-4 pt-4 pb-10 w-full flex-1">
       <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
         <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
         Nuestros locales
