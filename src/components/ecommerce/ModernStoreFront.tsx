@@ -754,10 +754,10 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Address/delivery bar (mobile only, desktop has it in header) ────── */}
       <div style={{ background: "#f0ede7" }} className="relative lg:hidden">
-        <div className="max-w-5xl mx-auto px-4 pt-3 pb-2.5">
+        <div className="max-w-5xl mx-auto px-3 pt-3 pb-2.5">
           <button
             onClick={openDelivery}
-            className="w-full flex items-center gap-2.5 bg-white rounded-full px-4 py-2 shadow-sm hover:shadow transition group cursor-pointer"
+            className="w-full flex items-center gap-2.5 bg-white rounded-full px-4 py-2.5 shadow-sm hover:shadow transition group cursor-pointer"
           >
             {!deliverySelected ? (
               <>
