@@ -117,6 +117,19 @@ function playTelefono(c: AudioContext, master: GainNode, t0: number) {
   }
 }
 
+/** Sonido de advertencia Delifast: dos tonos graves cortos (distinto al de pedido nuevo). */
+export function playDelifastWarning(): void {
+  const c = ctx()
+  if (!c) return
+  const master = c.createGain()
+  master.gain.value = 1.0
+  master.connect(c.destination)
+  const t0 = c.currentTime + 0.02
+  // Dos tonos graves y cortos — claramente distinto al beep agudo de nuevo pedido.
+  beep(c, master, t0, 440, 0.18, 'sawtooth')
+  beep(c, master, t0 + 0.25, 330, 0.28, 'sawtooth')
+}
+
 /** Reproduce el sonido elegido (o uno dado), fuerte. */
 export function playOrderAlert(type?: SoundType): void {
   const c = ctx()

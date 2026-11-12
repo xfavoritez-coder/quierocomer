@@ -9,6 +9,7 @@ import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
+import { playDelifastWarning } from '../lib/orderSound'
 import { supabase } from '@/lib/supabase'
 import CustomerOrdersDrawer from './CustomerOrdersDrawer'
 
@@ -184,7 +185,8 @@ function OrderTimer({ order, isRetiro: _isRetiro, icon = true, style }: { order:
 
 function OrderCard({
   order, restaurantId, isSelected, showTypeChip, stageBusy, blocked, branchLabel, cols = 3,
-  onSelect, onStageChange, onCobro, onBlock, onDismissBlock,
+  waitTimeDriver,
+  onSelect, onStageChange, onCobro, onBlock, onDismissBlock, onDelifastNoTracking,
 }: {
   order: PosOrderLite
   restaurantId: string
@@ -194,11 +196,13 @@ function OrderCard({
   blocked: boolean
   branchLabel?: string
   cols?: 1 | 2 | 3
+  waitTimeDriver: number
   onSelect: () => void
   onStageChange: (o: PosOrderLite, stage: string) => void
   onCobro: (o: PosOrderLite) => void
   onBlock: (o: PosOrderLite) => void
   onDismissBlock: () => void
+  onDelifastNoTracking?: (orderId: string, noTracking: boolean) => void
 }) {
   const isDesktop = useIsDesktop()
   const paid = isPaid(order)
@@ -218,6 +222,23 @@ function OrderCard({
   const [delifastCancelled, setDelifastCancelled] = useState(false)
   // Cuando Delifast no tiene tracking real (status vacío = "Reparto"): permitir entrega manual.
   const [delifastNoTracking, setDelifastNoTracking] = useState(false)
+
+  // Notify board when noTracking changes & manage stuck timer
+  const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!order.delifastVentaId) return
+    onDelifastNoTracking?.(order.id, delifastNoTracking)
+    if (delifastNoTracking && waitTimeDriver > 0) {
+      // Check if order has ALREADY been waiting longer than waitTimeDriver
+      const elapsed = (Date.now() - new Date(order.createdAt).getTime()) / 60000
+      const remaining = Math.max(0, waitTimeDriver - elapsed) * 60000
+      stuckTimerRef.current = setTimeout(() => {
+        onDelifastNoTracking?.(order.id, true) // re-signal (board uses it for stuck set)
+      }, remaining)
+    }
+    return () => { if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [delifastNoTracking, order.id, order.delifastVentaId, waitTimeDriver])
 
   // Realce de la tarjeta: rojo si está bloqueada (intento de avanzar sin cobrar),
   // ámbar si está impaga, normal si está pagada.
@@ -978,6 +999,13 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
+  const [waitTimeDriver, setWaitTimeDriver] = useState(20) // minutes, default 20
+  // Delifast "stuck" alert: orders without tracking & orders stuck past waitTimeDriver
+  const [noTrackingOrderIds, setNoTrackingOrderIds] = useState<Set<string>>(new Set())
+  const [stuckOrderIds, setStuckOrderIds] = useState<Set<string>>(new Set())
+  const [delifastAlertDismissedUntil, setDelifastAlertDismissedUntil] = useState(0)
+  const delifastAlertSoundFiredRef = useRef(false)
+  const stuckTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<PosOrderLite | null>(null)
   const [cobro, setCobro] = useState<PosOrderLite | null>(null)
@@ -1056,6 +1084,82 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const blockAdvance = useCallback((o: PosOrderLite) => setBlockedId(o.id), [])
   const dismissBlock = useCallback(() => setBlockedId(null), [])
 
+  // Delifast no-tracking callback: each OrderCard reports its noTracking status.
+  // Board manages noTrackingOrderIds + stuckOrderIds centrally.
+  const handleDelifastNoTracking = useCallback((orderId: string, noTracking: boolean) => {
+    setNoTrackingOrderIds(prev => {
+      const next = new Set(prev)
+      if (noTracking) next.add(orderId); else next.delete(orderId)
+      return next
+    })
+    // Check if this order has been waiting longer than waitTimeDriver
+    if (noTracking) {
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        const elapsed = (Date.now() - new Date(order.createdAt).getTime()) / 60000
+        if (elapsed >= waitTimeDriver) {
+          setStuckOrderIds(prev => { const n = new Set(prev); n.add(orderId); return n })
+        } else {
+          // Start a timer for the remaining time
+          const remaining = (waitTimeDriver - elapsed) * 60000
+          const prevTimer = stuckTimersRef.current.get(orderId)
+          if (prevTimer) clearTimeout(prevTimer)
+          const t = setTimeout(() => {
+            setStuckOrderIds(prev => { const n = new Set(prev); n.add(orderId); return n })
+          }, remaining)
+          stuckTimersRef.current.set(orderId, t)
+        }
+      }
+    } else {
+      // Order got tracking — remove from stuck
+      setStuckOrderIds(prev => { const n = new Set(prev); n.delete(orderId); return n })
+      const t = stuckTimersRef.current.get(orderId)
+      if (t) { clearTimeout(t); stuckTimersRef.current.delete(orderId) }
+    }
+  }, [orders, waitTimeDriver])
+
+  // Clean up stuck timers for orders no longer in the list
+  useEffect(() => {
+    const ids = new Set(orders.map(o => o.id))
+    setNoTrackingOrderIds(prev => {
+      const next = new Set<string>()
+      prev.forEach(id => { if (ids.has(id)) next.add(id) })
+      return next.size !== prev.size ? next : prev
+    })
+    setStuckOrderIds(prev => {
+      const next = new Set<string>()
+      prev.forEach(id => { if (ids.has(id)) next.add(id) })
+      return next.size !== prev.size ? next : prev
+    })
+    stuckTimersRef.current.forEach((t, id) => {
+      if (!ids.has(id)) { clearTimeout(t); stuckTimersRef.current.delete(id) }
+    })
+  }, [orders])
+
+  // Alert condition: 1 stuck OR 2+ noTracking
+  const delifastAlertActive = stuckOrderIds.size >= 1 || noTrackingOrderIds.size >= 2
+  const delifastAlertVisible = delifastAlertActive && Date.now() > delifastAlertDismissedUntil
+
+  // Play sound once when alert first activates
+  useEffect(() => {
+    if (delifastAlertActive && !delifastAlertSoundFiredRef.current) {
+      delifastAlertSoundFiredRef.current = true
+      playDelifastWarning()
+    }
+    if (!delifastAlertActive) {
+      delifastAlertSoundFiredRef.current = false
+    }
+  }, [delifastAlertActive])
+
+  // Re-check dismissed alert after 10 min: force re-render so banner re-appears
+  useEffect(() => {
+    if (!delifastAlertActive || delifastAlertDismissedUntil === 0) return
+    const remaining = delifastAlertDismissedUntil - Date.now()
+    if (remaining <= 0) return
+    const t = setTimeout(() => setDelifastAlertDismissedUntil(0), remaining)
+    return () => clearTimeout(t)
+  }, [delifastAlertActive, delifastAlertDismissedUntil])
+
   useEffect(() => {
     if (restaurantId) { setRestaurantId(restaurantId); setUserId(TEST_USER_ID) }
   }, [restaurantId])
@@ -1085,6 +1189,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
           setOrders(d.orders)
           onOrdersUpdate?.(d.orders)
           setDelifastEnabled(!!d.delifastEnabled)
+          if (d.driverTime) setWaitTimeDriver(parseInt(d.driverTime, 10) || 20)
           setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
         }
       }
@@ -1242,6 +1347,30 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
           )}
         </div>
 
+        {/* Delifast stuck alert banner */}
+        {delifastAlertVisible && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+            marginBottom: 14, borderRadius: 12,
+            background: 'rgba(220,38,38,.10)', border: '1.5px solid rgba(220,38,38,.35)',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.2" style={{ flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: '#991b1b', lineHeight: 1.4 }}>
+              {'Delifast no est\u00e1 asignando motoristas \u00b7 Busca reparto por tu cuenta'}
+            </span>
+            <button
+              onClick={() => setDelifastAlertDismissedUntil(Date.now() + 10 * 60000)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#991b1b', flexShrink: 0, display: 'flex' }}
+              aria-label="Descartar alerta"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        )}
+
         {/* List */}
         {loading && orders.length === 0 ? (
           <div className="pos-empty" style={{ minHeight: 200 }}>
@@ -1266,6 +1395,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                 cols={cols}
                 stageBusy={stageBusy}
                 blocked={blockedId === o.id}
+                waitTimeDriver={waitTimeDriver}
                 branchLabel={allBranches && allBranches.length > 1 && o._branchId
                   ? (allBranches.find(b => b.id === o._branchId)?.branchName || allBranches.find(b => b.id === o._branchId)?.name)
                   : undefined}
@@ -1280,6 +1410,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                 onCobro={handleCobro}
                 onBlock={blockAdvance}
                 onDismissBlock={dismissBlock}
+                onDelifastNoTracking={handleDelifastNoTracking}
               />
             ))}
           </div>
