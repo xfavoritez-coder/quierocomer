@@ -1697,7 +1697,8 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
       )}
       <button
         onClick={toggleFullscreen}
-        className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-lg bg-white/90 backdrop-blur shadow-sm text-gray-600 hover:text-gray-900 transition"
+        className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow-md text-gray-600 hover:text-gray-900 transition cursor-pointer"
+        style={{ zIndex: 5 }}
         aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
       >
         {isFullscreen ? (
