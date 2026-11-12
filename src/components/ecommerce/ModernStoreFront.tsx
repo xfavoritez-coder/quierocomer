@@ -1581,20 +1581,27 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
   const pts = useMemo(() => siblings.filter(b => b.lat && b.lng), [siblings]);
   const hasPoints = pts.length > 0 || (tenant.deliveryConfig.origin != null);
 
-  // Initialize map once
+  // Initialize map ONCE when both Google Maps API and polygons are ready
+  const [mapInitialized, setMapInitialized] = useState(false);
   useEffect(() => {
-    if (!mapReady || !containerRef.current || !hasPoints || mapRef.current) return;
+    if (!mapReady || !containerRef.current || !hasPoints || mapInitialized) return;
+    // Wait for polygons to load (or timeout after 3s)
+    if (allPolygons.length === 0 && siblings.length > 0) {
+      const timer = setTimeout(() => setMapInitialized(false), 3000); // force init after 3s
+      return () => clearTimeout(timer);
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const G = (window as any).google?.maps;
     if (!G) return;
 
+    const bounds = new G.LatLngBounds();
     const defaultCenter = pts.length > 0
       ? { lat: pts[0].lat!, lng: pts[0].lng! }
       : tenant.deliveryConfig.origin ?? { lat: -33.45, lng: -70.65 };
 
-    mapRef.current = new G.Map(containerRef.current, {
+    const map = new G.Map(containerRef.current, {
       center: defaultCenter,
-      zoom: 11,
+      zoom: 12,
       disableDefaultUI: true,
       zoomControl: true,
       gestureHandling: "cooperative",
@@ -1603,71 +1610,42 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
         { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
       ],
     });
+    mapRef.current = map;
 
     // Branch markers
-    const bounds = new G.LatLngBounds();
     const faviconUrl = tenant.faviconUrl || tenant.logoUrl;
     pts.forEach(b => {
       const pos = { lat: b.lat!, lng: b.lng! };
       new G.Marker({
-        position: pos,
-        map: mapRef.current,
+        position: pos, map,
         title: b.branchName || b.name,
-        icon: faviconUrl ? {
-          url: faviconUrl,
-          scaledSize: new G.Size(24, 24),
-          anchor: new G.Point(12, 12),
-        } : {
-          path: G.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: primaryColor,
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2.5,
-        },
+        icon: faviconUrl ? { url: faviconUrl, scaledSize: new G.Size(24, 24), anchor: new G.Point(12, 12) }
+          : { path: G.SymbolPath.CIRCLE, scale: 9, fillColor: primaryColor, fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2.5 },
       });
       bounds.extend(pos);
+    });
+
+    // Delivery polygons
+    allPolygons.forEach(({ polygon }) => {
+      const gPoly = new G.Polygon({ paths: polygon, strokeColor: primaryColor, strokeOpacity: 0.7, strokeWeight: 2, fillColor: primaryColor, fillOpacity: 0.08, map });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      gPoly.getPath().forEach((p: any) => bounds.extend(p));
     });
 
     // User location
     if (deliveryAddress?.lat != null && deliveryAddress?.lng != null) {
       const userPos = { lat: deliveryAddress.lat, lng: deliveryAddress.lng };
-      new G.Marker({ position: userPos, map: mapRef.current, title: deliveryAddress.address, icon: { path: G.SymbolPath.CIRCLE, scale: 14, fillColor: "#3b82f6", fillOpacity: 0.15, strokeColor: "#3b82f6", strokeOpacity: 0.3, strokeWeight: 1 } });
-      new G.Marker({ position: userPos, map: mapRef.current, icon: { path: G.SymbolPath.CIRCLE, scale: 7, fillColor: "#3b82f6", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2.5 } });
+      new G.Marker({ position: userPos, map, title: deliveryAddress.address, icon: { path: G.SymbolPath.CIRCLE, scale: 14, fillColor: "#3b82f6", fillOpacity: 0.15, strokeColor: "#3b82f6", strokeOpacity: 0.3, strokeWeight: 1 } });
+      new G.Marker({ position: userPos, map, icon: { path: G.SymbolPath.CIRCLE, scale: 7, fillColor: "#3b82f6", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2.5 } });
       bounds.extend(userPos);
     }
 
-  }, [mapReady, hasPoints, pts, deliveryAddress, primaryColor, tenant.deliveryConfig.origin]);
-
-  // Draw polygons when they load (async)
-  const polygonsDrawnRef = useRef(false);
-  useEffect(() => {
-    if (!mapRef.current || allPolygons.length === 0 || polygonsDrawnRef.current) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const G = (window as any).google?.maps;
-    if (!G) return;
-    polygonsDrawnRef.current = true;
-
-    const bounds = new G.LatLngBounds();
-    // Re-add branch points to bounds
-    pts.forEach(b => bounds.extend({ lat: b.lat!, lng: b.lng! }));
-
-    allPolygons.forEach(({ polygon }) => {
-      const gPoly = new G.Polygon({
-        paths: polygon,
-        strokeColor: primaryColor,
-        strokeOpacity: 0.7,
-        strokeWeight: 2,
-        fillColor: primaryColor,
-        fillOpacity: 0.08,
-        map: mapRef.current,
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      gPoly.getPath().forEach((p: any) => bounds.extend(p));
-    });
-
-    mapRef.current.fitBounds(bounds, 30);
-  }, [allPolygons, pts, primaryColor]);
+    // Single fitBounds
+    if (allPolygons.length > 0 || pts.length > 1) {
+      map.fitBounds(bounds, 30);
+    }
+    setMapInitialized(true);
+  }, [mapReady, hasPoints, pts, allPolygons, deliveryAddress, primaryColor, tenant.deliveryConfig.origin, mapInitialized, siblings.length, tenant.faviconUrl, tenant.logoUrl]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -1689,16 +1667,17 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
   if (!hasPoints) return null;
 
   return (
-    <div ref={containerRef} className="relative mb-5 rounded-xl overflow-hidden shadow-sm bg-gray-200 h-[300px] sm:h-[400px]">
-      {!mapReady && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <MapPin className="w-8 h-8 text-gray-400 animate-pulse" />
-        </div>
-      )}
+    <div className="relative mb-5">
+      <div ref={containerRef} className="rounded-xl overflow-hidden shadow-sm bg-gray-200 h-[300px] sm:h-[400px]">
+        {!mapReady && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <MapPin className="w-8 h-8 text-gray-400 animate-pulse" />
+          </div>
+        )}
+      </div>
       <button
         onClick={toggleFullscreen}
-        className="absolute top-3 right-14 w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow-md text-gray-600 hover:text-gray-900 transition cursor-pointer"
-        style={{ zIndex: 999 }}
+        className="absolute top-3 right-3 z-50 w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow-md text-gray-600 hover:text-gray-900 transition cursor-pointer"
         aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
       >
         {isFullscreen ? (
