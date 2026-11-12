@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import DelifastTracking from './DelifastTracking'
 import CustomerOrdersDrawer from './CustomerOrdersDrawer'
 import { deliveryPlatformLabel } from '@/lib/pos'
+import { printBoletaForOrder } from '@/lib/pos/bridge'
 import { fmtElapsed } from './OrderClock'
 
 // ── Interfaz pública ───────────────────────────────────────────────────
@@ -200,6 +201,17 @@ export default function PastOrderDetail({
   const [editPhone, setEditPhone] = useState(order.customerPhone || '')
   const [editEmail, setEditEmail] = useState(order.customerEmail || '')
   const [savingCustomer, setSavingCustomer] = useState(false)
+  const [printingBoleta, setPrintingBoleta] = useState(false)
+  const [boletaMsg, setBoletaMsg] = useState<string | null>(null)
+
+  const handlePrintBoleta = async () => {
+    setPrintingBoleta(true); setBoletaMsg(null)
+    const r = await printBoletaForOrder(order.id, { retries: 1 })
+    if (r.printed) setBoletaMsg('✓ Boleta enviada a la impresora')
+    else if (r.ok) setBoletaMsg('Este pedido no tiene boleta')
+    else setBoletaMsg(r.error || 'No se pudo imprimir la boleta')
+    setPrintingBoleta(false)
+  }
 
   useEffect(() => {
     if (!order.customerPhone) return
@@ -494,6 +506,28 @@ export default function PastOrderDetail({
             </div>
           )}
         </div>
+
+        {/* Reimprimir boleta (solo pedidos pagados; si no tiene boleta, lo avisa) */}
+        {paid && !canceled && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+              disabled={printingBoleta}
+              onClick={handlePrintBoleta}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)',
+                background: 'var(--surface)', color: 'var(--ink)', cursor: printingBoleta ? 'default' : 'pointer',
+                fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingBoleta ? 0.6 : 1,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              {printingBoleta ? 'Imprimiendo…' : 'Imprimir boleta'}
+            </button>
+            {boletaMsg && (
+              <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: boletaMsg.startsWith('✓') ? 'var(--jade)' : 'var(--ink-3)' }}>{boletaMsg}</span>
+            )}
+          </div>
+        )}
 
         {/* Tiempos (delivery report stats) */}
         {(order.prepMin != null || order.transitMin != null || order.totalMin != null) && (

@@ -2,7 +2,7 @@
 // El POS llama al agente local (http://localhost:7777) para imprimir comandas.
 // El POS renderiza la comanda a bytes ESC/POS y se los manda crudos (base64);
 // el agente solo los imprime. Mismo agente que el del ecommerce (unificado).
-import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, bytesToBase64 } from "./escpos";
+import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, encodeBoleta, bytesToBase64 } from "./escpos";
 
 export interface BridgeConfig {
   url: string  // ej: "http://192.168.1.10:7777" o "http://localhost:7777"
@@ -39,6 +39,23 @@ export interface KitchenComandaPayload {
   pickupTime?: string
   sentBy: string
   items: ComandaItem[]
+}
+
+// Boleta electrónica (representación impresa térmica, con timbre PDF417).
+export interface BoletaLine { name: string; qty: number; price: number }
+export interface BoletaPayload {
+  jobId: string
+  emisorName: string
+  emisorRut: string
+  emisorGiro?: string
+  emisorAddress?: string
+  folio: number
+  fecha: string          // "12/11/2026 16:09"
+  items: BoletaLine[]
+  total: number
+  tedBase64?: string     // bytes del TED (SII) para el PDF417 nativo
+  verifyUrl?: string     // consulta pública (public_url)
+  sandbox?: boolean
 }
 
 export interface CashCloseMethod {
@@ -154,6 +171,60 @@ export async function printCashClose(payload: CashClosePayload): Promise<{ ok: b
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
   }
+}
+
+export async function printBoleta(payload: BoletaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  const url = getBridgeUrl()
+  try {
+    const escpos = bytesToBase64(encodeBoleta(payload))
+    const res = await fetch(`${url}/print`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: payload.jobId, escpos }),
+      signal: AbortSignal.timeout(8000),
+    })
+    const data = await res.json()
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` }
+    return { ok: true, jobId: data.jobId }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
+  }
+}
+
+/**
+ * Trae los datos de la boleta de una venta (/api/pos/boleta-print) y la imprime
+ * en la caja. Reintenta mientras la boleta se está emitiendo (emisión async al
+ * cobrar). Para reimprimir desde el historial basta retries=1.
+ */
+export async function printBoletaForOrder(posOrderId: string, opts?: { retries?: number; intervalMs?: number }): Promise<{ ok: boolean; printed?: boolean; error?: string; notReady?: boolean }> {
+  const retries = opts?.retries ?? 1
+  const interval = opts?.intervalMs ?? 2000
+  for (let i = 0; i < retries; i++) {
+    let data: any = {}
+    try {
+      const res = await fetch(`/api/pos/boleta-print?posOrderId=${encodeURIComponent(posOrderId)}`, { cache: 'no-store' })
+      data = await res.json().catch(() => ({}))
+      if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` }
+    } catch {
+      return { ok: false, error: 'No se pudo consultar la boleta' }
+    }
+    // El local no emite boletas por SharkPOS → no es error, simplemente no hay boleta.
+    if (data.enabled === false) return { ok: true, printed: false }
+    // La emisión falló (p. ej. 4xx de SharkPOS) → no tiene sentido reintentar.
+    if (data.failed) return { ok: false, error: 'La emisión de la boleta falló' }
+    if (data.ready && data.boleta) {
+      const b = data.boleta
+      const pr = await printBoleta({
+        jobId: 'bol_' + posOrderId, emisorName: b.emisorName, emisorRut: b.emisorRut,
+        emisorGiro: b.emisorGiro, emisorAddress: b.emisorAddress,
+        folio: b.folio, fecha: b.fecha, items: b.items, total: b.total,
+        tedBase64: b.tedBase64, verifyUrl: b.verifyUrl, sandbox: b.sandbox,
+      })
+      return { ...pr, printed: pr.ok }
+    }
+    if (i < retries - 1) await new Promise((r) => setTimeout(r, interval))
+  }
+  return { ok: false, notReady: true, error: 'La boleta aún se está emitiendo' }
 }
 
 export async function printTest(): Promise<{ ok: boolean; error?: string }> {

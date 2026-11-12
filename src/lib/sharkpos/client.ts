@@ -152,6 +152,25 @@ export async function emitBoleta(input: EmitBoletaInput): Promise<SharkposResult
   throw new Error(`SharkPOS emitBoleta falló tras ${MAX} intentos: ${String(lastErr)}`);
 }
 
+export interface TedResult {
+  folio?: number;
+  /** Bytes del TED en base64, listos para el PDF417 (nivel de corrección 5). */
+  tedBase64?: string;
+  /** TED como texto XML (contiene <RE>RUTEmisor</RE>, etc.). */
+  ted?: string;
+  raw: Record<string, unknown>;
+}
+
+/** Trae el timbre electrónico (TED) de un documento, para imprimir el PDF417. */
+export async function getBoletaTed(dteId: string): Promise<TedResult> {
+  const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/ted/`, {
+    headers: authHeaders(),
+    signal: AbortSignal.timeout(20_000),
+  });
+  const d = (await res.json().catch(() => ({}))) as Record<string, any>;
+  return { folio: d.folio, tedBase64: d.ted_base64, ted: d.ted, raw: d };
+}
+
 /** Consulta el estado de un documento por su dte_id (alternativa al webhook). */
 export async function getDocument(dteId: string): Promise<SharkposResult> {
   const res = await fetch(`${BASE}/api/v1/dte/documents/${dteId}/`, {

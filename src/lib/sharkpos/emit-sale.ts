@@ -15,7 +15,7 @@ type RawItem = Record<string, unknown>;
  * total cobrado (p. ej. por despacho o descuento a nivel de pedido), se consolida
  * en UNA línea por el total real, para que la boleta refleje siempre lo cobrado.
  */
-function buildLines(items: unknown, total: number, fallbackName: string, deliveryFee = 0): { lines: BoletaItemInput[]; amountTotal: number } {
+export function buildLines(items: unknown, total: number, fallbackName: string, deliveryFee = 0): { lines: BoletaItemInput[]; amountTotal: number } {
   const arr: RawItem[] = Array.isArray(items) ? (items as RawItem[]) : [];
   const lines: BoletaItemInput[] = [];
   for (const it of arr) {

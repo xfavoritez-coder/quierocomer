@@ -4,7 +4,7 @@
 //
 // Portado de print-bridge/src/encoder.js (mismo formato que diseñó el POS).
 
-import type { ComandaPayload, ComandaItem, CashClosePayload, KitchenComandaPayload } from "./bridge";
+import type { ComandaPayload, ComandaItem, CashClosePayload, KitchenComandaPayload, BoletaPayload } from "./bridge";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -51,7 +51,36 @@ class Enc {
   doubleOff() { return this.raw(GS, 0x21, 0x00); }
   lf() { return this.raw(0x0a); }
   cut() { return this.raw(GS, 0x56, 0x42, 0x05); }
+  // Código de barras 2D PDF417 nativo (ESC/POS GS ( k), para el timbre SII (TED).
+  // Nivel de corrección 5 (el que exige el SII). `data` = bytes crudos del TED.
+  pdf417(data: number[]) {
+    const fn = (f: number, ...args: number[]) => {
+      const body = [0x30, f, ...args];
+      this.raw(GS, 0x28, 0x6b, body.length & 0xff, (body.length >> 8) & 0xff, ...body);
+    };
+    fn(0x41, 0x00);        // columnas: auto
+    fn(0x42, 0x00);        // filas: auto
+    fn(0x43, 0x03);        // ancho de módulo
+    fn(0x44, 0x03);        // alto de fila
+    fn(0x45, 0x30, 0x35);  // corrección de errores nivel 5
+    // Guardar datos (fn 0x50, m 0x30): pL/pH = len(data)+3
+    const storeLen = data.length + 3;
+    this.raw(GS, 0x28, 0x6b, storeLen & 0xff, (storeLen >> 8) & 0xff, 0x30, 0x50, 0x30, ...data);
+    fn(0x51, 0x30);        // imprimir
+    return this;
+  }
   toBytes(): Uint8Array { return Uint8Array.from(this.bytes); }
+}
+
+// $ con separador de miles chileno.
+function clp(n: number): string { return "$" + Math.round(n).toLocaleString("es-CL"); }
+
+// base64 → bytes (para el TED del PDF417). Funciona en navegador (atob) y server.
+function base64ToBytes(b64: string): number[] {
+  const bin = typeof atob !== "undefined" ? atob(b64) : Buffer.from(b64, "base64").toString("binary");
+  const out: number[] = [];
+  for (let i = 0; i < bin.length; i++) out.push(bin.charCodeAt(i) & 0xff);
+  return out;
 }
 
 function lineColumns(left: string, right: string, width = WIDTH): string {
@@ -218,6 +247,56 @@ export function encodeKitchenComanda(c: KitchenComandaPayload): Uint8Array {
   }
 
   e.line("-".repeat(WIDTH)).lf().lf().lf().cut();
+  return e.toBytes();
+}
+
+/**
+ * Boleta electrónica (representación impresa térmica 80mm) → bytes ESC/POS.
+ * Cabecera emisor + folio, detalle, total, y el TIMBRE SII como PDF417 nativo.
+ */
+export function encodeBoleta(b: BoletaPayload): Uint8Array {
+  const e = new Enc();
+  e.init().alignCenter();
+  if (b.sandbox) e.boldOn().line("*** SANDBOX - SIN VALIDEZ TRIBUTARIA ***").boldOff();
+  e.boldOn().line((b.emisorName || "").toUpperCase()).boldOff();
+  if (b.emisorGiro) e.line(wrapText(b.emisorGiro, WIDTH));
+  if (b.emisorAddress) e.line(wrapText(b.emisorAddress, WIDTH));
+  e.lf();
+  e.boldOn().line("R.U.T.: " + b.emisorRut).line("BOLETA ELECTRONICA").line("N " + String(b.folio)).boldOff();
+
+  e.alignLeft().line("=".repeat(WIDTH));
+  e.line("Fecha: " + b.fecha);
+  e.line("-".repeat(WIDTH));
+
+  // Detalle: "cant x nombre .............. $monto"
+  for (const it of b.items || []) {
+    const amount = clp(it.qty * it.price);
+    const left = `${it.qty} x ${it.name}`;
+    const maxLeft = WIDTH - amount.length - 1;
+    if (left.length <= maxLeft) {
+      e.line(lineColumns(left, amount));
+    } else {
+      // Nombre largo: nombre envuelto y el monto en su propia línea a la derecha.
+      e.line(wrapText(left, WIDTH));
+      e.line(lineColumns("", amount));
+    }
+  }
+  e.line("-".repeat(WIDTH));
+  // TOTAL en doble tamaño (24 columnas efectivas).
+  e.boldOn().doubleOn().line(lineColumns("TOTAL", clp(b.total), 24)).doubleOff().boldOff();
+  e.line("IVA incluido (19%)");
+  e.lf();
+
+  // Timbre electrónico SII (PDF417) centrado.
+  if (b.tedBase64) {
+    e.alignCenter();
+    e.pdf417(base64ToBytes(b.tedBase64));
+    e.line("Timbre Electronico SII");
+    e.line("Verifique en www.sii.cl");
+  }
+  if (b.verifyUrl) e.alignCenter().line(wrapText(b.verifyUrl, WIDTH));
+
+  e.alignLeft().lf().lf().lf().cut();
   return e.toBytes();
 }
 

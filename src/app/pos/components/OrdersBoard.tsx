@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId } from '@/lib/pos'
 import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
-import { getBridgeStatus, printKitchenComanda } from '@/lib/pos/bridge'
+import { getBridgeStatus, printKitchenComanda, printBoletaForOrder } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
@@ -1459,7 +1459,12 @@ function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPai
           payments: finalParts.map(p => ({ method: p.method, amount: p.amount, received: p.received })),
         }),
       })
-      if (r.ok) onPaid()
+      if (r.ok) {
+        onPaid()
+        // Imprime la boleta en la caja cuando SharkPOS la emita (async). No bloquea
+        // el cobro; en locales sin boleta no hace nada.
+        printBoletaForOrder(order.id, { retries: 8, intervalMs: 2000 }).catch(() => {})
+      }
     } catch { }
     setSending(false)
   }
