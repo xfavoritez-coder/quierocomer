@@ -112,7 +112,6 @@ export default function BrandStore({ brand, representative, basePath, initialPro
       setBranchSlug(branch.slug);
       saveBranch(branch.slug);
       setPickerOpen(false);
-      toast.success(`Pidiendo en ${branch.branchName || branch.name}`);
     } finally {
       setSwitching(false);
     }
