@@ -369,9 +369,8 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
-            {/* Botón "Entregado" — solo cuando NO hay pill de Delifast activa.
-                Si la pill muestra estado (motorista en camino), Delifast controla y no se muestra botón. */}
-            {paid && (delifastNoTracking || delifastCancelled || !order.isDelivery || !order.delifastVentaId) && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId && delifastNoTracking)) && (
+            {/* Botón "Entregado" — cuando Delifast no tiene tracking, canceló, o en out_for_delivery sin tracking activo */}
+            {paid && (delifastNoTracking || delifastCancelled || !order.isDelivery || !order.delifastVentaId) && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId && (delifastNoTracking || delifastCancelled))) && (
               <button
                 onClick={() => {
                   if (!window.confirm('¿Estás seguro que deseas marcar este pedido como entregado?')) return
