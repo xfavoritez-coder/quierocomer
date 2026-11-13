@@ -8,6 +8,14 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const BRAND = "#6366f1";
 const clp = (n: number) => "$" + (Math.round(n) || 0).toLocaleString("es-CL");
+const toName = (s: string) => (s || "").trim().replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase()) || "—";
+const STATUS_ES: Record<string, string> = { PENDING: "Pendiente", CONFIRMED: "Confirmado", PREPARING: "Preparando", READY: "Listo", OUT_FOR_DELIVERY: "En camino", DELIVERED: "Entregado", DONE: "Completado", COMPLETED: "Completado" };
+const statusLabel = (s: string) => STATUS_ES[s] || s;
+function statusColor(s: string): { bg: string; fg: string } {
+  if (["DONE", "COMPLETED", "DELIVERED"].includes(s)) return { bg: "rgba(22,163,74,0.14)", fg: "#16a34a" };
+  if (["PENDING", "PREPARING", "CONFIRMED"].includes(s)) return { bg: "rgba(245,158,11,0.16)", fg: "#b45309" };
+  return { bg: "var(--adm-hover)", fg: "var(--adm-text2)" };
+}
 
 interface Stats {
   days: number;
@@ -15,6 +23,7 @@ interface Stats {
   orders: { app: number; appRevenue: number; appAov: number; web: number; webRevenue: number; webAov: number; total: number; appSharePct: number; series: { date: string; app: number; web: number }[] };
   conversion: { buyers: number; devices: number; pct: number };
   topProducts: { name: string; qty: number; revenue: number }[];
+  appOrdersList: { id: string; customer: string; phone: string; total: number; status: string; orderType: string; createdAt: string }[];
   exclusiveProducts: number;
   notifications: { title: string; sent: number; total: number; createdAt: string }[];
 }
@@ -113,6 +122,34 @@ export default function AppResumenPage() {
                     </div>
                   </div>
                 )); })()}
+              </div>
+            )}
+          </div>
+
+          {/* Pedidos hechos desde la app */}
+          <div style={card}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Pedidos desde la app</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text3)" }}>{s.appOrdersList.length}{s.appOrdersList.length >= 50 ? "+" : ""} en {days}d</span>
+            </div>
+            {s.appOrdersList.length === 0 ? (
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Aún no hay pedidos desde la app en este período.</p>
+            ) : (
+              <div style={{ display: "grid", gap: 6 }}>
+                {s.appOrdersList.map((o) => (
+                  <div key={o.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-hover)" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{toName(o.customer)}</div>
+                      <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                        {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(o.total)}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: statusColor(o.status).bg, color: statusColor(o.status).fg }}>{statusLabel(o.status)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
     prisma.dish.count({ where: { restaurantId, deletedAt: null, OR: [{ appOnly: true }, { appPrice: { gt: 0 } }] } }),
     prisma.onlineOrder.findMany({
       where: { restaurantId, source: "ecommerce", createdAt: { gte: from }, status: { notIn: CANCELLED } },
-      select: { fromApp: true, total: true, createdAt: true, items: true, customerPhone: true },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, fromApp: true, total: true, createdAt: true, items: true, customerName: true, customerPhone: true, status: true, orderType: true },
     }),
     prisma.appPushLog.findMany({ where: { restaurantId }, orderBy: { createdAt: "desc" }, take: 10, select: { title: true, sent: true, total: true, createdAt: true } }),
   ]);
@@ -48,15 +49,17 @@ export async function GET(req: NextRequest) {
   let appOrders = 0, appRevenue = 0, webOrders = 0, webRevenue = 0;
   const byDay = new Map<string, { app: number; web: number }>();
   for (let i = days - 1; i >= 0; i--) byDay.set(ymd(new Date(Date.now() - i * 864e5)), { app: 0, web: 0 });
-  // Top productos + compradores únicos (solo pedidos de la app).
+  // Top productos + compradores únicos + listado (solo pedidos de la app).
   const prodMap = new Map<string, { name: string; qty: number; revenue: number }>();
   const appBuyers = new Set<string>();
+  const appList: { id: string; customer: string; phone: string; total: number; status: string; orderType: string; createdAt: Date }[] = [];
   for (const o of orders) {
     const k = ymd(o.createdAt);
     const slot = byDay.get(k);
     if (o.fromApp) {
       appOrders++; appRevenue += o.total || 0; if (slot) slot.app++;
       if (o.customerPhone) appBuyers.add(o.customerPhone);
+      if (appList.length < 50) appList.push({ id: o.id, customer: o.customerName || "—", phone: o.customerPhone || "", total: o.total || 0, status: o.status, orderType: o.orderType, createdAt: o.createdAt });
       const items = Array.isArray(o.items) ? (o.items as any[]) : [];
       for (const it of items) {
         const name = String(it?.dishName || it?.name || "Ítem").trim() || "Ítem";
@@ -84,6 +87,7 @@ export async function GET(req: NextRequest) {
     },
     conversion: { buyers: appBuyers.size, devices: totalDev, pct: conversionPct },
     topProducts,
+    appOrdersList: appList,
     exclusiveProducts: exclusives,
     notifications: notifs,
   });
