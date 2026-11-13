@@ -8,6 +8,7 @@ import { dailyOrderNumbers } from "@/lib/kds/dailyNumber";
 import { parseDeliveryConfig } from "@/lib/ecommerce/delivery";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseEcommerceConfig, integrationStatus, parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
+import { getPlatformSetting } from "@/lib/platformSettings";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { markUberOrderReady, denyUberOrder, cancelUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
 
@@ -179,7 +180,10 @@ export async function GET(req: NextRequest) {
     dailyNumber: nums[o.id] ?? null,
     driverTime, pickupTime, deliveryTime,
   }));
-  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes, readyAlertMinutes, uberEnabled, pedidosyaEnabled });
+  // Seguimiento Delifast pausado globalmente (desde /admin/ajustes) → el board
+  // no muestra la alerta de "Delifast no asigna" (no hay datos porque no consultamos).
+  const delifastTrackingPaused = (await getPlatformSetting("delifast_tracking_paused")) === "1";
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, delifastTrackingPaused, prepAlertMinutes, readyAlertMinutes, uberEnabled, pedidosyaEnabled });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

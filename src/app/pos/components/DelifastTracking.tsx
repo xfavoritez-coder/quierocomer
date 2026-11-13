@@ -364,6 +364,9 @@ export function DelifastStatusPill({
         const res = await fetch(`/api/pos/delivery-tracking?restaurantId=${restaurantId}&posOrderId=${posOrderId}`, { cache: 'no-store' })
         const d = await res.json()
         if (cancelled) return
+        // Sincronización pausada (scraping off) y sin datos del webhook todavía:
+        // NO es que Delifast no asigne, es que no estamos consultando → no alarmar.
+        if (d.paused) return
         // Sin configurar, pendiente, o sin tracking
         if (!d.configured || d.pending || !d.tracking) {
           // Solo notificar noTracking si NUNCA hubo tracking activo antes

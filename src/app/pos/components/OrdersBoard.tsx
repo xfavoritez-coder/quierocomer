@@ -1138,6 +1138,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
+  const [delifastPaused, setDelifastPaused] = useState(false)
   const [uberEnabled, setUberEnabled] = useState(false)
   const [pedidosyaEnabled, setPedidosyaEnabled] = useState(false)
   const [waitTimeDriver, setWaitTimeDriver] = useState(20) // minutes, default 20
@@ -1263,6 +1264,13 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   // 1. Orders WITH delifastVentaId: check tracking API
   // 2. Orders WITHOUT delifastVentaId in ready/out_for_delivery: Delifast couldn't even create the request
   useEffect(() => {
+    // Sincronización Delifast pausada → sin fuente de datos: no evaluar "sin reparto"
+    // (sería falso positivo). Limpia cualquier alerta previa.
+    if (delifastPaused) {
+      setNoTrackingOrderIds(new Set())
+      setStuckOrderIds(new Set())
+      return
+    }
     const deliveryOrders = orders.filter(o => (o.isDelivery || o.saleType === 'delivery') && o.opsStage !== 'delivered')
     if (deliveryOrders.length === 0) return
 
@@ -1308,7 +1316,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     check()
     const interval = setInterval(check, 30000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [orders, restaurantId, waitTimeDriver])
+  }, [orders, restaurantId, waitTimeDriver, delifastPaused])
 
   // Clean up stuck timers for orders no longer in the list
   useEffect(() => {
@@ -1373,6 +1381,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
         setOrders(merged)
         onOrdersUpdate?.(merged)
         setDelifastEnabled(false)
+        setDelifastPaused(false)
         setUberEnabled(false); setPedidosyaEnabled(false)
         setSelected(prev => prev ? (merged.find(o => o.id === prev.id) ?? null) : null)
       } else {
@@ -1382,6 +1391,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
           setOrders(d.orders)
           onOrdersUpdate?.(d.orders)
           setDelifastEnabled(!!d.delifastEnabled)
+          setDelifastPaused(!!d.delifastTrackingPaused)
           setUberEnabled(!!d.uberEnabled); setPedidosyaEnabled(!!d.pedidosyaEnabled)
           if (d.driverTime) setWaitTimeDriver(parseInt(d.driverTime, 10) || 20)
           setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)

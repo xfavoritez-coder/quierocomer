@@ -9,9 +9,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { getPlatformSetting } from "@/lib/platformSettings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Cache corto del flag de pausa (se consulta en cada poll de cada tarjeta).
+let pausedCache: { at: number; val: boolean } | null = null;
+async function isPaused(): Promise<boolean> {
+  if (pausedCache && Date.now() - pausedCache.at < 10_000) return pausedCache.val;
+  const val = (await getPlatformSetting("delifast_tracking_paused")) === "1";
+  pausedCache = { at: Date.now(), val };
+  return val;
+}
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -42,6 +52,9 @@ export async function GET(req: NextRequest) {
   if (order.delifastTracking) {
     return NextResponse.json({ ok: true, configured: true, tracking: order.delifastTracking, trackedAt: order.delifastTrackedAt });
   }
-  // El worker aún no cargó el seguimiento (pedido recién creado / sin viaje en Delifast).
+  // Sin seguimiento persistido. Si la sincronización (scraping) está pausada y el
+  // webhook aún no cargó datos, NO es que Delifast no asigne: es que no estamos
+  // consultando → `paused` (la UI no muestra la alerta). Si está activo → `pending`.
+  if (await isPaused()) return NextResponse.json({ ok: true, configured: true, paused: true });
   return NextResponse.json({ ok: true, configured: true, pending: true });
 }
