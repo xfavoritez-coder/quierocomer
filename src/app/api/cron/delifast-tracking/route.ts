@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig, type DelifastCreds } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastTracking, resolveDelifastVentaId } from "@/lib/delifast/client";
+import { getPlatformSetting } from "@/lib/platformSettings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,6 +74,11 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Pausa global desde /admin/ajustes (no consulta Delifast mientras esté pausado).
+  if ((await getPlatformSetting("delifast_tracking_paused")) === "1") {
+    return NextResponse.json({ ok: true, paused: true });
   }
 
   const start = Date.now();

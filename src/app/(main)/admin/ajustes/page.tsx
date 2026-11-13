@@ -52,13 +52,27 @@ export default function AjustesPage() {
   const [daLoaded, setDaLoaded] = useState(false);
   const [daSaving, setDaSaving] = useState(false);
   const [apkUploading, setApkUploading] = useState(false);
+  const [delifastPaused, setDelifastPaused] = useState(false);
+  const [delifastSaving, setDelifastSaving] = useState(false);
 
   const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
+
+  const toggleDelifastPause = async () => {
+    const val = !delifastPaused;
+    setDelifastSaving(true);
+    setDelifastPaused(val); // optimista
+    try {
+      const res = await fetch("/api/admin/platform-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ delifastTrackingPaused: val }) });
+      if (!res.ok) { toast.error("No se pudo guardar"); setDelifastPaused(!val); }
+      else toast.success(val ? "Seguimiento Delifast pausado" : "Seguimiento Delifast reanudado");
+    } catch { toast.error("Error de conexión"); setDelifastPaused(!val); }
+    setDelifastSaving(false);
+  };
 
   useEffect(() => {
     fetch("/api/admin/platform-settings")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setGoogleKey(d.googleApiKey || ""); if (d.deliveryWalletBank) setBank((p) => ({ ...p, ...d.deliveryWalletBank })); if (Array.isArray(d.deliverySurchargeTiers)) setTiers(d.deliverySurchargeTiers); } })
+      .then((d) => { if (d) { setGoogleKey(d.googleApiKey || ""); if (d.deliveryWalletBank) setBank((p) => ({ ...p, ...d.deliveryWalletBank })); if (Array.isArray(d.deliverySurchargeTiers)) setTiers(d.deliverySurchargeTiers); setDelifastPaused(d.delifastTrackingPaused === true); } })
       .catch(() => {})
       .finally(() => setKeyLoaded(true));
   }, []);
@@ -213,6 +227,32 @@ export default function AjustesPage() {
         }}>
           {keySaving ? "Guardando…" : "Guardar API keys"}
         </button>
+      </div>
+
+      {/* Seguimiento Delifast (worker) */}
+      <div style={{ background: "#1a1a1a", border: `1px solid ${delifastPaused ? "rgba(239,68,68,0.4)" : "#2A2A2A"}`, borderRadius: 14, padding: 22, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 6px" }}>Seguimiento de repartidores (Delifast)</h2>
+            <p style={{ fontSize: "0.85rem", color: "#999", lineHeight: 1.5, margin: 0 }}>
+              El worker consulta Delifast cada ~15s para actualizar el estado de los repartidores en el POS. {delifastPaused
+                ? <strong style={{ color: "#ef4444" }}>Pausado: no se está consultando a Delifast.</strong>
+                : <strong style={{ color: "#4ade80" }}>Activo.</strong>}
+              {" "}Pausa por completo esa consulta (p. ej. si Delifast falla o para bajar carga).
+            </p>
+          </div>
+          <button
+            onClick={toggleDelifastPause}
+            disabled={delifastSaving}
+            title={delifastPaused ? "Reanudar" : "Pausar"}
+            style={{ width: 54, height: 30, borderRadius: 15, border: "none", cursor: delifastSaving ? "wait" : "pointer", position: "relative", flexShrink: 0, background: delifastPaused ? "#ef4444" : "rgba(255,255,255,0.15)", transition: "background 0.2s", opacity: delifastSaving ? 0.6 : 1 }}
+          >
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: delifastPaused ? 27 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+          </button>
+        </div>
+        <p style={{ fontSize: "0.76rem", color: "#777", margin: "10px 0 0" }}>
+          {delifastPaused ? "🔴 Pausado" : "🟢 Activo"} · mientras esté pausado, el POS muestra el último estado conocido (no se actualiza).
+        </p>
       </div>
 
       {/* Datos de transferencia · Saldo para delivery */}

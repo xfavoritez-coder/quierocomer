@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
   const googleApiKey = (await getPlatformSetting("google_api_key")) || "";
   const deliveryWalletBank = await getWalletBank();
   const deliverySurchargeTiers = await getSurchargeTiers();
-  return NextResponse.json({ googleApiKey, deliveryWalletBank, deliverySurchargeTiers });
+  const delifastTrackingPaused = (await getPlatformSetting("delifast_tracking_paused")) === "1";
+  return NextResponse.json({ googleApiKey, deliveryWalletBank, deliverySurchargeTiers, delifastTrackingPaused });
 }
 
 export async function PUT(req: NextRequest) {
@@ -42,6 +43,9 @@ export async function PUT(req: NextRequest) {
   }
   if (body?.deliverySurchargeTiers !== undefined && Array.isArray(body.deliverySurchargeTiers)) {
     await setSurchargeTiers(body.deliverySurchargeTiers as SurchargeTier[]);
+  }
+  if (body?.delifastTrackingPaused !== undefined) {
+    await setPlatformSetting("delifast_tracking_paused", body.delifastTrackingPaused ? "1" : null);
   }
   return NextResponse.json({ ok: true });
 }
