@@ -162,7 +162,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const r = await prisma.restaurant.findFirst({
     where: restaurantByKey(slug),
     select: {
-      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
+      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true, appAndroidUrl: true, appIosUrl: true,
       cartaAccentColor: true, address: true, commune: true, primaryCategory: true, whatsapp: true, phone: true, instagram: true, website: true,
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
@@ -174,7 +174,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const hours = parseHours(r.ecommerceHours);
   const avail = resolveAvailability(hours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
-    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl, appAndroidUrl: store.appAndroidUrl, appIosUrl: store.appIosUrl,
+    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl, appAndroidUrl: r.appAndroidUrl ?? null, appIosUrl: r.appIosUrl ?? null,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, metaPixelId: store.metaPixelId, pageTitle: store.pageTitle, metaDescription: store.metaDescription, brandSlug: store.brandSlug,
@@ -212,7 +212,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
   const restaurant = await prisma.restaurant.findFirst({
     where: restaurantByKey(slug),
     select: {
-      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true,
+      id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true, appAndroidUrl: true, appIosUrl: true,
       cartaAccentColor: true, address: true, commune: true, whatsapp: true, phone: true, instagram: true, website: true,
       primaryCategory: true,
       owner: { select: { email: true } },
@@ -385,8 +385,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       branchName: store.branchName,
       logoUrl: store.storeLogoUrl ?? restaurant.logoUrl,
       bannerUrl: store.bannerUrl ?? restaurant.orderingBannerUrl,
-      appAndroidUrl: store.appAndroidUrl,
-      appIosUrl: store.appIosUrl,
+      appAndroidUrl: restaurant.appAndroidUrl ?? null,
+      appIosUrl: restaurant.appIosUrl ?? null,
       primaryColor: store.primaryColor,
       headerBgColor: store.headerBgColor,
       categoryColor: store.categoryColor,

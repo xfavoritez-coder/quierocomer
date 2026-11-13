@@ -385,6 +385,8 @@ model Restaurant {
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
   appEnabled                 Boolean                   @default(false) // módulo APP del panel (Resumen + Notificaciones); solo locales con app móvil
+  appAndroidUrl              String? // enlace de descarga de la app en Google Play (se usa en el menú del ecommerce)
+  appIosUrl                  String? // enlace de descarga de la app en la App Store (iPhone)
   sharkposEnabled            Boolean                   @default(false) // piloto: emitir boletas SII vía SharkPOS (solo locales sin Toteat)
   sharkposTenantId           String? // modo plataforma: id del RUT dado de alta en SharkPOS
   sharkposApiKey             String? // API key del RUT (cifrada en reposo con SECRET_ENCRYPTION_KEY); si está, emite con esta key en vez de la global

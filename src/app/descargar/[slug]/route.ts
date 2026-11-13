@@ -12,12 +12,12 @@ const esc = (s: string) => (s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;",
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const r = await prisma.restaurant.findFirst({ where: { slug }, select: { name: true, logoUrl: true, ecommerceStoreConfig: true } });
+  const r = await prisma.restaurant.findFirst({ where: { slug }, select: { name: true, logoUrl: true, appAndroidUrl: true, appIosUrl: true, ecommerceStoreConfig: true } });
   if (!r) return NextResponse.redirect("https://quierocomer.com");
 
   const cfg = parseStoreConfig(r.ecommerceStoreConfig);
-  const android = cfg.appAndroidUrl;
-  const ios = cfg.appIosUrl;
+  const android = r.appAndroidUrl;
+  const ios = r.appIosUrl;
   const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `https://quierocomer.com/ecommerce/${slug}`;
   const logo = cfg.storeLogoUrl || r.logoUrl || "";
 

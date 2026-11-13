@@ -38,8 +38,6 @@ export interface EcommerceStoreConfig {
   storeLogoUrl: string | null; // logo propio de la tienda ecommerce (null = usa el logo del local en configuración)
   faviconUrl: string | null; // favicon de la tienda y de la web de seguimiento (null = usa el logo)
   bannerUrl: string | null; // imagen de banner/hero de la tienda (tema base); null = sin banner
-  appAndroidUrl: string | null; // enlace a la app en Google Play (se muestra en el menú del ecommerce)
-  appIosUrl: string | null; // enlace a la app en la App Store (iPhone)
   gtmId: string | null; // Google Tag Manager container id (ej: "GTM-XXXXXX"); null = sin GTM
   metaPixelId: string | null; // Meta (Facebook) Pixel ID (solo dígitos, 15-16 cifras); null = sin Pixel
   pageTitle: string | null; // <title> personalizado en Google (null = "{Nombre} · Pedir online")
@@ -191,8 +189,6 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     storeLogoUrl: typeof o.storeLogoUrl === "string" && o.storeLogoUrl.trim() ? o.storeLogoUrl.trim() : null,
     faviconUrl: typeof o.faviconUrl === "string" && o.faviconUrl.trim() ? o.faviconUrl.trim() : null,
     bannerUrl: typeof o.bannerUrl === "string" && o.bannerUrl.trim() ? o.bannerUrl.trim() : null,
-    appAndroidUrl: typeof o.appAndroidUrl === "string" && o.appAndroidUrl.trim() ? o.appAndroidUrl.trim().slice(0, 400) : null,
-    appIosUrl: typeof o.appIosUrl === "string" && o.appIosUrl.trim() ? o.appIosUrl.trim().slice(0, 400) : null,
     gtmId: normalizeGtmId(o.gtmId),
     metaPixelId: typeof o.metaPixelId === "string" && o.metaPixelId.trim() ? o.metaPixelId.trim().replace(/\D/g, "").slice(0, 20) || null : null,
     pageTitle: typeof o.pageTitle === "string" && o.pageTitle.trim() ? o.pageTitle.trim().slice(0, 120) : null,
