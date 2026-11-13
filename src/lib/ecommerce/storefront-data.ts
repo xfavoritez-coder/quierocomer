@@ -238,7 +238,7 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         orderBy: { position: "asc" },
         select: {
           id: true, categoryId: true, name: true, description: true, detailedDescription: true,
-          price: true, discountPrice: true, appPrice: true, photos: true, stockCountdown: true, soldOut: true,
+          price: true, discountPrice: true, appPrice: true, appOnly: true, photos: true, stockCountdown: true, soldOut: true,
           toteatProductId: true, isHero: true, dailyBadge: true, newBadge: true, isActive: true, hideFromOrdering: true, daysOfWeek: true,
           modifierTemplates: {
             select: {
@@ -285,6 +285,11 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
   const storeCategories: StoreCategory[] = [];
   const products: StoreProduct[] = [];
 
+  // En la app, los productos solo-app o con precio exclusivo app se agrupan en una
+  // categoría "Exclusivo de la APP" que va primera (ver abajo). Marcamos sus ids.
+  const APP_EXCLUSIVE_ID = "app-exclusive";
+  const exclusiveIds = new Set<string>();
+
   for (const cat of categories) {
     // Filtro por día: Dish.daysOfWeek ("mostrar solo estos días"). En gestión de
     // carta (includeHidden) se muestran todos; en la tienda se oculta el plato los
@@ -327,9 +332,13 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         }
       }
 
+      // ¿Exclusivo de la app? (solo-app o con precio exclusivo app). Solo aplica en fromApp.
+      const isExclusive = fromApp && (d.appOnly === true || (d.appPrice != null && d.appPrice > 0));
+      if (isExclusive) exclusiveIds.add(d.id);
+
       products.push({
         id: d.id,
-        category_id: d.categoryId,
+        category_id: isExclusive ? APP_EXCLUSIVE_ID : d.categoryId,
         name: displayName,
         description: d.description,
         detailed_description: d.detailedDescription ?? null,
@@ -349,6 +358,16 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
         promo_id: activePromo?.id ?? null,
       });
     }
+  }
+
+  // App: categoría "Exclusivo de la APP" primera (solo-app + precio exclusivo app).
+  // Se quitan las categorías que quedaron sin productos tras mover los exclusivos.
+  if (fromApp && exclusiveIds.size > 0) {
+    const usedCatIds = new Set(products.filter((p) => !p.hidden).map((p) => p.category_id));
+    for (let i = storeCategories.length - 1; i >= 0; i--) {
+      if (!usedCatIds.has(storeCategories[i].id)) storeCategories.splice(i, 1);
+    }
+    storeCategories.unshift({ id: APP_EXCLUSIVE_ID, name: "Exclusivo de la APP", position: -1 });
   }
 
   const fallbackMethods = (restaurant.orderingPaymentMethods || "").split(",").map((s) => s.trim()).filter(Boolean);
