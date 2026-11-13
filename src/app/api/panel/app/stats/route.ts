@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     prisma.dish.count({ where: { restaurantId, deletedAt: null, OR: [{ appOnly: true }, { appPrice: { gt: 0 } }] } }),
     prisma.onlineOrder.findMany({
       where: { restaurantId, source: "ecommerce", createdAt: { gte: from }, status: { notIn: CANCELLED } },
-      select: { fromApp: true, total: true, createdAt: true },
+      select: { fromApp: true, total: true, createdAt: true, items: true, customerPhone: true },
     }),
     prisma.appPushLog.findMany({ where: { restaurantId }, orderBy: { createdAt: "desc" }, take: 10, select: { title: true, sent: true, total: true, createdAt: true } }),
   ]);
@@ -48,13 +48,30 @@ export async function GET(req: NextRequest) {
   let appOrders = 0, appRevenue = 0, webOrders = 0, webRevenue = 0;
   const byDay = new Map<string, { app: number; web: number }>();
   for (let i = days - 1; i >= 0; i--) byDay.set(ymd(new Date(Date.now() - i * 864e5)), { app: 0, web: 0 });
+  // Top productos + compradores únicos (solo pedidos de la app).
+  const prodMap = new Map<string, { name: string; qty: number; revenue: number }>();
+  const appBuyers = new Set<string>();
   for (const o of orders) {
     const k = ymd(o.createdAt);
     const slot = byDay.get(k);
-    if (o.fromApp) { appOrders++; appRevenue += o.total || 0; if (slot) slot.app++; }
-    else { webOrders++; webRevenue += o.total || 0; if (slot) slot.web++; }
+    if (o.fromApp) {
+      appOrders++; appRevenue += o.total || 0; if (slot) slot.app++;
+      if (o.customerPhone) appBuyers.add(o.customerPhone);
+      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      for (const it of items) {
+        const name = String(it?.dishName || it?.name || "Ítem").trim() || "Ítem";
+        const key = String(it?.product_id || name);
+        const qty = Math.max(1, Math.round(Number(it?.quantity) || 1));
+        const rev = (Number(it?.unitTotal ?? it?.unit_price) || 0) * qty;
+        const cur = prodMap.get(key) || { name, qty: 0, revenue: 0 };
+        cur.qty += qty; cur.revenue += rev; cur.name = name;
+        prodMap.set(key, cur);
+      }
+    } else { webOrders++; webRevenue += o.total || 0; if (slot) slot.web++; }
   }
   const totalOrders = appOrders + webOrders;
+  const topProducts = Array.from(prodMap.values()).sort((a, b) => b.qty - a.qty).slice(0, 5);
+  const conversionPct = totalDev ? Math.round((appBuyers.size / totalDev) * 100) : 0;
 
   return NextResponse.json({
     days,
@@ -65,6 +82,8 @@ export async function GET(req: NextRequest) {
       total: totalOrders, appSharePct: totalOrders ? Math.round((appOrders / totalOrders) * 100) : 0,
       series: Array.from(byDay.entries()).map(([date, v]) => ({ date, ...v })),
     },
+    conversion: { buyers: appBuyers.size, devices: totalDev, pct: conversionPct },
+    topProducts,
     exclusiveProducts: exclusives,
     notifications: notifs,
   });

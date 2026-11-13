@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send } from "lucide-react";
+import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -13,6 +13,8 @@ interface Stats {
   days: number;
   devices: { total: number; ios: number; android: number; optedIn: number; new: number; active: number };
   orders: { app: number; appRevenue: number; appAov: number; web: number; webRevenue: number; webAov: number; total: number; appSharePct: number; series: { date: string; app: number; web: number }[] };
+  conversion: { buyers: number; devices: number; pct: number };
+  topProducts: { name: string; qty: number; revenue: number }[];
   exclusiveProducts: number;
   notifications: { title: string; sent: number; total: number; createdAt: string }[];
 }
@@ -72,6 +74,7 @@ export default function AppResumenPage() {
             <Tile icon={<ShoppingBag size={16} />} label={`Pedidos app (${days}d)`} value={s.orders.app} sub={`${s.orders.appSharePct}% del total`} accent />
             <Tile icon={<ShoppingBag size={16} />} label="Ingresos app" value={clp(s.orders.appRevenue)} sub="ventas desde la app" accent />
             <Tile icon={<ShoppingBag size={16} />} label="Ticket prom. app" value={clp(s.orders.appAov)} sub={`web: ${clp(s.orders.webAov)}`} />
+            <Tile icon={<Target size={16} />} label="Conversión" value={`${s.conversion.pct}%`} sub={`${s.conversion.buyers} compradores · ${s.conversion.devices} disp.`} />
             <Tile icon={<Sparkles size={16} />} label="Productos exclusivos" value={s.exclusiveProducts} sub="solo-app o precio app" />
           </div>
 
@@ -84,6 +87,34 @@ export default function AppResumenPage() {
               </span>
             </div>
             <OrdersChart series={s.orders.series} />
+          </div>
+
+          {/* Top productos pedidos desde la app */}
+          <div style={card}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Trophy size={17} color={BRAND} />
+              <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Top productos pedidos desde la app</span>
+            </div>
+            {s.topProducts.length === 0 ? (
+              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Aún no hay pedidos desde la app en este período.</p>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                {(() => { const maxQty = Math.max(1, ...s.topProducts.map((p) => p.qty)); return s.topProducts.map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ width: 22, height: 22, borderRadius: 7, flexShrink: 0, background: i === 0 ? BRAND : "var(--adm-hover)", color: i === 0 ? "#fff" : "var(--adm-text2)", fontFamily: F, fontSize: "0.74rem", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 600, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                        <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text2)", flexShrink: 0 }}>{p.qty} u · {clp(p.revenue)}</span>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 999, background: "var(--adm-hover)", overflow: "hidden" }}>
+                        <div style={{ width: `${Math.round((p.qty / maxQty) * 100)}%`, height: "100%", background: BRAND, borderRadius: 999 }} />
+                      </div>
+                    </div>
+                  </div>
+                )); })()}
+              </div>
+            )}
           </div>
 
           {/* Notificaciones recientes */}
@@ -132,18 +163,28 @@ function OrdersChart({ series }: { series: { date: string; app: number; web: num
   const max = Math.max(1, ...series.map((d) => d.app + d.web));
   const n = series.length;
   const gap = n > 45 ? 1 : 2;
+  const dm = (ymd: string) => { const [, m, d] = ymd.split("-"); return `${Number(d)}/${Number(m)}`; };
+  // ~5 fechas repartidas (primera, cuartos, última) para no amontonar.
+  const idxs = n <= 1 ? [0] : Array.from(new Set([0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1].map((i) => Math.min(n - 1, Math.max(0, i)))));
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap, height: 120 }}>
-      {series.map((d, i) => {
-        const appH = (d.app / max) * 100;
-        const webH = (d.web / max) * 100;
-        return (
-          <div key={i} title={`${d.date}: app ${d.app} · web ${d.web}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", minWidth: 2 }}>
-            <div style={{ height: `${webH}%`, background: "#cbd5e1", borderRadius: "3px 3px 0 0" }} />
-            <div style={{ height: `${appH}%`, background: BRAND, borderRadius: webH > 0 ? 0 : "3px 3px 0 0" }} />
-          </div>
-        );
-      })}
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap, height: 120 }}>
+        {series.map((d, i) => {
+          const appH = (d.app / max) * 100;
+          const webH = (d.web / max) * 100;
+          return (
+            <div key={i} title={`${dm(d.date)}: app ${d.app} · web ${d.web}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", minWidth: 2 }}>
+              <div style={{ height: `${webH}%`, background: "#cbd5e1", borderRadius: "3px 3px 0 0" }} />
+              <div style={{ height: `${appH}%`, background: BRAND, borderRadius: webH > 0 ? 0 : "3px 3px 0 0" }} />
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        {idxs.map((i) => (
+          <span key={i} style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{dm(series[i].date)}</span>
+        ))}
+      </div>
     </div>
   );
 }
