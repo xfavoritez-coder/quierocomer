@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, MapPin, LogOut, Camera, Globe, Mail, RotateCcw, QrCode } from "lucide-react";
+import { X, ChevronRight, ChevronDown, ArrowLeft, User, ClipboardList, Heart, MessageCircle, MapPin, LogOut, Camera, Globe, Mail, RotateCcw, QrCode, Download } from "lucide-react";
 import { toast } from "sonner";
 import type { StoreTenant, StoreProduct } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItemOption } from "@/lib/ecommerce/cart-store";
@@ -18,6 +18,9 @@ type View = CustomerMenuView;
 
 export default function CustomerMenu({ tenant, primaryColor, onClose, side = "right", products = [], initialView = "root", variant = "drawer", initialLoginExpanded = false }: { tenant: StoreTenant; primaryColor: string; onClose: () => void; side?: "left" | "right"; products?: StoreProduct[]; initialView?: CustomerMenuView; variant?: "drawer" | "sheet" | "modern"; initialLoginExpanded?: boolean }) {
   const [view, setView] = useState<View>(initialView);
+  // Enlaces de descarga de la app: solo en la WEB (dentro de la app no tiene sentido).
+  const [showAppLinks, setShowAppLinks] = useState(false);
+  useEffect(() => { try { if (!(window as any).Capacitor?.isNativePlatform?.()) setShowAppLinks(true); } catch { /* noop */ } }, []);
   const sheet = variant === "sheet" || variant === "modern";
   const { closing, requestClose } = useCloseAnimation(onClose);
   const panelAnim = sheet
@@ -166,6 +169,20 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
                   <a href={`https://quierocomer.com/qr/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition text-left">
                     <span style={{ color: primaryColor }}><QrCode className="w-5 h-5" /></span>
                     <span className="flex-1 text-sm font-bold text-gray-800">Carta mesa</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  </a>
+                )}
+                {showAppLinks && tenant.appAndroidUrl && (
+                  <a href={tenant.appAndroidUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition text-left">
+                    <span style={{ color: primaryColor }}><Download className="w-5 h-5" /></span>
+                    <span className="flex-1 text-sm font-bold text-gray-800">Descargar app para Android</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  </a>
+                )}
+                {showAppLinks && tenant.appIosUrl && (
+                  <a href={tenant.appIosUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition text-left">
+                    <span style={{ color: primaryColor }}><Download className="w-5 h-5" /></span>
+                    <span className="flex-1 text-sm font-bold text-gray-800">Descargar app para iPhone</span>
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </a>
                 )}

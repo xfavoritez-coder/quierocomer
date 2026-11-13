@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy } from "lucide-react";
+import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy, Download } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -34,6 +34,31 @@ export default function AppResumenPage() {
   const [days, setDays] = useState(30);
   const [s, setS] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  // Enlaces de descarga de la app (se guardan en la config de la tienda).
+  const [android, setAndroid] = useState("");
+  const [ios, setIos] = useState("");
+  const [linksSaving, setLinksSaving] = useState(false);
+  const [linksMsg, setLinksMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/panel/app/links?restaurantId=${restaurantId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) { setAndroid(d.appAndroidUrl || ""); setIos(d.appIosUrl || ""); } })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  async function saveLinks() {
+    setLinksSaving(true); setLinksMsg(null);
+    try {
+      const r = await fetch(`/api/panel/app/links`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, appAndroidUrl: android.trim(), appIosUrl: ios.trim() }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setLinksMsg(d.error || "No se pudo guardar"); return; }
+      setAndroid(d.appAndroidUrl || ""); setIos(d.appIosUrl || "");
+      setLinksMsg("✓ Enlaces guardados");
+    } catch { setLinksMsg("Error de conexión"); }
+    finally { setLinksSaving(false); }
+  }
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -61,6 +86,29 @@ export default function AppResumenPage() {
           {[7, 30, 90].map((d) => (
             <button key={d} onClick={() => setDays(d)} style={{ padding: "7px 13px", border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.8rem", fontWeight: 700, background: days === d ? BRAND : "transparent", color: days === d ? "#fff" : "var(--adm-text2)" }}>{d}d</button>
           ))}
+        </div>
+      </div>
+
+      {/* Enlaces de descarga de la app (se usan en el menú del ecommerce) */}
+      <div style={card}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <Download size={17} color={BRAND} />
+          <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Enlaces de descarga de la app</span>
+        </div>
+        <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Pega aquí los enlaces de tu app. Aparecerán en el menú del ecommerce como “Descargar app para Android / iPhone”.</p>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 5 }}>Google Play (Android)</label>
+            <input value={android} onChange={(e) => setAndroid(e.target.value)} placeholder="https://play.google.com/store/apps/details?id=..." style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 5 }}>App Store (iPhone)</label>
+            <input value={ios} onChange={(e) => setIos(e.target.value)} placeholder="https://apps.apple.com/cl/app/..." style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={saveLinks} disabled={linksSaving} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: BRAND, color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: linksSaving ? "default" : "pointer", opacity: linksSaving ? 0.6 : 1 }}>{linksSaving ? "Guardando…" : "Guardar enlaces"}</button>
+            {linksMsg && <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: linksMsg.startsWith("✓") ? "#16a34a" : "#ef4444" }}>{linksMsg}</span>}
+          </div>
         </div>
       </div>
 

@@ -20,6 +20,8 @@ export interface StoreTenant {
   branchName: string | null; // nombre de sucursal dentro de la marca (ej. "Recoleta")
   logoUrl: string | null;
   bannerUrl: string | null;
+  appAndroidUrl: string | null; // enlace a la app en Google Play (menú del ecommerce)
+  appIosUrl: string | null; // enlace a la app en App Store (iPhone)
   primaryColor: string;
   headerBgColor: string;
   categoryColor: string;
@@ -172,7 +174,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
   const hours = parseHours(r.ecommerceHours);
   const avail = resolveAvailability(hours, { deliveryEnabled: store.deliveryEnabled, pickupEnabled: store.pickupEnabled });
   return {
-    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl,
+    id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl, appAndroidUrl: store.appAndroidUrl, appIosUrl: store.appIosUrl,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
     instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, metaPixelId: store.metaPixelId, pageTitle: store.pageTitle, metaDescription: store.metaDescription, brandSlug: store.brandSlug,
@@ -383,6 +385,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       branchName: store.branchName,
       logoUrl: store.storeLogoUrl ?? restaurant.logoUrl,
       bannerUrl: store.bannerUrl ?? restaurant.orderingBannerUrl,
+      appAndroidUrl: store.appAndroidUrl,
+      appIosUrl: store.appIosUrl,
       primaryColor: store.primaryColor,
       headerBgColor: store.headerBgColor,
       categoryColor: store.categoryColor,
