@@ -195,6 +195,9 @@ function PosCourierActions({ order, restaurantId, uberEnabled, pedidosyaEnabled,
   order: PosOrderLite; restaurantId: string; uberEnabled: boolean; pedidosyaEnabled: boolean; onChanged: () => void
 }) {
   const [busy, setBusy] = useState(false)
+  const [quoting, setQuoting] = useState(false)
+  type Quote = { fee: number | null; surcharge: number; total: number; durationMin: number | null; quoteId: string | null; balance: number; sufficient: boolean }
+  const [quote, setQuote] = useState<Quote | null>(null)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
   const hasUber = !!order.uberDeliveryId
   const hasPya = !!order.pyaShippingId
@@ -203,17 +206,21 @@ function PosCourierActions({ order, restaurantId, uberEnabled, pedidosyaEnabled,
   const canceled = order.posStatus === 'canceled'
 
   async function reqUber() {
-    setBusy(true)
+    setQuoting(true)
     try {
       const q = await fetch(`/api/panel/ecommerce/pos-orders/uber?restaurantId=${restaurantId}&id=${order.id}`).then(r => r.json()).catch(() => null)
       if (!q || q.error) { window.alert(q?.error || 'No se pudo cotizar el despacho Uber'); return }
-      const total = q.total ?? q.fee ?? 0
-      if (q.sufficient === false) { window.alert(`Saldo insuficiente para el despacho Uber (${clp(total)}). Recarga tu saldo para delivery.`); return }
-      if (!window.confirm(`Despacho Uber: ${clp(total)}${q.durationMin ? ` · ~${q.durationMin} min` : ''}.\n¿Solicitar repartidor?`)) return
-      const r = await fetch('/api/panel/ecommerce/pos-orders/uber', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: order.id, quoteId: q.quoteId, fee: q.fee }) })
+      setQuote({ fee: q.fee ?? null, surcharge: q.surcharge ?? 0, total: q.total ?? (q.fee ?? 0), durationMin: q.durationMin ?? null, quoteId: q.quoteId ?? null, balance: q.balance ?? 0, sufficient: q.sufficient !== false })
+    } catch { window.alert('Error de conexión al cotizar') } finally { setQuoting(false) }
+  }
+  async function confirmUber() {
+    if (!quote) return
+    setBusy(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/uber', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: order.id, quoteId: quote.quoteId, fee: quote.fee }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { window.alert(d.error || 'No se pudo solicitar Uber'); return }
-      onChanged()
+      setQuote(null); onChanged()
     } catch { window.alert('Error de conexión') } finally { setBusy(false) }
   }
   async function reqPya() {
@@ -249,11 +256,63 @@ function PosCourierActions({ order, restaurantId, uberEnabled, pedidosyaEnabled,
   }
 
   if (!stageOk || !(uberEnabled || pedidosyaEnabled)) return null
-  const btn: React.CSSProperties = { fontSize: 13, fontWeight: 800, padding: '7px 14px', borderRadius: 8, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }
+  const bus = busy || quoting
+  const btn: React.CSSProperties = { fontSize: 13, fontWeight: 800, padding: '7px 14px', borderRadius: 8, border: 'none', cursor: bus ? 'default' : 'pointer', opacity: bus ? 0.6 : 1, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }
   return (
-    <div style={{ display: 'inline-flex', gap: 6, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-      {uberEnabled && <button onClick={reqUber} disabled={busy} style={{ ...btn, background: '#111' }}>🛵 Uber</button>}
-      {pedidosyaEnabled && <button onClick={reqPya} disabled={busy} style={{ ...btn, background: '#D52B1E' }}>🛵 PedidosYa</button>}
+    <>
+      <div style={{ display: 'inline-flex', gap: 6, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        {uberEnabled && <button onClick={reqUber} disabled={bus} style={{ ...btn, background: '#111' }}>{quoting ? 'Cotizando…' : '🛵 Uber'}</button>}
+        {pedidosyaEnabled && <button onClick={reqPya} disabled={bus} style={{ ...btn, background: '#D52B1E' }}>🛵 PedidosYa</button>}
+      </div>
+      {quote && <UberQuoteModal order={order} quote={quote} busy={busy} onConfirm={confirmUber} onClose={() => setQuote(null)} />}
+    </>
+  )
+}
+
+// Modal de cotización de Uber Direct (estilo POS QuieroComer).
+function UberQuoteModal({ order, quote, busy, onConfirm, onClose }: {
+  order: PosOrderLite
+  quote: { fee: number | null; surcharge: number; total: number; durationMin: number | null; balance: number; sufficient: boolean }
+  busy: boolean
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  const ref = order.orderReference || (order.dailyNumber != null ? `#${order.dailyNumber}` : order.customerName)
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 360, background: 'var(--surface)', borderRadius: 16, padding: 22, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', fontFamily: 'var(--sans)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <span style={{ width: 30, height: 30, borderRadius: 7, background: '#000', color: '#fff', fontSize: 15, fontWeight: 900, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>U</span>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)' }}>Repartidor de Uber</div>
+        </div>
+        <div style={{ background: 'var(--sunk)', borderRadius: 12, padding: 16, textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 4 }}>{quote.surcharge > 0 ? 'Total a descontar' : 'Costo del despacho'}</div>
+          <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--mono)' }}>{quote.fee != null ? clp(quote.total) : '—'}</div>
+          {quote.surcharge > 0 && quote.fee != null && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8, fontSize: 12, color: 'var(--ink-3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Despacho (courier)</span><span>{clp(quote.fee)}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Recargo plataforma</span><span>{clp(quote.surcharge)}</span></div>
+            </div>
+          )}
+          {quote.durationMin != null && <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 8 }}>🛵 Llega al local en ~{quote.durationMin} min</div>}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--ink-4)', textAlign: 'center', marginBottom: 12 }}>Pedido {ref}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, background: quote.sufficient ? 'var(--sunk)' : 'rgba(239,68,68,0.1)', marginBottom: 14 }}>
+          <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>Saldo para delivery</span>
+          <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--mono)', color: quote.sufficient ? 'var(--ink)' : '#dc2626' }}>{clp(quote.balance)}</span>
+        </div>
+        {!quote.sufficient && (
+          <div style={{ fontSize: 13, color: '#dc2626', textAlign: 'center', marginBottom: 12, fontWeight: 600 }}>
+            Saldo insuficiente para este despacho. Recarga tu saldo para delivery.
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} disabled={busy} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={onConfirm} disabled={busy || !quote.sufficient} style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: quote.sufficient ? '#000' : '#9ca3af', color: '#fff', fontSize: 14, fontWeight: 800, cursor: busy || !quote.sufficient ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+            {busy ? 'Solicitando…' : 'Solicitar repartidor'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
