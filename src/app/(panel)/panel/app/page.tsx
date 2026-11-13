@@ -39,9 +39,11 @@ export default function AppResumenPage() {
   const [ios, setIos] = useState("");
   const [linksSaving, setLinksSaving] = useState(false);
   const [linksMsg, setLinksMsg] = useState<string | null>(null);
-  const [copied, setCopied] = useState<"android" | "ios" | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const slug = session?.restaurants.find((r) => r.id === restaurantId)?.slug || "";
+  const smartLink = slug ? `https://quierocomer.com/descargar/${slug}` : "";
 
-  async function copy(text: string, key: "android" | "ios") {
+  async function copy(text: string, key: string) {
     const val = (text || "").trim();
     if (!val) return;
     try {
@@ -128,6 +130,18 @@ export default function AppResumenPage() {
             <button onClick={saveLinks} disabled={linksSaving} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: BRAND, color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: linksSaving ? "default" : "pointer", opacity: linksSaving ? 0.6 : 1 }}>{linksSaving ? "Guardando…" : "Guardar enlaces"}</button>
             {linksMsg && <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: linksMsg.startsWith("✓") ? "#16a34a" : "#ef4444" }}>{linksMsg}</span>}
           </div>
+
+          {/* Enlace único inteligente: detecta el SO y lleva a la tienda correcta */}
+          {smartLink && (android.trim() || ios.trim()) && (
+            <div style={{ marginTop: 4, padding: "12px 14px", borderRadius: 12, background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.3)" }}>
+              <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: BRAND, marginBottom: 2 }}>🔗 Enlace único (detecta Android / iPhone)</div>
+              <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 10px" }}>Comparte este enlace donde quieras (redes, WhatsApp, bio): abre la tienda correcta según el teléfono del cliente.</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input readOnly value={smartLink} onFocus={(e) => e.currentTarget.select()} style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.84rem" }} />
+                <CopyBtn disabled={false} copied={copied === "smart"} onClick={() => copy(smartLink, "smart")} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
