@@ -1328,6 +1328,23 @@ model OrderPushSubscription {
   @@index([restaurantId])
 }
 
+// Dispositivos de la app (Capacitor) de los CLIENTES, para enviar notificaciones
+// push (promos). Se registra/actualiza el token en cada apertura de la app.
+// Sin relación a Restaurant (tabla creada por SQL crudo en prod; ver memoria raw-SQL).
+model AppDevice {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  platform      String // "ios" | "android"
+  token         String   @unique
+  customerPhone String?
+  optedIn       Boolean  @default(true)
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([restaurantId])
+  @@index([restaurantId, optedIn])
+}
+
 model GuestProfile {
   id                  String         @id
   createdAt           DateTime       @default(now())

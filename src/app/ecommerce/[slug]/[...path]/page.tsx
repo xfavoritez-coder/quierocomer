@@ -12,6 +12,7 @@ import GtmScript from "@/components/ecommerce/GtmScript";
 import MetaPixelScript from "@/components/ecommerce/MetaPixelScript";
 import StorePwa from "@/components/ecommerce/StorePwa";
 import AppFlagSync from "@/components/ecommerce/AppFlagSync";
+import AppPushRegister from "@/components/ecommerce/AppPushRegister";
 import StoreJsonLd from "@/components/ecommerce/StoreJsonLd";
 import PageHitTracker from "@/components/PageHitTracker";
 
@@ -119,7 +120,7 @@ export default async function EcommerceProductPage({ params }: { params: Promise
   const metaPixel = <MetaPixelScript id={data.tenant.metaPixelId} />;
   const pwa = <StorePwa enabled={basePath === ""} />;
   const hit = <PageHitTracker restaurantId={data.tenant.id} page="ecommerce" />;
-  const appSync = <AppFlagSync active={fromApp} />;
+  const appSync = <>{<AppFlagSync active={fromApp} />}{fromApp && <AppPushRegister restaurantId={data.tenant.id} />}</>;
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
 
   if (data.tenant.theme === "modern") {
