@@ -36,6 +36,46 @@ function restaurantFromLocal(localId?: string | null): string | null {
   }
 }
 
+// Construye el objeto de seguimiento (DelifastTracking) desde el webhook de
+// Delifast, si trae los datos ricos (repartidor, ETA, PIN, ubicación, foto de
+// entrega, timestamps). Tolerante: acepta objeto anidado o campos sueltos.
+function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: string | null; estado?: string | null }): Record<string, unknown> | null {
+  const g = (k: string) => body[k];
+  const rep = (body.repartidor && typeof body.repartidor === "object" ? body.repartidor : {}) as Record<string, unknown>;
+  const ubi = (body.ubicacion && typeof body.ubicacion === "object" ? body.ubicacion : {}) as Record<string, unknown>;
+  const ts = (body.timestamps && typeof body.timestamps === "object" ? body.timestamps : {}) as Record<string, unknown>;
+  const s = (v: unknown) => (v != null && String(v).trim() !== "" ? String(v).trim() : null);
+  const num = (v: unknown) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+
+  const driverName = s(rep.nombre ?? g("repartidor_nombre") ?? (typeof g("repartidor") === "string" ? g("repartidor") : null));
+  const driverPhone = s(rep.telefono ?? g("repartidor_telefono") ?? g("telefono"));
+  const driverPhoto = s(rep.foto ?? g("repartidor_foto") ?? g("foto"));
+  const lat = num(ubi.lat ?? g("lat"));
+  const lng = num(ubi.lng ?? g("lng"));
+  const eta = s(g("eta") ?? (g("eta_min") != null ? `${g("eta_min")} min` : null));
+  const pin = s(g("pin") ?? g("pincode"));
+  const pod = s(g("foto_entrega") ?? g("dropoff_imagen"));
+  const url = s(g("url_seguimiento") ?? g("url_status"));
+
+  const hasAny = driverName || driverPhone || driverPhoto || lat != null || eta || pin || pod || url || Object.keys(ts).length;
+  if (!hasAny) return null;
+
+  return {
+    idVenta: meta.idVenta,
+    status: s(meta.estado) ?? null,
+    eta, dropoffEta: s(g("eta_cliente")) ?? null, pin,
+    driver: (driverName || driverPhone || driverPhoto) ? { name: driverName, photo: driverPhoto, phone: driverPhone } : null,
+    location: lat != null && lng != null ? { lat, lng, at: new Date().toISOString() } : null,
+    deliveryPhoto: pod,
+    statusUrl: url,
+    timeline: {
+      confirmacion: s(ts.asignado), inicioPickup: s(ts.recogido), llegadaLocal: s(ts.en_local),
+      inicioDropoff: s(ts.en_camino), entregado: s(ts.entregado), cancelado: s(ts.cancelado),
+    },
+    source: "webhook",
+  };
+}
+
 function toOpsStage(estado?: string | null): string | null {
   const e = (estado || "").toLowerCase();
   if (/entregad/.test(e)) return "delivered";
@@ -152,6 +192,15 @@ export async function POST(req: NextRequest) {
     stageChanged = true;
     if (nextStage === "out_for_delivery") patch.opsDispatchedAt = now;
     if (nextStage === "delivered") patch.opsDeliveredAt = now;
+  }
+
+  // Seguimiento rico (si el webhook lo trae) → se persiste y el POS lo lee de la BD
+  // sin raspar el panel de Delifast.
+  const rich = trackingFromWebhook(body, { idVenta, estado });
+  if (rich) {
+    patch.delifastTracking = rich as object;
+    patch.delifastStatus = estado ?? (rich.status as string | null) ?? null;
+    patch.delifastTrackedAt = now;
   }
 
   if (Object.keys(patch).length === 0) {
