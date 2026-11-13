@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt, MonitorPlay, Wallet, Activity } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, ChevronDown, ChevronRight, X, LogOut, BarChart3, Bell, ContactRound, UsersRound, Store, UserCog, Megaphone, Settings, Sun, Moon, Printer, Calculator, HelpCircle, ShoppingCart, Gift, Menu as MenuIcon, CreditCard, Scan, Star, QrCode, ClipboardList, Users, TrendingUp, Landmark, Rocket, ShoppingBag, ConciergeBell, Warehouse, Truck, ClipboardCheck, ListChecks, Bike, Navigation, Receipt, MonitorPlay, Wallet, Activity, Smartphone } from "lucide-react";
 import { usePanelLang } from "@/lib/i18n/panel";
 
 const F = "var(--font-display)";
@@ -104,9 +104,17 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Tag, labelKey: "nav_ecommerce_coupons", href: `${base}/ecommerce/cupones` },
         { icon: Star, labelKey: "nav_ecommerce_surveys", href: `${base}/ecommerce/encuestas` },
         { icon: ContactRound, labelKey: "nav_ecommerce_customers", href: `${base}/ecommerce/clientes` },
-        { icon: Bell, labelKey: "nav_ecommerce_notifications", href: `${base}/ecommerce/notificaciones` },
         { icon: BarChart3, labelKey: "nav_ecommerce_reports", href: `${base}/ecommerce/reportes` },
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
+      ],
+    }] : []),
+    ...(opts.hasEcommerce ? [{
+      key: "app",
+      label: "APP",
+      icon: Smartphone,
+      items: [
+        { icon: Activity, labelKey: "nav_app_summary", href: `${base}/app` },
+        { icon: Bell, labelKey: "nav_ecommerce_notifications", href: `${base}/app/notificaciones` },
       ],
     }] : []),
     ...(opts.hasPos ? [{

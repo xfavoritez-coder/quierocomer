@@ -76,5 +76,8 @@ export async function POST(req: NextRequest) {
     await prisma.appDevice.updateMany({ where: { id: { in: invalidIds } }, data: { optedIn: false } }).catch(() => {});
   }
 
+  // Historial para el panel APP.
+  await prisma.appPushLog.create({ data: { restaurantId, title: payload.title, body: payload.body, url, sent, failed, total: devices.length } }).catch(() => {});
+
   return NextResponse.json({ ok: true, sent, failed, invalid: invalidIds.length, total: devices.length });
 }

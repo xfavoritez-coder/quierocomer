@@ -1345,6 +1345,21 @@ model AppDevice {
   @@index([restaurantId, optedIn])
 }
 
+// Historial de notificaciones push promocionales enviadas (para el panel APP).
+model AppPushLog {
+  id           String   @id @default(cuid())
+  restaurantId String
+  title        String
+  body         String
+  url          String?
+  sent         Int      @default(0)
+  failed       Int      @default(0)
+  total        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([restaurantId, createdAt])
+}
+
 model GuestProfile {
   id                  String         @id
   createdAt           DateTime       @default(now())
