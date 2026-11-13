@@ -567,6 +567,9 @@ model PosOrder {
   vendorName      String?
   orderReference  String?
   delifastVentaId String? // id_venta de Delifast, para mapear sus cambios de estado
+  delifastTracking   Json? // seguimiento Delifast persistido por el worker (repartidor, estado, ETA, timeline). La UI lo lee de aquí, sin raspar por pantalla.
+  delifastStatus     String? // estado crudo del viaje Delifast (para consultas rápidas)
+  delifastTrackedAt  DateTime? // última actualización del tracking por el worker
 
   items      Json? // líneas normalizadas del pedido
   rawPayload Json? // payload crudo de Toteat (para depurar/reprocesar)

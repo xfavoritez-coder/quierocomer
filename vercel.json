@@ -29,6 +29,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/delifast-tracking",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/ecommerce-scheduled-release",
       "schedule": "* * * * *"
     },
