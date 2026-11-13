@@ -18,8 +18,7 @@ import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastCodigoOrigen } from "@/lib/delifast/client";
 import { getPlatformSetting } from "@/lib/platformSettings";
-
-const STAGE_ORDER: Record<string, number> = { preparing: 0, ready: 1, out_for_delivery: 2, delivered: 3 };
+import { STAGE_ORDER, toOpsStage } from "@/lib/delifast/status";
 
 // Cache negativo: id_venta de Delifast que NO corresponde a un pedido nuestro
 // (codigo_origen vacío). Evita re-consultar el detalle en cada evento repetido.
@@ -75,13 +74,6 @@ function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: str
     },
     source: "webhook",
   };
-}
-
-function toOpsStage(estado?: string | null): string | null {
-  const e = (estado || "").toLowerCase();
-  if (/entregad/.test(e)) return "delivered";
-  if (/camino|reparto|retirad|despach|ruta/.test(e)) return "out_for_delivery";
-  return null; // confirmada / asignado / otros → no cambia opsStage
 }
 
 export async function POST(req: NextRequest) {

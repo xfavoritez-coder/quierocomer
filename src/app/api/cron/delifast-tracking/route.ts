@@ -13,6 +13,8 @@ import { parseEcommerceConfig, type DelifastCreds } from "@/lib/ecommerce/config
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastTracking, resolveDelifastVentaId } from "@/lib/delifast/client";
 import { getPlatformSetting } from "@/lib/platformSettings";
+import { STAGE_ORDER, toOpsStage } from "@/lib/delifast/status";
+import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +32,7 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
       createdAt: { gte: since },
       OR: [{ delifastVentaId: { not: null } }, { orderReference: { not: null } }],
     },
-    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true, delifastTracking: true, delifastTrackedAt: true },
+    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true, opsStage: true, delifastTracking: true, delifastTrackedAt: true },
     orderBy: { createdAt: "desc" },
     take: 400,
   });
@@ -66,10 +68,26 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
         }
         if (!idVenta) return;
         const tracking = await getDelifastTracking(o.restaurantId, creds, idVenta);
-        await prisma.posOrder.update({
-          where: { id: o.id },
-          data: { delifastTracking: (tracking ?? Prisma.JsonNull) as object, delifastStatus: tracking?.status ?? null, delifastTrackedAt: new Date() },
+        const data: Record<string, unknown> = {
+          delifastTracking: (tracking ?? Prisma.JsonNull) as object,
+          delifastStatus: tracking?.status ?? null,
+          delifastTrackedAt: new Date(),
+        };
+        // Avanzar opsStage según el estado del viaje (como hacía el worker Pusher).
+        // Solo hacia adelante, nunca retrocede. Así, sin Pusher, el POS igual auto-avanza.
+        const next = toOpsStage(tracking?.status);
+        let advanced = false;
+        if (next && (STAGE_ORDER[next] ?? 0) > (STAGE_ORDER[o.opsStage] ?? 0)) {
+          data.opsStage = next;
+          if (next === "out_for_delivery") data.opsDispatchedAt = new Date();
+          if (next === "delivered") data.opsDeliveredAt = new Date();
+          advanced = true;
+        }
+        const res = await prisma.posOrder.update({
+          where: { id: o.id }, data,
+          select: { restaurantId: true, externalId: true, opsStage: true, posStatus: true },
         });
+        if (advanced) void syncOnlineOrderFromPos(res).catch(() => {}); // sincroniza OnlineOrder + push al cliente
         updated++;
       } catch { /* un pedido que falle no detiene la pasada */ }
     }));
