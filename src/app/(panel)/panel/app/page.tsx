@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy, Download } from "lucide-react";
+import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy, Download, Copy, Check } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -39,6 +39,19 @@ export default function AppResumenPage() {
   const [ios, setIos] = useState("");
   const [linksSaving, setLinksSaving] = useState(false);
   const [linksMsg, setLinksMsg] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"android" | "ios" | null>(null);
+
+  async function copy(text: string, key: "android" | "ios") {
+    const val = (text || "").trim();
+    if (!val) return;
+    try {
+      await navigator.clipboard.writeText(val);
+    } catch {
+      const ta = document.createElement("textarea"); ta.value = val; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch { /* noop */ } ta.remove();
+    }
+    setCopied(key); setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500);
+  }
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -99,11 +112,17 @@ export default function AppResumenPage() {
         <div style={{ display: "grid", gap: 10 }}>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 5 }}>Google Play (Android)</label>
-            <input value={android} onChange={(e) => setAndroid(e.target.value)} placeholder="https://play.google.com/store/apps/details?id=..." style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={android} onChange={(e) => setAndroid(e.target.value)} placeholder="https://play.google.com/store/apps/details?id=..." style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+              <CopyBtn disabled={!android.trim()} copied={copied === "android"} onClick={() => copy(android, "android")} />
+            </div>
           </div>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 5 }}>App Store (iPhone)</label>
-            <input value={ios} onChange={(e) => setIos(e.target.value)} placeholder="https://apps.apple.com/cl/app/..." style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <input value={ios} onChange={(e) => setIos(e.target.value)} placeholder="https://apps.apple.com/cl/app/..." style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-hover)", color: "var(--adm-text)", fontFamily: FB, fontSize: "0.86rem" }} />
+              <CopyBtn disabled={!ios.trim()} copied={copied === "ios"} onClick={() => copy(ios, "ios")} />
+            </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={saveLinks} disabled={linksSaving} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: BRAND, color: "#fff", fontFamily: F, fontSize: "0.86rem", fontWeight: 800, cursor: linksSaving ? "default" : "pointer", opacity: linksSaving ? 0.6 : 1 }}>{linksSaving ? "Guardando…" : "Guardar enlaces"}</button>
@@ -237,6 +256,14 @@ function Tile({ icon, label, value, sub, accent }: { icon: React.ReactNode; labe
       <div style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 900, color: "var(--adm-text)", lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 4 }}>{sub}</div>}
     </div>
+  );
+}
+
+function CopyBtn({ disabled, copied, onClick }: { disabled: boolean; copied: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} disabled={disabled} title="Copiar enlace" style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "0 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: copied ? "rgba(22,163,74,0.12)" : "var(--adm-hover)", color: copied ? "#16a34a" : "var(--adm-text2)", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1 }}>
+      {copied ? <Check size={15} /> : <Copy size={15} />}{copied ? "Copiado" : "Copiar"}
+    </button>
   );
 }
 
