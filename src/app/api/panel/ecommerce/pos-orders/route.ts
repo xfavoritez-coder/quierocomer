@@ -130,9 +130,12 @@ export async function GET(req: NextRequest) {
   // Ubicación del local (origen de despacho) para el mini-mapa en vivo de la tarjeta.
   const rLoc = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { lat: true, lng: true, ecommerceDeliveryConfig: true, ecommerceStoreConfig: true, ecommerceConfig: true, centroPedidosConfig: true } });
   // Umbral (min) de la alerta de retiro atascado en preparación. 0 = off; sin def = 60.
-  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number; readyAlertMinutes?: number };
+  const cpCfg = (rLoc?.centroPedidosConfig && typeof rLoc.centroPedidosConfig === "object" && !Array.isArray(rLoc.centroPedidosConfig) ? rLoc.centroPedidosConfig : {}) as { prepAlertMinutes?: number; readyAlertMinutes?: number; uberEnabled?: boolean; pedidosyaEnabled?: boolean };
   const prepAlertMinutes = typeof cpCfg.prepAlertMinutes === "number" ? cpCfg.prepAlertMinutes : 60;
   const readyAlertMinutes = typeof cpCfg.readyAlertMinutes === "number" ? cpCfg.readyAlertMinutes : 30;
+  // Couriers externos habilitados por el local (default true), para el botón en las tarjetas.
+  const uberEnabled = cpCfg.uberEnabled !== false;
+  const pedidosyaEnabled = cpCfg.pedidosyaEnabled !== false;
   // ¿El local usa Delifast? Si no, el POS no consulta el seguimiento al entregar.
   const delifastEnabled = integrationStatus(parseEcommerceConfig(rLoc?.ecommerceConfig)).delifast;
   const dCfg = parseDeliveryConfig(rLoc?.ecommerceDeliveryConfig);
@@ -176,7 +179,7 @@ export async function GET(req: NextRequest) {
     dailyNumber: nums[o.id] ?? null,
     driverTime, pickupTime, deliveryTime,
   }));
-  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes, readyAlertMinutes });
+  return NextResponse.json({ orders: ordersOut, from: fromYmd, to: toYmd, today, localLat, localLng, driverTime, pickupTime, deliveryTime, delifastEnabled, prepAlertMinutes, readyAlertMinutes, uberEnabled, pedidosyaEnabled });
 }
 
 /** PATCH /api/panel/ecommerce/pos-orders → avanza la etapa operativa de un pedido.

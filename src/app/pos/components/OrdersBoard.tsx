@@ -56,6 +56,10 @@ interface PosOrderLite {
   createdAt: string
   rawPayload?: unknown
   delifastVentaId?: string | null
+  posStatus?: string | null
+  uberDeliveryId?: string | null
+  pyaShippingId?: string | null
+  courier?: unknown
   _branchId?: string  // set internally in multi-branch mode
 }
 
@@ -183,10 +187,82 @@ function OrderTimer({ order, isRetiro: _isRetiro, icon = true, style }: { order:
 
 // ── Order card ──────────────────────────────────────────────────────
 
+// ── Solicitar repartidor externo (Uber Direct / PedidosYa) desde una tarjeta del POS ──
+// Reutiliza los endpoints /api/panel/ecommerce/pos-orders/{uber,pedidosya} (cotiza,
+// solicita y cobra del saldo para delivery). Se muestra solo en pedidos DELIVERY
+// en preparación/listo sin repartidor asignado, si el local tiene el courier activo.
+function PosCourierActions({ order, restaurantId, uberEnabled, pedidosyaEnabled, onChanged }: {
+  order: PosOrderLite; restaurantId: string; uberEnabled: boolean; pedidosyaEnabled: boolean; onChanged: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const isDelivery = order.isDelivery || order.saleType === 'delivery'
+  const hasUber = !!order.uberDeliveryId
+  const hasPya = !!order.pyaShippingId
+  const hasCourier = hasUber || hasPya
+  const stageOk = order.opsStage === 'preparing' || order.opsStage === 'ready'
+  const canceled = order.posStatus === 'canceled'
+
+  async function reqUber() {
+    setBusy(true)
+    try {
+      const q = await fetch(`/api/panel/ecommerce/pos-orders/uber?restaurantId=${restaurantId}&id=${order.id}`).then(r => r.json()).catch(() => null)
+      if (!q || q.error) { window.alert(q?.error || 'No se pudo cotizar el despacho Uber'); return }
+      const total = q.total ?? q.fee ?? 0
+      if (q.sufficient === false) { window.alert(`Saldo insuficiente para el despacho Uber (${clp(total)}). Recarga tu saldo para delivery.`); return }
+      if (!window.confirm(`Despacho Uber: ${clp(total)}${q.durationMin ? ` · ~${q.durationMin} min` : ''}.\n¿Solicitar repartidor?`)) return
+      const r = await fetch('/api/panel/ecommerce/pos-orders/uber', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: order.id, quoteId: q.quoteId, fee: q.fee }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { window.alert(d.error || 'No se pudo solicitar Uber'); return }
+      onChanged()
+    } catch { window.alert('Error de conexión') } finally { setBusy(false) }
+  }
+  async function reqPya() {
+    if (!window.confirm('¿Solicitar un repartidor de PedidosYa para este pedido?')) return
+    setBusy(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders/pedidosya', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: order.id }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { window.alert(d.error || 'No se pudo solicitar PedidosYa'); return }
+      onChanged()
+    } catch { window.alert('Error de conexión') } finally { setBusy(false) }
+  }
+  async function cancel() {
+    if (!window.confirm('¿Cancelar el repartidor de este pedido?')) return
+    setBusy(true)
+    try {
+      const path = hasUber ? 'uber' : 'pedidosya'
+      const r = await fetch(`/api/panel/ecommerce/pos-orders/${path}?restaurantId=${restaurantId}&id=${order.id}`, { method: 'DELETE' })
+      if (!r.ok) { const d = await r.json().catch(() => ({})); window.alert(d.error || 'No se pudo cancelar'); return }
+      onChanged()
+    } catch { window.alert('Error de conexión') } finally { setBusy(false) }
+  }
+
+  if (!isDelivery || canceled) return null
+
+  if (hasCourier) {
+    return (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexShrink: 0 }}>
+        <span style={{ fontSize: 12, fontWeight: 800, padding: '4px 10px', borderRadius: 999, background: hasUber ? '#111' : '#D52B1E', color: '#fff' }}>🛵 {hasUber ? 'Uber' : 'PedidosYa'} en camino</span>
+        <button onClick={cancel} disabled={busy} style={{ fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: busy ? 'default' : 'pointer' }}>Cancelar</button>
+      </div>
+    )
+  }
+
+  if (!stageOk || !(uberEnabled || pedidosyaEnabled)) return null
+  const btn: React.CSSProperties = { fontSize: 13, fontWeight: 800, padding: '7px 14px', borderRadius: 8, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }
+  return (
+    <div style={{ display: 'inline-flex', gap: 6, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {uberEnabled && <button onClick={reqUber} disabled={busy} style={{ ...btn, background: '#111' }}>🛵 Uber</button>}
+      {pedidosyaEnabled && <button onClick={reqPya} disabled={busy} style={{ ...btn, background: '#D52B1E' }}>🛵 PedidosYa</button>}
+    </div>
+  )
+}
+
 function OrderCard({
   order, restaurantId, isSelected, showTypeChip, stageBusy, blocked, branchLabel, cols = 3,
   waitTimeDriver,
   onSelect, onStageChange, onCobro, onBlock, onDismissBlock, onDelifastNoTracking,
+  uberEnabled = false, pedidosyaEnabled = false, onCourierChanged,
 }: {
   order: PosOrderLite
   restaurantId: string
@@ -203,6 +279,9 @@ function OrderCard({
   onBlock: (o: PosOrderLite) => void
   onDismissBlock: () => void
   onDelifastNoTracking?: (orderId: string, noTracking: boolean) => void
+  uberEnabled?: boolean
+  pedidosyaEnabled?: boolean
+  onCourierChanged?: () => void
 }) {
   const isDesktop = useIsDesktop()
   const paid = isPaid(order)
@@ -369,6 +448,8 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
+            {/* Solicitar repartidor externo (Uber Direct / PedidosYa) — delivery en prep/listo */}
+            <PosCourierActions order={order} restaurantId={order._branchId ?? restaurantId} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} onChanged={() => onCourierChanged?.()} />
             {/* Botón "Entregado" — cuando Delifast no tiene tracking, canceló, o en out_for_delivery sin tracking activo */}
             {paid && (delifastNoTracking || delifastCancelled || !order.isDelivery || !order.delifastVentaId) && (order.opsStage === 'out_for_delivery' || (order.opsStage === 'ready' && isDelivery && order.delifastVentaId && (delifastNoTracking || delifastCancelled))) && (
               <button
@@ -998,6 +1079,8 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
+  const [uberEnabled, setUberEnabled] = useState(false)
+  const [pedidosyaEnabled, setPedidosyaEnabled] = useState(false)
   const [waitTimeDriver, setWaitTimeDriver] = useState(20) // minutes, default 20
   // Delifast "stuck" alert: orders without tracking & orders stuck past waitTimeDriver
   const [noTrackingOrderIds, setNoTrackingOrderIds] = useState<Set<string>>(new Set())
@@ -1231,6 +1314,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
         setOrders(merged)
         onOrdersUpdate?.(merged)
         setDelifastEnabled(false)
+        setUberEnabled(false); setPedidosyaEnabled(false)
         setSelected(prev => prev ? (merged.find(o => o.id === prev.id) ?? null) : null)
       } else {
         const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
@@ -1239,6 +1323,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
           setOrders(d.orders)
           onOrdersUpdate?.(d.orders)
           setDelifastEnabled(!!d.delifastEnabled)
+          setUberEnabled(!!d.uberEnabled); setPedidosyaEnabled(!!d.pedidosyaEnabled)
           if (d.driverTime) setWaitTimeDriver(parseInt(d.driverTime, 10) || 20)
           setSelected(prev => prev ? (d.orders.find((o: PosOrderLite) => o.id === prev.id) ?? null) : null)
         }
@@ -1461,6 +1546,9 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                 onBlock={blockAdvance}
                 onDismissBlock={dismissBlock}
                 onDelifastNoTracking={handleDelifastNoTracking}
+                uberEnabled={uberEnabled}
+                pedidosyaEnabled={pedidosyaEnabled}
+                onCourierChanged={fetchOrders}
               />
             ))}
           </div>
