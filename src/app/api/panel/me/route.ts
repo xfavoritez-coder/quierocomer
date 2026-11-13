@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
       const restaurant = await prisma.restaurant.findFirst({
         where: { slug: demoSlug, isDemo: true },
-        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, appEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true },
       });
       if (!restaurant) return NextResponse.json({ error: "Demo no encontrado" }, { status: 401 });
 
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
           status: "ACTIVE",
           ...(ownerId ? { restaurant: { ownerId } } : { restaurantId: member.restaurantId }),
         },
-        select: { role: true, restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true } } },
+        select: { role: true, restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, appEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true } } },
         orderBy: { restaurant: { createdAt: "asc" } },
       });
 
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true }, orderBy: { createdAt: 'asc' } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, subscriptionStatus: true, toteatApiToken: true, isDemo: true, multiMenuEnabled: true, controlEnabled: true, financialEnabled: true, orderingEnabled: true, reviewMode: true, googleReviewUrl: true, reviewReward: true, profileType: true, ecommerceEnabled: true, bodegaEnabled: true, centroPedidosEnabled: true, posEnabled: true, appEnabled: true, orderingNavHidden: true, viewerSections: true, ecommerceStoreConfig: true }, orderBy: { createdAt: 'asc' } } },
     });
 
     if (!owner) {

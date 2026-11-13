@@ -134,6 +134,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.centroPedidosEnabled !== undefined && { centroPedidosEnabled: body.centroPedidosEnabled }),
         // Pilar POS / Punto de venta (super-admin only): flag maestro
         ...(body.posEnabled !== undefined && { posEnabled: body.posEnabled }),
+        // Módulo APP del panel (super-admin only): Resumen + Notificaciones (solo locales con app)
+        ...(body.appEnabled !== undefined && { appEnabled: body.appEnabled }),
         // Boletas SII vía SharkPOS (super-admin only): habilita emitir (requiere RUT dado de alta o key global)
         ...(body.sharkposEnabled !== undefined && { sharkposEnabled: body.sharkposEnabled }),
         // Factura (33) en el POS (requiere contrato + CAF 33 en SharkPOS)

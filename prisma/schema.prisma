@@ -384,6 +384,7 @@ model Restaurant {
   deliveryBalance            Int                       @default(0) // saldo prepago (CLP) para solicitar repartidores externos
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
+  appEnabled                 Boolean                   @default(false) // módulo APP del panel (Resumen + Notificaciones); solo locales con app móvil
   sharkposEnabled            Boolean                   @default(false) // piloto: emitir boletas SII vía SharkPOS (solo locales sin Toteat)
   sharkposTenantId           String? // modo plataforma: id del RUT dado de alta en SharkPOS
   sharkposApiKey             String? // API key del RUT (cifrada en reposo con SECRET_ENCRYPTION_KEY); si está, emite con esta key en vez de la global

@@ -46,6 +46,7 @@ interface Restaurant {
   bodegaEnabled?: boolean;
   centroPedidosEnabled?: boolean;
   posEnabled?: boolean;
+  appEnabled?: boolean;
   sharkposEnabled?: boolean;
   sharkposTenantId?: string | null;
   sharkposTenantRut?: string | null;
@@ -1089,6 +1090,43 @@ export default function AdminLocales() {
               <div style={{
                 width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
                 left: selected.posEnabled ? 23 : 3, transition: "left 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              }} />
+            </button>
+          </div>
+          </div>
+        )}
+
+        {/* Toggle Módulo APP (panel: Resumen + Notificaciones) — super-admin only. Solo locales con app móvil. */}
+        {isSuper && detailTab === "pilares" && (
+          <div style={{ padding: "14px 16px", background: selected.appEnabled ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.appEnabled ? "rgba(99,102,241,0.4)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.appEnabled ? "#818cf8" : "white", margin: 0 }}>📱 APP <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#818cf8", background: "rgba(99,102,241,0.18)", padding: "1px 6px", borderRadius: 999, marginLeft: 4 }}>BETA</span></p>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+                {selected.appEnabled
+                  ? "Módulo activo · menú APP (Resumen de KPIs + Notificaciones) en el panel del local"
+                  : "Solo para locales con app móvil: KPIs de la app y envío de notificaciones push"}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const val = !selected.appEnabled;
+                const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appEnabled: val }) });
+                if (!res.ok) { alert("Error al actualizar"); return; }
+                const u = { ...selected, appEnabled: val };
+                setSelected(u);
+                setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }}
+              style={{
+                width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+                background: selected.appEnabled ? "#6366f1" : "rgba(255,255,255,0.15)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+                left: selected.appEnabled ? 23 : 3, transition: "left 0.2s",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
               }} />
             </button>

@@ -44,7 +44,7 @@ const ORDERING_EXCEPTIONS = ["el-menu-de-la-esquina"];
 type NavItem = { icon: any; labelKey: string; href: string; badge?: string };
 type NavSection = { key: string; label: string; icon: any; badge?: string; items: NavItem[] };
 
-function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean; hasPos?: boolean; orderingHidden?: boolean; isSuperAdmin?: boolean } = {}) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null; hasControl?: boolean; hasFinancial?: boolean; slug?: string; hasLoyalty?: boolean; profileType?: string; hasEcommerce?: boolean; hasBodega?: boolean; hasCentroPedidos?: boolean; hasPos?: boolean; hasApp?: boolean; orderingHidden?: boolean; isSuperAdmin?: boolean } = {}) {
   const showLive = opts.hasToteat && opts.plan === "PREMIUM" && !LIVE_HIDDEN.includes(opts.slug ?? "");
   const isStore = opts.profileType === "STORE";
 
@@ -108,7 +108,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
         { icon: Settings, labelKey: "nav_ecommerce_settings", href: `${base}/ecommerce/configuracion` },
       ],
     }] : []),
-    ...(opts.hasEcommerce ? [{
+    ...(opts.hasApp ? [{
       key: "app",
       label: "APP",
       icon: Smartphone,
@@ -305,8 +305,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const hasBodega = !!(selected as any)?.bodegaEnabled;
   const hasCentroPedidos = !!(selected as any)?.centroPedidosEnabled;
   const hasPos = !!(selected as any)?.posEnabled;
+  const hasApp = !!(selected as any)?.appEnabled;
   const orderingHidden = !!(selected as any)?.orderingNavHidden;
-  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos, hasPos, orderingHidden, isSuperAdmin: role === "SUPERADMIN" });
+  const nav = buildNav(basePath, { hasToteat, plan, hasControl, hasFinancial, slug: selected?.slug, hasLoyalty, profileType, hasEcommerce, hasBodega, hasCentroPedidos, hasPos, hasApp, orderingHidden, isSuperAdmin: role === "SUPERADMIN" });
 
   // Perfil VIEWER: el owner controla qué secciones del sidebar puede ver.
   // viewerSections null/undefined = ve todas (comportamiento por defecto).

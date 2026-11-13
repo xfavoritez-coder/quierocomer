@@ -10,7 +10,7 @@ const FB = "var(--font-body)";
 export default function AppModuleLayout({ children }: { children: React.ReactNode }) {
   const session = useSessionContext();
   const selected = session?.restaurants.find((r) => r.id === session.selectedRestaurantId);
-  const enabled = !!(selected as any)?.ecommerceEnabled;
+  const enabled = !!(selected as any)?.appEnabled;
 
   if (!session || session.loading) {
     return <div style={{ padding: 40, textAlign: "center", fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</div>;
