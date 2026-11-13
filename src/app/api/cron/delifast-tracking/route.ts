@@ -30,14 +30,21 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
       createdAt: { gte: since },
       OR: [{ delifastVentaId: { not: null } }, { orderReference: { not: null } }],
     },
-    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true },
+    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true, delifastTracking: true, delifastTrackedAt: true },
     orderBy: { createdAt: "desc" },
     take: 400,
   });
-  if (!orders.length) return { orders: 0, updated: 0 };
+  // Si el webhook de Delifast está alimentando un pedido (source:"webhook" reciente),
+  // el worker NO lo raspa: el webhook es la fuente fresca (ubicación en vivo, etc.).
+  const active = orders.filter((o) => {
+    const t = o.delifastTracking as { source?: string } | null;
+    if (t?.source === "webhook" && o.delifastTrackedAt && Date.now() - new Date(o.delifastTrackedAt).getTime() < 120_000) return false;
+    return true;
+  });
+  if (!active.length) return { orders: orders.length, updated: 0 };
 
   // Credenciales Delifast por local (solo los configurados).
-  const rids = [...new Set(orders.map((o) => o.restaurantId))];
+  const rids = [...new Set(active.map((o) => o.restaurantId))];
   const rests = await prisma.restaurant.findMany({ where: { id: { in: rids } }, select: { id: true, ecommerceConfig: true } });
   const credsByR = new Map<string, DelifastCreds>();
   for (const r of rests) {
@@ -47,8 +54,8 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
 
   let updated = 0;
   const CH = 5;
-  for (let i = 0; i < orders.length; i += CH) {
-    await Promise.all(orders.slice(i, i + CH).map(async (o) => {
+  for (let i = 0; i < active.length; i += CH) {
+    await Promise.all(active.slice(i, i + CH).map(async (o) => {
       const creds = credsByR.get(o.restaurantId);
       if (!creds) return;
       try {

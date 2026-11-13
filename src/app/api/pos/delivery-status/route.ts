@@ -17,6 +17,7 @@ import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastCodigoOrigen } from "@/lib/delifast/client";
+import { getPlatformSetting } from "@/lib/platformSettings";
 
 const STAGE_ORDER: Record<string, number> = { preparing: 0, ready: 1, out_for_delivery: 2, delivered: 3 };
 
@@ -153,7 +154,12 @@ export async function POST(req: NextRequest) {
   //    match por nombre de cliente, que causaba falsos positivos.
   const negKey = `${restaurantId}:${idVenta}`;
   const negAt = notOursVenta.get(negKey);
-  if (!po && idVenta && !(negAt && Date.now() - negAt < NOT_OURS_TTL)) {
+  // Si la sincronización está pausada desde /admin/ajustes, NO raspamos Delifast
+  // para resolver (solo se matchea por id_venta/codigo_origen, que no consultan nada).
+  const paused = !po && idVenta && !(negAt && Date.now() - negAt < NOT_OURS_TTL)
+    ? (await getPlatformSetting("delifast_tracking_paused")) === "1"
+    : false;
+  if (!po && !paused && idVenta && !(negAt && Date.now() - negAt < NOT_OURS_TTL)) {
     const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } });
     const creds = decryptEcommerceSecrets(parseEcommerceConfig(r?.ecommerceConfig)).delifast;
     if (creds?.enabled && creds.email && creds.password && creds.plataforma) {

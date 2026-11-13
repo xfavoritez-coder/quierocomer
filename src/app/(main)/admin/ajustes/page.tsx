@@ -235,10 +235,10 @@ export default function AjustesPage() {
           <div style={{ flex: 1 }}>
             <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#fff", margin: "0 0 6px" }}>Seguimiento de repartidores (Delifast)</h2>
             <p style={{ fontSize: "0.85rem", color: "#999", lineHeight: 1.5, margin: 0 }}>
-              El worker consulta Delifast cada ~15s para actualizar el estado de los repartidores en el POS. {delifastPaused
-                ? <strong style={{ color: "#ef4444" }}>Pausado: no se está consultando a Delifast.</strong>
+              El worker <strong style={{ color: "#ddd" }}>consulta (scrapea)</strong> el panel de Delifast cada ~15s para actualizar el estado de los repartidores en el POS. {delifastPaused
+                ? <strong style={{ color: "#ef4444" }}>Pausado: no estamos consultando a Delifast.</strong>
                 : <strong style={{ color: "#4ade80" }}>Activo.</strong>}
-              {" "}Pausa por completo esa consulta (p. ej. si Delifast falla o para bajar carga).
+              {" "}Pausa por completo ese scraping (p. ej. cuando Delifast ya nos manda su webhook, o para bajar carga). <strong style={{ color: "#ddd" }}>El webhook de Delifast sigue funcionando aunque esto esté pausado.</strong>
             </p>
           </div>
           <button
@@ -251,7 +251,7 @@ export default function AjustesPage() {
           </button>
         </div>
         <p style={{ fontSize: "0.76rem", color: "#777", margin: "10px 0 0" }}>
-          {delifastPaused ? "🔴 Pausado" : "🟢 Activo"} · mientras esté pausado, el POS muestra el último estado conocido (no se actualiza).
+          {delifastPaused ? "🔴 Scraping pausado" : "🟢 Scraping activo"} · el seguimiento del POS se alimenta del scraping y/o del webhook de Delifast; si ambos están apagados, muestra el último estado conocido.
         </p>
       </div>
 
