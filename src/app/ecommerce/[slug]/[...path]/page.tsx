@@ -121,7 +121,7 @@ export default async function EcommerceProductPage({ params }: { params: Promise
   const metaPixel = <MetaPixelScript id={data.tenant.metaPixelId} />;
   const pwa = <StorePwa enabled={basePath === ""} />;
   const hit = <PageHitTracker restaurantId={data.tenant.id} page="ecommerce" />;
-  const appSync = <>{<AppFlagSync active={fromApp} />}{fromApp && <AppPushRegister restaurantId={data.tenant.id} />}{fromApp && <AppPushOptIn restaurantId={data.tenant.id} />}</>;
+  const appSync = <>{<AppFlagSync active={fromApp} />}{fromApp && <AppPushRegister restaurantId={data.tenant.id} />}{fromApp && <AppPushOptIn restaurantId={data.tenant.id} brandColor={data.tenant.primaryColor} />}</>;
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
 
   if (data.tenant.theme === "modern") {

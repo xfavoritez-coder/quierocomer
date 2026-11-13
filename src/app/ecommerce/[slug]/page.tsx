@@ -137,7 +137,7 @@ export default async function EcommerceStorePage({ params, searchParams }: { par
   const hit = <PageHitTracker restaurantId={data.tenant.id} page="ecommerce" />;
   // Sincroniza la cookie qc_app: si corre dentro de la app, la activa (y refresca
   // una vez) para que aparezcan los platos exclusivos; si no, no hace nada.
-  const appSync = <>{<AppFlagSync active={fromApp} />}{fromApp && <AppPushRegister restaurantId={data.tenant.id} />}{fromApp && <AppPushOptIn restaurantId={data.tenant.id} />}</>;
+  const appSync = <>{<AppFlagSync active={fromApp} />}{fromApp && <AppPushRegister restaurantId={data.tenant.id} />}{fromApp && <AppPushOptIn restaurantId={data.tenant.id} brandColor={data.tenant.primaryColor} />}</>;
   // Datos estructurados para que Google muestre las fotos de los productos.
   const jsonLd = <StoreJsonLd tenant={data.tenant} categories={data.categories} products={data.products} />;
   const effectiveTheme = themeOverride || data.tenant.theme;

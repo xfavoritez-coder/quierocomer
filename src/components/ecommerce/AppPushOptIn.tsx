@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { Bell, X } from "lucide-react";
 
 /**
  * Banner de OPT-IN de notificaciones (solo dentro de la app). Para crecer la
@@ -12,7 +13,17 @@ import { useEffect, useRef, useState } from "react";
 const DISMISS_KEY = "qc_push_optin_dismissed_at";
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 
-export default function AppPushOptIn({ restaurantId }: { restaurantId: string }) {
+// Utilidades de color de marca.
+function parseHex(hex: string): [number, number, number] {
+  let h = (hex || "").replace("#", "").trim();
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const n = parseInt(h || "6366f1", 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function tint(hex: string, a: number): string { const [r, g, b] = parseHex(hex); return `rgba(${r},${g},${b},${a})`; }
+function readableOn(hex: string): string { const [r, g, b] = parseHex(hex); return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? "#1a1a1a" : "#ffffff"; }
+
+export default function AppPushOptIn({ restaurantId, brandColor = "#6366f1" }: { restaurantId: string; brandColor?: string }) {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const pushRef = useRef<any>(null);
@@ -74,19 +85,26 @@ export default function AppPushOptIn({ restaurantId }: { restaurantId: string })
   }
 
   if (!show) return null;
+  const onBrand = readableOn(brandColor);
   return (
     <div style={{ position: "fixed", left: 12, right: 12, bottom: "calc(12px + env(safe-area-inset-bottom, 0px))", zIndex: 9999, maxWidth: 480, margin: "0 auto",
-      background: "#1f2430", color: "#fff", borderRadius: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.35)", padding: 16, fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-        <div style={{ fontSize: 26, lineHeight: 1 }}>🔔</div>
+      background: "#ffffff", color: "#1a1a1a", borderRadius: 18, boxShadow: "0 14px 44px rgba(0,0,0,0.22)", padding: 16,
+      borderTop: `3px solid ${brandColor}`, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <button onClick={ahoraNo} aria-label="Cerrar" style={{ position: "absolute", top: 10, right: 10, width: 28, height: 28, borderRadius: 8, border: "none", background: "transparent", color: "#9aa0ab", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <X size={17} />
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: 24 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: tint(brandColor, 0.12), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Bell size={22} color={brandColor} />
+        </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 2 }}>Activa las notificaciones</div>
-          <div style={{ fontSize: 13, color: "#c7cbd4", lineHeight: 1.4 }}>Entérate de promos y ofertas exclusivas de la app antes que nadie.</div>
+          <div style={{ fontSize: 13, color: "#60656e", lineHeight: 1.4 }}>Entérate de promos y ofertas exclusivas de la app antes que nadie.</div>
         </div>
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button onClick={ahoraNo} disabled={busy} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "transparent", color: "#c7cbd4", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ahora no</button>
-        <button onClick={activar} disabled={busy} style={{ flex: 2, padding: "10px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontWeight: 800, fontSize: 14, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>{busy ? "Activando…" : "Activar"}</button>
+        <button onClick={ahoraNo} disabled={busy} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid #e4e6ea", background: "transparent", color: "#60656e", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ahora no</button>
+        <button onClick={activar} disabled={busy} style={{ flex: 2, padding: "11px", borderRadius: 11, border: "none", background: brandColor, color: onBrand, fontWeight: 800, fontSize: 14, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}>{busy ? "Activando…" : "Activar"}</button>
       </div>
     </div>
   );
