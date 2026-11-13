@@ -19,6 +19,9 @@ async function assertOwnership(req: NextRequest, restaurantId: string): Promise<
 }
 
 const CANCELLED = ["CANCELED", "CANCELLED", "REJECTED", "canceled", "cancelled", "rejected"];
+// Un PEDIDO real = NO anulado y (ya avanzó más allá de PENDING, es decir fue
+// aceptado/entregado) O está pagado. PENDING sin pagar = intento, NO cuenta.
+const realOrderWhere = { status: { notIn: CANCELLED }, OR: [{ status: { not: "PENDING" } }, { paymentStatus: "paid" }] };
 const ymd = (d: Date) => new Date(d.toLocaleString("en-US", { timeZone: "America/Santiago" })).toISOString().slice(0, 10);
 
 export async function GET(req: NextRequest) {
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
     prisma.appDevice.count({ where: { restaurantId, lastSeenAt: { gte: from } } }),
     prisma.dish.count({ where: { restaurantId, deletedAt: null, OR: [{ appOnly: true }, { appPrice: { gt: 0 } }] } }),
     prisma.onlineOrder.findMany({
-      where: { restaurantId, source: "ecommerce", createdAt: { gte: from }, status: { notIn: CANCELLED } },
+      where: { restaurantId, source: "ecommerce", createdAt: { gte: from }, ...realOrderWhere },
       orderBy: { createdAt: "desc" },
       select: { id: true, fromApp: true, total: true, createdAt: true, items: true, customerName: true, customerPhone: true, status: true, orderType: true },
     }),
