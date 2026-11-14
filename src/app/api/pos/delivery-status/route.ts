@@ -55,8 +55,15 @@ function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: str
   // ETA al LOCAL (recoger) y ETA al CLIENTE (entregar). Aceptamos varios nombres
   // (minutos, "HH:MM" o timestamp — etaMinutes() los normaliza). OJO: pasamos el
   // valor crudo, sin " min", porque etaMinutes solo parsea número/hora/timestamp.
-  const eta = s(g("eta") ?? g("eta_local") ?? g("pickup_eta") ?? g("eta_min") ?? g("minutos_llegada_local"));
-  const dropoffEta = s(g("eta_cliente") ?? g("eta_casa") ?? g("dropoff_eta") ?? g("eta_dropoff") ?? g("minutos_llegada_casa"));
+  // Delifast manda UN solo `eta` (minutos al próximo destino). Si el repartidor ya
+  // va al cliente (estado "En Camino" o hay timestamp en_camino), ese ETA es al
+  // CLIENTE → va a dropoffEta (el pill muestra "Entrega en X min"); si todavía va
+  // al local, es el ETA al local. Un eta_cliente explícito, si viene, manda.
+  const rawEta = s(g("eta") ?? g("eta_min") ?? g("minutos") ?? g("eta_local") ?? g("pickup_eta") ?? g("minutos_llegada_local"));
+  const explicitDropoffEta = s(g("eta_cliente") ?? g("eta_casa") ?? g("dropoff_eta") ?? g("eta_dropoff") ?? g("minutos_llegada_casa"));
+  const towardClient = /camino|reparto|ruta|dropoff|transit/.test((meta.estado || "").toLowerCase()) || !!s(ts.en_camino ?? ts.dropoff);
+  const eta = towardClient ? null : rawEta;
+  const dropoffEta = explicitDropoffEta ?? (towardClient ? rawEta : null);
   const pin = s(g("pin") ?? g("pincode"));
   const pod = s(g("foto_entrega") ?? g("dropoff_imagen"));
   const url = s(g("url_seguimiento") ?? g("url_status"));

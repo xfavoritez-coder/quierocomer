@@ -71,6 +71,9 @@ function etaMinutes(eta?: string | null): number | null {
   if (!eta) return null
   const s = String(eta).trim()
   if (/^\d+$/.test(s)) return Number(s)
+  // "3 min" / "3min" / "3 minutos" (lo que manda el webhook de Delifast)
+  const minMatch = s.match(/^(\d+)\s*(?:min|minuto)/i)
+  if (minMatch) return Number(minMatch[1])
   // "HH:MM" sin fecha: calcular minutos desde ahora hasta esa hora hoy (o mañana si ya pasó)
   const hm = s.match(/^(\d{1,2}):(\d{2})$/)
   if (hm) {
@@ -92,10 +95,23 @@ function etaToHM(eta?: string | null): string | null {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// "YYYY-MM-DD HH:MM:SS" → "HH:MM"
+// Timestamp → "HH:MM" en hora de Chile. Acepta ISO/UTC del webhook
+// ("2026-11-13T23:36:18Z") y el formato local del scraping ("2026-11-03 18:13:33").
 function hm(ts?: string | null): string | null {
   if (!ts) return null
-  const m = String(ts).match(/\b(\d{1,2}):(\d{2})/)
+  const raw = String(ts).trim()
+  const hasTz = /[zZ]|[+-]\d\d:?\d\d$/.test(raw)
+  // Con zona horaria explícita (o ISO con T) → parsear y convertir a hora de Chile.
+  if (hasTz || raw.includes('T')) {
+    const d = new Date(raw)
+    if (Number.isFinite(d.getTime())) {
+      try {
+        return new Intl.DateTimeFormat('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Santiago' }).format(d)
+      } catch { /* fallthrough al regex */ }
+    }
+  }
+  // Sin zona ("YYYY-MM-DD HH:MM:SS", ya es hora local Chile del scraping) → HH:MM tal cual.
+  const m = raw.match(/(?:^|[ T])(\d{1,2}):(\d{2})/)
   return m ? `${m[1].padStart(2, '0')}:${m[2]}` : null
 }
 
@@ -207,10 +223,10 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
     </div>
   )
 
-  // ETA al local: solo tiene sentido antes de que el repartidor llegue al local.
-  const etaMin = !t.timeline.llegadaLocal ? etaMinutes(t.eta) : null
-  // ETA al cliente: solo tiene sentido mientras va al cliente (ya salió del local, aún no llegó).
-  const dropoffEtaMin = t.timeline.llegadaLocal && !t.timeline.llegadaCasa ? etaMinutes(t.dropoffEta) : null
+  // ETA al local: tiene sentido antes de salir hacia el cliente (sin "En camino").
+  const etaMin = !t.timeline.inicioDropoff ? etaMinutes(t.eta) : null
+  // ETA al cliente: mientras va al cliente (ya salió / "En camino", aún no llegó).
+  const dropoffEtaMin = t.timeline.inicioDropoff && !t.timeline.llegadaCasa ? etaMinutes(t.dropoffEta) : null
   const steps: { label: string; ts: string | null }[] = [
     { label: 'Confirmada', ts: t.timeline.confirmacion },
     { label: 'Pickup iniciado', ts: t.timeline.inicioPickup },
