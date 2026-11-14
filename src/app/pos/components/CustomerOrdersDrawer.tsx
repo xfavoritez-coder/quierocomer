@@ -158,8 +158,8 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600 }}>
+      <div style={{ padding: '4px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px 6px 4px', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600, flexShrink: 0 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Volver
         </button>
@@ -333,27 +333,32 @@ export default function CustomerOrdersDrawer({
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 520, height: '90dvh',
+          width: '100%', maxWidth: 520, maxHeight: '90dvh',
           background: 'var(--surface)', borderRadius: '20px 20px 0 0',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           boxShadow: '0 -4px 32px rgba(0,0,0,.18)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }} onClick={onClose}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--ink-4)', opacity: 0.5 }} />
+        </div>
         {selected ? (
           <OrderDetail order={selected} restaurantId={restaurantId} onBack={() => setSelected(null)} />
         ) : (
           <>
             {/* Header */}
-            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            <div style={{ padding: '4px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink)' }}>
+                <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {displayName(customerName || 'Cliente')}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>
                   {loading ? 'Cargando…' : `${orders.length} pedido${orders.length !== 1 ? 's' : ''} · ${customerPhone}`}
                 </div>
               </div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--ink-3)' }}>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--ink-3)', flexShrink: 0 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
