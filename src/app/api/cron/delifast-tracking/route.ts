@@ -1,10 +1,13 @@
 // ═══════════════════════════════════════════════════════════
-//  WORKER centralizado de seguimiento Delifast (POS).
-//  Antes cada pantalla de caja raspaba Delifast cada 15s por pedido. Ahora un
-//  solo worker consulta Delifast una vez por pedido activo y persiste el tracking
-//  en PosOrder.delifastTracking; la UI lo lee de la BD (ver /api/pos/delivery-tracking).
-//  Corre cada minuto y hace ~4 pasadas internas (cada 15s) para cadencia ~15s.
-//  Protegido con CRON_SECRET.
+//  WORKER de CIERRE Delifast (POS) — SOLO completar/entregar.
+//  El seguimiento EN VIVO (repartidor, ETA, ubicación, estados intermedios) lo
+//  maneja el WEBHOOK de Delifast. Este worker es solo una RED DE SEGURIDAD para
+//  el bug de Delifast: su webhook no dispara el evento "Entregado" (cuando el
+//  pedido deja de estar activo), así que los pedidos quedan colgados en reparto.
+//  Corre cada minuto (vercel.json) y, por cada pedido de delivery integrado con
+//  Delifast que NO esté entregado, consulta Delifast y SOLO si figura "Entregado"
+//  lo cierra (opsStage=delivered + sync + push). No toca estados intermedios ni
+//  pisa el tracking en vivo del webhook. Protegido con CRON_SECRET.
 // ═══════════════════════════════════════════════════════════
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
@@ -13,16 +16,14 @@ import { parseEcommerceConfig, type DelifastCreds } from "@/lib/ecommerce/config
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastTracking, resolveDelifastVentaId } from "@/lib/delifast/client";
 import { getPlatformSetting } from "@/lib/platformSettings";
-import { STAGE_ORDER, toOpsStage } from "@/lib/delifast/status";
+import { toOpsStage } from "@/lib/delifast/status";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-async function doPass(): Promise<{ orders: number; updated: number }> {
+async function closeDelivered(): Promise<{ orders: number; closed: number }> {
   const since = new Date(Date.now() - 12 * 60 * 60 * 1000); // pedidos de las últimas 12h
   const orders = await prisma.posOrder.findMany({
     where: {
@@ -32,21 +33,22 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
       createdAt: { gte: since },
       OR: [{ delifastVentaId: { not: null } }, { orderReference: { not: null } }],
     },
-    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true, opsStage: true, delifastTracking: true, delifastTrackedAt: true },
+    select: { id: true, restaurantId: true, delifastVentaId: true, orderReference: true, opsStage: true, delifastTrackedAt: true, delifastTracking: true },
     orderBy: { createdAt: "desc" },
     take: 400,
   });
-  // Si el webhook de Delifast está alimentando un pedido (source:"webhook" reciente),
-  // el worker NO lo raspa: el webhook es la fuente fresca (ubicación en vivo, etc.).
-  const active = orders.filter((o) => {
+  // El webhook alimenta el estado en vivo: si lo actualizó hace <2 min, el pedido
+  // sigue activo (aún no entregado), así que no lo consultamos todavía — el bug del
+  // "Entregado" aparece justo cuando el webhook se queda callado tras la entrega.
+  const pend = orders.filter((o) => {
     const t = o.delifastTracking as { source?: string } | null;
     if (t?.source === "webhook" && o.delifastTrackedAt && Date.now() - new Date(o.delifastTrackedAt).getTime() < 120_000) return false;
     return true;
   });
-  if (!active.length) return { orders: orders.length, updated: 0 };
+  if (!pend.length) return { orders: orders.length, closed: 0 };
 
   // Credenciales Delifast por local (solo los configurados).
-  const rids = [...new Set(active.map((o) => o.restaurantId))];
+  const rids = [...new Set(pend.map((o) => o.restaurantId))];
   const rests = await prisma.restaurant.findMany({ where: { id: { in: rids } }, select: { id: true, ecommerceConfig: true } });
   const credsByR = new Map<string, DelifastCreds>();
   for (const r of rests) {
@@ -54,10 +56,10 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
     if (c?.enabled && c.email && c.password && c.plataforma) credsByR.set(r.id, c);
   }
 
-  let updated = 0;
+  let closed = 0;
   const CH = 5;
-  for (let i = 0; i < active.length; i += CH) {
-    await Promise.all(active.slice(i, i + CH).map(async (o) => {
+  for (let i = 0; i < pend.length; i += CH) {
+    await Promise.all(pend.slice(i, i + CH).map(async (o) => {
       const creds = credsByR.get(o.restaurantId);
       if (!creds) return;
       try {
@@ -68,31 +70,28 @@ async function doPass(): Promise<{ orders: number; updated: number }> {
         }
         if (!idVenta) return;
         const tracking = await getDelifastTracking(o.restaurantId, creds, idVenta);
-        const data: Record<string, unknown> = {
-          delifastTracking: (tracking ?? Prisma.JsonNull) as object,
-          delifastStatus: tracking?.status ?? null,
-          delifastTrackedAt: new Date(),
-        };
-        // Avanzar opsStage según el estado del viaje (como hacía el worker Pusher).
-        // Solo hacia adelante, nunca retrocede. Así, sin Pusher, el POS igual auto-avanza.
-        const next = toOpsStage(tracking?.status);
-        let advanced = false;
-        if (next && (STAGE_ORDER[next] ?? 0) > (STAGE_ORDER[o.opsStage] ?? 0)) {
-          data.opsStage = next;
-          if (next === "out_for_delivery") data.opsDispatchedAt = new Date();
-          if (next === "delivered") data.opsDeliveredAt = new Date();
-          advanced = true;
-        }
+        // SOLO actuamos si Delifast ya lo marca "Entregado". Lo demás (en camino,
+        // en local, etc.) es trabajo del webhook — no lo tocamos.
+        if (toOpsStage(tracking?.status) !== "delivered") return;
         const res = await prisma.posOrder.update({
-          where: { id: o.id }, data,
+          where: { id: o.id },
+          data: {
+            opsStage: "delivered",
+            opsDeliveredAt: new Date(),
+            delifastStatus: tracking?.status ?? "Entregado",
+            // Guardamos el tracking final (trae la foto de entrega + timeline) ya
+            // que lo tenemos en mano; es parte de cerrar el pedido, no live-tracking.
+            delifastTracking: (tracking ?? Prisma.JsonNull) as object,
+            delifastTrackedAt: new Date(),
+          },
           select: { restaurantId: true, externalId: true, opsStage: true, posStatus: true },
         });
-        if (advanced) void syncOnlineOrderFromPos(res).catch(() => {}); // sincroniza OnlineOrder + push al cliente
-        updated++;
+        void syncOnlineOrderFromPos(res).catch(() => {}); // sincroniza OnlineOrder (DONE) + push al cliente
+        closed++;
       } catch { /* un pedido que falle no detiene la pasada */ }
     }));
   }
-  return { orders: orders.length, updated };
+  return { orders: orders.length, closed };
 }
 
 export async function GET(req: NextRequest) {
@@ -107,12 +106,6 @@ export async function GET(req: NextRequest) {
   }
 
   const start = Date.now();
-  let passes = 0, updated = 0, orders = 0;
-  for (let i = 0; i < 4; i++) {
-    const r = await doPass();
-    passes++; updated += r.updated; orders = r.orders;
-    if (i === 3 || Date.now() - start > 42000) break; // no queda tiempo para otra pasada
-    await sleep(15000);
-  }
-  return NextResponse.json({ ok: true, passes, orders, updated, ms: Date.now() - start });
+  const r = await closeDelivered();
+  return NextResponse.json({ ok: true, orders: r.orders, closed: r.closed, ms: Date.now() - start });
 }
