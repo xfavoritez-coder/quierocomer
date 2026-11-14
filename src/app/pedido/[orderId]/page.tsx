@@ -585,24 +585,15 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
 
-        {/* Hora programada (pedido agendado) — destacada para que el cliente la vea */}
+        {/* Hora programada (pedido agendado) — texto centrado y minimalista */}
         {order.scheduledFor && (
-          <div style={{
-            ...cardStyle,
-            marginBottom: 16,
-            display: "flex", alignItems: "center", gap: 12,
-            background: theme.accent + "14",
-            border: `1px solid ${theme.accent}55`,
-          }}>
-            <span style={{ fontSize: 24, flexShrink: 0 }}>🕐</span>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ ...labelStyle, color: theme.accent, margin: "0 0 2px" }}>
-                {order.orderType === "DELIVERY" ? "Programado para delivery" : "Programado para retiro"}
-              </p>
-              <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, color: theme.text, margin: 0 }}>
-                {fmtScheduled(order.scheduledFor)}
-              </p>
-            </div>
+          <div style={{ textAlign: "center", margin: "0 0 16px" }}>
+            <p style={{ ...labelStyle, margin: "0 0 2px" }}>
+              {order.orderType === "DELIVERY" ? "Programado para delivery" : "Programado para retiro"}
+            </p>
+            <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: theme.text, margin: 0 }}>
+              {fmtScheduled(order.scheduledFor)}
+            </p>
           </div>
         )}
 
