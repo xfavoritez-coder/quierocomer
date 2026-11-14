@@ -2414,7 +2414,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
             return (
               <div style={{
                 position: 'absolute',
-                bottom: 'calc(100% - 148px)', // se ancla sobre la barra más alta
+                bottom: 'calc(100% - 160px)', // se ancla sobre la barra más alta
                 left: leftPct < 20 ? 0 : leftPct > 80 ? 'auto' : `${leftPct}%`,
                 right: leftPct > 80 ? 0 : 'auto',
                 transform: leftPct >= 20 && leftPct <= 80 ? 'translateX(-50%)' : 'none',
@@ -2441,38 +2441,53 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               </div>
             )
           })()}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', height: 180, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 160, padding: '0 4px' }}>
+            {/* Grid de columnas — cada barra se posiciona con bottom:0 absoluto */}
+            <div style={{ display: 'flex', gap: 2, height: '100%' }}>
             {buckets.map((b, i) => {
               const unk = b.unknownOrders ?? 0
               const total = b.newClients + b.recurringClients + unk
               const barH = total > 0 ? Math.max(2, Math.round((total / maxTotal) * 148)) : 0
               const isHovered = tooltipIdx === i
+              // Gradiente vertical: azul (nuevos) → verde (recurrentes) → gris (sin contacto)
               const newPct  = total > 0 ? (b.newClients / total) * 100 : 0
               const recPct  = total > 0 ? (b.recurringClients / total) * 100 : 0
-              const unkPct  = total > 0 ? (unk / total) * 100 : 0
+              const stops: string[] = []
+              if (newPct > 0) stops.push(`${BLUE} 0%`, `${BLUE} ${newPct}%`)
+              if (recPct > 0) stops.push(`#10b981 ${newPct}%`, `#10b981 ${newPct + recPct}%`)
+              if (total > 0 && unk > 0) stops.push(`#888 ${newPct + recPct}%`, `#888 100%`)
+              const gradient = stops.length > 0 ? `linear-gradient(to bottom, ${stops.join(', ')})` : BLUE
               return (
                 <div
                   key={b.date}
-                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default' }}
+                  style={{ flex: 1, minWidth: 0, position: 'relative', cursor: total > 0 ? 'pointer' : 'default' }}
                   onMouseEnter={() => total > 0 && setTooltipIdx(i)}
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
                 >
+                  {/* Número encima de la barra */}
                   {showCount && total > 0 && (
-                    <div style={{ textAlign: 'center', fontFamily: F, fontSize: 8, color: 'var(--ink-3)', lineHeight: 1, marginBottom: 3 }}>
+                    <div style={{
+                      position: 'absolute', bottom: barH + 3, left: 0, right: 0,
+                      textAlign: 'center', fontFamily: F, fontSize: 8, color: 'var(--ink-3)', lineHeight: 1,
+                    }}>
                       {total}
                     </div>
                   )}
+                  {/* Barra — anclada al fondo con position absolute */}
                   {barH > 0 && (
-                    <div style={{ width: '80%', maxWidth: 28, height: barH, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRadius: '3px 3px 0 0', overflow: 'hidden', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
-                      {newPct > 0 && <div style={{ flex: `${newPct} 0 0%`, background: BLUE, minHeight: 1 }} />}
-                      {recPct > 0 && <div style={{ flex: `${recPct} 0 0%`, background: '#10b981', minHeight: 1 }} />}
-                      {unkPct > 0 && <div style={{ flex: `${unkPct} 0 0%`, background: 'var(--ink-4)', minHeight: 1, opacity: 0.6 }} />}
-                    </div>
+                    <div style={{
+                      position: 'absolute', bottom: 0, left: '10%', right: '10%', maxWidth: 28, margin: '0 auto',
+                      height: barH, borderRadius: '3px 3px 0 0',
+                      background: gradient,
+                      opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1,
+                      transition: 'opacity .15s',
+                    }} />
                   )}
                 </div>
               )
             })}
+            </div>
           </div>
           {/* Etiquetas de fecha — fila separada para que las barras toquen el fondo */}
           <div style={{ display: 'flex', gap: 2, padding: '4px 4px 0', overflowX: 'hidden' }}>
