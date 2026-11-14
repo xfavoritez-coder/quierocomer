@@ -2441,21 +2441,19 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
               </div>
             )
           })()}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', overflowX: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, padding: '0 4px', height: 180, overflow: 'hidden' }}>
             {buckets.map((b, i) => {
               const unk = b.unknownOrders ?? 0
               const total = b.newClients + b.recurringClients + unk
               const barH = total > 0 ? Math.max(2, Math.round((total / maxTotal) * 148)) : 0
               const isHovered = tooltipIdx === i
-              // Porcentajes flex para cada segmento — flex-basis en % del barH total,
-              // sin Math.round por segmento, el navegador reparte los píxeles sin gaps.
               const newPct  = total > 0 ? (b.newClients / total) * 100 : 0
               const recPct  = total > 0 ? (b.recurringClients / total) * 100 : 0
               const unkPct  = total > 0 ? (unk / total) * 100 : 0
               return (
                 <div
                   key={b.date}
-                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', height: 180, cursor: total > 0 ? 'pointer' : 'default' }}
+                  style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', cursor: total > 0 ? 'pointer' : 'default' }}
                   onMouseEnter={() => total > 0 && setTooltipIdx(i)}
                   onMouseLeave={() => setTooltipIdx(null)}
                   onClick={() => total > 0 && setTooltipIdx(isHovered ? null : i)}
@@ -2466,7 +2464,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                     </div>
                   )}
                   {barH > 0 && (
-                    <div style={{ width: '80%', maxWidth: 28, height: barH, display: 'flex', flexDirection: 'column', borderRadius: '3px 3px 0 0', overflow: 'hidden', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
+                    <div style={{ width: '80%', maxWidth: 28, height: barH, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRadius: '3px 3px 0 0', overflow: 'hidden', opacity: tooltipIdx !== null && !isHovered ? 0.4 : 1, transition: 'opacity .15s' }}>
                       {newPct > 0 && <div style={{ flex: `${newPct} 0 0%`, background: BLUE, minHeight: 1 }} />}
                       {recPct > 0 && <div style={{ flex: `${recPct} 0 0%`, background: '#10b981', minHeight: 1 }} />}
                       {unkPct > 0 && <div style={{ flex: `${unkPct} 0 0%`, background: 'var(--ink-4)', minHeight: 1, opacity: 0.6 }} />}

@@ -51,26 +51,6 @@
     {
       "path": "/api/cron/billing-recovery",
       "schedule": "0 9,21 * * *"
-    },
-    {
-      "path": "/api/cron/meta-ads?action=activate&cid=120233063925000467",
-      "schedule": "0 19 * * 1-6"
-    },
-    {
-      "path": "/api/cron/meta-ads?action=activate&cid=120210681463440467",
-      "schedule": "0 19 * * 2,5,6"
-    },
-    {
-      "path": "/api/cron/meta-ads?action=deactivate",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/meta-ads?action=activate&cid=120250703448740467&hour=16",
-      "schedule": "0 19 * * 1-6"
-    },
-    {
-      "path": "/api/cron/meta-ads?action=deactivate&cid=120250703448740467&hour=21",
-      "schedule": "45 0 * * 0,2-6"
     }
   ]
 }
