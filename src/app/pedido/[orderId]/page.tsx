@@ -48,6 +48,7 @@ interface OrderData {
   restaurantSlug?: string | null;
   status: string;
   statusHistory: StatusEntry[];
+  scheduledFor?: string | null;
   notes: string | null;
   cancellationReason: string | null;
   estimatedTime: string | null;
@@ -189,6 +190,18 @@ function getSteps(orderType: "PICKUP" | "DELIVERY", t: TrackingTexts) {
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+}
+
+// Hora programada (pedido agendado) en hora de Chile. Muestra "Hoy HH:MM" o
+// "vie 14 nov · HH:MM" si es otro día.
+function fmtScheduled(iso: string): string {
+  const d = new Date(iso);
+  const TZ = "America/Santiago";
+  const time = d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TZ });
+  const dayKey = (x: Date) => new Intl.DateTimeFormat("es-CL", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(x);
+  if (dayKey(d) === dayKey(new Date())) return `Hoy ${time}`;
+  const date = d.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
+  return `${date} · ${time}`;
 }
 
 function getStepTime(stepIndex: number, statusHistory: StatusEntry[], createdAt: string, stepStatuses: string[][]): string | null {
@@ -571,6 +584,27 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: theme.text, margin: 0 }}>{st.t}</h2>
           {st.s && <p style={{ fontFamily: FONT, fontSize: 14, color: theme.text2, margin: "4px 0 0", lineHeight: 1.5 }}>{st.s}</p>}
         </div>
+
+        {/* Hora programada (pedido agendado) — destacada para que el cliente la vea */}
+        {order.scheduledFor && (
+          <div style={{
+            ...cardStyle,
+            marginBottom: 16,
+            display: "flex", alignItems: "center", gap: 12,
+            background: theme.accent + "14",
+            border: `1px solid ${theme.accent}55`,
+          }}>
+            <span style={{ fontSize: 24, flexShrink: 0 }}>🕐</span>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ ...labelStyle, color: theme.accent, margin: "0 0 2px" }}>
+                {order.orderType === "DELIVERY" ? "Programado para delivery" : "Programado para retiro"}
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 800, color: theme.text, margin: 0 }}>
+                {fmtScheduled(order.scheduledFor)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Avisos push del estado del pedido */}
         {order.status !== "DONE" && <NotifyButton orderId={orderId} accent={theme.accent} textColor={theme.text2} />}

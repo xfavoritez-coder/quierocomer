@@ -28,6 +28,7 @@ export async function GET(
       cancellationReason: true,
       status: true,
       statusHistory: true,
+      scheduledFor: true,
       createdAt: true,
       updatedAt: true,
       restaurant: {
@@ -88,6 +89,7 @@ export async function GET(
     restaurantSlug: order.restaurant.slug,
     status,
     statusHistory,
+    scheduledFor: order.scheduledFor ? order.scheduledFor.toISOString() : null,
     notes: order.notes ?? null,
     cancellationReason: order.cancellationReason ?? null,
     estimatedTime: order.restaurant.orderingWaitTime ?? null,
