@@ -2390,7 +2390,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ink-4)', flexShrink: 0 }} />
-          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Sin contacto</span>
+          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Venta rápida</span>
         </div>
       </div>
 
@@ -2435,7 +2435,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                 {(b.unknownOrders ?? 0) > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-4)', display: 'inline-block', flexShrink: 0 }} />
-                    Sin contacto: <strong>{b.unknownOrders}</strong>
+                    Venta rápida: <strong>{b.unknownOrders}</strong>
                   </div>
                 )}
               </div>
