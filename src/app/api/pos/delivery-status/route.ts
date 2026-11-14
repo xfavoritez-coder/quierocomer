@@ -89,23 +89,47 @@ function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: str
   const hasAny = driverName || driverPhone || driverPhoto || lat != null || eta || dropoffEta || pin || pod || url || Object.keys(ts).length;
   if (!hasAny) return null;
 
+  const nowIso = new Date().toISOString();
+  const timeline: Record<string, string | null> = {
+    confirmacion: s(ts.asignado ?? ts.confirmada),
+    inicioPickup: s(ts.recogido ?? ts.pickup),
+    llegadaLocal: s(ts.en_local ?? ts.llegada_local),
+    inicioDropoff: s(ts.en_camino ?? ts.dropoff),
+    // "Llegó al cliente": el pill lo usa para distinguir "va en camino" de "ya llegó".
+    llegadaCasa: s(ts.llegada_cliente ?? ts.en_cliente ?? ts.llegada_casa ?? g("llegada_cliente")),
+    entregado: s(ts.entregado),
+    cancelado: s(ts.cancelado),
+  };
+  // Respaldo: Delifast manda el ESTADO pero a veces no su timestamp (p. ej.
+  // "Entregado" con timestamps.entregado=null). Si el paso correspondiente al
+  // estado actual no trae hora, usamos la hora de recepción del webhook.
+  const curKey = estadoTimelineKey(meta.estado);
+  if (curKey && !timeline[curKey]) timeline[curKey] = nowIso;
+
   return {
     idVenta: meta.idVenta,
     status: s(meta.estado) ?? null,
     eta, dropoffEta, pin,
     driver: (driverName || driverPhone || driverPhoto) ? { name: driverName, photo: driverPhoto, phone: driverPhone } : null,
-    location: lat != null && lng != null ? { lat, lng, at: new Date().toISOString() } : null,
+    location: lat != null && lng != null ? { lat, lng, at: nowIso } : null,
     deliveryPhoto: pod,
     statusUrl: url,
-    timeline: {
-      confirmacion: s(ts.asignado ?? ts.confirmada), inicioPickup: s(ts.recogido ?? ts.pickup), llegadaLocal: s(ts.en_local ?? ts.llegada_local),
-      inicioDropoff: s(ts.en_camino ?? ts.dropoff),
-      // "Llegó al cliente": el pill lo usa para distinguir "va en camino" de "ya llegó".
-      llegadaCasa: s(ts.llegada_cliente ?? ts.en_cliente ?? ts.llegada_casa ?? g("llegada_cliente")),
-      entregado: s(ts.entregado), cancelado: s(ts.cancelado),
-    },
+    timeline,
     source: "webhook",
   };
+}
+
+// Mapea el estado Delifast al paso del timeline que representa (para el respaldo
+// de hora de recepción cuando no viene el timestamp).
+function estadoTimelineKey(estado?: string | null): string | null {
+  const e = (estado || "").toLowerCase();
+  if (/entregad/.test(e)) return "entregado";
+  if (/cancel|anul/.test(e)) return "cancelado";
+  if (/camino|reparto|ruta|dropoff|transit/.test(e)) return "inicioDropoff";
+  if (/en.?local|lleg.*local/.test(e)) return "llegadaLocal";
+  if (/recog|pickup/.test(e)) return "inicioPickup";
+  if (/asignad|confirmad/.test(e)) return "confirmacion";
+  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -243,6 +267,17 @@ export async function POST(req: NextRequest) {
   // sin raspar el panel de Delifast.
   const rich = trackingFromWebhook(body, { idVenta, estado });
   if (rich) {
+    // Conservar las horas ya guardadas de pasos anteriores (incluidos los
+    // respaldos de hora de recepción) que ESTE evento no trae, para que el
+    // timeline se vaya completando progresivamente en vez de perder pasos.
+    try {
+      const prev = await prisma.posOrder.findUnique({ where: { id: po.id }, select: { delifastTracking: true } });
+      const prevTl = (prev?.delifastTracking as { timeline?: Record<string, string | null> } | null)?.timeline;
+      const tl = rich.timeline as Record<string, string | null>;
+      if (prevTl && tl) {
+        for (const k of Object.keys(tl)) if (tl[k] == null && prevTl[k] != null) tl[k] = prevTl[k];
+      }
+    } catch { /* no crítico: el timeline igual se guarda */ }
     patch.delifastTracking = rich as object;
     patch.delifastStatus = estado ?? (rich.status as string | null) ?? null;
     patch.delifastTrackedAt = now;
