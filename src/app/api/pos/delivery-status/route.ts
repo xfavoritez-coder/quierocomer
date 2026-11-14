@@ -17,8 +17,26 @@ import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { decryptEcommerceSecrets } from "@/lib/ecommerce/configSecrets";
 import { getDelifastCodigoOrigen } from "@/lib/delifast/client";
-import { getPlatformSetting } from "@/lib/platformSettings";
+import { getPlatformSetting, setPlatformSetting } from "@/lib/platformSettings";
 import { STAGE_ORDER, toOpsStage } from "@/lib/delifast/status";
+
+// Captura de depuración: guarda el cuerpo CRUDO de los últimos webhooks en un
+// PlatformSetting (ring buffer) para poder inspeccionar exactamente qué manda
+// Delifast. Solo corre si el flag "delifast_webhook_debug" === "1". No rompe
+// nunca el webhook (todo en try/catch). Guarda sin el `secret`.
+const WEBHOOK_LOG_MAX = 50;
+async function captureWebhook(body: Record<string, unknown>): Promise<void> {
+  try {
+    if ((await getPlatformSetting("delifast_webhook_debug")) !== "1") return;
+    const { secret, ...safe } = body; void secret;
+    let arr: unknown[] = [];
+    try { arr = JSON.parse((await getPlatformSetting("delifast_webhook_log")) || "[]"); } catch { arr = []; }
+    if (!Array.isArray(arr)) arr = [];
+    arr.push({ at: new Date().toISOString(), body: safe });
+    if (arr.length > WEBHOOK_LOG_MAX) arr = arr.slice(-WEBHOOK_LOG_MAX);
+    await setPlatformSetting("delifast_webhook_log", JSON.stringify(arr));
+  } catch { /* nunca afecta al webhook */ }
+}
 
 // Cache negativo: id_venta de Delifast que NO corresponde a un pedido nuestro
 // (codigo_origen vacío). Evita re-consultar el detalle en cada evento repetido.
@@ -103,6 +121,9 @@ export async function POST(req: NextRequest) {
   if (!secret || body.secret !== secret) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  // Depuración opcional: capturar el payload crudo (flag delifast_webhook_debug).
+  await captureWebhook(body);
 
   // El id del local puede venir como `local`, `localId` o `local_id` (número o
   // texto). Lo necesitamos para saber a QUÉ restaurante pertenece el codigo_origen
