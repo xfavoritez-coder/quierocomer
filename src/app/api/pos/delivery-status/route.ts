@@ -90,11 +90,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
+  // El id del local puede venir como `local`, `localId` o `local_id` (número o
+  // texto). Lo necesitamos para saber a QUÉ restaurante pertenece el codigo_origen
+  // (que es nuestro orderNumber y NO es único entre locales).
+  const rawLocal = body.local ?? body.localId ?? body.local_id;
+  const localStr = rawLocal != null && String(rawLocal).trim() !== "" ? String(rawLocal).trim() : undefined;
   const restaurantId =
     (typeof body.restaurantId === "string" && body.restaurantId) ||
-    restaurantFromLocal(body.localId as string | undefined);
+    restaurantFromLocal(localStr);
   if (!restaurantId) {
-    return NextResponse.json({ error: "Falta restaurantId (o localId mapeable)" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: "No pude mapear el local a un restaurante",
+        receivedLocal: localStr ?? null,
+        hint: "Envía el id de tu local en el campo \"local\" y avísanos ese valor para mapearlo (DELIFAST_LOCAL_MAP).",
+      },
+      { status: 400 },
+    );
   }
 
   const estado = (body.estado ?? body.nuevo_estado) as string | undefined;
