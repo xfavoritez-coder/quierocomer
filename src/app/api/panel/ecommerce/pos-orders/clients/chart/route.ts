@@ -180,8 +180,8 @@ export async function GET(req: NextRequest) {
     )
     SELECT
       rd.order_bucket::text as bucket,
-      COUNT(CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} = rd.order_bucket THEN 1 END)::int as new_clients,
-      COUNT(CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} < rd.order_bucket THEN 1 END)::int as recurring_clients,
+      COUNT(DISTINCT CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} = rd.order_bucket THEN rd.client_key END)::int as new_clients,
+      COUNT(DISTINCT CASE WHEN rd.client_key IS NOT NULL AND ${firstBucketExpr} < rd.order_bucket THEN rd.client_key END)::int as recurring_clients,
       COUNT(CASE WHEN rd.client_key IS NULL THEN 1 END)::int as unknown_orders
     FROM range_data rd
     LEFT JOIN first_orders fo ON rd.client_key = fo.client_key
