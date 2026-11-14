@@ -52,25 +52,32 @@ function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: str
   const driverPhoto = s(rep.foto ?? g("repartidor_foto") ?? g("foto"));
   const lat = num(ubi.lat ?? g("lat"));
   const lng = num(ubi.lng ?? g("lng"));
-  const eta = s(g("eta") ?? (g("eta_min") != null ? `${g("eta_min")} min` : null));
+  // ETA al LOCAL (recoger) y ETA al CLIENTE (entregar). Aceptamos varios nombres
+  // (minutos, "HH:MM" o timestamp — etaMinutes() los normaliza). OJO: pasamos el
+  // valor crudo, sin " min", porque etaMinutes solo parsea número/hora/timestamp.
+  const eta = s(g("eta") ?? g("eta_local") ?? g("pickup_eta") ?? g("eta_min") ?? g("minutos_llegada_local"));
+  const dropoffEta = s(g("eta_cliente") ?? g("eta_casa") ?? g("dropoff_eta") ?? g("eta_dropoff") ?? g("minutos_llegada_casa"));
   const pin = s(g("pin") ?? g("pincode"));
   const pod = s(g("foto_entrega") ?? g("dropoff_imagen"));
   const url = s(g("url_seguimiento") ?? g("url_status"));
 
-  const hasAny = driverName || driverPhone || driverPhoto || lat != null || eta || pin || pod || url || Object.keys(ts).length;
+  const hasAny = driverName || driverPhone || driverPhoto || lat != null || eta || dropoffEta || pin || pod || url || Object.keys(ts).length;
   if (!hasAny) return null;
 
   return {
     idVenta: meta.idVenta,
     status: s(meta.estado) ?? null,
-    eta, dropoffEta: s(g("eta_cliente")) ?? null, pin,
+    eta, dropoffEta, pin,
     driver: (driverName || driverPhone || driverPhoto) ? { name: driverName, photo: driverPhoto, phone: driverPhone } : null,
     location: lat != null && lng != null ? { lat, lng, at: new Date().toISOString() } : null,
     deliveryPhoto: pod,
     statusUrl: url,
     timeline: {
-      confirmacion: s(ts.asignado), inicioPickup: s(ts.recogido), llegadaLocal: s(ts.en_local),
-      inicioDropoff: s(ts.en_camino), entregado: s(ts.entregado), cancelado: s(ts.cancelado),
+      confirmacion: s(ts.asignado ?? ts.confirmada), inicioPickup: s(ts.recogido ?? ts.pickup), llegadaLocal: s(ts.en_local ?? ts.llegada_local),
+      inicioDropoff: s(ts.en_camino ?? ts.dropoff),
+      // "Llegó al cliente": el pill lo usa para distinguir "va en camino" de "ya llegó".
+      llegadaCasa: s(ts.llegada_cliente ?? ts.en_cliente ?? ts.llegada_casa ?? g("llegada_cliente")),
+      entregado: s(ts.entregado), cancelado: s(ts.cancelado),
     },
     source: "webhook",
   };
