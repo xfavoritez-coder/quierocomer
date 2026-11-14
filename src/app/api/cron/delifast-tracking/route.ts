@@ -94,6 +94,61 @@ async function closeDelivered(): Promise<{ orders: number; closed: number }> {
   return { orders: orders.length, closed };
 }
 
+// Relleno de timeline: los pedidos que cerró el WEBHOOK quedan con el timeline
+// incompleto (el webhook no trae "Inicio Pickup", manda `en_camino` null y NO manda
+// "Llegada Casa"). El DETALLE de Delifast sí tiene las 6 horas reales, así que para
+// cada pedido recién entregado al que le falte "Llegada Casa" lo consultamos UNA vez
+// y completamos/corregimos el timeline (sin tocar opsStage: ya está entregado).
+// Apenas queda con llegadaCasa, deja de entrar acá (no se vuelve a raspar).
+async function backfillTimelines(): Promise<number> {
+  const since = new Date(Date.now() - 30 * 60 * 1000); // entregados en los últimos 30 min
+  const orders = await prisma.posOrder.findMany({
+    where: { isDelivery: true, opsStage: "delivered", opsDeliveredAt: { gte: since }, delifastVentaId: { not: null } },
+    select: { id: true, restaurantId: true, delifastVentaId: true, delifastTracking: true },
+    orderBy: { opsDeliveredAt: "desc" },
+    take: 50,
+  });
+  // Solo los que NO tienen aún "Llegada Casa" (los que cerró el scraping ya la traen).
+  const need = orders.filter((o) => {
+    const t = o.delifastTracking as { timeline?: Record<string, string | null> } | null;
+    return !t?.timeline?.llegadaCasa;
+  });
+  if (!need.length) return 0;
+
+  const rids = [...new Set(need.map((o) => o.restaurantId))];
+  const rests = await prisma.restaurant.findMany({ where: { id: { in: rids } }, select: { id: true, ecommerceConfig: true } });
+  const credsByR = new Map<string, DelifastCreds>();
+  for (const r of rests) {
+    const c = decryptEcommerceSecrets(parseEcommerceConfig(r.ecommerceConfig)).delifast;
+    if (c?.enabled && c.email && c.password && c.plataforma) credsByR.set(r.id, c);
+  }
+
+  let filled = 0;
+  for (const o of need) {
+    const creds = credsByR.get(o.restaurantId);
+    if (!creds || !o.delifastVentaId) continue;
+    try {
+      const det = await getDelifastTracking(o.restaurantId, creds, o.delifastVentaId);
+      const detTl = det?.timeline as Record<string, string | null> | undefined;
+      if (!detTl) continue;
+      const prev = (o.delifastTracking as Record<string, unknown> | null) ?? {};
+      const prevTl = (prev.timeline as Record<string, string | null> | undefined) ?? {};
+      // El detalle (scraping) es la fuente autoritativa de las 6 horas → lo tomamos,
+      // pero conservamos repartidor/pin/url del webhook si el detalle no los trae.
+      const mergedTl: Record<string, string | null> = { ...prevTl };
+      for (const k of Object.keys(detTl)) if (detTl[k]) mergedTl[k] = detTl[k];
+      const merged = {
+        ...prev,
+        timeline: mergedTl,
+        deliveryPhoto: det?.deliveryPhoto ?? (prev.deliveryPhoto as string | null) ?? null,
+      };
+      await prisma.posOrder.update({ where: { id: o.id }, data: { delifastTracking: merged as object } });
+      filled++;
+    } catch { /* un pedido que falle no detiene la pasada */ }
+  }
+  return filled;
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -107,5 +162,6 @@ export async function GET(req: NextRequest) {
 
   const start = Date.now();
   const r = await closeDelivered();
-  return NextResponse.json({ ok: true, orders: r.orders, closed: r.closed, ms: Date.now() - start });
+  const filled = await backfillTimelines().catch(() => 0);
+  return NextResponse.json({ ok: true, orders: r.orders, closed: r.closed, filled, ms: Date.now() - start });
 }

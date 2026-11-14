@@ -90,21 +90,29 @@ function trackingFromWebhook(body: Record<string, unknown>, meta: { idVenta: str
   if (!hasAny) return null;
 
   const nowIso = new Date().toISOString();
+  // Hoy el webhook de Delifast SOLO trae: asignado, en_local, recogido, entregado
+  // (en_camino viene SIEMPRE null y NO manda inicio_pickup ni llegada_casa). OJO con
+  // `recogido`: es el momento en que el repartidor TOMA el pedido y sale al cliente =
+  // inicio del dropoff ("En camino"), NO "Pickup iniciado". Antes de salir del local
+  // viene como ESTIMADO, así que solo lo usamos cuando el estado ya indica que va al
+  // cliente (towardClient). Las horas de "Inicio Pickup" y "Llegó al cliente" no
+  // llegan por webhook → las completa el worker de cierre con el detalle de Delifast.
   const timeline: Record<string, string | null> = {
     confirmacion: s(ts.asignado ?? ts.confirmada),
-    inicioPickup: s(ts.recogido ?? ts.pickup),
+    inicioPickup: s(ts.inicio_pickup ?? ts.camino_local ?? ts.pickup),
     llegadaLocal: s(ts.en_local ?? ts.llegada_local),
-    inicioDropoff: s(ts.en_camino ?? ts.dropoff),
+    inicioDropoff: s(ts.en_camino ?? ts.dropoff) ?? (towardClient ? s(ts.recogido) : null),
     // "Llegó al cliente": el pill lo usa para distinguir "va en camino" de "ya llegó".
-    llegadaCasa: s(ts.llegada_cliente ?? ts.en_cliente ?? ts.llegada_casa ?? g("llegada_cliente")),
+    llegadaCasa: s(ts.llegada_cliente ?? ts.en_cliente ?? ts.llegada_casa ?? ts.llegada_destino ?? g("llegada_cliente")),
     entregado: s(ts.entregado),
     cancelado: s(ts.cancelado),
   };
-  // Respaldo: Delifast manda el ESTADO pero a veces no su timestamp (p. ej.
-  // "Entregado" con timestamps.entregado=null). Si el paso correspondiente al
-  // estado actual no trae hora, usamos la hora de recepción del webhook.
+  // Respaldo de hora SOLO para estados TERMINALES: Delifast manda "Entregado"/
+  // "Cancelado" sin su timestamp, así que usamos la hora de recepción (±segundos).
+  // Para los intermedios NO inventamos hora: antes "En camino" tomaba la hora de
+  // recepción y salía totalmente descuadrada (p. ej. 20:11 en vez de 19:50).
   const curKey = estadoTimelineKey(meta.estado);
-  if (curKey && !timeline[curKey]) timeline[curKey] = nowIso;
+  if ((curKey === "entregado" || curKey === "cancelado") && !timeline[curKey]) timeline[curKey] = nowIso;
 
   return {
     idVenta: meta.idVenta,
