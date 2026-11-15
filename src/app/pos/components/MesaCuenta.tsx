@@ -6,6 +6,7 @@
 // Al cobrar, cierra el pedido (opsStage=delivered) para liberar la mesa.
 import { useState } from 'react'
 import { CobroModal } from './OrdersBoard'
+import { printKitchenComanda, getKitchenBridgeUrl } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 
 interface MesaItem { productName?: string; dishName?: string; name?: string; quantity?: number; unit_price?: number; options?: string[]; note?: string; courtesy?: boolean }
@@ -22,8 +23,36 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
 }) {
   const navigate = usePosNav()
   const [cobro, setCobro] = useState(false)
+  const [reprinting, setReprinting] = useState(false)
   const items = Array.isArray(order.items) ? order.items : []
   const total = order.totalAmount || 0
+
+  // Reimprime la ÚLTIMA ronda (o todo el pedido si no hay rondas registradas) a la
+  // impresora de cocina. Útil si la impresora estaba apagada al enviarla.
+  const handleReprint = async () => {
+    const rounds = (order.rawPayload as { rounds?: { items?: MesaItem[] }[] } | undefined)?.rounds
+    const last = Array.isArray(rounds) && rounds.length ? rounds[rounds.length - 1].items : null
+    const src = (Array.isArray(last) && last.length ? last : items)
+    if (!src.length) return
+    setReprinting(true)
+    try {
+      const r = await printKitchenComanda({
+        jobId: Math.random().toString(36).slice(2),
+        type: 'mesa',
+        tableNumber: (order.tableLabel || mesaKey) || undefined,
+        orderLabel: `Mesa ${order.tableLabel || mesaKey}`,
+        sentBy: 'POS',
+        items: src.map((it) => ({
+          quantity: it.quantity || 1,
+          dish_name: it.productName || it.dishName || it.name || 'Ítem',
+          modifiers: (it.options || []).map((v) => ({ name: v, price_adjustment: 0 })),
+          note: it.note || undefined,
+        })),
+      }, getKitchenBridgeUrl())
+      if (!r.ok) alert('No se pudo imprimir: ' + (r.error || 'agente no disponible'))
+    } catch { alert('No se pudo imprimir la comanda') }
+    setReprinting(false)
+  }
 
   const handlePaid = async () => {
     // Cobrado → cerramos el pedido (delivered): libera la mesa y va al historial.
@@ -72,6 +101,10 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>
             <span>Total</span><span style={{ fontFamily: 'var(--mono)' }}>{clp(total)}</span>
           </div>
+          <button
+            onClick={handleReprint} disabled={reprinting || items.length === 0}
+            style={{ padding: '8px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontWeight: 600, fontSize: 13, cursor: items.length === 0 ? 'default' : 'pointer', opacity: items.length === 0 ? 0.5 : 1, fontFamily: 'var(--sans)' }}
+          >{reprinting ? 'Imprimiendo…' : '🖨 Reimprimir comanda de cocina'}</button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => navigate(`/pos/tomar-pedido?mesa=${encodeURIComponent(mesaKey)}&order=${order.id}`)}
