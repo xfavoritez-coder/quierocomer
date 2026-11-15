@@ -120,24 +120,6 @@ export function setKitchenMode(on: boolean): void {
   localStorage.setItem(LS_KITCHEN, on ? '1' : '0')
 }
 
-// ── URL del agente de COCINA (opcional, por equipo) ───────────────
-// Si está vacía, la comanda de cocina va al agente principal (getBridgeUrl).
-// Si se setea (ej. un mini-PC en la cocina con su propio agente), las comandas
-// de mesa van a ESA URL → separa cocina de caja sin tocar el agente.
-const LS_KITCHEN_URL = 'pos_kitchen_bridge_url'
-
-export function getKitchenBridgeUrl(): string {
-  if (typeof window === 'undefined') return ''
-  return localStorage.getItem(LS_KITCHEN_URL) || getBridgeUrl()
-}
-
-export function setKitchenBridgeUrl(url: string): void {
-  if (typeof window === 'undefined') return
-  const v = (url || '').trim().replace(/\/$/, '')
-  if (v) localStorage.setItem(LS_KITCHEN_URL, v)
-  else localStorage.removeItem(LS_KITCHEN_URL)
-}
-
 // ── API calls ─────────────────────────────────────────────────────
 
 export async function printComanda(comanda: ComandaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
@@ -158,8 +140,8 @@ export async function printComanda(comanda: ComandaPayload): Promise<{ ok: boole
   }
 }
 
-export async function printKitchenComanda(payload: KitchenComandaPayload, urlOverride?: string): Promise<{ ok: boolean; jobId?: string; error?: string }> {
-  const url = urlOverride || getBridgeUrl()
+export async function printKitchenComanda(payload: KitchenComandaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  const url = getBridgeUrl()
   try {
     const escpos = bytesToBase64(encodeKitchenComanda(payload))
     const res = await fetch(`${url}/print`, {

@@ -13,7 +13,6 @@ import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 import { formatPlaceAddress, placeAddressParts } from "@/lib/ecommerce/address";
 import type { StorefrontData, StoreProduct, StoreOptionGroup } from "@/lib/ecommerce/storefront-data";
 import type { AccompConfig } from "@/lib/ecommerce/accompaniments";
-import { printKitchenComanda, getKitchenBridgeUrl } from "@/lib/pos/bridge";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -298,23 +297,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             });
         const d = await res.json();
         if (!res.ok || (!d.ok && !d.order)) throw new Error(d.error || "No se pudo guardar");
-        // Comanda de cocina (best-effort): imprime los ítems de ESTA ronda al
-        // agente de cocina (getKitchenBridgeUrl → el principal si no hay uno aparte).
-        try {
-          await printKitchenComanda({
-            jobId: uid(),
-            type: "mesa",
-            tableNumber: tableLabel || undefined,
-            orderLabel: `Mesa ${tableLabel}`,
-            sentBy: "POS",
-            items: mesaItems.map((i) => ({
-              quantity: i.quantity,
-              dish_name: i.name,
-              modifiers: (i.options || []).map((o) => ({ name: o.value, price_adjustment: 0 })),
-              note: i.comment || undefined,
-            })),
-          }, getKitchenBridgeUrl());
-        } catch { /* sin agente/impresora: el pedido igual quedó guardado */ }
+        // La comanda de cocina la imprime el agente desde la cola (Path B, enrutada
+        // por la config de impresión del local) — ver manual-order/addItems/queue.
         setShowConfirm(false);
         if (onDone) onDone(); else { setCart([]); showToast("✓ Agregado a la mesa"); }
         return;

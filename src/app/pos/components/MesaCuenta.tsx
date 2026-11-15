@@ -6,11 +6,10 @@
 // Al cobrar, cierra el pedido (opsStage=delivered) para liberar la mesa.
 import { useState } from 'react'
 import { CobroModal } from './OrdersBoard'
-import { printKitchenComanda, getKitchenBridgeUrl } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 
 interface MesaItem { productName?: string; dishName?: string; name?: string; quantity?: number; unit_price?: number; options?: string[]; note?: string; courtesy?: boolean }
-type MesaOrder = { id: string; tableLabel?: string | null; totalAmount?: number; paidAmount?: number; items?: MesaItem[]; createdAt?: string;[k: string]: unknown }
+type MesaOrder = { id: string; externalId?: string; tableLabel?: string | null; totalAmount?: number; paidAmount?: number; items?: MesaItem[]; createdAt?: string;[k: string]: unknown }
 
 // CobroModal viene tipado para el board (PosOrderLite/OrderType); acá lo usamos
 // con el PosOrder dine-in tal cual lo entrega la API. Lo tratamos como props sueltas.
@@ -27,30 +26,19 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
   const items = Array.isArray(order.items) ? order.items : []
   const total = order.totalAmount || 0
 
-  // Reimprime la ÚLTIMA ronda (o todo el pedido si no hay rondas registradas) a la
-  // impresora de cocina. Útil si la impresora estaba apagada al enviarla.
+  // Reenvía la comanda a impresión por el flujo del agente (cola + routing de la
+  // config: imprime en la impresora de cocina configurada). Útil si estaba offline.
   const handleReprint = async () => {
-    const rounds = (order.rawPayload as { rounds?: { items?: MesaItem[] }[] } | undefined)?.rounds
-    const last = Array.isArray(rounds) && rounds.length ? rounds[rounds.length - 1].items : null
-    const src = (Array.isArray(last) && last.length ? last : items)
-    if (!src.length) return
+    const ext = String(order.externalId || '')
+    if (!ext.startsWith('oo-')) { alert('No se puede reimprimir este pedido'); return }
     setReprinting(true)
     try {
-      const r = await printKitchenComanda({
-        jobId: Math.random().toString(36).slice(2),
-        type: 'mesa',
-        tableNumber: (order.tableLabel || mesaKey) || undefined,
-        orderLabel: `Mesa ${order.tableLabel || mesaKey}`,
-        sentBy: 'POS',
-        items: src.map((it) => ({
-          quantity: it.quantity || 1,
-          dish_name: it.productName || it.dishName || it.name || 'Ítem',
-          modifiers: (it.options || []).map((v) => ({ name: v, price_adjustment: 0 })),
-          note: it.note || undefined,
-        })),
-      }, getKitchenBridgeUrl())
-      if (!r.ok) alert('No se pudo imprimir: ' + (r.error || 'agente no disponible'))
-    } catch { alert('No se pudo imprimir la comanda') }
+      const r = await fetch('/api/panel/ecommerce/print-reenqueue', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId, id: ext.slice(3) }),
+      })
+      if (!r.ok) alert('No se pudo reenviar a impresión')
+    } catch { alert('No se pudo reenviar a impresión') }
     setReprinting(false)
   }
 

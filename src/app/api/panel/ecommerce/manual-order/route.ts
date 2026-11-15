@@ -138,10 +138,14 @@ export async function POST(req: NextRequest) {
         deliveryAddress: isDelivery ? (deliveryAddress?.trim() || null) : null,
         // Dine-in: marcamos la mesa en deliveryAddressParts ({dineIn,tableLabel})
         // para que el espejo (centroMirror) cree el PosOrder como dine-in SIN tocar
-        // el schema del OnlineOrder. Robusto ante backfill (queda persistido).
+        // el schema del OnlineOrder. `lastRound` = los ítems de esta ronda, que la
+        // cola de impresión (Path B) usa para la comanda de cocina (solo esta ronda).
         deliveryAddressParts: isDineIn
-          ? ({ dineIn: true, tableLabel: tableLbl } as object)
+          ? ({ dineIn: true, tableLabel: tableLbl, lastRound: items.map((it) => ({ name: it.name, quantity: it.quantity, options: (it.options ?? []).map((o) => o.value), note: it.comment || null })) } as object)
           : isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
+        // Dine-in: pide imprimir la comanda ya (el agente la toma de la cola y la
+        // enruta a la impresora de cocina configurada), sin depender del printMode.
+        ...(isDineIn ? { printRequestedAt: new Date() } : {}),
         deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
         deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         paymentMethod: paymentMethod || "pendiente",

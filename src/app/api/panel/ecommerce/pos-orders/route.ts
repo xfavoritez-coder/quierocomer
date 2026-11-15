@@ -278,7 +278,7 @@ export async function PATCH(req: NextRequest) {
   // cada ronda en rawPayload.rounds (para imprimir la comanda de esa ronda en
   // Fase 2). La boleta lee PosOrder.items/totalAmount, así sale itemizada completa.
   if (body?.action === "addItems") {
-    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, items: true, totalAmount: true, paidAmount: true, posStatus: true, rawPayload: true } });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, items: true, totalAmount: true, paidAmount: true, posStatus: true, rawPayload: true, externalId: true, tableLabel: true } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     if (order.posStatus === "canceled") return NextResponse.json({ error: "El pedido está anulado" }, { status: 400 });
     const totAmt = order.totalAmount || 0;
@@ -310,6 +310,20 @@ export async function PATCH(req: NextRequest) {
       where: { id },
       data: { items: mergedItems as unknown as object, totalAmount: newTotal, rawPayload: rawPayload as object },
     });
+    // Mesa: reencola la comanda de ESTA ronda a la cola del agente (Path B) → la
+    // imprime en la impresora de cocina configurada. lastRound = solo los nuevos.
+    const ooId = order.externalId?.startsWith("oo-") ? order.externalId.slice(3) : null;
+    if (ooId) {
+      const lastRound = roundItems.map((it) => ({ name: it.productName, quantity: it.quantity, options: it.options, note: it.note ?? null }));
+      await prisma.onlineOrder.update({
+        where: { id: ooId },
+        data: {
+          deliveryAddressParts: { dineIn: true, tableLabel: order.tableLabel ?? "", lastRound } as object,
+          printedAt: null,
+          printRequestedAt: new Date(),
+        },
+      }).catch(() => { /* la ronda igual se guardó; el reprint manual queda disponible */ });
+    }
     void syncOnlineOrderFromPos(updated).catch(() => {});
     return NextResponse.json({ order: updated, addedRound: { items: roundItems, subtotal: addedSubtotal } });
   }

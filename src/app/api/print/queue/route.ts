@@ -7,9 +7,16 @@ import { encodeKitchenComanda, bytesToBase64 } from "@/lib/pos/escpos";
 // Devuelve el ESC/POS ya renderizado en base64 para que el agente lo imprima crudo.
 function kitchenEscposFor(o: {
   id: string; orderNumber: number | null; customerName: string | null; customerPhone: string | null;
-  orderType: string; deliveryAddress: string | null; items: unknown;
+  orderType: string; deliveryAddress: string | null; items: unknown; deliveryAddressParts?: unknown;
 }): string {
-  const rawItems = Array.isArray(o.items) ? (o.items as Record<string, unknown>[]) : [];
+  // Dine-in (mesa): la comanda es "MESA <label>" y SOLO los ítems de la ronda
+  // pendiente (deliveryAddressParts.lastRound), no todo el pedido.
+  const dp = (o.deliveryAddressParts && typeof o.deliveryAddressParts === "object" && !Array.isArray(o.deliveryAddressParts))
+    ? (o.deliveryAddressParts as Record<string, unknown>) : null;
+  const isDineIn = !!dp?.dineIn;
+  const tableLabel = isDineIn ? String(dp?.tableLabel ?? "") : "";
+  const roundItems = isDineIn && Array.isArray(dp?.lastRound) ? (dp!.lastRound as Record<string, unknown>[]) : null;
+  const rawItems = roundItems ?? (Array.isArray(o.items) ? (o.items as Record<string, unknown>[]) : []);
   const items = rawItems.map((it) => ({
     quantity: Number(it.quantity) || 1,
     dish_name: String(it.dishName || it.name || "Producto"),
@@ -17,16 +24,19 @@ function kitchenEscposFor(o: {
       ? (it.selectedOptions as Record<string, unknown>[])
           .filter((op) => op && op.optionName)
           .map((op) => ({ name: String(op.optionName), price_adjustment: 0 }))
-      : [],
-    note: (typeof it.comment === "string" && it.comment) || (typeof it.notes === "string" && it.notes) || undefined,
+      : Array.isArray(it.options)
+        ? (it.options as unknown[]).filter(Boolean).map((v) => ({ name: String(v), price_adjustment: 0 }))
+        : [],
+    note: (typeof it.comment === "string" && it.comment) || (typeof it.note === "string" && it.note) || (typeof it.notes === "string" && it.notes) || undefined,
   }));
   const bytes = encodeKitchenComanda({
     jobId: "kc_" + o.id,
-    type: o.orderType === "DELIVERY" ? "delivery" : "retiro",
-    orderLabel: "#" + (o.orderNumber ?? ""),
-    customerName: o.customerName || undefined,
-    customerPhone: o.customerPhone || undefined,
-    customerAddress: o.orderType === "DELIVERY" ? (o.deliveryAddress || undefined) : undefined,
+    type: isDineIn ? "mesa" : o.orderType === "DELIVERY" ? "delivery" : "retiro",
+    orderLabel: isDineIn ? `Mesa ${tableLabel}` : "#" + (o.orderNumber ?? ""),
+    tableNumber: isDineIn ? tableLabel : undefined,
+    customerName: isDineIn ? undefined : (o.customerName || undefined),
+    customerPhone: isDineIn ? undefined : (o.customerPhone || undefined),
+    customerAddress: !isDineIn && o.orderType === "DELIVERY" ? (o.deliveryAddress || undefined) : undefined,
     sentBy: "ecommerce",
     items,
   });
@@ -89,7 +99,7 @@ export async function GET(req: NextRequest) {
       id: true, orderNumber: true, customerName: true, customerPhone: true,
       orderType: true, deliveryAddress: true, paymentMethod: true, paymentStatus: true, paymentGateway: true,
       items: true, total: true, deliveryFee: true, discount: true, couponCode: true, notes: true, createdAt: true,
-      reprintTicketOnly: true,
+      reprintTicketOnly: true, deliveryAddressParts: true,
     },
   });
 
@@ -116,6 +126,7 @@ export async function GET(req: NextRequest) {
       couponCode: o.couponCode,
       notes: o.notes,
       createdAt: o.createdAt.toISOString(),
+      deliveryAddressParts: o.deliveryAddressParts,
     }));
 
   // Impresión de prueba: si el dueño la solicitó y el agente aún no la confirmó,
@@ -152,6 +163,17 @@ export async function GET(req: NextRequest) {
   const out = mapped.flatMap((o) => {
     const isTest = typeof o.id === "string" && o.id.startsWith("test-");
     if (isTest) return [o];
+    const dp = (o.deliveryAddressParts && typeof o.deliveryAddressParts === "object" && !Array.isArray(o.deliveryAddressParts))
+      ? (o.deliveryAddressParts as Record<string, unknown>) : null;
+    // Mesa (dine-in): SOLO la comanda de cocina (sin ticket de caja; la boleta es
+    // al cobrar). Siempre se imprime (no depende del toggle kitchenComanda), y el
+    // agente la enruta a la impresora de cocina configurada.
+    if (dp?.dineIn) {
+      try {
+        const escpos = kitchenEscposFor(o);
+        return [{ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]];
+      } catch { return []; }
+    }
     const entries: (typeof mapped)[number][] = cfg.printCopies === 2 ? [o, o] : [o];
     if (cfg.kitchenComanda && !ticketOnlyIds.has(o.id)) {
       try {
