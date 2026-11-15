@@ -27,6 +27,7 @@ import type { PosRestaurant } from './lib/usePosRestaurant'
 import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
+import MesaCuenta from './components/MesaCuenta'
 import OrdersBoard from './components/OrdersBoard'
 import PrepAlertWatcher from './components/PrepAlertWatcher'
 import DelifastCancelWatcher from './components/DelifastCancelWatcher'
@@ -248,6 +249,33 @@ export default function PosHomePage() {
   const garzones = useStaff(restaurantId)
   const pendingCount = usePendingSyncCount()
 
+  // ── Mesas server-authoritative: la ocupación sale de los PosOrder dine-in
+  // ABIERTOS (impagos), no del sistema Dexie. Al cobrar, la mesa se libera.
+  const [mesaOrders, setMesaOrders] = useState<any[]>([])
+  const [mesaCuenta, setMesaCuenta] = useState<{ order: any; key: string } | null>(null)
+  const fetchMesaOrders = useCallback(async () => {
+    if (!restaurantId) return
+    try {
+      const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+      if (!r.ok) return
+      const d = await r.json()
+      const list = Array.isArray(d.orders) ? d.orders : []
+      setMesaOrders(list.filter((o: any) =>
+        (o.saleType === 'dine-in' || o.saleType === 'dinein') &&
+        o.posStatus !== 'canceled' &&
+        (o.paidAmount || 0) < (o.totalAmount || 0),
+      ))
+    } catch { /* noop */ }
+  }, [restaurantId])
+  const mesaOrderByLabel = useMemo(() => {
+    const m = new Map<string, any>()
+    for (const o of mesaOrders) {
+      const k = String(o.tableLabel || '').trim()
+      if (k && !m.has(k)) m.set(k, o)
+    }
+    return m
+  }, [mesaOrders])
+
   // La caja es server-authoritative (usePosCash): cashSession===null = cerrada
   // confirmada por el servidor; no hace falta el fallback a cash-status.
 
@@ -271,7 +299,11 @@ export default function PosHomePage() {
     if (!isDesktop) setDesktopPanel(null)
   }, [isDesktop])
 
-  const [tab, setTab] = useState<Tab>('todos')
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === 'undefined') return 'todos'
+    const t = new URLSearchParams(window.location.search).get('tab')
+    return (t === 'mesas' || t === 'retiro' || t === 'delivery' || t === 'todos') ? t : 'todos'
+  })
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
   const [pendingModal, setPendingModal] = useState(false)
@@ -307,11 +339,8 @@ export default function PosHomePage() {
     purgeMirrorAccounts()
   })
 
-  // Tab counts for badges
-  const ocupadas = tables.filter(t => {
-    const { status } = getTableStatus(t.id, accounts)
-    return status !== 'libre'
-  }).length
+  // Tab counts for badges — mesas ocupadas = PosOrder dine-in abiertos.
+  const ocupadas = mesaOrders.length
 
   const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
   // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
@@ -345,6 +374,16 @@ export default function PosHomePage() {
     fetchAlertConfig()
   }, [restaurantId])
 
+  // Ocupación de mesas: refresca al entrar a la pestaña Mesas, cada 12s y al volver.
+  useEffect(() => {
+    if (tab !== 'mesas') return
+    fetchMesaOrders()
+    const iv = setInterval(fetchMesaOrders, 12_000)
+    const onVis = () => { if (document.visibilityState === 'visible') fetchMesaOrders() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
+  }, [tab, fetchMesaOrders])
+
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
 
@@ -357,16 +396,15 @@ export default function PosHomePage() {
   }
 
   // Handlers
-  const handleMesaClick = (tableId: string, tableNumber: number, tableLabel?: string) => {
-    const { status, accountId } = getTableStatus(tableId, accounts)
-    if (status === 'libre') {
-      setMesaOpenModal({ tableId, tableNumber, tableLabel: tableLabel ?? `Mesa ${tableNumber}` })
-    } else if (accountId) {
-      if (isDesktop) {
-        setDesktopPanel({ type: 'cuenta', accountId, tab: 'mesas' })
-      } else {
-        navigate(`/pos/cuenta?id=${accountId}`)
-      }
+  const handleMesaClick = (table: PosTable) => {
+    const key = table.label || String(table.number)
+    const order = mesaOrderByLabel.get(key)
+    if (!order) {
+      // Mesa libre: tomar el primer pedido (modo mesa) → ocupa al enviar.
+      navigate(`/pos/tomar-pedido?mesa=${encodeURIComponent(key)}`)
+    } else {
+      // Mesa ocupada: abre la cuenta (ítems + Agregar ítems + Cobrar).
+      setMesaCuenta({ order, key })
     }
   }
 
@@ -399,34 +437,27 @@ export default function PosHomePage() {
     ? accounts.find(a => a.id === activePanelAccountId)?.table_id ?? null
     : null
 
-  // Render de una tarjeta de mesa (reutilizado en vista plana y agrupada por sector)
+  // Render de una tarjeta de mesa. Ocupación = PosOrder dine-in abierto (impago)
+  // anclado a esta mesa por tableLabel. Muestra el total acumulado y el tiempo.
   const renderMesaButton = (table: PosTable) => {
-    const { status, accountId } = getTableStatus(table.id, accounts)
-    const acc = accountId ? accounts.find(a => a.id === accountId) : undefined
-    const isCuentaPedida = status === 'cuenta_pedida'
-    const isActivePanel = isDesktop && activePanelTableId === table.id
-    const tableLabel = table.label || String(table.number)
+    const key = table.label || String(table.number)
+    const order = mesaOrderByLabel.get(key)
+    const occupied = !!order
+    const status = occupied ? 'con_pedidos' : 'libre'
     return (
       <div key={table.id} className={`pos-mesa-cell ${status}`}>
         <button
-          className={`pos-mesa ${status}${isActivePanel ? ' panel-active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); handleMesaClick(table.id, table.number, table.label) }}
+          className={`pos-mesa ${status}`}
+          onClick={(e) => { e.stopPropagation(); handleMesaClick(table) }}
         >
           {/* Número/label de la mesa — siempre visible, grande, dentro del cuadrado */}
-          <span className="pos-mesa-num">{tableLabel}</span>
+          <span className="pos-mesa-num">{key}</span>
           <div className="pos-mesa-center">
-            {status === 'libre' ? null : isCuentaPedida ? (
-              <>
-                {acc?.covers ? <span className="pos-mesa-covers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null}
-                <span className="ms">Cuenta</span>
-              </>
-            ) : acc ? (
-              acc.covers ? <span className="pos-mesa-covers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{acc.covers}</span> : null
-            ) : null}
+            {occupied ? <span className="ms" style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>${Math.round(order.totalAmount || 0).toLocaleString('es-CL')}</span> : null}
           </div>
-          {acc ? (
+          {occupied ? (
             <div className="pos-mesa-bottom">
-              <span className="pos-mesa-time" style={{ width: '100%', display: 'inline-flex', justifyContent: 'center' }}><LiveClock since={acc.opened_at} icon={false} style={{ fontWeight: 'inherit', color: 'inherit' }} /></span>
+              <span className="pos-mesa-time" style={{ width: '100%', display: 'inline-flex', justifyContent: 'center' }}><LiveClock since={order.createdAt} icon={false} style={{ fontWeight: 'inherit', color: 'inherit' }} /></span>
             </div>
           ) : (
             <div className="pos-mesa-bottom">
@@ -434,12 +465,6 @@ export default function PosHomePage() {
             </div>
           )}
         </button>
-        {acc?.opened_by_name && (
-          <span className="pos-mesa-garzon" title={acc.opened_by_name}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
-            {acc.opened_by_name}
-          </span>
-        )}
       </div>
     )
   }
@@ -736,6 +761,16 @@ export default function PosHomePage() {
 
       {/* ── Modals ──────────────────────────────────────────── */}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
+      {/* Cuenta de una mesa ocupada (PosOrder dine-in) */}
+      {mesaCuenta && (
+        <MesaCuenta
+          order={mesaCuenta.order}
+          mesaKey={mesaCuenta.key}
+          restaurantId={restaurantId}
+          onClose={() => setMesaCuenta(null)}
+          onChanged={fetchMesaOrders}
+        />
+      )}
       {mesaOpenModal && (
         <MesaOpenModal
           tableLabel={mesaOpenModal.tableLabel}
