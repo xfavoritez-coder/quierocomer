@@ -53,7 +53,7 @@ const C = {
 // Componente reutilizable: recibe el restaurantId por prop (el panel lo toma de
 // la sesión; el POS lo toma de usePosRestaurant). `backHref`/`backLabel` definen
 // el enlace "atrás" según dónde se embeba.
-export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean }) {
+export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false, tableLabel = null, existingOrderId = null, onDone }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void }) {
   const [data, setData] = useState<StorefrontData | null>(null);
   const [posAvailable, setPosAvailable] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       <CollapseSidebar />
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} tableLabel={tableLabel} existingOrderId={existingOrderId} onDone={onDone} />}
     </>
   );
 }
@@ -99,8 +99,11 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string }) {
+function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel, tableLabel = null, existingOrderId = null, onDone }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void }) {
   const { tenant, categories, products } = data;
+  // Modo mesa (dine-in): el pedido se ancla a una mesa. Oculta tipo/cliente/
+  // descuento/pago (el pago es al cobrar) y al enviar crea/suma al PosOrder dine-in.
+  const isMesa = !!tableLabel;
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
   // Modos que resuelven la dirección con mapa/geocoding y cotizan por coordenadas
@@ -258,6 +261,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   // Validación
   const invalid = useMemo(() => {
     if (!cart.length) return "Agrega productos";
+    if (isMesa) return null; // mesa: solo requiere productos (el pago es al cobrar)
     if (deliveryType !== "QUICK" && !customerName.trim()) return "Falta el nombre del cliente";
     // Teléfono obligatorio en retiro y delivery (no en venta rápida, que no pide cliente).
     if (deliveryType !== "QUICK" && !customerPhone.trim()) return "Falta el teléfono del cliente";
@@ -267,11 +271,36 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
     }
     if (!paymentMethod) return "Selecciona el medio de pago";
     return null;
-  }, [cart, customerName, customerPhone, deliveryType, deliveryMode, selectedZone, subtotal, geo.status, paymentMethod]);
+  }, [cart, customerName, customerPhone, deliveryType, deliveryMode, selectedZone, subtotal, geo.status, paymentMethod, isMesa]);
 
   async function submit() {
     setSending(true);
     try {
+      // ── Modo mesa ──: crea el PosOrder dine-in (manual-order orderType=DINEIN) o
+      // le suma una ronda (pos-orders action=addItems). El pago/boleta es al cobrar.
+      if (isMesa) {
+        const mesaItems = cart.map((i) => ({
+          product_id: i.product_id, name: i.name, unit_price: i.courtesy ? 0 : i.unit_price,
+          quantity: i.quantity, comment: i.comment, courtesy: i.courtesy, options: i.options,
+        }));
+        const res = existingOrderId
+          ? await fetch("/api/panel/ecommerce/pos-orders", {
+              method: "PATCH", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ restaurantId, id: existingOrderId, action: "addItems", items: mesaItems }),
+            })
+          : await fetch("/api/panel/ecommerce/manual-order", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                restaurantId, orderType: "DINEIN", tableLabel, posNative: disableToteat,
+                notes: [accomNote, notes.trim()].filter(Boolean).join(" | ") || null, items: mesaItems,
+              }),
+            });
+        const d = await res.json();
+        if (!res.ok || (!d.ok && !d.order)) throw new Error(d.error || "No se pudo guardar");
+        setShowConfirm(false);
+        if (onDone) onDone(); else { setCart([]); showToast("✓ Agregado a la mesa"); }
+        return;
+      }
       const res = await fetch("/api/panel/ecommerce/manual-order", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -351,15 +380,26 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const cartPanel = (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.card, overflow: "hidden" }}>
       <div style={{ flex: 1, overflowY: "auto" }}>
+        {/* Modo mesa: cabecera de la mesa (sin selector de tipo ni cliente) */}
+        {isMesa && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 14, borderBottom: `1px solid ${C.border2}` }}>
+            <UtensilsCrossed size={16} color={accent} />
+            <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: C.text }}>Mesa {tableLabel}</span>
+            <span style={{ fontFamily: FB, fontSize: "0.74rem", color: C.text3, marginLeft: "auto" }}>{existingOrderId ? "Agregar ronda" : "Abrir mesa"}</span>
+          </div>
+        )}
+
         {/* Tipo de venta (Retiro / Delivery / Venta rápida) */}
+        {!isMesa && (
         <div style={{ display: "flex", gap: 8, padding: 14, borderBottom: `1px solid ${C.border2}`, flexWrap: "wrap" }}>
           {tenant.pickupEnabled && <TypeBtn active={deliveryType === "PICKUP"} onClick={() => setDeliveryType("PICKUP")} icon={<Package size={15} />} label="Retiro" activeBg={C.text} />}
           {tenant.deliveryEnabled && <TypeBtn active={deliveryType === "DELIVERY"} onClick={() => setDeliveryType("DELIVERY")} icon={<Bike size={15} />} label="Delivery" activeBg={accent} />}
           <TypeBtn active={deliveryType === "QUICK"} onClick={() => setDeliveryType("QUICK")} icon={<Package size={15} />} label="Venta rápida" activeBg={C.text} />
         </div>
+        )}
 
         {/* Cliente — no se pide en venta rápida (el nombre es un correlativo diario) */}
-        {deliveryType !== "QUICK" && (
+        {!isMesa && deliveryType !== "QUICK" && (
           <Section icon={<User size={13} />} title="Cliente">
             <div style={{ display: "flex", gap: 8 }}>
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre *" style={{ ...inp, flex: 1, minWidth: 0 }} />
@@ -438,7 +478,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           </div>
         )}
 
-        {/* Descuento */}
+        {/* Descuento — en mesa el ajuste/pago va al cobrar */}
+        {!isMesa && (<>
         <Section icon={<Tag size={13} />} title="Descuento">
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ display: "flex", borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, flexShrink: 0 }}>
@@ -459,6 +500,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             ))}
           </div>
         </Section>
+        </>)}
 
         {/* Notas */}
         {tenant.notesEnabled && (
@@ -482,9 +524,9 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             <span style={{ fontFamily: FB, fontSize: "0.76rem", color: C.text2 }}>Enviar al POS (Toteat)</span>
           </label>
         )}
-        <button onClick={() => { if (!invalid) setShowConfirm(true); }} disabled={!!invalid} title={invalid || undefined}
-          style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: invalid ? "not-allowed" : "pointer", background: invalid ? C.border : accent, color: invalid ? C.text3 : readableText(accent) }}>
-          {invalid || `Tomar pedido — ${fmt(total)}`}
+        <button onClick={() => { if (!invalid) { if (isMesa) submit(); else setShowConfirm(true); } }} disabled={!!invalid || sending} title={invalid || undefined}
+          style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: invalid || sending ? "not-allowed" : "pointer", background: invalid ? C.border : accent, color: invalid ? C.text3 : readableText(accent) }}>
+          {sending ? "Guardando…" : invalid || (isMesa ? `${existingOrderId ? "Agregar a la mesa" : "Abrir mesa"} — ${fmt(total)}` : `Tomar pedido — ${fmt(total)}`)}
         </button>
       </div>
     </div>
@@ -497,7 +539,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
         <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
           <ArrowLeft size={15} /> {backLabel}
         </Link>
-        <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{tenant.name}</span>
+        <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{isMesa ? `Mesa ${tableLabel}` : tenant.name}</span>
         <button onClick={() => window.open(backHref.startsWith("/pos") ? "/pos/tomar-pedido" : "/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
           <ExternalLink size={14} /> Nueva ventana

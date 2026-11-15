@@ -1704,7 +1704,8 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
 }
 
 // ── Modal de cobro ─────────────────────────────────────────────────
-function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; delifastEnabled: boolean; onClose: () => void; onPaid: () => void }) {
+// Exportado para reutilizarlo desde la cuenta de mesa (mismo cobro + boleta).
+export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose, onPaid }: { order: PosOrderLite; restaurantId: string; type: OrderType; delifastEnabled: boolean; onClose: () => void; onPaid: () => void }) {
   const total = order.totalAmount || 0
   const paid = isPaid(order)
   // Pagos combinados: lista de partes { método, monto aplicado, recibido }. El

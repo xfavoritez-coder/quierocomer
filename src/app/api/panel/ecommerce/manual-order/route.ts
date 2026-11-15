@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     if (isDineIn && !tableLbl) return NextResponse.json({ error: "Falta la mesa" }, { status: 400 });
     if (!isQuick && !isDineIn && !customerName?.trim()) return NextResponse.json({ error: "Falta el nombre del cliente" }, { status: 400 });
     if (!Array.isArray(items) || !items.length) return NextResponse.json({ error: "El pedido no tiene productos" }, { status: 400 });
-    if (!paymentMethod) return NextResponse.json({ error: "Falta el medio de pago" }, { status: 400 });
+    if (!isDineIn && !paymentMethod) return NextResponse.json({ error: "Falta el medio de pago" }, { status: 400 });
 
     // Si se va a enviar a Toteat, TODO producto debe tener código: si falta,
     // no se comanda (obliga a mapear el código en la carta).
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
           : isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
         deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
         deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
-        paymentMethod,
+        paymentMethod: paymentMethod || "pendiente",
         paymentStatus: "unpaid",
         paymentGateway: null,
         items: storedItems as unknown as object,
