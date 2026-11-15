@@ -20,11 +20,11 @@ const COLUMNS = [
   { id: 'done',     label: 'Hecho',         color: '#22c55e', icon: '✅' },
 ] as const
 
-const PEOPLE = ['felipe', 'alfredo'] as const
+const PEOPLE = ['jaime', 'alfredo'] as const
 type Person = typeof PEOPLE[number]
 
 const AVATARS: Record<Person, { bg: string; letter: string }> = {
-  felipe:  { bg: '#3b82f6', letter: 'F' },
+  jaime:  { bg: '#3b82f6', letter: 'F' },
   alfredo: { bg: '#f59e0b', letter: 'A' },
 }
 
