@@ -3626,3 +3626,19 @@ model PosCashSession {
   @@index([restaurantId, openedAt])
   @@index([shiftId])
 }
+
+// ── Board interno (quierocomer.com/go) ──────────────────────────────
+model GoTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  column      String   @default("backlog") // backlog | week | doing | done
+  assignee    String?  // "felipe" | "alfredo"
+  priority    Int      @default(0) // 0=normal, 1=urgente
+  position    Int      @default(0)
+  archivedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([column, archivedAt])
+}
