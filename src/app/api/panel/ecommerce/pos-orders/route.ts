@@ -272,6 +272,48 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ order: updated });
   }
 
+  // ── Agregar ítems a un pedido abierto (cuenta corriente de mesa) ────
+  // Mesas = PosOrder dine-in al que se le suman rondas. Hasta ahora los ítems de
+  // un PosOrder eran fijos; esta acción los ACUMULA y recalcula el total. Guarda
+  // cada ronda en rawPayload.rounds (para imprimir la comanda de esa ronda en
+  // Fase 2). La boleta lee PosOrder.items/totalAmount, así sale itemizada completa.
+  if (body?.action === "addItems") {
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, items: true, totalAmount: true, paidAmount: true, posStatus: true, rawPayload: true } });
+    if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    if (order.posStatus === "canceled") return NextResponse.json({ error: "El pedido está anulado" }, { status: 400 });
+    const totAmt = order.totalAmount || 0;
+    if (totAmt > 0 && (order.paidAmount || 0) >= totAmt) return NextResponse.json({ error: "El pedido ya está cobrado" }, { status: 400 });
+
+    interface InItem { name?: string; unit_price?: number; quantity?: number; comment?: string; courtesy?: boolean; options?: { value?: string }[] }
+    const incoming = Array.isArray(body?.items) ? (body.items as InItem[]) : [];
+    const roundItems = incoming.map((it) => ({
+      productName: String(it.name || "Ítem").trim() || "Ítem",
+      quantity: Math.max(1, Math.round(Number(it.quantity) || 1)),
+      unit_price: Math.max(0, Math.round(Number(it.unit_price) || 0)),
+      options: (it.options ?? []).map((o) => o?.value).filter((v): v is string => !!v),
+      note: it.comment?.trim() || undefined,
+      courtesy: !!it.courtesy,
+    }));
+    if (!roundItems.length) return NextResponse.json({ error: "Sin ítems para agregar" }, { status: 400 });
+
+    const addedSubtotal = roundItems.reduce((s, it) => s + it.unit_price * it.quantity, 0);
+    const prevItems = Array.isArray(order.items) ? (order.items as unknown[]) : [];
+    const mergedItems = [...prevItems, ...roundItems];
+    const newTotal = totAmt + addedSubtotal;
+
+    const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload)) ? (order.rawPayload as Record<string, unknown>) : {};
+    const prevRounds = Array.isArray(prevRaw.rounds) ? (prevRaw.rounds as unknown[]) : [];
+    const by = req.cookies.get("panel_id")?.value || "pos";
+    const rawPayload = { ...prevRaw, rounds: [...prevRounds, { at: new Date().toISOString(), by, items: roundItems }] };
+
+    const updated = await prisma.posOrder.update({
+      where: { id },
+      data: { items: mergedItems as unknown as object, totalAmount: newTotal, rawPayload: rawPayload as object },
+    });
+    void syncOnlineOrderFromPos(updated).catch(() => {});
+    return NextResponse.json({ order: updated, addedRound: { items: roundItems, subtotal: addedSubtotal } });
+  }
+
   // ── Anular pedido desde el POS (retiro/delivery) ───────────────────
   // Lo marca como cancelado (posStatus "canceled") → sale de los activos y pasa
   // al historial. Guarda el motivo en rawPayload. No borra el registro.

@@ -47,7 +47,15 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
   });
   if (existing) return; // ya espejado
 
-  const isDelivery = order.orderType === "DELIVERY";
+  // Dine-in (mesa): el tomador de pedidos marca la mesa en deliveryAddressParts
+  // ({dineIn:true, tableLabel}) para no tocar el schema del OnlineOrder. Se crea
+  // como PosOrder saleType="dine-in" + tableLabel → el board lo pinta como "Salón"
+  // con su mesa y SIN correlativo. Luego se le agregan rondas (cuenta corriente).
+  const dineParts = (order.deliveryAddressParts && typeof order.deliveryAddressParts === "object" && !Array.isArray(order.deliveryAddressParts))
+    ? (order.deliveryAddressParts as Record<string, unknown>) : null;
+  const isDineIn = !!dineParts?.dineIn;
+  const tableLabel = isDineIn ? (String(dineParts?.tableLabel ?? "").trim() || null) : null;
+  const isDelivery = !isDineIn && order.orderType === "DELIVERY";
   const base = `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`;
   // Origen del pedido en el nombre de canal: App (desde la app Capacitor) o Web.
   const vendorName = order.fromApp ? `${base}-App` : channel === "web" ? `${base}-Web` : base;
@@ -78,8 +86,9 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         provider: "ecommerce",
         posStatus: "new",
         opsStage: "preparing",
-        saleType: isDelivery ? "delivery" : "pickup",
+        saleType: isDineIn ? "dine-in" : isDelivery ? "delivery" : "pickup",
         isDelivery,
+        ...(tableLabel ? { tableLabel } : {}),
         customerName: order.customerName || "",
         customerPhone: order.customerPhone || "",
         customerEmail: order.customerEmail || "",
@@ -95,7 +104,7 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         discountAmount: order.discount || 0,
         currency: "CLP",
         vendorName,
-        orderReference: order.orderNumber != null ? String(order.orderNumber) : null,
+        orderReference: isDineIn ? null : (order.orderNumber != null ? String(order.orderNumber) : null),
         items: items as unknown as object,
         customerLat: isDelivery ? order.deliveryLat : null,
         customerLng: isDelivery ? order.deliveryLng : null,

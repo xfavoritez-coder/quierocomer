@@ -40,20 +40,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       restaurantId, customerName, customerPhone, orderType, deliveryAddress, deliveryAddressParts,
-      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative,
+      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative, tableLabel,
     } = body as {
       restaurantId?: string; customerName?: string; customerPhone?: string; orderType?: string;
       deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryLat?: number; deliveryLng?: number; items?: ManualItem[];
-      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean;
+      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean; tableLabel?: string;
     };
 
     // Venta rápida: no requiere nombre del cliente; el nombre es un correlativo
     // diario ("Rápida #N") que se reinicia cada día. Se guarda como retiro.
     const isQuick = orderType === "QUICK";
+    // Mesa (dine-in): el pedido se ancla a una mesa (tableLabel), SIN correlativo
+    // visible y sin requerir nombre de cliente. Se guarda como PosOrder dine-in
+    // (ver centroMirror) al que luego se le agregan rondas (cuenta corriente).
+    const isDineIn = orderType === "DINEIN";
+    const tableLbl = String(tableLabel ?? "").trim();
 
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
     if (!(await verifyAccess(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    if (!isQuick && !customerName?.trim()) return NextResponse.json({ error: "Falta el nombre del cliente" }, { status: 400 });
+    if (isDineIn && !tableLbl) return NextResponse.json({ error: "Falta la mesa" }, { status: 400 });
+    if (!isQuick && !isDineIn && !customerName?.trim()) return NextResponse.json({ error: "Falta el nombre del cliente" }, { status: 400 });
     if (!Array.isArray(items) || !items.length) return NextResponse.json({ error: "El pedido no tiene productos" }, { status: 400 });
     if (!paymentMethod) return NextResponse.json({ error: "Falta el medio de pago" }, { status: 400 });
 
@@ -80,6 +86,8 @@ export async function POST(req: NextRequest) {
       });
       effectiveName = `Venta rápida #${todayCount + 1}`;
     }
+    // Mesa: el "nombre" es la mesa (el board igual muestra tableLabel para dine-in).
+    if (isDineIn) effectiveName = String(customerName ?? "").trim() || `Mesa ${tableLbl}`;
 
     // Subtotal server-side (nunca confiar en el total del cliente). El staff sí
     // define descuento y envío manualmente (endpoint autenticado por panel).
@@ -128,7 +136,12 @@ export async function POST(req: NextRequest) {
         customerEmail: null,
         orderType: isDelivery ? "DELIVERY" : "PICKUP",
         deliveryAddress: isDelivery ? (deliveryAddress?.trim() || null) : null,
-        deliveryAddressParts: isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
+        // Dine-in: marcamos la mesa en deliveryAddressParts ({dineIn,tableLabel})
+        // para que el espejo (centroMirror) cree el PosOrder como dine-in SIN tocar
+        // el schema del OnlineOrder. Robusto ante backfill (queda persistido).
+        deliveryAddressParts: isDineIn
+          ? ({ dineIn: true, tableLabel: tableLbl } as object)
+          : isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
         deliveryLat: isDelivery && Number.isFinite(Number(deliveryLat)) ? Number(deliveryLat) : null,
         deliveryLng: isDelivery && Number.isFinite(Number(deliveryLng)) ? Number(deliveryLng) : null,
         paymentMethod,
