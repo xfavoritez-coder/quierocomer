@@ -24,7 +24,7 @@ const PEOPLE = ['jaime', 'alfredo'] as const
 type Person = typeof PEOPLE[number]
 
 const AVATARS: Record<Person, { bg: string; letter: string }> = {
-  jaime:  { bg: '#3b82f6', letter: 'F' },
+  jaime:  { bg: '#3b82f6', letter: 'J' },
   alfredo: { bg: '#f59e0b', letter: 'A' },
 }
 
