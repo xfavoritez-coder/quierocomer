@@ -243,6 +243,11 @@ model TeamMember {
 // `PosEvent` vacía y BORRARA `pos_events` (incidente nov-2026, pérdida de todas
 // las cajas). Nunca corras `prisma db push` contra prod. Ver memoria
 // quierocomer-raw-sql-tables.
+// 🔒 PROTEGIDA A NIVEL BD: un EVENT TRIGGER (`protect_raw_tables_drop`, ver
+// src/lib/pos/sql/002_protect_pos_events.sql) BLOQUEA cualquier DROP de
+// pos_events y hace rollback de toda la operación → `prisma db push` contra
+// prod ahora FALLA en vez de borrar datos. Para operar la tabla a propósito:
+// `DROP EVENT TRIGGER protect_raw_tables_drop;` … y re-aplicar el .sql.
 
 model Restaurant {
   id                         String                    @id @default(cuid())
