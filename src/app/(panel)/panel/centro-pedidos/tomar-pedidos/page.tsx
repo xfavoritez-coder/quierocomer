@@ -382,12 +382,16 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   const cartPanel = (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.card, overflow: "hidden" }}>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {/* Modo mesa: cabecera de la mesa (sin selector de tipo ni cliente) */}
+        {/* Modo mesa: banner de la mesa (sin selector de tipo ni datos de cliente) */}
         {isMesa && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 14, borderBottom: `1px solid ${C.border2}` }}>
-            <UtensilsCrossed size={16} color={accent} />
-            <span style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 800, color: C.text }}>Mesa {tableLabel}</span>
-            <span style={{ fontFamily: FB, fontSize: "0.74rem", color: C.text3, marginLeft: "auto" }}>{existingOrderId ? "Agregar ronda" : "Abrir mesa"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "14px 16px", borderBottom: `1px solid ${C.border2}`, background: `${accent}0f` }}>
+            <div style={{ width: 40, height: 40, borderRadius: 11, background: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <UtensilsCrossed size={19} color={readableText(accent)} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: C.text, lineHeight: 1.15 }}>Mesa {tableLabel}</div>
+              <div style={{ fontFamily: FB, fontSize: "0.76rem", color: C.text2 }}>{existingOrderId ? "Agregar productos a la cuenta" : "Nuevo pedido de mesa"}</div>
+            </div>
           </div>
         )}
 
