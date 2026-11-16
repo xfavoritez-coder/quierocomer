@@ -1065,8 +1065,31 @@ export function OrderDetailPanel({
           </button>
         )}
 
-        {/* Acciones finales: Imprimir + Anular — mismo contenedor, botones hermanos */}
+        {/* Acciones finales: Marcar entregado + Imprimir + Anular — mismo contenedor */}
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Marcar entregado — SEGURO manual: hace lo que Delifast (u otro auto-
+              entregado) no hizo. Para TODO tipo de pedido no entregado. handleFinalize
+              ya trae el guard (si Delifast no marcó entregado, pregunta igual). */}
+          {order.opsStage !== 'delivered' && (
+            <button
+              onClick={handleFinalize}
+              disabled={finalizing}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                padding: '10px 14px', borderRadius: 10, border: '1px solid var(--jade)',
+                background: 'none', color: 'var(--jade)', cursor: finalizing ? 'wait' : 'pointer',
+                fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
+                opacity: finalizing ? 0.6 : 1, transition: 'background .12s',
+              }}
+            >
+              {finalizing ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>
+              )}
+              {finalizing ? 'Marcando…' : 'Marcar entregado'}
+            </button>
+          )}
           {/* Imprimir ticket */}
           <div style={{ position: 'relative' }}>
             <button
