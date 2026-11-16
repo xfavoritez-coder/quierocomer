@@ -400,8 +400,9 @@ export default function PosHomePage() {
     const key = table.label || String(table.number)
     const order = mesaOrderByLabel.get(key)
     if (!order) {
-      // Mesa libre: tomar el primer pedido (modo mesa) → ocupa al enviar.
-      navigate(`/pos/tomar-pedido?mesa=${encodeURIComponent(key)}`)
+      // Mesa libre: tomar el primer pedido (modo mesa) → ocupa al enviar. Ruta
+      // propia /pos/mesa/<label> (no /pos/tomar-pedido) para no mezclar el caché.
+      navigate(`/pos/mesa/${encodeURIComponent(key)}`)
     } else {
       // Mesa ocupada: abre la cuenta (ítems + Agregar ítems + Cobrar).
       setMesaCuenta({ order, key })

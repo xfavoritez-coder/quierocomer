@@ -95,7 +95,7 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
           >{reprinting ? 'Imprimiendo…' : '🖨 Reimprimir comanda de cocina'}</button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={() => navigate(`/pos/tomar-pedido?mesa=${encodeURIComponent(mesaKey)}&order=${order.id}`)}
+              onClick={() => navigate(`/pos/mesa/${encodeURIComponent(mesaKey)}?order=${order.id}`)}
               style={{ flex: 1, padding: '12px', borderRadius: 'var(--r-btn)', border: '1px solid var(--line)', background: 'var(--sunk)', color: 'var(--ink)', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--sans)' }}
             >+ Agregar ítems</button>
             <button
