@@ -162,7 +162,7 @@ export default function CustomerMenu({ tenant, primaryColor, onClose, side = "ri
               <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
                 <MenuRow icon={<User className="w-5 h-5" />} label="Mi perfil" onClick={() => go("profile")} color={primaryColor} />
                 <MenuRow icon={<ClipboardList className="w-5 h-5" />} label="Mis pedidos" onClick={() => go("orders")} color={primaryColor} />
-                {tenant.favoritesEnabled && <MenuRow icon={<Heart className="w-5 h-5" />} label="Mis favoritos" onClick={() => go("favorites")} color={primaryColor} />}
+                {tenant.favoritesEnabled && user && <MenuRow icon={<Heart className="w-5 h-5" />} label="Mis favoritos" onClick={() => go("favorites")} color={primaryColor} />}
                 {/* Contáctanos y Redes sociales se quitaron del menú: ya están afuera,
                     en su propio botón del menú flotante principal. */}
                 {tenant.showTableMenu && (
