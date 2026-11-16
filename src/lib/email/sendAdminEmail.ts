@@ -705,7 +705,7 @@ export function demoExpiredEmailHtml({
 
   <tr><td style="background:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 20px 60px rgba(70,45,10,0.09);overflow:hidden;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr><td style="background:#c0392b;padding:14px 28px;">
+    <tr><td style="background:${GOLD};padding:14px 28px;">
       <p style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#fff;margin:0;text-align:center;">Tu periodo de prueba ha finalizado</p>
     </td></tr>
     </table>
@@ -718,16 +718,16 @@ export function demoExpiredEmailHtml({
         Tus 14 dias de prueba terminaron. Tu carta ya no es visible para tus clientes.
       </p>
       <p style="font-size:15px;color:#5a3e1b;line-height:1.75;margin:0 0 24px;text-align:center;">
-        Para reactivarla y seguir recibiendo pedidos, elige un plan desde tu panel:
+        Si te gusto como funciona, puedes reactivarla en solo 2 pasos desde el siguiente enlace:
       </p>
 
       <!-- QR preview -->
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
       <tr><td align="center">
-        <table cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border-radius:20px;border:1.5px solid #ead7b7;box-shadow:0 6px 20px rgba(70,45,10,0.10);opacity:0.5;">
+        <table cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border-radius:20px;border:1.5px solid #ead7b7;box-shadow:0 6px 20px rgba(70,45,10,0.10);">
         <tr><td style="padding:20px 20px 0;" align="center">
-          <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:800;color:#c0392b;margin:0 0 12px;">Carta pausada</p>
-          <img src="${qrImageUrl}" alt="QR ${restaurantName}" width="120" height="120" style="width:120px;height:120px;display:block;border-radius:4px;opacity:0.4;" />
+          <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:800;color:${GOLD};margin:0 0 12px;">Tu codigo QR de ${restaurantName}</p>
+          <img src="${qrImageUrl}" alt="QR ${restaurantName}" width="160" height="160" style="width:160px;height:160px;display:block;border-radius:4px;" />
         </td></tr>
         <tr><td style="padding:12px 20px 18px;" align="center">
           <p style="font-family:Georgia,serif;font-size:15px;color:#111;margin:0 0 2px;">${restaurantName}</p>
