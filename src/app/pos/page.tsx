@@ -90,7 +90,21 @@ export default function PosHomePage() {
     if (typeof window === 'undefined') return ''
     return localStorage.getItem('pos:branchMode') || ''
   })
-  const effectiveBranchMode = branchMode || restaurantId
+  // La sucursal guardada solo vale si pertenece a ESTA sesión. Si se cambió de
+  // dueño (admin → "entrar como owner" de otro local) el localStorage queda
+  // apuntando a una marca de OTRO dueño; usarla hacía que config/caja leyeran y
+  // escribieran al local equivocado → "No autorizado" (assertOwnership falla por
+  // dueño distinto). Si no pertenece, se cae a la sucursal primaria.
+  const branchIsValid = branchMode === 'todas' || (!!branchMode && restaurants.some(r => r.id === branchMode))
+  const effectiveBranchMode = branchIsValid ? branchMode : restaurantId
+  // Limpia el localStorage si quedó una sucursal de otra sesión/dueño.
+  useEffect(() => {
+    if (!restaurants.length) return // esperar a que carguen las sucursales
+    if (branchMode && branchMode !== 'todas' && !restaurants.some(r => r.id === branchMode)) {
+      localStorage.setItem('pos:branchMode', '')
+      setBranchMode('')
+    }
+  }, [restaurants, branchMode])
   // allBranches: only populated when "todas" is active and there are 2+ branches
   const allBranches = useMemo(
     () => effectiveBranchMode === 'todas' && restaurants.length > 1 ? restaurants : undefined,
