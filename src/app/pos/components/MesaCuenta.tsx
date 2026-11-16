@@ -54,17 +54,18 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
   }
 
   return (
-    <>
-      <div className="pos-drawer-overlay" onClick={onClose} />
-      <div className="pos-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="pos-sheet-header">
-          <div style={{ fontWeight: 800, fontSize: 16 }}>Mesa {order.tableLabel || mesaKey}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: 'var(--surface)' }}>
+        <div className="pos-sheet-header" style={{ flexShrink: 0 }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>Mesa {order.tableLabel || mesaKey}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>Cuenta abierta</div>
+          </div>
           <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 0, cursor: 'pointer', padding: 8, color: 'var(--ink-3)' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px', minHeight: 0 }}>
           {items.length === 0 ? (
             <p style={{ color: 'var(--ink-3)', textAlign: 'center', padding: '24px 0', fontSize: 14 }}>Sin ítems aún.</p>
           ) : items.map((it, i) => {
@@ -104,11 +105,10 @@ export default function MesaCuenta({ order, restaurantId, mesaKey, onClose, onCh
             >Cobrar {clp(total)}</button>
           </div>
         </div>
-      </div>
 
-      {cobro && (
-        <Cobro order={order} restaurantId={restaurantId} type="todos" delifastEnabled={false} onClose={() => setCobro(false)} onPaid={handlePaid} />
-      )}
-    </>
+        {cobro && (
+          <Cobro order={order} restaurantId={restaurantId} type="todos" delifastEnabled={false} onClose={() => setCobro(false)} onPaid={handlePaid} />
+        )}
+    </div>
   )
 }

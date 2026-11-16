@@ -445,10 +445,11 @@ export default function PosHomePage() {
     const order = mesaOrderByLabel.get(key)
     const occupied = !!order
     const status = occupied ? 'con_pedidos' : 'libre'
+    const isSelected = isDesktop && mesaCuenta?.key === key
     return (
       <div key={table.id} className={`pos-mesa-cell ${status}`}>
         <button
-          className={`pos-mesa ${status}`}
+          className={`pos-mesa ${status}${isSelected ? ' panel-active' : ''}`}
           onClick={(e) => { e.stopPropagation(); handleMesaClick(table) }}
         >
           {/* Número/label de la mesa — siempre visible, grande, dentro del cuadrado */}
@@ -725,8 +726,16 @@ export default function PosHomePage() {
 
       {/* ── Panel detalle (columna derecha en desktop) ────────────────────── */}
       {isDesktop && (
-        <div className={`pos-split-right${activePanel ? '' : ' empty'}`}>
-          {activePanel?.type === 'cuenta' && (
+        <div className={`pos-split-right${(mesaCuenta || activePanel) ? '' : ' empty'}`}>
+          {mesaCuenta ? (
+            <MesaCuenta
+              order={mesaCuenta.order}
+              mesaKey={mesaCuenta.key}
+              restaurantId={restaurantId}
+              onClose={() => setMesaCuenta(null)}
+              onChanged={fetchMesaOrders}
+            />
+          ) : activePanel?.type === 'cuenta' ? (
             <CuentaPanel
               accountId={activePanel.accountId}
               fromTab={tab}
@@ -734,8 +743,7 @@ export default function PosHomePage() {
               onClose={() => setDesktopPanel(null)}
               onGoToComandero={(id) => setDesktopPanel({ type: 'comandero', accountId: id, tab })}
             />
-          )}
-          {activePanel?.type === 'comandero' && (
+          ) : activePanel?.type === 'comandero' ? (
             <ComanderoPanel
               accountId={activePanel.accountId}
               isPanel
@@ -745,8 +753,7 @@ export default function PosHomePage() {
                 : setDesktopPanel(null)
               }
             />
-          )}
-          {!activePanel && (
+          ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                 <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
@@ -762,15 +769,18 @@ export default function PosHomePage() {
 
       {/* ── Modals ──────────────────────────────────────────── */}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
-      {/* Cuenta de una mesa ocupada (PosOrder dine-in) */}
-      {mesaCuenta && (
-        <MesaCuenta
-          order={mesaCuenta.order}
-          mesaKey={mesaCuenta.key}
-          restaurantId={restaurantId}
-          onClose={() => setMesaCuenta(null)}
-          onChanged={fetchMesaOrders}
-        />
+      {/* Cuenta de mesa en MOBILE (sin panel lateral): pantalla completa.
+          En desktop se muestra docked en pos-split-right (arriba). */}
+      {!isDesktop && mesaCuenta && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--surface)', display: 'flex', flexDirection: 'column' }}>
+          <MesaCuenta
+            order={mesaCuenta.order}
+            mesaKey={mesaCuenta.key}
+            restaurantId={restaurantId}
+            onClose={() => setMesaCuenta(null)}
+            onChanged={fetchMesaOrders}
+          />
+        </div>
       )}
       {mesaOpenModal && (
         <MesaOpenModal
