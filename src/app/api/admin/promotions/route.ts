@@ -109,12 +109,15 @@ export async function POST(req: NextRequest) {
 
     await assertOwnsRestaurant(req, restaurantId);
 
+    // Normalizar: dishId siempre presente en dishIds
+    const normalizedDishIds = [...(dishIds || [])];
+    if (dishId && !normalizedDishIds.includes(dishId)) normalizedDishIds.push(dishId);
     const promoData: any = {
       restaurantId, name, description: description || null,
       promoType: promoType || "product",
       imageUrl: imageUrl || null,
       thumbUrl: thumbUrl || null,
-      dishIds: dishIds || [],
+      dishIds: normalizedDishIds,
       dishId: dishId || null,
       promoName: promoName || null,
       originalPrice, promoPrice, discountPct,
@@ -168,6 +171,16 @@ export async function PUT(req: NextRequest) {
     if (!existing) return NextResponse.json({ error: "Promoción no encontrada" }, { status: 404 });
     await assertOwnsRestaurant(req, existing.restaurantId);
 
+    // Normalizar: si se actualiza dishId o dishIds, sincronizar ambos
+    let updDishIds = Array.isArray(data.dishIds) ? [...data.dishIds] : undefined;
+    const updDishId = data.dishId !== undefined ? (data.dishId || null) : undefined;
+    if (updDishId && updDishIds && !updDishIds.includes(updDishId)) updDishIds.push(updDishId);
+    if (updDishId && !updDishIds) {
+      // dishId cambia pero dishIds no se envió — cargar dishIds actual y agregar
+      const cur = await prisma.promotion.findUnique({ where: { id }, select: { dishIds: true } });
+      if (cur && !cur.dishIds.includes(updDishId)) updDishIds = [...cur.dishIds, updDishId];
+    }
+
     const promo = await prisma.promotion.update({
       where: { id },
       data: {
@@ -181,8 +194,8 @@ export async function PUT(req: NextRequest) {
         ...(data.validUntil !== undefined && { validUntil: data.validUntil ? new Date(data.validUntil) : null }),
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
         ...(data.hideOriginalWhenActive !== undefined && { hideOriginalWhenActive: !!data.hideOriginalWhenActive }),
-        ...(Array.isArray(data.dishIds) && { dishIds: data.dishIds }),
-        ...(data.dishId !== undefined && { dishId: data.dishId || null }),
+        ...(updDishIds && { dishIds: updDishIds }),
+        ...(updDishId !== undefined && { dishId: updDishId }),
         ...(data.promoName !== undefined && { promoName: data.promoName || null }),
         ...(data.position !== undefined && { position: data.position }),
         ...(data.featured !== undefined && { featured: data.featured }),
