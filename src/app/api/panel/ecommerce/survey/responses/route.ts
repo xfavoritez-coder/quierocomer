@@ -23,8 +23,21 @@ export async function GET(req: NextRequest) {
     where: { restaurantId: { in: allIds } },
     orderBy: { createdAt: "desc" },
     take: 500,
-    select: { id: true, orderId: true, customerName: true, ratings: true, comment: true, createdAt: true },
+    select: { id: true, orderId: true, restaurantId: true, customerName: true, ratings: true, comment: true, createdAt: true },
   });
+
+  // Nombres de sucursales (para multisucursal)
+  const branchNameMap = new Map<string, string>();
+  if (allIds.length > 1) {
+    const branches = await prisma.restaurant.findMany({
+      where: { id: { in: allIds } },
+      select: { id: true, name: true, ecommerceStoreConfig: true },
+    });
+    for (const b of branches) {
+      const bcfg = parseStoreConfig(b.ecommerceStoreConfig);
+      branchNameMap.set(b.id, bcfg.branchName || b.name);
+    }
+  }
 
   // Datos del pedido asociado
   const orderIds = rows.map((x) => x.orderId).filter((x): x is string => !!x);
@@ -83,6 +96,7 @@ export async function GET(req: NextRequest) {
       customerPhone: order?.customerPhone ?? null,
       comment: row.comment,
       createdAt: row.createdAt,
+      branchName: branchNameMap.get(row.restaurantId) ?? null,
       answers,
     };
   });

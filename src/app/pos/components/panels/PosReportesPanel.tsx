@@ -1201,7 +1201,10 @@ function SatisfaccionSection({ restaurantId, allBranches, onViewAll }: { restaur
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
+                      {(r as any).branchName && <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-3)' }}>{(r as any).branchName}</span>}
+                    </div>
                     {canClick && (
                       <span style={{ fontFamily: F, fontSize: '0.62rem', color: 'var(--ink-4)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                         Ver pedido
@@ -3011,6 +3014,7 @@ function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: s
                   <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{dateStr}</span>
                   {resp.orderNumber && <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>· Pedido #{resp.orderNumber}</span>}
                   {orderTypeLabel && <span style={{ fontFamily: F, fontSize: '0.65rem', fontWeight: 700, color: BLUE, background: `${BLUE}18`, padding: '1px 7px', borderRadius: 999 }}>{orderTypeLabel}</span>}
+                  {(resp as any).branchName && <span style={{ fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', background: 'var(--sunk)', padding: '1px 7px', borderRadius: 999, border: '1px solid var(--line)' }}>{(resp as any).branchName}</span>}
                   {resp.orderTotal && <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-2)' }}>{clp(resp.orderTotal)}</span>}
                 </div>
               </div>
