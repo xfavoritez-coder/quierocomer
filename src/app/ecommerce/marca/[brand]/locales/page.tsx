@@ -9,11 +9,18 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   const { brand } = await params;
   const data = await loadEcommerceBrand(brand);
   if (!data) return {};
-  const iconUrl = data.faviconUrl || data.logoUrl;
+  const faviconUrl = data.faviconUrl || data.logoUrl;
+  const logoUrl = data.logoUrl || data.faviconUrl;
   return {
     title: `Locales · ${data.brandName}`,
     description: `Encuentra las sucursales de ${data.brandName}: dirección, horarios y área de reparto.`,
-    ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
+    ...(faviconUrl ? { icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl } } : {}),
+    openGraph: {
+      title: `Locales · ${data.brandName}`,
+      description: `Encuentra las sucursales de ${data.brandName}: dirección, horarios y área de reparto.`,
+      images: logoUrl ? [{ url: logoUrl, width: 400, height: 400, alt: data.brandName }] : [],
+      type: "website",
+    },
   };
 }
 
