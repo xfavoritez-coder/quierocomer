@@ -66,8 +66,10 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rutas de seguimiento de pedidos — independientes del dominio, no reescribir.
-  if (pathname.startsWith("/pedido/")) return NextResponse.next();
+  // Rutas globales de QC ligadas a un pedido (seguimiento, encuesta) — se mandan
+  // por correo/SMS con el dominio propio del local, pero la página vive en la raíz
+  // de QC, no bajo /ecommerce/{host}. No reescribir o caerían al storefront (home).
+  if (pathname.startsWith("/pedido/") || pathname.startsWith("/encuesta/")) return NextResponse.next();
 
   // ── Dominio de ECOMMERCE ──────────────────────────────────
   // Reescribir todas las rutas de dominios de ecommerce a /ecommerce/{host}{pathname}
