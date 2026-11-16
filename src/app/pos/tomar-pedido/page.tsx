@@ -14,14 +14,14 @@ import { usePosRestaurant } from '../lib/usePosRestaurant'
 function PosTomarPedidoInner() {
   const { restaurantId } = usePosRestaurant()
   const router = useRouter()
-  // En CLIENTE leemos el URL REAL del navegador (useSearchParams puede quedar
-  // stale con el Router Cache al navegar entre /pos/tomar-pedido con y sin ?mesa,
-  // arrastrando un mesa=S1 viejo a un pedido de retiro). En SSR caemos a
-  // useSearchParams, que sí trae el parámetro → sin flash ni desajuste de hidratación.
+  // useSearchParams es REACTIVO: refleja el URL actual tanto en carga directa como
+  // en navegación interna (al tocar una mesa de la grilla → router.push). Leer
+  // window.location.search en el render NO sirve: durante la navegación interna el
+  // componente lo lee antes de que se actualice y, al no ser estado reactivo, no
+  // vuelve a renderizar (quedaba en modo retiro con ?mesa en el URL).
   const sp = useSearchParams()
-  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : sp
-  const mesa = params.get('mesa')
-  const order = params.get('order')
+  const mesa = sp.get('mesa')
+  const order = sp.get('order')
   return (
     <div className="pos-tomar-wrap">
       <style>{`.pos-tomar-wrap{padding:24px 32px;min-height:100dvh;background:#f8fafc}@media(max-width:767px){.pos-tomar-wrap{padding:16px}}`}</style>
