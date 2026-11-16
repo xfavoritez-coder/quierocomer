@@ -1516,8 +1516,8 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
               key={b.id}
               name={b.branchName || b.name}
               address={b.address}
-              phone={null}
-              whatsapp={null}
+              phone={b.phone ?? null}
+              whatsapp={b.whatsapp ?? null}
               open={b.open}
               opensAt={b.opensAt}
               weeklyHours={branchHours.get(b.id) ?? null}

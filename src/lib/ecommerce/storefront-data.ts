@@ -589,6 +589,8 @@ export interface BrandBranch {
   name: string;
   branchName: string | null;
   address: string | null;
+  whatsapp: string | null;
+  phone: string | null;
   lat: number | null;
   lng: number | null;
   logoUrl: string | null;
@@ -619,7 +621,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
   const rows = await prisma.restaurant.findMany({
     where: { ecommerceEnabled: true, ecommerceStoreConfig: { path: ["brandSlug"], equals: key } },
     select: {
-      id: true, slug: true, name: true, logoUrl: true, address: true, lat: true, lng: true,
+      id: true, slug: true, name: true, logoUrl: true, address: true, whatsapp: true, phone: true, lat: true, lng: true,
       cartaAccentColor: true, ecommerceStoreConfig: true, ecommerceConfig: true,
       ecommerceHours: true, ecommerceDeliveryConfig: true,
     },
@@ -632,6 +634,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
     const avail = resolveAvailability(parseHours(r.ecommerceHours), { deliveryEnabled: cfg.deliveryEnabled, pickupEnabled: cfg.pickupEnabled });
     return {
       id: r.id, slug: r.slug, name: r.name, branchName: cfg.branchName, address: r.address,
+      whatsapp: r.whatsapp ?? null, phone: r.phone ?? null,
       lat: dcfg.origin?.lat ?? r.lat ?? null, lng: dcfg.origin?.lng ?? r.lng ?? null,
       logoUrl: r.logoUrl, primaryColor: cfg.primaryColor,
       pickupEnabled: cfg.pickupEnabled, deliveryEnabled: cfg.deliveryEnabled,
