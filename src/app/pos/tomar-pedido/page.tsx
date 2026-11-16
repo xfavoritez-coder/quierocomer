@@ -14,11 +14,14 @@ import { usePosRestaurant } from '../lib/usePosRestaurant'
 function PosTomarPedidoInner() {
   const { restaurantId } = usePosRestaurant()
   const router = useRouter()
-  // useSearchParams SÍ trae los parámetros en SSR y cliente → el "modo mesa" se
-  // aplica desde el primer render (sin flash ni desajuste de hidratación).
+  // En CLIENTE leemos el URL REAL del navegador (useSearchParams puede quedar
+  // stale con el Router Cache al navegar entre /pos/tomar-pedido con y sin ?mesa,
+  // arrastrando un mesa=S1 viejo a un pedido de retiro). En SSR caemos a
+  // useSearchParams, que sí trae el parámetro → sin flash ni desajuste de hidratación.
   const sp = useSearchParams()
-  const mesa = sp.get('mesa')
-  const order = sp.get('order')
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : sp
+  const mesa = params.get('mesa')
+  const order = params.get('order')
   return (
     <div className="pos-tomar-wrap">
       <style>{`.pos-tomar-wrap{padding:24px 32px;min-height:100dvh;background:#f8fafc}@media(max-width:767px){.pos-tomar-wrap{padding:16px}}`}</style>
