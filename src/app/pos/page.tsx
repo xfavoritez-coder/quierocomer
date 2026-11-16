@@ -27,8 +27,7 @@ import type { PosRestaurant } from './lib/usePosRestaurant'
 import { useIsDesktop } from './lib/useIsDesktop'
 import CuentaPanel from './components/CuentaPanel'
 import ComanderoPanel from './components/ComanderoPanel'
-import MesaCuenta from './components/MesaCuenta'
-import OrdersBoard from './components/OrdersBoard'
+import OrdersBoard, { OrderDetailPanel, CobroModal } from './components/OrdersBoard'
 import PrepAlertWatcher from './components/PrepAlertWatcher'
 import DelifastCancelWatcher from './components/DelifastCancelWatcher'
 import { LiveClock } from './components/OrderClock'
@@ -275,6 +274,18 @@ export default function PosHomePage() {
     }
     return m
   }, [mesaOrders])
+  // Cobro + avance de etapa para el panel de mesa (reusa OrderDetailPanel/CobroModal
+  // del board → mismo detalle en Mesas y en Todos).
+  const [mesaCobro, setMesaCobro] = useState<any>(null)
+  const [mesaStageBusy, setMesaStageBusy] = useState<string | null>(null)
+  const changeMesaStage = useCallback(async (o: any, stage: string) => {
+    setMesaStageBusy(o?.id ?? null)
+    try {
+      await fetch('/api/panel/ecommerce/pos-orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: o.id, opsStage: stage }) })
+    } catch { /* noop */ }
+    setMesaStageBusy(null)
+    fetchMesaOrders()
+  }, [restaurantId, fetchMesaOrders])
 
   // La caja es server-authoritative (usePosCash): cashSession===null = cerrada
   // confirmada por el servidor; no hace falta el fallback a cash-status.
@@ -728,12 +739,20 @@ export default function PosHomePage() {
       {isDesktop && (
         <div className={`pos-split-right${(mesaCuenta || activePanel) ? '' : ' empty'}`}>
           {mesaCuenta ? (
-            <MesaCuenta
+            <OrderDetailPanel
               order={mesaCuenta.order}
-              mesaKey={mesaCuenta.key}
               restaurantId={restaurantId}
+              cajaOpen={!!cashSession}
+              stageBusy={mesaStageBusy}
+              delifastEnabled={false}
+              blocked={false}
+              onStageChange={changeMesaStage}
+              onCobro={(o) => setMesaCobro(o)}
+              onBlock={() => {}}
+              onDismissBlock={() => {}}
               onClose={() => setMesaCuenta(null)}
-              onChanged={fetchMesaOrders}
+              onPaid={() => { setMesaCuenta(null); fetchMesaOrders() }}
+              navigate={navigate}
             />
           ) : activePanel?.type === 'cuenta' ? (
             <CuentaPanel
@@ -770,17 +789,41 @@ export default function PosHomePage() {
       {/* ── Modals ──────────────────────────────────────────── */}
       {pendingModal && <PendingModal count={pendingCount} onClose={() => setPendingModal(false)} />}
       {/* Cuenta de mesa en MOBILE (sin panel lateral): pantalla completa.
-          En desktop se muestra docked en pos-split-right (arriba). */}
+          En desktop se muestra docked en pos-split-right (arriba). Mismo
+          OrderDetailPanel que Todos. */}
       {!isDesktop && mesaCuenta && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'var(--surface)', display: 'flex', flexDirection: 'column' }}>
-          <MesaCuenta
+          <OrderDetailPanel
             order={mesaCuenta.order}
-            mesaKey={mesaCuenta.key}
             restaurantId={restaurantId}
+            cajaOpen={!!cashSession}
+            stageBusy={mesaStageBusy}
+            delifastEnabled={false}
+            blocked={false}
+            onStageChange={changeMesaStage}
+            onCobro={(o) => setMesaCobro(o)}
+            onBlock={() => {}}
+            onDismissBlock={() => {}}
             onClose={() => setMesaCuenta(null)}
-            onChanged={fetchMesaOrders}
+            onPaid={() => { setMesaCuenta(null); fetchMesaOrders() }}
+            navigate={navigate}
           />
         </div>
+      )}
+      {/* Cobro de mesa (reusa CobroModal del board) → al cobrar, cierra el pedido
+          (delivered) para liberar la mesa y mandarla al historial, + boleta. */}
+      {mesaCobro && (
+        <CobroModal
+          order={mesaCobro}
+          restaurantId={restaurantId}
+          type="todos"
+          delifastEnabled={false}
+          onClose={() => setMesaCobro(null)}
+          onPaid={async () => {
+            try { await fetch('/api/panel/ecommerce/pos-orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: mesaCobro.id, opsStage: 'delivered' }) }) } catch { /* la mesa igual se libera al refrescar (pagada) */ }
+            setMesaCobro(null); setMesaCuenta(null); fetchMesaOrders()
+          }}
+        />
       )}
       {mesaOpenModal && (
         <MesaOpenModal

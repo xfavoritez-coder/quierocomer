@@ -639,7 +639,9 @@ function CobroStrip({
 
 // ── Order detail panel ──────────────────────────────────────────────
 
-function OrderDetailPanel({
+// Exportado para reutilizarlo en el panel derecho de Mesas (mismo componente que
+// el detalle de Todos/Retiro/Delivery → los cajeros ven lo mismo en todas partes).
+export function OrderDetailPanel({
   order, restaurantId, cajaOpen, stageBusy, delifastEnabled, blocked, onStageChange, onCobro, onBlock, onDismissBlock, onClose, onPaid, navigate,
 }: {
   order: PosOrderLite
@@ -999,6 +1001,22 @@ function OrderDetailPanel({
               onCobro={onCobro} onBlock={onBlock} onStageChange={onStageChange} onDismissBlock={onDismissBlock}
             />
           </div>
+        )}
+
+        {/* Mesa (dine-in): agregar ítems a la cuenta corriente (nueva ronda) */}
+        {isDineIn && !paid && (
+          <button
+            onClick={() => navigate(`/pos/mesa/${encodeURIComponent(order.tableLabel || '')}?order=${order.id}`)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+              padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)',
+              background: 'var(--sunk)', color: 'var(--ink)',
+              cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, marginBottom: 8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Agregar ítems
+          </button>
         )}
 
         {/* Botón Cobrar — visible cuando el pedido no está pagado */}
