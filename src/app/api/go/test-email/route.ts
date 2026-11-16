@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail, demoExpiredEmailHtml, qrNudgeEmailHtml } from "@/lib/email/sendAdminEmail";
+import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
 
 export const maxDuration = 120;
 
@@ -13,11 +14,19 @@ export async function GET(req: NextRequest) {
 
   // action=test → enviar correo de prueba demo expired a favoritez@gmail.com
   if (action === "test") {
+    // Buscar el owner de Club de Campo para generar autologin real
+    const r = await prisma.restaurant.findFirst({
+      where: { slug: "varas-oportus" },
+      select: { ownerId: true },
+    });
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+    const panelUrl = r?.ownerId
+      ? buildAutoLoginUrl(baseUrl, r.ownerId) + `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3DPREMIUM`
+      : `${baseUrl}/panel/mi-restaurante?renew=1&plan=PREMIUM`;
     const html = demoExpiredEmailHtml({
       ownerName: "Jaime",
       restaurantName: "Club de Campo San Fernando",
-      slug: "varas-oportus",
-      panelUrl: "https://quierocomer.com/panel",
+      panelUrl,
     });
     await sendAdminEmail({
       to: "favoritez@gmail.com",

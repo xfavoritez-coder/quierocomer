@@ -675,19 +675,15 @@ ${openPixel ? `<img src="${openPixel}" alt="" width="1" height="1" style="displa
 export function demoExpiredEmailHtml({
   ownerName,
   restaurantName,
-  slug,
   panelUrl,
   openPixel,
 }: {
   ownerName: string;
   restaurantName: string;
-  slug: string;
   panelUrl: string;
   openPixel?: string;
 }): string {
   const firstName = ownerName.split(" ")[0];
-  const qrLink = `${BASE_URL}/qr/${slug}`;
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrLink)}&color=1a1a1a&bgcolor=fffaf1&qzone=2`;
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -710,31 +706,28 @@ export function demoExpiredEmailHtml({
     </td></tr>
     </table>
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr><td style="padding:32px 28px 28px;">
+    <tr><td style="padding:32px 28px 12px;">
       <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.2;letter-spacing:-0.02em;margin:0 0 18px;color:#111;text-align:center;">
         ${firstName}, tu carta QR de ${restaurantName} fue pausada
       </h1>
-      <p style="font-size:15px;color:#5a3e1b;line-height:1.75;margin:0 0 14px;text-align:center;">
+      <p style="font-size:15px;color:#5a3e1b;line-height:1.75;margin:0 0 0;text-align:center;">
         Tus 14 dias de prueba terminaron. Tu carta ya no es visible para tus clientes.
       </p>
-      <p style="font-size:15px;color:#5a3e1b;line-height:1.75;margin:0 0 24px;text-align:center;">
-        Si te gusto como funciona, puedes reactivarla en solo 2 pasos desde el siguiente enlace:
-      </p>
+    </td></tr>
+    </table>
 
-      <!-- QR preview -->
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
-      <tr><td align="center">
-        <table cellpadding="0" cellspacing="0" border="0" style="background:#fffaf1;border-radius:20px;border:1.5px solid #ead7b7;box-shadow:0 6px 20px rgba(70,45,10,0.10);">
-        <tr><td style="padding:20px 20px 0;" align="center">
-          <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;font-weight:800;color:${GOLD};margin:0 0 12px;">Tu codigo QR de ${restaurantName}</p>
-          <img src="${qrImageUrl}" alt="QR ${restaurantName}" width="160" height="160" style="width:160px;height:160px;display:block;border-radius:4px;" />
-        </td></tr>
-        <tr><td style="padding:12px 20px 18px;" align="center">
-          <p style="font-family:Georgia,serif;font-size:15px;color:#111;margin:0 0 2px;">${restaurantName}</p>
-        </td></tr>
-        </table>
-      </td></tr>
-      </table>
+    <!-- Separador -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td style="padding:0 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#ead7b7;"></td></tr></table>
+    </td></tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td style="padding:20px 28px 28px;">
+      <p style="font-size:16px;font-weight:700;color:#111;line-height:1.5;margin:0 0 20px;text-align:center;">
+        Si te gusto como funciona, puedes reactivarla en solo 2 pasos:
+      </p>
 
       <!-- Price box -->
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
@@ -749,21 +742,18 @@ export function demoExpiredEmailHtml({
       </td></tr>
       </table>
 
-      <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding-bottom:10px;">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center">
         <a href="${panelUrl}" style="display:inline-block;background:${GOLD};color:#fff;font-size:16px;font-weight:800;padding:17px 40px;border-radius:14px;text-decoration:none;box-shadow:0 10px 28px rgba(232,147,10,0.35);">
           Reactivar mi carta ahora →
         </a>
       </td></tr></table>
-      <p style="font-size:13px;color:#b8a888;text-align:center;margin:14px 0 0;line-height:1.6;">
-        Tambien puedes pagar por transferencia. Responde este correo y te ayudamos.
-      </p>
     </td></tr>
     </table>
   </td></tr>
 
   <tr><td align="center" style="padding-top:24px;">
     <p style="color:#b8a888;font-size:11px;margin:0;line-height:1.8;">
-      <a href="${BASE_URL}" style="color:${GOLD};text-decoration:none;font-family:Georgia,serif;">QuieroComer.cl</a>
+      <a href="${BASE_URL}" style="color:${GOLD};text-decoration:none;font-family:Georgia,serif;">QuieroComer.com</a>
       &nbsp;&middot;&nbsp; Hecho en Chile
     </p>
   </td></tr>

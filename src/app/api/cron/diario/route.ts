@@ -511,7 +511,6 @@ export async function GET(req: NextRequest) {
               html: demoExpiredEmailHtml({
                 ownerName: r.owner.name || "Hola",
                 restaurantName: r.name,
-                slug: r.slug,
                 panelUrl,
               }),
             });
