@@ -321,58 +321,11 @@ function ExpiryBanner({ restaurantId }: { restaurantId: string | null }) {
     return <FreeTrialBanner restaurantId={restaurantId} />;
   }
 
-  // FREE con trial ya usado y sin pago → mismo banner rotativo (no mencionar "prueba terminó")
-  if (isFreeTrialExpired) {
-    const UPGRADE_MESSAGES = [
-      "Mejora tu carta QR para que venda más",
-      "Activa tu página de pedidos online",
-      "Exporta tu carta en PDF con diseño",
-      "Permite que tus mesas llamen al garzón",
-      "Recibe valoraciones de tus clientes",
-    ];
-    const msgIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % UPGRADE_MESSAGES.length;
-    const handleUpgrade = () => window.dispatchEvent(new CustomEvent("show-plan-modal", {
-      detail: { initialTab: "PREMIUM", source: "expiry_banner_upgrade" },
-    }));
-    return (
-      <>
-        <style dangerouslySetInnerHTML={{ __html: `
-          .qc-expiry-sticky { position:sticky; top:0; z-index:99; margin:-24px -32px 24px; }
-          @media (max-width:767px) { .qc-expiry-sticky { top:58px; margin:-20px -16px 20px; } }
-        `}} />
-        <div className="qc-expiry-sticky">
-          <div style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "10px 16px",
-            background: "linear-gradient(135deg, #6d28d9, #7c3aed)",
-            fontFamily: "var(--font-body)",
-          }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontWeight: 700, margin: 0, fontSize: "0.84rem", color: "#fff" }}>{UPGRADE_MESSAGES[msgIndex]}</p>
-            </div>
-            <button
-              onClick={handleUpgrade}
-              style={{
-                padding: "7px 14px", border: "2px solid rgba(255,255,255,0.7)", borderRadius: 999,
-                background: "transparent", color: "#fff",
-                fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
-                cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-              }}
-            >
-              Activar Premium
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   let title: string;
   let sub: string;
   let bannerColor: string;
   let btnLabel: string;
-  if (isExpired) {
+  if (isExpired || isFreeTrialExpired) {
     title = t("menu_offline");
     sub = t("menu_offline_sub");
     bannerColor = "#dc2626";
