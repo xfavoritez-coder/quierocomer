@@ -28,10 +28,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Limpia el flag efímero `kitchenOnly` de los parts (reimpresión solo-cocina ya
+  // cumplida): si queda pegado no causa daño hoy, pero deja los parts inconsistentes.
+  // Se conserva todo lo demás (dineIn/tableLabel/covers/garzon/lastRound).
+  const existing = await prisma.onlineOrder.findFirst({
+    where: { id: orderId, restaurantId: restaurant.id },
+    select: { deliveryAddressParts: true },
+  });
+  let partsClear: object | undefined;
+  const parts = existing?.deliveryAddressParts;
+  if (parts && typeof parts === "object" && !Array.isArray(parts) && (parts as Record<string, unknown>).kitchenOnly) {
+    const rest = { ...(parts as Record<string, unknown>) };
+    delete rest.kitchenOnly;
+    partsClear = rest;
+  }
+
   // Solo marca si el pedido pertenece a ese local (evita marcar pedidos ajenos).
   const res = await prisma.onlineOrder.updateMany({
     where: { id: orderId, restaurantId: restaurant.id },
-    data: { printedAt: new Date(), printRequestedAt: null, reprintTicketOnly: false },
+    data: { printedAt: new Date(), printRequestedAt: null, reprintTicketOnly: false, ...(partsClear ? { deliveryAddressParts: partsClear } : {}) },
   });
   return NextResponse.json({ ok: res.count > 0 });
 }

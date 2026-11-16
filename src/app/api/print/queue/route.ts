@@ -169,6 +169,13 @@ export async function GET(req: NextRequest) {
     // al cobrar). Siempre se imprime (no depende del toggle kitchenComanda), y el
     // agente la enruta a la impresora de cocina configurada.
     if (dp?.dineIn) {
+      // Si el staff pidió explícitamente el TICKET de caja (cuenta de la mesa),
+      // se emite el ticket —respetando las copias configuradas—, NO la comanda de
+      // cocina. (Antes la rama dine-in ignoraba reprintTicketOnly y siempre sacaba
+      // la comanda de cocina aunque se tocara "Ticket de caja".)
+      if (ticketOnlyIds.has(o.id)) {
+        return cfg.printCopies === 2 ? [o, o] : [o];
+      }
       try {
         const escpos = kitchenEscposFor(o);
         return [{ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]];
