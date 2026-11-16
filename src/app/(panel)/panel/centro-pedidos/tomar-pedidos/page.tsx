@@ -477,8 +477,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           )}
         </Section>
 
-        {/* Acompañamientos (reutiliza el del checkout) */}
-        {cart.length > 0 && (
+        {/* Acompañamientos (reutiliza el del checkout) — no aplican en mesa */}
+        {!isMesa && cart.length > 0 && (
           <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.border2}` }}>
             <AccompanimentsSection config={tenant.accompaniments as AccompConfig} items={cartLines} subtotal={subtotal} primaryColor={accent} onResolve={(r) => setAccomNote(r.notesPart)} />
           </div>
