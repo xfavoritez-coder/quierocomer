@@ -174,7 +174,13 @@ export async function POST(req: NextRequest) {
     // Espeja el pedido al Centro de pedidos (PosOrder). Normalmente solo cuando el
     // local NO gestiona por POS; con posNative se fuerza (el POS nativo no envía a
     // Toteat, así que el PosOrder debe crearse acá para verse en el board y chips).
-    void mirrorOnlineOrderToCentro(order.id, "manual", { force: !!posNative }).catch(() => {});
+    // Se AWAITea (antes era void fire-and-forget): en serverless, al enviar la
+    // respuesta la función se congela y la promesa pendiente se mataba a mitad →
+    // a veces no se creaba el PosOrder y la mesa salía vacía aunque la comanda
+    // se imprimiera. Awaiteando garantiza que el PosOrder exista antes de responder.
+    await mirrorOnlineOrderToCentro(order.id, "manual", { force: !!posNative }).catch((e) => {
+      console.error("[ecommerce/manual-order] mirror falló", order.id, e);
+    });
 
     return NextResponse.json({ ok: true, orderId: order.id, orderNumber, displayName: effectiveName, isQuick, pos });
   } catch (e) {
