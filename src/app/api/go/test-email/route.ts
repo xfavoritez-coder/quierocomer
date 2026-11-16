@@ -95,5 +95,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, sent, skipped, total: leads.length, results });
   }
 
-  return NextResponse.json({ error: "action must be 'test' or 'nudge-sweep'" }, { status: 400 });
+  // action=expire-demo&id=xxx → expirar un demo manualmente y enviar correo
+  if (action === "expire-demo") {
+    const id = req.nextUrl.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+    const r = await prisma.restaurant.findUnique({
+      where: { id },
+      select: { id: true, name: true, slug: true, isDemo: true, owner: { select: { id: true, email: true, name: true } } },
+    });
+    if (!r) return NextResponse.json({ error: "not found" }, { status: 404 });
+
+    await prisma.restaurant.update({
+      where: { id },
+      data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE" },
+    });
+
+    let emailSent = false;
+    if (r.owner?.email) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      const panelUrl = buildAutoLoginUrl(baseUrl, r.owner.id) +
+        `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3DPREMIUM`;
+      await sendAdminEmail({
+        to: r.owner.email,
+        subject: `Tu periodo de prueba de ${r.name} ha finalizado`,
+        purpose: "demo_expired",
+        html: demoExpiredEmailHtml({ ownerName: r.owner.name || "Hola", restaurantName: r.name, panelUrl }),
+      });
+      emailSent = true;
+    }
+
+    return NextResponse.json({ ok: true, expired: r.name, emailSent, emailTo: r.owner?.email });
+  }
+
+  return NextResponse.json({ error: "action must be 'test', 'nudge-sweep' or 'expire-demo'" }, { status: 400 });
 }
