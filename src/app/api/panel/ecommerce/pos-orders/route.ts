@@ -315,10 +315,22 @@ export async function PATCH(req: NextRequest) {
     const ooId = order.externalId?.startsWith("oo-") ? order.externalId.slice(3) : null;
     if (ooId) {
       const lastRound = roundItems.map((it) => ({ name: it.productName, quantity: it.quantity, options: it.options, note: it.note ?? null }));
+      // Conservar la metadata de la mesa (comensales + garzón) al reescribir los
+      // parts: se guardó al abrir la mesa y vive en rawPayload.mesa (preservado en
+      // el update de arriba). Antes se descartaba en cada ronda nueva.
+      const mesaMeta = (prevRaw.mesa && typeof prevRaw.mesa === "object" && !Array.isArray(prevRaw.mesa)) ? (prevRaw.mesa as Record<string, unknown>) : null;
+      const mesaCovers = Number(mesaMeta?.covers) > 0 ? Math.round(Number(mesaMeta?.covers)) : null;
+      const mesaGarzon = String(mesaMeta?.garzon ?? "").trim() || null;
       await prisma.onlineOrder.update({
         where: { id: ooId },
         data: {
-          deliveryAddressParts: { dineIn: true, tableLabel: order.tableLabel ?? "", lastRound } as object,
+          deliveryAddressParts: {
+            dineIn: true,
+            tableLabel: order.tableLabel ?? "",
+            ...(mesaCovers ? { covers: mesaCovers } : {}),
+            ...(mesaGarzon ? { garzon: mesaGarzon } : {}),
+            lastRound,
+          } as object,
           printedAt: null,
           printRequestedAt: new Date(),
         },
