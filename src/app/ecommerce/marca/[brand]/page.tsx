@@ -9,18 +9,19 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   const { brand } = await params;
   const data = await loadEcommerceBrand(brand);
   if (!data) return {};
-  const iconUrl = data.faviconUrl || data.logoUrl;
+  const faviconUrl = data.faviconUrl || data.logoUrl;
+  const logoUrl = data.logoUrl || data.faviconUrl;
   const title = data.pageTitle || `${data.brandName} · Pedir online`;
   const description = data.metaDescription || `Haz tu pedido en ${data.brandName}: elige delivery o retiro y te asignamos la sucursal.`;
   return {
     title,
     description,
     alternates: { canonical: data.brandDomain ? `https://${data.brandDomain}` : `https://quierocomer.com/tienda/marca/${brand}` },
-    ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
+    ...(faviconUrl ? { icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl } } : {}),
     openGraph: {
       title: data.pageTitle || data.brandName,
       description,
-      images: iconUrl ? [{ url: iconUrl, width: 400, height: 400, alt: data.brandName }] : [],
+      images: logoUrl ? [{ url: logoUrl, width: 400, height: 400, alt: data.brandName }] : [],
       type: "website",
     },
   };

@@ -33,16 +33,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (slug.includes(".")) {
     const brand = await loadEcommerceBrandByDomain(slug);
     if (brand) {
-      const brandIcon = brand.faviconUrl || brand.logoUrl;
+      const brandFavicon = brand.faviconUrl || brand.logoUrl;
+      const brandLogo = brand.logoUrl || brand.faviconUrl;
       const brandTitle = brand.pageTitle || `${brand.brandName} · Pedir online`;
       const brandDesc = brand.metaDescription || `Haz tu pedido en ${brand.brandName}: elige delivery o retiro y te asignamos la sucursal.`;
-      const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = brandIcon
-        ? [{ url: brandIcon, width: 400, height: 400, alt: brand.brandName }]
+      const ogImages: { url: string; width?: number; height?: number; alt?: string }[] = brandLogo
+        ? [{ url: brandLogo, width: 400, height: 400, alt: brand.brandName }]
         : [];
       return {
         title: brandTitle,
         description: brandDesc,
-        ...(brandIcon ? { icons: { icon: brandIcon, shortcut: brandIcon, apple: brandIcon } } : {}),
+        ...(brandFavicon ? { icons: { icon: brandFavicon, shortcut: brandFavicon, apple: brandFavicon } } : {}),
         openGraph: { title: brand.pageTitle || brand.brandName, description: brandDesc, images: ogImages, type: "website" },
       };
     }
