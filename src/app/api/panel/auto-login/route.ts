@@ -58,7 +58,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/panel/login", req.url));
   }
 
-  const isFirstConfirmation = !owner.emailVerificado;
+  const redirect = searchParams.get("redirect");
+  const hasExplicitRedirect = redirect && redirect.startsWith("/panel");
+  const isFirstConfirmation = !owner.emailVerificado && !hasExplicitRedirect;
 
   // Mark email as verified
   await prisma.restaurantOwner.update({
@@ -67,6 +69,7 @@ export async function GET(req: NextRequest) {
   });
 
   // ── First-time confirmation: activate trial + show welcome screen ───────────
+  // Skip if there's an explicit redirect (e.g. payment link from expiry email)
   let welcomeCookie: string | null = null;
 
   if (isFirstConfirmation) {
@@ -95,7 +98,7 @@ export async function GET(req: NextRequest) {
             data: { isDemo: false },
           });
         } else {
-          const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
           await prisma.restaurant.updateMany({
             where: { ownerId: oid, subscriptionStatus: "NONE" },
             data: {
@@ -167,9 +170,8 @@ export async function GET(req: NextRequest) {
   const token = crypto.randomUUID();
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
-  const redirect = searchParams.get("redirect");
   // Si viene un redirect explícito (ej. desde email de expiración), respetarlo siempre
-  const destination = redirect && redirect.startsWith("/panel")
+  const destination = hasExplicitRedirect
     ? redirect
     : welcomeCookie ? "/bienvenida" : "/panel";
 
@@ -239,7 +241,7 @@ function credentialsEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:20px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${firstName}, ${isFree ? "tu carta QR ya está <strong style=\"color:#111\">activa y lista</strong> para compartir con tus clientes" : "tu cuenta está activa con <strong style=\"color:#111\">7 días Premium gratis</strong>"}.
+  ${firstName}, ${isFree ? "tu carta QR ya está <strong style=\"color:#111\">activa y lista</strong> para compartir con tus clientes" : "tu cuenta está activa con <strong style=\"color:#111\">14 días Premium gratis</strong>"}.
 </p>
 </td></tr>
 </table>
