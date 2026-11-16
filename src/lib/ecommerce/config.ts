@@ -140,6 +140,9 @@ export interface CentroPedidosConfig {
   /** Minutos que un pedido de RETIRO puede estar "Listo" sin ser retirado antes de
    *  que el POS avise (sugiere llamar al cliente). 0 = desactivado. Sin definir = 30. */
   readyAlertMinutes?: number;
+  /** Si está activo, al CERRAR LA CAJA el POS avisa si hay pedidos abiertos (no
+   *  entregados) y deja entregarlos ahí mismo antes de cerrar. Default: off. */
+  alertOpenOrdersOnClose?: boolean;
   /** Métodos de pago de la caja. Si no está definido, se usan los 5 por defecto.
    *  `emitsFiscal` = al cobrar con este método se emite boleta (requiere además que
    *  el local tenga SharkPOS habilitado). */

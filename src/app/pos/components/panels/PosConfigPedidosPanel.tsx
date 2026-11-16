@@ -8,6 +8,7 @@ interface PedidosCfg {
   uberEnabled?: boolean
   pedidosyaEnabled?: boolean
   customerAbsorbsSurcharge?: boolean
+  alertOpenOrdersOnClose?: boolean
   prepAlertMinutes?: number
 }
 
@@ -159,6 +160,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
             { key: 'uberEnabled'          as const, title: 'Solicitar Uber Direct',  desc: 'Muestra el botón Uber en las tarjetas. Desactívalo si no usas Uber.' },
             { key: 'pedidosyaEnabled'     as const, title: 'Solicitar PedidosYa',    desc: 'Muestra el botón PedidosYa en las tarjetas. Desactívalo si no lo usas.' },
             { key: 'customerAbsorbsSurcharge' as const, title: 'Cliente paga cargo de servicio', desc: 'El cargo de la plataforma se suma al despacho que paga el cliente.' },
+            { key: 'alertOpenOrdersOnClose' as const, title: 'Avisar pedidos abiertos al cerrar caja', desc: 'Al cerrar la caja, si hay pedidos sin entregar, el POS los muestra y deja entregarlos ahí mismo antes de cerrar.' },
           ] as { key: keyof PedidosCfg; title: string; desc: string }[]).map(({ key, title, desc }) => {
             const checked = key === 'uberEnabled' || key === 'pedidosyaEnabled' ? pedidos[key] !== false : !!pedidos[key]
             return <ToggleRow key={key} title={title} desc={desc} checked={checked} disabled={savingPed} onChange={() => updatePedidos({ [key]: !checked })} />

@@ -20,6 +20,7 @@ import PosCajaHistorial from '../PosCajaHistorial'
 import StaleAccountsCleanup from '../StaleAccountsCleanup'
 import TurnoBar from '../TurnoBar'
 import CajaStepper from '../CajaStepper'
+import CloseOpenOrdersModal, { type OpenOrderLite } from '../CloseOpenOrdersModal'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -48,6 +49,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   const [opening, setOpening] = useState(false)
   const [closing, setClosing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [openGate, setOpenGate] = useState<OpenOrderLite[] | null>(null)
   const [showHistorial, setShowHistorial] = useState(false)
 
   useEffect(() => {
@@ -122,7 +124,20 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
   const difference = countedCash ? counted - expectedCash : 0
   const hasCounted = countedCash.length > 0
 
-  const handleClose = async () => {
+  const handleClose = async (skipGate = false) => {
+    // Gate "pedidos abiertos" (config alertOpenOrdersOnClose): si el local lo activó
+    // y hay pedidos sin entregar, muestra el modal para entregarlos ahí mismo (o
+    // cerrar de todas formas). skipGate=true cuando el usuario ya pasó por el modal.
+    if (!skipGate) {
+      try {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+        const d = await r.json()
+        if (d?.alertOpenOrdersOnClose) {
+          const open = (Array.isArray(d.orders) ? d.orders : []).filter((o: OpenOrderLite & { posStatus?: string }) => o.opsStage !== 'delivered' && o.posStatus !== 'canceled')
+          if (open.length) { setOpenGate(open); return }
+        }
+      } catch { /* si la consulta falla, no bloquear el cierre */ }
+    }
     if (openAccounts.length > 0 && !confirmOpen) {
       setConfirmOpen(true)
       return
@@ -482,7 +497,7 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
         <div className="pos-caja-btns">
           <button
             className="close"
-            onClick={handleClose}
+            onClick={() => handleClose()}
             disabled={closing}
             style={closing ? { background: 'var(--line-strong)', color: 'var(--ink-3)', boxShadow: 'none', cursor: 'default' } : undefined}
           >
@@ -501,6 +516,15 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
         </div>
 
       </div>
+
+      {openGate && (
+        <CloseOpenOrdersModal
+          restaurantId={restaurantId}
+          initialOrders={openGate}
+          onCancel={() => setOpenGate(null)}
+          onProceed={() => { setOpenGate(null); handleClose(true) }}
+        />
+      )}
     </div>
   )
 }

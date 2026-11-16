@@ -18,6 +18,7 @@ import PosHeader from '../components/PosHeader'
 import StaleAccountsCleanup from '../components/StaleAccountsCleanup'
 import TurnoBar from '../components/TurnoBar'
 import CajaStepper from '../components/CajaStepper'
+import CloseOpenOrdersModal, { type OpenOrderLite } from '../components/CloseOpenOrdersModal'
 import type { PaymentMethod } from '@/lib/pos'
 import { printCashClose, getBridgeUrl } from '@/lib/pos/bridge'
 import { toast } from 'sonner'
@@ -50,6 +51,7 @@ export default function CajaPage() {
   const [opening, setOpening] = useState(false)
   const [closing, setClosing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [openGate, setOpenGate] = useState<OpenOrderLite[] | null>(null)
 
   // Debe re-ejecutarse cuando el restaurante resuelve (al montar, restaurantId aún
   // puede ser el FALLBACK). Si no, los eventos de caja se etiquetan con el local
@@ -142,7 +144,18 @@ export default function CajaPage() {
   const difference = countedCash ? counted - expectedCash : 0
   const hasCounted = countedCash.length > 0
 
-  const handleClose = async () => {
+  const handleClose = async (skipGate = false) => {
+    // Gate "pedidos abiertos" (config alertOpenOrdersOnClose): ver PosCajaPanel.
+    if (!skipGate) {
+      try {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${restaurantId}&scope=activos`, { cache: 'no-store' })
+        const d = await r.json()
+        if (d?.alertOpenOrdersOnClose) {
+          const open = (Array.isArray(d.orders) ? d.orders : []).filter((o: OpenOrderLite & { posStatus?: string }) => o.opsStage !== 'delivered' && o.posStatus !== 'canceled')
+          if (open.length) { setOpenGate(open); return }
+        }
+      } catch { /* si la consulta falla, no bloquear el cierre */ }
+    }
     if (openAccounts.length > 0 && !confirmOpen) {
       setConfirmOpen(true)
       return
@@ -490,7 +503,7 @@ export default function CajaPage() {
           <div className="pos-caja-btns">
             <button
               className="close"
-              onClick={handleClose}
+              onClick={() => handleClose()}
               disabled={closing}
               style={closing ? { background: 'var(--line-strong)', color: 'var(--ink-3)', boxShadow: 'none', cursor: 'default' } : undefined}
             >
@@ -510,6 +523,15 @@ export default function CajaPage() {
 
         </div>
       </div>
+
+      {openGate && (
+        <CloseOpenOrdersModal
+          restaurantId={restaurantId}
+          initialOrders={openGate}
+          onCancel={() => setOpenGate(null)}
+          onProceed={() => { setOpenGate(null); handleClose(true) }}
+        />
+      )}
     </div>
   )
 }
