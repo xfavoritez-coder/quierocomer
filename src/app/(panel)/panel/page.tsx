@@ -126,29 +126,6 @@ export default function PanelDashboard() {
   useEffect(() => {
     if (sessionLoading || !selectedRestaurantId) return;
 
-    // Demo restaurants: show real dish names but zero stats (not fake inflated numbers)
-    if (isDemo) {
-      fetch(`/api/admin/locales/${selectedRestaurantId}/dishes-demo`)
-        .then(r => r.json())
-        .then(d => {
-          if (d.dishes?.length) {
-            setData({
-              visitsThisWeek: 0, visitsDelta: null, avgSessionDuration: 0, genioUsedThisWeek: 0,
-              topDishesViewed: d.dishes.slice(0, 5).map((dd: any) => ({ name: dd.name, count: 0, photo: dd.photo })),
-              topSearches: [], starDish: null,
-              todayScans: 0, todayWaiterCalls: 0, todayWaiterPending: 0,
-              lastScanAt: null, todayUniqueVisitors: 0, todayBirthdays: 0,
-              weekBirthdays: 0, genioToday: 0, todayAvgDuration: 0,
-            });
-          } else {
-            setNoDishes(true);
-          }
-        })
-        .catch(() => { setNoDishes(true); })
-        .finally(() => setLoading(false));
-      return;
-    }
-
     setLoading(true);
     const rid = selectedRestaurantId;
     // Fetch each API independently so a single failure doesn't blank the whole page
@@ -577,8 +554,8 @@ export default function PanelDashboard() {
         );
       })()}
 
-      {/* ═══ Banner "primeras estadísticas" para locales demo/nuevos ═══ */}
-      {!isStore && isDemo && (
+      {/* ═══ Banner "primeras estadísticas" para locales demo/nuevos sin visitas ═══ */}
+      {!isStore && isDemo && (data?.visitsThisWeek ?? 0) === 0 && (data?.todayScans ?? 0) === 0 && (
         <div style={{
           position: "relative", overflow: "hidden",
           background: "linear-gradient(135deg, rgba(244,166,35,0.10) 0%, rgba(244,166,35,0.03) 100%)",
