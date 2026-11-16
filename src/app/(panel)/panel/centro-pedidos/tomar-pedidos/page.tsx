@@ -532,7 +532,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
         )}
         <button onClick={() => { if (!invalid) { if (isMesa) submit(); else setShowConfirm(true); } }} disabled={!!invalid || sending} title={invalid || undefined}
           style={{ width: "100%", padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.9rem", fontWeight: 800, cursor: invalid || sending ? "not-allowed" : "pointer", background: invalid ? C.border : accent, color: invalid ? C.text3 : readableText(accent) }}>
-          {sending ? "Guardando…" : invalid || (isMesa ? `${existingOrderId ? "Agregar a la mesa" : "Abrir mesa"} — ${fmt(total)}` : `Tomar pedido — ${fmt(total)}`)}
+          {sending ? "Enviando…" : invalid || (isMesa ? `Enviar a cocina — ${fmt(total)}` : `Tomar pedido — ${fmt(total)}`)}
         </button>
       </div>
     </div>
