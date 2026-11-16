@@ -1476,6 +1476,7 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
   tenant: StoreTenant; siblings: BrandBranch[]; primaryColor: string; onViewHours: () => void;
 }) {
   const [branchHours, setBranchHours] = useState<Map<string, import("@/lib/ecommerce/hours").DayHours[] | null>>(new Map());
+  const [hoursModalBranch, setHoursModalBranch] = useState<{ name: string; hours: import("@/lib/ecommerce/hours").DayHours[] } | null>(null);
 
   // Fetch hours for all branches
   useEffect(() => {
@@ -1524,7 +1525,11 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
               weeklyHours={branchHours.get(b.id) ?? null}
               primaryColor={primaryColor}
               logoUrl={tenant.faviconUrl || b.logoUrl}
-              onViewHours={b.id === tenant.id ? onViewHours : undefined}
+              onViewHours={branchHours.get(b.id) ? () => {
+                if (b.id === tenant.id) { onViewHours(); return; }
+                const h = branchHours.get(b.id);
+                if (h) setHoursModalBranch({ name: b.branchName || b.name, hours: h });
+              } : undefined}
               current={b.id === tenant.id}
             />
           ))
@@ -1544,6 +1549,14 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
           />
         )}
       </div>
+      {hoursModalBranch && (
+        <HoursModal
+          weeklyHours={hoursModalBranch.hours}
+          primaryColor={primaryColor}
+          branchName={hoursModalBranch.name}
+          onClose={() => setHoursModalBranch(null)}
+        />
+      )}
     </div>
   );
 }
