@@ -1832,11 +1832,12 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
 
   const tipNum = parseInt(tip, 10) || 0
   const tip10 = Math.round(total * 0.1)   // sugerencia de propina: 10% del total
+  const grandTotal = total + tipNum        // total a cobrar = cuenta + propina
   const mLabel = (m: string) => payMethods.find(x => x.key === m)?.label ?? m
   const BILLS = [1000, 2000, 5000, 10000, 20000]
 
   const partsTotal = parts.reduce((s, p) => s + p.amount, 0)
-  const remaining = Math.max(0, total - partsTotal)
+  const remaining = Math.max(0, grandTotal - partsTotal)
   const committedChange = parts.reduce((s, p) => s + (p.method === 'efectivo' ? Math.max(0, p.received - p.amount) : 0), 0)
 
   // Entrada "en curso" del formulario (lo que todavía no se agrega como parte).
@@ -1847,7 +1848,7 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
   const pendingChange = curMethod === 'efectivo' ? Math.max(0, pendingReceived - pendingApplied) : 0
   const totalChange = committedChange + pendingChange
   // Se puede cobrar si las partes ya agregadas + la pendiente cubren el total.
-  const canPay = total > 0 && partsTotal + pendingApplied >= total
+  const canPay = grandTotal > 0 && partsTotal + pendingApplied >= grandTotal
   // Mostrar "Agregar" (dividir) solo cuando el monto de este método es parcial.
   const canSplit = remaining > 0 && curAmountNum > 0 && curAmountNum < remaining
 
@@ -1926,6 +1927,23 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
 
   const fieldStyle: React.CSSProperties = { width: '100%', padding: '9px 11px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--sunk)', fontSize: 15, fontFamily: 'var(--mono)', color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }
 
+  // Propina: va justo después de los métodos de pago. Suma al grandTotal (total
+  // de arriba + monto a cobrar). Botón de 10% además del monto manual.
+  const propinaBlock = (
+    <div style={{ marginBottom: 10 }}>
+      <label className="pos-modal-label" style={{ marginTop: 0 }}>Propina (opcional)</label>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, flex: 1 }} />
+        {tip10 > 0 && (
+          <button type="button" onClick={() => setTip(tipNum === tip10 ? '' : String(tip10))}
+            style={{ flexShrink: 0, padding: '0 14px', borderRadius: 9, border: `1px solid ${tipNum === tip10 ? 'var(--amber)' : 'var(--line)'}`, background: tipNum === tip10 ? 'var(--amber-tint)' : 'transparent', color: tipNum === tip10 ? 'var(--amber-press)' : 'var(--ink-2)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}>
+            10% · {clp(tip10)}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
       <div className="pos-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, width: '100%', padding: 20, position: 'relative' }}>
@@ -1934,9 +1952,16 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
         </button>
         <div className="pos-modal-title" style={{ marginBottom: 10, paddingRight: 32 }}>Cobrar · {displayName(order.customerName || 'Cliente')}</div>
 
-        <div style={{ ...row, borderBottom: '1px dashed var(--line-strong)', paddingBottom: 8, marginBottom: 8 }}>
-          <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>Total</span>
-          <span style={{ ...num, fontWeight: 800, fontSize: 20, color: 'var(--ink)' }}>{clp(total)}</span>
+        <div style={{ borderBottom: '1px dashed var(--line-strong)', paddingBottom: 8, marginBottom: 8 }}>
+          <div style={row}>
+            <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>{tipNum > 0 ? 'Total con propina' : 'Total'}</span>
+            <span style={{ ...num, fontWeight: 800, fontSize: 20, color: 'var(--ink)' }}>{clp(grandTotal)}</span>
+          </div>
+          {tipNum > 0 && (
+            <div style={{ ...row, padding: 0, fontSize: 12, color: 'var(--ink-3)' }}>
+              <span>Cuenta {clp(total)} + propina {clp(tipNum)}</span>
+            </div>
+          )}
         </div>
 
         {/* Partes ya agregadas (pago combinado) */}
@@ -1977,6 +2002,9 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
               ))}
             </div>
 
+            {/* Propina — justo después de los métodos de pago (suma al total/cobro) */}
+            {propinaBlock}
+
             <div style={{ display: 'flex', gap: 8, marginBottom: curMethod === 'efectivo' ? 8 : 10 }}>
               <div style={{ flex: 1 }}>
                 <label className="pos-modal-label" style={{ marginTop: 0 }}>Monto</label>
@@ -2013,20 +2041,6 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
           </div>
         )}
 
-        <label className="pos-modal-label">Propina (opcional)</label>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, flex: 1, marginBottom: 0 }} />
-          {tip10 > 0 && (
-            <button
-              type="button"
-              onClick={() => setTip(tipNum === tip10 ? '' : String(tip10))}
-              style={{ flexShrink: 0, padding: '0 14px', borderRadius: 10, border: `1px solid ${tipNum === tip10 ? 'var(--amber)' : 'var(--line)'}`, background: tipNum === tip10 ? 'var(--amber-tint)' : 'transparent', color: tipNum === tip10 ? 'var(--amber-press)' : 'var(--ink-2)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}
-            >
-              10% · {clp(tip10)}
-            </button>
-          )}
-        </div>
-
         {/* Factura: solo si el local la tiene habilitada. Si no, se emite boleta. */}
         {facturaEnabled && (
           <div style={{ marginBottom: 14, padding: 10, borderRadius: 10, border: `1px solid ${factura.on ? 'var(--amber)' : 'var(--line)'}`, background: factura.on ? 'var(--amber-tint)' : 'transparent' }}>
@@ -2053,7 +2067,7 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
         <div className="pos-modal-actions" style={{ marginTop: 0 }}>
           <button className="pos-modal-cancel" onClick={onClose}>Cancelar</button>
           <button className="pos-modal-ok" disabled={!canPay || sending || (factura.on && !facturaReady)} onClick={handlePay} style={{ opacity: !canPay || sending || (factura.on && !facturaReady) ? 0.6 : 1 }}>
-            {sending ? 'Cobrando…' : factura.on ? `Cobrar y facturar ${clp(total)}` : `Cobrar ${clp(total)}`}
+            {sending ? 'Cobrando…' : factura.on ? `Cobrar y facturar ${clp(grandTotal)}` : `Cobrar ${clp(grandTotal)}`}
           </button>
         </div>
 

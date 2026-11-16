@@ -92,7 +92,12 @@ export async function GET(req: NextRequest) {
     const parts = Array.isArray(rp?.posPayment?.parts) ? rp.posPayment.parts.filter((pp: any) => (Number(pp?.amount) || 0) > 0) : [];
     if (!platform && parts.length > 1) {
       // Pago combinado: reparte cada parte en su método; la propina va al primero.
-      parts.forEach((pp: any, i: number) => add(normMethod(pp?.method), Number(pp?.amount) || 0, i === 0 ? tip : 0));
+      // Las partes ahora pueden sumar cuenta+propina (el cobro incluye la propina):
+      // se escalan a `amount` (la CUENTA) para no doble-contar la propina en ventas
+      // (la propina se suma aparte). Compatible hacia atrás: si las partes ya sumaban
+      // la cuenta (data vieja), el factor es 1 y no cambia nada.
+      const partsSum = parts.reduce((s: number, pp: any) => s + (Number(pp?.amount) || 0), 0) || 1;
+      parts.forEach((pp: any, i: number) => add(normMethod(pp?.method), Math.round((Number(pp?.amount) || 0) * amount / partsSum), i === 0 ? tip : 0));
     } else {
       const method = platform ?? normMethod(parts[0]?.method || rp?.posPayment?.method || rp?.webPayment?.method);
       add(method, amount, tip);
