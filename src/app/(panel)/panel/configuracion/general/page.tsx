@@ -72,6 +72,7 @@ export default function ConfiguracionGeneralPage() {
   const [infoTiktok, setInfoTiktok] = useState("");
   const [infoFacebook, setInfoFacebook] = useState("");
   const [infoYoutube, setInfoYoutube] = useState("");
+  const [infoGoogleMapsUrl, setInfoGoogleMapsUrl] = useState("");
   const [infoSlug, setInfoSlug] = useState("");
   const [slugInput, setSlugInput] = useState("");
   const [slugSaving, setSlugSaving] = useState(false);
@@ -105,6 +106,7 @@ export default function ConfiguracionGeneralPage() {
       setInfoTiktok(d.tiktok || "");
       setInfoFacebook(d.facebook || "");
       setInfoYoutube(d.youtube || "");
+      setInfoGoogleMapsUrl(d.googleMapsUrl || "");
       setInfoSlug(d.slug || "");
       setSlugInput(d.slug || "");
       setAccentColor(d.cartaAccentColor || null);
@@ -308,8 +310,19 @@ export default function ConfiguracionGeneralPage() {
             <input value={infoYoutube} onChange={e => setInfoYoutube(e.target.value)} style={inputStyle} placeholder="youtube.com/@tu-canal" />
           </div>
         </div>
+        {/* Link Google Maps */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Link de Google Maps
+          </label>
+          <input value={infoGoogleMapsUrl} onChange={e => setInfoGoogleMapsUrl(e.target.value)} style={inputStyle} placeholder="https://maps.app.goo.gl/... o link de tu ficha de Google" />
+          <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>
+            Pega el link de tu ficha en Google Maps. Si lo agregas, al hacer click en tu direccion los clientes iran directo a tu ficha.
+          </p>
+        </div>
         <button
-          onClick={() => save({ name: infoName, dietType: infoDietType, address: infoAddress || null, lat: infoLat, lng: infoLng, phone: infoPhone || null, whatsapp: infoWhatsapp || null, instagram: infoInstagram || null, tiktok: infoTiktok || null, facebook: infoFacebook || null, youtube: infoYoutube || null, logoUrl: infoLogoUrl || null })}
+          onClick={() => save({ name: infoName, dietType: infoDietType, address: infoAddress || null, lat: infoLat, lng: infoLng, phone: infoPhone || null, whatsapp: infoWhatsapp || null, instagram: infoInstagram || null, tiktok: infoTiktok || null, facebook: infoFacebook || null, youtube: infoYoutube || null, googleMapsUrl: infoGoogleMapsUrl || null, logoUrl: infoLogoUrl || null })}
           disabled={saving}
           style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
         >
