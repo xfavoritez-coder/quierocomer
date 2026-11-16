@@ -168,9 +168,10 @@ export async function GET(req: NextRequest) {
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
   const redirect = searchParams.get("redirect");
-  const destination = welcomeCookie
-    ? "/bienvenida"
-    : (redirect && redirect.startsWith("/panel") ? redirect : "/panel");
+  // Si viene un redirect explícito (ej. desde email de expiración), respetarlo siempre
+  const destination = redirect && redirect.startsWith("/panel")
+    ? redirect
+    : welcomeCookie ? "/bienvenida" : "/panel";
 
   const response = NextResponse.redirect(new URL(destination, req.url));
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
