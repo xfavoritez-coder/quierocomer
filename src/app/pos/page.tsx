@@ -457,6 +457,9 @@ export default function PosHomePage() {
     const occupied = !!order
     const status = occupied ? 'con_pedidos' : 'libre'
     const isSelected = isDesktop && mesaCuenta?.key === key
+    const mesaMeta = (order?.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number; garzon?: string } | null
+    const covers = mesaMeta?.covers
+    const garzon = mesaMeta?.garzon
     return (
       <div key={table.id} className={`pos-mesa-cell ${status}`}>
         <button
@@ -466,7 +469,12 @@ export default function PosHomePage() {
           {/* Número/label de la mesa — siempre visible, grande, dentro del cuadrado */}
           <span className="pos-mesa-num">{key}</span>
           <div className="pos-mesa-center">
-            {occupied ? <span className="ms" style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>${Math.round(order.totalAmount || 0).toLocaleString('es-CL')}</span> : null}
+            {occupied ? (
+              <>
+                {covers ? <span className="pos-mesa-covers"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>{covers}</span> : null}
+                <span className="ms" style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>${Math.round(order.totalAmount || 0).toLocaleString('es-CL')}</span>
+              </>
+            ) : null}
           </div>
           {occupied ? (
             <div className="pos-mesa-bottom">
@@ -478,6 +486,12 @@ export default function PosHomePage() {
             </div>
           )}
         </button>
+        {occupied && garzon ? (
+          <span className="pos-mesa-garzon" title={garzon}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
+            {garzon}
+          </span>
+        ) : null}
       </div>
     )
   }

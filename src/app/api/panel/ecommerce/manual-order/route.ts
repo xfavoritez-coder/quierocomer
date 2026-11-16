@@ -40,11 +40,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       restaurantId, customerName, customerPhone, orderType, deliveryAddress, deliveryAddressParts,
-      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative, tableLabel,
+      deliveryLat, deliveryLng, items, notes, paymentMethod, discount, deliveryFee, sendToPos, posNative, tableLabel, covers, garzon,
     } = body as {
       restaurantId?: string; customerName?: string; customerPhone?: string; orderType?: string;
       deliveryAddress?: string; deliveryAddressParts?: Record<string, string> | null; deliveryLat?: number; deliveryLng?: number; items?: ManualItem[];
-      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean; tableLabel?: string;
+      notes?: string; paymentMethod?: string; discount?: number; deliveryFee?: number; sendToPos?: boolean; posNative?: boolean; tableLabel?: string; covers?: number; garzon?: string;
     };
 
     // Venta rápida: no requiere nombre del cliente; el nombre es un correlativo
@@ -141,7 +141,13 @@ export async function POST(req: NextRequest) {
         // el schema del OnlineOrder. `lastRound` = los ítems de esta ronda, que la
         // cola de impresión (Path B) usa para la comanda de cocina (solo esta ronda).
         deliveryAddressParts: isDineIn
-          ? ({ dineIn: true, tableLabel: tableLbl, lastRound: items.map((it) => ({ name: it.name, quantity: it.quantity, options: (it.options ?? []).map((o) => o.value), note: it.comment || null })) } as object)
+          ? ({
+              dineIn: true,
+              tableLabel: tableLbl,
+              ...(covers != null && Number(covers) > 0 ? { covers: Math.max(1, Math.round(Number(covers))) } : {}),
+              ...(String(garzon ?? "").trim() ? { garzon: String(garzon).trim() } : {}),
+              lastRound: items.map((it) => ({ name: it.name, quantity: it.quantity, options: (it.options ?? []).map((o) => o.value), note: it.comment || null })),
+            } as object)
           : isDelivery && deliveryAddressParts && typeof deliveryAddressParts === "object" ? (deliveryAddressParts as object) : undefined,
         // Dine-in: pide imprimir la comanda ya (el agente la toma de la cola y la
         // enruta a la impresora de cocina configurada), sin depender del printMode.

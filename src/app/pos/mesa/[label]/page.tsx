@@ -7,6 +7,7 @@
 // (para agregar rondas) en el query. Embebe el MISMO tomador en modo mesa.
 import { Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useStaff } from '@/lib/pos'
 import { TomarPedidos } from '@/app/(panel)/panel/centro-pedidos/tomar-pedidos/page'
 import { usePosRestaurant } from '../../lib/usePosRestaurant'
 
@@ -17,6 +18,8 @@ function PosMesaInner() {
   const sp = useSearchParams()
   const label = decodeURIComponent(String(params?.label ?? ''))
   const order = sp.get('order')
+  // Garzones configurados del local (Dexie del POS) para el selector al abrir mesa.
+  const staff = useStaff(restaurantId)
   return (
     <div className="pos-tomar-wrap">
       <style>{`.pos-tomar-wrap{padding:24px 32px;min-height:100dvh;background:#f8fafc}@media(max-width:767px){.pos-tomar-wrap{padding:16px}}`}</style>
@@ -27,6 +30,7 @@ function PosMesaInner() {
         disableToteat
         tableLabel={label}
         existingOrderId={order}
+        garzones={(staff || []).filter((g) => g.active !== false).map((g) => g.name)}
         onDone={() => router.push('/pos?tab=mesas')}
       />
     </div>

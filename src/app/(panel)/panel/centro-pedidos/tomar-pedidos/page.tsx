@@ -53,7 +53,7 @@ const C = {
 // Componente reutilizable: recibe el restaurantId por prop (el panel lo toma de
 // la sesión; el POS lo toma de usePosRestaurant). `backHref`/`backLabel` definen
 // el enlace "atrás" según dónde se embeba.
-export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false, tableLabel = null, existingOrderId = null, onDone }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void }) {
+export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false, tableLabel = null, existingOrderId = null, onDone, garzones = [] }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[] }) {
   const [data, setData] = useState<StorefrontData | null>(null);
   const [posAvailable, setPosAvailable] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       <CollapseSidebar />
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} tableLabel={tableLabel} existingOrderId={existingOrderId} onDone={onDone} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} tableLabel={tableLabel} existingOrderId={existingOrderId} onDone={onDone} garzones={garzones} />}
     </>
   );
 }
@@ -99,11 +99,14 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel, tableLabel = null, existingOrderId = null, onDone }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void }) {
+function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel, tableLabel = null, existingOrderId = null, onDone, garzones = [] }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[] }) {
   const { tenant, categories, products } = data;
   // Modo mesa (dine-in): el pedido se ancla a una mesa. Oculta tipo/cliente/
   // descuento/pago (el pago es al cobrar) y al enviar crea/suma al PosOrder dine-in.
   const isMesa = !!tableLabel;
+  // Al ABRIR la mesa (sin existingOrderId) se piden comensales + garzón.
+  const [covers, setCovers] = useState<string>("");
+  const [garzon, setGarzon] = useState<string>("");
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
   // Modos que resuelven la dirección con mapa/geocoding y cotizan por coordenadas
@@ -292,6 +295,8 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
               method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 restaurantId, orderType: "DINEIN", tableLabel, posNative: disableToteat,
+                covers: covers ? Math.max(1, Math.round(Number(covers))) : null,
+                garzon: garzon.trim() || null,
                 notes: [accomNote, notes.trim()].filter(Boolean).join(" | ") || null, items: mesaItems,
               }),
             });
@@ -391,6 +396,27 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: C.text, lineHeight: 1.15 }}>Mesa {tableLabel}</div>
               <div style={{ fontFamily: FB, fontSize: "0.76rem", color: C.text2 }}>{existingOrderId ? "Agregar productos a la cuenta" : "Nuevo pedido de mesa"}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Mesa: comensales + garzón (solo al ABRIR la mesa) */}
+        {isMesa && !existingOrderId && (
+          <div style={{ display: "flex", gap: 10, padding: "12px 14px", borderBottom: `1px solid ${C.border2}` }}>
+            <div style={{ flex: "0 0 108px" }}>
+              <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: C.text2, marginBottom: 4 }}>Comensales</label>
+              <input type="number" min={1} inputMode="numeric" value={covers} onChange={(e) => setCovers(e.target.value)} placeholder="Ej: 4" style={inp} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: C.text2, marginBottom: 4 }}>Garzón</label>
+              {garzones.length > 0 ? (
+                <select value={garzon} onChange={(e) => setGarzon(e.target.value)} style={{ ...inp, appearance: "auto" }}>
+                  <option value="">Sin asignar</option>
+                  {garzones.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              ) : (
+                <input value={garzon} onChange={(e) => setGarzon(e.target.value)} placeholder="Nombre del garzón" style={inp} />
+              )}
             </div>
           </div>
         )}

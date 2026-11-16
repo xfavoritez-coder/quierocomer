@@ -55,6 +55,8 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
     ? (order.deliveryAddressParts as Record<string, unknown>) : null;
   const isDineIn = !!dineParts?.dineIn;
   const tableLabel = isDineIn ? (String(dineParts?.tableLabel ?? "").trim() || null) : null;
+  const covers = isDineIn && Number(dineParts?.covers) > 0 ? Math.round(Number(dineParts?.covers)) : null;
+  const garzon = isDineIn ? (String(dineParts?.garzon ?? "").trim() || null) : null;
   const isDelivery = !isDineIn && order.orderType === "DELIVERY";
   const base = `QC-${(order.restaurant.name || "").trim() || "QuieroComer"}`;
   // Origen del pedido en el nombre de canal: App (desde la app Capacitor) o Web.
@@ -99,6 +101,7 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
         rawPayload: ({
           ...(alreadyPaid ? { webPayment: { method: payMethod || "online", at: new Date().toISOString() } } : {}),
           ...(order.notes?.trim() ? { orderNotes: order.notes.trim() } : {}),
+          ...(isDineIn && (covers || garzon) ? { mesa: { ...(covers ? { covers } : {}), ...(garzon ? { garzon } : {}) } } : {}),
         } as object),
         deliveryFee: order.deliveryFee || 0,
         discountAmount: order.discount || 0,

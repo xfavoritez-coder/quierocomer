@@ -877,6 +877,27 @@ export function OrderDetailPanel({
               </button>
             )}
           </div>
+          {isDineIn && (() => {
+            const m = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, unknown>).mesa : null) as { covers?: number; garzon?: string } | null
+            const nCovers = m?.covers, garzon = m?.garzon
+            if (!nCovers && !garzon) return null
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 14, color: 'var(--ink-2)', marginTop: 6, flexWrap: 'wrap' }}>
+                {nCovers ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8z"/></svg>
+                    {nCovers} {nCovers === 1 ? 'comensal' : 'comensales'}
+                  </span>
+                ) : null}
+                {garzon ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    {garzon}
+                  </span>
+                ) : null}
+              </div>
+            )
+          })()}
           {order.customerPhone && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--ink-2)', marginTop: 6 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.26h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.85a16 16 0 0 0 6.16 6.16l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
