@@ -834,6 +834,15 @@ export function OrderDetailPanel({
             Pedido #{order.orderReference ?? order.id.slice(-6)}
           </span>
           <span style={{ flex: 1 }} />
+          {/* Cerrar el detalle (útil sobre todo en móvil, donde ocupa la pantalla) */}
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            title="Cerrar"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, width: 32, height: 32, borderRadius: 8, background: 'var(--sunk)', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink-2)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
 
         {/* Fila inferior: nombre cliente + pill historial */}
