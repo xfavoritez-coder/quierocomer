@@ -1728,7 +1728,7 @@ function BranchCard({ name, address, phone, whatsapp, instagram, open, opensAt, 
           {address && (
             <div className="flex items-start gap-2">
               <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-              <span className="text-sm text-gray-600">{address}</span>
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-gray-900 transition">{address}</a>
             </div>
           )}
 
