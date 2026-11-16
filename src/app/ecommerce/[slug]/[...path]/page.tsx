@@ -53,6 +53,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const iconUrl = tenant.faviconUrl || tenant.logoUrl;
   const title = tenant.pageTitle || `${tenant.name} · Pedir online`;
 
+  // /tags/[category] — metadata de categoría con fotos de sus productos
+  if (path[0] === "tags" && path[1]) {
+    const categorySlug = path[1];
+    const category = data.categories.find((c) => slugify(c.name) === categorySlug);
+    if (category) {
+      const categoryProducts = data.products.filter((p) => p.category_id === category.id);
+      const categoryImages = categoryProducts
+        .map((p) => p.image_url)
+        .filter((u): u is string => !!u && /^https?:\/\//i.test(u))
+        .slice(0, 6)
+        .map((url) => ({ url }));
+      const logoImage = tenant.logoUrl ? [{ url: tenant.logoUrl, width: 400, height: 400, alt: tenant.name }] : [];
+      return {
+        title: `${category.name} · ${tenant.name}`,
+        description: `Pide ${category.name} en ${tenant.name}. ${categoryProducts.length} opciones disponibles.`,
+        ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
+        openGraph: {
+          title: `${category.name} · ${tenant.name}`,
+          description: `Pide ${category.name} en ${tenant.name}. ${categoryProducts.length} opciones disponibles.`,
+          images: [...categoryImages, ...logoImage],
+          type: "website",
+        },
+      };
+    }
+  }
+
   // Buscar el producto por slug
   const product = data.products.find((p) => slugify(p.name) === productSlug);
   const productImage = product?.image_url && /^https?:\/\//i.test(product.image_url) ? product.image_url : null;
