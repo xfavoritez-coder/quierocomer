@@ -33,10 +33,10 @@ export function subscribePosConfig(fn: () => void): () => void {
  *  (y deduplica llamadas concurrentes). Con force: siempre refresca. */
 export async function loadPosConfig(restaurantId: string, opts?: { force?: boolean }): Promise<void> {
   if (!restaurantId) return
-  if (!opts?.force) {
-    if (cache.get(restaurantId)?.loaded) return
-    const f = inflight.get(restaurantId); if (f) return f
-  }
+  // Deduplica llamadas concurrentes (incluido force): si ya hay un fetch en
+  // curso, todos esperan el mismo (evita N fetches de los N hooks montados).
+  const f = inflight.get(restaurantId); if (f) return f
+  if (!opts?.force && cache.get(restaurantId)?.loaded) return
   const p = (async () => {
     try {
       const r = await fetch(`/api/pos/config?restaurantId=${restaurantId}`, { cache: 'no-store' })

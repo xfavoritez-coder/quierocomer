@@ -5,6 +5,7 @@ import {
   usePosSync,
   useTables,
   useSectors,
+  usePosConfigLoaded,
   usePendingSyncCount,
   setRestaurantId,
   setUserId,
@@ -116,6 +117,7 @@ export default function PosHomePage() {
   const { caja: cashSession, step: cajaStep, loading: cashLoading } = usePosCash(restaurantId)
   const tables = useTables(restaurantId)
   const sectors = useSectors(restaurantId)
+  const configLoaded = usePosConfigLoaded(restaurantId)
   const pendingCount = usePendingSyncCount()
 
   // ── Mesas server-authoritative: la ocupación sale de los PosOrder dine-in
@@ -560,6 +562,15 @@ export default function PosHomePage() {
                   </div>
                 )}
               </>
+            ) : !configLoaded ? (
+              // Mientras llega la config del servidor: NO mostrar "Sin mesas"
+              // (parpadeaba al recargar). Mismo layout para no saltar.
+              <div className="pos-empty" style={{ minHeight: 200 }} aria-busy="true">
+                <div className="ring">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                </div>
+                <p style={{ opacity: 0.55 }}>Cargando mesas…</p>
+              </div>
             ) : (
               <div className="pos-empty" style={{ minHeight: 200 }}>
                 <div className="ring">

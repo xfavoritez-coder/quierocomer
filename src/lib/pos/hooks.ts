@@ -139,6 +139,13 @@ export function useStaff(restaurantId: string): PosStaff[] {
   return useMemo(() => snap.staff.filter(s => s.active), [snap])
 }
 
+// ¿Ya llegó la config del servidor? Sirve para NO mostrar el estado "Sin mesas
+// configuradas" mientras se carga (antes con Dexie era instantáneo; ahora hay un
+// fetch, y sin esto parpadea el vacío al recargar).
+export function usePosConfigLoaded(restaurantId: string): boolean {
+  return usePosConfigStore(restaurantId).loaded
+}
+
 // ── Cash session ─────────────────────────────────────────────────
 
 // Devuelve la caja abierta DEL RESTAURANTE ACTUAL. Si hay varias abiertas (p.ej.

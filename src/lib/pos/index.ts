@@ -51,6 +51,7 @@ export {
   useTables,
   useSectors,
   useStaff,
+  usePosConfigLoaded,
 } from './hooks'
 export { saveTables, saveSectors, updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, nextTableNumber, addSector, removeSector } from './tables'
 export { saveGarzon, saveStaffMember, deleteGarzon, seedDefaultGarzones } from './staff'
