@@ -1831,6 +1831,7 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
   }
 
   const tipNum = parseInt(tip, 10) || 0
+  const tip10 = Math.round(total * 0.1)   // sugerencia de propina: 10% del total
   const mLabel = (m: string) => payMethods.find(x => x.key === m)?.label ?? m
   const BILLS = [1000, 2000, 5000, 10000, 20000]
 
@@ -2013,7 +2014,18 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
         )}
 
         <label className="pos-modal-label">Propina (opcional)</label>
-        <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, marginBottom: 14 }} />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          <input type="number" inputMode="numeric" value={tip} onChange={(e) => setTip(e.target.value)} placeholder="0" style={{ ...fieldStyle, flex: 1, marginBottom: 0 }} />
+          {tip10 > 0 && (
+            <button
+              type="button"
+              onClick={() => setTip(tipNum === tip10 ? '' : String(tip10))}
+              style={{ flexShrink: 0, padding: '0 14px', borderRadius: 10, border: `1px solid ${tipNum === tip10 ? 'var(--amber)' : 'var(--line)'}`, background: tipNum === tip10 ? 'var(--amber-tint)' : 'transparent', color: tipNum === tip10 ? 'var(--amber-press)' : 'var(--ink-2)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}
+            >
+              10% · {clp(tip10)}
+            </button>
+          )}
+        </div>
 
         {/* Factura: solo si el local la tiene habilitada. Si no, se emite boleta. */}
         {facturaEnabled && (
