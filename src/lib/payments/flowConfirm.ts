@@ -24,7 +24,7 @@ export async function confirmFlowPayment(token: string | null): Promise<boolean>
     // Programado: queda pagado pero NO se despacha; el cron lo libera a su hora.
     if (!order.scheduledFor || order.scheduledReleasedAt) {
       await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => console.error("[flowConfirm] POS:", e));
-      void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
+      await mirrorOnlineOrderToCentro(order.id, "web").catch((e) => console.error("[flowConfirm] mirror:", e));
       if (order.source === "ecommerce") notifyNewEcommerceOrder({ id: order.id, restaurantId: order.restaurantId, customerName: order.customerName, total: order.total, orderType: order.orderType }).catch(() => {});
     }
     return true;

@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, orderId: order.id, paid: false, scheduled: true });
       }
       const pos = await dispatchOrderToPos(order.id, { channel: "web" }).catch((e) => ({ ok: false, message: String(e) }));
-      void mirrorOnlineOrderToCentro(order.id, "web").catch(() => {});
+      await mirrorOnlineOrderToCentro(order.id, "web").catch((e) => console.error("[ecommerce/checkout] mirror:", e));
       notifyNewEcommerceOrder({ id: order.id, restaurantId: restaurant.id, customerName: order.customerName, total, orderType: order.orderType }).catch(() => {});
       // Correo de confirmación al cliente (con el link de seguimiento).
       if (customerEmail?.trim()) void sendOrderStatusEmail(order.id, "ACCEPTED");
