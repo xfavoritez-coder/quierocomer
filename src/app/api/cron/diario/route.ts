@@ -496,7 +496,7 @@ export async function GET(req: NextRequest) {
         // Desactivar demo → la carta se pausa
         await prisma.restaurant.update({
           where: { id: r.id },
-          data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE" },
+          data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE", trialEndsAt: now },
         });
 
         // Enviar email al dueño

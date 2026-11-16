@@ -597,7 +597,8 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
       ((rest as any).subscriptionStatus === 'TRIALING' && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
       ((rest as any).subscriptionStatus === 'CANCELED' && _periodEnd && _chileDate(_periodEnd) >= _todayChile)
     const neverPaid = !(rest as any).lastPaymentAt
-    const isPaused = !isMenuLive && !neverPaid
+    const trialExpired = !!(rest as any).trialEndsAt && _chileDate(new Date((rest as any).trialEndsAt)) < _todayChile
+    const isPaused = !isMenuLive && (!neverPaid || trialExpired)
 
     const hasOrdering = rest.orderingEnabled
     const hasLoyalty = !!rest.loyaltyProgram?.active

@@ -135,9 +135,10 @@ export default async function CartaPage({
     (_r.subscriptionStatus === "ACTIVE" && _gracedEnd && _chileDate(_gracedEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "TRIALING" && _trialEnd && _chileDate(_trialEnd) >= _todayChile) ||
     (_r.subscriptionStatus === "CANCELED" && _periodEnd && _chileDate(_periodEnd) >= _todayChile);
-  // Restaurants that never paid (lastPaymentAt === null) get free-tier access instead of the paused screen
+  // Restaurants that never paid get free-tier access UNLESS they had a trial/demo that expired
   const neverPaid = !_r.lastPaymentAt;
-  const isPaused = !isMenuLive && !neverPaid;
+  const trialExpired = !!_r.trialEndsAt && _chileDate(new Date(_r.trialEndsAt)) < _todayChile;
+  const isPaused = !isMenuLive && (!neverPaid || trialExpired);
 
   // Only Premium restaurants support multilingual — override lang for others
   if ((restaurant as any).plan !== "PREMIUM" && !isValidLang(urlLang)) {

@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
 
     await prisma.restaurant.update({
       where: { id },
-      data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE" },
+      data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE", trialEndsAt: new Date() },
     });
 
     let emailSent = false;
