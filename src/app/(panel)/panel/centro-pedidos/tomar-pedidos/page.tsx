@@ -566,17 +566,21 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
 
   // Modal de apertura de mesa: comensales + garzón. Se abre al entrar a una mesa
   // nueva; los valores se muestran luego como info (read-only) en el carrito.
+  // Usa la tipografía del POS (var(--sans)/var(--mono), cargadas por /pos/layout),
+  // no la del storefront, porque solo aparece en el contexto del POS (/pos/mesa).
   const QUICK_COVERS = [1, 2, 3, 4, 5, 6, 8];
+  const PS = "var(--sans, 'Inter', system-ui, sans-serif)";
+  const PM = "var(--mono, 'IBM Plex Mono', ui-monospace, monospace)";
   const mesaOpenModalContent = (
-    <div onClick={() => setMesaModalOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div onClick={() => setMesaModalOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: PS }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: C.card, borderRadius: 18, border: `1px solid ${C.border}`, boxShadow: "0 16px 48px rgba(0,0,0,0.28)", padding: 20, display: "flex", flexDirection: "column", gap: 16, maxHeight: "90dvh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
           <div style={{ width: 40, height: 40, borderRadius: 11, background: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <UtensilsCrossed size={19} color={readableText(accent)} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: C.text }}>Abrir Mesa {tableLabel}</div>
-            <div style={{ fontFamily: FB, fontSize: "0.76rem", color: C.text2 }}>Comensales y garzón</div>
+            <div style={{ fontFamily: PS, fontSize: "1.05rem", fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }}>Abrir Mesa {tableLabel}</div>
+            <div style={{ fontFamily: PS, fontSize: "0.76rem", color: C.text2 }}>Comensales y garzón</div>
           </div>
           <button onClick={() => { if (onDone) onDone(); else setMesaModalOpen(false); }} aria-label="Cancelar" style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text3, padding: 4, lineHeight: 0 }}>
             <X size={20} />
@@ -584,31 +588,31 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
         </div>
 
         <div>
-          <label style={{ display: "block", fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Comensales</label>
+          <label style={{ display: "block", fontFamily: PS, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Comensales</label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 7 }}>
             {QUICK_COVERS.map((n) => {
               const on = covers === String(n);
-              return <button key={n} onClick={() => setCovers(String(n))} style={{ height: 44, borderRadius: 11, border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: on ? C.text : C.text2, fontFamily: F, fontWeight: 800, fontSize: "1rem", cursor: "pointer" }}>{n}</button>;
+              return <button key={n} onClick={() => setCovers(String(n))} style={{ height: 44, borderRadius: 11, border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: on ? C.text : C.text2, fontFamily: PM, fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}>{n}</button>;
             })}
-            <input type="number" min={1} inputMode="numeric" value={covers && !QUICK_COVERS.includes(Number(covers)) ? covers : ""} onChange={(e) => setCovers(e.target.value)} placeholder="9+" style={{ ...inp, height: 44, textAlign: "center", padding: "0 8px" }} />
+            <input type="number" min={1} inputMode="numeric" value={covers && !QUICK_COVERS.includes(Number(covers)) ? covers : ""} onChange={(e) => setCovers(e.target.value)} placeholder="9+" style={{ ...inp, height: 44, textAlign: "center", padding: "0 8px", fontFamily: PM }} />
           </div>
         </div>
 
         <div>
-          <label style={{ display: "block", fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Garzón</label>
+          <label style={{ display: "block", fontFamily: PS, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Garzón</label>
           {garzones.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
               {garzones.map((g) => {
                 const on = garzon === g;
-                return <button key={g} onClick={() => setGarzon(g)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 11, textAlign: "left", border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: C.text, fontFamily: FB, fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
-                  <span style={{ width: 28, height: 28, borderRadius: "50%", background: on ? accent : C.border, color: on ? readableText(accent) : C.text2, display: "grid", placeItems: "center", fontFamily: F, fontWeight: 800, fontSize: "0.8rem", flexShrink: 0 }}>{g.charAt(0).toUpperCase()}</span>
+                return <button key={g} onClick={() => setGarzon(g)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 11, textAlign: "left", border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: C.text, fontFamily: PS, fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
+                  <span style={{ width: 28, height: 28, borderRadius: "50%", background: on ? accent : C.border, color: on ? readableText(accent) : C.text2, display: "grid", placeItems: "center", fontFamily: PM, fontWeight: 700, fontSize: "0.8rem", flexShrink: 0 }}>{g.charAt(0).toUpperCase()}</span>
                   <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g}</span>
                   {on && <CheckCircle2 size={16} color={accent} />}
                 </button>;
               })}
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 13px", borderRadius: 11, border: `1px dashed ${C.border}`, background: C.card, color: C.text2, fontFamily: FB, fontSize: "0.85rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 13px", borderRadius: 11, border: `1px dashed ${C.border}`, background: C.card, color: C.text2, fontFamily: PS, fontSize: "0.85rem" }}>
               <User size={15} /> <b style={{ color: C.text, fontWeight: 700 }}>Garzón</b>
               <span style={{ fontSize: "0.72rem", color: C.text3 }}>— configura garzones en el POS para elegir</span>
             </div>
@@ -616,7 +620,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
         </div>
 
         <button onClick={() => setMesaModalOpen(false)}
-          style={{ padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: "pointer", background: accent, color: readableText(accent) }}>
+          style={{ padding: "13px", borderRadius: 12, border: "none", fontFamily: PS, fontSize: "0.92rem", fontWeight: 800, cursor: "pointer", background: accent, color: readableText(accent) }}>
           Abrir mesa →
         </button>
       </div>
