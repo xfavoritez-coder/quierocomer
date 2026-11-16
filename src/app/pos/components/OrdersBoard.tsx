@@ -716,9 +716,25 @@ function OrderDetailPanel({
       setTimeout(() => setPrintMsg(null), 3000)
       return
     }
-    // "Comanda cocina" = comanda de cocina en letra grande, directo por el agente local.
+    // "Comanda cocina" = comanda de cocina en letra grande. Si ESTA máquina tiene
+    // agente local (ej. el PC de la cocina), imprime directo; si no (ej. el Mac que
+    // solo toma pedidos), la REENVÍA por el servidor para que el agente de la cocina
+    // la imprima en su impresora. Así funciona desde cualquier equipo.
     const status = await getBridgeStatus()
-    if (!status.ok) { setPrintMsg('Agente desconectado'); setPrinting(null); return }
+    if (!status.ok) {
+      const onlineId = order.externalId?.startsWith('oo-') ? order.externalId.slice(3) : null
+      if (!onlineId) { setPrintMsg('✗ Sin agente local en este equipo'); setPrinting(null); setTimeout(() => setPrintMsg(null), 3000); return }
+      try {
+        const res = await fetch('/api/panel/ecommerce/print-reenqueue', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantId: rid, id: onlineId }),
+        })
+        const d = await res.json().catch(() => ({}))
+        setPrintMsg(res.ok ? '✓ Enviado a la impresora de cocina' : '✗ ' + (d.error || `HTTP ${res.status}`))
+      } catch { setPrintMsg('✗ Error de conexión') }
+      setPrinting(null); setTimeout(() => setPrintMsg(null), 3000)
+      return
+    }
     const items = itemLines(order.items).map(l => ({ quantity: l.qty, dish_name: l.name, modifiers: l.options.map(o => ({ name: o, price_adjustment: 0 })), note: l.note }))
     r = await printKitchenComanda({
       jobId: order.id + '-kitchen',
