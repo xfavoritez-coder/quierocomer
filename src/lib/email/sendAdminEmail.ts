@@ -726,7 +726,7 @@ export function demoExpiredEmailHtml({
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr><td style="padding:20px 28px 28px;">
       <p style="font-size:16px;font-weight:700;color:#111;line-height:1.5;margin:0 0 20px;text-align:center;">
-        Si te gusto como funciona, puedes reactivarla en solo 2 pasos:
+        Si te gusto y deseas seguir usandola, puedes reactivarla con el Plan Premium en solo 2 pasos:
       </p>
 
       <!-- Price box -->
