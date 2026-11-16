@@ -38,6 +38,7 @@ export interface KitchenComandaPayload {
   customerPhone?: string
   customerAddress?: string
   pickupTime?: string
+  waiter?: string             // garzón (solo mesa)
   sentBy: string
   items: ComandaItem[]
 }

@@ -210,6 +210,8 @@ export function encodeKitchenComanda(c: KitchenComandaPayload): Uint8Array {
   e.init().alignCenter();
   e.doubleOn().boldOn().line(c.orderLabel).boldOff().doubleOff();
   e.boldOn().line(titulo).boldOff();
+  // Mesa: garzón que atiende (bajo el título, antes de la hora).
+  if (c.type === "mesa" && c.waiter) e.boldOn().line("Garzon: " + c.waiter).boldOff();
   e.line(hora);
 
   // Cliente GRANDE + datos de entrega

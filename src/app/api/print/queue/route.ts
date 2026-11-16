@@ -37,6 +37,8 @@ function kitchenEscposFor(o: {
     customerName: isDineIn ? undefined : (o.customerName || undefined),
     customerPhone: isDineIn ? undefined : (o.customerPhone || undefined),
     customerAddress: !isDineIn && o.orderType === "DELIVERY" ? (o.deliveryAddress || undefined) : undefined,
+    // Mesa: garzón que abrió la mesa (deliveryAddressParts.garzon) → va en la comanda.
+    waiter: isDineIn ? (String(dp?.garzon ?? "").trim() || undefined) : undefined,
     sentBy: "ecommerce",
     items,
   });
