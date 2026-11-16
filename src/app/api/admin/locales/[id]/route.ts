@@ -11,7 +11,7 @@ import type { EcommerceConfig } from "@/lib/ecommerce/config";
 const OWNER_EDITABLE_FIELDS = [
   "name", "description", "logoUrl", "bannerUrl",
   "phone", "whatsapp", "address",
-  "instagram", "website", "scheduleJson",
+  "instagram", "tiktok", "facebook", "youtube", "website", "scheduleJson",
   "waiterPanelActive",
   "showCategoryLobby",
   "birthdayPerk",
@@ -100,6 +100,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.ownerId !== undefined && { ownerId: body.ownerId || null }),
         ...(body.instagram !== undefined && { instagram: body.instagram }),
+        ...(body.tiktok !== undefined && { tiktok: body.tiktok }),
+        ...(body.facebook !== undefined && { facebook: body.facebook }),
+        ...(body.youtube !== undefined && { youtube: body.youtube }),
         ...(body.website !== undefined && { website: body.website }),
         ...(body.whatsapp !== undefined && { whatsapp: body.whatsapp }),
         ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),

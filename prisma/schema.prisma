@@ -267,6 +267,9 @@ model Restaurant {
   waiterPanelActive          Boolean                   @default(false)
   qrActivatedAt              DateTime?
   instagram                  String?
+  tiktok                     String?
+  facebook                   String?
+  youtube                    String?
   scheduleJson               Json?
   website                    String?
   whatsapp                   String?
