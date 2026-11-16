@@ -374,7 +374,6 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   // Inicia la actividad al ver el pedido y la actualiza/termina según el estado.
   const liveStartedRef = useRef(false);
   const liveStatusRef = useRef<string | null>(null);
-  const [laInfo, setLaInfo] = useState<string>(""); // diagnóstico temporal
   useEffect(() => {
     if (!order || typeof window === "undefined") return;
     const cap: any = (window as any).Capacitor;
@@ -382,7 +381,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
     const platform = cap?.getPlatform?.();
     if (!native || platform !== "ios") { return; }
     const LA = getOrderActivity(cap);
-    if (!LA) { setLaInfo("isla: bridge nativo no disponible"); return; }
+    if (!LA) return;
     if (liveStartedRef.current && liveStatusRef.current === order.status) return; // sin cambios
     liveStatusRef.current = order.status;
 
@@ -404,21 +403,14 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       // avanzaba ni terminaba → quedaba pegada en 1/5; y un pedido ya finalizado
       // solo hacía `return` sin cerrar la isla huérfana.
       LA.end(base).catch(() => {});
-      const isFinal = order.status === "DONE" || order.status === "CANCELLED";
-      setLaInfo(isFinal ? "isla: pedido finalizado — cerrada" : "isla: pedido no activo — sin isla");
       return;
     }
 
     if (!liveStartedRef.current) {
       liveStartedRef.current = true;
-      // ¿Soporta Live Activities / están habilitadas?
-      LA.isSupported().then((s: any) => {
-        if (s && s.supported === false) setLaInfo("isla: Live Activities deshabilitadas en Ajustes");
-      }).catch(() => {});
       // Push token de la actividad → backend (para actualizar con la app cerrada)
       LA.onPushToken((token) => {
         if (!token) return;
-        setLaInfo("isla: token recibido ✓ (push ok)");
         fetch("/api/ecommerce/order-push/subscribe", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, liveActivity: { token } }),
@@ -429,9 +421,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
         orderNumber: order.orderNumber != null ? String(order.orderNumber) : "",
         storeName: order.restaurantName,
         orderType: order.orderType,
-      }).then((r: any) => {
-        setLaInfo("isla: " + (r?.started ? "iniciada ✓" : ("no iniciada — " + (r?.reason || "?"))));
-      }).catch((e: any) => setLaInfo("isla: error al iniciar — " + (e?.message || e)));
+      }).catch(() => {});
     } else {
       LA.update(base).catch(() => {});
     }
@@ -599,11 +589,6 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
         {/* Avisos push del estado del pedido */}
         {order.status !== "DONE" && <NotifyButton orderId={orderId} accent={theme.accent} textColor={theme.text2} />}
-
-        {/* Diagnóstico temporal de la Isla Dinámica (solo app iOS) */}
-        {laInfo && (
-          <p style={{ textAlign: "center", fontSize: 11, color: theme.text3, margin: "0 0 12px", fontFamily: FONT }}>{laInfo}</p>
-        )}
 
         {/* Mapa en vivo del repartidor (deliveryhandroll) — solo cuando el pedido
             ya salió a reparto (IN_DELIVERY) y tenemos ubicación del repartidor. */}
