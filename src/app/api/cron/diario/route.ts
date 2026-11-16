@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { processAutomations } from "@/lib/automations/processor";
 import { runBirthdayPushes } from "@/lib/loyalty/birthdayPush";
-import { sendAdminEmail, qrNudgeEmailHtml } from "@/lib/email/sendAdminEmail";
+import { sendAdminEmail, qrNudgeEmailHtml, demoExpiredEmailHtml } from "@/lib/email/sendAdminEmail";
+import { buildAutoLoginUrl } from "@/lib/email/autoLoginUrl";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -421,14 +422,15 @@ export async function GET(req: NextRequest) {
       console.error("[diario] Translation sweep error:", e);
     }
 
-    // 6. QR nudge email — DESACTIVADO (usar script manual _run-qr-nudge-now.ts)
+    // 6. QR nudge email — a los 7 días de creado, si tiene <30 visitas
     let qrNudgeSent = 0;
-    if (false) try {
-      const nudgeWindowStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // at least 3 days ago
+    try {
+      const nudgeWindowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const nudgeWindowEnd = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // no más de 30 días atrás
       const nudgeLeads = await prisma.lead.findMany({
         where: {
           cartaStatus: "DELIVERED",
-          deliveredAt: { lte: nudgeWindowStart },
+          deliveredAt: { lte: nudgeWindowStart, gte: nudgeWindowEnd },
           email: { not: "" },
         },
         select: { id: true, email: true, ownerName: true, localName: true, generatedSlug: true, events: true },
@@ -436,10 +438,17 @@ export async function GET(req: NextRequest) {
 
       for (const lead of nudgeLeads) {
         const events = (lead.events as any[] | null) ?? [];
-        if (events.some((e: any) => e.type === "qr_nudge_sent")) continue; // already sent
+        if (events.some((e: any) => e.type === "qr_nudge_sent")) continue;
 
         const slug = lead.generatedSlug!;
         if (!slug) continue;
+
+        // Solo enviar si el local tiene menos de 30 visitas
+        const restaurant = await prisma.restaurant.findUnique({ where: { slug }, select: { id: true } });
+        if (restaurant) {
+          const visitCount = await prisma.pageHit.count({ where: { restaurantId: restaurant.id } });
+          if (visitCount >= 30) continue;
+        }
 
         const firstName = (lead.ownerName || "").split(" ")[0] || "Hola";
         const restaurantName = lead.localName || "";
@@ -467,6 +476,55 @@ export async function GET(req: NextRequest) {
       }
     } catch (e) {
       console.error("[diario] QR nudge error:", e);
+    }
+
+    // 7. Demo expiry — a los 14 días, pausar carta + enviar email
+    let demosExpired = 0;
+    try {
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+      const expiredDemos = await prisma.restaurant.findMany({
+        where: {
+          isDemo: true,
+          createdAt: { lte: fourteenDaysAgo },
+          billingExempt: false,
+        },
+        select: { id: true, name: true, slug: true, ownerId: true, owner: { select: { id: true, email: true, name: true } } },
+      });
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
+      for (const r of expiredDemos) {
+        // Desactivar demo → la carta se pausa
+        await prisma.restaurant.update({
+          where: { id: r.id },
+          data: { isDemo: false, subscriptionStatus: "NONE", plan: "FREE" },
+        });
+
+        // Enviar email al dueño
+        if (r.owner?.email) {
+          const panelUrl = buildAutoLoginUrl(baseUrl, r.owner.id) +
+            `&redirect=/panel/mi-restaurante%3Frenew%3D1%26plan%3DPREMIUM`;
+          try {
+            await sendAdminEmail({
+              to: r.owner.email,
+              subject: `Tu periodo de prueba de ${r.name} ha finalizado`,
+              purpose: "demo_expired",
+              html: demoExpiredEmailHtml({
+                ownerName: r.owner.name || "Hola",
+                restaurantName: r.name,
+                slug: r.slug,
+                panelUrl,
+              }),
+            });
+          } catch (e) {
+            console.error(`[diario] Demo expired email failed for ${r.owner.email}:`, e);
+          }
+        }
+
+        demosExpired++;
+        console.log(`[diario] Demo expired: ${r.name} (${r.slug})`);
+      }
+    } catch (e) {
+      console.error("[diario] Demo expiry error:", e);
     }
 
     // 7. Auto-ocultar platos con cinta "Solo hoy" del día anterior.
@@ -516,6 +574,7 @@ export async function GET(req: NextRequest) {
           birthdayPushMembers,
           translationsBackfilled,
           qrNudgeSent,
+          demosExpired,
           dailyBadgeHidden,
           automations: automationResults,
           dailySnapshot: {
