@@ -727,7 +727,7 @@ function OrderDetailPanel({
       try {
         const res = await fetch('/api/panel/ecommerce/print-reenqueue', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ restaurantId: rid, id: onlineId }),
+          body: JSON.stringify({ restaurantId: rid, id: onlineId, kitchenOnly: true }),
         })
         const d = await res.json().catch(() => ({}))
         setPrintMsg(res.ok ? '✓ Enviado a la impresora de cocina' : '✗ ' + (d.error || `HTTP ${res.status}`))

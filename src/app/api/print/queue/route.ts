@@ -174,6 +174,14 @@ export async function GET(req: NextRequest) {
         return [{ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]];
       } catch { return []; }
     }
+    // "Comanda cocina" reenviada desde un equipo sin agente local (ej. el Mac):
+    // SOLO la comanda de cocina (sin ticket de caja). Marca deliveryAddressParts.kitchenOnly.
+    if (dp?.kitchenOnly) {
+      try {
+        const escpos = kitchenEscposFor(o);
+        return [{ id: o.id, orderNumber: o.orderNumber, escpos } as unknown as (typeof mapped)[number]];
+      } catch { return []; }
+    }
     const entries: (typeof mapped)[number][] = cfg.printCopies === 2 ? [o, o] : [o];
     if (cfg.kitchenComanda && !ticketOnlyIds.has(o.id)) {
       try {
