@@ -33,7 +33,7 @@ export default function GarzonesConfigPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await deleteGarzon(id)
+    await deleteGarzon(restaurantId, id)
   }
 
   const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: 20, marginBottom: 20, boxShadow: 'var(--sh-1)' }

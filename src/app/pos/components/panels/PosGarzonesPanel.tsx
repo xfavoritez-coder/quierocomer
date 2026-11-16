@@ -45,7 +45,7 @@ export default function PosGarzonesPanel({ restaurantId, title, onBack }: { rest
   }
 
   const handleDelete = async (id: string) => {
-    await deleteGarzon(id)
+    await deleteGarzon(restaurantId, id)
   }
 
   void syncing

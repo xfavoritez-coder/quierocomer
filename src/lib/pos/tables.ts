@@ -1,22 +1,19 @@
 import { v4 as uuidv4 } from 'uuid'
-import { posDb } from './db'
-import { configureTables, configureSectors } from './events'
 import type { PosTable, PosSector } from './types'
+import { loadPosConfig, getPosConfigSnapshot, setTablesRemote, setSectorsRemote } from './configApi'
 
-// ── One-time migration: emit events for tables/sectors created before sync ──
+// Config de mesas/sectores SERVER-AUTHORITATIVE (/api/pos/config). Estas funciones
+// calculan el set nuevo a partir del set ACTUAL (leído fresco del servidor) y lo
+// reemplazan entero (mismo modelo "replace" que tenía el Dexie). Reemplaza el
+// event-sourcing en pos_events, que un wipe borraba.
 
-export async function migrateLocalTablesToEvents(restaurantId: string): Promise<void> {
-  const hasEvent = await posDb.events
-    .where('restaurant_id').equals(restaurantId)
-    .filter(e => e.type === 'tables_configured' || e.type === 'sectors_configured')
-    .first()
-  if (hasEvent) return
-
-  const tables = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
-  const sectors = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
-
-  if (sectors.length > 0) await configureSectors({ sectors })
-  if (tables.length > 0) await configureTables({ tables })
+async function currentTables(restaurantId: string): Promise<PosTable[]> {
+  await loadPosConfig(restaurantId, { force: true })
+  return [...getPosConfigSnapshot(restaurantId).tables]
+}
+async function currentSectors(restaurantId: string): Promise<PosSector[]> {
+  await loadPosConfig(restaurantId, { force: true })
+  return [...getPosConfigSnapshot(restaurantId).sectors]
 }
 
 export async function saveTables(restaurantId: string, tables: { number: number; label?: string; sector_id?: string }[]): Promise<void> {
@@ -30,7 +27,7 @@ export async function saveTables(restaurantId: string, tables: { number: number;
     y: Math.floor(i / 5),
     active: true,
   }))
-  await configureTables({ tables: rows })
+  await setTablesRemote(restaurantId, rows)
 }
 
 const idOf = (t: { label?: string; number: number }) => t.label || String(t.number)
@@ -54,8 +51,8 @@ export function nextTableNumber(tables: { label?: string; number: number }[], pr
 }
 
 /**
- * Agrega mesas al set actual SIN reemplazarlo. Lee las mesas frescas desde la
- * BD (no desde el estado de React) para que dos altas seguidas no se pisen.
+ * Agrega mesas al set actual SIN reemplazarlo. Lee las mesas frescas desde el
+ * servidor (no desde el estado de React) para que dos altas seguidas no se pisen.
  * Continúa la numeración existente y omite identificadores repetidos.
  * Devuelve cuántas mesas se agregaron realmente.
  */
@@ -63,7 +60,7 @@ export async function addTables(
   restaurantId: string,
   opts: { count: number; prefix?: string; from?: number; sectorId?: string | null }
 ): Promise<number> {
-  const current = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
+  const current = await currentTables(restaurantId)
   const existing = new Set(current.map(idOf))
   const prefix = (opts.prefix || '').trim()
   const from = opts.from ?? nextTableNumber(current, prefix)
@@ -83,7 +80,7 @@ export async function addTables(
     })
     added++
   }
-  if (added > 0) await configureTables({ tables: rows })
+  if (added > 0) await setTablesRemote(restaurantId, rows)
   return added
 }
 
@@ -91,7 +88,7 @@ export async function addTables(
 export async function addCustomTable(restaurantId: string, label: string, sectorId?: string | null): Promise<boolean> {
   const name = label.trim()
   if (!name) return false
-  const current = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
+  const current = await currentTables(restaurantId)
   if (current.some(t => idOf(t) === name)) return false
   const isNum = /^\d+$/.test(name)
   const maxNum = current.reduce((m, t) => Math.max(m, t.number), 0)
@@ -102,30 +99,26 @@ export async function addCustomTable(restaurantId: string, label: string, sector
     sector_id: sectorId ?? undefined,
     x: (current.length % 5), y: Math.floor(current.length / 5), active: true,
   }
-  await configureTables({ tables: [...current, row] })
+  await setTablesRemote(restaurantId, [...current, row])
   return true
 }
 
-/** Elimina una mesa leyendo el set fresco desde la BD. */
+/** Elimina una mesa leyendo el set fresco desde el servidor. */
 export async function removeTable(restaurantId: string, tableId: string): Promise<void> {
-  const current = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
-  await configureTables({ tables: current.filter(t => t.id !== tableId) })
+  const current = await currentTables(restaurantId)
+  await setTablesRemote(restaurantId, current.filter(t => t.id !== tableId))
 }
 
-export async function updateTableSector(tableId: string, sectorId: string | null): Promise<void> {
-  const table = await posDb.posTables.get(tableId)
-  if (!table) return
-  const all = await posDb.posTables.where('restaurant_id').equals(table.restaurant_id).toArray()
-  const updated = all.map(t => t.id === tableId ? { ...t, sector_id: sectorId ?? undefined } : t)
-  await configureTables({ tables: updated })
+export async function updateTableSector(restaurantId: string, tableId: string, sectorId: string | null): Promise<void> {
+  const all = await currentTables(restaurantId)
+  if (!all.some(t => t.id === tableId)) return
+  await setTablesRemote(restaurantId, all.map(t => t.id === tableId ? { ...t, sector_id: sectorId ?? undefined } : t))
 }
 
-export async function updateTableLabel(tableId: string, label: string): Promise<void> {
-  const table = await posDb.posTables.get(tableId)
-  if (!table) return
-  const all = await posDb.posTables.where('restaurant_id').equals(table.restaurant_id).toArray()
-  const updated = all.map(t => t.id === tableId ? { ...t, label: label || undefined } : t)
-  await configureTables({ tables: updated })
+export async function updateTableLabel(restaurantId: string, tableId: string, label: string): Promise<void> {
+  const all = await currentTables(restaurantId)
+  if (!all.some(t => t.id === tableId)) return
+  await setTablesRemote(restaurantId, all.map(t => t.id === tableId ? { ...t, label: label || undefined } : t))
 }
 
 /**
@@ -137,14 +130,14 @@ export async function updateTableLabel(tableId: string, label: string): Promise<
 export async function addSector(restaurantId: string, name: string): Promise<boolean> {
   const n = name.trim()
   if (!n) return false
-  const current = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
+  const current = await currentSectors(restaurantId)
   if (current.some(s => s.name.toLowerCase() === n.toLowerCase())) return false
   const sorted = [...current].sort((a, b) => a.position - b.position)
   const rows: PosSector[] = [
     ...sorted.map((s, i) => ({ ...s, position: i })),
     { id: uuidv4(), restaurant_id: restaurantId, name: n, position: sorted.length },
   ]
-  await configureSectors({ sectors: rows })
+  await setSectorsRemote(restaurantId, rows)
   return true
 }
 
@@ -153,16 +146,16 @@ export async function addSector(restaurantId: string, name: string): Promise<boo
  * "sin sector" (conservando los ids de las mesas, no las borra).
  */
 export async function removeSector(restaurantId: string, sectorId: string): Promise<void> {
-  const tbls = await posDb.posTables.where('restaurant_id').equals(restaurantId).toArray()
+  const tbls = await currentTables(restaurantId)
   if (tbls.some(t => t.sector_id === sectorId)) {
-    await configureTables({ tables: tbls.map(t => t.sector_id === sectorId ? { ...t, sector_id: undefined } : t) })
+    await setTablesRemote(restaurantId, tbls.map(t => t.sector_id === sectorId ? { ...t, sector_id: undefined } : t))
   }
-  const current = await posDb.posSectors.where('restaurant_id').equals(restaurantId).toArray()
+  const current = await currentSectors(restaurantId)
   const rows = current
     .filter(s => s.id !== sectorId)
     .sort((a, b) => a.position - b.position)
     .map((s, i) => ({ ...s, position: i }))
-  await configureSectors({ sectors: rows })
+  await setSectorsRemote(restaurantId, rows)
 }
 
 export async function saveSectors(restaurantId: string, sectors: { name: string; position: number }[]): Promise<void> {
@@ -172,5 +165,5 @@ export async function saveSectors(restaurantId: string, sectors: { name: string;
     name: s.name,
     position: s.position,
   }))
-  await configureSectors({ sectors: rows })
+  await setSectorsRemote(restaurantId, rows)
 }

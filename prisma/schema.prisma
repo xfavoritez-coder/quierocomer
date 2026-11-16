@@ -3627,6 +3627,51 @@ model PosCashSession {
   @@index([shiftId])
 }
 
+// ── Config del POS nativo: mesas / sectores / garzones ──────────────
+// SERVER-AUTHORITATIVE (reemplaza el event-sourcing en Dexie/pos_events, que un
+// wipe de pos_events borraba). Fuente de verdad = estas tablas; el cliente lee
+// por /api/pos/config (polling) y escribe por acciones. El id NO es @default:
+// al migrar desde Dexie se conservan los uuid existentes (para no romper el
+// vínculo mesa→sector por sectorId); las altas nuevas generan el id en el server.
+model PosTable {
+  id           String   @id
+  restaurantId String
+  number       Int
+  label        String?
+  sectorId     String?
+  x            Int      @default(0)
+  y            Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId, active])
+}
+
+model PosSector {
+  id           String   @id
+  restaurantId String
+  name         String
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId])
+}
+
+model PosStaff {
+  id           String   @id
+  restaurantId String
+  name         String
+  pinHash      String   @default("")
+  role         String   @default("garzon") // admin | garzon | cocinero | cajero
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId, active])
+}
+
 // ── Board interno (quierocomer.com/go) ──────────────────────────────
 model GoTask {
   id          String   @id @default(cuid())

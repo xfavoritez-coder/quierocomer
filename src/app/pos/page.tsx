@@ -8,9 +8,7 @@ import {
   usePendingSyncCount,
   setRestaurantId,
   setUserId,
-  migrateLocalTablesToEvents,
-  migrateLocalStaffToEvents,
-  deduplicateStaff,
+  backfillPosConfig,
   purgeMirrorAccounts,
 } from '@/lib/pos'
 import type { PosTable } from '@/lib/pos'
@@ -207,9 +205,9 @@ export default function PosHomePage() {
   useState(() => {
     setRestaurantId(restaurantId)
     setUserId(TEST_USER_ID)
-    migrateLocalTablesToEvents(restaurantId)
-    migrateLocalStaffToEvents(restaurantId)
-    deduplicateStaff(restaurantId)
+    // Migración one-time: sube la config vieja (Dexie/pos_events) al servidor si
+    // éste aún está vacío para el local. Idempotente (ver backfillPosConfig).
+    backfillPosConfig(restaurantId)
     purgeMirrorAccounts()
   })
 

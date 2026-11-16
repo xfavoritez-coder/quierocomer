@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
+import { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react'
 import { posDb } from './db'
 import { startSync, stopSync, subscribePosReady } from './sync'
 import { getRestaurantId } from './events'
@@ -8,6 +8,7 @@ import type { Account, CashSession, Shift, PosTable, PosSector, PosStaff } from 
 import type { CachedProduct } from './types'
 import { refreshCatalog, getCachedProducts, getCachedCategories } from './catalog'
 import { notifyDbChange, getDbVersion, subscribeDbChange } from './notify'
+import { getPosConfigSnapshot, subscribePosConfig, loadPosConfig } from './configApi'
 
 function useDbVersion(): number {
   return useSyncExternalStore(subscribeDbChange, getDbVersion, () => 0)
@@ -100,34 +101,42 @@ export function useAccount(accountId: string | null): Account | undefined {
   )
 }
 
-// ── Tables ───────────────────────────────────────────────────────
+// ── Config server-authoritative: mesas / sectores / garzones ─────────
+// Leen de la caché de /api/pos/config (ver configApi.ts), NO de Dexie. La caché
+// es compartida: un solo fetch alimenta los tres hooks. Se carga al montar y se
+// refresca cada 45s (la config cambia poco) + tras cada mutación local.
+
+const EMPTY_CONFIG = { tables: [] as PosTable[], sectors: [] as PosSector[], staff: [] as PosStaff[], loaded: false }
+
+function usePosConfigStore(restaurantId: string) {
+  useEffect(() => {
+    if (!restaurantId) return
+    loadPosConfig(restaurantId)
+    const iv = setInterval(() => loadPosConfig(restaurantId, { force: true }), 45_000)
+    const onWake = () => { if (document.visibilityState === 'visible') loadPosConfig(restaurantId, { force: true }) }
+    document.addEventListener('visibilitychange', onWake)
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onWake) }
+  }, [restaurantId])
+  return useSyncExternalStore(
+    subscribePosConfig,
+    () => (restaurantId ? getPosConfigSnapshot(restaurantId) : EMPTY_CONFIG),
+    () => EMPTY_CONFIG,
+  )
+}
 
 export function useTables(restaurantId: string): PosTable[] {
-  return useDexieQuery(
-    () => posDb.posTables.where('restaurant_id').equals(restaurantId).filter(t => t.active).sortBy('number'),
-    [restaurantId],
-    []
-  )
+  const snap = usePosConfigStore(restaurantId)
+  return useMemo(() => snap.tables.filter(t => t.active).sort((a, b) => a.number - b.number), [snap])
 }
-
-// ── Sectors ──────────────────────────────────────────────────────
 
 export function useSectors(restaurantId: string): PosSector[] {
-  return useDexieQuery(
-    () => posDb.posSectors.where('restaurant_id').equals(restaurantId).sortBy('position'),
-    [restaurantId],
-    []
-  )
+  const snap = usePosConfigStore(restaurantId)
+  return useMemo(() => [...snap.sectors].sort((a, b) => a.position - b.position), [snap])
 }
 
-// ── Staff (garzones) ─────────────────────────────────────────────
-
 export function useStaff(restaurantId: string): PosStaff[] {
-  return useDexieQuery(
-    () => posDb.staff.where('restaurant_id').equals(restaurantId).filter(s => s.active).toArray(),
-    [restaurantId],
-    []
-  )
+  const snap = usePosConfigStore(restaurantId)
+  return useMemo(() => snap.staff.filter(s => s.active), [snap])
 }
 
 // ── Cash session ─────────────────────────────────────────────────

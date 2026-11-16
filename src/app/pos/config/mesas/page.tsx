@@ -78,13 +78,13 @@ export default function MesasConfigPage() {
   }
 
   const handleSectorChange = async (tableId: string, sectorId: string) => {
-    await updateTableSector(tableId, sectorId || null)
+    await updateTableSector(restaurantId, tableId, sectorId || null)
   }
 
   const handleLabelBlur = async (tableId: string) => {
     const val = editingLabel[tableId]
     if (val === undefined) return
-    await updateTableLabel(tableId, val.trim())
+    await updateTableLabel(restaurantId, tableId, val.trim())
     setEditingLabel(prev => { const n = { ...prev }; delete n[tableId]; return n })
   }
 

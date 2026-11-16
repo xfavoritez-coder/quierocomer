@@ -52,6 +52,7 @@ export {
   useSectors,
   useStaff,
 } from './hooks'
-export { saveTables, saveSectors, updateTableSector, updateTableLabel, migrateLocalTablesToEvents, addTables, addCustomTable, removeTable, nextTableNumber, addSector, removeSector } from './tables'
-export { saveGarzon, saveStaffMember, deleteGarzon, seedDefaultGarzones, migrateLocalStaffToEvents, deduplicateStaff } from './staff'
+export { saveTables, saveSectors, updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, nextTableNumber, addSector, removeSector } from './tables'
+export { saveGarzon, saveStaffMember, deleteGarzon, seedDefaultGarzones } from './staff'
+export { backfillPosConfig, loadPosConfig } from './configApi'
 export { updateAccountCovers, updateAccountGarzon } from './account-meta'
