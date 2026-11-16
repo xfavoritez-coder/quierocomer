@@ -104,9 +104,12 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   // Modo mesa (dine-in): el pedido se ancla a una mesa. Oculta tipo/cliente/
   // descuento/pago (el pago es al cobrar) y al enviar crea/suma al PosOrder dine-in.
   const isMesa = !!tableLabel;
-  // Al ABRIR la mesa (sin existingOrderId) se piden comensales + garzón.
-  const [covers, setCovers] = useState<string>("");
+  // Al ABRIR la mesa (sin existingOrderId) un modal pide comensales + garzón; los
+  // valores quedan como INFO (read-only) en el carrito. Sin garzones configurados,
+  // el garzón queda como "Garzón".
+  const [covers, setCovers] = useState<string>(isMesa && !existingOrderId ? "2" : "");
   const [garzon, setGarzon] = useState<string>("");
+  const [mesaModalOpen, setMesaModalOpen] = useState<boolean>(isMesa && !existingOrderId);
   const accent = tenant.primaryColor || "#F4A623";
   const deliveryMode = tenant.deliveryConfig?.mode ?? "zones";
   // Modos que resuelven la dirección con mapa/geocoding y cotizan por coordenadas
@@ -296,7 +299,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
               body: JSON.stringify({
                 restaurantId, orderType: "DINEIN", tableLabel, posNative: disableToteat,
                 covers: covers ? Math.max(1, Math.round(Number(covers))) : null,
-                garzon: garzon.trim() || null,
+                garzon: garzon.trim() || (garzones.length === 0 ? "Garzón" : null),
                 notes: [accomNote, notes.trim()].filter(Boolean).join(" | ") || null, items: mesaItems,
               }),
             });
@@ -400,25 +403,22 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           </div>
         )}
 
-        {/* Mesa: comensales + garzón (solo al ABRIR la mesa) */}
+        {/* Mesa: info de comensales + garzón (se llenan en el modal de apertura).
+            Read-only; al tocarla se reabre el modal para corregir. */}
         {isMesa && !existingOrderId && (
-          <div style={{ display: "flex", gap: 10, padding: "12px 14px", borderBottom: `1px solid ${C.border2}` }}>
-            <div style={{ flex: "0 0 108px" }}>
-              <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: C.text2, marginBottom: 4 }}>Comensales</label>
-              <input type="number" min={1} inputMode="numeric" value={covers} onChange={(e) => setCovers(e.target.value)} placeholder="Ej: 4" style={inp} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <label style={{ display: "block", fontFamily: FB, fontSize: "0.72rem", fontWeight: 700, color: C.text2, marginBottom: 4 }}>Garzón</label>
-              {garzones.length > 0 ? (
-                <select value={garzon} onChange={(e) => setGarzon(e.target.value)} style={{ ...inp, appearance: "auto" }}>
-                  <option value="">Sin asignar</option>
-                  {garzones.map((g) => <option key={g} value={g}>{g}</option>)}
-                </select>
-              ) : (
-                <input value={garzon} onChange={(e) => setGarzon(e.target.value)} placeholder="Nombre del garzón" style={inp} />
-              )}
-            </div>
-          </div>
+          <button
+            onClick={() => setMesaModalOpen(true)}
+            style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 16px", borderBottom: `1px solid ${C.border2}`, background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.85rem", fontWeight: 600, color: C.text }}>
+              <User size={14} color={C.text2} /> {covers ? `${covers} comensales` : "Comensales —"}
+            </span>
+            <span style={{ color: C.border }}>·</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.85rem", fontWeight: 600, color: C.text }}>
+              <User size={14} color={C.text2} /> {garzon || (garzones.length === 0 ? "Garzón" : "Sin asignar")}
+            </span>
+            <PencilLine size={14} color={C.text3} style={{ marginLeft: "auto" }} />
+          </button>
         )}
 
         {/* Tipo de venta (Retiro / Delivery / Venta rápida) */}
@@ -564,9 +564,70 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
     </div>
   );
 
+  // Modal de apertura de mesa: comensales + garzón. Se abre al entrar a una mesa
+  // nueva; los valores se muestran luego como info (read-only) en el carrito.
+  const QUICK_COVERS = [1, 2, 3, 4, 5, 6, 8];
+  const mesaOpenModalContent = (
+    <div onClick={() => setMesaModalOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: C.card, borderRadius: 18, border: `1px solid ${C.border}`, boxShadow: "0 16px 48px rgba(0,0,0,0.28)", padding: 20, display: "flex", flexDirection: "column", gap: 16, maxHeight: "90dvh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <UtensilsCrossed size={19} color={readableText(accent)} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 800, color: C.text }}>Abrir Mesa {tableLabel}</div>
+            <div style={{ fontFamily: FB, fontSize: "0.76rem", color: C.text2 }}>Comensales y garzón</div>
+          </div>
+          <button onClick={() => { if (onDone) onDone(); else setMesaModalOpen(false); }} aria-label="Cancelar" style={{ background: "transparent", border: "none", cursor: "pointer", color: C.text3, padding: 4, lineHeight: 0 }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div>
+          <label style={{ display: "block", fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Comensales</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 7 }}>
+            {QUICK_COVERS.map((n) => {
+              const on = covers === String(n);
+              return <button key={n} onClick={() => setCovers(String(n))} style={{ height: 44, borderRadius: 11, border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: on ? C.text : C.text2, fontFamily: F, fontWeight: 800, fontSize: "1rem", cursor: "pointer" }}>{n}</button>;
+            })}
+            <input type="number" min={1} inputMode="numeric" value={covers && !QUICK_COVERS.includes(Number(covers)) ? covers : ""} onChange={(e) => setCovers(e.target.value)} placeholder="9+" style={{ ...inp, height: 44, textAlign: "center", padding: "0 8px" }} />
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: "block", fontFamily: FB, fontSize: "0.74rem", fontWeight: 700, color: C.text2, marginBottom: 7 }}>Garzón</label>
+          {garzones.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+              {garzones.map((g) => {
+                const on = garzon === g;
+                return <button key={g} onClick={() => setGarzon(g)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 11, textAlign: "left", border: on ? `2px solid ${accent}` : `1px solid ${C.border}`, background: on ? `${accent}18` : C.card, color: C.text, fontFamily: FB, fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
+                  <span style={{ width: 28, height: 28, borderRadius: "50%", background: on ? accent : C.border, color: on ? readableText(accent) : C.text2, display: "grid", placeItems: "center", fontFamily: F, fontWeight: 800, fontSize: "0.8rem", flexShrink: 0 }}>{g.charAt(0).toUpperCase()}</span>
+                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g}</span>
+                  {on && <CheckCircle2 size={16} color={accent} />}
+                </button>;
+              })}
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 13px", borderRadius: 11, border: `1px dashed ${C.border}`, background: C.card, color: C.text2, fontFamily: FB, fontSize: "0.85rem" }}>
+              <User size={15} /> <b style={{ color: C.text, fontWeight: 700 }}>Garzón</b>
+              <span style={{ fontSize: "0.72rem", color: C.text3 }}>— configura garzones en el POS para elegir</span>
+            </div>
+          )}
+        </div>
+
+        <button onClick={() => setMesaModalOpen(false)}
+          style={{ padding: "13px", borderRadius: 12, border: "none", fontFamily: F, fontSize: "0.92rem", fontWeight: 800, cursor: "pointer", background: accent, color: readableText(accent) }}>
+          Abrir mesa →
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
+      {isMesa && !existingOrderId && mesaModalOpen && typeof document !== "undefined" &&
+        createPortal(mesaOpenModalContent, document.querySelector(".theme-dark, .theme-light") ?? document.body)}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
         <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
           <ArrowLeft size={15} /> {backLabel}
