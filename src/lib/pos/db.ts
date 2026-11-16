@@ -2,29 +2,13 @@ import Dexie, { type EntityTable } from 'dexie'
 import type {
   PosEvent,
   Account,
-  AccountItem,
-  Round,
-  Payment,
   CashSession,
   Shift,
   PosTable,
   PosSector,
   PosStaff,
-  PosDevice,
   CachedProduct,
 } from './types'
-
-// ── Snapshot (materialización diaria) ────────────────────────────
-
-export interface DailySnapshot {
-  id: string                    // restaurant_id + date
-  restaurant_id: string
-  date: string                  // YYYY-MM-DD
-  last_event_seq: number
-  accounts: Account[]
-  cash_session: CashSession | null
-  created_at: string
-}
 
 // ── Sync queue entry ─────────────────────────────────────────────
 
@@ -40,18 +24,13 @@ export interface SyncQueueEntry {
 export class PosDatabase extends Dexie {
   events!: EntityTable<PosEvent, 'event_id'>
   accounts!: EntityTable<Account, 'id'>
-  items!: EntityTable<AccountItem, 'id'>
-  rounds!: EntityTable<Round, 'id'>
-  payments!: EntityTable<Payment, 'id'>
   cashSessions!: EntityTable<CashSession, 'id'>
   shifts!: EntityTable<Shift, 'id'>
   posTables!: EntityTable<PosTable, 'id'>
   posSectors!: EntityTable<PosSector, 'id'>
   staff!: EntityTable<PosStaff, 'id'>
-  devices!: EntityTable<PosDevice, 'id'>
   products!: EntityTable<CachedProduct, 'id'>
   syncQueue!: EntityTable<SyncQueueEntry, 'id'>
-  snapshots!: EntityTable<DailySnapshot, 'id'>
 
   constructor() {
     super('pos_quierocomer')
@@ -79,6 +58,18 @@ export class PosDatabase extends Dexie {
     // Turno (capa externa sobre las cajas).
     this.version(3).stores({
       shifts: 'id, is_open, [restaurant_id+is_open]',
+    })
+
+    // Limpieza: stores declarados en v1 pero NUNCA usados (ningún `posDb.items/
+    // rounds/payments/devices/snapshots` en el código). Los ítems/rondas/pagos
+    // viven embebidos en `accounts`; el device_id en localStorage. Se dropean
+    // (están vacíos). Dexie los crea en v1 y los elimina aquí → neto: no existen.
+    this.version(4).stores({
+      items: null,
+      rounds: null,
+      payments: null,
+      devices: null,
+      snapshots: null,
     })
   }
 }

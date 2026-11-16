@@ -11,7 +11,6 @@ export type PosEventType =
   | 'account_opened'
   | 'round_sent'
   | 'item_voided'
-  | 'item_updated'
   | 'payment_recorded'
   | 'account_closed'
   | 'account_voided'
@@ -82,14 +81,6 @@ export interface ItemVoidedPayload {
   account_id: string
   item_id: string
   reason: string
-}
-
-export interface ItemUpdatedPayload {
-  account_id: string
-  item_id: string
-  quantity?: number
-  modifiers?: ItemModifier[]
-  note?: string
 }
 
 export interface PaymentRecordedPayload {

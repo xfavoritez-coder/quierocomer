@@ -1,7 +1,7 @@
 // POS QuieroComer — barrel export
 
 export { posDb } from './db'
-export type { DailySnapshot, SyncQueueEntry } from './db'
+export type { SyncQueueEntry } from './db'
 
 export * from './types'
 
