@@ -676,7 +676,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── WhatsApp floating button ────── */}
-      {(tenant.whatsapp || tenant.phone) && (
+      {tenant.showWhatsApp !== false && (tenant.whatsapp || tenant.phone) && (
         <a
           href={`https://wa.me/${(tenant.whatsapp || tenant.phone || "").replace(/[^0-9]/g, "")}`}
           target="_blank"

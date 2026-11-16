@@ -983,8 +983,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
 
       {/* ── WhatsApp floating button ────── */}
-      {/* WhatsApp floating — visible si hay whatsapp o phone */}
-      {(tenant.whatsapp || tenant.phone) ? (
+      {tenant.showWhatsApp !== false && (tenant.whatsapp || tenant.phone) ? (
         <a
           href={`https://wa.me/${(tenant.whatsapp || tenant.phone || "").replace(/[^0-9]/g, "")}`}
           target="_blank"

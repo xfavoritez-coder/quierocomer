@@ -228,7 +228,7 @@ export default function EcommerceConfiguracionPage() {
                 style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input, var(--adm-card))", border: "1px solid var(--adm-input-border, var(--adm-card-border))", borderRadius: 8, color: "var(--adm-text)", fontFamily: "monospace", fontSize: "0.86rem", outline: "none", boxSizing: "border-box" }}
               />
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", lineHeight: 1.5 }}>
-                Escribe solo el dominio, sin “https://” ni “www” (ej: <b>haruna.cl</b>). Además debes: (1) agregar el dominio a este proyecto en Vercel y (2) en tu proveedor DNS apuntarlo a Vercel — registro <b>A</b> <code>@</code> → <code>76.76.21.21</code> y <b>CNAME</b> <code>www</code> → <code>cname.vercel-dns.com</code>. Déjalo vacío para usar el dominio de quierocomer.
+                Escribe solo el dominio, sin "https://" ni "www" (ej: <b>haruna.cl</b>). Además debes: (1) agregar el dominio a este proyecto en Vercel y (2) en tu proveedor DNS apuntarlo a Vercel — registro <b>A</b> <code>@</code> → <code>76.76.21.21</code> y <b>CNAME</b> <code>www</code> → <code>cname.vercel-dns.com</code>. Déjalo vacío para usar el dominio de quierocomer.
               </p>
             </div>
           </section>
@@ -620,16 +620,30 @@ export default function EcommerceConfiguracionPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Favoritos</p>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Permite al cliente marcar productos con ♥ y verlos en “Mis favoritos”.</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Permite al cliente marcar productos con ♥ y verlos en "Mis favoritos".</p>
               </div>
               <Toggle on={cfg.favoritesEnabled} onClick={() => patch({ favoritesEnabled: !cfg.favoritesEnabled })} />
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Mostrar carta mesa</p>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Agrega “Carta mesa” en el menú de la tienda, con el link de tu carta QR del local.</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Agrega "Carta mesa" en el menú de la tienda, con el link de tu carta QR del local.</p>
               </div>
               <Toggle on={cfg.showTableMenu} onClick={() => patch({ showTableMenu: !cfg.showTableMenu })} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Botón de WhatsApp</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Muestra un botón flotante de WhatsApp en la tienda para que el cliente te contacte.</p>
+              </div>
+              <Toggle on={cfg.showWhatsApp} onClick={() => patch({ showWhatsApp: !cfg.showWhatsApp })} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+              <div>
+                <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Teléfono de contacto</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "1px 0 0" }}>Muestra el número de teléfono del local en la tienda y en las tarjetas de sucursales.</p>
+              </div>
+              <Toggle on={cfg.showPhone} onClick={() => patch({ showPhone: !cfg.showPhone })} />
             </div>
           </section>
           )}

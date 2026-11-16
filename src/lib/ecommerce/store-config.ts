@@ -67,6 +67,8 @@ export interface EcommerceStoreConfig {
   kitchenPrintTarget: "same" | "name" | "ip"; // a qué impresora va la comanda de cocina
   kitchenPrinterName: string | null; // nombre exacto de la impresora de cocina (cuando kitchenPrintTarget = "name")
   kitchenPrinterIp: string | null; // IP (o IP:puerto) de la impresora de cocina (cuando kitchenPrintTarget = "ip")
+  showWhatsApp: boolean; // mostrar botón flotante de WhatsApp en la tienda
+  showPhone: boolean; // mostrar teléfono de contacto en la tienda
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -214,6 +216,8 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     kitchenPrintTarget: o.kitchenPrintTarget === "name" ? "name" : o.kitchenPrintTarget === "ip" ? "ip" : "same",
     kitchenPrinterName: typeof o.kitchenPrinterName === "string" && o.kitchenPrinterName.trim() ? o.kitchenPrinterName.trim() : null,
     kitchenPrinterIp: typeof o.kitchenPrinterIp === "string" && o.kitchenPrinterIp.trim() ? o.kitchenPrinterIp.trim() : null,
+    showWhatsApp: o.showWhatsApp !== false, // default true
+    showPhone: o.showPhone !== false, // default true
   };
 }
 

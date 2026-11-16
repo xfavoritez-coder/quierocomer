@@ -65,6 +65,8 @@ export interface StoreTenant {
   scheduledOrdersEnabled: boolean; // el local acepta pedidos programados
   scheduleMaxDaysAhead: number; // días hacia adelante que se puede programar
   showTableMenu: boolean; // mostrar "Carta mesa" en el menú (link a /qr/<slug>)
+  showWhatsApp: boolean; // mostrar botón flotante de WhatsApp
+  showPhone: boolean; // mostrar teléfono de contacto
   primaryCategory: string | null; // categoría culinaria principal (para JSON-LD servesCuisine)
   commune: string | null; // comuna del local (para JSON-LD)
 }
@@ -190,6 +192,8 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,
+    showWhatsApp: store.showWhatsApp,
+    showPhone: store.showPhone,
     primaryCategory: r.primaryCategory ?? null,
     commune: r.commune ?? null,
   };
@@ -429,6 +433,8 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
     scheduledOrdersEnabled: store.scheduledOrdersEnabled,
     scheduleMaxDaysAhead: store.scheduleMaxDaysAhead,
     showTableMenu: store.showTableMenu,
+    showWhatsApp: store.showWhatsApp,
+    showPhone: store.showPhone,
     primaryCategory: restaurant.primaryCategory ?? null,
     commune: restaurant.commune ?? null,
     },
@@ -595,6 +601,7 @@ export interface BrandBranch {
 export interface BrandData {
   brandSlug: string;
   brandName: string;
+  brandDomain: string | null;
   logoUrl: string | null;
   faviconUrl: string | null;
   googleMapsKey: string | null;
@@ -643,6 +650,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
   return {
     brandSlug: key,
     brandName: branches[0]?.name || key,
+    brandDomain: allCfgs.find((c) => c.brandDomain)?.brandDomain ?? null,
     logoUrl: branches.find((b) => b.logoUrl)?.logoUrl ?? null,
     faviconUrl: allCfgs.find((c) => c.faviconUrl)?.faviconUrl ?? null,
     googleMapsKey: gmaps,

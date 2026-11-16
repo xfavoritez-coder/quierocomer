@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   return {
     title,
     description,
-    alternates: { canonical: `https://quierocomer.com/ecommerce/marca/${brand}` },
+    alternates: { canonical: data.brandDomain ? `https://${data.brandDomain}` : `https://quierocomer.com/ecommerce/marca/${brand}` },
     ...(iconUrl ? { icons: { icon: iconUrl, shortcut: iconUrl, apple: iconUrl } } : {}),
     openGraph: {
       title: data.pageTitle || data.brandName,
