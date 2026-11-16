@@ -8,6 +8,11 @@ const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 const nextConfig: NextConfig = {
   turbopack: { root: projectRoot },
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "pdf-lib"],
+  async rewrites() {
+    return [
+      { source: '/tienda/:path*', destination: '/ecommerce/:path*' },
+    ]
+  },
   async redirects() {
     return [
       { source: '/localesfeed/mapa', destination: '/localesfeed?tab=mapa', permanent: false },

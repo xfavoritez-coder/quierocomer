@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 // ── Types ────────────────────────────────────────────────────────────
 interface Task {
@@ -369,6 +370,18 @@ export default function GoBoard() {
     const d = await api('GET')
     if (d.tasks) setTasks(d.tasks)
   }, [])
+
+  // Supabase Realtime — sync changes from other users
+  useEffect(() => {
+    if (!authed || !supabase) return
+    const channel = supabase
+      .channel('go-tasks')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'GoTask' }, () => {
+        refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [authed, refresh])
 
   const updateTask = async (id: string, data: Partial<Task>) => {
     // Optimistic update
