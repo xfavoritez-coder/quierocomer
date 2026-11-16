@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "sonner";
 import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
+import StoreBottomNav from "./StoreBottomNav";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp, slugify } from "@/lib/ecommerce/format";
@@ -645,25 +646,20 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* ── Menú flotante inferior — solo móvil ──────────────────── */}
-      {/* 5 iconos planos e iguales (estilo Instagram), con nuestro color en el
-          activo. El carrito es uno más de la fila y lleva su badge de cantidad. */}
-      <nav className="sm:hidden fixed inset-x-4 z-40 flex justify-center pointer-events-none" style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-        <div className="pointer-events-auto relative flex items-center justify-around w-full max-w-md mx-auto bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-2 h-16">
-          <FabBtn label="Inicio" color={primaryColor} active={activeTab === "home"} onClick={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Home className="w-6 h-6" /></FabBtn>
-          <FabBtn label="Favoritos" color={primaryColor} active={activeTab === "favorites"} onClick={() => { if (loggedIn === false) { promptLogin(""); return; } setActiveTab("favorites"); openMenu("favorites"); }}><Heart className="w-6 h-6" /></FabBtn>
-          {/* Carrito — plano como el resto; conserva el badge y la animación cart-bump. */}
-          <FabBtn label="Ver carrito" color={primaryColor} onClick={goCheckout}>
-            <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
-              <ShoppingCart className="w-6 h-6" />
-              {badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow" style={{ background: primaryColor }}>{badge}</span>
-              )}
-            </span>
-          </FabBtn>
-          <FabBtn label="Contacto" color={primaryColor} active={activeTab === "contact"} onClick={() => { setActiveTab("contact"); openMenu("contact"); }}><MessageCircle className="w-6 h-6" /></FabBtn>
-          <FabBtn label="Perfil" color={primaryColor} active={activeTab === "profile"} onClick={() => { setActiveTab("profile"); openMenu("root"); }}><User className="w-6 h-6" /></FabBtn>
-        </div>
-      </nav>
+      {/* Barra flotante inferior — componente compartido con el seguimiento de
+          pedido (StoreBottomNav). 5 iconos planos; el carrito lleva su badge. */}
+      <StoreBottomNav
+        color={primaryColor}
+        hideOnDesktop
+        active={activeTab}
+        badge={badge}
+        cartBump={cartBump}
+        onHome={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onFavorites={() => { if (loggedIn === false) { promptLogin(""); return; } setActiveTab("favorites"); openMenu("favorites"); }}
+        onCart={goCheckout}
+        onContact={() => { setActiveTab("contact"); openMenu("contact"); }}
+        onProfile={() => { setActiveTab("profile"); openMenu("root"); }}
+      />
 
       {/* ── Modal de horarios (tienda cerrada) ───────────────────── */}
       {hoursModalOpen && tenant.weeklyHours && (
@@ -744,23 +740,6 @@ function HoursModal({ weeklyHours, primaryColor, branchName, onClose }: { weekly
         </button>
       </div>
     </div>
-  );
-}
-
-// ── Botón del menú flotante (móvil) — solo icono, estilo referencia ──
-// Cuando está activo se pinta con el color de la tienda (los iconos lucide usan
-// currentColor, así que basta con fijar el color del texto del botón).
-function FabBtn({ children, label, onClick, active, color }: { children: React.ReactNode; label: string; onClick: () => void; active?: boolean; color: string }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className={`w-11 h-11 flex items-center justify-center rounded-full transition active:scale-90 ${active ? "" : "text-gray-400 hover:text-gray-700"}`}
-      style={active ? { color } : undefined}
-    >
-      {children}
-    </button>
   );
 }
 

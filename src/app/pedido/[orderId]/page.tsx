@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { DEFAULT_TRACKING_TEXTS, trackingStatusText, type TrackingTexts } from "@/lib/ecommerce/trackingTexts";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
-import { Home, Heart, MessageCircle, User, ShoppingBag } from "lucide-react";
+import StoreBottomNav from "@/components/ecommerce/StoreBottomNav";
 
 const OrderTrackingMap = dynamic(() => import("@/components/ecommerce/OrderTrackingMap"), { ssr: false });
 
@@ -543,8 +543,8 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
   const storeHome = storeBase || "/";
 
   return (
-    <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px 120px" }}>
+    <div style={{ minHeight: "100vh", background: theme.bg, fontFamily: FONT, paddingTop: "env(safe-area-inset-top)" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px calc(120px + env(safe-area-inset-bottom))" }}>
 
         {/* Restaurant header — clickeable para volver a la tienda */}
         <a href={storeHome} style={{ display: "block", textAlign: "center", marginBottom: 24, textDecoration: "none" }}>
@@ -703,48 +703,15 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
 
       {/* Barra inferior de la tienda — mantiene el seguimiento "embebido"
           dentro de la app/web con acceso directo a inicio, menú y carrito. */}
-      <StoreNav base={storeBase} accent={theme.accent} />
+      <StoreBottomNav
+        color={theme.accent}
+        onHome={() => { window.location.href = storeHome; }}
+        onFavorites={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=favorites`; }}
+        onCart={() => { window.location.href = `${storeBase}/checkout`; }}
+        onContact={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=contact`; }}
+        onProfile={() => { window.location.href = `${storeHome}${storeHome.includes("?") ? "&" : "?"}menu=profile`; }}
+      />
     </div>
-  );
-}
-
-// ── Barra flotante inferior (estilo storefront) para volver a la tienda ──
-function StoreNav({ base, accent }: { base: string; accent: string }) {
-  const home = base || "/";
-  const withMenu = (m: string) => `${home}${home.includes("?") ? "&" : "?"}menu=${m}`;
-  const go = (href: string) => (window.location.href = href);
-  return (
-    <nav className="fixed bottom-3 inset-x-0 z-40 flex justify-center pointer-events-none">
-      <div className="pointer-events-auto relative flex items-center gap-3 bg-white/95 backdrop-blur rounded-full shadow-[0_10px_34px_rgba(0,0,0,0.20)] border border-gray-100 px-4 h-16">
-        <StoreNavBtn label="Inicio" onClick={() => go(home)}><Home className="w-6 h-6" /></StoreNavBtn>
-        <StoreNavBtn label="Favoritos" onClick={() => go(withMenu("favorites"))}><Heart className="w-6 h-6" /></StoreNavBtn>
-        <span className="w-16 shrink-0" aria-hidden />
-        <StoreNavBtn label="Contacto" onClick={() => go(withMenu("contact"))}><MessageCircle className="w-6 h-6" /></StoreNavBtn>
-        <StoreNavBtn label="Perfil" onClick={() => go(withMenu("profile"))}><User className="w-6 h-6" /></StoreNavBtn>
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-          <button
-            onClick={() => go(`${base}/checkout`)}
-            aria-label="Ir a la tienda"
-            className="relative w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg ring-4 ring-white"
-            style={{ background: accent }}
-          >
-            <ShoppingBag className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function StoreNavBtn({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="w-11 h-11 flex items-center justify-center rounded-full transition active:scale-90 text-gray-400 hover:text-gray-700"
-    >
-      {children}
-    </button>
   );
 }
 
