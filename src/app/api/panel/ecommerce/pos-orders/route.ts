@@ -199,7 +199,7 @@ export async function PATCH(req: NextRequest) {
   // Registra el pago sobre el PosOrder usando los campos existentes (sin tocar
   // el schema): paidAmount/tipAmount/changeAmount + el método en rawPayload.
   if (body?.action === "pay") {
-    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, rawPayload: true, restaurant: { select: { centroPedidosConfig: true } } } });
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, totalAmount: true, paidAmount: true, saleType: true, opsStage: true, rawPayload: true, restaurant: { select: { centroPedidosConfig: true } } } });
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     // Métodos de pago válidos = los configurados por el local (o los 5 por defecto).
     const allowedMethods = new Set(effectivePaymentMethods(parseCentroPedidosConfig(order.restaurant?.centroPedidosConfig)).map((m) => m.key));
@@ -261,9 +261,15 @@ export async function PATCH(req: NextRequest) {
       }
     }
     const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 }, ...(posFactura ? { posFactura } : {}) };
+    // Mesa (dine-in): cobrar = cerrar la mesa → marca "entregado" EN EL MISMO update
+    // (atómico). Antes el cobro de mesa hacía un PATCH opsStage=delivered aparte; si
+    // ese 2º paso fallaba, el pedido quedaba pagado pero sin entregar → desaparecía
+    // de la grilla (ya pagado) y no entraba al historial (no entregado) = invisible.
+    const isDineIn = order.saleType === "dine-in" || order.saleType === "dinein";
+    const deliverNow = isDineIn && order.opsStage !== "delivered";
     const updated = await prisma.posOrder.update({
       where: { id },
-      data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload },
+      data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload, ...(deliverNow ? { opsStage: "delivered", opsDeliveredAt: new Date() } : {}) },
     });
     void syncOnlineOrderFromPos(updated).catch(() => {});
     // Boleta SII (SharkPOS): venta recién cobrada → emite en segundo plano (no
