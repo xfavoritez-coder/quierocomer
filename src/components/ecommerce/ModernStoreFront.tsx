@@ -65,8 +65,8 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   // Sync URL with view
   useEffect(() => {
     try {
-      const base = window.location.pathname.replace(/\/locales$/, "");
-      const target = activeView === "locales" ? `${base}/locales` : base;
+      const base = window.location.pathname.replace(/\/locales$/, "") || "/";
+      const target = activeView === "locales" ? `${base === "/" ? "" : base}/locales` : (base || "/");
       if (window.location.pathname !== target) window.history.pushState(null, "", target);
     } catch {}
   }, [activeView]);
