@@ -230,7 +230,12 @@ export default async function CartaPage({
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
   const filteredPromos = activePromos.filter(p => !p.daysOfWeek?.length || p.daysOfWeek.includes(todayDow));
-  const promoDishIds = filteredPromos.flatMap(p => p.dishIds);
+  // dishIds (array) o dishId (singular) — ambos campos apuntan a platos de la promo
+  const promoDishIds = filteredPromos.flatMap(p => {
+    const ids = [...p.dishIds];
+    if ((p as any).dishId && !ids.includes((p as any).dishId)) ids.push((p as any).dishId);
+    return ids;
+  });
   const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
     where: { id: { in: promoDishIds } },
     select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true, ecommerceOnly: true },
@@ -240,17 +245,23 @@ export default async function CartaPage({
   // (Dish.ecommerceOnly): el plato ya se oculta de la carta, su banner también debe.
   const ecomOnlyDishIds = new Set(promoDishes.filter(d => (d as any).ecommerceOnly).map(d => d.id));
   const marketingPromos = filteredPromos
-    .filter(p => !(p.dishIds.length > 0 && p.dishIds.every(id => ecomOnlyDishIds.has(id))))
-    .map(p => ({
-    id: p.id, name: p.name, description: p.description,
-    promoType: p.promoType, imageUrl: p.imageUrl,
-    discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
-    validUntil: p.validUntil ? new Date(p.validUntil).toISOString() : null,
-    daysOfWeek: p.daysOfWeek || [],
-    dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),
-    featured: !!(p as any).featured,
-    dishIds: p.dishIds,
-  }));
+    .filter(p => {
+      const allIds = [...p.dishIds, ...((p as any).dishId ? [(p as any).dishId] : [])];
+      return !(allIds.length > 0 && allIds.every(id => ecomOnlyDishIds.has(id)));
+    })
+    .map(p => {
+    const allIds = [...p.dishIds, ...((p as any).dishId && !p.dishIds.includes((p as any).dishId) ? [(p as any).dishId] : [])];
+    return {
+      id: p.id, name: p.name, description: p.description,
+      promoType: p.promoType, imageUrl: p.imageUrl,
+      discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
+      validUntil: p.validUntil ? new Date(p.validUntil).toISOString() : null,
+      daysOfWeek: p.daysOfWeek || [],
+      dishes: allIds.map(id => promoDishMap[id]).filter(Boolean),
+      featured: !!(p as any).featured,
+      dishIds: allIds,
+    };
+  });
 
   // Filter announcements by day of week and date range
   const now = new Date();
