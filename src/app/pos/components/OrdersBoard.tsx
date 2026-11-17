@@ -456,8 +456,31 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Footer coloreado: estado + (si está pagado) botón de avance */}
-      {(() => {
+      {/* Footer para MESA: sin botones de avance, muestra tiempo y estado */}
+      {isDineIn && (() => {
+        const mins = Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000)
+        const timeStr = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`
+        const mesaColor = '#8b5cf6'
+        return (
+          <div
+            style={{
+              padding: '11px 16px', minHeight: 48, boxSizing: 'border-box',
+              background: `${mesaColor}10`, borderTop: `1px solid ${mesaColor}20`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: mesaColor }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/><path d="M3 18h18"/></svg>
+              {order.tableLabel || 'Mesa'}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}>{timeStr}</span>
+          </div>
+        )
+      })()}
+
+      {/* Footer coloreado: estado + (si está pagado) botón de avance (solo delivery/retiro) */}
+      {!isDineIn && (() => {
         const footerColor = delifastCancelled ? RED : (STAGE_COLOR[order.opsStage] ?? '#aaa')
         const stageLabel = delifastCancelled
           ? 'Reparto cancelado'
@@ -1067,10 +1090,8 @@ export function OrderDetailPanel({
 
         {/* Acciones finales: Marcar entregado + Imprimir + Anular — mismo contenedor */}
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Marcar entregado — SEGURO manual: hace lo que Delifast (u otro auto-
-              entregado) no hizo. Para TODO tipo de pedido no entregado. handleFinalize
-              ya trae el guard (si Delifast no marcó entregado, pregunta igual). */}
-          {order.opsStage !== 'delivered' && (
+          {/* Marcar entregado — solo delivery/retiro (mesa se cierra al cobrar) */}
+          {order.opsStage !== 'delivered' && !isDineIn && (
             <button
               onClick={handleFinalize}
               disabled={finalizing}
