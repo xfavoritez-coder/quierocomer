@@ -169,6 +169,13 @@ interface Report {
   byMonth?: { ym: string; sales: number; orders: number }[]
   byYear?: { yr: string; sales: number; orders: number }[]
   deliveryTimes?: DeliveryTimes
+  dineInStats?: {
+    totalOrders: number
+    totalSales: number
+    avgTicket: number
+    tables: { table: string; orders: number; sales: number }[]
+    hourly: { hour: number; orders: number; sales: number }[]
+  }
   paymentMethods?: PaymentMethod[]
   cancellations?: CancellationData
   tipsStats?: TipsStats
@@ -3058,7 +3065,7 @@ function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: s
   )
 }
 
-type ReportSubSection = 'dashboard' | 'delivery' | 'platos' | 'clientes' | 'comportamiento' | 'satisfaccion'
+type ReportSubSection = 'dashboard' | 'delivery' | 'mesa' | 'platos' | 'clientes' | 'comportamiento' | 'satisfaccion'
 
 const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode }[] = [
   {
@@ -3078,6 +3085,16 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
         <rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'mesa',
+    label: 'Mesa',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/>
+        <path d="M3 18h18"/>
       </svg>
     ),
   },
@@ -3378,6 +3395,83 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           </>
         )}
 
+        {/* Mesa sub-section */}
+        {subSection === 'mesa' && (
+          <>
+            <DateRangePicker fromDate={fromDate} toDate={toDate} today={today}
+              onFromChange={v => { setFromDate(v); if (v > toDate) setToDate(v) }}
+              onToChange={v => { setToDate(v); if (v < fromDate) setFromDate(v) }}
+              onReset={() => { setFromDate(today); setToDate(today) }}
+              onRange={(f, t) => { setFromDate(f); setToDate(t) }}
+              onRefresh={fetchReport} />
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Cargando…
+              </div>
+            ) : !data?.dineInStats || data.dineInStats.totalOrders === 0 ? (
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+                <p style={{ fontFamily: F, color: 'var(--ink-3)', fontSize: '0.84rem' }}>Sin pedidos de mesa en el período.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* KPIs de mesa */}
+                <SectionLabel>Resumen de mesa</SectionLabel>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+                  <Stat label="Venta en mesa" value={clp(data.dineInStats.totalSales)} color={PURPLE} big span={2} />
+                  <Stat label="Pedidos" value={data.dineInStats.totalOrders.toLocaleString('es-CL')} color={'var(--amber)'} />
+                  <Stat label="Ticket promedio" value={clp(data.dineInStats.avgTicket)} color={BLUE} />
+                </div>
+
+                {/* Ranking de mesas */}
+                {data.dineInStats.tables.length > 0 && (
+                  <>
+                    <SectionLabel>Ranking de mesas</SectionLabel>
+                    <Card style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        {/* Header */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '0 0 8px', borderBottom: '1px solid var(--line)' }}>
+                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Mesa</span>
+                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'right' }}>Pedidos</span>
+                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'right' }}>Venta</span>
+                        </div>
+                        {data.dineInStats.tables.map((t: any, i: number) => (
+                          <div key={t.table} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '10px 0', borderBottom: i < (data.dineInStats?.tables.length ?? 0) - 1 ? '1px solid var(--line)' : 'none', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: PURPLE, background: `${PURPLE}18`, width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                              <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{t.table}</span>
+                            </div>
+                            <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink-2)', textAlign: 'right' }}>{t.orders}</span>
+                            <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right' }}>{clp(t.sales)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  </>
+                )}
+
+                {/* Horas pico de mesa */}
+                <SectionLabel>Horarios de mesa</SectionLabel>
+                <Card style={{ padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 120 }}>
+                    {(data.dineInStats?.hourly ?? []).filter((h: any) => h.hour >= 8 && h.hour <= 23).map((h: any) => {
+                      const maxOrders = Math.max(1, ...(data.dineInStats?.hourly ?? []).map((x: any) => x.orders));
+                      const barH = h.orders > 0 ? Math.max(4, Math.round((h.orders / maxOrders) * 100)) : 0;
+                      return (
+                        <div key={h.hour} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                          {h.orders > 0 && <span style={{ fontFamily: F, fontSize: 8, color: 'var(--ink-3)' }}>{h.orders}</span>}
+                          <div style={{ width: '80%', maxWidth: 24, height: barH, background: h.orders > 0 ? PURPLE : 'var(--line)', borderRadius: '3px 3px 0 0', transition: 'height .2s' }} />
+                          <span style={{ fontFamily: F, fontSize: 9, color: 'var(--ink-3)' }}>{h.hour}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Dashboard sub-section */}
         {subSection === 'dashboard' && <>
 
@@ -3422,6 +3516,9 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                 </>)
               })()}
               <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
+              {data.dineInStats && data.dineInStats.totalOrders > 0 && (
+                <Stat label="Mesa" value={clp(data.dineInStats.totalSales)} hint={`${data.dineInStats.totalOrders} pedidos · prom. ${clp(data.dineInStats.avgTicket)}`} color={PURPLE} />
+              )}
               <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
                 <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />

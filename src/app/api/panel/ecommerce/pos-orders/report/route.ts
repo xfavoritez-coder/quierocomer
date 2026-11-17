@@ -600,6 +600,35 @@ export async function GET(req: NextRequest) {
     return Array.from(yrMap.entries()).sort().map(([yr, v]) => ({ yr, sales: v.sales, orders: v.orders }));
   })();
 
+  // ── Mesa (dine-in) stats ──────────────────────────
+  const dineInOrders = orders.filter(o => {
+    const type = o.isDelivery ? "delivery" : ((o.tableLabel && o.tableLabel.trim()) || o.saleType === "dine-in") ? "dine-in" : "pickup";
+    return type === "dine-in";
+  });
+  const tableCountMap = new Map<string, { orders: number; sales: number }>();
+  const dineInHourMap = new Map<number, { orders: number; sales: number }>();
+  for (const o of dineInOrders) {
+    const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+    const tbl = (o.tableLabel || "Sin mesa").trim();
+    const te = tableCountMap.get(tbl) || { orders: 0, sales: 0 };
+    te.orders += 1; te.sales += net; tableCountMap.set(tbl, te);
+    const h = new Date(new Date(o.createdAt).toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours();
+    const he = dineInHourMap.get(h) || { orders: 0, sales: 0 };
+    he.orders += 1; he.sales += net; dineInHourMap.set(h, he);
+  }
+  const dineInStats = {
+    totalOrders: dineInOrders.length,
+    totalSales: typeMap["dine-in"].sales,
+    avgTicket: dineInOrders.length > 0 ? Math.round(typeMap["dine-in"].sales / dineInOrders.length) : 0,
+    tables: Array.from(tableCountMap.entries())
+      .map(([table, v]) => ({ table, orders: v.orders, sales: v.sales }))
+      .sort((a, b) => b.orders - a.orders),
+    hourly: Array.from({ length: 24 }, (_, h) => {
+      const e = dineInHourMap.get(h);
+      return { hour: h, orders: e?.orders ?? 0, sales: e?.sales ?? 0 };
+    }),
+  };
+
   return NextResponse.json({
     from: fromYmd,
     to: toYmd,
@@ -619,6 +648,7 @@ export async function GET(req: NextRequest) {
     byMonth,
     byYear,
     deliveryTimes,
+    dineInStats,
     paymentMethods,
     cancellations,
     tipsStats,
