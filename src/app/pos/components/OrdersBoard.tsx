@@ -322,6 +322,7 @@ function OrderCard({
   waitTimeDriver,
   onSelect, onStageChange, onCobro, onBlock, onDismissBlock, onDelifastNoTracking,
   uberEnabled = false, pedidosyaEnabled = false, onCourierChanged, delifastPaused = false,
+  delifastStuck = false,
 }: {
   order: PosOrderLite
   restaurantId: string
@@ -342,6 +343,7 @@ function OrderCard({
   pedidosyaEnabled?: boolean
   onCourierChanged?: () => void
   delifastPaused?: boolean
+  delifastStuck?: boolean
 }) {
   const isDesktop = useIsDesktop()
   const paid = isPaid(order)
@@ -383,7 +385,9 @@ function OrderCard({
   // ámbar si está impaga, normal si está pagada.
   const shell: React.CSSProperties = blocked
     ? { border: `1.5px solid ${RED}`, boxShadow: `0 0 0 1px ${RED}, 0 8px 22px rgba(220,38,38,.22)` }
-    : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
+    : delifastStuck
+      ? { border: `2px solid ${RED}`, boxShadow: `0 0 0 1px ${RED}40, 0 4px 14px rgba(220,38,38,.15)` }
+      : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
 
   // Texto secundario (dirección / mesa / retiro) uniforme para todas las tarjetas.
   const secondary = (isDelivery && order.addressLine)
@@ -1690,7 +1694,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: '#991b1b', lineHeight: 1.4 }}>
-              {'Delifast no est\u00e1 asignando motoristas \u00b7 Busca reparto por tu cuenta'}
+              Delifast no esta asignando motoristas · Los pedidos afectados estan marcados con borde rojo
             </span>
             <button
               onClick={() => setDelifastAlertDismissedUntil(Date.now() + 10 * 60000)}
@@ -1746,6 +1750,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
                 pedidosyaEnabled={pedidosyaEnabled}
                 onCourierChanged={fetchOrders}
                 delifastPaused={delifastPaused}
+                delifastStuck={delifastAlertVisible && (stuckOrderIds.has(o.id) || noTrackingOrderIds.has(o.id))}
               />
             ))}
           </div>
