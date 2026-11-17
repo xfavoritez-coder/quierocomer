@@ -117,8 +117,9 @@ export default function PosHomePage() {
       localStorage.setItem('pos:branchMode', 'todas')
       setBranchMode('todas')
     } else if (id !== restaurantId) {
-      // Different branch → preserve inner page across reload
+      // Different branch → preserve inner page and tab across reload
       if (innerPage) localStorage.setItem('pos:restoreInnerPage', innerPage)
+      if (tab !== 'todos') localStorage.setItem('pos:restoreTab', tab)
       localStorage.setItem('pos:branchMode', id)
       switchPosBranch(id)
     } else {
@@ -215,7 +216,11 @@ export default function PosHomePage() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === 'undefined') return 'todos'
     const t = new URLSearchParams(window.location.search).get('tab')
-    return (t === 'mesas' || t === 'retiro' || t === 'delivery' || t === 'todos') ? t : 'todos'
+    if (t === 'mesas' || t === 'retiro' || t === 'delivery' || t === 'todos') return t
+    // Restore tab from branch switch
+    const saved = localStorage.getItem('pos:restoreTab')
+    if (saved) { localStorage.removeItem('pos:restoreTab'); return (saved === 'mesas' || saved === 'retiro' || saved === 'delivery') ? saved : 'todos' }
+    return 'todos'
   })
   const [sectorFilter, setSectorFilter] = useState<string>('all')
   const [menuOpen, setMenuOpen] = useState(false)
