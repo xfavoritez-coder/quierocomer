@@ -456,11 +456,13 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Footer para MESA: sin botones de avance, muestra tiempo y estado */}
+      {/* Footer para MESA: personas + tiempo, sin botones de avance */}
       {isDineIn && (() => {
         const mins = Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000)
         const timeStr = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`
         const mesaColor = '#8b5cf6'
+        const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number } | null
+        const covers = mesaMeta?.covers
         return (
           <div
             style={{
@@ -470,11 +472,18 @@ function OrderCard({
             }}
             onClick={e => e.stopPropagation()}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: mesaColor }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13.5, color: mesaColor }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/><path d="M3 18h18"/></svg>
-              {order.tableLabel || 'Mesa'}
+              {covers ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
+                  {covers} {covers === 1 ? 'persona' : 'personas'}
+                </span>
+              ) : (
+                <span>{timeStr}</span>
+              )}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}>{timeStr}</span>
+            {covers && <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}>{timeStr}</span>}
           </div>
         )
       })()}

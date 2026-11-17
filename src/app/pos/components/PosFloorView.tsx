@@ -114,7 +114,7 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
           return (
             <button
               key={table.id}
-              onClick={() => onMesaClick(table)}
+              onClick={(e) => { e.stopPropagation(); onMesaClick(table) }}
               style={{
                 position: 'absolute',
                 left: pos.x,
@@ -137,23 +137,23 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
               }}
             >
               {/* Label */}
-              <span style={{ fontSize: style.w < 50 ? '0.58rem' : '0.68rem', fontWeight: 800, color: occupied ? statusColor : 'var(--ink-2)', lineHeight: 1 }}>
+              <span style={{ fontSize: style.w < 55 ? '0.78rem' : '0.92rem', fontWeight: 900, color: occupied ? statusColor : 'var(--ink-2)', lineHeight: 1 }}>
                 {key}
               </span>
 
               {occupied ? (
                 <>
                   {/* Amount */}
-                  <span style={{ fontFamily: MONO, fontSize: style.w < 50 ? '0.52rem' : '0.62rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1, marginTop: 2 }}>
+                  <span style={{ fontFamily: MONO, fontSize: style.w < 55 ? '0.68rem' : '0.78rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1, marginTop: 3 }}>
                     ${Math.round(order.totalAmount || 0).toLocaleString('es-CL')}
                   </span>
                   {/* Time */}
-                  <span style={{ fontSize: '0.5rem', fontWeight: 600, color: statusColor, lineHeight: 1, marginTop: 1 }}>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: statusColor, lineHeight: 1, marginTop: 2 }}>
                     <LiveClock since={order.createdAt} />
                   </span>
                 </>
               ) : (
-                <span style={{ fontSize: '0.48rem', color: 'var(--ink-4)', lineHeight: 1, marginTop: 1 }}>Libre</span>
+                <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--ink-4)', lineHeight: 1, marginTop: 2 }}>Libre</span>
               )}
             </button>
           )
