@@ -31,6 +31,10 @@ export interface StoreTenant {
   whatsapp: string | null;
   phone: string | null;
   instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  youtube: string | null;
+  googleMapsUrl: string | null;
   website: string | null;
   contactEmail: string | null;
   // Overrides para la página de Política de Privacidad (null = usa address/whatsapp/contactEmail).
@@ -165,7 +169,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     where: restaurantByKey(slug),
     select: {
       id: true, slug: true, name: true, logoUrl: true, orderingBannerUrl: true, appAndroidUrl: true, appIosUrl: true,
-      cartaAccentColor: true, address: true, commune: true, primaryCategory: true, whatsapp: true, phone: true, instagram: true, website: true,
+      cartaAccentColor: true, address: true, commune: true, primaryCategory: true, whatsapp: true, phone: true, instagram: true, tiktok: true, facebook: true, youtube: true, googleMapsUrl: true, website: true,
       owner: { select: { email: true } },
       orderingDelivery: true, orderingWaitTime: true, orderingMinAmount: true,
       orderingPaymentMethods: true, ecommerceEnabled: true, ecommerceDeliveryZones: true, ecommerceDeliveryConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, ecommerceAccompaniments: true, ecommerceHours: true,
@@ -179,7 +183,7 @@ export async function loadEcommerceTenant(slug: string): Promise<StoreTenant | n
     id: r.id, slug: r.slug, name: r.name, branchName: store.branchName, logoUrl: store.storeLogoUrl ?? r.logoUrl, bannerUrl: store.bannerUrl ?? r.orderingBannerUrl, appAndroidUrl: r.appAndroidUrl ?? null, appIosUrl: r.appIosUrl ?? null,
     primaryColor: store.primaryColor, headerBgColor: store.headerBgColor, categoryColor: store.categoryColor, notesEnabled: store.notesEnabled, posShowDescriptions: store.posShowDescriptions,
     address: r.address, whatsapp: r.whatsapp, phone: r.phone,
-    instagram: r.instagram, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, metaPixelId: store.metaPixelId, pageTitle: store.pageTitle, metaDescription: store.metaDescription, brandSlug: store.brandSlug,
+    instagram: r.instagram, tiktok: (r as any).tiktok ?? null, facebook: (r as any).facebook ?? null, youtube: (r as any).youtube ?? null, googleMapsUrl: (r as any).googleMapsUrl ?? null, website: r.website, contactEmail: r.owner?.email ?? null, privacyEmail: store.privacyEmail, privacyPhone: store.privacyPhone, privacyAddress: store.privacyAddress, favoritesEnabled: store.favoritesEnabled, theme: store.theme, bannerProductIds: store.bannerProductIds, customDomain: store.customDomain, faviconUrl: store.faviconUrl, gtmId: store.gtmId, metaPixelId: store.metaPixelId, pageTitle: store.pageTitle, metaDescription: store.metaDescription, brandSlug: store.brandSlug,
     deliveryEnabled: avail.deliveryEnabled, pickupEnabled: avail.pickupEnabled,
     waitTime: r.orderingWaitTime, waitTimePickup: store.waitTimePickup, waitTimeDelivery: store.waitTimeDelivery, minAmount: r.orderingMinAmount ?? null, minOrderPickup: store.minOrderPickup, minOrderDelivery: store.minOrderDelivery,
     paymentMethods: store.paymentMethods,
@@ -400,6 +404,10 @@ export async function loadEcommerceStorefront(slug: string, opts?: { includeHidd
       whatsapp: restaurant.whatsapp,
       phone: restaurant.phone,
       instagram: restaurant.instagram,
+      tiktok: (restaurant as any).tiktok ?? null,
+      facebook: (restaurant as any).facebook ?? null,
+      youtube: (restaurant as any).youtube ?? null,
+      googleMapsUrl: (restaurant as any).googleMapsUrl ?? null,
       website: restaurant.website,
       contactEmail: restaurant.owner?.email ?? null,
       privacyEmail: store.privacyEmail,

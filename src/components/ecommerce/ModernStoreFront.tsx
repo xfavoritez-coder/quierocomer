@@ -11,6 +11,7 @@ import ProductModal from "./ProductModal";
 import StoreStyles from "./StoreStyles";
 import { trackStoreView, trackDishView, trackCartAdd, trackCartView, trackSessionEnd, trackScrollCategory, trackSearch, trackModifierOpen } from "@/lib/ecommerce/storeAnalytics";
 import { type BrandControls, shortAddr, DeliveryModal } from "./StoreFront";
+import StoreFooter from "./StoreFooter";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 
 const MODERN_SANS = "'DM Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -935,11 +936,9 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
       )}
 
       {/* ── Footer ────── */}
-      <footer className="mt-auto pb-28 sm:pb-8" style={{ background: "#1e293b" }}>
-        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-center">
-          <span className="text-[13px] text-gray-500">Creado por <a href="https://quierocomer.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-400 hover:text-white transition">QuieroComer.com</a> · © {new Date().getFullYear()}</span>
-        </div>
-      </footer>
+      <div className="pb-28 sm:pb-8">
+        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="modern" brandMode={!!brandControls} siblings={siblings} />
+      </div>
 
       {/* ── Product modal ────── */}
       {selectedProduct && (

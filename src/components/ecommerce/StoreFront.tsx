@@ -4,6 +4,7 @@ import { Toaster, toast } from "sonner";
 import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, Home, User, MessageCircle, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import StoreBottomNav from "./StoreBottomNav";
+import StoreFooter from "./StoreFooter";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp, slugify } from "@/lib/ecommerce/format";
@@ -608,10 +609,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       </div>
 
       {/* ── Footer ───────────────────────────────────────────────── */}
-      {/* pb extra en móvil para que el texto quede por encima del menú flotante */}
-      <footer className="border-t border-gray-100 bg-white pt-12 pb-32 sm:pt-14 sm:pb-14">
-        <p className="text-center text-xs text-gray-400">powered by QuieroComer · 2026</p>
-      </footer>
+      <div className="pb-32 sm:pb-14">
+        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="base" brandMode={!!brandControls} siblings={siblings} />
+      </div>
 
       {/* Modal producto */}
       {selectedProduct && (
