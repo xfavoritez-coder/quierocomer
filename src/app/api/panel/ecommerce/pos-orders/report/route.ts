@@ -132,14 +132,23 @@ export async function GET(req: NextRequest) {
       pm.count += 1; pm.amount += net; pmMap.set(rawMethod, pm);
     }
 
-    // Venta por canal según vendorName — renombrar nombres técnicos.
-    const rawName = (o.vendorName || "").trim();
-    const CHANNEL_LABELS: Record<string, string> = {
-      "QuieroComer": "Tienda online",
-      "Toteat": "POS Toteat",
-      "Delifast": "Delifast",
-    };
-    const name = CHANNEL_LABELS[rawName] || rawName || "Venta rápida";
+    // Venta por canal — clasificar por tipo de pedido (mesa/delivery/retiro/web).
+    const rawVendor = (o.vendorName || "").trim();
+    const orderType: "delivery" | "pickup" | "dine-in" = o.isDelivery
+      ? "delivery"
+      : ((o.tableLabel && o.tableLabel.trim()) || o.saleType === "dine-in") ? "dine-in" : "pickup";
+    let name: string;
+    if (rawVendor.toLowerCase().includes("-web") || rawVendor.toLowerCase().includes("web")) {
+      name = "Tienda online";
+    } else if (orderType === "dine-in") {
+      name = "Mesa";
+    } else if (orderType === "delivery") {
+      name = "Delivery";
+    } else if (orderType === "pickup") {
+      name = rawVendor ? "Retiro" : "Venta rapida";
+    } else {
+      name = rawVendor || "Venta rapida";
+    }
     const ch = channelMap.get(name) || { name, sales: 0, orders: 0 };
     ch.sales += net;
     ch.orders += 1;
