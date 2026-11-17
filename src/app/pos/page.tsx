@@ -30,6 +30,7 @@ import PosConfigPanel from './components/panels/PosConfigPanel'
 import PosHistorialPanel from './components/panels/PosHistorialPanel'
 import PosReportesPanel from './components/panels/PosReportesPanel'
 import PosFloorView from './components/PosFloorView'
+import NuevoPedidoModal, { prefetchMenu } from './components/NuevoPedidoModal'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -73,8 +74,25 @@ function PendingModal({ count, onClose }: { count: number; onClose: () => void }
 // ── Main page ─────────────────────────────────────────────────────
 
 export default function PosHomePage() {
-  const navigate = usePosNav()
+  const rawNavigate = usePosNav()
   const isDesktop = useIsDesktop()
+  // Interceptar navegación a tomar-pedido y mesa para abrir modal
+  const navigate = useCallback((path: string) => {
+    if (path === '/pos/tomar-pedido') {
+      setNpMesa(null)
+      setNpOpen(true)
+      return
+    }
+    const mesaMatch = path.match(/^\/pos\/mesa\/([^?]+)(\?order=(.+))?/)
+    if (mesaMatch) {
+      const label = decodeURIComponent(mesaMatch[1])
+      const orderId = mesaMatch[3] || undefined
+      setNpMesa({ label, orderId })
+      setNpOpen(true)
+      return
+    }
+    rawNavigate(path)
+  }, [rawNavigate])
   const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled, isOwner } = usePosRestaurant()
 
   // Auth guard: redirect to login if session resolved but no restaurant found
@@ -138,6 +156,12 @@ export default function PosHomePage() {
   // ── Mesas server-authoritative: la ocupación sale de los PosOrder dine-in
   // ABIERTOS (impagos), no del sistema Dexie. Al cobrar, la mesa se libera.
   const [posFloorConfig, setPosFloorConfig] = useState<any>(null)
+  // ── Nuevo pedido modal ──
+  const [npOpen, setNpOpen] = useState(false)
+  const [npMesa, setNpMesa] = useState<{ label: string; orderId?: string } | null>(null)
+  // Pre-cargar menú en background al montar
+  useEffect(() => { if (restaurantId) prefetchMenu(restaurantId) }, [restaurantId])
+
   const [mesaOrders, setMesaOrders] = useState<any[]>([])
   const [mesaCuenta, setMesaCuenta] = useState<{ order: any; key: string } | null>(null)
   // Multi-branch mesa orders (for "todas las sucursales" mode)
@@ -822,6 +846,16 @@ export default function PosHomePage() {
 
       {/* ── Drawer ── */}
       {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={openInnerPage} />}
+
+      {/* ── Modal nuevo pedido ── */}
+      <NuevoPedidoModal
+        restaurantId={restaurantId}
+        open={npOpen}
+        onClose={() => { setNpOpen(false); setNpMesa(null) }}
+        onOrderCreated={() => { refreshOrdersRef.current?.(); fetchMesaOrders() }}
+        tableLabel={npMesa?.label}
+        existingOrderId={npMesa?.orderId}
+      />
     </div>
   )
 }

@@ -501,22 +501,22 @@ function OrderCard({
         return (
           <div
             style={{
-              padding: '11px 16px',
-              minHeight: 56,
+              padding: '8px 12px',
+              minHeight: 48,
               boxSizing: 'border-box',
               background: footerColor + '14',
               borderTop: `1px solid ${footerColor}28`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-              flexWrap: 'wrap', rowGap: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+              flexWrap: 'nowrap',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13.5, color: footerColor }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: footerColor, flexShrink: 0 }} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, fontSize: 12.5, color: footerColor, whiteSpace: 'nowrap' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: footerColor, flexShrink: 0 }} />
                 {stageLabel}
               </span>
-              <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink-2)' }} />
+              <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)', whiteSpace: 'nowrap' }} />
             </span>
             {/* Botón de avance de etapa — mismo para pagado e impago */}
             {next && (
@@ -524,11 +524,11 @@ function OrderCard({
                 onClick={() => paid ? onStageChange(order, next.stage) : onBlock(order)}
                 disabled={busy}
                 style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: 'none',
                   background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
                 }}
               >
                 {busy && <span className="animate-spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', flexShrink: 0 }} />}
@@ -558,7 +558,7 @@ function OrderCard({
                 disabled={busy}
                 style={{
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: delifastCancelled ? RED : (STAGE_COLOR.delivered ?? '#6b7280'), color: '#fff',
+                  background: '#1e40af', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                   display: 'inline-flex', alignItems: 'center', gap: 6,
