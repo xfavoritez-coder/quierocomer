@@ -43,8 +43,8 @@ const INNER_PAGES: Record<string, { title: string; component: React.ComponentTyp
   reportes: { title: 'Reportes', component: PosReportesPanel },
 }
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'todos', label: 'Pedidos' },
-  { id: 'delivery', label: 'Delivery' },
+  { id: 'todos', label: 'Todos' },
+  { id: 'delivery', label: 'Online' },
   { id: 'mesas', label: 'Mesas' },
 ]
 
@@ -317,10 +317,11 @@ export default function PosHomePage() {
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
 
-  const totalPedidos = orderCounts.retiro + orderCounts.delivery
+  const totalAll = orderCounts.retiro + orderCounts.delivery + ocupadas
+  const totalOnline = orderCounts.retiro + orderCounts.delivery
   const tabCounts: Partial<Record<Tab, number>> = {
-    ...(totalPedidos > 0 ? { todos: totalPedidos } : {}),
-    ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
+    ...(totalAll > 0 ? { todos: totalAll } : {}),
+    ...(totalOnline > 0 ? { delivery: totalOnline } : {}),
     ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
   }
 

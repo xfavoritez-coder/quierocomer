@@ -1546,12 +1546,18 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
   const list = useMemo(() => {
     const q = search.trim().toLowerCase()
     const filtered = orders.filter((o) => {
-      const deliv = o.isDelivery || o.saleType === 'delivery'
-      const dineIn = !deliv && (o.saleType === 'dine-in' || o.saleType === 'dinein')
-      // "Pedidos" (todos) = retiro + delivery, sin mesas
-      if (type === 'todos' && dineIn) return false
-      if (type === 'delivery' && !deliv) return false
-      if (type === 'retiro' && (deliv || dineIn)) return false
+      if (type !== 'todos') {
+        const deliv = o.isDelivery || o.saleType === 'delivery'
+        const dineIn = !deliv && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+        // "Online" = pedidos de la tienda web (delivery + retiro online), sin mesas ni venta rapida POS
+        if (type === 'delivery') {
+          if (dineIn) return false
+          const vendor = (o.vendorName || '').toLowerCase()
+          const isOnline = deliv || vendor.includes('web') || vendor.includes('qc') || vendor.includes('quierocomer')
+          if (!isOnline) return false
+        }
+        if (type === 'retiro' && (deliv || dineIn)) return false
+      }
       if (!q) return true
       const ref = (o.orderReference ?? (o.dailyNumber != null ? String(o.dailyNumber) : '')).toLowerCase()
       const name = (o.customerName || '').toLowerCase()
