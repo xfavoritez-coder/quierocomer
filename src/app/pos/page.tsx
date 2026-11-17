@@ -33,7 +33,7 @@ import PosFloorView from './components/PosFloorView'
 
 const TEST_USER_ID = 'pos-garzon'
 
-type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos'
+type Tab = 'mesas' | 'retiro' | 'delivery' | 'todos' // retiro kept for backward compat
 
 const INNER_PAGES: Record<string, { title: string; component: React.ComponentType<any> }> = {
   carta: { title: 'Carta', component: PosCartaPanel },
@@ -43,10 +43,9 @@ const INNER_PAGES: Record<string, { title: string; component: React.ComponentTyp
   reportes: { title: 'Reportes', component: PosReportesPanel },
 }
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'mesas', label: 'Mesas' },
-  { id: 'retiro', label: 'Retiro' },
+  { id: 'todos', label: 'Pedidos' },
   { id: 'delivery', label: 'Delivery' },
+  { id: 'mesas', label: 'Mesas' },
 ]
 
 // ── Modals ────────────────────────────────────────────────────────
@@ -216,10 +215,11 @@ export default function PosHomePage() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === 'undefined') return 'todos'
     const t = new URLSearchParams(window.location.search).get('tab')
-    if (t === 'mesas' || t === 'retiro' || t === 'delivery' || t === 'todos') return t
+    if (t === 'mesas' || t === 'delivery' || t === 'todos') return t
+    if (t === 'retiro') return 'todos' // backward compat: retiro merged into pedidos
     // Restore tab from branch switch
     const saved = localStorage.getItem('pos:restoreTab')
-    if (saved) { localStorage.removeItem('pos:restoreTab'); return (saved === 'mesas' || saved === 'retiro' || saved === 'delivery') ? saved : 'todos' }
+    if (saved) { localStorage.removeItem('pos:restoreTab'); return (saved === 'mesas' || saved === 'delivery') ? saved : 'todos' }
     return 'todos'
   })
   const [sectorFilter, setSectorFilter] = useState<string>('all')
@@ -300,29 +300,28 @@ export default function PosHomePage() {
       .catch(() => {})
   }, [restaurantId])
 
-  // Ocupación de mesas: refresca al entrar a la pestaña Mesas, cada 12s y al volver.
+  // Ocupación de mesas: refresca SIEMPRE cada 15s (badge visible en todas las tabs).
   useEffect(() => {
-    if (tab !== 'mesas') return
+    if (!restaurantId) return
     fetchMesaOrders()
     if (effectiveBranchMode === 'todas') fetchAllBranchMesas()
     const iv = setInterval(() => {
       fetchMesaOrders()
       if (effectiveBranchMode === 'todas') fetchAllBranchMesas()
-    }, 12_000)
+    }, 15_000)
     const onVis = () => { if (document.visibilityState === 'visible') { fetchMesaOrders(); if (effectiveBranchMode === 'todas') fetchAllBranchMesas() } }
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
-  }, [tab, fetchMesaOrders, fetchAllBranchMesas, effectiveBranchMode])
+  }, [restaurantId, fetchMesaOrders, fetchAllBranchMesas, effectiveBranchMode])
 
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
 
-  const totalAll = orderCounts.retiro + orderCounts.delivery + ocupadas
+  const totalPedidos = orderCounts.retiro + orderCounts.delivery
   const tabCounts: Partial<Record<Tab, number>> = {
-    ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
-    ...(orderCounts.retiro > 0 ? { retiro: orderCounts.retiro } : {}),
+    ...(totalPedidos > 0 ? { todos: totalPedidos } : {}),
     ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
-    ...(totalAll > 0 ? { todos: totalAll } : {}),
+    ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
   }
 
   // Handlers
@@ -520,7 +519,7 @@ export default function PosHomePage() {
       {!innerPage && <>
 
       {/* ── Retiro / Delivery / Todos ── */}
-      {(tab === 'retiro' || tab === 'delivery' || tab === 'todos') && (
+      {(tab === 'delivery' || tab === 'todos') && (
         <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} />
       )}
 
