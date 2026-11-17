@@ -138,6 +138,8 @@ export default function PosHomePage() {
   // ABIERTOS (impagos), no del sistema Dexie. Al cobrar, la mesa se libera.
   const [mesaOrders, setMesaOrders] = useState<any[]>([])
   const [mesaCuenta, setMesaCuenta] = useState<{ order: any; key: string } | null>(null)
+  // Multi-branch mesa orders (for "todas las sucursales" mode)
+  const [allBranchMesas, setAllBranchMesas] = useState<{ branchId: string; branchName: string; orders: any[] }[]>([])
   const fetchMesaOrders = useCallback(async () => {
     if (!restaurantId) return
     try {
@@ -152,6 +154,26 @@ export default function PosHomePage() {
       ))
     } catch { /* noop */ }
   }, [restaurantId])
+  // Fetch mesas from all branches
+  const fetchAllBranchMesas = useCallback(async () => {
+    if (!restaurants || restaurants.length < 2) return
+    const results: { branchId: string; branchName: string; orders: any[] }[] = []
+    for (const branch of restaurants) {
+      try {
+        const r = await fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${branch.id}&scope=activos`, { cache: 'no-store' })
+        if (!r.ok) continue
+        const d = await r.json()
+        const list = Array.isArray(d.orders) ? d.orders : []
+        const dineIn = list.filter((o: any) =>
+          (o.saleType === 'dine-in' || o.saleType === 'dinein') &&
+          o.posStatus !== 'canceled' &&
+          (o.paidAmount || 0) < (o.totalAmount || 0),
+        )
+        results.push({ branchId: branch.id, branchName: (branch as any).branchName || branch.name, orders: dineIn })
+      } catch { /* noop */ }
+    }
+    setAllBranchMesas(results)
+  }, [restaurants])
   const mesaOrderByLabel = useMemo(() => {
     const m = new Map<string, any>()
     for (const o of mesaOrders) {
@@ -266,11 +288,15 @@ export default function PosHomePage() {
   useEffect(() => {
     if (tab !== 'mesas') return
     fetchMesaOrders()
-    const iv = setInterval(fetchMesaOrders, 12_000)
-    const onVis = () => { if (document.visibilityState === 'visible') fetchMesaOrders() }
+    if (effectiveBranchMode === 'todas') fetchAllBranchMesas()
+    const iv = setInterval(() => {
+      fetchMesaOrders()
+      if (effectiveBranchMode === 'todas') fetchAllBranchMesas()
+    }, 12_000)
+    const onVis = () => { if (document.visibilityState === 'visible') { fetchMesaOrders(); if (effectiveBranchMode === 'todas') fetchAllBranchMesas() } }
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
-  }, [tab, fetchMesaOrders])
+  }, [tab, fetchMesaOrders, fetchAllBranchMesas, effectiveBranchMode])
 
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
@@ -482,13 +508,97 @@ export default function PosHomePage() {
         <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} />
       )}
 
-      {/* ── Mesas en modo Todas: mensaje para seleccionar sucursal ── */}
+      {/* ── Mesas en modo Todas: vista multi-sucursal ── */}
       {tab === 'mesas' && effectiveBranchMode === 'todas' && (
-        <div className="pos-empty" style={{ flex: 1, minHeight: 200 }}>
-          <div className="ring">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <div className="pos-scroll" style={{ flex: 1, minHeight: 0 }}>
+          <div className="pos-pad" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* KPIs */}
+            {(() => {
+              const totalOcupadas = allBranchMesas.reduce((s, b) => s + b.orders.length, 0)
+              const totalVenta = allBranchMesas.reduce((s, b) => s + b.orders.reduce((ss: number, o: any) => ss + (o.totalAmount || 0), 0), 0)
+              const avgTicket = totalOcupadas > 0 ? Math.round(totalVenta / totalOcupadas) : 0
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: '1.4rem', fontWeight: 900, color: '#8b5cf6' }}>{totalOcupadas}</div>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: '0.68rem', color: 'var(--ink-3)', fontWeight: 600 }}>Mesas ocupadas</div>
+                  </div>
+                  <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>${totalVenta.toLocaleString('es-CL')}</div>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: '0.68rem', color: 'var(--ink-3)', fontWeight: 600 }}>Venta en mesa</div>
+                  </div>
+                  <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.2rem', fontWeight: 900, color: 'var(--ink)' }}>${avgTicket.toLocaleString('es-CL')}</div>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: '0.68rem', color: 'var(--ink-3)', fontWeight: 600 }}>Ticket promedio</div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Por sucursal */}
+            {allBranchMesas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-3)', fontFamily: 'var(--sans)', fontSize: '0.84rem' }}>
+                Cargando mesas...
+              </div>
+            ) : allBranchMesas.every(b => b.orders.length === 0) ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-3)', fontFamily: 'var(--sans)', fontSize: '0.84rem' }}>
+                No hay mesas ocupadas en ninguna sucursal.
+              </div>
+            ) : (
+              allBranchMesas.map(branch => (
+                <div key={branch.branchId} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden' }}>
+                  {/* Branch header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: branch.orders.length > 0 ? '1px solid var(--line)' : 'none', background: branch.orders.length > 0 ? '#8b5cf608' : 'transparent' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>{branch.branchName}</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: branch.orders.length > 0 ? '#8b5cf620' : 'var(--sunk)', color: branch.orders.length > 0 ? '#8b5cf6' : 'var(--ink-3)' }}>
+                        {branch.orders.length} {branch.orders.length === 1 ? 'mesa' : 'mesas'}
+                      </span>
+                    </div>
+                    {branch.orders.length > 0 && (
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '0.78rem', fontWeight: 800, color: 'var(--ink)' }}>
+                        ${branch.orders.reduce((s: number, o: any) => s + (o.totalAmount || 0), 0).toLocaleString('es-CL')}
+                      </span>
+                    )}
+                  </div>
+                  {/* Mesa rows */}
+                  {branch.orders.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {branch.orders.map((o: any, i: number) => {
+                        const mins = Math.round((Date.now() - new Date(o.createdAt).getTime()) / 60000)
+                        const timeStr = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`
+                        const paid = (o.paidAmount || 0) >= (o.totalAmount || 0) && (o.totalAmount || 0) > 0
+                        const status = paid ? 'Pagado' : o.posStatus === 'preparing' ? 'Preparando' : o.posStatus === 'ready' ? 'Listo' : mins > 60 ? 'Esperando cuenta' : 'Comiendo'
+                        const statusColor = paid ? '#22c55e' : o.posStatus === 'preparing' ? '#f59e0b' : o.posStatus === 'ready' ? '#3b82f6' : mins > 60 ? '#ef4444' : '#8b5cf6'
+                        return (
+                          <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
+                            {/* Mesa icon */}
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${statusColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/><path d="M3 18h18"/></svg>
+                            </div>
+                            {/* Info */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontFamily: 'var(--sans)', fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{o.tableLabel || 'Mesa'}</span>
+                                <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: `${statusColor}18`, color: statusColor }}>{status}</span>
+                              </div>
+                              <div style={{ fontFamily: 'var(--sans)', fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 1 }}>
+                                {o.customerName || 'Sin nombre'} · {timeStr}
+                              </div>
+                            </div>
+                            {/* Amount */}
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', flexShrink: 0 }}>
+                              ${(o.totalAmount || 0).toLocaleString('es-CL')}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-          <p>Selecciona una sucursal para ver las mesas.</p>
         </div>
       )}
 
