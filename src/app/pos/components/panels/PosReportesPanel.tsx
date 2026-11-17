@@ -333,7 +333,7 @@ function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: num
   return (
     <Card style={{ flex: '2 1 240px', minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Por canal</span>
+        <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Por origen</span>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>con IVA</span>
       </div>
       {channels.length === 0 ? (

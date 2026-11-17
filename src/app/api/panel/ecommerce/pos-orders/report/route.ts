@@ -132,8 +132,14 @@ export async function GET(req: NextRequest) {
       pm.count += 1; pm.amount += net; pmMap.set(rawMethod, pm);
     }
 
-    // Venta por canal según vendorName.
-    const name = (o.vendorName || "").trim() || "Sin canal";
+    // Venta por canal según vendorName — renombrar nombres técnicos.
+    const rawName = (o.vendorName || "").trim();
+    const CHANNEL_LABELS: Record<string, string> = {
+      "QuieroComer": "Tienda online",
+      "Toteat": "POS Toteat",
+      "Delifast": "Delifast",
+    };
+    const name = CHANNEL_LABELS[rawName] || rawName || "Venta rápida";
     const ch = channelMap.get(name) || { name, sales: 0, orders: 0 };
     ch.sales += net;
     ch.orders += 1;
