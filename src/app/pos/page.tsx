@@ -275,12 +275,12 @@ export default function PosHomePage() {
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
 
-  const totalOnline = orderCounts.retiro + orderCounts.delivery
+  const totalAll = orderCounts.retiro + orderCounts.delivery + ocupadas
   const tabCounts: Partial<Record<Tab, number>> = {
     ...(ocupadas > 0 ? { mesas: ocupadas } : {}),
     ...(orderCounts.retiro > 0 ? { retiro: orderCounts.retiro } : {}),
     ...(orderCounts.delivery > 0 ? { delivery: orderCounts.delivery } : {}),
-    ...(totalOnline > 0 ? { todos: totalOnline } : {}),
+    ...(totalAll > 0 ? { todos: totalAll } : {}),
   }
 
   // Handlers
