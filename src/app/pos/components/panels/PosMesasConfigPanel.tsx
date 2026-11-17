@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTables, useSectors, usePosSync, setRestaurantId, setUserId } from '@/lib/pos'
 import { updateTableSector, updateTableLabel, addTables, addCustomTable, removeTable, saveTables, nextTableNumber, addSector, removeSector } from '@/lib/pos'
+import PosFloorEditor from './PosFloorEditor'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -271,6 +272,19 @@ export default function PosMesasConfigPanel({ restaurantId, title, onBack }: { r
               Eliminar todas las mesas
             </button>
           </>
+        )}
+
+        {/* Editor visual del salon */}
+        {tables.length > 0 && (
+          <div style={{ marginTop: 24, borderTop: '1px solid var(--line)', paddingTop: 20 }}>
+            <h3 style={{ fontFamily: 'var(--sans)', fontSize: '0.92rem', fontWeight: 800, color: 'var(--ink)', margin: '0 0 4px' }}>
+              Editor de salon
+            </h3>
+            <p style={{ fontFamily: 'var(--sans)', fontSize: '0.74rem', color: 'var(--ink-3)', margin: '0 0 14px' }}>
+              Arrastra las mesas para posicionarlas como estan en tu local. Esta vista se usa en la operacion diaria.
+            </p>
+            <PosFloorEditor restaurantId={restaurantId} />
+          </div>
         )}
       </div>
     </div>

@@ -392,6 +392,7 @@ model Restaurant {
   deliveryBalance            Int                       @default(0) // saldo prepago (CLP) para solicitar repartidores externos
   walletTxns                 DeliveryWalletTxn[]
   posEnabled                 Boolean                   @default(false)
+  posFloorConfig             Json?
   appEnabled                 Boolean                   @default(false) // módulo APP del panel (Resumen + Notificaciones); solo locales con app móvil
   appAndroidUrl              String? // enlace de descarga de la app en Google Play (se usa en el menú del ecommerce)
   appIosUrl                  String? // enlace de descarga de la app en la App Store (iPhone)

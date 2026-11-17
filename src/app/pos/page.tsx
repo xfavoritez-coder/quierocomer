@@ -29,6 +29,7 @@ import PosCajaPanel from './components/panels/PosCajaPanel'
 import PosConfigPanel from './components/panels/PosConfigPanel'
 import PosHistorialPanel from './components/panels/PosHistorialPanel'
 import PosReportesPanel from './components/panels/PosReportesPanel'
+import PosFloorView from './components/PosFloorView'
 
 const TEST_USER_ID = 'pos-garzon'
 
@@ -136,6 +137,7 @@ export default function PosHomePage() {
 
   // ── Mesas server-authoritative: la ocupación sale de los PosOrder dine-in
   // ABIERTOS (impagos), no del sistema Dexie. Al cobrar, la mesa se libera.
+  const [posFloorConfig, setPosFloorConfig] = useState<any>(null)
   const [mesaOrders, setMesaOrders] = useState<any[]>([])
   const [mesaCuenta, setMesaCuenta] = useState<{ order: any; key: string } | null>(null)
   // Multi-branch mesa orders (for "todas las sucursales" mode)
@@ -282,6 +284,15 @@ export default function PosHomePage() {
       } catch { /* noop */ }
     }
     fetchAlertConfig()
+  }, [restaurantId])
+
+  // Load floor plan config once
+  useEffect(() => {
+    if (!restaurantId) return
+    fetch(`/api/admin/locales/${restaurantId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.posFloorConfig) setPosFloorConfig(d.posFloorConfig) })
+      .catch(() => {})
   }, [restaurantId])
 
   // Ocupación de mesas: refresca al entrar a la pestaña Mesas, cada 12s y al volver.
@@ -610,8 +621,20 @@ export default function PosHomePage() {
       <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setMesaCuenta(null) : undefined}>
         <div className="pos-pad">
 
-            {/* MESAS */}
-          {tab === 'mesas' && (() => {
+            {/* MESAS — Floor plan view (si hay layout configurado) */}
+          {tab === 'mesas' && posFloorConfig && tables.some(t => t.x > 0 || t.y > 0) && (
+            <PosFloorView
+              tables={tables}
+              config={posFloorConfig}
+              mesaOrderByLabel={mesaOrderByLabel}
+              sectors={sectors}
+              onMesaClick={handleMesaClick}
+              selectedKey={mesaCuenta?.key}
+            />
+          )}
+
+            {/* MESAS — Grid view (fallback si no hay layout) */}
+          {tab === 'mesas' && !(posFloorConfig && tables.some(t => t.x > 0 || t.y > 0)) && (() => {
             const filteredTables = sectorFilter === 'all'
               ? tables
               : sectorFilter === 'none'
