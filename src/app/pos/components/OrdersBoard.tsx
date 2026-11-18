@@ -573,7 +573,7 @@ function OrderCard({
                 disabled={busy}
                 style={{
                   fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
-                  background: '#1e40af', color: '#fff',
+                  background: '#fff', color: '#374151', border: '1.5px solid #d1d5db',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
                   display: 'inline-flex', alignItems: 'center', gap: 6,
