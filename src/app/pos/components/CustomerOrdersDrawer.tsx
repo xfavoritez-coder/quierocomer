@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import DelifastTracking from './DelifastTracking'
 
 // ── Helpers (mismos que PosHistorialPanel) ────────────────────────────
@@ -324,17 +325,18 @@ export default function CustomerOrdersDrawer({
       .finally(() => setLoading(false))
   }, [restaurantId, customerPhone])
 
-  return (
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <div
       className="pos-modal-overlay"
       onClick={onClose}
-      style={{ alignItems: 'flex-end', padding: 0 }}
+      style={{ alignItems: 'center', justifyContent: 'center', padding: 20 }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 520, maxHeight: '90dvh',
-          background: 'var(--surface)', borderRadius: '20px 20px 0 0',
+          width: '100%', maxWidth: 520, maxHeight: '85dvh',
+          background: 'var(--surface)', borderRadius: 20,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           boxShadow: '0 -4px 32px rgba(0,0,0,.18)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -428,6 +430,7 @@ export default function CustomerOrdersDrawer({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
