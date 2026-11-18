@@ -460,34 +460,37 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Footer para MESA: personas + tiempo, sin botones de avance */}
+      {/* Footer para MESA: estado + tiempo + garzon */}
       {isDineIn && (() => {
         const mins = Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000)
         const timeStr = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`
-        const mesaColor = '#8b5cf6'
-        const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number } | null
+        const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number; garzon?: string } | null
         const covers = mesaMeta?.covers
+        const garzon = mesaMeta?.garzon
+        // Estado de la mesa
+        const mesaStatus = order.posStatus === 'preparing' ? 'Preparando' : order.posStatus === 'ready' ? 'Listo para servir' : mins > 60 ? 'Esperando cuenta' : 'Comiendo'
+        const statusColor = order.posStatus === 'preparing' ? '#f59e0b' : order.posStatus === 'ready' ? '#3b82f6' : mins > 60 ? '#ef4444' : '#8b5cf6'
         return (
           <div
             style={{
-              padding: '11px 16px', minHeight: 48, boxSizing: 'border-box',
-              background: `${mesaColor}10`, borderTop: `1px solid ${mesaColor}20`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+              padding: '8px 12px', minHeight: 44, boxSizing: 'border-box',
+              background: `${statusColor}10`, borderTop: `1px solid ${statusColor}20`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
             }}
             onClick={e => e.stopPropagation()}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 13.5, color: mesaColor }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/><path d="M3 18h18"/></svg>
-              {covers ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
-                  {covers} {covers === 1 ? 'persona' : 'personas'}
-                </span>
-              ) : (
-                <span>{timeStr}</span>
-              )}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
+              <span style={{ fontWeight: 700, fontSize: 12, color: statusColor, whiteSpace: 'nowrap' }}>{mesaStatus}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{timeStr}</span>
+              {garzon && <span style={{ fontSize: 11, color: 'var(--ink-4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>· {garzon}</span>}
             </span>
-            {covers && <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}>{timeStr}</span>}
+            {covers ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', flexShrink: 0 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
+                {covers}
+              </span>
+            ) : null}
           </div>
         )
       })()}
@@ -882,7 +885,23 @@ export function OrderDetailPanel({
         {/* Fila superior: nro pedido */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px 0px' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-            Pedido #{order.orderReference ?? order.id.slice(-6)}
+            {isDineIn ? (
+              <>
+                {(() => {
+                  const meta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { garzon?: string; covers?: number } | null
+                  const garzon = meta?.garzon
+                  const covers = meta?.covers
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      {covers && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{covers} pers.</span>}
+                      {garzon && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>· {garzon}</span>}
+                    </span>
+                  )
+                })()}
+              </>
+            ) : (
+              <>Pedido #{order.orderReference ?? order.id.slice(-6)}</>
+            )}
           </span>
           <span style={{ flex: 1 }} />
           {/* Cerrar el detalle (útil sobre todo en móvil, donde ocupa la pantalla) */}
@@ -996,7 +1015,7 @@ export function OrderDetailPanel({
             {order.createdAt && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-3)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Realizado a las {fmtTimeAmPm(order.createdAt)}
+                {isDineIn ? 'Tomada a las' : 'Realizado a las'} {fmtTimeAmPm(order.createdAt)}
               </div>
             )}
           </div>

@@ -288,6 +288,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
         const mesaItems = cart.map((i) => ({
           product_id: i.product_id, name: i.name, unit_price: i.courtesy ? 0 : i.unit_price,
           quantity: i.quantity, comment: i.comment, courtesy: i.courtesy, options: i.options,
+          addedAt: new Date().toISOString(),
         }));
         const res = existingOrderId
           ? await fetch("/api/panel/ecommerce/pos-orders", {
