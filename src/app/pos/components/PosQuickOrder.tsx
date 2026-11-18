@@ -60,6 +60,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [discountType, setDiscountType] = useState<'%' | '$'>('%')
   const [discountInput, setDiscountInput] = useState('')
+  const [modProduct, setModProduct] = useState<StoreProduct | null>(null)
+  const [editComment, setEditComment] = useState<string | null>(null)
   const catScrollRef = useRef<HTMLDivElement>(null)
 
   // Mobile detection (must be before render)
@@ -285,17 +287,35 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {cart.map(item => (
-              <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--line)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                  <button onClick={() => updateQty(item.key, -1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 14 }}>−</button>
-                  <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 800, width: 22, textAlign: 'center', color: 'var(--ink)' }}>{item.quantity}</span>
-                  <button onClick={() => updateQty(item.key, 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 14 }}>+</button>
+              <div key={item.key} style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--line)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <button onClick={() => updateQty(item.key, -1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 14 }}>−</button>
+                    <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 800, width: 22, textAlign: 'center', color: 'var(--ink)' }}>{item.quantity}</span>
+                    <button onClick={() => updateQty(item.key, 1)} style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 14 }}>+</button>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{item.name}</span>
+                    {item.options.length > 0 && (
+                      <span style={{ fontFamily: F, fontSize: 11, color: 'var(--ink-3)' }}>{item.options.map(o => o.value).join(', ')}</span>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(item.unit_price * item.quantity)}</span>
+                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                    <button onClick={() => setEditComment(editComment === item.key ? null : item.key)} title="Nota" style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.comment ? AMBER : 'var(--ink-4)', padding: 2, display: 'flex' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button onClick={() => removeFromCart(item.key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-4)', padding: 2, display: 'flex' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
                 </div>
-                <span style={{ flex: 1, fontFamily: F, fontSize: 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-                <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: 'var(--ink-2)', flexShrink: 0 }}>{clp(item.unit_price * item.quantity)}</span>
-                <button onClick={() => removeFromCart(item.key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-4)', padding: 2, display: 'flex' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+                {editComment === item.key && (
+                  <input value={item.comment} onChange={e => setCart(prev => prev.map(i => i.key === item.key ? { ...i, comment: e.target.value } : i))}
+                    placeholder="Nota: ej. sin cebolla"
+                    autoFocus
+                    style={{ width: '100%', marginTop: 6, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', fontFamily: F, fontSize: 12, color: 'var(--ink)', outline: 'none', boxSizing: 'border-box' }} />
+                )}
               </div>
             ))}
           </div>
@@ -387,49 +407,58 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
         </div>
       )}
 
-      {/* Product list */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {(activeCat ? filtered.filter(p => p.category_id === activeCat) : filtered).map(p => {
-          const qty = qtyMap.get(p.id) || 0
-          const hasModifiers = p.option_groups && p.option_groups.length > 0
+      {/* Product grid/list */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {(activeCat ? visibleCats.filter(c => c.id === activeCat) : visibleCats).map(cat => {
+          const catProducts = filtered.filter(p => p.category_id === cat.id)
+          if (!catProducts.length) return null
           return (
-            <button key={p.id}
-              onClick={() => {
-                if (hasModifiers) {
-                  // TODO: modifier modal
-                  addToCart(p)
-                } else {
-                  addToCart(p)
-                }
-              }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                borderRadius: 10, border: 'none', background: qty > 0 ? `${AMBER}08` : 'transparent',
-                cursor: 'pointer', textAlign: 'left', fontFamily: F, width: '100%',
-                transition: 'background .1s',
-              }}
-            >
-              {/* Photo */}
-              {p.image_url && (
-                <img src={p.image_url} alt="" loading="lazy"
-                  style={{ width: isMobile ? 48 : 40, height: isMobile ? 48 : 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
-              )}
-              {/* Name + price */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: isMobile ? 15 : 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 800, color: AMBER, fontFamily: MONO }}>{clp(p.price)}</div>
+            <div key={cat.id} style={{ marginBottom: 16 }}>
+              {!activeCat && <div style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8, paddingLeft: 2 }}>{cat.name}</div>}
+              <div style={isMobile
+                ? { display: 'flex', flexDirection: 'column', gap: 2 }
+                : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }
+              }>
+                {catProducts.map(p => {
+                  const qty = qtyMap.get(p.id) || 0
+                  const hasModifiers = p.option_groups && p.option_groups.length > 0
+                  return isMobile ? (
+                    /* Mobile: lista compacta */
+                    <button key={p.id} onClick={() => hasModifiers ? setModProduct(p) : addToCart(p)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: qty > 0 ? `${AMBER}08` : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: F, width: '100%' }}>
+                      {p.image_url && <img src={p.image_url} alt="" loading="lazy" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: AMBER, fontFamily: MONO }}>{clp(p.price)}</div>
+                      </div>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: qty > 0 ? AMBER : 'var(--sunk)', color: qty > 0 ? '#fff' : 'var(--ink-3)', fontWeight: 800, fontSize: qty > 0 ? 13 : 16 }}>
+                        {qty > 0 ? qty : '+'}
+                      </div>
+                    </button>
+                  ) : (
+                    /* Desktop: card con foto grande */
+                    <button key={p.id} onClick={() => hasModifiers ? setModProduct(p) : addToCart(p)}
+                      style={{ display: 'flex', flexDirection: 'column', borderRadius: 12, border: qty > 0 ? `2px solid ${AMBER}` : '1.5px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left', fontFamily: F, overflow: 'hidden', position: 'relative' }}>
+                      {p.image_url ? (
+                        <img src={p.image_url} alt="" loading="lazy" style={{ width: '100%', height: 100, objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: 50, background: 'var(--sunk)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-4)', fontSize: 20 }}>🍽</div>
+                      )}
+                      <div style={{ padding: '8px 10px' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' }}>{p.name}</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: AMBER, fontFamily: MONO, marginTop: 2 }}>{clp(p.price)}</div>
+                      </div>
+                      {qty > 0 && (
+                        <div style={{ position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 999, background: AMBER, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,.2)' }}>{qty}</div>
+                      )}
+                      {hasModifiers && (
+                        <div style={{ position: 'absolute', top: 6, left: 6, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,.5)', color: '#fff', fontSize: 9, fontWeight: 700 }}>+ Opciones</div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
-              {/* Qty badge or + */}
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: qty > 0 ? AMBER : 'var(--sunk)',
-                color: qty > 0 ? '#fff' : 'var(--ink-3)',
-                fontWeight: 800, fontSize: qty > 0 ? 13 : 16,
-              }}>
-                {qty > 0 ? qty : '+'}
-              </div>
-            </button>
+            </div>
           )
         })}
       </div>
@@ -459,16 +488,28 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  // ── Modifiers Modal ──────────────────────────────────────
+  const modifiersModal = modProduct && (() => {
+    const groups = modProduct.option_groups ?? []
+    return (
+      <ModifiersOverlay product={modProduct} groups={groups} onAdd={(options, qty) => {
+        addToCart(modProduct, qty, options)
+        setModProduct(null)
+      }} onClose={() => setModProduct(null)} />
+    )
+  })()
+
   if (!isMobile) {
     // Desktop split
     return (
-      <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0, height: '100%' }}>
+      <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0, height: '100%', position: 'relative' }}>
         <div style={{ width: 360, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', overflow: 'hidden' }}>
           {orderPanel}
         </div>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', overflow: 'hidden' }}>
           {productsPanel}
         </div>
+        {modifiersModal}
       </div>
     )
   }
@@ -507,6 +548,92 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
         >
           Productos
         </button>
+      </div>
+      {modifiersModal}
+    </div>
+  )
+}
+
+// ── Modifiers Overlay ──────────────────────────────────────
+function ModifiersOverlay({ product, groups, onAdd, onClose }: {
+  product: StoreProduct
+  groups: StoreProduct['option_groups']
+  onAdd: (options: CartOption[], qty: number) => void
+  onClose: () => void
+}) {
+  const [selected, setSelected] = useState<Record<string, string[]>>({})
+  const [qty, setQty] = useState(1)
+
+  const toggle = (gId: string, maxSelect: number, valueId: string) => {
+    setSelected(prev => {
+      const cur = prev[gId] ?? []
+      if (cur.includes(valueId)) return { ...prev, [gId]: cur.filter(v => v !== valueId) }
+      if (maxSelect === 1) return { ...prev, [gId]: [valueId] }
+      if (cur.length < maxSelect) return { ...prev, [gId]: [...cur, valueId] }
+      return prev
+    })
+  }
+
+  const optionsFlat: CartOption[] = groups.flatMap(g => (selected[g.id] ?? []).map(vid => {
+    const val = (g.values ?? []).find(v => v.id === vid)!
+    return { group_id: g.id, group_name: g.name, value_id: vid, value: val.name, price_delta: val.price_delta }
+  }))
+  const unitPrice = product.price + optionsFlat.reduce((s, o) => s + o.price_delta, 0)
+  const canAdd = groups.every(g => (selected[g.id]?.length ?? 0) >= Math.max(1, g.min_select))
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid #e5e7eb' }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+            <h2 style={{ fontFamily: F, fontSize: 16, fontWeight: 800, color: '#111', margin: 0 }}>{product.name}</h2>
+            {product.description && <p style={{ fontFamily: F, fontSize: 12, color: '#6b7280', margin: '2px 0 0' }}>{product.description}</p>}
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 2 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        {/* Groups */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {groups.map(g => (
+            <div key={g.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: '#111' }}>{g.name}</span>
+                {g.is_required && <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '1px 6px', borderRadius: 4 }}>Requerido</span>}
+                {g.max_select > 1 && <span style={{ fontSize: 11, color: '#9ca3af' }}>Max {g.max_select}</span>}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {(g.values ?? []).map(v => {
+                  const checked = (selected[g.id] ?? []).includes(v.id)
+                  return (
+                    <button key={v.id} onClick={() => toggle(g.id, g.max_select, v.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', border: checked ? `2px solid ${AMBER}` : '1.5px solid #e5e7eb', background: checked ? `${AMBER}08` : '#fff' }}>
+                      <span style={{ width: 16, height: 16, borderRadius: '50%', border: `2px solid ${checked ? AMBER : '#d1d5db'}`, background: checked ? AMBER : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {checked && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
+                      </span>
+                      <span style={{ flex: 1, fontFamily: F, fontSize: 13, color: '#111' }}>{v.name}</span>
+                      {v.price_delta !== 0 && <span style={{ fontFamily: MONO, fontSize: 12, color: '#6b7280' }}>{v.price_delta > 0 ? '+' : ''}{clp(v.price_delta)}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Footer */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderTop: '1px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#6b7280' }}>−</button>
+            <span style={{ width: 24, textAlign: 'center', fontFamily: F, fontWeight: 800, fontSize: 15 }}>{qty}</span>
+            <button onClick={() => setQty(q => q + 1)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#6b7280' }}>+</button>
+          </div>
+          <button onClick={() => { if (canAdd) onAdd(optionsFlat, qty) }} disabled={!canAdd}
+            style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', fontFamily: F, fontSize: 14, fontWeight: 800, cursor: canAdd ? 'pointer' : 'default', background: canAdd ? AMBER : '#e5e7eb', color: canAdd ? '#fff' : '#9ca3af' }}>
+            {canAdd ? `Agregar — ${clp(unitPrice * qty)}` : 'Selecciona una opcion'}
+          </button>
+        </div>
       </div>
     </div>
   )
