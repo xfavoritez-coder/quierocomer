@@ -42,10 +42,11 @@ interface Props {
   existingOrderId?: string | null
   covers?: number
   garzon?: string
+  onClientInfo?: (name: string, label: string) => void
 }
 
 // ── Main Component ──────────────────────────────────────────
-export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tableLabel, existingOrderId, covers: initCovers, garzon: initGarzon }: Props) {
+export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tableLabel, existingOrderId, covers: initCovers, garzon: initGarzon, onClientInfo }: Props) {
   const { categories, products } = data
   const [view, setView] = useState<View>('order')
   const [saleType, setSaleType] = useState<SaleType>('QUICK')
@@ -55,6 +56,9 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [address, setAddress] = useState('')
   const [addressRef, setAddressRef] = useState('')
   const [payMethod, setPayMethod] = useState<PayMethod>('efectivo')
+  const [deliveryFee, setDeliveryFee] = useState(0)
+  const [deliveryMsg, setDeliveryMsg] = useState('')
+  const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCat, setActiveCat] = useState<string | null>(null)
@@ -73,10 +77,41 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  // Auto-calculate delivery fee
+  const deliveryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => {
+    if (saleType !== 'DELIVERY' || address.trim().length < 6) {
+      setDeliveryFee(0); setDeliveryMsg(''); setDeliveryLoading(false); return
+    }
+    setDeliveryLoading(true); setDeliveryMsg('Calculando envio...')
+    clearTimeout(deliveryTimer.current)
+    deliveryTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/panel/ecommerce/delivery-quote', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantId, address: address.trim() }),
+        })
+        const q = await res.json()
+        if (q.available) { setDeliveryFee(q.fee); setDeliveryMsg(`${clp(q.fee)} delivery · ${q.formatted || ''}`); }
+        else { setDeliveryFee(0); setDeliveryMsg(q.reason || 'Zona no disponible'); }
+      } catch { setDeliveryFee(0); setDeliveryMsg('Error al calcular'); }
+      setDeliveryLoading(false)
+    }, 800)
+    return () => clearTimeout(deliveryTimer.current)
+  }, [address, saleType, restaurantId])
+
+  // Report client info to parent for minimized pill label
+  useEffect(() => {
+    if (!onClientInfo) return
+    const label = isMesa ? `Mesa ${tableLabel}` : customerName.trim() || (saleType === 'QUICK' ? 'Venta rapida' : 'Nuevo pedido')
+    onClientInfo(customerName, label)
+  }, [customerName, saleType, isMesa, tableLabel, onClientInfo])
+
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0)
   const subtotal = cart.reduce((s, i) => s + (i.courtesy ? 0 : i.unit_price * i.quantity), 0)
   const discount = discountInput ? (discountType === '%' ? Math.round(subtotal * Math.min(100, Number(discountInput) || 0) / 100) : Math.min(subtotal, Number(discountInput) || 0)) : 0
-  const total = Math.max(0, subtotal - discount)
+  const fee = saleType === 'DELIVERY' ? deliveryFee : 0
+  const total = Math.max(0, subtotal + fee - discount)
 
   // Product quantity map for badges
   const qtyMap = useMemo(() => {
@@ -152,6 +187,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           deliveryAddress: saleType === 'DELIVERY' ? [address, addressRef].filter(Boolean).join(', ') : null,
           paymentMethod: saleType === 'QUICK' ? 'efectivo' : (payMethod === 'debito' || payMethod === 'credito' ? 'tarjeta' : payMethod),
           discount,
+          deliveryFee: fee,
           posNative: true,
           items: cart.map(i => ({
             product_id: i.product_id, name: i.name, unit_price: i.unit_price,
@@ -238,6 +274,14 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
                 <input value={addressRef} onChange={e => setAddressRef(e.target.value)} placeholder="Ej: depto 302, casa azul"
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               </div>
+              {/* Delivery fee */}
+              {deliveryMsg && (
+                <div style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: deliveryLoading ? 'var(--ink-3)' : deliveryFee > 0 ? '#16a34a' : '#ef4444', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0' }}>
+                  {deliveryLoading && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                  {deliveryMsg}
+                </div>
+              )}
             </>
           )}
           {/* Payment */}
@@ -338,9 +382,14 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
       {/* Total + Submit */}
       {cart.length > 0 && (
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 'auto' }}>
-          {discount > 0 && (
+          {(discount > 0 || fee > 0) && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: F, fontSize: 13, color: 'var(--ink-3)', marginBottom: 4 }}>
               <span>Subtotal</span><span style={{ fontFamily: MONO }}>{clp(subtotal)}</span>
+            </div>
+          )}
+          {fee > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: F, fontSize: 13, color: 'var(--ink-3)', marginBottom: 4 }}>
+              <span>Delivery</span><span style={{ fontFamily: MONO }}>{clp(fee)}</span>
             </div>
           )}
           {discount > 0 && (

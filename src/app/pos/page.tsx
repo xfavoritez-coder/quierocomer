@@ -76,23 +76,6 @@ function PendingModal({ count, onClose }: { count: number; onClose: () => void }
 export default function PosHomePage() {
   const rawNavigate = usePosNav()
   const isDesktop = useIsDesktop()
-  // Interceptar navegación a tomar-pedido y mesa para abrir modal
-  const navigate = useCallback((path: string) => {
-    if (path === '/pos/tomar-pedido') {
-      setNpMesa(null)
-      setNpOpen(true)
-      return
-    }
-    const mesaMatch = path.match(/^\/pos\/mesa\/([^?]+)(\?order=(.+))?/)
-    if (mesaMatch) {
-      const label = decodeURIComponent(mesaMatch[1])
-      const orderId = mesaMatch[3] || undefined
-      setNpMesa({ label, orderId })
-      setNpOpen(true)
-      return
-    }
-    rawNavigate(path)
-  }, [rawNavigate])
   const { restaurantId, restaurant, restaurants, loading: posLoading, posEnabled, isOwner } = usePosRestaurant()
 
   // Auth guard: redirect to login if session resolved but no restaurant found
@@ -156,11 +139,31 @@ export default function PosHomePage() {
   // ── Mesas server-authoritative: la ocupación sale de los PosOrder dine-in
   // ABIERTOS (impagos), no del sistema Dexie. Al cobrar, la mesa se libera.
   const [posFloorConfig, setPosFloorConfig] = useState<any>(null)
-  // ── Nuevo pedido modal ──
-  const [npOpen, setNpOpen] = useState(false)
-  const [npMesa, setNpMesa] = useState<{ label: string; orderId?: string } | null>(null)
+  // ── Nuevo pedido modal (soporta múltiples minimizados) ──
+  const [npOrders, setNpOrders] = useState<{ id: number; open: boolean; mesa: { label: string; orderId?: string } | null }[]>([])
+  const npCounter = useRef(0)
   // Pre-cargar menú en background al montar
   useEffect(() => { if (restaurantId) prefetchMenu(restaurantId) }, [restaurantId])
+  const openNewOrder = useCallback((mesa?: { label: string; orderId?: string }) => {
+    const id = ++npCounter.current
+    setNpOrders(prev => [...prev, { id, open: true, mesa: mesa || null }])
+  }, [])
+  // Interceptar navegación a tomar-pedido y mesa para abrir modal
+  const navigate = useCallback((path: string) => {
+    if (path === '/pos/tomar-pedido') { openNewOrder(); return }
+    const mesaMatch = path.match(/^\/pos\/mesa\/([^?]+)(\?order=(.+))?/)
+    if (mesaMatch) { openNewOrder({ label: decodeURIComponent(mesaMatch[1]), orderId: mesaMatch[3] || undefined }); return }
+    rawNavigate(path)
+  }, [rawNavigate, openNewOrder])
+  const closeOrder = useCallback((id: number) => {
+    setNpOrders(prev => prev.filter(o => o.id !== id))
+  }, [])
+  const minimizeOrder = useCallback((id: number) => {
+    setNpOrders(prev => prev.map(o => o.id === id ? { ...o, open: false } : o))
+  }, [])
+  const restoreOrder = useCallback((id: number) => {
+    setNpOrders(prev => prev.map(o => o.id === id ? { ...o, open: true } : o))
+  }, [])
 
   const [mesaOrders, setMesaOrders] = useState<any[]>([])
   const [mesaCuenta, setMesaCuenta] = useState<{ order: any; key: string } | null>(null)
@@ -545,7 +548,7 @@ export default function PosHomePage() {
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'delivery' || tab === 'todos') && (
-        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} onNewOrder={() => { setNpMesa(null); setNpOpen(true) }} />
+        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} onNewOrder={() => openNewOrder()} />
       )}
 
       {/* ── Mesas en modo Todas: vista multi-sucursal ── */}
@@ -652,6 +655,7 @@ export default function PosHomePage() {
 
             {/* MESAS — Floor plan view (si hay layout configurado) */}
           {tab === 'mesas' && posFloorConfig && tables.some(t => t.x > 0 || t.y > 0) && (
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
             <PosFloorView
               tables={tables}
               config={posFloorConfig}
@@ -660,6 +664,7 @@ export default function PosHomePage() {
               onMesaClick={handleMesaClick}
               selectedKey={mesaCuenta?.key}
             />
+            </div>
           )}
 
             {/* MESAS — Grid view (fallback si no hay layout) */}
@@ -847,15 +852,20 @@ export default function PosHomePage() {
       {/* ── Drawer ── */}
       {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={openInnerPage} />}
 
-      {/* ── Modal nuevo pedido ── */}
-      <NuevoPedidoModal
-        restaurantId={restaurantId}
-        open={npOpen}
-        onClose={() => { setNpOpen(false); setNpMesa(null) }}
-        onOrderCreated={() => { refreshOrdersRef.current?.(); fetchMesaOrders() }}
-        tableLabel={npMesa?.label}
-        existingOrderId={npMesa?.orderId}
-      />
+      {/* ── Modales nuevo pedido (multi-pedido) ── */}
+      {npOrders.map(np => (
+        <NuevoPedidoModal
+          key={np.id}
+          restaurantId={restaurantId}
+          open={np.open}
+          onClose={() => closeOrder(np.id)}
+          onMinimize={() => minimizeOrder(np.id)}
+          onRestore={() => restoreOrder(np.id)}
+          onOrderCreated={() => { closeOrder(np.id); refreshOrdersRef.current?.(); fetchMesaOrders() }}
+          tableLabel={np.mesa?.label}
+          existingOrderId={np.mesa?.orderId}
+        />
+      ))}
     </div>
   )
 }
