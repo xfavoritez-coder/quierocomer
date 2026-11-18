@@ -132,22 +132,20 @@ export async function GET(req: NextRequest) {
       pm.count += 1; pm.amount += net; pmMap.set(rawMethod, pm);
     }
 
-    // Venta por canal — clasificar por tipo de pedido (mesa/delivery/retiro/web).
+    // Venta por canal — clasificar por tipo: venta rapida, delivery, retiro, mesa.
     const rawVendor = (o.vendorName || "").trim();
-    const orderType: "delivery" | "pickup" | "dine-in" = o.isDelivery
+    const chType: "delivery" | "pickup" | "dine-in" = o.isDelivery
       ? "delivery"
       : ((o.tableLabel && o.tableLabel.trim()) || o.saleType === "dine-in") ? "dine-in" : "pickup";
     let name: string;
-    if (rawVendor.toLowerCase().includes("-web") || rawVendor.toLowerCase().includes("web")) {
-      name = "Tienda online";
-    } else if (orderType === "dine-in") {
+    if (chType === "dine-in") {
       name = "Mesa";
-    } else if (orderType === "delivery") {
+    } else if (chType === "delivery") {
       name = "Delivery";
-    } else if (orderType === "pickup") {
-      name = rawVendor ? "Retiro" : "Venta rapida";
+    } else if (o.saleType === "quick" || o.saleType === "QUICK" || !rawVendor) {
+      name = "Venta rapida";
     } else {
-      name = rawVendor || "Venta rapida";
+      name = "Retiro";
     }
     const ch = channelMap.get(name) || { name, sales: 0, orders: 0 };
     ch.sales += net;
