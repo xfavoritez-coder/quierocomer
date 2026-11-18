@@ -3424,33 +3424,6 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                   )
                 })()}
 
-                {/* Ranking de mesas */}
-                {data.dineInStats.tables.length > 0 && (
-                  <>
-                    <SectionLabel>Ranking de mesas</SectionLabel>
-                    <Card style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        {/* Header */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '0 0 8px', borderBottom: '1px solid var(--line)' }}>
-                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Mesa</span>
-                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'right' }}>Pedidos</span>
-                          <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'right' }}>Venta</span>
-                        </div>
-                        {data.dineInStats.tables.map((t: any, i: number) => (
-                          <div key={t.table} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '10px 0', borderBottom: i < (data.dineInStats?.tables.length ?? 0) - 1 ? '1px solid var(--line)' : 'none', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: PURPLE, background: `${PURPLE}18`, width: 24, height: 24, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
-                              <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{t.table}</span>
-                            </div>
-                            <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink-2)', textAlign: 'right' }}>{t.orders}</span>
-                            <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right' }}>{clp(t.sales)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  </>
-                )}
-
                 {/* Horas pico de mesa */}
                 <SectionLabel>Horarios de mesa</SectionLabel>
                 <Card style={{ padding: '14px 16px' }}>
