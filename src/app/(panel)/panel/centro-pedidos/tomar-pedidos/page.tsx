@@ -53,15 +53,15 @@ const C = {
 // Componente reutilizable: recibe el restaurantId por prop (el panel lo toma de
 // la sesión; el POS lo toma de usePosRestaurant). `backHref`/`backLabel` definen
 // el enlace "atrás" según dónde se embeba.
-export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false, tableLabel = null, existingOrderId = null, onDone, garzones = [] }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[] }) {
-  const [data, setData] = useState<StorefrontData | null>(null);
+export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos", backLabel = "Centro de pedidos", disableToteat = false, tableLabel = null, existingOrderId = null, onDone, garzones = [], preloadedData, modalMode = false }: { restaurantId?: string | null; backHref?: string; backLabel?: string; disableToteat?: boolean; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[]; preloadedData?: StorefrontData | null; modalMode?: boolean }) {
+  const [data, setData] = useState<StorefrontData | null>(preloadedData || null);
   const [posAvailable, setPosAvailable] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!preloadedData);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!restaurantId || preloadedData) return;
     setLoading(true);
     Promise.all([
       fetch(`/api/panel/ecommerce/menu?restaurantId=${restaurantId}`).then((r) => (r.ok ? r.json() : Promise.reject(new Error("No se pudo cargar el catálogo")))),
@@ -70,16 +70,16 @@ export function TomarPedidos({ restaurantId, backHref = "/panel/centro-pedidos",
       .then(([menu, status]) => { setData(menu); setPosAvailable(!!status?.integrations?.pos); setMapsKey(status?.googleMapsKey || null); setErr(null); })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
-  }, [restaurantId]);
+  }, [restaurantId, preloadedData]);
 
   // Colapsa el sidebar del panel desde el primer render (antes de cargar), para
   // que no se vea aparecer y desaparecer. Se restaura al desmontar la página.
   return (
     <>
-      <CollapseSidebar />
+      {!modalMode && <CollapseSidebar />}
       {loading ? <Center><Loader2 size={22} className="animate-spin" /> Cargando catálogo…</Center>
         : err || !data ? <Center>{err || "No disponible"}</Center>
-        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={backHref} backLabel={backLabel} tableLabel={tableLabel} existingOrderId={existingOrderId} onDone={onDone} garzones={garzones} />}
+        : <POS data={data} restaurantId={restaurantId!} posAvailable={posAvailable && !disableToteat} disableToteat={disableToteat} mapsKey={mapsKey} backHref={modalMode ? "" : backHref} backLabel={modalMode ? "" : backLabel} tableLabel={tableLabel} existingOrderId={existingOrderId} onDone={onDone} garzones={garzones} modalMode={modalMode} />}
     </>
   );
 }
@@ -99,7 +99,7 @@ function Center({ children }: { children: React.ReactNode }) {
   return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, fontFamily: FB, color: "var(--adm-text2)" }}>{children}</div>;
 }
 
-function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel, tableLabel = null, existingOrderId = null, onDone, garzones = [] }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[] }) {
+function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey, backHref, backLabel, tableLabel = null, existingOrderId = null, onDone, garzones = [], modalMode = false }: { data: StorefrontData; restaurantId: string; posAvailable: boolean; disableToteat?: boolean; mapsKey: string | null; backHref: string; backLabel: string; tableLabel?: string | null; existingOrderId?: string | null; onDone?: () => void; garzones?: string[]; modalMode?: boolean }) {
   const { tenant, categories, products } = data;
   // Modo mesa (dine-in): el pedido se ancla a una mesa. Oculta tipo/cliente/
   // descuento/pago (el pago es al cobrar) y al enviar crea/suma al PosOrder dine-in.
@@ -632,19 +632,21 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
       <StoreStyles />
       {isMesa && !existingOrderId && mesaModalOpen && typeof document !== "undefined" &&
         createPortal(mesaOpenModalContent, document.querySelector(".theme-dark, .theme-light") ?? document.body)}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
-          <ArrowLeft size={15} /> {backLabel}
-        </Link>
-        <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{isMesa ? `Mesa ${tableLabel}` : tenant.name}</span>
-        <button onClick={() => window.open(backHref.startsWith("/pos") ? "/pos/tomar-pedido" : "/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
-          <ExternalLink size={14} /> Nueva ventana
-        </button>
-      </div>
+      {!modalMode && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+          <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
+            <ArrowLeft size={15} /> {backLabel}
+          </Link>
+          <span style={{ flex: 1, textAlign: "center", fontFamily: F, fontSize: "0.95rem", fontWeight: 800, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{isMesa ? `Mesa ${tableLabel}` : tenant.name}</span>
+          <button onClick={() => window.open(backHref.startsWith("/pos") ? "/pos/tomar-pedido" : "/panel/centro-pedidos/tomar-pedidos", "_blank", "noopener")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.text2, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
+            <ExternalLink size={14} /> Nueva ventana
+          </button>
+        </div>
+      )}
 
       {isWide ? (
-        <div style={{ display: "flex", gap: 14, height: "calc(100dvh - 96px)", minHeight: 520 }}>
+        <div style={{ display: "flex", gap: 14, height: modalMode ? "100%" : "calc(100dvh - 96px)", minHeight: 520, flex: modalMode ? 1 : undefined }}>
           <div style={{ width: 380, flexShrink: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>{cartPanel}</div>
           <div style={{ flex: 1, minWidth: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>{menuPanel}</div>
         </div>
