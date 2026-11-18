@@ -886,19 +886,7 @@ export function OrderDetailPanel({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px 0px' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 600, color: 'var(--ink-3)', letterSpacing: '.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
             {isDineIn ? (
-              <>
-                {(() => {
-                  const meta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { garzon?: string; covers?: number } | null
-                  const garzon = meta?.garzon
-                  const covers = meta?.covers
-                  return (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      {covers && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{covers} pers.</span>}
-                      {garzon && <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>· {garzon}</span>}
-                    </span>
-                  )
-                })()}
-              </>
+              <>Mesa {order.tableLabel || ''}</>
             ) : (
               <>Pedido #{order.orderReference ?? order.id.slice(-6)}</>
             )}
@@ -1015,9 +1003,19 @@ export function OrderDetailPanel({
             {order.createdAt && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-3)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {isDineIn ? 'Tomada a las' : 'Realizado a las'} {fmtTimeAmPm(order.createdAt)}
+                {isDineIn ? 'Abierta a las' : 'Realizado a las'} {fmtTimeAmPm(order.createdAt)}
               </div>
             )}
+            {isDineIn && (() => {
+              const meta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { garzon?: string; covers?: number } | null
+              return (meta?.covers || meta?.garzon) ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink-3)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>
+                  {meta.covers && <span>{meta.covers} {meta.covers === 1 ? 'comensal' : 'comensales'}</span>}
+                  {meta.garzon && <span>· {meta.garzon}</span>}
+                </div>
+              ) : null
+            })()}
           </div>
         )}
 
