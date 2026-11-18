@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { StorefrontData, StoreProduct, StoreCategory } from '@/lib/ecommerce/storefront-data'
+import type { AccompConfig } from '@/lib/ecommerce/accompaniments'
+import AccompanimentsSection from '@/components/ecommerce/AccompanimentsSection'
 
 // ── Types ──────────────────────────────────────────────────
 interface CartItem {
@@ -66,6 +68,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [discountInput, setDiscountInput] = useState('')
   const [modProduct, setModProduct] = useState<StoreProduct | null>(null)
   const [editComment, setEditComment] = useState<string | null>(null)
+  const [accomNote, setAccomNote] = useState('')
   const catScrollRef = useRef<HTMLDivElement>(null)
 
   // Mobile detection (must be before render)
@@ -188,6 +191,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           paymentMethod: saleType === 'QUICK' ? 'efectivo' : (payMethod === 'debito' || payMethod === 'credito' ? 'tarjeta' : payMethod),
           discount,
           deliveryFee: fee,
+          notes: accomNote || null,
           posNative: true,
           items: cart.map(i => ({
             product_id: i.product_id, name: i.name, unit_price: i.unit_price,
@@ -301,6 +305,17 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
             </div>
           </div>
         </div>
+      )}
+
+      {/* Acompañamientos */}
+      {!isMesa && cart.length > 0 && data.tenant.accompaniments && ((data.tenant.accompaniments as AccompConfig).perAmountEnabled || (data.tenant.accompaniments as AccompConfig).perProductEnabled) && (
+        <AccompanimentsSection
+          config={data.tenant.accompaniments as AccompConfig}
+          items={cart.map(i => ({ product_id: i.product_id, name: i.name, quantity: i.quantity, unit_price: i.unit_price }))}
+          subtotal={subtotal}
+          primaryColor={AMBER}
+          onResolve={(r) => setAccomNote(r.notesPart)}
+        />
       )}
 
       {/* Descuento (todos los tipos) */}

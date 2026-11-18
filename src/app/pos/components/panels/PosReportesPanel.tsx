@@ -2368,8 +2368,8 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
   const [tooltipIdx, setTooltipIdx] = useState<number | null>(null)
 
   const buckets = chartData ?? []
-  const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients + (b.unknownOrders ?? 0)))
-  const hasData = buckets.some(b => b.newClients + b.recurringClients + (b.unknownOrders ?? 0) > 0)
+  const maxTotal = Math.max(1, ...buckets.map(b => b.newClients + b.recurringClients))
+  const hasData = buckets.some(b => b.newClients + b.recurringClients > 0)
   const count = buckets.length
   const labelEvery = count <= 12 ? 1 : count <= 20 ? 2 : count <= 31 ? 5 : 7
   const showCount = count <= 25
@@ -2436,7 +2436,7 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                 fontFamily: F, fontSize: 11, lineHeight: 1.6, pointerEvents: 'none',
                 boxShadow: '0 4px 16px rgba(0,0,0,.25)',
               }}>
-                <div style={{ fontWeight: 700, marginBottom: 3 }}>{b.label} · {b.newClients + b.recurringClients + (b.unknownOrders ?? 0)} ped.</div>
+                <div style={{ fontWeight: 700, marginBottom: 3 }}>{b.label} · {b.newClients + b.recurringClients} clientes</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: BLUE, display: 'inline-block', flexShrink: 0 }} />
                   Nuevos: <strong>{b.newClients}</strong>
@@ -2445,12 +2445,6 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
                   Recurrentes: <strong>{b.recurringClients}</strong>
                 </div>
-                {(b.unknownOrders ?? 0) > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-4)', display: 'inline-block', flexShrink: 0 }} />
-                    Venta rápida: <strong>{b.unknownOrders}</strong>
-                  </div>
-                )}
               </div>
             )
           })()}
@@ -2458,17 +2452,13 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
             {/* Grid de columnas — cada barra se posiciona con bottom:0 absoluto */}
             <div style={{ display: 'flex', gap: 2, height: '100%' }}>
             {buckets.map((b, i) => {
-              const unk = b.unknownOrders ?? 0
-              const total = b.newClients + b.recurringClients + unk
+              const total = b.newClients + b.recurringClients
               const barH = total > 0 ? Math.max(2, Math.round((total / maxTotal) * 148)) : 0
               const isHovered = tooltipIdx === i
-              // Gradiente vertical: azul (nuevos) → verde (recurrentes) → gris (sin contacto)
               const newPct  = total > 0 ? (b.newClients / total) * 100 : 0
-              const recPct  = total > 0 ? (b.recurringClients / total) * 100 : 0
               const stops: string[] = []
               if (newPct > 0) stops.push(`${BLUE} 0%`, `${BLUE} ${newPct}%`)
-              if (recPct > 0) stops.push(`#10b981 ${newPct}%`, `#10b981 ${newPct + recPct}%`)
-              if (total > 0 && unk > 0) stops.push(`#888 ${newPct + recPct}%`, `#888 100%`)
+              if (newPct < 100) stops.push(`#10b981 ${newPct}%`, `#10b981 100%`)
               const gradient = stops.length > 0 ? `linear-gradient(to bottom, ${stops.join(', ')})` : BLUE
               return (
                 <div
@@ -3602,7 +3592,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             </div>
 
             {/* Ventas por origen por día */}
-            {(data as any).byOriginDay && (data as any).byOriginDay.length > 0 && !singleDay && (
+            {(data as any).byOriginDay && (data as any).byOriginDay.length > 0 && (
               <>
                 <SectionLabel>Ventas por origen</SectionLabel>
                 <Card style={{ padding: '14px 16px' }}>
