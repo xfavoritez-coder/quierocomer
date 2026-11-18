@@ -54,17 +54,34 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
 
-  // Auto-scale to fit container
+  // Calculate bounding box of actual table positions for smart scaling
+  const bbox = useMemo(() => {
+    if (!tables.length) return { x: 0, y: 0, w: canvasW, h: canvasH }
+    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
+    for (const t of tables) {
+      const s = getTableStyle(config, t.id)
+      minX = Math.min(minX, t.x)
+      minY = Math.min(minY, t.y)
+      maxX = Math.max(maxX, t.x + s.w)
+      maxY = Math.max(maxY, t.y + s.h)
+    }
+    const pad = 30
+    return { x: Math.max(0, minX - pad), y: Math.max(0, minY - pad), w: maxX - minX + pad * 2, h: maxY - minY + pad * 2 }
+  }, [tables, config, canvasW, canvasH])
+
+  // Auto-scale: fit the bounding box of tables, not the full canvas
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const obs = new ResizeObserver(entries => {
       const { width } = entries[0].contentRect
-      setScale(Math.min(1, width / canvasW))
+      const scaleW = width / bbox.w
+      const scaleH = (width * 0.7) / bbox.h // limit height to 70% of width for comfort
+      setScale(Math.min(1.2, Math.max(0.5, Math.min(scaleW, scaleH))))
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [canvasW])
+  }, [bbox])
 
   const hasFloorPlan = tables.some(t => t.x > 0 || t.y > 0)
   if (!hasFloorPlan) return null // fallback to grid
@@ -76,21 +93,26 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
     return m
   }, [sectors])
 
+  const viewW = bbox.w
+  const viewH = bbox.h
+  const offsetX = bbox.x
+  const offsetY = bbox.y
+
   return (
     <div ref={containerRef} style={{ width: '100%', overflow: 'hidden' }}>
       <div style={{
         position: 'relative',
-        width: canvasW,
-        height: canvasH,
+        width: viewW,
+        height: viewH,
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
-        marginBottom: canvasH * (scale - 1),
+        marginBottom: Math.max(0, viewH * scale - viewH + 10),
         background: 'var(--sunk)',
         borderRadius: 16,
         border: '1px solid var(--line)',
       }}>
         {tables.map(table => {
-          const pos = { x: table.x, y: table.y }
+          const pos = { x: table.x - offsetX, y: table.y - offsetY }
           const style = getTableStyle(config, table.id)
           const key = table.label || String(table.number)
           const order = mesaOrderByLabel.get(key)
