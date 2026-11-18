@@ -3418,11 +3418,19 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* KPIs de mesa */}
                 <SectionLabel>Resumen de mesa</SectionLabel>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
-                  <Stat label="Venta en mesa" value={clp(data.dineInStats.totalSales)} color={PURPLE} big span={2} />
-                  <Stat label="Pedidos" value={data.dineInStats.totalOrders.toLocaleString('es-CL')} color={'var(--amber)'} />
-                  <Stat label="Ticket promedio" value={clp(data.dineInStats.avgTicket)} color={BLUE} />
-                </div>
+                {(() => {
+                  const totalItems = (data.dineInStats.history || []).reduce((s: number, m: any) => s + (m.items?.length || 0), 0)
+                  const totalCovers = (data.dineInStats.history || []).reduce((s: number, m: any) => s + (m.covers || 0), 0)
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
+                      <Stat label="Venta en mesa" value={clp(data.dineInStats.totalSales)} color={PURPLE} big span={2} />
+                      <Stat label="Mesas atendidas" value={data.dineInStats.totalOrders.toLocaleString('es-CL')} color={'var(--amber)'} />
+                      <Stat label="Ticket promedio" value={clp(data.dineInStats.avgTicket)} color={BLUE} />
+                      <Stat label="Items vendidos" value={totalItems.toLocaleString('es-CL')} color={GREEN} />
+                      {totalCovers > 0 && <Stat label="Comensales" value={totalCovers.toLocaleString('es-CL')} color={PURPLE} />}
+                    </div>
+                  )
+                })()}
 
                 {/* Ranking de mesas */}
                 {data.dineInStats.tables.length > 0 && (
