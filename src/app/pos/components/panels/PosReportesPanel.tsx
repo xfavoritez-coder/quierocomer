@@ -1031,8 +1031,9 @@ function PaymentMethodsSection({ methods, total }: { methods: PaymentMethod[]; t
                   <span style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
                   {m.label}
                 </span>
-                <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', flexShrink: 0 }}>
-                  {m.count} ped. <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 400, color: 'var(--ink-3)' }}>({pct}%)</span>
+                <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{clp(m.amount)}</span>
+                  <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 500, color: 'var(--ink-3)' }}>{m.count} ped. ({pct}%)</span>
                 </span>
               </div>
               <div style={{ height: 6, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
