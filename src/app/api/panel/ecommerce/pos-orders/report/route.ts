@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
   const typeMap: Record<"delivery" | "pickup" | "dine-in", { sales: number; orders: number }> = {
     delivery: { sales: 0, orders: 0 }, pickup: { sales: 0, orders: 0 }, "dine-in": { sales: 0, orders: 0 },
   };
+  const originDayMap = new Map<string, { ymd: string; origin: string; sales: number; orders: number }>();
 
   const isDeliveryLine = (name: string, code: string) => {
     const n = name.toLowerCase();
@@ -151,6 +152,13 @@ export async function GET(req: NextRequest) {
     ch.sales += net;
     ch.orders += 1;
     channelMap.set(name, ch);
+
+    // Por origen por día
+    const originDay = chileYmd(o.createdAt);
+    const odKey = `${originDay}:${name}`;
+    const od = originDayMap.get(odKey) || { ymd: originDay, origin: name, sales: 0, orders: 0 };
+    od.sales += net; od.orders += 1;
+    originDayMap.set(odKey, od);
 
     // Tipo de pedido: delivery / mesa (dine-in) / retiro (pickup).
     const type: "delivery" | "pickup" | "dine-in" = o.isDelivery
@@ -691,6 +699,7 @@ export async function GET(req: NextRequest) {
     byYear,
     deliveryTimes,
     dineInStats,
+    byOriginDay: Array.from(originDayMap.values()).sort((a, b) => a.ymd.localeCompare(b.ymd) || a.origin.localeCompare(b.origin)),
     paymentMethods,
     cancellations,
     tipsStats,

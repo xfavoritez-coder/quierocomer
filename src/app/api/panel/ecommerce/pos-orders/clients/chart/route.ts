@@ -157,6 +157,8 @@ export async function GET(req: NextRequest) {
       FROM "PosOrder"
       WHERE "restaurantId" IN (${idsLiteral})
         AND "posStatus" != 'canceled'
+        AND "saleType" NOT IN ('dine-in', 'dinein', 'quick', 'QUICK')
+        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
       UNION ALL
       SELECT
         COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,

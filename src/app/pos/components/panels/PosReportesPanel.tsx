@@ -2392,10 +2392,6 @@ function ClientsAcquisitionChart({ restaurantId, allBranches }: { restaurantId: 
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
           <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Recurrentes</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ink-4)', flexShrink: 0 }} />
-          <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>Venta rápida</span>
-        </div>
       </div>
 
       {/* Chart area */}
@@ -3596,6 +3592,65 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
               <ChannelBreakdown channels={data.channels} total={data.productSales} />
               <OrderTypePie byType={data.byType} />
             </div>
+
+            {/* Ventas por origen por día */}
+            {(data as any).byOriginDay && (data as any).byOriginDay.length > 0 && !singleDay && (
+              <>
+                <SectionLabel>Ventas por origen</SectionLabel>
+                <Card style={{ padding: '14px 16px' }}>
+                  {(() => {
+                    const raw = (data as any).byOriginDay as { ymd: string; origin: string; sales: number; orders: number }[]
+                    const ORIGIN_COLORS: Record<string, string> = { 'Venta rapida': 'var(--amber)', 'Delivery': BLUE, 'Retiro': GREEN, 'Mesa': PURPLE }
+                    const origins = [...new Set(raw.map(r => r.origin))]
+                    const days = [...new Set(raw.map(r => r.ymd))].sort()
+                    const dayData = days.map(ymd => {
+                      const entries: Record<string, number> = {}
+                      for (const o of origins) entries[o] = 0
+                      for (const r of raw) { if (r.ymd === ymd) entries[r.origin] = r.sales }
+                      return { ymd, ...entries, total: Object.values(entries).reduce((s, v) => s + v, 0) }
+                    })
+                    const maxTotal = Math.max(1, ...dayData.map(d => d.total))
+                    const fmtDay = (ymd: string) => { try { const d = new Date(`${ymd}T12:00:00Z`); return `${d.getUTCDate()} ${new Intl.DateTimeFormat('es-CL', { month: 'short', timeZone: 'UTC' }).format(d).replace('.', '')}` } catch { return ymd } }
+                    return (
+                      <>
+                        {/* Legend */}
+                        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                          {origins.map(o => (
+                            <div key={o} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: 2, background: ORIGIN_COLORS[o] || 'var(--ink-3)', flexShrink: 0 }} />
+                              <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)' }}>{o}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Bars */}
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 140 }}>
+                          {dayData.map((d, i) => {
+                            const barH = d.total > 0 ? Math.max(4, Math.round((d.total / maxTotal) * 120)) : 0
+                            const stops: string[] = []
+                            let pct = 0
+                            for (const o of origins) {
+                              const v = (d as any)[o] || 0
+                              if (v <= 0) continue
+                              const p = (v / d.total) * 100
+                              stops.push(`${ORIGIN_COLORS[o] || '#999'} ${pct}%`, `${ORIGIN_COLORS[o] || '#999'} ${pct + p}%`)
+                              pct += p
+                            }
+                            const grad = stops.length > 0 ? `linear-gradient(to bottom, ${stops.join(', ')})` : 'var(--line)'
+                            const showLabel = days.length <= 14 || i % Math.ceil(days.length / 10) === 0
+                            return (
+                              <div key={d.ymd} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
+                                <div style={{ width: '80%', maxWidth: 28, height: barH, background: grad, borderRadius: '3px 3px 0 0' }} />
+                                {showLabel && <span style={{ fontFamily: F, fontSize: 9, color: 'var(--ink-3)', marginTop: 3, whiteSpace: 'nowrap' }}>{fmtDay(d.ymd)}</span>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )
+                  })()}
+                </Card>
+              </>
+            )}
 
             {/* Métodos de pago */}
             {data.paymentMethods && data.paymentMethods.length > 0 && (
