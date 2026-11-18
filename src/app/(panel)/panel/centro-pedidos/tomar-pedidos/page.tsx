@@ -631,8 +631,11 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   return (
     <div className="qc-storefront" style={{ fontFamily: FB }}>
       <StoreStyles />
-      {isMesa && !existingOrderId && mesaModalOpen && typeof document !== "undefined" &&
-        createPortal(mesaOpenModalContent, document.querySelector(".theme-dark, .theme-light") ?? document.body)}
+      {isMesa && !existingOrderId && mesaModalOpen && (
+        modalMode
+          ? mesaOpenModalContent
+          : typeof document !== "undefined" && createPortal(mesaOpenModalContent, document.querySelector(".theme-dark, .theme-light") ?? document.body)
+      )}
       {!modalMode && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
           <Link href={backHref} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textDecoration: "none", flexShrink: 0 }}>
