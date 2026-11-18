@@ -329,7 +329,7 @@ function HourlyChart({ hourly }: { hourly: HourBucket[] }) {
   )
 }
 
-function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: number }) {
+function ChannelBreakdown({ channels, total, tipsTotal, tipsStats }: { channels: Channel[]; total: number; tipsTotal?: number; tipsStats?: { pctWithTip: number; avgPerOrder: number } | null }) {
   const palette = ['var(--amber)', GREEN, BLUE, PURPLE, '#ef4444', '#0ea5e9', '#ec4899']
   return (
     <Card style={{ flex: '2 1 240px', minWidth: 0 }}>
@@ -360,6 +360,19 @@ function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: num
               </div>
             )
           })}
+          {/* Propinas */}
+          {tipsTotal != null && tipsTotal > 0 && (
+            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 10, marginTop: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: F, fontSize: '0.82rem', fontWeight: 600, color: '#16a34a' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Propinas
+                  {tipsStats && <span style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', fontWeight: 500 }}>· {tipsStats.pctWithTip}% de pedidos</span>}
+                </span>
+                <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: '#16a34a', flexShrink: 0 }}>{clp(tipsTotal)}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -3576,11 +3589,6 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                     prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined} />
                 </>)
               })()}
-              <Stat label="Delivery" value={clp(data.deliveryTotal)} hint="Total cobrado" color={BLUE} />
-              {data.dineInStats && data.dineInStats.totalOrders > 0 && (
-                <Stat label="Mesa" value={clp(data.dineInStats.totalSales)} hint={`${data.dineInStats.totalOrders} pedidos · prom. ${clp(data.dineInStats.avgTicket)}`} color={PURPLE} />
-              )}
-              <Stat label="Propinas" value={clp(data.tipsTotal)} hint={data.tipsStats ? `${data.tipsStats.pctWithTip}% de pedidos · prom. ${clp(data.tipsStats.avgPerOrder)}` : undefined} color={PURPLE} />
               {data.cancellations && data.cancellations.count > 0 && (
                 <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
               )}
@@ -3589,7 +3597,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             {/* Canal + Tipo */}
             <SectionLabel>Desglose</SectionLabel>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
-              <ChannelBreakdown channels={data.channels} total={data.productSales} />
+              <ChannelBreakdown channels={data.channels} total={data.productSales} tipsTotal={data.tipsTotal} tipsStats={data.tipsStats} />
               <OrderTypePie byType={data.byType} />
             </div>
 
