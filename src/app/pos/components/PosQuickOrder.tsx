@@ -434,8 +434,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
         })}
       </div>
 
-      {/* Bottom: "Listo" button (mobile) */}
-      {cartCount > 0 && (
+      {/* Bottom: "Listo" button (solo mobile, en desktop ambos paneles son visibles) */}
+      {cartCount > 0 && isMobile && (
         <button onClick={() => setView('order')}
           style={{
             marginTop: 8, padding: '12px', borderRadius: 12, border: 'none', flexShrink: 0,
