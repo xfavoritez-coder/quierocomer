@@ -545,7 +545,7 @@ export default function PosHomePage() {
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'delivery' || tab === 'todos') && (
-        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} />
+        <OrdersBoard restaurantId={restaurantId} type={tab} allBranches={allBranches} onOrdersUpdate={handleOrdersUpdate} refreshRef={refreshOrdersRef} onNewOrder={() => { setNpMesa(null); setNpOpen(true) }} />
       )}
 
       {/* ── Mesas en modo Todas: vista multi-sucursal ── */}

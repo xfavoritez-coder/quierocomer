@@ -572,7 +572,7 @@ function OrderCard({
                 }}
                 disabled={busy}
                 style={{
-                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none',
+                  fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
                   background: '#fff', color: '#374151', border: '1.5px solid #d1d5db',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
@@ -1273,7 +1273,7 @@ function MobileDetailSheet({ children, onClose }: { children: React.ReactNode; o
 
 // ── Main component ──────────────────────────────────────────────────
 
-export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersUpdate, refreshRef }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[]; onOrdersUpdate?: (orders: PosOrderLite[]) => void; refreshRef?: React.MutableRefObject<() => void> }) {
+export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersUpdate, refreshRef, onNewOrder }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[]; onOrdersUpdate?: (orders: PosOrderLite[]) => void; refreshRef?: React.MutableRefObject<() => void>; onNewOrder?: () => void }) {
   const isDesktop = useIsDesktop()
   const [orders, setOrders] = useState<PosOrderLite[]>([])
   const [delifastEnabled, setDelifastEnabled] = useState(false)
@@ -1690,7 +1690,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
             </button>
           )}
           {!allBranches && (
-            <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
+            <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } if (onNewOrder) onNewOrder(); else navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               {newOrderLabel}
             </button>
