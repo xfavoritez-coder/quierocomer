@@ -1666,48 +1666,66 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
               </button>
             )}
           </div>
-          {/* Botones */}
+          {/* Botón unificado: vista + orden */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button onClick={() => setSortOpen(o => !o)} aria-label="Ordenar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}>
-              <SortIcon dir={sortDir} />
+            <button onClick={() => setSortOpen(o => !o)} aria-label="Opciones de vista" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, border: '1px solid var(--line)', background: sortOpen ? 'var(--sunk)' : 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+              </svg>
             </button>
             {sortOpen && (
               <>
                 <div onClick={() => setSortOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9 }} />
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
-                  {(['hora', 'total', 'estado'] as SortField[]).map(f => {
-                    const labels: Record<SortField, string> = { hora: 'Hora del pedido', total: 'Total', estado: 'Estado' }
-                    const isActive = sortField === f
-                    return (
-                      <div key={f} style={{ borderBottom: '1px solid var(--line)' }}>
-                        <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{labels[f]}</div>
-                        {(['desc', 'asc'] as const).map(d => {
-                          const dirLabel: Record<SortField, [string, string]> = {
-                            hora: ['Más nuevo primero', 'Más antiguo primero'],
-                            total: ['Mayor primero', 'Menor primero'],
-                            estado: ['Más atrasado primero', 'Más avanzado primero'],
-                          }
-                          const active = isActive && sortDir === d
-                          return (
-                            <button key={d} onClick={() => setSort(f, d)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 14px', border: 'none', background: active ? 'var(--sunk)' : 'transparent', cursor: 'pointer', fontSize: 13, color: active ? 'var(--ink)' : 'var(--ink-2)', fontFamily: 'var(--sans)', fontWeight: active ? 700 : 500, textAlign: 'left' }}>
-                              {active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>}
-                              {!active && <span style={{ width: 10 }} />}
-                              {dirLabel[f][d === 'desc' ? 0 : 1]}
-                            </button>
-                          )
-                        })}
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, overflow: 'hidden', minWidth: 210, boxShadow: '0 12px 32px rgba(0,0,0,.14)' }}>
+
+                  {/* Vista */}
+                  {maxCols > 1 && (
+                    <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Vista</div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {([1, 2, 3] as const).filter(c => c <= maxCols).map(c => (
+                          <button key={c} onClick={() => { setViewCols(c); try { localStorage.setItem('pos:boardCols:v2', String(c)) } catch {} }}
+                            style={{
+                              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                              padding: '8px 6px', borderRadius: 8, cursor: 'pointer',
+                              border: cols === c ? '2px solid var(--amber)' : '1.5px solid var(--line)',
+                              background: cols === c ? 'rgba(245,158,11,.08)' : 'var(--surface)',
+                              color: cols === c ? 'var(--amber)' : 'var(--ink-3)',
+                            }}
+                          >
+                            <ViewIcon cols={c} />
+                            <span style={{ fontSize: 10, fontWeight: 600 }}>{c === 1 ? 'Filas' : `${c} col`}</span>
+                          </button>
+                        ))}
                       </div>
-                    )
-                  })}
+                    </div>
+                  )}
+
+                  {/* Orden */}
+                  <div style={{ padding: '8px 0' }}>
+                    <div style={{ padding: '4px 14px 6px', fontSize: 10, fontWeight: 700, color: 'var(--ink-4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Ordenar por</div>
+                    {(['hora', 'total', 'estado'] as SortField[]).map(f => {
+                      const labels: Record<SortField, string> = { hora: 'Hora', total: 'Total', estado: 'Estado' }
+                      return (['desc', 'asc'] as const).map(d => {
+                        const dirLabel: Record<SortField, [string, string]> = {
+                          hora: ['Mas reciente', 'Mas antiguo'],
+                          total: ['Mayor monto', 'Menor monto'],
+                          estado: ['Mas atrasado', 'Mas avanzado'],
+                        }
+                        const active = sortField === f && sortDir === d
+                        return (
+                          <button key={`${f}-${d}`} onClick={() => setSort(f, d)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 14px', border: 'none', background: active ? 'var(--sunk)' : 'transparent', cursor: 'pointer', fontSize: 13, color: active ? 'var(--ink)' : 'var(--ink-2)', fontFamily: 'var(--sans)', fontWeight: active ? 700 : 400, textAlign: 'left' }}>
+                            {active ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="3" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg> : <span style={{ width: 10 }} />}
+                            {labels[f]}: {dirLabel[f][d === 'desc' ? 0 : 1]}
+                          </button>
+                        )
+                      })
+                    })}
+                  </div>
                 </div>
               </>
             )}
           </div>
-          {maxCols > 1 && (
-            <button onClick={cycleView} title={`Vista: ${cols === 1 ? 'filas' : cols + ' columnas'} · toca para cambiar`} aria-label="Cambiar vista" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 10px', cursor: 'pointer', flexShrink: 0 }}>
-              <ViewIcon cols={cols} />
-            </button>
-          )}
           {!allBranches && (
             <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } if (onNewOrder) onNewOrder(); else navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
