@@ -640,6 +640,35 @@ export async function GET(req: NextRequest) {
       const e = dineInHourMap.get(h);
       return { hour: h, orders: e?.orders ?? 0, sales: e?.sales ?? 0 };
     }),
+    // Historial detallado de cada mesa
+    history: dineInOrders.map(o => {
+      const rp = (o.rawPayload && typeof o.rawPayload === "object" && !Array.isArray(o.rawPayload)) ? o.rawPayload as Record<string, any> : {};
+      const mesa = rp.mesa || {};
+      const payment = rp.posPayment || null;
+      const items = Array.isArray(o.items) ? (o.items as any[]).map((it: any) => ({
+        name: it.productName || it.name || "Item",
+        qty: it.quantity || 1,
+        price: it.unit_price || 0,
+        addedAt: it.addedAt || null,
+      })) : [];
+      const net = Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0));
+      return {
+        id: o.id,
+        table: (o.tableLabel || "").trim(),
+        total: o.totalAmount || 0,
+        productSales: net,
+        tip: o.tipAmount || 0,
+        paid: (o.paidAmount || 0) >= (o.totalAmount || 0) && (o.totalAmount || 0) > 0,
+        covers: mesa.covers || null,
+        garzon: mesa.garzon || null,
+        openedAt: o.createdAt.toISOString(),
+        closedAt: payment?.at || null,
+        paymentMethod: payment?.method || null,
+        customerName: o.customerName || null,
+        items,
+        orderRef: o.orderReference || null,
+      };
+    }).sort((a, b) => a.openedAt.localeCompare(b.openedAt)),
   };
 
   return NextResponse.json({

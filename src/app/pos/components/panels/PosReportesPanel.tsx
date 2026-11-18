@@ -175,6 +175,7 @@ interface Report {
     avgTicket: number
     tables: { table: string; orders: number; sales: number }[]
     hourly: { hour: number; orders: number; sales: number }[]
+    history?: any[]
   }
   paymentMethods?: PaymentMethod[]
   cancellations?: CancellationData
@@ -3467,6 +3468,94 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                     })}
                   </div>
                 </Card>
+
+                {/* Historial de mesas */}
+                {data.dineInStats.history && data.dineInStats.history.length > 0 && (
+                  <>
+                    <SectionLabel>Historial de mesas</SectionLabel>
+                    {data.dineInStats.history.map((m: any) => {
+                      const duration = m.closedAt ? Math.round((new Date(m.closedAt).getTime() - new Date(m.openedAt).getTime()) / 60000) : null
+                      const durationStr = duration ? (duration < 60 ? `${duration} min` : `${Math.floor(duration / 60)}h ${duration % 60}m`) : null
+                      const openTime = new Date(m.openedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })
+                      const closeTime = m.closedAt ? new Date(m.closedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' }) : null
+                      // Calcular tiempo entre rondas
+                      const itemTimes = (m.items || []).filter((it: any) => it.addedAt).map((it: any) => new Date(it.addedAt).getTime()).sort((a: number, b: number) => a - b)
+                      const rounds: number[] = []
+                      for (let i = 1; i < itemTimes.length; i++) {
+                        const diff = Math.round((itemTimes[i] - itemTimes[i - 1]) / 60000)
+                        if (diff > 2) rounds.push(diff) // solo gaps > 2 min como rondas separadas
+                      }
+                      const avgRound = rounds.length > 0 ? Math.round(rounds.reduce((s: number, r: number) => s + r, 0) / rounds.length) : null
+
+                      return (
+                        <Card key={m.id} style={{ padding: '14px 16px' }}>
+                          {/* Header */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 10, background: m.paid ? '#dcfce7' : `${PURPLE}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={m.paid ? '#16a34a' : PURPLE} strokeWidth="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10"/><path d="M19 8v10"/><path d="M3 18h18"/></svg>
+                              </div>
+                              <div>
+                                <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Mesa {m.table}</div>
+                                <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)' }}>
+                                  {openTime}{closeTime ? ` → ${closeTime}` : ' · Abierta'}
+                                  {durationStr && <span style={{ color: 'var(--ink-4)', marginLeft: 6 }}>({durationStr})</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontFamily: 'var(--mono)', fontSize: '0.92rem', fontWeight: 800, color: 'var(--ink)' }}>{clp(m.total)}</div>
+                              {m.tip > 0 && <div style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', color: '#16a34a' }}>+{clp(m.tip)} propina</div>}
+                            </div>
+                          </div>
+
+                          {/* Info pills */}
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                            {m.covers && (
+                              <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: 'var(--sunk)', color: 'var(--ink-2)' }}>
+                                {m.covers} {m.covers === 1 ? 'comensal' : 'comensales'}
+                              </span>
+                            )}
+                            {m.garzon && (
+                              <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: 'var(--sunk)', color: 'var(--ink-2)' }}>
+                                {m.garzon}
+                              </span>
+                            )}
+                            {m.paymentMethod && (
+                              <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: m.paid ? '#dcfce7' : '#fef3c7', color: m.paid ? '#16a34a' : '#d97706' }}>
+                                {m.paymentMethod.charAt(0).toUpperCase() + m.paymentMethod.slice(1)}
+                              </span>
+                            )}
+                            {!m.paid && (
+                              <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: '#fef3c7', color: '#d97706' }}>Sin cobrar</span>
+                            )}
+                            {avgRound && (
+                              <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: `${PURPLE}14`, color: PURPLE }}>
+                                ~{avgRound} min entre rondas
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Items */}
+                          {m.items.length > 0 && (
+                            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+                              {m.items.map((it: any, idx: number) => (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, padding: '3px 0', fontSize: '0.78rem' }}>
+                                  <span style={{ color: 'var(--ink)' }}>
+                                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--amber)', marginRight: 4 }}>{it.qty}×</span>
+                                    {it.name}
+                                    {it.addedAt && <span style={{ fontSize: '0.65rem', color: 'var(--ink-4)', marginLeft: 6 }}>{new Date(it.addedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })}</span>}
+                                  </span>
+                                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.74rem', color: 'var(--ink-2)', flexShrink: 0 }}>{clp(it.price * it.qty)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    })}
+                  </>
+                )}
               </div>
             )}
           </>
