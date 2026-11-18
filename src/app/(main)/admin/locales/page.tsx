@@ -1586,6 +1586,14 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
   const [xil, setXil] = useState(restaurant.toteatLocalId !== null ? String(restaurant.toteatLocalId) : "");
   const [xiu, setXiu] = useState(restaurant.toteatUserId !== null ? String(restaurant.toteatUserId) : "");
   const [token, setToken] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const hasWebhook = !!restaurant.toteatWebhookSecret;
+  const WEBHOOK_URL = "https://quierocomer.com/api/ecommerce/toteat/webhook";
+  const copyTo = async (text: string, which: string) => {
+    try { await navigator.clipboard.writeText(text); setCopied(which); setTimeout(() => setCopied(null), 1300); } catch { /* noop */ }
+  };
 
   useEffect(() => {
     setXir(restaurant.toteatRestaurantId || "");
@@ -1594,6 +1602,8 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
     setToken("");
     setEditing(false);
     setMsg(null);
+    setShowSecret(false);
+    setCopied(null);
   }, [restaurant.id]);
 
   const save = async () => {
@@ -1654,7 +1664,7 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setOpen(!open)}>
         <div>
           <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-            🔌 Integración Toteat {isConfigured ? <span style={{ color: "#4ade80", fontSize: "0.7rem", marginLeft: 6 }}>● Conectado</span> : <span style={{ color: "#999", fontSize: "0.7rem", marginLeft: 6 }}>○ Sin configurar</span>}
+            🔌 Integración Toteat {isConfigured ? <span style={{ color: "#4ade80", fontSize: "0.7rem", marginLeft: 6 }}>● Conectado</span> : <span style={{ color: "#999", fontSize: "0.7rem", marginLeft: 6 }}>○ Sin configurar</span>}{hasWebhook && <span style={{ color: "#60a5fa", fontSize: "0.7rem", marginLeft: 6 }}>● Webhook de ingesta</span>}
           </p>
           {isConfigured && (
             <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "2px 0 0" }}>
@@ -1667,6 +1677,36 @@ function ToteatSection({ restaurant, onUpdate }: { restaurant: Restaurant; onUpd
 
       {open && (
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #2A2A2A", display: "flex", flexDirection: "column", gap: 10 }}>
+          {hasWebhook && (() => {
+            const codeStyle = { flex: 1, minWidth: 0, fontFamily: "monospace", fontSize: "0.68rem", color: "#bbb", background: "#111", padding: "6px 8px", borderRadius: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const };
+            const btnStyle = { flexShrink: 0, padding: "6px 10px", borderRadius: 6, border: "1px solid #333", background: "transparent", color: "#aaa", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" };
+            const secret = restaurant.toteatWebhookSecret || "";
+            const maskedSecret = secret.length > 6 ? `${"•".repeat(Math.max(4, secret.length - 4))}${secret.slice(-4)}` : "••••";
+            return (
+              <div style={{ padding: "10px 12px", background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.25)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.76rem", fontWeight: 700, color: "#cfe3ff", margin: 0 }}>🔑 Webhook de ingesta de pedidos</p>
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#8aa", margin: "2px 0 0", lineHeight: 1.4 }}>Toteat (o la fuente externa) postea los pedidos a esta URL y autentica con el token. Resuelve el local por el token (es único).</p>
+                </div>
+                <div>
+                  <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#789" }}>URL del webhook</span>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 3 }}>
+                    <code style={codeStyle}>{WEBHOOK_URL}</code>
+                    <button onClick={() => copyTo(WEBHOOK_URL, "url")} style={btnStyle}>{copied === "url" ? "✓" : "Copiar"}</button>
+                  </div>
+                </div>
+                <div>
+                  <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#789" }}>Token (header <code>x-webhook-token</code> / <code>Authorization</code> / <code>?token=</code>)</span>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 3 }}>
+                    <code style={codeStyle}>{showSecret ? secret : maskedSecret}</code>
+                    <button onClick={() => setShowSecret((v) => !v)} style={btnStyle}>{showSecret ? "Ocultar" : "Mostrar"}</button>
+                    <button onClick={() => copyTo(secret, "token")} style={btnStyle}>{copied === "token" ? "✓" : "Copiar"}</button>
+                  </div>
+                </div>
+                <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#f59e0b", margin: 0, lineHeight: 1.4 }}>⚠️ No cambies ni borres este token si una fuente externa ya inyecta pedidos con él (p. ej. Hand Roll): se cortaría la entrada de pedidos. El borrado está en Pilares → Boletas SII → "Cortar Toteat".</p>
+              </div>
+            );
+          })()}
           {!editing && isConfigured ? (
             <div style={{ fontFamily: F, fontSize: "0.78rem", color: "#aaa" }}>
               <p style={{ margin: 0 }}><span style={{ color: "#999" }}>Restaurant ID (xir):</span> {restaurant.toteatRestaurantId}</p>
