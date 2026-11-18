@@ -21,7 +21,7 @@ interface CartOption { group_id: string; group_name: string; value_id: string; v
 
 type SaleType = 'QUICK' | 'DELIVERY' | 'PICKUP'
 type View = 'order' | 'products'
-type PayMethod = 'efectivo' | 'tarjeta' | 'transferencia'
+type PayMethod = 'efectivo' | 'debito' | 'credito' | 'transferencia'
 
 const AMBER = '#f59e0b'
 const F = "var(--sans, 'Inter', system-ui, sans-serif)"
@@ -58,10 +58,23 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [sending, setSending] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [discountType, setDiscountType] = useState<'%' | '$'>('%')
+  const [discountInput, setDiscountInput] = useState('')
   const catScrollRef = useRef<HTMLDivElement>(null)
+
+  // Mobile detection (must be before render)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0)
   const subtotal = cart.reduce((s, i) => s + (i.courtesy ? 0 : i.unit_price * i.quantity), 0)
+  const discount = discountInput ? (discountType === '%' ? Math.round(subtotal * Math.min(100, Number(discountInput) || 0) / 100) : Math.min(subtotal, Number(discountInput) || 0)) : 0
+  const total = Math.max(0, subtotal - discount)
 
   // Product quantity map for badges
   const qtyMap = useMemo(() => {
@@ -135,7 +148,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           customerPhone: saleType === 'QUICK' ? '' : customerPhone.trim(),
           orderType: saleType,
           deliveryAddress: saleType === 'DELIVERY' ? [address, addressRef].filter(Boolean).join(', ') : null,
-          paymentMethod: saleType === 'QUICK' ? 'efectivo' : payMethod,
+          paymentMethod: saleType === 'QUICK' ? 'efectivo' : (payMethod === 'debito' || payMethod === 'credito' ? 'tarjeta' : payMethod),
+          discount,
           posNative: true,
           items: cart.map(i => ({
             product_id: i.product_id, name: i.name, unit_price: i.unit_price,
@@ -167,10 +181,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   }, [categories, filtered])
 
   // ── Validation ──────────────────────────────────────────
-  const canSubmit = cart.length > 0 && !sending && (
-    saleType === 'QUICK' || isMesa ||
-    (customerName.trim() && customerPhone.trim() && (saleType !== 'DELIVERY' || address.trim()))
-  )
+  const validationMsg = !cart.length ? 'Agrega productos' : (saleType !== 'QUICK' && !isMesa && !customerName.trim()) ? 'Falta el nombre' : (saleType !== 'QUICK' && !isMesa && !customerPhone.trim()) ? 'Falta el telefono' : (saleType === 'DELIVERY' && !address.trim()) ? 'Falta la direccion' : null
+  const canSubmit = !validationMsg && !sending
 
   // ── Render ──────────────────────────────────────────────
   const isNarrow = typeof window !== 'undefined' && window.innerWidth < 768
@@ -229,19 +241,34 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           {/* Payment */}
           <div>
             <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>Medio de pago</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {(['efectivo', 'tarjeta', 'transferencia'] as PayMethod[]).map(m => (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {([['efectivo', 'Efectivo'], ['debito', 'Debito'], ['credito', 'Credito'], ['transferencia', 'Transferencia']] as [PayMethod, string][]).map(([m, label]) => (
                 <button key={m} onClick={() => setPayMethod(m)}
                   style={{
-                    flex: 1, padding: '8px 6px', borderRadius: 8, fontFamily: F, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    flex: '1 1 calc(50% - 4px)', padding: '8px 6px', borderRadius: 8, fontFamily: F, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     border: payMethod === m ? `2px solid ${AMBER}` : '1.5px solid var(--line)',
                     background: payMethod === m ? `${AMBER}12` : 'var(--surface)',
                     color: payMethod === m ? AMBER : 'var(--ink-3)',
-                    textTransform: 'capitalize',
                   }}
-                >{m}</button>
+                >{label}</button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Descuento (todos los tipos) */}
+      {!isMesa && cart.length > 0 && (
+        <div>
+          <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>Descuento</label>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ display: 'flex', borderRadius: 8, border: '1.5px solid var(--line)', overflow: 'hidden', flexShrink: 0 }}>
+              <button onClick={() => setDiscountType('%')} style={{ padding: '7px 10px', border: 'none', fontFamily: F, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: discountType === '%' ? `${AMBER}18` : 'var(--surface)', color: discountType === '%' ? AMBER : 'var(--ink-3)' }}>%</button>
+              <button onClick={() => setDiscountType('$')} style={{ padding: '7px 10px', border: 'none', borderLeft: '1px solid var(--line)', fontFamily: F, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: discountType === '$' ? `${AMBER}18` : 'var(--surface)', color: discountType === '$' ? AMBER : 'var(--ink-3)' }}>$</button>
+            </div>
+            <input value={discountInput} onChange={e => setDiscountInput(e.target.value.replace(/[^0-9]/g, ''))} placeholder={discountType === '%' ? '0%' : '$0'}
+              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: MONO, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+            {discount > 0 && <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: '#ef4444', flexShrink: 0 }}>-{clp(discount)}</span>}
           </div>
         </div>
       )}
@@ -291,20 +318,33 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
       {/* Total + Submit */}
       {cart.length > 0 && (
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 'auto' }}>
+          {discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: F, fontSize: 13, color: 'var(--ink-3)', marginBottom: 4 }}>
+              <span>Subtotal</span><span style={{ fontFamily: MONO }}>{clp(subtotal)}</span>
+            </div>
+          )}
+          {discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: F, fontSize: 13, color: '#ef4444', marginBottom: 4 }}>
+              <span>Descuento</span><span style={{ fontFamily: MONO }}>-{clp(discount)}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: F, fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginBottom: 10 }}>
             <span>Total</span>
-            <span style={{ fontFamily: MONO }}>{clp(subtotal)}</span>
+            <span style={{ fontFamily: MONO }}>{clp(total)}</span>
           </div>
-          <button onClick={submit} disabled={!canSubmit}
+          <button onClick={canSubmit ? submit : undefined}
             style={{
               width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-              background: canSubmit ? AMBER : 'var(--line)', color: canSubmit ? '#fff' : 'var(--ink-4)',
+              background: canSubmit ? AMBER : '#e5e7eb', color: canSubmit ? '#fff' : '#9ca3af',
               fontFamily: F, fontSize: 15, fontWeight: 800, cursor: canSubmit ? 'pointer' : 'default',
-              opacity: sending ? 0.6 : 1,
+              opacity: sending ? 0.6 : 1, position: 'relative',
             }}
           >
             {sending ? 'Enviando...' : isMesa ? 'Enviar a cocina' : 'Tomar pedido'}
           </button>
+          {validationMsg && !sending && (
+            <p style={{ fontFamily: F, fontSize: 12, color: '#ef4444', textAlign: 'center', marginTop: 6 }}>{validationMsg}</p>
+          )}
         </div>
       )}
     </div>
@@ -320,10 +360,10 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           style={{ width: '100%', padding: '9px 12px 9px 32px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
       </div>
 
-      {/* Categories horizontal scroll */}
+      {/* Categories */}
       {!search && (
-        <div ref={catScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', flexShrink: 0, marginBottom: 10, scrollbarWidth: 'none', paddingBottom: 2 }}>
-          <style>{`.pos-qo-cats::-webkit-scrollbar{display:none}`}</style>
+        <div ref={catScrollRef} style={{ display: 'flex', gap: 6, flexShrink: 0, marginBottom: 10, paddingBottom: 2, ...(isMobile ? { overflowX: 'auto', scrollbarWidth: 'none' } : { flexWrap: 'wrap' }) }}>
+          <style>{`div::-webkit-scrollbar{display:none}`}</style>
           <button onClick={() => setActiveCat(null)}
             style={{
               padding: '6px 14px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0,
@@ -372,12 +412,12 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
               {/* Photo */}
               {p.image_url && (
                 <img src={p.image_url} alt="" loading="lazy"
-                  style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                  style={{ width: isMobile ? 48 : 40, height: isMobile ? 48 : 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
               )}
               {/* Name + price */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', fontFamily: MONO }}>{clp(p.price)}</div>
+                <div style={{ fontSize: isMobile ? 15 : 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                <div style={{ fontSize: isMobile ? 14 : 13, fontWeight: 800, color: AMBER, fontFamily: MONO }}>{clp(p.price)}</div>
               </div>
               {/* Qty badge or + */}
               <div style={{
@@ -412,7 +452,6 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   // ── Layout ──────────────────────────────────────────────
   // Desktop: split (order left, products right)
   // Mobile: tabs
-  const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
