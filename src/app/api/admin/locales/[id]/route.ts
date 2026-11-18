@@ -128,6 +128,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.toteatLocalId !== undefined && { toteatLocalId: body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId) }),
         ...(body.toteatUserId !== undefined && { toteatUserId: body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId) }),
         ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
+        // Cortar por completo Toteat: limpiar el secret del webhook de ingesta (es el
+        // gate que bloquea la emisión de boletas por SharkPOS). Solo se permite limpiar.
+        ...(body.toteatWebhookSecret === null && { toteatWebhookSecret: null }),
         ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
         ...(body.genioFabEnabled !== undefined && { genioFabEnabled: body.genioFabEnabled }),
         ...(body.multiMenuEnabled !== undefined && { multiMenuEnabled: body.multiMenuEnabled }),

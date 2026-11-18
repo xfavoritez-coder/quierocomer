@@ -173,6 +173,20 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
     onUpdate({ sharkposTenantId: null, sharkposTenantRut: null, sharkposTenantName: null, sharkposTenantEnv: null, sharkposEnabled: false });
   }
 
+  async function cortarToteat() {
+    if (!confirm("¿Cortar la integración Toteat de este local?\n\nToteat dejará de inyectar pedidos (su webhook quedará sin credencial) y se habilita la emisión de boletas por SharkPOS. Los pedidos nuevos deben entrar por el POS nativo.\n\nReversible: se puede reconfigurar Toteat más adelante.")) return;
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch(`/api/admin/locales/${selected.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toteatWebhookSecret: null, toteatRestaurantId: null, toteatLocalId: null, toteatUserId: null, toteatApiToken: null }),
+      });
+      if (!res.ok) { setErr("No se pudo cortar Toteat"); setBusy(false); return; }
+      onUpdate({ toteatWebhookSecret: null, toteatRestaurantId: null, toteatLocalId: null, toteatUserId: null, toteatApiToken: null });
+    } catch { setErr("Error de red al cortar Toteat"); }
+    finally { setBusy(false); }
+  }
+
   const usesToteat = !!selected.toteatWebhookSecret;
   const active = registered || enabled;
 
@@ -202,7 +216,12 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
       </div>
 
       {usesToteat && (
-        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f59e0b", margin: "8px 0 0" }}>⚠️ Este local usa Toteat; su fiscal va por ahí. No se emitirán boletas por SharkPOS aunque esté habilitado.</p>
+        <div style={{ margin: "8px 0 0" }}>
+          <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f59e0b", margin: 0 }}>⚠️ Este local usa Toteat; su fiscal va por ahí. No se emitirán boletas por SharkPOS aunque esté habilitado.</p>
+          <button onClick={cortarToteat} disabled={busy} style={{ marginTop: 8, padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.4)", background: "transparent", color: "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+            {busy ? "Cortando…" : "Cortar Toteat (desvincular fiscal)"}
+          </button>
+        </div>
       )}
 
       {!encReady && platformReady && (
