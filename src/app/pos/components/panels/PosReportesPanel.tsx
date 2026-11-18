@@ -1185,12 +1185,10 @@ function SatisfaccionSection({ restaurantId, allBranches, onViewAll }: { restaur
             <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Últimos comentarios</div>
             {lastComments.map(r => {
               const avgR = r.answers.length > 0 ? r.answers.reduce((s, a) => s + a.v, 0) / r.answers.length : null
-              const canClick = !!(r.orderId && r.customerPhone)
               return (
                 <div
                   key={r.id}
-                  onClick={canClick ? () => handleCommentClick(r) : undefined}
-                  style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px', cursor: canClick ? 'pointer' : 'default' }}
+                  style={{ background: 'var(--sunk)', borderRadius: 10, padding: '8px 12px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: avgR !== null ? 4 : 0 }}>
                     {avgR !== null && <StarBar avg={avgR} />}
@@ -1213,12 +1211,6 @@ function SatisfaccionSection({ restaurantId, allBranches, onViewAll }: { restaur
                       {r.customerName && <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)' }}>— {r.customerName}</div>}
                       {(r as any).branchName && <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-3)' }}>{(r as any).branchName}</span>}
                     </div>
-                    {canClick && (
-                      <span style={{ fontFamily: F, fontSize: '0.62rem', color: 'var(--ink-4)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                        Ver pedido
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                      </span>
-                    )}
                   </div>
                 </div>
               )
