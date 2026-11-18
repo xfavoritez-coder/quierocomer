@@ -3414,6 +3414,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                 {(() => {
                   const totalItems = (data.dineInStats.history || []).reduce((s: number, m: any) => s + (m.items?.length || 0), 0)
                   const totalCovers = (data.dineInStats.history || []).reduce((s: number, m: any) => s + (m.covers || 0), 0)
+                  const totalTips = (data.dineInStats.history || []).reduce((s: number, m: any) => s + (m.tip || 0), 0)
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
                       <Stat label="Venta en mesa" value={clp(data.dineInStats.totalSales)} color={PURPLE} big span={2} />
@@ -3421,6 +3422,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                       <Stat label="Ticket promedio" value={clp(data.dineInStats.avgTicket)} color={BLUE} />
                       <Stat label="Items vendidos" value={totalItems.toLocaleString('es-CL')} color={GREEN} />
                       {totalCovers > 0 && <Stat label="Comensales" value={totalCovers.toLocaleString('es-CL')} color={PURPLE} />}
+                      {totalTips > 0 && <Stat label="Propinas" value={clp(totalTips)} color={'#16a34a'} />}
                     </div>
                   )
                 })()}
