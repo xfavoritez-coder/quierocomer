@@ -174,8 +174,8 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onOrderC
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, padding: '8px 12px 0', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             <TomarPedidos
               key={key}
               restaurantId={restaurantId}

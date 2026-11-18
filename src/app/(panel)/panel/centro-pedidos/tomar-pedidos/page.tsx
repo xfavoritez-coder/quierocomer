@@ -629,7 +629,7 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
   );
 
   return (
-    <div className="qc-storefront" style={{ fontFamily: FB }}>
+    <div className="qc-storefront" style={{ fontFamily: FB, ...(modalMode ? { display: "flex", flexDirection: "column" as const, flex: 1, minHeight: 0, height: "100%" } : {}) }}>
       <StoreStyles />
       {isMesa && !existingOrderId && mesaModalOpen && (
         modalMode
@@ -655,21 +655,27 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
           <div style={{ flex: 1, minWidth: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>{menuPanel}</div>
         </div>
       ) : (
-        <>
-          {/* Panel: ocupa hasta justo encima de la barra fija (evita scroll de página). */}
-          <div style={{ height: "calc(100dvh - 184px)", minHeight: 340, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+          {/* Panel: ocupa el espacio disponible */}
+          <div style={{ flex: 1, minHeight: 0, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             {mobileTab === "menu" ? menuPanel : cartPanel}
           </div>
-          {/* Barra de tabs FIJA abajo — portada al contenedor de tema para no verse
-              afectada por el zoom del panel. */}
-          {typeof document !== "undefined" && createPortal(
-            <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, display: "flex", gap: 8, padding: "8px 12px calc(8px + env(safe-area-inset-bottom))", background: C.card, borderTop: `1px solid ${C.border}`, boxShadow: "0 -4px 16px rgba(0,0,0,0.06)" }}>
+          {/* Barra de tabs */}
+          {modalMode ? (
+            <div style={{ display: "flex", gap: 8, padding: "8px 12px", background: C.card, borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
               <TabBtn active={mobileTab === "cart"} onClick={() => setMobileTab("cart")} icon={<ShoppingCart size={16} />} label={`Pedido${cartCount ? ` (${cartCount})` : ""}`} accent={accent} />
-              <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menú" accent={accent} />
-            </div>,
-            document.querySelector(".theme-dark, .theme-light") ?? document.body,
+              <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menu" accent={accent} />
+            </div>
+          ) : (
+            typeof document !== "undefined" && createPortal(
+              <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, display: "flex", gap: 8, padding: "8px 12px calc(8px + env(safe-area-inset-bottom))", background: C.card, borderTop: `1px solid ${C.border}`, boxShadow: "0 -4px 16px rgba(0,0,0,0.06)" }}>
+                <TabBtn active={mobileTab === "cart"} onClick={() => setMobileTab("cart")} icon={<ShoppingCart size={16} />} label={`Pedido${cartCount ? ` (${cartCount})` : ""}`} accent={accent} />
+                <TabBtn active={mobileTab === "menu"} onClick={() => setMobileTab("menu")} icon={<UtensilsCrossed size={16} />} label="Menu" accent={accent} />
+              </div>,
+              document.querySelector(".theme-dark, .theme-light") ?? document.body,
+            )
           )}
-        </>
+        </div>
       )}
 
       {modalProduct && <ModifiersModal product={modalProduct} accent={accent} onClose={() => setModalProduct(null)} onAdd={(base, qty) => { addToCart(base, qty); setModalProduct(null); if (!isWide) setMobileTab("cart"); }} />}
