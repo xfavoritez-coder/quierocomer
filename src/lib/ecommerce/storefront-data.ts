@@ -629,7 +629,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
   const key = (brandSlug || "").trim().toLowerCase();
   if (!key) return null;
   const rows = await prisma.restaurant.findMany({
-    where: { ecommerceEnabled: true, ecommerceStoreConfig: { path: ["brandSlug"], equals: key } },
+    where: { ecommerceEnabled: true, isActive: true, ecommerceStoreConfig: { path: ["brandSlug"], equals: key } },
     select: {
       id: true, slug: true, name: true, logoUrl: true, address: true, whatsapp: true, phone: true, instagram: true, googleMapsUrl: true, lat: true, lng: true,
       cartaAccentColor: true, ecommerceStoreConfig: true, ecommerceConfig: true,
