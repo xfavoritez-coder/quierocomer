@@ -350,7 +350,7 @@ function ChannelBreakdown({ channels, total }: { channels: Channel[]; total: num
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0, fontFamily: F, fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <span style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
                     {c.name}
-                    <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', fontWeight: 500 }}>· {c.orders} ped.</span>
+                    <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', fontWeight: 500 }}>· {c.orders} {c.name === 'Mesa' ? (c.orders === 1 ? 'mesa' : 'mesas') : 'ped.'}</span>
                   </span>
                   <span style={{ flexShrink: 0, fontFamily: F, fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)' }}>{clp(c.sales)} <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 500, color: 'var(--ink-3)' }}>({pct}%)</span></span>
                 </div>
