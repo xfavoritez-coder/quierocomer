@@ -535,6 +535,21 @@ function OrderCard({
                 {busy ? 'Procesando…' : next.label + ' →'}
               </button>
             )}
+            {/* Botón Cobrar — pedido entregado pero no pagado */}
+            {!paid && order.opsStage === 'delivered' && (
+              <button
+                onClick={() => onCobro(order)}
+                style={{
+                  fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: 'none',
+                  background: AMBER, color: '#fff',
+                  cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
+                  display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                Cobrar
+              </button>
+            )}
             {/* Pill de estado Delifast — visible en ready y out_for_delivery */}
             {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
