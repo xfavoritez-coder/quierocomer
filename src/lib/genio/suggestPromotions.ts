@@ -77,12 +77,13 @@ CONTEXTO:
 - Promociones anteriores: ${pastPromosText}
 
 REGLAS:
-- Cada promo debe incluir 1-3 platos
+- Cada promo debe incluir 1-3 platos DE LA CARTA (usa los nombres EXACTOS tal cual aparecen arriba, NO inventes platos ni nombres creativos)
+- "dishNames" debe contener nombres copiados textualmente de la carta
 - El descuento debe ser entre 10% y 30%
 - Justifica por qué esta promo tiene sentido con los datos
 - Escribe un copy corto para email (2-3 frases)
 - Los precios deben ser en CLP (pesos chilenos)
-- Sé creativo pero realista
+- El "name" de la promo puede ser creativo, pero los platos deben existir en la carta
 
 Responde SOLO con un JSON array de 3 objetos, sin markdown, sin explicación fuera del JSON:
 [{
@@ -129,10 +130,20 @@ Responde SOLO con un JSON array de 3 objetos, sin markdown, sin explicación fue
     return [];
   }
 
-  // Match dish names to IDs
+  // Match dish names to IDs — strict: require exact match (case-insensitive)
   return suggestions.map((s: any) => {
     const matchedDishIds = (s.dishNames || []).map((name: string) => {
-      const match = dishes.find(d => d.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(d.name.toLowerCase()));
+      // Exact match first
+      const exact = dishes.find(d => d.name.toLowerCase().trim() === name.toLowerCase().trim());
+      if (exact) return exact.id;
+      // Fallback: one must be a full substring of the other, but only if the shorter is >= 5 chars
+      const match = dishes.find(d => {
+        const dn = d.name.toLowerCase().trim();
+        const sn = name.toLowerCase().trim();
+        const shorter = dn.length < sn.length ? dn : sn;
+        if (shorter.length < 5) return false;
+        return dn.includes(sn) || sn.includes(dn);
+      });
       return match?.id;
     }).filter(Boolean);
 
@@ -148,5 +159,6 @@ Responde SOLO con un JSON array de 3 objetos, sin markdown, sin explicación fue
       justification: s.justification,
       emailCopy: s.emailCopy,
     };
-  });
+  // Skip suggestions where no real dishes were matched
+  }).filter((s: PromoSuggestion) => s.dishIds.length > 0);
 }

@@ -45,7 +45,7 @@ const INNER_PAGES: Record<string, { title: string; component: React.ComponentTyp
 }
 const TABS: { id: Tab; label: string }[] = [
   { id: 'todos', label: 'Todos' },
-  { id: 'delivery', label: 'Online' },
+  { id: 'delivery', label: 'Pedidos' },
   { id: 'mesas', label: 'Mesas' },
 ]
 
