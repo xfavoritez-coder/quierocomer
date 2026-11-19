@@ -100,10 +100,10 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onMinimize() }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') { isMesa ? onClose() : onMinimize() } }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open, onMinimize])
+  }, [open, onMinimize, onClose, isMesa])
 
   // El modal se mantiene MONTADO aunque esté minimizado (display:none) para no perder
   // lo escrito en el pedido; al minimizar se muestra un pill flotante, apilado por índice.
@@ -128,7 +128,7 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
       </button>
       )}
       <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,23,42,.6)', backdropFilter: 'blur(6px)', display: open ? 'flex' : 'none', alignItems: 'stretch', justifyContent: 'center', animation: 'npFadeIn .15s ease-out' }}
-        onClick={onMinimize}>
+        onClick={isMesa ? onClose : onMinimize}>
       <style>{`@keyframes npFadeIn{from{opacity:0}to{opacity:1}}@keyframes npSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
       <div onClick={e => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 1200, margin: 16, background: '#f8fafc', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.35)', animation: 'npSlideUp .2s ease-out', position: 'relative' }}>
@@ -143,38 +143,43 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
             </span>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={onMinimize} title="Minimizar" style={{ background: '#f3f4f6', border: 'none', cursor: 'pointer', padding: '6px 8px', color: '#6b7280', display: 'flex', borderRadius: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14"/></svg>
-            </button>
+            {!isMesa && (
+              <button onClick={onMinimize} title="Minimizar" style={{ background: '#f3f4f6', border: 'none', cursor: 'pointer', padding: '6px 8px', color: '#6b7280', display: 'flex', borderRadius: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14"/></svg>
+              </button>
+            )}
             <button onClick={onClose} title="Cerrar" style={{ background: '#f3f4f6', border: 'none', cursor: 'pointer', padding: '6px 8px', color: '#6b7280', display: 'flex', borderRadius: 8 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
         {/* Content */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, padding: '12px 14px 8px' }}>
-          {!preloaded ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8, color: '#9ca3af', fontFamily: F, fontSize: 14 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              Cargando...
-            </div>
-          ) : (
-            <PosQuickOrder
-              restaurantId={restaurantId}
-              data={preloaded}
-              onDone={onOrderCreated}
-              isMesa={isMesa}
-              tableLabel={tableLabel || undefined}
-              existingOrderId={existingOrderId}
-              covers={mesaSetup.covers}
-              garzon={mesaSetup.garzon}
-              onClientInfo={(name, label) => { clientNameRef.current = name; orderLabelRef.current = label || (isMesa ? `Mesa ${tableLabel}` : name || 'Nuevo pedido') }}
-            />
-          )}
-        </div>
-        {isMesa && mesaSetup.show && (
-          <MesaSetupModal garzones={garzones} onConfirm={(c, g) => setMesaSetup({ show: false, covers: c, garzon: g })} onClose={onClose} />
+        {isMesa && mesaSetup.show ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <MesaSetupModal garzones={garzones} onConfirm={(c, g) => setMesaSetup({ show: false, covers: c, garzon: g })} onClose={onClose} />
+          </div>
+        ) : (
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, padding: '12px 14px 8px' }}>
+            {!preloaded ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8, color: '#9ca3af', fontFamily: F, fontSize: 14 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                Cargando...
+              </div>
+            ) : (
+              <PosQuickOrder
+                restaurantId={restaurantId}
+                data={preloaded}
+                onDone={onOrderCreated}
+                isMesa={isMesa}
+                tableLabel={tableLabel || undefined}
+                existingOrderId={existingOrderId}
+                covers={mesaSetup.covers}
+                garzon={mesaSetup.garzon}
+                onClientInfo={(name, label) => { clientNameRef.current = name; orderLabelRef.current = label || (isMesa ? `Mesa ${tableLabel}` : name || 'Nuevo pedido') }}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>
