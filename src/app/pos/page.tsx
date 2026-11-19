@@ -596,8 +596,8 @@ export default function PosHomePage() {
               </svg>
             </button>
 
-            {/* Centro: logo + branch (centrado en mobile Y desktop) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 auto' }}>
+            {/* Logo + branch: centrado en mobile, izquierda en desktop */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: isDesktop ? undefined : '0 auto' }}>
               <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
