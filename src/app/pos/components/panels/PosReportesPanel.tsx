@@ -3624,7 +3624,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                             <div style={{ fontFamily: 'var(--mono)', fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>{clp(br.data.productSales)}</div>
                             {prevBr && prevBr.sales > 0 && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                                <span style={{ fontFamily: 'var(--mono)', fontSize: '0.66rem', fontWeight: 600, color: 'var(--ink-4)' }}>{clp(prevBr.sales)}</span>
+                                <span style={{ fontFamily: 'var(--mono)', fontSize: '0.66rem', fontWeight: 600, color: 'var(--ink-4)' }}>sem. ant. {clp(prevBr.sales)}</span>
                                 {delta !== null && (
                                   <span style={{ fontFamily: 'var(--mono)', fontSize: '0.66rem', fontWeight: 700, color: delta >= 0 ? GREEN : '#ef4444' }}>
                                     {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%
