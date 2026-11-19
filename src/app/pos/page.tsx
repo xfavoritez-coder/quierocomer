@@ -332,11 +332,13 @@ export default function PosHomePage() {
   // Load floor plan config (refresca al entrar a Mesas para reflejar lo recién guardado)
   useEffect(() => {
     if (!restaurantId) return
-    fetch(`/api/admin/locales/${restaurantId}`)
+    fetch(`/api/admin/locales/${restaurantId}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
       .then(d => setPosFloorConfig(d?.posFloorConfig ?? null))
       .catch(() => {})
-  }, [restaurantId, tab])
+    // Refetchea al cambiar de pestaña Y al entrar/salir de una inner page (ej. cerrar el
+    // editor de salón) → refleja el toggle "usar distribución" recién guardado sin refrescar.
+  }, [restaurantId, tab, innerPage])
 
   // Ocupación de mesas: refresca SIEMPRE cada 15s (badge visible en todas las tabs).
   useEffect(() => {

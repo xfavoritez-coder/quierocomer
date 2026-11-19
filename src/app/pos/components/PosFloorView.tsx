@@ -69,18 +69,23 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
     return { x: Math.max(0, minX - pad), y: Math.max(0, minY - pad), w: maxX - minX + pad * 2, h: maxY - minY + pad * 2 }
   }, [tables, config, canvasW, canvasH])
 
-  // Auto-scale: fit the bounding box of tables, not the full canvas
+  // Auto-scale: llena TODO el ancho disponible (sin cap bajo) manteniendo la relación de
+  // aspecto; solo se limita por un presupuesto de alto (para no exceder la pantalla).
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const obs = new ResizeObserver(entries => {
-      const { width } = entries[0].contentRect
-      const scaleW = width / bbox.w
-      const scaleH = (width * 0.7) / bbox.h // limit height to 70% of width for comfort
-      setScale(Math.min(1.2, Math.max(0.5, Math.min(scaleW, scaleH))))
-    })
+    const recompute = () => {
+      const width = el.clientWidth || el.getBoundingClientRect().width
+      if (!width) return
+      // Prioriza LLENAR EL ANCHO disponible (el contenedor hace scroll vertical si queda
+      // alto). Cap 2.6x para no agrandar demasiado cuando hay pocas mesas.
+      setScale(Math.max(0.3, Math.min(width / bbox.w, 2.6)))
+    }
+    recompute()
+    const obs = new ResizeObserver(recompute)
     obs.observe(el)
-    return () => obs.disconnect()
+    window.addEventListener('resize', recompute)
+    return () => { obs.disconnect(); window.removeEventListener('resize', recompute) }
   }, [bbox])
 
   const hasFloorPlan = tables.some(t => t.x > 0 || t.y > 0)
