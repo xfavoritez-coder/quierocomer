@@ -90,7 +90,7 @@ function DateRangePicker({ fromDate, toDate, today, onFromChange, onToChange, on
         </button>
         {dropOpen && (
           <div style={{
-            position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50,
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
             background: 'var(--surface)', border: '1px solid var(--line)',
             borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,.10)',
             minWidth: 148, padding: '4px 0', overflow: 'hidden',
