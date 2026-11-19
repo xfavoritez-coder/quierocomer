@@ -1741,7 +1741,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
         {/* Header: buscador + botones */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           {/* Buscador */}
-          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: isDesktop ? 320 : undefined }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input
               type="search"
@@ -1818,8 +1818,8 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
             )}
           </div>
           {!allBranches && (
-            <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } if (onNewOrder) onNewOrder(); else navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', borderRadius: 9, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <button onClick={() => { if (!cajaOpen) { navigate('/pos/caja'); return } if (onNewOrder) onNewOrder(); else navigate('/pos/tomar-pedido') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', background: 'var(--amber)', color: '#fff', borderRadius: 9, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)', flexShrink: 0, boxShadow: '0 2px 8px rgba(245,158,11,.25)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               {newOrderLabel}
             </button>
           )}
