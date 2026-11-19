@@ -578,8 +578,8 @@ export default function PosHomePage() {
 
             <div style={{ flex: 1 }} />
 
-            {/* Desktop: tabs centrados */}
-            {isDesktop && !innerPage && (
+            {/* Desktop: tabs centrados — siempre visibles */}
+            {isDesktop && (
               <div className="pos-tabs-bar" style={{ flexShrink: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
                 {TABS.map(t => (
                   <button
@@ -629,8 +629,8 @@ export default function PosHomePage() {
         </div>
       )}
 
-      {/* ── Tabs mobile: Todos · Pedidos · Mesas ── */}
-      {!isDesktop && !innerPage && (
+      {/* ── Tabs mobile: Todos · Pedidos · Mesas — siempre visibles ── */}
+      {!isDesktop && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '8px 0', background: 'var(--surface)', borderBottom: '1px solid var(--line)',
