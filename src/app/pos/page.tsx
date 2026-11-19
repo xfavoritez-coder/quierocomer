@@ -492,7 +492,50 @@ export default function PosHomePage() {
               }}>POS</span>
             </a>
 
-            <div style={{ flex: 1 }} />
+            {/* Sucursales — misma fila, centradas en el espacio restante */}
+            {restaurants.length > 1 ? (
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 6, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
+                margin: '0 12px',
+              }}>
+                {restaurants.map(b => {
+                  const active = effectiveBranchMode === b.id
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => handleBranchSelect(b.id)}
+                      style={{
+                        padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
+                        border: active ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
+                        background: active ? 'var(--amber-tint)' : 'transparent',
+                        fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
+                        color: active ? 'var(--amber-press)' : 'var(--ink-3)',
+                        whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                      }}
+                    >
+                      {b.branchName ?? b.name}
+                    </button>
+                  )
+                })}
+                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
+                <button
+                  onClick={() => handleBranchSelect('todas')}
+                  style={{
+                    padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
+                    border: effectiveBranchMode === 'todas' ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
+                    background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
+                    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
+                    color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
+                    whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                  }}
+                >
+                  Todas
+                </button>
+              </div>
+            ) : (
+              <div style={{ flex: 1 }} />
+            )}
 
             {/* Pending sync */}
             {pendingCount > 0 && (
@@ -504,49 +547,6 @@ export default function PosHomePage() {
               </button>
             )}
           </div>
-
-          {/* Fila sucursales — centrada */}
-          {restaurants.length > 1 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: 6, padding: '0 14px 10px',
-              overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
-            }}>
-              {restaurants.map(b => {
-                const active = effectiveBranchMode === b.id
-                return (
-                  <button
-                    key={b.id}
-                    onClick={() => handleBranchSelect(b.id)}
-                    style={{
-                      padding: '6px 16px', borderRadius: 999, cursor: 'pointer',
-                      border: active ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
-                      background: active ? 'var(--amber-tint)' : 'transparent',
-                      fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
-                      color: active ? 'var(--amber-press)' : 'var(--ink-3)',
-                      whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-                    }}
-                  >
-                    {b.branchName ?? b.name}
-                  </button>
-                )
-              })}
-              <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
-              <button
-                onClick={() => handleBranchSelect('todas')}
-                style={{
-                  padding: '6px 16px', borderRadius: 999, cursor: 'pointer',
-                  border: effectiveBranchMode === 'todas' ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
-                  background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
-                  fontFamily: 'var(--sans)', fontSize: 13, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
-                  color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
-                  whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-                }}
-              >
-                Todas
-              </button>
-            </div>
-          )}
 
           {/* Separador */}
           <div style={{ height: 1, background: 'var(--line)' }} />
