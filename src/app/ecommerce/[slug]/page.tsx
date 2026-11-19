@@ -128,7 +128,7 @@ export default async function EcommerceStorePage({ params, searchParams }: { par
   const brandSlug = data.tenant.brandSlug || await loadBrandSlugForSlug(slug);
   if (brandSlug) {
     const brand = await loadEcommerceBrand(brandSlug);
-    if (brand) siblings = brand.branches.filter((b) => b.id !== data.tenant.id);
+    if (brand) siblings = brand.branches.filter((b) => b.id !== data.tenant.id && !b.hidden);
   }
 
   const gtm = <GtmScript id={data.tenant.gtmId} />;

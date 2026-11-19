@@ -294,7 +294,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: text3, marginBottom: 12 }}>Explorar</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {brandMode && siblings && siblings.length > 1 && (
+                {brandMode && siblings && siblings.filter(s => !(s as any).hidden).length > 0 && (
                   <a href="/locales" style={{ fontSize: 13, color: text2, textDecoration: 'none' }}>Nuestros locales</a>
                 )}
                 {tenant.website && (
