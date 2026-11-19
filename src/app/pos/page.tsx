@@ -83,9 +83,9 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
         onClick={() => setOpen(o => !o)}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 7,
-          padding: '5px 10px', borderRadius: 9,
+          padding: '6px 11px', borderRadius: 9,
           border: '1px solid var(--line)', background: 'var(--surface)',
-          fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
+          fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
           color: 'var(--ink)', cursor: 'pointer', outline: 'none',
         }}
       >
@@ -596,17 +596,18 @@ export default function PosHomePage() {
       )}
       {/* ── Header unificado — siempre visible ── */}
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, position: 'relative' }}>
-            {/* Hamburger + Logo */}
-            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, position: 'relative', justifyContent: isDesktop ? undefined : 'center' }}>
+            {/* Hamburger */}
+            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0, ...(isDesktop ? {} : { position: 'absolute', left: 14 }) }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
+            {/* Logo */}
             <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" style={{ width: 26, height: 26, borderRadius: 7 }} />
-              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+              <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
+              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 15, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
             </a>
 
             {/* Nombre local o branch select */}
