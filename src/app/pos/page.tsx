@@ -131,18 +131,13 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
               >
                 {storeIcon(active ? 'var(--ink)' : 'var(--ink-3)', 13)}
                 <span style={{ flex: 1 }}>{opt.label}</span>
-                {opt.count > 0 && (
+                {!active && opt.count > 0 && (
                   <span style={{
                     fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
                     padding: '1px 5px', borderRadius: 999, lineHeight: '14px',
-                    background: active ? 'var(--ink)' : 'var(--ink-3)',
+                    background: 'var(--ink-3)',
                     color: '#fff',
                   }}>{opt.count}</span>
-                )}
-                {active && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
                 )}
               </button>
             )
