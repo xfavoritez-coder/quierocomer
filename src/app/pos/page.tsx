@@ -52,7 +52,7 @@ const TABS: { id: Tab; label: string }[] = [
 // ── Modals ────────────────────────────────────────────────────────
 
 // ── Branch Dropdown (custom, no native select) ──
-function BranchDropdown({ restaurants, value, onChange }: { restaurants: { id: string; name: string; branchName?: string | null }[]; value: string; onChange: (id: string) => void }) {
+function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaurants: { id: string; name: string; branchName?: string | null }[]; value: string; onChange: (id: string) => void; counts?: Record<string, number> }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -70,10 +70,12 @@ function BranchDropdown({ restaurants, value, onChange }: { restaurants: { id: s
     </svg>
   )
 
+  const totalCount = Object.values(counts).reduce((s, n) => s + n, 0)
   const allOptions = [
-    { id: 'todas', label: 'Todas las sucursales' },
-    ...restaurants.map(b => ({ id: b.id, label: b.branchName ?? b.name })),
+    { id: 'todas', label: 'Todas las sucursales', count: totalCount },
+    ...restaurants.map(b => ({ id: b.id, label: b.branchName ?? b.name, count: counts[b.id] || 0 })),
   ]
+  const currentCount = value === 'todas' ? totalCount : (counts[value] || 0)
 
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
@@ -89,6 +91,14 @@ function BranchDropdown({ restaurants, value, onChange }: { restaurants: { id: s
       >
         {storeIcon('var(--amber)', 13)}
         {current}
+        {currentCount > 0 && (
+          <span style={{
+            fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
+            padding: '1px 5px', borderRadius: 999,
+            background: 'var(--amber)', color: '#fff',
+            lineHeight: '14px',
+          }}>{currentCount}</span>
+        )}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
           style={{ transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <path d="M6 9l6 6 6-6"/>
@@ -120,9 +130,17 @@ function BranchDropdown({ restaurants, value, onChange }: { restaurants: { id: s
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
               >
                 {storeIcon(active ? 'var(--amber)' : 'var(--ink-3)', 13)}
-                {opt.label}
+                <span style={{ flex: 1 }}>{opt.label}</span>
+                {opt.count > 0 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
+                    padding: '1px 5px', borderRadius: 999, lineHeight: '14px',
+                    background: active ? 'var(--amber)' : 'var(--ink-3)',
+                    color: '#fff',
+                  }}>{opt.count}</span>
+                )}
                 {active && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
@@ -382,6 +400,7 @@ export default function PosHomePage() {
   const ocupadas = mesaOrders.length
 
   const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
+  const [branchCounts, setBranchCounts] = useState<Record<string, number>>({})
   // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
   const [activeOrders, setActiveOrders] = useState<any[]>([])
   const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
@@ -395,6 +414,13 @@ export default function PosHomePage() {
     const delivery = orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
     const retiro = orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
     setOrderCounts({ retiro, delivery })
+    // Per-branch counts
+    const bc: Record<string, number> = {}
+    for (const o of orders) {
+      const bid = (o as any)._branchId || restaurantId
+      bc[bid] = (bc[bid] || 0) + 1
+    }
+    setBranchCounts(bc)
     setActiveOrders(orders)
   }, [])
 
@@ -562,6 +588,7 @@ export default function PosHomePage() {
                   restaurants={restaurants}
                   value={effectiveBranchMode}
                   onChange={handleBranchSelect}
+                  counts={branchCounts}
                 />
               </>
             ) : restaurant?.name ? (
