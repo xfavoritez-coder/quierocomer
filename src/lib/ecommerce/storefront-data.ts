@@ -609,6 +609,7 @@ export interface BrandBranch {
   deliveryEnabled: boolean;
   open: boolean;
   opensAt: string | null; // si está cerrado y abre hoy más tarde
+  hidden: boolean; // sucursal oculta: no se muestra en selector pero sí se evalúa para delivery
 }
 export interface BrandData {
   brandSlug: string;
@@ -650,9 +651,9 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
       pickupEnabled: cfg.pickupEnabled, deliveryEnabled: cfg.deliveryEnabled,
       open: avail.openStatus.open,
       opensAt: avail.openStatus.opensAt ?? null,
+      hidden: cfg.hiddenBranch,
     };
-  }).filter((_, i) => !parseStoreConfig(rows[i].ecommerceStoreConfig).hiddenBranch)
-  .sort((a, b) => {
+  }).sort((a, b) => {
     // abiertas primero, luego alfabético
     if (a.open !== b.open) return a.open ? -1 : 1;
     return (a.branchName || a.name).localeCompare(b.branchName || b.name);

@@ -72,8 +72,9 @@ export default function BrandStore({ brand, representative, basePath, initialPro
     // Marca de una sola sucursal: no tiene sentido pedir que elijan — se liga sola
     // y la tienda se comporta como una normal (el selector de entrega es el de esa
     // sucursal). No fijamos delivery/retiro: eso lo elige el cliente al pedir.
-    if (!saved && brand.branches.length === 1) {
-      const only = brand.branches[0];
+    const visibleBranches = brand.branches.filter((b) => !b.hidden);
+    if (!saved && visibleBranches.length === 1) {
+      const only = visibleBranches[0];
       (async () => {
         const bd = only.slug === representative.tenant.slug ? representative : await fetchStorefront(only.slug);
         if (!bd) { setResolving(false); return; }
@@ -189,7 +190,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   const modern = variant === "modern";
   const accent = brand.branches[0]?.primaryColor || "#F4A623";
   const hasDelivery = brand.branches.some((b) => b.deliveryEnabled);
-  const hasPickup = brand.branches.some((b) => b.pickupEnabled);
+  const hasPickup = brand.branches.some((b) => b.pickupEnabled && !b.hidden);
   const currentType = useCartStore((s) => s.deliveryType);
   const currentSelected = useCartStore((s) => s.deliverySelected);
   const [tab, setTab] = useState<"delivery" | "pickup">(currentSelected && currentType === "pickup" && hasPickup ? "pickup" : hasDelivery ? "delivery" : "pickup");
@@ -384,7 +385,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {brand.branches.filter((b) => b.pickupEnabled).map((b) => {
+            {brand.branches.filter((b) => b.pickupEnabled && !b.hidden).map((b) => {
               const faviconUrl = brand.faviconUrl || b.logoUrl;
               return (
                 <button key={b.id} onClick={() => onChoose(b, "pickup")} disabled={switching} style={{ textAlign: "left", background: b.slug === currentSlug ? `${accent}10` : "#fff", border: `1px solid ${b.slug === currentSlug ? `${accent}55` : "#eee"}`, borderRadius: modern ? 12 : 14, padding: modern ? 16 : 14, cursor: "pointer", opacity: switching ? 0.6 : 1, display: "flex", alignItems: "center", gap: 12 }}>

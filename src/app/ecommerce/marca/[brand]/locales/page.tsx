@@ -29,8 +29,9 @@ export default async function BrandLocalesPage({ params, searchParams }: { param
   const sp = await searchParams;
   const themeOverride = typeof sp.theme === "string" ? sp.theme : undefined;
   const data = await loadEcommerceBrand(brand);
-  if (!data || data.branches.length === 0) return notFound();
-  const representative = await getEcommerceStorefront(data.branches[0].slug);
+  const visible = data?.branches.filter((b) => !b.hidden) ?? [];
+  if (!data || visible.length === 0) return notFound();
+  const representative = await getEcommerceStorefront(visible[0].slug);
   if (!representative) return notFound();
   return <BrandStore brand={data} representative={representative} themeOverride={themeOverride} />;
 }

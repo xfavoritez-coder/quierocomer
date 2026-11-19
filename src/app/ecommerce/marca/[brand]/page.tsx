@@ -32,11 +32,12 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const themeOverride = typeof sp.theme === "string" ? sp.theme : undefined;
   const data = await loadEcommerceBrand(brand);
-  if (!data || data.branches.length === 0) return notFound();
+  const visible = data?.branches.filter((b) => !b.hidden) ?? [];
+  if (!data || visible.length === 0) return notFound();
   // Menú compartido: se muestra directo el catálogo de una sucursal "representante"
   // (los menús son iguales entre sucursales de la marca). La sucursal real se elige
   // recién al agregar algo al carrito (ver BrandStore).
-  const representative = await getEcommerceStorefront(data.branches[0].slug);
+  const representative = await getEcommerceStorefront(visible[0].slug);
   if (!representative) return notFound();
   return <BrandStore brand={data} representative={representative} themeOverride={themeOverride} />;
 }
