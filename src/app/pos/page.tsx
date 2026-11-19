@@ -72,7 +72,7 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
 
   const totalCount = Object.values(counts).reduce((s, n) => s + n, 0)
   const allOptions = [
-    { id: 'todas', label: 'Todas las sucursales', count: totalCount },
+    { id: 'todas', label: 'Todas', count: totalCount },
     ...restaurants.map(b => ({ id: b.id, label: b.branchName ?? b.name, count: counts[b.id] || 0 })),
   ]
   const currentCount = value === 'todas' ? totalCount : (counts[value] || 0)
