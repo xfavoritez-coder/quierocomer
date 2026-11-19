@@ -465,39 +465,37 @@ export default function PosHomePage() {
         />
       ) : (
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            padding: '0 14px', height: 52, position: 'relative',
-          }}>
-            {/* Izquierda: hamburger */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48 }}>
+            {/* Hamburger + Logo */}
             <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
+            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="QuieroComer" style={{ width: 26, height: 26, borderRadius: 7 }} />
+              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+            </a>
 
-            {/* Centro: logo + marca + branch/nombre */}
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
-                <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
-              </a>
-
-              <span style={{ width: 1, height: 20, background: 'var(--line)', flexShrink: 0 }} />
-
-              {restaurants.length > 1 ? (
+            {/* Nombre local o branch select */}
+            {restaurants.length > 1 ? (
+              <>
+                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <select
                     value={effectiveBranchMode}
                     onChange={(e) => handleBranchSelect(e.target.value)}
                     style={{
                       appearance: 'none', WebkitAppearance: 'none',
-                      padding: '4px 26px 4px 8px', borderRadius: 8,
-                      border: 'none', background: 'transparent',
-                      fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
+                      padding: '5px 28px 5px 10px', borderRadius: 8,
+                      border: '1.5px solid var(--line)', background: 'var(--surface)',
+                      fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
                       color: 'var(--ink)', cursor: 'pointer', outline: 'none',
+                      transition: 'border-color .15s',
                     }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--amber)'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = 'var(--line)'}
                   >
                     {restaurants.map(b => (
                       <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
@@ -505,37 +503,56 @@ export default function PosHomePage() {
                     <option value="todas">Todas las sucursales</option>
                   </select>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
-                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                     <path d="M6 9l6 6 6-6"/>
                   </svg>
                 </div>
-              ) : restaurant?.name ? (
+              </>
+            ) : restaurant?.name ? (
+              <>
+                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{restaurant.name}</span>
                   {restaurant.commune && (
                     <span style={{ fontFamily: 'var(--sans)', fontSize: 10.5, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
                   )}
                 </div>
-              ) : null}
-            </div>
+              </>
+            ) : null}
 
-            {/* Derecha: pending */}
-            <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-              {pendingCount > 0 && (
-                <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
-                  </svg>
-                  {pendingCount}
-                </button>
-              )}
-            </div>
+            <div style={{ flex: 1 }} />
+
+            {/* Desktop: tabs inline en el header */}
+            {isDesktop && !innerPage && (
+              <div className="pos-tabs-bar" style={{ flexShrink: 0 }}>
+                {TABS.map(t => (
+                  <button
+                    key={t.id}
+                    className={`pos-tab${tab === t.id ? ' on' : ''}`}
+                    onClick={() => selectTab(t.id)}
+                  >
+                    {t.label}
+                    {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Pending sync */}
+            {pendingCount > 0 && (
+              <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+                </svg>
+                {pendingCount}
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* ── Tabs: Todos · Pedidos · Mesas ── */}
-      {!innerPage && (
+      {/* ── Tabs mobile: Todos · Pedidos · Mesas ── */}
+      {!isDesktop && !innerPage && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '8px 0', background: 'var(--surface)', borderBottom: '1px solid var(--line)',
