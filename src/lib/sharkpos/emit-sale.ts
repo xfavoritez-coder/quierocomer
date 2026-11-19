@@ -6,8 +6,22 @@
 // ═══════════════════════════════════════════════════════════
 import { prisma } from "@/lib/prisma";
 import { emitBoleta, emitFactura, sharkposConfigured, type BoletaItemInput, type SharkposCred, type B2BReceptor } from "./client";
-import { parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
+import { parseCentroPedidosConfig, effectivePaymentMethods, normalizePaymentKey } from "@/lib/ecommerce/config";
 import { decryptSecret } from "@/lib/crypto/secret";
+
+// Pasarelas de pago online del ecommerce. Para la decisión fiscal se tratan como
+// "webpay" (pago con tarjeta online) si la config no tiene una key propia para ellas,
+// de modo que el toggle "emite boleta" de Webpay cubra a todas las online.
+const ONLINE_GATEWAYS = new Set(["webpay", "flow", "mercadopago", "mercado_pago", "transbank", "online", "getnet"]);
+
+/** Mapea el medio de un pedido web (rawPayload.webPayment.method: webpay/flow/
+ *  mercadopago/efectivo/transferencia/…) a una key de la config de métodos de pago. */
+function resolveWebMethodKey(raw: string, fiscalByKey: Map<string, boolean>): string {
+  const k = normalizePaymentKey(raw);
+  if (fiscalByKey.has(k)) return k;                         // la config tiene esa key tal cual
+  if (ONLINE_GATEWAYS.has(k) && fiscalByKey.has("webpay")) return "webpay"; // online → webpay
+  return k;                                                 // desconocida → default (emite)
+}
 
 /** Lee los datos de receptor de factura guardados en el cobro (rawPayload.posFactura),
  *  validando que estén los campos obligatorios y que el RUT no sea consumidor final. */
@@ -88,13 +102,19 @@ export async function emitBoletaForPosOrder(posOrderId: string): Promise<void> {
   // Capa 2 — el método de pago usado emite documento fiscal.
   const methods = effectivePaymentMethods(parseCentroPedidosConfig(order.restaurant.centroPedidosConfig));
   const fiscalByKey = new Map(methods.map((m) => [m.key, m.emitsFiscal]));
-  const pp = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
-    ? ((order.rawPayload as Record<string, unknown>).posPayment as { method?: string; parts?: { method?: string }[] } | undefined)
-    : undefined;
+  const raw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
+    ? (order.rawPayload as Record<string, unknown>) : {};
+  const pp = raw.posPayment as { method?: string; parts?: { method?: string }[] } | undefined;
+  const wp = raw.webPayment as { method?: string } | undefined;
   const usedMethods: string[] = [];
   if (pp) {
+    // Cobro en el POS: método(s) elegidos en caja.
     if (Array.isArray(pp.parts)) for (const p of pp.parts) { if (p?.method) usedMethods.push(String(p.method)); }
     else if (pp.method) usedMethods.push(String(pp.method));
+  } else if (wp?.method) {
+    // Pedido pagado en la web: el medio llega en webPayment.method (webpay/flow/…);
+    // se resuelve a una key de la config para respetar su toggle "emite boleta".
+    usedMethods.push(resolveWebMethodKey(String(wp.method), fiscalByKey));
   }
   // Emite si al menos un método usado emite fiscal. Si no se puede determinar el
   // método, se mantiene el comportamiento por defecto (los métodos base emiten).
