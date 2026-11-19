@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
   });
   let partsClear: object | undefined;
   const parts = existing?.deliveryAddressParts;
-  if (parts && typeof parts === "object" && !Array.isArray(parts) && (parts as Record<string, unknown>).kitchenOnly) {
+  if (parts && typeof parts === "object" && !Array.isArray(parts) && ((parts as Record<string, unknown>).kitchenOnly || (parts as Record<string, unknown>).precuentaEscpos)) {
     const rest = { ...(parts as Record<string, unknown>) };
     delete rest.kitchenOnly;
+    delete rest.precuentaEscpos; // precuenta reenviada ya impresa → quitar el ESC/POS efímero
     partsClear = rest;
   }
 

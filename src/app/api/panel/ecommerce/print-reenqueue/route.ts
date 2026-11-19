@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
   // por el servidor. Se marca en deliveryAddressParts (preservando la dirección si
   // es delivery); la cola emite únicamente la comanda de cocina.
   const kitchenOnly = body?.kitchenOnly === true;
+  // precuentaEscpos: ESC/POS ya renderizado de la precuenta de garzones (reenviado
+  // desde un equipo sin agente local). La cola lo emite tal cual para la impresora
+  // de la caja. One-shot: el ack lo limpia.
+  const precuentaEscpos = typeof body?.precuentaEscpos === "string" && body.precuentaEscpos.length > 0 ? body.precuentaEscpos : null;
   if (!restaurantId || !id) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
@@ -41,6 +45,7 @@ export async function POST(req: NextRequest) {
   const parts = (existing.deliveryAddressParts && typeof existing.deliveryAddressParts === "object" && !Array.isArray(existing.deliveryAddressParts))
     ? { ...(existing.deliveryAddressParts as Record<string, unknown>) } : {};
   if (kitchenOnly) parts.kitchenOnly = true; else delete parts.kitchenOnly;
+  if (precuentaEscpos) parts.precuentaEscpos = precuentaEscpos; else delete parts.precuentaEscpos;
 
   await prisma.onlineOrder.update({
     where: { id },

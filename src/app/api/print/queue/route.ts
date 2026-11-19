@@ -167,6 +167,11 @@ export async function GET(req: NextRequest) {
     if (isTest) return [o];
     const dp = (o.deliveryAddressParts && typeof o.deliveryAddressParts === "object" && !Array.isArray(o.deliveryAddressParts))
       ? (o.deliveryAddressParts as Record<string, unknown>) : null;
+    // Precuenta de garzones reenviada desde un equipo sin agente local: emite SOLO el
+    // ESC/POS ya renderizado (no comanda de cocina ni ticket). El ack limpia el flag.
+    if (dp && typeof dp.precuentaEscpos === "string" && dp.precuentaEscpos) {
+      return [{ id: o.id, orderNumber: o.orderNumber, escpos: dp.precuentaEscpos } as unknown as (typeof mapped)[number]];
+    }
     // Mesa (dine-in): SOLO la comanda de cocina (sin ticket de caja; la boleta es
     // al cobrar). Siempre se imprime (no depende del toggle kitchenComanda), y el
     // agente la enruta a la impresora de cocina configurada.

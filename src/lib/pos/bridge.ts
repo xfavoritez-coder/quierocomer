@@ -191,6 +191,12 @@ export async function printCashClose(payload: CashClosePayload): Promise<{ ok: b
   }
 }
 
+/** Pre-renderiza la precuenta a ESC/POS base64 (para reenviarla por el servidor
+ *  cuando ESTE equipo no tiene agente local, ej. el Mac que solo toma pedidos). */
+export function buildPrecuentaEscpos(payload: PrecuentaPayload): string {
+  return bytesToBase64(encodePrecuenta(payload));
+}
+
 export async function printPrecuenta(payload: PrecuentaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
   const url = getBridgeUrl()
   try {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId } from '@/lib/pos'
 import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
-import { getBridgeStatus, printKitchenComanda, printBoletaForOrder, printPrecuenta } from '@/lib/pos/bridge'
+import { getBridgeStatus, printKitchenComanda, printBoletaForOrder, printPrecuenta, buildPrecuentaEscpos } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
@@ -755,12 +755,14 @@ export function OrderDetailPanel({
     let r: { ok: boolean; error?: string }
     if (kind === 'precuenta') {
       // Precuenta para garzones (tipo "Consumo" de Toteat): subtotal + propina sugerida
-      // (10%) + total con propina. Se imprime en el agente LOCAL de esta máquina (caja).
+      // (10%) + total con propina. Si ESTE equipo tiene agente local, imprime directo;
+      // si no (ej. el Mac que solo toma pedidos), la REENVÍA por el servidor para que
+      // el agente de la caja la imprima — igual que "Comanda cocina".
       try {
         const info = await fetch(`/api/pos/restaurant?id=${rid}`, { cache: 'no-store' }).then(res => res.ok ? res.json() : null).catch(() => null)
         const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number; garzon?: string } | null
         const items = itemLines(order.items).map(l => ({ quantity: l.qty, name: l.name, total: (l.price || 0) * l.qty, modifiers: l.options.map(o => ({ name: o })) }))
-        r = await printPrecuenta({
+        const payload = {
           jobId: order.id + '-precuenta',
           localName: info?.name || undefined,
           localAddress: [info?.address, info?.commune].filter(Boolean).join(', ') || undefined,
@@ -771,9 +773,23 @@ export function OrderDetailPanel({
           items,
           subtotal: order.totalAmount || 0,
           tipPct: 10,
-        })
-      } catch { r = { ok: false, error: 'Error' } }
-      setPrintMsg(r.ok ? '✓ Precuenta enviada' : '✗ ' + (r.error || 'Sin agente local en este equipo'))
+        }
+        const status = await getBridgeStatus()
+        if (status.ok) {
+          r = await printPrecuenta(payload)
+          setPrintMsg(r.ok ? '✓ Precuenta enviada' : '✗ ' + (r.error || 'Error'))
+        } else {
+          // Sin agente local → reenviar por el servidor a la impresora de la caja.
+          const onlineId = order.externalId?.startsWith('oo-') ? order.externalId.slice(3) : null
+          if (!onlineId) { setPrintMsg('✗ Este pedido no se puede reenviar a la caja'); setPrinting(null); setTimeout(() => setPrintMsg(null), 3000); return }
+          const res = await fetch('/api/panel/ecommerce/print-reenqueue', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurantId: rid, id: onlineId, precuentaEscpos: buildPrecuentaEscpos(payload) }),
+          })
+          const d = await res.json().catch(() => ({}))
+          setPrintMsg(res.ok ? '✓ Precuenta enviada a la impresora de caja' : '✗ ' + (d.error || `HTTP ${res.status}`))
+        }
+      } catch { setPrintMsg('✗ Error al imprimir la precuenta') }
       setPrinting(null)
       setTimeout(() => setPrintMsg(null), 3000)
       return
