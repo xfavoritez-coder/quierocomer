@@ -84,22 +84,22 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 7,
           padding: '5px 10px', borderRadius: 9,
-          border: '1.5px solid var(--amber)', background: 'var(--amber-tint)',
+          border: '1px solid var(--line)', background: 'var(--surface)',
           fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
-          color: 'var(--amber-press)', cursor: 'pointer', outline: 'none',
+          color: 'var(--ink)', cursor: 'pointer', outline: 'none',
         }}
       >
-        {storeIcon('var(--amber)', 13)}
+        {storeIcon('var(--ink-3)', 13)}
         {current}
         {currentCount > 0 && (
           <span style={{
             fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
             padding: '1px 5px', borderRadius: 999,
-            background: 'var(--amber)', color: '#fff',
+            background: 'var(--ink-3)', color: '#fff',
             lineHeight: '14px',
           }}>{currentCount}</span>
         )}
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
           style={{ transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <path d="M6 9l6 6 6-6"/>
         </svg>
@@ -121,26 +121,26 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, width: '100%',
                   padding: '8px 10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  background: active ? 'var(--amber-tint)' : 'transparent',
+                  background: active ? 'var(--sunk)' : 'transparent',
                   fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
-                  color: active ? 'var(--amber-press)' : 'var(--ink)',
+                  color: active ? 'var(--ink)' : 'var(--ink)',
                   textAlign: 'left', transition: 'background .1s',
                 }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--sunk)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
               >
-                {storeIcon(active ? 'var(--amber)' : 'var(--ink-3)', 13)}
+                {storeIcon(active ? 'var(--ink)' : 'var(--ink-3)', 13)}
                 <span style={{ flex: 1 }}>{opt.label}</span>
                 {opt.count > 0 && (
                   <span style={{
                     fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
                     padding: '1px 5px', borderRadius: 999, lineHeight: '14px',
-                    background: active ? 'var(--amber)' : 'var(--ink-3)',
+                    background: active ? 'var(--ink)' : 'var(--ink-3)',
                     color: '#fff',
                   }}>{opt.count}</span>
                 )}
                 {active && (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 )}
