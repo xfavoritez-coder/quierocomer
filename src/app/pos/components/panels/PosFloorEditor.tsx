@@ -40,8 +40,12 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
   const sectors = useSectors(restaurantId)
   const [cfg, setCfg] = useState<FloorConfig>({ canvasW: 800, canvasH: 500, tables: {} })
   const [positions, setPositions] = useState<Map<string, { x: number; y: number }>>(new Map())
-  const [selected, setSelected] = useState<string | null>(null)
-  const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  // Arrastre de una mesa o de un grupo seleccionado (delta sobre las posiciones originales).
+  const [dragging, setDragging] = useState<{ ids: string[]; startX: number; startY: number; orig: Map<string, { x: number; y: number }> } | null>(null)
+  // Rectángulo de selección múltiple (marquee).
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
+  const marqueeRef = useRef<{ x0: number; y0: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -107,34 +111,75 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
     return m
   }, [sectors])
 
-  // ── Drag handlers ──────────────────────────────────────────
-  const handlePointerDown = useCallback((tableId: string, e: React.PointerEvent) => {
+  // ── Drag de mesa(s) ────────────────────────────────────────
+  const handleTablePointerDown = useCallback((tableId: string, e: React.PointerEvent) => {
     e.preventDefault()
     e.stopPropagation()
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
-    const pos = positions.get(tableId) || { x: 0, y: 0 }
-    setDragging({ id: tableId, offsetX: e.clientX - rect.left - pos.x, offsetY: e.clientY - rect.top - pos.y })
-    setSelected(tableId)
-  }, [positions])
+    // Si la mesa es parte de una selección múltiple, arrastra TODO el grupo; si no, solo ella.
+    const inGroup = selectedIds.has(tableId) && selectedIds.size > 1
+    const group = inGroup ? [...selectedIds] : [tableId]
+    if (!inGroup) setSelectedIds(new Set([tableId]))
+    const orig = new Map<string, { x: number; y: number }>()
+    for (const id of group) orig.set(id, positions.get(id) || { x: 0, y: 0 })
+    setDragging({ ids: group, startX: e.clientX, startY: e.clientY, orig })
+  }, [positions, selectedIds])
+
+  // ── Marquee (selección por rectángulo) sobre el canvas vacío ──
+  const handleCanvasPointerDown = useCallback((e: React.PointerEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const x = e.clientX - rect.left, y = e.clientY - rect.top
+    marqueeRef.current = { x0: x, y0: y }
+    setMarquee({ x0: x, y0: y, x1: x, y1: y })
+    setSelectedIds(new Set()) // un clic vacío limpia; si arrastra, el move selecciona
+  }, [])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging || !canvasRef.current) return
-    const rect = canvasRef.current.getBoundingClientRect()
-    const x = snap(Math.max(0, Math.min(cfg.canvasW - 40, e.clientX - rect.left - dragging.offsetX)))
-    const y = snap(Math.max(0, Math.min(cfg.canvasH - 40, e.clientY - rect.top - dragging.offsetY)))
-    setPositions(prev => { const m = new Map(prev); m.set(dragging.id, { x, y }); return m })
-    setSaved(false)
-  }, [dragging, cfg.canvasW, cfg.canvasH])
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    if (dragging) {
+      const dx = e.clientX - dragging.startX, dy = e.clientY - dragging.startY
+      setPositions(prev => {
+        const m = new Map(prev)
+        for (const id of dragging.ids) {
+          const o = dragging.orig.get(id) || { x: 0, y: 0 }
+          m.set(id, {
+            x: snap(Math.max(0, Math.min(cfg.canvasW - 40, o.x + dx))),
+            y: snap(Math.max(0, Math.min(cfg.canvasH - 40, o.y + dy))),
+          })
+        }
+        return m
+      })
+      setSaved(false)
+      return
+    }
+    if (marqueeRef.current) {
+      const x = e.clientX - rect.left, y = e.clientY - rect.top
+      const { x0, y0 } = marqueeRef.current
+      setMarquee({ x0, y0, x1: x, y1: y })
+      const minX = Math.min(x0, x), maxX = Math.max(x0, x), minY = Math.min(y0, y), maxY = Math.max(y0, y)
+      const sel = new Set<string>()
+      for (const t of rawTables) {
+        const p = positions.get(t.id) || { x: 0, y: 0 }
+        const s = getTableStyle(cfg, t.id)
+        if (p.x < maxX && p.x + s.w > minX && p.y < maxY && p.y + s.h > minY) sel.add(t.id) // AABB intersecta
+      }
+      setSelectedIds(sel)
+    }
+  }, [dragging, cfg, rawTables, positions])
 
-  const handlePointerUp = useCallback(() => { setDragging(null) }, [])
+  const handlePointerUp = useCallback(() => { setDragging(null); marqueeRef.current = null; setMarquee(null) }, [])
 
-  // ── Shape/size controls ──────────────────────────────────
-  const updateTableCfg = (tableId: string, patch: Partial<FloorConfig['tables'][string]>) => {
-    setCfg(prev => ({
-      ...prev,
-      tables: { ...prev.tables, [tableId]: { ...getTableStyle(prev, tableId), ...patch } },
-    }))
+  // ── Shape/size/rotation — aplica a TODAS las mesas seleccionadas ──
+  const applyToSelected = (patch: Partial<FloorConfig['tables'][string]>) => {
+    if (selectedIds.size === 0) return
+    setCfg(prev => {
+      const tables = { ...prev.tables }
+      for (const id of selectedIds) tables[id] = { ...getTableStyle(prev, id), ...patch }
+      return { ...prev, tables }
+    })
     setSaved(false)
   }
 
@@ -180,8 +225,11 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
     setSaved(false)
   }
 
-  const selectedTable = rawTables.find(t => t.id === selected)
-  const selectedStyle = selected ? getTableStyle(cfg, selected) : null
+  const selIds = [...selectedIds]
+  const primaryId = selIds[0] || null
+  const primaryTable = rawTables.find(t => t.id === primaryId)
+  const primaryStyle = primaryId ? getTableStyle(cfg, primaryId) : null
+  const multi = selIds.length > 1
 
   if (rawTables.length === 0) {
     return (
@@ -199,8 +247,11 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
           <button onClick={autoArrange} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)', cursor: 'pointer' }}>
             Distribuir
           </button>
+          <button onClick={() => setSelectedIds(selectedIds.size === rawTables.length ? new Set() : new Set(rawTables.map(t => t.id)))} style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${selectedIds.size === rawTables.length && rawTables.length > 0 ? PURPLE : 'var(--line)'}`, background: selectedIds.size === rawTables.length && rawTables.length > 0 ? `${PURPLE}14` : 'var(--surface)', color: selectedIds.size === rawTables.length && rawTables.length > 0 ? PURPLE : 'var(--ink-2)', cursor: 'pointer' }}>
+            {selectedIds.size === rawTables.length && rawTables.length > 0 ? 'Quitar selección' : 'Seleccionar todas'}
+          </button>
           <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>
-            Arrastra las mesas para posicionarlas
+            Arrastra las mesas para moverlas · dibuja un rectángulo en el salón para seleccionar varias
           </span>
         </div>
         <button
@@ -220,10 +271,10 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       {/* Canvas */}
       <div
         ref={canvasRef}
+        onPointerDown={handleCanvasPointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onClick={() => setSelected(null)}
         style={{
           position: 'relative',
           width: '100%',
@@ -250,19 +301,30 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
           </div>
         )}
 
+        {/* Marquee (rectángulo de selección) */}
+        {marquee && (
+          <div style={{
+            position: 'absolute',
+            left: Math.min(marquee.x0, marquee.x1), top: Math.min(marquee.y0, marquee.y1),
+            width: Math.abs(marquee.x1 - marquee.x0), height: Math.abs(marquee.y1 - marquee.y0),
+            border: `1.5px solid ${PURPLE}`, background: `${PURPLE}12`, borderRadius: 4,
+            zIndex: 80, pointerEvents: 'none',
+          }} />
+        )}
+
         {/* Tables */}
         {rawTables.map(table => {
           const pos = positions.get(table.id) || { x: 0, y: 0 }
           const style = getTableStyle(cfg, table.id)
-          const isSelected = selected === table.id
+          const isSelected = selectedIds.has(table.id)
+          const isDragging = !!dragging?.ids.includes(table.id)
           const color = table.sector_id ? (sectorColor.get(table.sector_id) || 'var(--ink-3)') : 'var(--ink-3)'
           const label = table.label || String(table.number)
 
           return (
             <div
               key={table.id}
-              onPointerDown={(e) => handlePointerDown(table.id, e)}
-              onClick={(e) => { e.stopPropagation(); setSelected(table.id) }}
+              onPointerDown={(e) => handleTablePointerDown(table.id, e)}
               style={{
                 position: 'absolute',
                 left: pos.x,
@@ -274,10 +336,10 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
                 border: `2.5px ${isSelected ? 'solid' : 'dashed'} ${isSelected ? PURPLE : color}`,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                cursor: dragging?.id === table.id ? 'grabbing' : 'grab',
-                transition: dragging?.id === table.id ? 'none' : 'box-shadow .15s',
-                boxShadow: isSelected ? `0 0 0 3px ${PURPLE}40` : dragging?.id === table.id ? '0 8px 24px rgba(0,0,0,.18)' : '0 2px 8px rgba(0,0,0,.06)',
-                zIndex: dragging?.id === table.id ? 100 : isSelected ? 50 : 10,
+                cursor: isDragging ? 'grabbing' : 'grab',
+                transition: isDragging ? 'none' : 'box-shadow .15s',
+                boxShadow: isSelected ? `0 0 0 3px ${PURPLE}40` : isDragging ? '0 8px 24px rgba(0,0,0,.18)' : '0 2px 8px rgba(0,0,0,.06)',
+                zIndex: isDragging ? 100 : isSelected ? 50 : 10,
                 transform: style.rotation ? `rotate(${style.rotation}deg)` : undefined,
                 userSelect: 'none',
               }}
@@ -295,11 +357,11 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
         })}
       </div>
 
-      {/* Selected table properties */}
-      {selectedTable && selectedStyle && (
+      {/* Propiedades de la(s) mesa(s) seleccionada(s) */}
+      {primaryTable && primaryStyle && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ fontFamily: F, fontSize: '0.78rem', fontWeight: 800, color: 'var(--ink)' }}>
-            {selectedTable.label || `Mesa ${selectedTable.number}`}
+            {multi ? `${selIds.length} mesas seleccionadas` : (primaryTable.label || `Mesa ${primaryTable.number}`)}
           </div>
 
           {/* Shape */}
@@ -309,13 +371,13 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
               {SHAPES.map(s => (
                 <button
                   key={s}
-                  onClick={() => updateTableCfg(selected!, { shape: s, ...(s === 'rect' ? { w: 90, h: 56 } : s === 'square' ? { w: 64, h: 64 } : { w: 64, h: 64 }) })}
+                  onClick={() => applyToSelected({ shape: s, ...(s === 'rect' ? { w: 90, h: 56 } : s === 'square' ? { w: 64, h: 64 } : { w: 64, h: 64 }) })}
                   style={{
                     fontFamily: F, fontSize: '0.7rem', fontWeight: 600,
                     padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
-                    border: selectedStyle.shape === s ? `2px solid ${PURPLE}` : '1px solid var(--line)',
-                    background: selectedStyle.shape === s ? `${PURPLE}14` : 'var(--surface)',
-                    color: selectedStyle.shape === s ? PURPLE : 'var(--ink-2)',
+                    border: primaryStyle.shape === s ? `2px solid ${PURPLE}` : '1px solid var(--line)',
+                    background: primaryStyle.shape === s ? `${PURPLE}14` : 'var(--surface)',
+                    color: primaryStyle.shape === s ? PURPLE : 'var(--ink-2)',
                   }}
                 >
                   {SHAPE_LABELS[s]}
@@ -327,15 +389,15 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
           {/* Size */}
           <div>
             <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)', marginBottom: 4, display: 'block' }}>
-              Tamaño: {selectedStyle.w} × {selectedStyle.h}
+              Tamaño: {primaryStyle.w} × {primaryStyle.h}
             </span>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input type="range" min={MIN_SIZE} max={140} value={selectedStyle.w}
-                onChange={e => updateTableCfg(selected!, { w: +e.target.value, ...(selectedStyle.shape !== 'rect' ? { h: +e.target.value } : {}) })}
+              <input type="range" min={MIN_SIZE} max={140} value={primaryStyle.w}
+                onChange={e => applyToSelected({ w: +e.target.value, ...(primaryStyle.shape !== 'rect' ? { h: +e.target.value } : {}) })}
                 style={{ flex: 1, accentColor: PURPLE }} />
-              {selectedStyle.shape === 'rect' && (
-                <input type="range" min={MIN_SIZE} max={140} value={selectedStyle.h}
-                  onChange={e => updateTableCfg(selected!, { h: +e.target.value })}
+              {primaryStyle.shape === 'rect' && (
+                <input type="range" min={MIN_SIZE} max={140} value={primaryStyle.h}
+                  onChange={e => applyToSelected({ h: +e.target.value })}
                   style={{ flex: 1, accentColor: PURPLE }} />
               )}
             </div>
@@ -344,10 +406,10 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
           {/* Rotation */}
           <div>
             <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)', marginBottom: 4, display: 'block' }}>
-              Rotacion: {selectedStyle.rotation}°
+              Rotacion: {primaryStyle.rotation}°
             </span>
-            <input type="range" min={0} max={360} step={15} value={selectedStyle.rotation}
-              onChange={e => updateTableCfg(selected!, { rotation: +e.target.value })}
+            <input type="range" min={0} max={360} step={15} value={primaryStyle.rotation}
+              onChange={e => applyToSelected({ rotation: +e.target.value })}
               style={{ width: '100%', accentColor: PURPLE }} />
           </div>
         </div>
