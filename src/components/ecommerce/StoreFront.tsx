@@ -5,7 +5,6 @@ import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Chevr
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import StoreBottomNav from "./StoreBottomNav";
 import StoreFooter from "./StoreFooter";
-import { BrandCoverageMap } from "./BrandStore";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp, slugify } from "@/lib/ecommerce/format";
@@ -609,13 +608,6 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
           </div>
         </div>
       </div>
-
-      {/* ── Mapa de cobertura ─────────────────────────────────── */}
-      {siblings && siblings.some((b) => b.deliveryPolygon?.length >= 3) && (
-        <div style={{ padding: '0 16px' }}>
-          <BrandCoverageMap branches={siblings} gmapsKey={tenant.googleMapsKey} accent={primaryColor} />
-        </div>
-      )}
 
       {/* ── Footer ───────────────────────────────────────────────── */}
       <div className="pb-32 sm:pb-14">

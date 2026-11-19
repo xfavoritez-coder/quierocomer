@@ -4,7 +4,6 @@ import { Toaster, toast } from "sonner";
 import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, ChevronLeft, ChevronRight, Pencil, Menu as MenuIcon, Heart, User, Clock, Motorbike, Lock, UtensilsCrossed } from "lucide-react";
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
-import { BrandCoverageMap } from "./BrandStore";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp, slugify } from "@/lib/ecommerce/format";
 import { useFavicon } from "@/lib/ecommerce/useFavicon";
@@ -1551,10 +1550,7 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
           />
         )}
       </div>
-      {/* Mapa de cobertura de delivery — zonas unificadas */}
-      {siblings && siblings.some((b) => b.deliveryPolygon?.length >= 3) && (
-        <BrandCoverageMap branches={siblings} gmapsKey={tenant.googleMapsKey} accent={primaryColor} />
-      )}
+      {/* Mapa de cobertura removido — se usa el existente */}
       {hoursModalBranch && (
         <HoursModal
           weeklyHours={hoursModalBranch.hours}
