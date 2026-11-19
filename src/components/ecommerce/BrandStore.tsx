@@ -360,14 +360,14 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                      {chosen.branch.branchName || chosen.branch.name}
+                      {chosen.branch.hidden ? brand.brandName : (chosen.branch.branchName || chosen.branch.name)}
                       {chosen.branch.open ? (
                         <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "1px 7px", borderRadius: 999 }}>Abierto</span>
                       ) : (
                         <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#ef4444", background: "#fef2f2", border: "1px solid #fecaca", padding: "1px 7px", borderRadius: 999 }}>Cerrado</span>
                       )}
                     </p>
-                    {chosen.branch.address && <p style={{ fontSize: "0.8rem", color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{chosen.branch.address}</p>}
+                    {!chosen.branch.hidden && chosen.branch.address && <p style={{ fontSize: "0.8rem", color: "#9ca3af", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{chosen.branch.address}</p>}
                   </div>
                 </div>
                 {chosen.mode !== "zones" && (
