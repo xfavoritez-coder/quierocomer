@@ -527,7 +527,7 @@ function OrderCard({
                 onClick={() => paid ? onStageChange(order, next.stage) : onBlock(order)}
                 disabled={busy}
                 style={{
-                  fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 8, border: 'none',
+                  fontSize: isDesktop ? 13 : 12, fontWeight: 700, padding: isDesktop ? '7px 14px' : '6px 12px', borderRadius: 8, border: 'none',
                   background: STAGE_COLOR[next.stage] ?? 'var(--amber)', color: '#fff',
                   cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1,
                   fontFamily: 'var(--sans)', flexShrink: 0, marginLeft: 'auto',
