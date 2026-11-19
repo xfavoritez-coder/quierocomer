@@ -76,8 +76,8 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
         {/* Top section: logo + social */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {tenant.logoUrl && (
-              <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+            {(tenant.faviconUrl || tenant.logoUrl) && (
+              <img src={tenant.faviconUrl || tenant.logoUrl!} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
             )}
             <div>
               <div style={{ fontSize: 16, fontWeight: 800, color: text1 }}>{tenant.name}</div>
@@ -118,12 +118,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
                     {tenant.phone}
                   </a>
                 )}
-                {tenant.contactEmail && (
-                  <a href={`mailto:${tenant.contactEmail}`} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: text2, fontSize: 13 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={text3} strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                    {tenant.contactEmail}
-                  </a>
-                )}
+                {/* Email omitido del footer por diseño */}
               </div>
             </div>
           )}
@@ -169,9 +164,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
 
         {/* Bottom: powered by */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-          <span style={{ fontSize: 11, color: text3 }}>
-            {new Date().getFullYear()} {tenant.name}. Todos los derechos reservados.
-          </span>
+          <span style={{ fontSize: 11, color: text3 }} />
           <a href="https://quierocomer.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none', fontSize: 11, color: text3 }}>
             Creado con
             <img src="https://quierocomer.com/logo.png" alt="QuieroComer" style={{ width: 14, height: 14 }} />
