@@ -318,14 +318,14 @@ export default function PosHomePage() {
     fetchAlertConfig()
   }, [restaurantId])
 
-  // Load floor plan config once
+  // Load floor plan config (refresca al entrar a Mesas para reflejar lo recién guardado)
   useEffect(() => {
     if (!restaurantId) return
     fetch(`/api/admin/locales/${restaurantId}`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.posFloorConfig) setPosFloorConfig(d.posFloorConfig) })
+      .then(d => setPosFloorConfig(d?.posFloorConfig ?? null))
       .catch(() => {})
-  }, [restaurantId])
+  }, [restaurantId, tab])
 
   // Ocupación de mesas: refresca SIEMPRE cada 15s (badge visible en todas las tabs).
   useEffect(() => {
@@ -653,8 +653,8 @@ export default function PosHomePage() {
       <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setMesaCuenta(null) : undefined}>
         <div className="pos-pad">
 
-            {/* MESAS — Floor plan view (si hay layout configurado) */}
-          {tab === 'mesas' && posFloorConfig && tables.some(t => t.x > 0 || t.y > 0) && (
+            {/* MESAS — Floor plan view (solo si el local activó "usar distribución real") */}
+          {tab === 'mesas' && posFloorConfig?.enabled && tables.some(t => t.x > 0 || t.y > 0) && (
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
             <PosFloorView
               tables={tables}
@@ -667,8 +667,8 @@ export default function PosHomePage() {
             </div>
           )}
 
-            {/* MESAS — Grid view (fallback si no hay layout) */}
-          {tab === 'mesas' && !(posFloorConfig && tables.some(t => t.x > 0 || t.y > 0)) && (() => {
+            {/* MESAS — Grid view (filas corridas; si el toggle de distribución está apagado) */}
+          {tab === 'mesas' && !(posFloorConfig?.enabled && tables.some(t => t.x > 0 || t.y > 0)) && (() => {
             const filteredTables = sectorFilter === 'all'
               ? tables
               : sectorFilter === 'none'

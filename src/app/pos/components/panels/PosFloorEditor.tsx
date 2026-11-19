@@ -7,6 +7,7 @@ import { useTables, useSectors } from '@/lib/pos/hooks'
 interface FloorConfig {
   canvasW: number
   canvasH: number
+  enabled?: boolean // si true, el POS usa esta distribución real en la pestaña Mesas
   tables: Record<string, { shape: 'round' | 'square' | 'rect'; w: number; h: number; rotation: number }>
 }
 
@@ -72,7 +73,7 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       .then(d => {
         if (d?.posFloorConfig) {
           const fc = d.posFloorConfig as FloorConfig
-          setCfg({ canvasW: fc.canvasW || 800, canvasH: fc.canvasH || 500, tables: fc.tables || {} })
+          setCfg({ canvasW: fc.canvasW || 800, canvasH: fc.canvasH || 500, enabled: fc.enabled === true, tables: fc.tables || {} })
         }
         setLoaded(true)
       })
@@ -275,18 +276,30 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
             Arrastra las mesas para moverlas · dibuja un rectángulo en el salón para seleccionar varias
           </span>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            fontFamily: F, fontSize: '0.78rem', fontWeight: 700,
-            padding: '8px 20px', borderRadius: 10, border: 'none',
-            background: saved ? '#22c55e' : PURPLE, color: '#fff',
-            cursor: saving ? 'wait' : 'pointer', transition: 'background .2s',
-          }}
-        >
-          {saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar plano'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          {/* Toggle: usar esta distribución real en el POS (Mesas) */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: F, fontSize: '0.74rem', fontWeight: 600, color: 'var(--ink-2)', userSelect: 'none' }}>
+            <span
+              onClick={() => { setCfg(prev => ({ ...prev, enabled: !prev.enabled })); setSaved(false) }}
+              style={{ width: 40, height: 23, borderRadius: 999, background: cfg.enabled ? PURPLE : 'var(--line)', position: 'relative', transition: 'background .2s', flexShrink: 0, display: 'inline-block' }}
+            >
+              <span style={{ position: 'absolute', top: 3, left: cfg.enabled ? 20 : 3, width: 17, height: 17, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
+            </span>
+            Usar esta distribución en el POS
+          </label>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              fontFamily: F, fontSize: '0.78rem', fontWeight: 700,
+              padding: '8px 20px', borderRadius: 10, border: 'none',
+              background: saved ? '#22c55e' : PURPLE, color: '#fff',
+              cursor: saving ? 'wait' : 'pointer', transition: 'background .2s',
+            }}
+          >
+            {saving ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar plano'}
+          </button>
+        </div>
       </div>
 
       {/* Canvas */}
