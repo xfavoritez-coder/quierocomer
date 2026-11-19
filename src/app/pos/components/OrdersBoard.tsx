@@ -452,7 +452,7 @@ function OrderCard({
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
           {isDelivery && order.deliveryFee > 0 && (
             <><span style={{ color: 'var(--ink-4)' }}>·</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zM15 17a2 2 0 104 0 2 2 0 00-4 0z"/><path d="M1 14V6h9l3 5h4l2 3"/><path d="M5 17H1"/><path d="M13 17h-4"/><path d="M19 17h2v-3"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18.5" cy="17.5" r="2.5"/><circle cx="7.5" cy="17.5" r="2.5"/><path d="M10 17.5h6M5 17.5H3V12l3-5h4l2 3h5l2 2"/></svg>
               {clp(order.deliveryFee)}
             </span></>
           )}
