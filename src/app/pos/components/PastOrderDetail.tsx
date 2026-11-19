@@ -242,12 +242,13 @@ export default function PastOrderDetail({
   }
 
   const [descBusy, setDescBusy] = useState<string | null>(null)
-  async function descargarDoc(kind: 'factura' | 'nc') {
+  async function descargarDoc(kind: 'boleta' | 'factura' | 'nc') {
     setDescBusy(kind)
     try {
       const res = await fetch(`/api/pos/doc-pdf?posOrderId=${order.id}&kind=${kind}`, { cache: 'no-store' })
       const d = await res.json().catch(() => ({}))
-      if (d?.ready && d.pdfBase64) abrirPdfBase64(d.pdfBase64, `${kind === 'nc' ? 'nota-credito' : 'factura'}-${d.folio || order.id}.pdf`)
+      const fnameBase = kind === 'nc' ? 'nota-credito' : kind === 'boleta' ? 'boleta' : 'factura'
+      if (d?.ready && d.pdfBase64) abrirPdfBase64(d.pdfBase64, `${fnameBase}-${d.folio || order.id}.pdf`)
       else window.alert(d?.reason || d?.error || 'No se pudo obtener el PDF')
     } catch { window.alert('Error al obtener el PDF') }
     finally { setDescBusy(null) }
@@ -574,19 +575,31 @@ export default function PastOrderDetail({
                 {descBusy === 'factura' ? 'Obteniendo…' : 'Descargar factura'}
               </button>
             ) : (
-              <button
-                disabled={printingBoleta}
-                onClick={handlePrintBoleta}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
-                  padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)',
-                  background: 'var(--surface)', color: 'var(--ink)', cursor: printingBoleta ? 'default' : 'pointer',
-                  fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingBoleta ? 0.6 : 1,
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                {printingBoleta ? 'Imprimiendo…' : 'Imprimir boleta'}
-              </button>
+              <>
+                <button
+                  disabled={printingBoleta}
+                  onClick={handlePrintBoleta}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                    padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)',
+                    background: 'var(--surface)', color: 'var(--ink)', cursor: printingBoleta ? 'default' : 'pointer',
+                    fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingBoleta ? 0.6 : 1,
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  {printingBoleta ? 'Imprimiendo…' : 'Imprimir boleta'}
+                </button>
+                {(order.boletaFolio != null || order.boletaDteId) && (
+                  <button
+                    disabled={descBusy === 'boleta'}
+                    onClick={() => descargarDoc('boleta')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: descBusy === 'boleta' ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: descBusy === 'boleta' ? 0.6 : 1 }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    {descBusy === 'boleta' ? 'Obteniendo…' : 'Descargar boleta'}
+                  </button>
+                )}
+              </>
             )}
             {boletaMsg && (
               <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: boletaMsg.startsWith('✓') ? 'var(--jade)' : 'var(--ink-3)' }}>{boletaMsg}</span>

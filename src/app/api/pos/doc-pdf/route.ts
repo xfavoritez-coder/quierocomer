@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { getB2BPdfBase64 } from "@/lib/sharkpos/client";
+import { getB2BPdfBase64, getBoletaPdfBase64 } from "@/lib/sharkpos/client";
 import { restaurantSharkposCred } from "@/lib/sharkpos/emit-sale";
 
 export const runtime = "nodejs";
@@ -38,6 +38,15 @@ export async function GET(req: NextRequest) {
   });
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (!(await assertOwnership(req, order.restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  // Boleta (39): PDF térmico 80mm desde SharkPOS (la factura/NC usan el PDF carta B2B).
+  if (kind === "boleta") {
+    if (!order.boletaDteId) return NextResponse.json({ error: "La venta no tiene boleta emitida" }, { status: 400 });
+    const cred = restaurantSharkposCred(order.restaurant);
+    const pdfBase64 = await getBoletaPdfBase64(order.boletaDteId, 80, cred);
+    if (!pdfBase64) return NextResponse.json({ ready: false, reason: "PDF no disponible aún" }, { status: 200 });
+    return NextResponse.json({ ready: true, pdfBase64, folio: order.boletaFolio, kind });
+  }
 
   const dteId = kind === "nc" ? order.notaCreditoDteId : (order.fiscalDocType === 33 ? order.boletaDteId : null);
   const folio = kind === "nc" ? order.notaCreditoFolio : order.boletaFolio;
