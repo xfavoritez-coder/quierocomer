@@ -312,15 +312,20 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
       {/* Sale type pills (not for mesa) */}
       {!isMesa && (
         <div style={{ display: 'flex', gap: 6 }}>
-          {([['QUICK', 'Venta rapida'], ['DELIVERY', 'Delivery'], ['PICKUP', 'Retiro']] as [SaleType, string][]).map(([t, label]) => (
+          {([
+            ['QUICK', 'Venta rápida', <svg key="q" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>],
+            ['DELIVERY', 'Delivery', <svg key="d" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>],
+            ['PICKUP', 'Retiro', <svg key="p" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>],
+          ] as [SaleType, string, React.ReactNode][]).map(([t, label, icon]) => (
             <button key={t} onClick={() => setSaleType(t)}
               style={{
                 flex: 1, padding: '10px 8px', borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 border: saleType === t ? `2px solid ${AMBER}` : '1.5px solid var(--line)',
                 background: saleType === t ? `${AMBER}12` : 'var(--surface)',
                 color: saleType === t ? AMBER : 'var(--ink-2)',
               }}
-            >{label}</button>
+            >{icon}{label}</button>
           ))}
         </div>
       )}
