@@ -610,6 +610,7 @@ export interface BrandBranch {
   open: boolean;
   opensAt: string | null; // si está cerrado y abre hoy más tarde
   hidden: boolean; // sucursal oculta: no se muestra en selector pero sí se evalúa para delivery
+  deliveryPolygon: { lat: number; lng: number }[]; // polígono de zona de delivery (vacío si no tiene)
 }
 export interface BrandData {
   brandSlug: string;
@@ -652,6 +653,7 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
       open: avail.openStatus.open,
       opensAt: avail.openStatus.opensAt ?? null,
       hidden: cfg.hiddenBranch,
+      deliveryPolygon: dcfg.polygonIncluded ?? [],
     };
   }).sort((a, b) => {
     // abiertas primero, luego alfabético

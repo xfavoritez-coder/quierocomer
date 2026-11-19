@@ -179,6 +179,78 @@ export default function BrandStore({ brand, representative, basePath, initialPro
   );
 }
 
+// ── Mapa de cobertura de delivery (todas las zonas unificadas) ──
+export function BrandCoverageMap({ branches, gmapsKey, accent }: { branches: BrandBranch[]; gmapsKey: string | null; accent: string }) {
+  const mapDiv = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<any>(null)
+  const ready = useGoogleMaps(gmapsKey)
+
+  useEffect(() => {
+    if (!ready || !mapDiv.current || mapRef.current) return
+    const g = (window as any).google
+    if (!g?.maps) return
+    mapRef.current = new g.maps.Map(mapDiv.current, {
+      zoom: 12, center: { lat: -33.45, lng: -70.65 },
+      disableDefaultUI: true, zoomControl: true,
+      styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }, { featureType: 'transit', stylers: [{ visibility: 'off' }] }],
+    })
+
+    const bounds = new g.maps.LatLngBounds()
+    let hasPolygons = false
+
+    // Dibujar TODOS los polígonos de delivery (incluyendo hidden) como una zona unificada
+    branches.forEach((b) => {
+      if (!b.deliveryPolygon || b.deliveryPolygon.length < 3) return
+      hasPolygons = true
+      new g.maps.Polygon({
+        paths: b.deliveryPolygon,
+        map: mapRef.current,
+        strokeColor: accent,
+        strokeWeight: 1.5,
+        strokeOpacity: 0.6,
+        fillColor: accent,
+        fillOpacity: 0.08,
+      })
+      b.deliveryPolygon.forEach((p: any) => bounds.extend(p))
+    })
+
+    // Markers solo para sucursales VISIBLES
+    branches.filter((b) => !b.hidden && b.lat != null && b.lng != null).forEach((b) => {
+      const marker = new g.maps.Marker({
+        position: { lat: b.lat!, lng: b.lng! },
+        map: mapRef.current,
+        title: b.branchName || b.name,
+        icon: {
+          path: g.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: accent,
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 2,
+        },
+      })
+      bounds.extend({ lat: b.lat!, lng: b.lng! })
+
+      const info = new g.maps.InfoWindow({
+        content: `<div style="font-family:system-ui;font-size:13px;font-weight:700;padding:2px 4px">${b.branchName || b.name}</div>`,
+      })
+      marker.addListener('click', () => info.open(mapRef.current, marker))
+    })
+
+    if (hasPolygons || branches.some((b) => b.lat != null)) {
+      mapRef.current.fitBounds(bounds, 40)
+    }
+  }, [ready, branches, accent])
+
+  if (!gmapsKey) return null
+
+  return (
+    <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', marginTop: 20 }}>
+      <div ref={mapDiv} style={{ width: '100%', height: 280 }} />
+    </div>
+  )
+}
+
 // ── Modal: elegir sucursal (delivery por dirección → más cercana · retiro) ──
 function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose, onClose, variant = "default" }: {
   brand: BrandData;
