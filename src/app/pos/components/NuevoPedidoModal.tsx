@@ -17,6 +17,7 @@ interface Props {
   onOrderCreated: () => void
   tableLabel?: string | null
   existingOrderId?: string | null
+  minimizedIndex?: number // posición entre los pedidos minimizados (para apilar los pills)
 }
 
 // ── Pre-fetch cache ──
@@ -73,7 +74,7 @@ function MesaSetupModal({ garzones, onConfirm, onClose }: { garzones: string[]; 
 }
 
 // ── Main ──
-export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimize, onRestore, onOrderCreated, tableLabel, existingOrderId }: Props) {
+export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimize, onRestore, onOrderCreated, tableLabel, existingOrderId, minimizedIndex = 0 }: Props) {
   const isMesa = !!tableLabel
   const staff = useStaff(restaurantId)
   const garzones = (staff || []).filter(g => g.active !== false).map(g => g.name)
@@ -104,12 +105,14 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
     return () => window.removeEventListener('keydown', handler)
   }, [open, onMinimize])
 
-  // Minimized pill
-  if (!open) {
-    return (
+  // El modal se mantiene MONTADO aunque esté minimizado (display:none) para no perder
+  // lo escrito en el pedido; al minimizar se muestra un pill flotante, apilado por índice.
+  return (
+    <>
+      {!open && (
       <button onClick={onRestore}
         style={{
-          position: 'fixed', bottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', right: 20, zIndex: 200,
+          position: 'fixed', bottom: `calc(20px + env(safe-area-inset-bottom, 0px) + ${minimizedIndex * 54}px)`, right: 20, zIndex: 200,
           display: 'flex', alignItems: 'center', gap: 8,
           padding: '12px 18px', borderRadius: 999,
           background: '#1e293b', color: '#fff', border: 'none', cursor: 'pointer',
@@ -123,13 +126,9 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
         </span>
         <span style={{ background: AMBER, color: '#000', fontWeight: 900, fontSize: 10, padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>Abrir</span>
       </button>
-    )
-  }
-
-  // Full modal
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,23,42,.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'stretch', justifyContent: 'center', animation: 'npFadeIn .15s ease-out' }}
-      onClick={onMinimize}>
+      )}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,23,42,.6)', backdropFilter: 'blur(6px)', display: open ? 'flex' : 'none', alignItems: 'stretch', justifyContent: 'center', animation: 'npFadeIn .15s ease-out' }}
+        onClick={onMinimize}>
       <style>{`@keyframes npFadeIn{from{opacity:0}to{opacity:1}}@keyframes npSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
       <div onClick={e => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 1200, margin: 16, background: '#f8fafc', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.35)', animation: 'npSlideUp .2s ease-out', position: 'relative' }}>
@@ -179,5 +178,6 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
         )}
       </div>
     </div>
+    </>
   )
 }

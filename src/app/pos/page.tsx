@@ -853,19 +853,23 @@ export default function PosHomePage() {
       {menuOpen && <PosMenuDrawer cashSession={!!cashSession} restaurant={restaurant} onClose={() => setMenuOpen(false)} onNavigate={navigate} onInline={openInnerPage} />}
 
       {/* ── Modales nuevo pedido (multi-pedido) ── */}
-      {npOrders.map(np => (
-        <NuevoPedidoModal
-          key={np.id}
-          restaurantId={restaurantId}
-          open={np.open}
-          onClose={() => closeOrder(np.id)}
-          onMinimize={() => minimizeOrder(np.id)}
-          onRestore={() => restoreOrder(np.id)}
-          onOrderCreated={() => { closeOrder(np.id); refreshOrdersRef.current?.(); fetchMesaOrders() }}
-          tableLabel={np.mesa?.label}
-          existingOrderId={np.mesa?.orderId}
-        />
-      ))}
+      {(() => {
+        const minimizedIds = npOrders.filter(o => !o.open).map(o => o.id)
+        return npOrders.map(np => (
+          <NuevoPedidoModal
+            key={np.id}
+            restaurantId={restaurantId}
+            open={np.open}
+            onClose={() => closeOrder(np.id)}
+            onMinimize={() => minimizeOrder(np.id)}
+            onRestore={() => restoreOrder(np.id)}
+            onOrderCreated={() => { closeOrder(np.id); refreshOrdersRef.current?.(); fetchMesaOrders() }}
+            tableLabel={np.mesa?.label}
+            existingOrderId={np.mesa?.orderId}
+            minimizedIndex={minimizedIds.indexOf(np.id)}
+          />
+        ))
+      })()}
     </div>
   )
 }
