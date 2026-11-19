@@ -20,7 +20,7 @@ import { usePosNav } from './lib/usePosNav'
 import { usePosRestaurant, switchPosBranch } from './lib/usePosRestaurant'
 import type { PosRestaurant } from './lib/usePosRestaurant'
 import { useIsDesktop } from './lib/useIsDesktop'
-import OrdersBoard, { OrderDetailPanel, CobroModal } from './components/OrdersBoard'
+import OrdersBoard, { OrderDetailPanel, CobroModal, DesktopDetailModal } from './components/OrdersBoard'
 import PrepAlertWatcher from './components/PrepAlertWatcher'
 import DelifastCancelWatcher from './components/DelifastCancelWatcher'
 import { LiveClock } from './components/OrderClock'
@@ -466,75 +466,70 @@ export default function PosHomePage() {
       ) : (
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '0 14px', height: 52,
+            display: 'flex', alignItems: 'center',
+            padding: '0 14px', height: 52, position: 'relative',
           }}>
-            {/* Hamburger */}
+            {/* Izquierda: hamburger */}
             <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
 
-            {/* Logo + QuieroComer (· Nombre local si es sucursal única) */}
-            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0, minWidth: 0 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
-              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
-                  {restaurants.length <= 1 && restaurant?.name && (
-                    <>
-                      <span style={{ color: 'var(--line)', fontSize: 14, fontWeight: 300 }}>·</span>
-                      <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink-2)' }}>{restaurant.name}</span>
-                    </>
+            {/* Centro: logo + marca + branch/nombre */}
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
+                <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+              </a>
+
+              <span style={{ width: 1, height: 20, background: 'var(--line)', flexShrink: 0 }} />
+
+              {restaurants.length > 1 ? (
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <select
+                    value={effectiveBranchMode}
+                    onChange={(e) => handleBranchSelect(e.target.value)}
+                    style={{
+                      appearance: 'none', WebkitAppearance: 'none',
+                      padding: '4px 26px 4px 8px', borderRadius: 8,
+                      border: 'none', background: 'transparent',
+                      fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
+                      color: 'var(--ink)', cursor: 'pointer', outline: 'none',
+                    }}
+                  >
+                    {restaurants.map(b => (
+                      <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
+                    ))}
+                    <option value="todas">Todas las sucursales</option>
+                  </select>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+              ) : restaurant?.name ? (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{restaurant.name}</span>
+                  {restaurant.commune && (
+                    <span style={{ fontFamily: 'var(--sans)', fontSize: 10.5, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
                   )}
                 </div>
-                {restaurants.length <= 1 && restaurant?.commune && (
-                  <span style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
-                )}
-              </div>
-            </a>
+              ) : null}
+            </div>
 
-            <div style={{ flex: 1 }} />
-
-            {/* Select sucursal */}
-            {restaurants.length > 1 && (
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <select
-                  value={effectiveBranchMode}
-                  onChange={(e) => handleBranchSelect(e.target.value)}
-                  style={{
-                    appearance: 'none', WebkitAppearance: 'none',
-                    padding: '6px 28px 6px 10px', borderRadius: 8,
-                    border: '1px solid var(--line)',
-                    background: 'var(--surface)',
-                    fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
-                    color: 'var(--ink-2)',
-                    cursor: 'pointer', outline: 'none',
-                  }}
-                >
-                  {restaurants.map(b => (
-                    <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
-                  ))}
-                  <option value="todas">Todas</option>
-                </select>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
-                  style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                  <path d="M6 9l6 6 6-6"/>
-                </svg>
-              </div>
-            )}
-
-            {/* Pending sync */}
-            {pendingCount > 0 && (
-              <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
-                </svg>
-                {pendingCount}
-              </button>
-            )}
+            {/* Derecha: pending */}
+            <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+              {pendingCount > 0 && (
+                <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  {pendingCount}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -722,10 +717,10 @@ export default function PosHomePage() {
 
       {/* ── Split layout: izquierda (mesas) + derecha (panel) ── */}
       {tab === 'mesas' && effectiveBranchMode !== 'todas' && (
-      <div className="pos-split-wrapper" style={isDesktop ? { flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' } : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div className="pos-split-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* ── Lista de mesas (columna izquierda en desktop) ──────────── */}
-      <div className={isDesktop ? 'pos-split-left pos-scroll' : 'pos-scroll'} onClick={isDesktop ? () => setMesaCuenta(null) : undefined}>
+      <div className="pos-scroll">
         <div className="pos-pad">
 
             {/* MESAS — Floor plan view (solo si el local activó "usar distribución real") */}
@@ -848,35 +843,26 @@ export default function PosHomePage() {
         </div>
       </div>
 
-      {/* ── Panel detalle (columna derecha en desktop) — mismo OrderDetailPanel
-           que la pestaña Todos. Mesa seleccionada = PosOrder dine-in abierto. ── */}
-      {isDesktop && (
-        <div className={`pos-split-right${mesaCuenta ? '' : ' empty'}`}>
-          {mesaCuenta ? (
-            <OrderDetailPanel
-              order={mesaCuenta.order}
-              restaurantId={restaurantId}
-              cajaOpen={!!cashSession}
-              stageBusy={mesaStageBusy}
-              delifastEnabled={false}
-              blocked={false}
-              onStageChange={changeMesaStage}
-              onCobro={(o) => setMesaCobro(o)}
-              onBlock={() => {}}
-              onDismissBlock={() => {}}
-              onClose={() => setMesaCuenta(null)}
-              onPaid={() => { setMesaCuenta(null); fetchMesaOrders() }}
-              navigate={navigate}
-            />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--ink-3)', height: '100%', padding: 24, textAlign: 'center' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>Selecciona una mesa</span>
-            </div>
-          )}
-        </div>
+      {/* ── Detail modal (desktop) — mesa seleccionada ── */}
+      {isDesktop && mesaCuenta && (
+        <DesktopDetailModal onClose={() => setMesaCuenta(null)}>
+          <OrderDetailPanel
+            order={mesaCuenta.order}
+            restaurantId={restaurantId}
+            cajaOpen={!!cashSession}
+            stageBusy={mesaStageBusy}
+            delifastEnabled={false}
+            blocked={false}
+            onStageChange={changeMesaStage}
+            onCobro={(o) => setMesaCobro(o)}
+            onBlock={() => {}}
+            onDismissBlock={() => {}}
+            onClose={() => setMesaCuenta(null)}
+            onPaid={() => { setMesaCuenta(null); fetchMesaOrders() }}
+            navigate={navigate}
+            inlineHistory
+          />
+        </DesktopDetailModal>
       )}
 
       </div>

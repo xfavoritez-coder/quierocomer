@@ -11,7 +11,7 @@ import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
 import { playDelifastWarning } from '../lib/orderSound'
 import { supabase } from '@/lib/supabase'
-import CustomerOrdersDrawer from './CustomerOrdersDrawer'
+import CustomerOrdersDrawer, { CustomerOrdersContent } from './CustomerOrdersDrawer'
 
 type OrderType = 'retiro' | 'delivery' | 'todos'
 
@@ -696,7 +696,7 @@ function CobroStrip({
 // Exportado para reutilizarlo en el panel derecho de Mesas (mismo componente que
 // el detalle de Todos/Retiro/Delivery → los cajeros ven lo mismo en todas partes).
 export function OrderDetailPanel({
-  order, restaurantId, cajaOpen, stageBusy, delifastEnabled, blocked, onStageChange, onCobro, onBlock, onDismissBlock, onClose, onPaid, navigate,
+  order, restaurantId, cajaOpen, stageBusy, delifastEnabled, blocked, onStageChange, onCobro, onBlock, onDismissBlock, onClose, onPaid, navigate, inlineHistory,
 }: {
   order: PosOrderLite
   restaurantId: string
@@ -711,6 +711,7 @@ export function OrderDetailPanel({
   onClose: () => void
   onPaid: () => void
   navigate: (path: string) => void
+  inlineHistory?: boolean
 }) {
   const paid = isPaid(order)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
@@ -889,12 +890,23 @@ export function OrderDetailPanel({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {showCustomerHistory && order.customerPhone && (
-        <CustomerOrdersDrawer
-          restaurantId={restaurantId}
-          customerName={order.customerName}
-          customerPhone={order.customerPhone}
-          onClose={() => setShowCustomerHistory(false)}
-        />
+        inlineHistory ? (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 5, background: 'var(--surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 20 }}>
+            <CustomerOrdersContent
+              restaurantId={restaurantId}
+              customerName={order.customerName}
+              customerPhone={order.customerPhone}
+              onClose={() => setShowCustomerHistory(false)}
+            />
+          </div>
+        ) : (
+          <CustomerOrdersDrawer
+            restaurantId={restaurantId}
+            customerName={order.customerName}
+            customerPhone={order.customerPhone}
+            onClose={() => setShowCustomerHistory(false)}
+          />
+        )
       )}
       {editCustomer && (
         <div className="pos-modal-overlay" onClick={() => setEditCustomer(false)}>
@@ -1334,6 +1346,43 @@ function MobileDetailSheet({ children, onClose }: { children: React.ReactNode; o
   )
 }
 
+// ── Desktop detail modal ─────────────────────────────────────────────
+export function DesktopDetailModal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div className="pos-detail-overlay" onClick={onClose}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 440, maxHeight: '88dvh',
+          background: 'var(--surface)', borderRadius: 20,
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,.25)',
+          animation: 'posSlideUp .2s ease-out',
+          position: 'relative',
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 10, right: 10, zIndex: 2,
+            width: 30, height: 30, borderRadius: 8,
+            border: 'none', background: 'var(--sunk)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--ink-3)', fontSize: 15,
+          }}
+        >✕</button>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ──────────────────────────────────────────────────
 
 export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersUpdate, refreshRef, onNewOrder }: { restaurantId: string; type: OrderType; allBranches?: BranchInfo[]; onOrdersUpdate?: (orders: PosOrderLite[]) => void; refreshRef?: React.MutableRefObject<() => void>; onNewOrder?: () => void }) {
@@ -1693,7 +1742,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     <div className="pos-scroll">
       <div className="pos-pad">
         {/* Header: buscador + botones */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, maxWidth: isDesktop ? 640 : undefined, margin: isDesktop ? '0 auto 14px' : undefined }}>
           {/* Buscador */}
           <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1882,18 +1931,34 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     </div>
   )
 
-  // Desktop: split layout
+  // Desktop: full-width list + detail modal
   if (isDesktop) {
     return (
-      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 420px', overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {listSection}
-        <div className={`pos-split-right${selected ? '' : ' empty'}`}>
-          {detailSection}
-        </div>
+        {selected && (
+          <DesktopDetailModal onClose={() => setSelected(null)}>
+            <OrderDetailPanel
+              order={selected}
+              restaurantId={selected._branchId || restaurantId}
+              cajaOpen={cajaOpen}
+              stageBusy={stageBusy}
+              delifastEnabled={delifastEnabled}
+              blocked={blockedId === selected.id}
+              onStageChange={changeStage}
+              onCobro={handleCobro}
+              onBlock={blockAdvance}
+              onDismissBlock={dismissBlock}
+              onClose={() => setSelected(null)}
+              onPaid={() => { setSelected(null); fetchOrders() }}
+              navigate={navigate}
+              inlineHistory
+            />
+          </DesktopDetailModal>
+        )}
         {cobro && (
           <CobroModal order={cobro} restaurantId={cobro._branchId || restaurantId} type={type} delifastEnabled={delifastEnabled} onClose={() => setCobro(null)} onPaid={() => { setCobro(null); setBlockedId(null); fetchOrders() }} />
         )}
-
       </div>
     )
   }

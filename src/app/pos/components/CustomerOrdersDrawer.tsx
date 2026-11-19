@@ -181,7 +181,6 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
 
         {/* Tags + dirección + hora */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Tipo + Pagado */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ ...tagStyle, background: tc.bg, color: tc.fg }}>{typeLabel}</span>
             {paid && !canceled && (
@@ -191,28 +190,21 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
               </span>
             )}
           </div>
-          {/* Dirección */}
           {isDelivery && order.addressLine && (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--ink-2)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginTop: 1, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               {cleanAddr(order.addressLine)}
             </div>
           )}
-          {/* Hora — "Realizado a las HH:MM p.m." */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--ink-3)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Realizado a las {fmtTimeAmPm(order.createdAt)}
           </div>
         </div>
 
-        {/* Delifast — cinta full-width */}
+        {/* Delifast */}
         {isDelivery && (
-          <div style={{
-            margin: '0 -20px',
-            borderTop: '1px solid var(--line)',
-            borderBottom: '1px solid var(--line)',
-            background: 'var(--sunk)',
-          }}>
+          <div style={{ margin: '0 -20px', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
             <DelifastTracking restaurantId={restaurantId} posOrderId={order.id} live={false} ribbon />
           </div>
         )}
@@ -268,21 +260,9 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
         <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)', marginBottom: 2 }}>Encuesta</div>
           {([
-            {
-              label: 'Email enviado',
-              value: order.surveySentAt ? fmtDateShort(order.surveySentAt) : null,
-              yes: !!order.surveySentAt,
-            },
-            {
-              label: 'Email abierto',
-              value: order.surveyEmailOpenedAt ? fmtDateShort(order.surveyEmailOpenedAt) : null,
-              yes: !!order.surveyEmailOpenedAt,
-            },
-            {
-              label: 'Respondió',
-              value: order.surveyAnsweredAt ? fmtDateShort(order.surveyAnsweredAt) : null,
-              yes: !!order.surveyAnsweredAt,
-            },
+            { label: 'Email enviado', value: order.surveySentAt ? fmtDateShort(order.surveySentAt) : null, yes: !!order.surveySentAt },
+            { label: 'Email abierto', value: order.surveyEmailOpenedAt ? fmtDateShort(order.surveyEmailOpenedAt) : null, yes: !!order.surveyEmailOpenedAt },
+            { label: 'Respondió', value: order.surveyAnsweredAt ? fmtDateShort(order.surveyAnsweredAt) : null, yes: !!order.surveyAnsweredAt },
           ] as { label: string; value: string | null; yes: boolean }[]).map(row => (
             <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>{row.label}</span>
@@ -303,8 +283,8 @@ function OrderDetail({ order, restaurantId, onBack }: { order: CustomerOrder; re
   )
 }
 
-// ── Componente principal ───────────────────────────────────────────────
-export default function CustomerOrdersDrawer({
+// ── Contenido interno (reutilizable inline o en portal) ──────────────
+export function CustomerOrdersContent({
   restaurantId, customerName, customerPhone, onClose,
 }: {
   restaurantId: string
@@ -325,6 +305,103 @@ export default function CustomerOrdersDrawer({
       .finally(() => setLoading(false))
   }, [restaurantId, customerPhone])
 
+  if (selected) {
+    return <OrderDetail order={selected} restaurantId={restaurantId} onBack={() => setSelected(null)} />
+  }
+
+  return (
+    <>
+      {/* Header */}
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px 6px 4px', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600, flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {displayName(customerName || 'Cliente')}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>
+            {loading ? 'Cargando…' : `${orders.length} pedido${orders.length !== 1 ? 's' : ''} · ${customerPhone}`}
+          </div>
+        </div>
+      </div>
+
+      {/* Lista */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {loading && (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14, fontFamily: 'var(--sans)' }}>Cargando…</div>
+        )}
+        {!loading && orders.length === 0 && (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14, fontFamily: 'var(--sans)' }}>Sin pedidos anteriores</div>
+        )}
+        {orders.map(o => {
+          const canceled = o.posStatus === 'canceled'
+          const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
+          const isDelivery = o.isDelivery || o.saleType === 'delivery'
+          const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+          const lines = itemLines(o.items)
+          const qty = lines.reduce((s, l) => s + l.qty, 0)
+          return (
+            <div
+              key={o.id}
+              onClick={() => setSelected(o)}
+              style={{
+                border: '1.5px solid var(--line)', borderRadius: 12, padding: '12px 14px',
+                cursor: 'pointer', background: 'var(--surface)', fontFamily: 'var(--sans)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                opacity: canceled ? 0.7 : 1,
+                transition: 'background .12s',
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                  {o.orderReference && (
+                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 13 }}>#{o.orderReference}</span>
+                  )}
+                  <span style={{ color: 'var(--ink-3)', fontWeight: 400, fontSize: 13 }}>
+                    {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--ink-3)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {qty > 0 && <span>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
+                  {isDelivery && o.addressLine && <><span>·</span><span>{cleanAddr(o.addressLine)}</span></>}
+                  {isDineIn && <><span>·</span><span>Salón</span></>}
+                </div>
+              </div>
+              <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 16, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
+                  {clp(o.totalAmount)}
+                </span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {canceled
+                    ? <span style={chip('#6b7280')}>Anulado</span>
+                    : paid
+                      ? <span style={chip('#16a34a')}>Pagado</span>
+                      : <span style={chip('#f59e0b')}>Sin cobro</span>}
+                  <span style={chip(isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b')}>
+                    {isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
+                  </span>
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+// ── Componente principal (portal overlay — mobile y contextos legacy) ─
+export default function CustomerOrdersDrawer({
+  restaurantId, customerName, customerPhone, onClose,
+}: {
+  restaurantId: string
+  customerName: string
+  customerPhone: string
+  onClose: () => void
+}) {
   if (typeof document === 'undefined') return null
   return createPortal(
     <div
@@ -346,89 +423,12 @@ export default function CustomerOrdersDrawer({
         <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }} onClick={onClose}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--ink-4)', opacity: 0.5 }} />
         </div>
-        {selected ? (
-          <OrderDetail order={selected} restaurantId={restaurantId} onBack={() => setSelected(null)} />
-        ) : (
-          <>
-            {/* Header */}
-            <div style={{ padding: '4px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {displayName(customerName || 'Cliente')}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>
-                  {loading ? 'Cargando…' : `${orders.length} pedido${orders.length !== 1 ? 's' : ''} · ${customerPhone}`}
-                </div>
-              </div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--ink-3)', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-
-            {/* Lista */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {loading && (
-                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14, fontFamily: 'var(--sans)' }}>Cargando…</div>
-              )}
-              {!loading && orders.length === 0 && (
-                <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontSize: 14, fontFamily: 'var(--sans)' }}>Sin pedidos anteriores</div>
-              )}
-              {orders.map(o => {
-                const canceled = o.posStatus === 'canceled'
-                const paid = o.paidAmount >= o.totalAmount && o.totalAmount > 0
-                const isDelivery = o.isDelivery || o.saleType === 'delivery'
-                const isDineIn = !isDelivery && (o.saleType === 'dine-in' || o.saleType === 'dinein')
-                const lines = itemLines(o.items)
-                const qty = lines.reduce((s, l) => s + l.qty, 0)
-                return (
-                  <div
-                    key={o.id}
-                    onClick={() => setSelected(o)}
-                    style={{
-                      border: '1.5px solid var(--line)', borderRadius: 12, padding: '12px 14px',
-                      cursor: 'pointer', background: 'var(--surface)', fontFamily: 'var(--sans)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                      opacity: canceled ? 0.7 : 1,
-                      transition: 'background .12s',
-                    }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                        {o.orderReference && (
-                          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, color: 'var(--ink-3)', fontSize: 13 }}>#{o.orderReference}</span>
-                        )}
-                        <span style={{ color: 'var(--ink-3)', fontWeight: 400, fontSize: 13 }}>
-                          {new Date(o.createdAt).toLocaleString('es-CL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--ink-3)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {qty > 0 && <span>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
-                        {isDelivery && o.addressLine && <><span>·</span><span>{cleanAddr(o.addressLine)}</span></>}
-                        {isDineIn && <><span>·</span><span>Salón</span></>}
-                      </div>
-                    </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 16, color: canceled ? 'var(--ink-3)' : 'var(--ink)', textDecoration: canceled ? 'line-through' : 'none' }}>
-                        {clp(o.totalAmount)}
-                      </span>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        {canceled
-                          ? <span style={chip('#6b7280')}>Anulado</span>
-                          : paid
-                            ? <span style={chip('#16a34a')}>Pagado</span>
-                            : <span style={chip('#f59e0b')}>Sin cobro</span>}
-                        <span style={chip(isDelivery ? '#f59e0b' : isDineIn ? '#8b5cf6' : '#64748b')}>
-                          {isDelivery ? 'Delivery' : isDineIn ? 'Salón' : 'Retiro'}
-                        </span>
-                      </div>
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
+        <CustomerOrdersContent
+          restaurantId={restaurantId}
+          customerName={customerName}
+          customerPhone={customerPhone}
+          onClose={onClose}
+        />
       </div>
     </div>,
     document.body,
