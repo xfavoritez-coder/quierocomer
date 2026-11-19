@@ -1731,7 +1731,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
     <div className="pos-scroll">
       <div className="pos-pad">
         {/* Header: buscador + botones */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: isDesktop ? 14 : 18, maxWidth: isDesktop ? 560 : undefined, margin: isDesktop ? '0 auto 14px' : undefined }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: isDesktop ? 560 : undefined, margin: isDesktop ? '0 auto 16px' : '0 0 20px' }}>
           {/* Buscador */}
           <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

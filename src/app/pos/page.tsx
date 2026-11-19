@@ -91,14 +91,6 @@ function BranchDropdown({ restaurants, value, onChange, counts = {} }: { restaur
       >
         {storeIcon('var(--ink-3)', 13)}
         {current}
-        {currentCount > 0 && (
-          <span style={{
-            fontSize: 10, fontWeight: 800, minWidth: 16, textAlign: 'center',
-            padding: '1px 5px', borderRadius: 999,
-            background: 'var(--ink-3)', color: '#fff',
-            lineHeight: '14px',
-          }}>{currentCount}</span>
-        )}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
           style={{ transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <path d="M6 9l6 6 6-6"/>
@@ -596,44 +588,44 @@ export default function PosHomePage() {
       )}
       {/* ── Header unificado — siempre visible ── */}
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, position: 'relative', justifyContent: isDesktop ? undefined : 'center' }}>
-            {/* Hamburger */}
-            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0, ...(isDesktop ? {} : { position: 'absolute', left: 14 }) }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: 54, position: 'relative' }}>
+            {/* Hamburger — siempre a la izquierda */}
+            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0, position: 'absolute', left: 14 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
-            {/* Logo */}
-            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
-              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 15, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
-            </a>
 
-            {/* Nombre local o branch select */}
-            {restaurants.length > 1 ? (
-              <>
-                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
-                <BranchDropdown
-                  restaurants={restaurants}
-                  value={effectiveBranchMode}
-                  onChange={handleBranchSelect}
-                  counts={branchCounts}
-                />
-              </>
-            ) : restaurant?.name ? (
-              <>
-                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{restaurant.name}</span>
-                  {restaurant.commune && (
-                    <span style={{ fontFamily: 'var(--sans)', fontSize: 10.5, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
-                  )}
-                </div>
-              </>
-            ) : null}
+            {/* Centro: logo + branch (centrado en mobile Y desktop) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 auto' }}>
+              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
+                <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 15, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+              </a>
 
-            <div style={{ flex: 1 }} />
+              {restaurants.length > 1 ? (
+                <>
+                  <span style={{ width: 1, height: 20, background: 'var(--line)', flexShrink: 0 }} />
+                  <BranchDropdown
+                    restaurants={restaurants}
+                    value={effectiveBranchMode}
+                    onChange={handleBranchSelect}
+                    counts={branchCounts}
+                  />
+                </>
+              ) : restaurant?.name ? (
+                <>
+                  <span style={{ width: 1, height: 20, background: 'var(--line)', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{restaurant.name}</span>
+                    {restaurant.commune && (
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
 
             {/* Desktop: tabs centrados — siempre visibles */}
             {isDesktop && (
