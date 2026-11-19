@@ -8,6 +8,8 @@ import CategoriesManager from "@/components/admin/CategoriesManager";
 import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
 import MenuGroupsManager from "@/components/admin/MenuGroupsManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
+import AdminPromos from "@/components/admin/pages/promocionesPage";
+import PlanPageGate from "@/components/admin/PlanPageGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
 import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed, FileUp, ShoppingCart, Smartphone } from "lucide-react";
@@ -394,7 +396,7 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = ["productos", "categorias", "modificadores", "horarios", "multimenu", "toteat"] as const;
+  const validTabs = ["productos", "categorias", "ofertas", "modificadores", "horarios", "multimenu", "toteat"] as const;
   type MenuTab = typeof validTabs[number];
   const tabFromUrl = searchParams.get("tab") as MenuTab | null;
   const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
@@ -1541,6 +1543,7 @@ export default function AdminMenus() {
         {([
           { key: "productos" as const, label: t("menu_products_tab") },
           { key: "categorias" as const, label: t("menu_categories_tab") },
+          { key: "ofertas" as const, label: "Ofertas" },
           { key: "modificadores" as const, label: t("menu_modifiers_tab") },
           { key: "horarios" as const, label: t("menu_schedules_tab") },
           ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: t("menu_multimenu_tab") }] : []),
@@ -2204,6 +2207,13 @@ export default function AdminMenus() {
       {/* ── Modificadores tab ── */}
       {menuTab === "modificadores" && selectedRestaurantId && (
         <ModifierTemplatesTab restaurantId={selectedRestaurantId} />
+      )}
+
+      {/* ── Ofertas tab (movido desde Carta QR → Ofertas) ── */}
+      {menuTab === "ofertas" && selectedRestaurantId && (
+        <PlanPageGate feature="promotions">
+          <AdminPromos />
+        </PlanPageGate>
       )}
 
       {/* ── Horarios tab ── */}
