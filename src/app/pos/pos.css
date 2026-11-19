@@ -253,7 +253,7 @@
 .pos-mod-add .price{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- mapa de mesas ---------- */
-.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:26px}
+.pos-mesa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,160px));gap:10px;margin-bottom:26px;justify-content:center}
 .pos-mesa{
   border:1px solid var(--line);
   border-left-width:1px;
