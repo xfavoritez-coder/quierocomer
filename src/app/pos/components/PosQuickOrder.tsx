@@ -32,6 +32,13 @@ const MONO = "var(--mono, 'JetBrains Mono', monospace)"
 let _uid = 0
 function uid() { return `qi_${Date.now()}_${++_uid}` }
 function clp(n: number) { return '$' + Math.round(n).toLocaleString('es-CL') }
+// Una dirección guardada viene como "<calle> · Dpto/casa: <ref>". Se separa para
+// que el campo Dirección tenga SOLO la calle (geocodable) y el Depto su referencia;
+// si no, el " · Dpto/casa: …" hace que Google la marque como imprecisa.
+function splitSavedAddr(a: string): { street: string; ref: string } {
+  const parts = String(a || '').split(/\s*·\s*dpto\/casa:\s*/i)
+  return { street: (parts[0] || '').trim(), ref: (parts[1] || '').trim() }
+}
 
 // ── Props ──────────────────────────────────────────────────
 interface Props {
@@ -158,8 +165,10 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           setCustomerName(d.name)
         }
         if (saleType === 'DELIVERY' && !address.trim() && Array.isArray(d.addresses) && d.addresses.length) {
+          const { street, ref } = splitSavedAddr(d.addresses[0])
           skipAddrSug.current = true
-          setAddress(d.addresses[0])
+          setAddress(street)
+          if (ref && !addressRef.trim()) setAddressRef(ref)
         }
       } catch { /* noop */ }
     }, 450)
@@ -344,12 +353,14 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {custAddrs.map((a, i) => {
-                      const active = address.trim().toLowerCase() === a.trim().toLowerCase()
+                      const { street, ref } = splitSavedAddr(a)
+                      const active = address.trim().toLowerCase() === street.toLowerCase()
+                      const shortStreet = street.replace(/,?\s*chile\b/gi, '').replace(/\s{2,}/g, ' ').trim()
                       return (
-                        <button key={i} type="button" onClick={() => { skipAddrSug.current = true; setAddress(a) }}
+                        <button key={i} type="button" onClick={() => { skipAddrSug.current = true; setAddress(street); setAddressRef(ref) }}
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 5, maxWidth: '100%', padding: '6px 10px', borderRadius: 999, border: `1.5px solid ${active ? 'var(--amber)' : 'var(--line)'}`, background: active ? 'rgba(222,124,0,.08)' : 'var(--surface)', color: active ? 'var(--amber)' : 'var(--ink-2)', fontFamily: F, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{a.replace(/,?\s*chile\b/gi, '').replace(/\s{2,}/g, ' ').trim()}</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{shortStreet}{ref ? ` · ${ref}` : ''}</span>
                         </button>
                       )
                     })}
