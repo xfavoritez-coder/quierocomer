@@ -498,14 +498,10 @@ export default function PosHomePage() {
                       color: 'var(--amber-press)', cursor: 'pointer', outline: 'none',
                     }}
                   >
-                    <optgroup label="Sucursales">
-                      {restaurants.map(b => (
-                        <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Vista global">
-                      <option value="todas">Todas las sucursales</option>
-                    </optgroup>
+                    <option value="todas">Todas las sucursales</option>
+                    {restaurants.map(b => (
+                      <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
+                    ))}
                   </select>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
                     style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
