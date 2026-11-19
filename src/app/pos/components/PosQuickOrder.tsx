@@ -602,8 +602,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
                   return isMobile ? (
                     /* Mobile: lista compacta */
                     <button key={p.id} onClick={() => hasModifiers ? setModProduct(p) : addToCart(p)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: qty > 0 ? `${AMBER}08` : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: F, width: '100%' }}>
-                      {p.image_url && <img src={p.image_url} alt="" loading="lazy" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: 'none', background: qty > 0 ? `${AMBER}08` : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: F, width: '100%', contentVisibility: 'auto', containIntrinsicSize: '320px 68px' }}>
+                      {p.image_url && <img src={p.image_url} alt="" loading="lazy" decoding="async" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                         <div style={{ fontSize: 14, fontWeight: 800, color: AMBER, fontFamily: MONO }}>{clp(p.price)}</div>
@@ -615,9 +615,9 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
                   ) : (
                     /* Desktop: card con foto grande */
                     <button key={p.id} onClick={() => hasModifiers ? setModProduct(p) : addToCart(p)}
-                      style={{ display: 'flex', flexDirection: 'column', borderRadius: 12, border: qty > 0 ? `2px solid ${AMBER}` : '1.5px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left', fontFamily: F, overflow: 'hidden', position: 'relative' }}>
+                      style={{ display: 'flex', flexDirection: 'column', borderRadius: 12, border: qty > 0 ? `2px solid ${AMBER}` : '1.5px solid var(--line)', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left', fontFamily: F, overflow: 'hidden', position: 'relative', contentVisibility: 'auto', containIntrinsicSize: '180px 168px' }}>
                       {p.image_url ? (
-                        <img src={p.image_url} alt="" loading="lazy" style={{ width: '100%', height: 100, objectFit: 'cover' }} />
+                        <img src={p.image_url} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: 100, objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '100%', height: 50, background: 'var(--sunk)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-4)', fontSize: 20 }}>🍽</div>
                       )}
