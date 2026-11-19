@@ -266,7 +266,18 @@ export default function PosHomePage() {
 
   const openInnerPage = useCallback((id: string | null) => {
     setInnerPage(id)
-    window.history.replaceState(null, '', id ? `/pos/${id}` : '/pos')
+    // Al cerrar una inner page se conserva la pestaña activa en la URL, así un refresh
+    // vuelve a la misma pestaña (y NO reabre Config por una URL /pos/config stale).
+    const base = tab === 'todos' ? '/pos' : `/pos?tab=${tab}`
+    window.history.replaceState(null, '', id ? `/pos/${id}` : base)
+  }, [tab])
+
+  // Cambiar de pestaña: limpia la inner page Y la URL (si no, al salir de Config la URL
+  // quedaba en /pos/config y el refresh reabría Config).
+  const selectTab = useCallback((t: Tab) => {
+    setTab(t)
+    setInnerPage(null)
+    window.history.replaceState(null, '', t === 'todos' ? '/pos' : `/pos?tab=${t}`)
   }, [])
 
   const handleReportesStateChange = useCallback((tab: string, from: string, to: string, chart: string, branch: string) => {
@@ -450,14 +461,14 @@ export default function PosHomePage() {
         syncing={syncing}
         onMenu={() => setMenuOpen(m => !m)}
         onPendingClick={() => setPendingModal(true)}
-        onBrandClick={() => { setTab('todos'); setInnerPage(null) }}
+        onBrandClick={() => selectTab('todos')}
         centerSlot={
           <div className="pos-tabs-bar">
             {TABS.map(t => (
               <button
                 key={t.id}
                 className={`pos-tab${tab === t.id && !innerPage ? ' on' : ''}`}
-                onClick={() => { setTab(t.id); setInnerPage(null) }}
+                onClick={() => selectTab(t.id)}
               >
                 {t.label}
                 {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
@@ -493,7 +504,7 @@ export default function PosHomePage() {
           </svg>
           <span style={{ color: 'var(--amber-press)', fontWeight: 700, fontSize: 13, fontFamily: 'var(--sans)' }}>{msg}</span>
           <button
-            onClick={() => setInnerPage('caja')}
+            onClick={() => openInnerPage('caja')}
             style={{ border: 'none', background: 'var(--amber)', color: '#fff', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)' }}
           >
             {cta}
