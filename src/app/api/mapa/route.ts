@@ -19,6 +19,7 @@ export async function GET() {
       logoUrl: true,
       googleRating: true,
       googleRatingCount: true,
+      ecommerceStoreConfig: true,
       dishes: {
         where: {
           isActive: true,
@@ -43,7 +44,7 @@ export async function GET() {
   })
 
   const result = restaurants
-    .filter((r) => r.lat !== null && r.lng !== null)
+    .filter((r) => r.lat !== null && r.lng !== null && !(r.ecommerceStoreConfig as any)?.hiddenBranch)
     .map((r) => ({
       id: r.id,
       name: r.name,

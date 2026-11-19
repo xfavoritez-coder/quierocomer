@@ -69,6 +69,7 @@ export interface EcommerceStoreConfig {
   kitchenPrinterIp: string | null; // IP (o IP:puerto) de la impresora de cocina (cuando kitchenPrintTarget = "ip")
   showWhatsApp: boolean; // mostrar botón flotante de WhatsApp en la tienda
   showPhone: boolean; // mostrar teléfono de contacto en la tienda
+  hiddenBranch: boolean; // sucursal oculta: no aparece en selector de sucursales, sitemap ni listados públicos, pero funciona normalmente por URL directa
 }
 
 /** Normaliza un email; null si no tiene forma válida. */
@@ -218,6 +219,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     kitchenPrinterIp: typeof o.kitchenPrinterIp === "string" && o.kitchenPrinterIp.trim() ? o.kitchenPrinterIp.trim() : null,
     showWhatsApp: o.showWhatsApp !== false, // default true
     showPhone: o.showPhone !== false, // default true
+    hiddenBranch: o.hiddenBranch === true,
   };
 }
 

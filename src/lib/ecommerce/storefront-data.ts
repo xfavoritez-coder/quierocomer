@@ -651,7 +651,8 @@ export async function loadEcommerceBrand(brandSlug: string): Promise<BrandData |
       open: avail.openStatus.open,
       opensAt: avail.openStatus.opensAt ?? null,
     };
-  }).sort((a, b) => {
+  }).filter((_, i) => !parseStoreConfig(rows[i].ecommerceStoreConfig).hiddenBranch)
+  .sort((a, b) => {
     // abiertas primero, luego alfabético
     if (a.open !== b.open) return a.open ? -1 : 1;
     return (a.branchName || a.name).localeCompare(b.branchName || b.name);

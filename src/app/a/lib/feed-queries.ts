@@ -190,6 +190,7 @@ async function _getFeedDishes(): Promise<FeedDish[]> {
         AND r.lng IS NOT NULL
         AND (r."googleMapsUrl" IS NOT NULL OR r."isShowcase" = true)
         AND (r."googleRating" IS NOT NULL OR r."isShowcase" = true)
+        AND COALESCE((r."ecommerceStoreConfig"->>'hiddenBranch')::boolean, false) = false
     ) ranked
     JOIN "Dish" d ON d.id = ranked.id
     JOIN "Category" c ON c.id = d."categoryId"
@@ -314,6 +315,7 @@ export const getCachedCategoryCountMap = unstable_cache(
         AND c."dishType" != 'drink'
         AND r."isActive" = true
         AND r."isDemo" = false
+        AND COALESCE((r."ecommerceStoreConfig"->>'hiddenBranch')::boolean, false) = false
     `
     const map: Record<string, number> = {}
     for (const row of rows) {

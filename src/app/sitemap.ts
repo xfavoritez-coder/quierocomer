@@ -136,7 +136,10 @@ const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap>
   // (handroll.cl) se excluyen: su canónica apunta a ese dominio y deben listarse
   // en el sitemap de su propio dominio, no en el de quierocomer.com.
   const ecommercePages: MetadataRoute.Sitemap = ecommerceStores
-    .filter(r => !((r.ecommerceStoreConfig as { customDomain?: string | null } | null)?.customDomain))
+    .filter(r => {
+      const cfg = r.ecommerceStoreConfig as { customDomain?: string | null; hiddenBranch?: boolean } | null;
+      return !cfg?.customDomain && !cfg?.hiddenBranch;
+    })
     .map(r => ({
       url: `${BASE}/ecommerce/${r.slug}`,
       lastModified: r.updatedAt,
