@@ -401,6 +401,28 @@ export default function PosHomePage() {
 
   const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
   const [branchCounts, setBranchCounts] = useState<Record<string, number>>({})
+
+  // Fetch per-branch counts independently (always all branches, regardless of selected)
+  useEffect(() => {
+    if (restaurants.length <= 1) return
+    const fetchCounts = () => {
+      Promise.all(
+        restaurants.map(b =>
+          fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${b.id}&scope=activos`, { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => ({ id: b.id, count: Array.isArray(d?.orders) ? d.orders.length : 0 }))
+            .catch(() => ({ id: b.id, count: 0 }))
+        )
+      ).then(results => {
+        const bc: Record<string, number> = {}
+        for (const r of results) bc[r.id] = r.count
+        setBranchCounts(bc)
+      })
+    }
+    fetchCounts()
+    const iv = setInterval(fetchCounts, 15_000)
+    return () => clearInterval(iv)
+  }, [restaurants])
   // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
   const [activeOrders, setActiveOrders] = useState<any[]>([])
   const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
@@ -414,15 +436,12 @@ export default function PosHomePage() {
     const delivery = orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
     const retiro = orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
     setOrderCounts({ retiro, delivery })
-    // Per-branch counts
-    const bc: Record<string, number> = {}
-    for (const o of orders) {
-      const bid = (o as any)._branchId || restaurantId
-      bc[bid] = (bc[bid] || 0) + 1
+    // Single-branch: update branchCounts from board data (multi-branch uses independent fetch)
+    if (restaurants.length <= 1) {
+      setBranchCounts({ [restaurantId]: orders.length })
     }
-    setBranchCounts(bc)
     setActiveOrders(orders)
-  }, [])
+  }, [restaurantId, restaurants.length])
 
   // prepAlertMin / readyAlertMin: se cargan una vez al montar (no cambian frecuentemente)
   useEffect(() => {
