@@ -432,7 +432,7 @@ function OrderCard({
             {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
           <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', flexShrink: 0 }}>
-            {clp(order.deliveryFee > 0 ? order.totalAmount - order.deliveryFee : order.totalAmount)}
+            {clp(order.totalAmount)}
           </span>
         </div>
         {/* Fila 2: chips inline + dirección (el texto fluye y envuelve debajo) */}
@@ -450,12 +450,6 @@ function OrderCard({
         <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
-          {isDelivery && order.deliveryFee > 0 && (
-            <><span style={{ color: 'var(--ink-4)' }}>·</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18.5" cy="17.5" r="2.5"/><circle cx="7.5" cy="17.5" r="2.5"/><path d="M10 17.5h6M5 17.5H3V12l3-5h4l2 3h5l2 2"/></svg>
-              {clp(order.deliveryFee)}
-            </span></>
-          )}
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', flexShrink: 0,
             background: paid ? '#dcfce7' : 'transparent',
             color: paid ? '#15803d' : AMBER,
