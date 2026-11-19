@@ -458,7 +458,8 @@ export default function PosHomePage() {
       {/* ── Cinta multisucursal — arriba del header ── */}
       {restaurants.length > 1 && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 4, padding: '0 10px', height: 36,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 4, padding: '0 10px', height: 36,
           background: 'var(--surface)', borderBottom: '1px solid var(--line)',
           flexShrink: 0, overflowX: 'auto', overflowY: 'hidden',
           scrollbarWidth: 'none',
@@ -556,26 +557,7 @@ export default function PosHomePage() {
         </div>
       )})()}
 
-      {/* ── Branch pills — below caja ribbon ── */}
-      {restaurants.length > 1 && (
-        <div className="pos-branch-bar">
-          {restaurants.map(r => (
-            <button
-              key={r.id}
-              className={`pos-branch-pill${effectiveBranchMode === r.id ? ' on' : ''}`}
-              onClick={() => handleBranchSelect(r.id)}
-            >
-              {r.branchName || r.name}
-            </button>
-          ))}
-          <button
-            className={`pos-branch-pill${effectiveBranchMode === 'todas' ? ' on' : ''}`}
-            onClick={() => handleBranchSelect('todas')}
-          >
-            Todas
-          </button>
-        </div>
-      )}
+      {/* Branch pills moved to top bar above header */}
 
       {/* ── Inner page (carta, caja, impresora, etc.) ── */}
       {innerPage && INNER_PAGES[innerPage] && (
