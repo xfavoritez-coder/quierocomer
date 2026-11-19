@@ -3154,7 +3154,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
 
   const fetchReport = useCallback(async () => {
     if (!restaurantId) return
-    setLoading(true); setData(null)
+    setLoading(true); setData(null); setBranchReports([]); setPrevBranchReports([])
     try {
       if (allBranches && allBranches.length > 1) {
         const results = await Promise.all(
