@@ -7,9 +7,11 @@
 //  webhook de Toteat (evita duplicados).
 // ═══════════════════════════════════════════════════════════
 import crypto from "crypto";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig, parseCentroPedidosConfig, effectivePosMode } from "@/lib/ecommerce/config";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
+import { emitBoletaForPosOrder } from "@/lib/sharkpos/emit-sale";
 
 interface StoredItemOpt { value?: string; optionName?: string }
 interface StoredItem {
@@ -116,5 +118,14 @@ export async function mirrorOnlineOrderToCentro(orderId: string, channel: "web" 
       select: { id: true },
     });
     void notifyNewPosOrder({ restaurantId, id: created.id, customerName: order.customerName || "", total: order.total || 0, isDelivery }).catch(() => {});
+    // Boleta SII (SharkPOS): si el pedido llega YA PAGADO desde la web (Webpay/Flow/
+    // MercadoPago), no pasa por el "cobrar" del POS (que es donde se emite normalmente),
+    // así que la emitimos aquí. El gate (local habilitado + sin Toteat + sin boleta) va
+    // dentro de emitBoletaForPosOrder; es idempotente por venta-<id>. after() = no bloquea
+    // la respuesta (RUT recién dado de alta puede reintentar folios ~2,5 min).
+    if (alreadyPaid) {
+      try { after(() => emitBoletaForPosOrder(created.id).catch((e) => console.error("[sharkpos] emit web venta", created.id, e))); }
+      catch { void emitBoletaForPosOrder(created.id).catch(() => {}); }
+    }
   } catch { /* noop (carrera de duplicado, etc.) */ }
 }
