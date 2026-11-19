@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import { fmtElapsed } from '../OrderClock'
 import { deliveryPlatformLabel } from '@/lib/pos'
+import { paymentSummaryFromRaw } from '@/lib/ecommerce/config'
 import PastOrderDetail from '../PastOrderDetail'
 import type { PastOrder } from '../PastOrderDetail'
 
@@ -275,6 +276,7 @@ function HistorialCard({ order, isSelected, onSelect, showBranch }: { order: His
   const isDesktop = useIsDesktop()
   const canceled = order.posStatus === 'canceled'
   const paid = order.paidAmount >= order.totalAmount && order.totalAmount > 0
+  const payMethod = paymentSummaryFromRaw(order.rawPayload)
   const lines = itemLines(order.items)
   const qty = lines.reduce((s, l) => s + l.qty, 0)
   const isDelivery = order.isDelivery || order.saleType === 'delivery'
@@ -331,6 +333,7 @@ function HistorialCard({ order, isSelected, onSelect, showBranch }: { order: His
               {(() => { const s = sourceTag(order); return <span style={chip(s.color)}>{s.label}</span> })()}
               <span style={chip(typeColor)}>{typeLabel}</span>
               <span style={chip(paid ? '#16a34a' : '#f59e0b')}>{paid ? 'Pagado' : 'Sin cobro'}</span>
+              {paid && payMethod && <span style={chip('#0ea5e9')}>{payMethod}</span>}
             </div>
           </div>
         </div>

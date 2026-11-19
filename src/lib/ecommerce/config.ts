@@ -239,6 +239,26 @@ export function mergeConfiguredPaymentMethods(cfg: CentroPedidosConfig, ordering
   return list;
 }
 
+/** Resumen legible del/los medio(s) de pago usados en un PosOrder, leído de
+ *  rawPayload: `posPayment` (cobro en caja, puede traer varias partes) o
+ *  `webPayment` (pago online). Devuelve null si no hay info de pago. */
+export function paymentSummaryFromRaw(rawPayload: unknown): string | null {
+  if (!rawPayload || typeof rawPayload !== "object" || Array.isArray(rawPayload)) return null;
+  const r = rawPayload as Record<string, unknown>;
+  const pp = r.posPayment as { method?: string; parts?: { method?: string }[] } | undefined;
+  const wp = r.webPayment as { method?: string } | undefined;
+  if (pp) {
+    const parts = Array.isArray(pp.parts) ? (pp.parts.map((p) => p?.method).filter(Boolean) as string[]) : [];
+    const uniq = [...new Set(parts)];
+    if (uniq.length > 1) return uniq.map((m) => paymentMethodLabel(m)).join(" + ");
+    if (uniq.length === 1) return paymentMethodLabel(uniq[0]);
+    if (pp.method && pp.method !== "mixto") return paymentMethodLabel(pp.method);
+    return null;
+  }
+  if (wp?.method) return paymentMethodLabel(wp.method);
+  return null;
+}
+
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as CentroPedidosConfig;
   return {};

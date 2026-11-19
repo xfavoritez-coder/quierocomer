@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import DelifastTracking from './DelifastTracking'
 import CustomerOrdersDrawer from './CustomerOrdersDrawer'
 import { deliveryPlatformLabel } from '@/lib/pos'
-import { printBoletaForOrder } from '@/lib/pos/bridge'
+import { printBoletaForOrder, printComanda, type ComandaItem } from '@/lib/pos/bridge'
 import { fmtElapsed } from './OrderClock'
 
 // ── Interfaz pública ───────────────────────────────────────────────────
@@ -220,6 +220,43 @@ export default function PastOrderDetail({
     else setBoletaMsg(r.error || 'No se pudo imprimir la boleta')
     setPrintingBoleta(false)
   }
+
+  // Imprime el ticket/comanda normal del pedido (cuando NO hay boleta electrónica).
+  const [printingTicket, setPrintingTicket] = useState(false)
+  const handlePrintTicket = async () => {
+    setPrintingTicket(true); setBoletaMsg(null)
+    const items: ComandaItem[] = Array.isArray(order.items)
+      ? (order.items as Record<string, unknown>[]).map((raw) => {
+          const o = (raw || {}) as Record<string, unknown>
+          const opts = Array.isArray(o.options) ? o.options : Array.isArray(o.selectedOptions) ? o.selectedOptions : []
+          return {
+            quantity: Number(o.quantity ?? o.qty ?? o.cantidad ?? 1) || 1,
+            dish_name: String(o.name ?? o.productName ?? o.dishName ?? o.title ?? 'Ítem'),
+            modifiers: (opts as unknown[])
+              .map((x) => ({ name: String(typeof x === 'string' ? x : ((x as Record<string, unknown>)?.value ?? (x as Record<string, unknown>)?.optionName ?? (x as Record<string, unknown>)?.name ?? '')), price_adjustment: 0 }))
+              .filter((m) => m.name),
+            note: (o.note ?? o.comment ?? undefined) as string | undefined,
+          }
+        })
+      : []
+    try {
+      const r = await printComanda({
+        jobId: `ticket-${order.id}-${Date.now()}`,
+        type: isDineIn ? 'mesa' : 'mostrador',
+        customerName: order.customerName || undefined,
+        accountId: order.id,
+        roundNumber: 1,
+        sentBy: 'historial',
+        items,
+      })
+      setBoletaMsg(r.ok ? '✓ Ticket enviado a la impresora' : (r.error || 'No se pudo imprimir el ticket'))
+    } catch {
+      setBoletaMsg('No se pudo imprimir el ticket')
+    }
+    setPrintingTicket(false)
+  }
+
+  const hasBoleta = !!(order.boletaDteId || order.boletaFolio != null)
 
   // ── Nota de crédito (anular) ─────────────────────────────────────────
   const esFactura = (order.fiscalDocType || 39) === 33
@@ -562,8 +599,9 @@ export default function PastOrderDetail({
           )}
         </div>
 
-        {/* Documento tributario: factura (33) → descargar PDF; boleta (39) → imprimir térmica */}
-        {paid && !canceled && (
+        {/* Documento: factura (33) → descargar PDF; boleta (39) → imprimir/descargar;
+            sin documento tributario → imprimir el ticket (comanda) normal. */}
+        {!canceled && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {esFactura ? (
               <button
@@ -574,7 +612,7 @@ export default function PastOrderDetail({
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 {descBusy === 'factura' ? 'Obteniendo…' : 'Descargar factura'}
               </button>
-            ) : (
+            ) : hasBoleta ? (
               <>
                 <button
                   disabled={printingBoleta}
@@ -600,6 +638,15 @@ export default function PastOrderDetail({
                   </button>
                 )}
               </>
+            ) : (
+              <button
+                disabled={printingTicket}
+                onClick={handlePrintTicket}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: printingTicket ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: printingTicket ? 0.6 : 1 }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                {printingTicket ? 'Imprimiendo…' : 'Imprimir ticket'}
+              </button>
             )}
             {boletaMsg && (
               <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: boletaMsg.startsWith('✓') ? 'var(--jade)' : 'var(--ink-3)' }}>{boletaMsg}</span>
