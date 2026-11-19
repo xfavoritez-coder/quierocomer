@@ -392,17 +392,18 @@ export function DelifastStatusPill({
           return
         }
         const trackingStatus = d.tracking.status ?? null
+        const hasDriver = !!(d.tracking.driver || d.tracking.timeline?.inicioPickup || d.tracking.timeline?.llegadaLocal)
         setStatus(trackingStatus)
         setLlegadaCasa(d.tracking.timeline?.llegadaCasa ?? null)
         setLlegadaLocal(d.tracking.timeline?.llegadaLocal ?? null)
         setDropoffEta(d.tracking.dropoffEta ?? null)
         setTimelineCancelado(!!(d.tracking.timeline?.cancelado))
-        // Si hay status real → marcar que ya hubo tracking (no volver atrás)
-        if (trackingStatus) {
+        // Si hay driver real o motorista en camino → marcar tracking activo
+        if (hasDriver) {
           hadTrackingRef.current = true
         }
-        // Status vacío = "Reparto" = Delifast nunca conectó motorista
-        if (onNoTracking && !noTrackingFiredRef.current && !trackingStatus && !hadTrackingRef.current) {
+        // Sin driver asignado = Delifast recibió pero no envió moto → noTracking
+        if (onNoTracking && !noTrackingFiredRef.current && !hasDriver && !hadTrackingRef.current) {
           noTrackingFiredRef.current = true; onNoTracking()
         }
         // Notificar cancelación
