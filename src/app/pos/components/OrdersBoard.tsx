@@ -1403,7 +1403,7 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
       // la preferencia anterior (que arrancaba en 1).
       const v = parseInt(localStorage.getItem('pos:boardCols:v2') || '', 10)
       if (v === 1 || v === 2 || v === 3) setViewCols(v)
-      else setViewCols(window.innerWidth >= 600 ? 2 : 1)
+      else setViewCols(window.innerWidth >= 900 ? 3 : window.innerWidth >= 600 ? 2 : 1)
     } catch { }
   }, [])
   // Máximo de columnas que caben bien según el ancho del dispositivo: teléfono
