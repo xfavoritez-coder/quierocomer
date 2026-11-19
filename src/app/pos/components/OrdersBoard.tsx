@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setRestaurantId, setUserId } from '@/lib/pos'
 import { usePosCash } from '@/lib/pos/cashApi'
 import type { PaymentMethod } from '@/lib/pos'
-import { getBridgeStatus, printKitchenComanda, printBoletaForOrder } from '@/lib/pos/bridge'
+import { getBridgeStatus, printKitchenComanda, printBoletaForOrder, printPrecuenta } from '@/lib/pos/bridge'
 import { usePosNav } from '../lib/usePosNav'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
@@ -724,7 +724,7 @@ export function OrderDetailPanel({
   const [canceling, setCanceling] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
-  const [printing, setPrinting] = useState<'ticket' | 'kitchen' | null>(null)
+  const [printing, setPrinting] = useState<'ticket' | 'kitchen' | 'precuenta' | null>(null)
   const [printMsg, setPrintMsg] = useState<string | null>(null)
   const [customerCount, setCustomerCount] = useState<number | null>(null)
   const [showCustomerHistory, setShowCustomerHistory] = useState(false)
@@ -749,10 +749,35 @@ export function OrderDetailPanel({
 
   const orderLabel = order.orderReference ?? (order.dailyNumber != null ? String(order.dailyNumber) : order.id.slice(-6))
 
-  const handlePrint = async (kind: 'ticket' | 'kitchen') => {
+  const handlePrint = async (kind: 'ticket' | 'kitchen' | 'precuenta') => {
     setPrintOpen(false); setPrinting(kind); setPrintMsg(null)
     const rid = order._branchId || restaurantId
     let r: { ok: boolean; error?: string }
+    if (kind === 'precuenta') {
+      // Precuenta para garzones (tipo "Consumo" de Toteat): subtotal + propina sugerida
+      // (10%) + total con propina. Se imprime en el agente LOCAL de esta máquina (caja).
+      try {
+        const info = await fetch(`/api/pos/restaurant?id=${rid}`, { cache: 'no-store' }).then(res => res.ok ? res.json() : null).catch(() => null)
+        const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number; garzon?: string } | null
+        const items = itemLines(order.items).map(l => ({ quantity: l.qty, name: l.name, total: (l.price || 0) * l.qty, modifiers: l.options.map(o => ({ name: o })) }))
+        r = await printPrecuenta({
+          jobId: order.id + '-precuenta',
+          localName: info?.name || undefined,
+          localAddress: [info?.address, info?.commune].filter(Boolean).join(', ') || undefined,
+          tableLabel: order.tableLabel || undefined,
+          orderRef: orderLabel,
+          covers: mesaMeta?.covers,
+          garzon: mesaMeta?.garzon,
+          items,
+          subtotal: order.totalAmount || 0,
+          tipPct: 10,
+        })
+      } catch { r = { ok: false, error: 'Error' } }
+      setPrintMsg(r.ok ? '✓ Precuenta enviada' : '✗ ' + (r.error || 'Sin agente local en este equipo'))
+      setPrinting(null)
+      setTimeout(() => setPrintMsg(null), 3000)
+      return
+    }
     if (kind === 'ticket') {
       // "Ticket de caja" = reimprime el MISMO ticket que se imprime solo al llegar
       // el pedido (el que trae los valores/total), re-encolándolo para el agente de
@@ -1186,6 +1211,11 @@ export function OrderDetailPanel({
                   <button onClick={() => handlePrint('ticket')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     Ticket de caja
+                  </button>
+                  <div style={{ height: 1, background: 'var(--line)' }} />
+                  <button onClick={() => handlePrint('precuenta')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+                    Precuenta garzones
                   </button>
                   <div style={{ height: 1, background: 'var(--line)' }} />
                   <button onClick={() => handlePrint('kitchen')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'var(--ink)', fontFamily: 'var(--sans)', fontWeight: 500, textAlign: 'left' }}>

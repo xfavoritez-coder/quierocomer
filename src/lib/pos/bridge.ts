@@ -2,7 +2,7 @@
 // El POS llama al agente local (http://localhost:7777) para imprimir comandas.
 // El POS renderiza la comanda a bytes ESC/POS y se los manda crudos (base64);
 // el agente solo los imprime. Mismo agente que el del ecommerce (unificado).
-import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, encodeBoleta, encodeRasterReceipt, bytesToBase64 } from "./escpos";
+import { encodeComanda, encodeKitchenComanda, encodeTest, encodeCashClose, encodeBoleta, encodePrecuenta, encodeRasterReceipt, bytesToBase64 } from "./escpos";
 import { pdfBase64ToRaster } from "./pdfRaster";
 
 export interface BridgeConfig {
@@ -60,6 +60,20 @@ export interface BoletaPayload {
   tedRaster?: { width: number; height: number; data: number[] } // timbre PDF417 rasterizado (GS v 0)
   verifyUrl?: string     // consulta pública (public_url)
   sandbox?: boolean
+}
+
+export interface PrecuentaLine { quantity: number; name: string; total: number; modifiers?: { name: string }[] }
+export interface PrecuentaPayload {
+  jobId: string
+  localName?: string      // ej. "Hand Roll" / razón social
+  localAddress?: string   // ej. "Rojas Magallanes 1232, La Florida"
+  tableLabel?: string     // "S2"
+  orderRef?: string       // número de comanda/pedido
+  covers?: number         // comensales
+  garzon?: string
+  items: PrecuentaLine[]
+  subtotal: number        // total sin propina
+  tipPct?: number         // % de propina sugerida (default 10)
 }
 
 export interface CashCloseMethod {
@@ -163,6 +177,24 @@ export async function printCashClose(payload: CashClosePayload): Promise<{ ok: b
   const url = getBridgeUrl()
   try {
     const escpos = bytesToBase64(encodeCashClose(payload))
+    const res = await fetch(`${url}/print`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: payload.jobId, escpos }),
+      signal: AbortSignal.timeout(5000),
+    })
+    const data = await res.json()
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` }
+    return { ok: true, jobId: data.jobId }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión con el agente' }
+  }
+}
+
+export async function printPrecuenta(payload: PrecuentaPayload): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  const url = getBridgeUrl()
+  try {
+    const escpos = bytesToBase64(encodePrecuenta(payload))
     const res = await fetch(`${url}/print`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -4,7 +4,7 @@
 //
 // Portado de print-bridge/src/encoder.js (mismo formato que diseñó el POS).
 
-import type { ComandaPayload, ComandaItem, CashClosePayload, KitchenComandaPayload, BoletaPayload } from "./bridge";
+import type { ComandaPayload, ComandaItem, CashClosePayload, KitchenComandaPayload, BoletaPayload, PrecuentaPayload } from "./bridge";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -98,6 +98,58 @@ function wrapText(str: string, width = WIDTH, indent = 0): string {
   }
   if (current.trim()) lines.push(current);
   return lines.join("\n");
+}
+
+/** Precuenta para garzones (tipo "Consumo" de Toteat) → bytes ESC/POS crudos.
+ *  NO fiscal. Incluye subtotal, propina sugerida y total con propina. */
+export function encodePrecuenta(p: PrecuentaPayload): Uint8Array {
+  const e = new Enc();
+  const money = (n: number) => Math.round(n || 0).toLocaleString("es-CL"); // "17.900" sin $
+  const subtotal = p.subtotal || 0;
+  const tipPct = p.tipPct ?? 10;
+  const propina = Math.round(subtotal * tipPct / 100);
+  const total = subtotal + propina;
+  const fecha = new Date().toLocaleString("es-CL", {
+    timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).replace(",", "");
+
+  // Cabecera
+  e.init().alignCenter();
+  if (p.localName) e.boldOn().line(p.localName).boldOff();
+  if (p.localAddress) e.line(p.localAddress);
+  e.doubleOn().line("Consumo" + (p.tableLabel ? " (" + p.tableLabel + ")" : "")).doubleOff();
+
+  // Datos
+  e.alignLeft().line("=".repeat(WIDTH));
+  if (p.orderRef) e.line(lineColumns("Comanda", p.orderRef));
+  e.line(lineColumns("Fecha", fecha));
+  if (p.covers) e.line(lineColumns("Comensales", String(p.covers)));
+  if (p.garzon) e.line(lineColumns("Garzon", p.garzon));
+
+  // Ítems
+  e.line("-".repeat(WIDTH));
+  e.line(lineColumns("Cant Producto", "Total"));
+  e.line("-".repeat(WIDTH));
+  for (const it of (p.items || [])) {
+    const qty = String(it.quantity ?? 1);
+    e.line(lineColumns(qty + "  " + (it.name || ""), money(it.total || 0)));
+    for (const m of (it.modifiers || [])) e.line(lineColumns("   +" + (m.name || ""), "0"));
+  }
+
+  // Totales
+  e.line("-".repeat(WIDTH));
+  e.line(lineColumns("Total General Mesa", money(subtotal)));
+  e.line(lineColumns("Consumo Cliente", money(subtotal)));
+  e.line(lineColumns("Propina Sugerida (" + tipPct + "%)", money(propina)));
+  e.boldOn().line(lineColumns("Total c/propina", money(total))).boldOff();
+  e.line("-".repeat(WIDTH));
+
+  // Pie
+  e.alignCenter().line("Muchas gracias por tu pedido");
+  e.line("NO VALIDO COMO COMPROBANTE FISCAL");
+  e.lf().lf().lf().cut();
+  return e.toBytes();
 }
 
 /** Comanda de cocina → bytes ESC/POS crudos. */
