@@ -3262,7 +3262,7 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   const singleDay = fromDate === toDate
   return (
     <div className="pos-scroll">
-      <div style={{ maxWidth: 680, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
 
         {/* Sub-section tabs */}
         <div style={{ position: 'relative', marginBottom: 14 }}>
