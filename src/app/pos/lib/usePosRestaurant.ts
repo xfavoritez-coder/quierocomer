@@ -8,6 +8,7 @@ const PANEL_KEY = 'panel_selected_restaurant'
 
 export interface PosRestaurant {
   branchName?: string | null
+  commune?: string | null
   id: string
   name: string
   slug: string
@@ -84,8 +85,8 @@ function init() {
       syncEventsRestaurant(id)
       _state = {
         restaurantId: id,
-        restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null, branchName: (rest as any).branchName ?? null } : null,
-        restaurants: (data.restaurants as any[]).map((r: any) => ({ id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null })),
+        restaurant: rest ? { id: rest.id, name: rest.name, slug: rest.slug, logoUrl: rest.logoUrl ?? null, branchName: (rest as any).branchName ?? null, commune: (rest as any).commune ?? null } : null,
+        restaurants: (data.restaurants as any[]).map((r: any) => ({ id: r.id, name: r.name, slug: r.slug, logoUrl: r.logoUrl ?? null, branchName: r.branchName ?? null, commune: r.commune ?? null })),
         loading: false,
         posEnabled: rest && typeof rest.posEnabled === "boolean" ? rest.posEnabled : null,
         isOwner: !data.teamMember,

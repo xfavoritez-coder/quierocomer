@@ -466,64 +466,67 @@ export default function PosHomePage() {
       ) : (
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '0 14px', height: 48,
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '0 14px', height: 52,
           }}>
-            {/* Izquierda: hamburger + logo + marca + POS */}
+            {/* Hamburger */}
             <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
-            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+
+            {/* Logo + QuieroComer (· Nombre local si es sucursal única) */}
+            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0, minWidth: 0 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
-              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
-              <span style={{
-                fontFamily: 'var(--mono, var(--sans))', fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em',
-                padding: '2.5px 8px', borderRadius: 6,
-                border: '1.5px solid #F4A623', background: 'transparent', color: '#F4A623',
-                textTransform: 'uppercase',
-              }}>POS</span>
+              <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+                  {restaurants.length <= 1 && restaurant?.name && (
+                    <>
+                      <span style={{ color: 'var(--line)', fontSize: 14, fontWeight: 300 }}>·</span>
+                      <span style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 14, color: 'var(--ink-2)' }}>{restaurant.name}</span>
+                    </>
+                  )}
+                </div>
+                {restaurants.length <= 1 && restaurant?.commune && (
+                  <span style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 500, color: 'var(--ink-3)', marginTop: -1 }}>{restaurant.commune}</span>
+                )}
+              </div>
             </a>
 
             <div style={{ flex: 1 }} />
 
-            {/* Derecha: select sucursal + pending */}
-            {restaurants.length > 1 && (() => {
-              const current = effectiveBranchMode === 'todas'
-                ? 'Todas las sucursales'
-                : (restaurants.find(r => r.id === effectiveBranchMode)?.branchName
-                  ?? restaurants.find(r => r.id === effectiveBranchMode)?.name
-                  ?? 'Sucursal')
-              return (
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <select
-                    value={effectiveBranchMode}
-                    onChange={(e) => handleBranchSelect(e.target.value)}
-                    style={{
-                      appearance: 'none', WebkitAppearance: 'none',
-                      padding: '7px 32px 7px 12px', borderRadius: 10,
-                      border: '1.5px solid var(--amber)',
-                      background: 'var(--amber-tint)',
-                      fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
-                      color: 'var(--amber-press)',
-                      cursor: 'pointer', outline: 'none',
-                    }}
-                  >
-                    {restaurants.map(b => (
-                      <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
-                    ))}
-                    <option value="todas">Todas las sucursales</option>
-                  </select>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
-                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <path d="M6 9l6 6 6-6"/>
-                  </svg>
-                </div>
-              )
-            })()}
+            {/* Select sucursal */}
+            {restaurants.length > 1 && (
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <select
+                  value={effectiveBranchMode}
+                  onChange={(e) => handleBranchSelect(e.target.value)}
+                  style={{
+                    appearance: 'none', WebkitAppearance: 'none',
+                    padding: '6px 28px 6px 10px', borderRadius: 8,
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface)',
+                    fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
+                    color: 'var(--ink-2)',
+                    cursor: 'pointer', outline: 'none',
+                  }}
+                >
+                  {restaurants.map(b => (
+                    <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
+                  ))}
+                  <option value="todas">Todas</option>
+                </select>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
+                  style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </div>
+            )}
 
+            {/* Pending sync */}
             {pendingCount > 0 && (
               <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
