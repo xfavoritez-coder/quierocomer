@@ -62,23 +62,43 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       .catch(() => setLoaded(true))
   }, [restaurantId])
 
-  // Init positions from tables
+  // Init / sincroniza posiciones de las mesas. MERGE (no rebuild): preserva las
+  // posiciones que ya hay en el estado —incluidos los arrastres sin guardar— y solo
+  // coloca las mesas que aún no tenemos. Antes rehacía todo el mapa en cada cambio de
+  // `rawTables` (el store hace polling), reseteando los arrastres a las posiciones del
+  // servidor; y las mesas sin posición (x=0,y=0) caían TODAS en {0,0} → se amontonaban.
   useEffect(() => {
     if (!loaded) return
-    const m = new Map<string, { x: number; y: number }>()
-    const hasLayoutData = rawTables.some(t => t.x > 0 || t.y > 0)
-    rawTables.forEach((t, i) => {
-      if (hasLayoutData) {
-        m.set(t.id, { x: t.x, y: t.y })
-      } else {
-        // Auto-layout: grid of tables
-        const col = i % 6
-        const row = Math.floor(i / 6)
-        m.set(t.id, { x: 40 + col * 100, y: 40 + row * 100 })
+    setPositions(prev => {
+      const m = new Map(prev)
+      const ids = new Set(rawTables.map(t => t.id))
+      for (const id of [...m.keys()]) if (!ids.has(id)) m.delete(id) // quitar mesas borradas
+      // Las x/y guardadas por el seed de la migración son ÍNDICES de grilla (0,1,2…),
+      // no píxeles → el editor las pintaba todas en el rincón (0-4px) = amontonadas.
+      // Si TODO el layout cabe en un cuadrito, no son píxeles reales → re-distribuir.
+      const maxX = Math.max(0, ...rawTables.map(t => t.x))
+      const maxY = Math.max(0, ...rawTables.map(t => t.y))
+      const piled = maxX <= 40 && maxY <= 40
+      const STEP = 100
+      const cols = Math.max(1, Math.floor((cfg.canvasW - 40) / STEP))
+      const collides = (x: number, y: number) =>
+        [...m.values()].some(p => Math.abs(p.x - x) < 72 && Math.abs(p.y - y) < 72)
+      let slot = 0
+      for (const t of rawTables) {
+        if (m.has(t.id)) continue                                             // ya posicionada → preservar
+        if (!piled && (t.x > 0 || t.y > 0)) { m.set(t.id, { x: t.x, y: t.y }); continue } // píxeles reales
+        // Sin posición real (o índices amontonados): primera celda libre de la grilla.
+        let x = 40, y = 40, tries = 0
+        do {
+          x = snap(40 + (slot % cols) * STEP)
+          y = snap(40 + Math.floor(slot / cols) * STEP)
+          slot++; tries++
+        } while (collides(x, y) && tries < 600)
+        m.set(t.id, { x, y })
       }
+      return m
     })
-    setPositions(m)
-  }, [rawTables, loaded])
+  }, [rawTables, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sectorColor = useMemo(() => {
     const colors = ['#8b5cf6', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4']
