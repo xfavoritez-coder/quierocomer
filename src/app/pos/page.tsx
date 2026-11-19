@@ -455,15 +455,7 @@ export default function PosHomePage() {
       {restaurantId && (
         <DelifastCancelWatcher restaurantId={restaurantId} orders={activeOrders} onChanged={() => refreshOrdersRef.current()} />
       )}
-      {/* ── Header unificado ── */}
-      {innerPage ? (
-        <PosHeader
-          mode="back"
-          eyebrow={INNER_PAGES[innerPage]?.title}
-          onBack={() => setInnerPage(null)}
-          onMenu={() => setMenuOpen(m => !m)}
-        />
-      ) : (
+      {/* ── Header unificado — siempre visible ── */}
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 48, position: 'relative' }}>
             {/* Hamburger + Logo */}
@@ -549,6 +541,28 @@ export default function PosHomePage() {
               </button>
             )}
           </div>
+        </div>
+
+      {/* ── Inner page sub-header: título + botón volver ── */}
+      {innerPage && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--line)',
+          flexShrink: 0,
+        }}>
+          <button
+            onClick={() => setInnerPage(null)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'var(--ink-2)',
+              padding: '4px 8px 4px 2px', borderRadius: 6,
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 6l-6 6 6 6"/></svg>
+            Volver
+          </button>
+          <span style={{ fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{INNER_PAGES[innerPage]?.title}</span>
         </div>
       )}
 
