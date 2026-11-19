@@ -455,73 +455,121 @@ export default function PosHomePage() {
       {restaurantId && (
         <DelifastCancelWatcher restaurantId={restaurantId} orders={activeOrders} onChanged={() => refreshOrdersRef.current()} />
       )}
-      {/* ── Cinta multisucursal — arriba del header ── */}
-      {restaurants.length > 1 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 4, padding: '0 10px', height: 36,
-          background: 'var(--surface)', borderBottom: '1px solid var(--line)',
-          flexShrink: 0, overflowX: 'auto', overflowY: 'hidden',
-          scrollbarWidth: 'none',
-        }}>
-          {restaurants.map(b => {
-            const active = effectiveBranchMode === b.id
-            return (
-              <button
-                key={b.id}
-                onClick={() => handleBranchSelect(b.id)}
-                style={{
-                  padding: '4px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  background: active ? 'var(--amber-tint)' : 'transparent',
-                  fontFamily: 'var(--sans)', fontSize: 12, fontWeight: active ? 800 : 600,
-                  color: active ? 'var(--amber-press)' : 'var(--ink-3)',
-                  whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-                }}
-              >
-                {b.branchName ?? b.name}
-              </button>
-            )
-          })}
-          <span style={{ width: 1, height: 16, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
-          <button
-            onClick={() => handleBranchSelect('todas')}
-            style={{
-              padding: '4px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
-              fontFamily: 'var(--sans)', fontSize: 12, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
-              color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
-              whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-            }}
-          >
-            Todas
-          </button>
+      {/* ── Header unificado ── */}
+      {innerPage ? (
+        <PosHeader
+          mode="back"
+          eyebrow={INNER_PAGES[innerPage]?.title}
+          onBack={() => setInnerPage(null)}
+          onMenu={() => setMenuOpen(m => !m)}
+        />
+      ) : (
+        <div style={{ flexShrink: 0 }}>
+          {/* Fila principal: hamburger + marca + sucursales + pending */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '0 12px', height: 48,
+            background: 'var(--surface)', borderBottom: '1px solid var(--line)',
+          }}>
+            {/* Hamburger */}
+            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M3 12h18M3 18h18"/>
+              </svg>
+            </button>
+
+            {/* Logo + nombre + tag POS */}
+            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
+              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>quierocomer</span>
+              <span style={{
+                fontFamily: 'var(--mono, var(--sans))', fontSize: 10, fontWeight: 800, letterSpacing: '.08em',
+                padding: '2px 7px', borderRadius: 6,
+                background: 'linear-gradient(135deg, #F4A623 0%, #f59e0b 100%)',
+                color: '#1a1a1a',
+                textTransform: 'uppercase',
+                boxShadow: '0 0 8px rgba(244,166,35,.3)',
+              }}>POS</span>
+            </a>
+
+            {/* Sucursales — centradas en el espacio restante */}
+            {restaurants.length > 1 && (
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 3, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
+                margin: '0 8px',
+              }}>
+                {restaurants.map(b => {
+                  const active = effectiveBranchMode === b.id
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => handleBranchSelect(b.id)}
+                      style={{
+                        padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                        background: active ? 'var(--amber-tint)' : 'transparent',
+                        fontFamily: 'var(--sans)', fontSize: 11.5, fontWeight: active ? 800 : 600,
+                        color: active ? 'var(--amber-press)' : 'var(--ink-3)',
+                        whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                      }}
+                    >
+                      {b.branchName ?? b.name}
+                    </button>
+                  )
+                })}
+                <span style={{ width: 1, height: 14, background: 'var(--line)', flexShrink: 0 }} />
+                <button
+                  onClick={() => handleBranchSelect('todas')}
+                  style={{
+                    padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                    background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
+                    fontFamily: 'var(--sans)', fontSize: 11.5, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
+                    color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
+                    whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                  }}
+                >
+                  Todas
+                </button>
+              </div>
+            )}
+
+            {/* Spacer si no hay sucursales */}
+            {restaurants.length <= 1 && <div style={{ flex: 1 }} />}
+
+            {/* Pending sync */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {pendingCount > 0 && (
+                <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  {pendingCount}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Fila de tabs: Todos · Pedidos · Mesas */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: 38, background: 'var(--surface)', borderBottom: '1px solid var(--line)',
+          }}>
+            <div className="pos-tabs-bar">
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  className={`pos-tab${tab === t.id && !innerPage ? ' on' : ''}`}
+                  onClick={() => selectTab(t.id)}
+                >
+                  {t.label}
+                  {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
-
-      {/* ── Header — siempre visible con tabs ── */}
-      <PosHeader
-        mode="brand"
-        storeName={restaurant?.name}
-        branchName={restaurant?.branchName ?? null}
-        syncing={syncing}
-        onMenu={() => setMenuOpen(m => !m)}
-        onPendingClick={() => setPendingModal(true)}
-        onBrandClick={() => selectTab('todos')}
-        centerSlot={
-          <div className="pos-tabs-bar">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                className={`pos-tab${tab === t.id && !innerPage ? ' on' : ''}`}
-                onClick={() => selectTab(t.id)}
-              >
-                {t.label}
-                {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
-              </button>
-            ))}
-          </div>
-        }
-      />
 
       {/* ── Caja cerrada — ribbon siempre visible ── */}
       {/* Se muestra solo cuando la caja está CERRADA confirmada: cashSession===null
