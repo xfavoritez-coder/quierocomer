@@ -192,6 +192,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {methods.map((m, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 14, padding: '12px 14px' }}>
+                  {m.key && <span title={`Medio: ${m.key}`} style={{ flexShrink: 0, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: 'var(--mono)', padding: '3px 7px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.key}</span>}
                   <input value={m.label} onChange={e => setMethodAt(i, { label: e.target.value })} placeholder="Nombre del método"
                     style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '0.88rem' }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>

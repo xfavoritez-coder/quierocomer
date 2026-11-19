@@ -210,6 +210,35 @@ export function effectivePaymentMethods(cfg: CentroPedidosConfig): PaymentMethod
   return clean.length ? clean : DEFAULT_PAYMENT_METHODS;
 }
 
+/** Etiqueta legible para una key de método de pago (web o caja). */
+export function paymentMethodLabel(key: string): string {
+  const k = normalizePaymentKey(key);
+  const map: Record<string, string> = {
+    efectivo: "Efectivo", debito: "Débito", credito: "Crédito",
+    transferencia: "Transferencia", webpay: "Webpay", flow: "Flow",
+    mercadopago: "MercadoPago", mercado_pago: "MercadoPago",
+    tarjeta: "Tarjeta", getnet: "Getnet", khipu: "Khipu", transbank: "Webpay",
+  };
+  if (map[k]) return map[k];
+  return k ? k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ") : key;
+}
+
+/** Lista de métodos de pago para la config del POS: los efectivos (caja) MÁS los
+ *  medios que el local ofrece en la web (orderingPaymentMethods: webpay/flow/
+ *  mercadopago/efectivo/…), cada uno como fila propia identificada por su key.
+ *  Preserva el toggle emitsFiscal ya guardado; los medios nuevos entran con emite=true. */
+export function mergeConfiguredPaymentMethods(cfg: CentroPedidosConfig, orderingPaymentMethods?: string | null): PaymentMethodConfig[] {
+  const list = [...effectivePaymentMethods(cfg)];
+  const seen = new Set(list.map((m) => m.key));
+  for (const tok of String(orderingPaymentMethods || "").split(",")) {
+    const key = normalizePaymentKey(tok);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    list.push({ key, label: paymentMethodLabel(key), emitsFiscal: true });
+  }
+  return list;
+}
+
 export function parseCentroPedidosConfig(raw: unknown): CentroPedidosConfig {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as CentroPedidosConfig;
   return {};

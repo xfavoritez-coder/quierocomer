@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, effectivePaymentMethods, normalizePaymentKey, type CentroPedidosConfig, type PaymentMethodConfig, type SharkposEmisor } from "@/lib/ecommerce/config";
+import { parseCentroPedidosConfig, parseEcommerceConfig, effectivePosMode, mergeConfiguredPaymentMethods, normalizePaymentKey, type CentroPedidosConfig, type PaymentMethodConfig, type SharkposEmisor } from "@/lib/ecommerce/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, sharkposEnabled: true, facturaEnabled: true } });
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true, ecommerceConfig: true, ecommerceStoreConfig: true, orderingPaymentMethods: true, sharkposEnabled: true, facturaEnabled: true } });
   const config = parseCentroPedidosConfig(r?.centroPedidosConfig);
   const ecom = parseEcommerceConfig(r?.ecommerceConfig);
   const hasPos = ecom.pos?.provider === "toteat";
@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
     hasPos,
     posModeEffective: effectivePosMode(config, ecom),
     posShowDescriptions: store.posShowDescriptions === true,
-    paymentMethods: effectivePaymentMethods(config),
+    // Incluye los medios que el local ofrece en la web (webpay/flow/mercadopago/…)
+    // como filas propias, además de los de caja → cada medio real con su toggle fiscal.
+    paymentMethods: mergeConfiguredPaymentMethods(config, r?.orderingPaymentMethods),
     sharkposEnabled: r?.sharkposEnabled === true,
     facturaEnabled: r?.facturaEnabled === true,
   });
