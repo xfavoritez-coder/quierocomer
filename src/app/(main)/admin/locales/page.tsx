@@ -91,6 +91,38 @@ const REGIONES_CHILE = [
   "Región de Aysén del General Carlos Ibáñez del Campo",
   "Región de Magallanes y de la Antártica Chilena",
 ];
+// ─── Lectura local de certificados SII (.pfx/.p12) con node-forge ───
+// Un certificado SII es personal: trae nombre (CN) y RUT del firmante (en el
+// serialNumber del subject o en el subjectAltName). Razón social/giro/dirección/
+// resolución NO están en el certificado. Todo se lee en el navegador; el archivo
+// y la clave no salen de aquí (igual que el alta, que los manda directo a SharkPOS).
+function rutDv(num: string): string {
+  let sum = 0, mul = 2;
+  for (let i = num.length - 1; i >= 0; i--) { sum += parseInt(num[i], 10) * mul; mul = mul === 7 ? 2 : mul + 1; }
+  const r = 11 - (sum % 11);
+  return r === 11 ? "0" : r === 10 ? "K" : String(r);
+}
+function normalizeRut(raw: string): string | null {
+  const t = raw.replace(/[.\s]/g, "").toUpperCase();
+  const m = t.match(/^(\d{1,8})-?([0-9K])$/);
+  return m ? `${m[1]}-${m[2]}` : null;
+}
+function rutValid(r: string): boolean {
+  const [num, d] = r.split("-");
+  return !!num && !!d && rutDv(num) === d;
+}
+function extractRutFromCert(cert: any, forge: any): string | null {
+  const cands: string[] = [];
+  try { const sn = cert.subject.getField({ name: "serialNumber" })?.value; if (sn) cands.push(String(sn)); } catch { /* noop */ }
+  try {
+    const der: string = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
+    const rx = /[0-9][0-9.]{5,10}-[0-9kK]/g; let m: RegExpExecArray | null;
+    while ((m = rx.exec(der))) cands.push(m[0]);
+  } catch { /* noop */ }
+  for (const c of cands) { const n = normalizeRut(c); if (n && rutValid(n)) return n; }
+  return null;
+}
+
 function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: (patch: Partial<Restaurant>) => void }) {
   const [platformReady, setPlatformReady] = useState<boolean | null>(null);
   const [platformEnv, setPlatformEnv] = useState<string>("sandbox");
@@ -102,10 +134,52 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const setF = (k: string, v: string) => setPf(p => ({ ...p, [k]: v }));
+  const [certInfo, setCertInfo] = useState<{ name: string; rut: string | null; issuer: string; validTo: string | null; expired: boolean } | null>(null);
+  const [certReading, setCertReading] = useState(false);
+  const [certMsg, setCertMsg] = useState<string | null>(null);
+
+  async function leerCertificado() {
+    if (!cert) { setCertMsg("Selecciona el archivo .pfx/.p12 primero."); return; }
+    const pass = (pf.certificatePassword || "").trim();
+    if (!pass) { setCertMsg("Escribe la clave del .pfx para poder abrirlo."); return; }
+    setCertReading(true); setCertMsg(null); setCertInfo(null);
+    try {
+      const mod: any = await import("node-forge");
+      const forge: any = mod.default ?? mod;
+      const bytes = new Uint8Array(await cert.arrayBuffer());
+      let bin = ""; const CH = 0x8000;
+      for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode(...bytes.subarray(i, i + CH));
+      let p12: any;
+      try {
+        const asn1 = forge.asn1.fromDer(forge.util.createBuffer(bin, "binary"));
+        p12 = forge.pkcs12.pkcs12FromAsn1(asn1, false, pass);
+      } catch {
+        setCertMsg("No se pudo abrir: clave incorrecta o el archivo no es un .pfx/.p12 válido.");
+        setCertReading(false); return;
+      }
+      const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
+      const certs: any[] = (bags[forge.pki.oids.certBag] || []).map((b: any) => b.cert).filter(Boolean);
+      if (!certs.length) { setCertMsg("El archivo no contiene un certificado legible."); setCertReading(false); return; }
+      let chosen = certs[0]; let rutFound: string | null = null;
+      for (const c of certs) { const r = extractRutFromCert(c, forge); if (r) { chosen = c; rutFound = r; break; } }
+      const nameFound = String(chosen.subject.getField("CN")?.value || "").trim();
+      const issuer = String(chosen.issuer.getField("CN")?.value || chosen.issuer.getField("O")?.value || "").trim();
+      const notAfter: Date | undefined = chosen.validity?.notAfter;
+      const expired = notAfter ? notAfter.getTime() < Date.now() : false;
+      setCertInfo({ name: nameFound, rut: rutFound, issuer, validTo: notAfter ? notAfter.toLocaleDateString("es-CL") : null, expired });
+      setPf((p) => ({ ...p, ...(nameFound ? { signerName: nameFound } : {}), ...(rutFound ? { signerRut: rutFound } : {}) }));
+      if (rutFound && !rut.trim()) setRut(rutFound);
+      if (!nameFound && !rutFound) setCertMsg("Se abrió el certificado, pero no se encontró nombre ni RUT legibles. Llénalos a mano.");
+    } catch {
+      setCertMsg("Error al leer el certificado.");
+    } finally {
+      setCertReading(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
-    setErr(null); setRut(""); setPf({}); setCert(null);
+    setErr(null); setRut(""); setPf({}); setCert(null); setCertInfo(null); setCertMsg(null); setCertReading(false);
     fetch(`/api/admin/locales/${selected.id}/sharkpos`)
       .then(r => r.json())
       .then(d => { if (alive) { setPlatformReady(!!d.platformConfigured); setPlatformEnv(d.platformEnv || "sandbox"); setEncReady(d.encryptionKeyConfigured !== false); } })
@@ -281,10 +355,28 @@ function SharkposCard({ selected, onUpdate }: { selected: Restaurant; onUpdate: 
             </div>
             <label style={{ fontFamily: F, fontSize: "0.68rem", color: "#aaa", display: "grid", gap: 4 }}>
               Certificado digital (.pfx / .p12, ≤2 MB)
-              <input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setCert(e.target.files?.[0] || null)} disabled={disabled} style={{ ...inp, padding: 6 }} />
+              <input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => { setCert(e.target.files?.[0] || null); setCertInfo(null); setCertMsg(null); }} disabled={disabled} style={{ ...inp, padding: 6 }} />
             </label>
             <input value={pf.certificatePassword || ""} onChange={(e) => setF("certificatePassword", e.target.value)} placeholder="Clave del certificado (.pfx — NO la del SII)" type="password" autoComplete="new-password" disabled={disabled} style={inp} />
             <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#777", margin: "-2px 0 0" }}>Es la contraseña del archivo del certificado digital, no la Clave Tributaria del SII (esa no se necesita).</p>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <button type="button" onClick={leerCertificado} disabled={disabled || !cert || !(pf.certificatePassword || "").trim() || certReading}
+                style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(96,165,250,0.4)", background: "rgba(96,165,250,0.08)", color: "#60a5fa", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: (disabled || !cert || certReading) ? "default" : "pointer", opacity: (!cert || !(pf.certificatePassword || "").trim()) ? 0.5 : 1 }}>
+                {certReading ? "Leyendo…" : "🔎 Leer datos del certificado"}
+              </button>
+              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#777" }}>Rellena firmante y RUT desde el .pfx (local, no se sube).</span>
+            </div>
+            {certMsg && <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#f87171", margin: 0 }}>⚠️ {certMsg}</p>}
+            {certInfo && (
+              <div style={{ padding: "9px 11px", background: certInfo.expired ? "rgba(248,113,113,0.08)" : "rgba(74,222,128,0.07)", border: `1px solid ${certInfo.expired ? "rgba(248,113,113,0.35)" : "rgba(74,222,128,0.3)"}`, borderRadius: 9, fontFamily: F, fontSize: "0.7rem", color: "#cbd5e1", display: "grid", gap: 2 }}>
+                <div style={{ fontWeight: 700, color: certInfo.expired ? "#f87171" : "#4ade80" }}>{certInfo.expired ? "⚠️ Certificado VENCIDO" : "✓ Certificado leído (clave correcta)"}</div>
+                {certInfo.name && <div>Firmante: <strong>{certInfo.name}</strong></div>}
+                {certInfo.rut && <div>RUT firmante: <strong>{certInfo.rut}</strong></div>}
+                {certInfo.issuer && <div>Emisor: {certInfo.issuer}</div>}
+                {certInfo.validTo && <div>Vigente hasta: {certInfo.validTo}</div>}
+                <div style={{ color: "#888", marginTop: 2 }}>Completé firmante y RUT. El RUT de la empresa, razón social, giro, dirección y resolución no vienen en el certificado — llénalos a mano.</div>
+              </div>
+            )}
             <label style={{ fontFamily: F, fontSize: "0.72rem", color: "#ccc", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
               <input type="checkbox" checked={wantsFactura} onChange={(e) => setWantsFactura(e.target.checked)} disabled={disabled} />
               Este local también emitirá <strong>facturas (33)</strong> — pide folios 33 (requiere que tu contrato las incluya)
