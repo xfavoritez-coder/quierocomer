@@ -458,9 +458,8 @@ export default function PosHomePage() {
       {/* ── Cinta multisucursal — arriba del header ── */}
       {restaurants.length > 1 && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: 38,
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          borderBottom: '1px solid rgba(255,255,255,.06)',
+          display: 'flex', alignItems: 'center', gap: 4, padding: '0 10px', height: 36,
+          background: 'var(--surface)', borderBottom: '1px solid var(--line)',
           flexShrink: 0, overflowX: 'auto', overflowY: 'hidden',
           scrollbarWidth: 'none',
         }}>
@@ -471,44 +470,28 @@ export default function PosHomePage() {
                 key={b.id}
                 onClick={() => handleBranchSelect(b.id)}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '5px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                  background: active ? 'rgba(244,166,35,.15)' : 'transparent',
+                  padding: '4px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: active ? 'var(--amber-tint)' : 'transparent',
                   fontFamily: 'var(--sans)', fontSize: 12, fontWeight: active ? 800 : 600,
-                  color: active ? '#F4A623' : 'rgba(255,255,255,.55)',
+                  color: active ? 'var(--amber-press)' : 'var(--ink-3)',
                   whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
                 }}
               >
-                {b.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={b.logoUrl} alt="" style={{ width: 18, height: 18, borderRadius: 5, objectFit: 'cover' }} />
-                ) : (
-                  <span style={{
-                    width: 18, height: 18, borderRadius: 5, fontSize: 9, fontWeight: 900, color: '#fff',
-                    background: active ? '#F4A623' : 'rgba(255,255,255,.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {(b.branchName ?? b.name).charAt(0).toUpperCase()}
-                  </span>
-                )}
                 {b.branchName ?? b.name}
               </button>
             )
           })}
-          {/* Separador + Todas */}
-          <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.1)', flexShrink: 0, margin: '0 2px' }} />
+          <span style={{ width: 1, height: 16, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
           <button
             onClick={() => handleBranchSelect('todas')}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '5px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
-              background: effectiveBranchMode === 'todas' ? 'rgba(244,166,35,.15)' : 'transparent',
+              padding: '4px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
               fontFamily: 'var(--sans)', fontSize: 12, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
-              color: effectiveBranchMode === 'todas' ? '#F4A623' : 'rgba(255,255,255,.55)',
+              color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
               whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
             Todas
           </button>
         </div>
