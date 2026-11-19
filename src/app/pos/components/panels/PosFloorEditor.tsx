@@ -50,6 +50,19 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
   const [saved, setSaved] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
+  // Ancho REAL del canvas (el elemento es responsive: width:100%, maxWidth:cfg.canvasW).
+  // Si usáramos cfg.canvasW (800) para la grilla pero el contenedor es más angosto, las
+  // columnas de la derecha quedarían fuera de vista (overflow:hidden) → mesas "perdidas".
+  const [canvasW, setCanvasW] = useState(800)
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    const update = () => setCanvasW(Math.round(el.getBoundingClientRect().width) || 800)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [loaded])
 
   // Load floor config from server
   useEffect(() => {
@@ -83,15 +96,23 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       const maxX = Math.max(0, ...rawTables.map(t => t.x))
       const maxY = Math.max(0, ...rawTables.map(t => t.y))
       const piled = maxX <= 40 && maxY <= 40
+      const W = canvasW // ancho REAL (no cfg.canvasW) → las mesas caben en lo visible
+      const inView = (p: { x: number; y: number }, id: string) => {
+        const s = getTableStyle(cfg, id)
+        return p.x >= 0 && p.y >= 0 && p.x + s.w <= W && p.y + s.h <= cfg.canvasH
+      }
       const STEP = 100
-      const cols = Math.max(1, Math.floor((cfg.canvasW - 40) / STEP))
+      const cols = Math.max(1, Math.floor((W - 40) / STEP))
       const collides = (x: number, y: number) =>
         [...m.values()].some(p => Math.abs(p.x - x) < 72 && Math.abs(p.y - y) < 72)
       let slot = 0
       for (const t of rawTables) {
-        if (m.has(t.id)) continue                                             // ya posicionada → preservar
-        if (!piled && (t.x > 0 || t.y > 0)) { m.set(t.id, { x: t.x, y: t.y }); continue } // píxeles reales
-        // Sin posición real (o índices amontonados): primera celda libre de la grilla.
+        const cur = m.get(t.id)
+        if (cur && inView(cur, t.id)) continue       // ya posicionada y VISIBLE → preservar
+        if (cur) m.delete(t.id)                       // estaba fuera de vista → reubicar
+        const saved = { x: t.x, y: t.y }
+        if (!piled && (t.x > 0 || t.y > 0) && inView(saved, t.id)) { m.set(t.id, saved); continue } // píxeles reales y visibles
+        // Sin posición visible (o índices amontonados): primera celda libre de la grilla.
         let x = 40, y = 40, tries = 0
         do {
           x = snap(40 + (slot % cols) * STEP)
@@ -102,7 +123,7 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       }
       return m
     })
-  }, [rawTables, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rawTables, loaded, canvasW]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sectorColor = useMemo(() => {
     const colors = ['#8b5cf6', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4']
@@ -146,7 +167,7 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
         for (const id of dragging.ids) {
           const o = dragging.orig.get(id) || { x: 0, y: 0 }
           m.set(id, {
-            x: snap(Math.max(0, Math.min(cfg.canvasW - 40, o.x + dx))),
+            x: snap(Math.max(0, Math.min(canvasW - 40, o.x + dx))),
             y: snap(Math.max(0, Math.min(cfg.canvasH - 40, o.y + dy))),
           })
         }
@@ -168,7 +189,7 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
       }
       setSelectedIds(sel)
     }
-  }, [dragging, cfg, rawTables, positions])
+  }, [dragging, cfg, rawTables, positions, canvasW])
 
   const handlePointerUp = useCallback(() => { setDragging(null); marqueeRef.current = null; setMarquee(null) }, [])
 
@@ -212,8 +233,8 @@ export default function PosFloorEditor({ restaurantId }: { restaurantId: string 
   // Auto-arrange: distribute evenly
   const autoArrange = () => {
     const m = new Map<string, { x: number; y: number }>()
-    const cols = Math.ceil(Math.sqrt(rawTables.length * (cfg.canvasW / cfg.canvasH)))
-    const cellW = Math.floor(cfg.canvasW / (cols || 1))
+    const cols = Math.ceil(Math.sqrt(rawTables.length * (canvasW / cfg.canvasH)))
+    const cellW = Math.floor(canvasW / (cols || 1))
     const rows = Math.ceil(rawTables.length / cols)
     const cellH = Math.floor(cfg.canvasH / (rows || 1))
     rawTables.forEach((t, i) => {
