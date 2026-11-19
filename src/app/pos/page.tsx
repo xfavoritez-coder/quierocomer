@@ -588,16 +588,16 @@ export default function PosHomePage() {
       )}
       {/* ── Header unificado — siempre visible ── */}
         <div style={{ flexShrink: 0, background: 'var(--surface)', borderBottom: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: 54, position: 'relative' }}>
-            {/* Hamburger — siempre a la izquierda */}
-            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0, position: 'absolute', left: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 54, position: 'relative' }}>
+            {/* Hamburger */}
+            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0, ...(isDesktop ? {} : { position: 'absolute', left: 14, zIndex: 1 }) }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
 
-            {/* Logo + branch: centrado en mobile, izquierda en desktop */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: isDesktop ? undefined : '0 auto' }}>
+            {/* Logo + branch: centrado en mobile, después del hamburger en desktop */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, ...(isDesktop ? {} : { margin: '0 auto' }) }}>
               <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
