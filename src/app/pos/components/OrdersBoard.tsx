@@ -1366,16 +1366,6 @@ export function DesktopDetailModal({ children, onClose }: { children: React.Reac
           position: 'relative',
         }}
       >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: 10, right: 10, zIndex: 2,
-            width: 30, height: 30, borderRadius: 8,
-            border: 'none', background: 'var(--sunk)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--ink-3)', fontSize: 15,
-          }}
-        >✕</button>
         {children}
       </div>
     </div>
