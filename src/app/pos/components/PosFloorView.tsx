@@ -104,13 +104,13 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
   const offsetY = bbox.y
 
   return (
-    <div ref={containerRef} style={{ width: '100%', overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ width: '100%', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
       <div style={{
         position: 'relative',
         width: viewW,
         height: viewH,
         transform: `scale(${scale})`,
-        transformOrigin: 'top left',
+        transformOrigin: 'top center',
         marginBottom: Math.max(0, viewH * scale - viewH + 10),
         background: 'var(--sunk)',
         borderRadius: 16,

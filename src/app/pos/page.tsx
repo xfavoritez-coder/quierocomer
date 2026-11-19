@@ -399,8 +399,8 @@ export default function PosHomePage() {
   // Tab counts for badges — mesas ocupadas = PosOrder dine-in abiertos.
   const ocupadas = mesaOrders.length
 
-  const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
   const [branchCounts, setBranchCounts] = useState<Record<string, number>>({})
+  const [branchOrderCounts, setBranchOrderCounts] = useState<Record<string, { delivery: number; retiro: number }>>({})
 
   // Fetch per-branch counts + tab counts independently (always all branches)
   useEffect(() => {
@@ -415,18 +415,20 @@ export default function PosHomePage() {
         )
       ).then(results => {
         const bc: Record<string, number> = {}
-        let del = 0, ret = 0
+        const boc: Record<string, { delivery: number; retiro: number }> = {}
         for (const r of results) {
           bc[r.id] = r.orders.length
+          let del = 0, ret = 0
           for (const o of r.orders) {
             const isD = o.isDelivery || o.saleType === 'delivery'
             const isDi = !isD && (o.saleType === 'dine-in' || o.saleType === 'dinein')
             if (isD) del++
             else if (!isDi) ret++
           }
+          boc[r.id] = { delivery: del, retiro: ret }
         }
         setBranchCounts(bc)
-        setOrderCounts({ retiro: ret, delivery: del })
+        setBranchOrderCounts(boc)
       })
     }
     fetchCounts()
@@ -443,15 +445,8 @@ export default function PosHomePage() {
   // (que ya tiene polling cada 15s + realtime). Así los counts siempre están en sync
   // con lo que muestra el tablero, sin necesitar una suscripción paralela.
   const handleOrdersUpdate = useCallback((orders: any[]) => {
-    const delivery = orders.filter((o: any) => o.isDelivery || o.saleType === 'delivery').length
-    const retiro = orders.filter((o: any) => !o.isDelivery && o.saleType !== 'delivery' && o.saleType !== 'dine-in' && o.saleType !== 'dinein').length
-    setOrderCounts({ retiro, delivery })
-    // Single-branch: update branchCounts from board data (multi-branch uses independent fetch)
-    if (restaurants.length <= 1) {
-      setBranchCounts({ [restaurantId]: orders.length })
-    }
     setActiveOrders(orders)
-  }, [restaurantId, restaurants.length])
+  }, [])
 
   // prepAlertMin / readyAlertMin: se cargan una vez al montar (no cambian frecuentemente)
   useEffect(() => {
@@ -495,6 +490,16 @@ export default function PosHomePage() {
 
   // refreshOrdersRef se pasa a OrdersBoard que lo apunta a su fetchOrders interno.
   // PrepAlertWatcher y DelifastCancelWatcher lo usan para forzar un re-fetch.
+
+  // Compute order counts based on selected branch
+  const orderCounts = useMemo(() => {
+    if (effectiveBranchMode === 'todas') {
+      let del = 0, ret = 0
+      for (const v of Object.values(branchOrderCounts)) { del += v.delivery; ret += v.retiro }
+      return { delivery: del, retiro: ret }
+    }
+    return branchOrderCounts[effectiveBranchMode] || { delivery: 0, retiro: 0 }
+  }, [branchOrderCounts, effectiveBranchMode])
 
   const totalAll = orderCounts.retiro + orderCounts.delivery + ocupadas
   const totalOnline = orderCounts.retiro + orderCounts.delivery
