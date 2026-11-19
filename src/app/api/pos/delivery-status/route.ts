@@ -54,6 +54,22 @@ function restaurantFromLocal(localId?: string | null): string | null {
   }
 }
 
+// Fallback: resuelve el restaurante buscando el local que tenga este id de Delifast
+// guardado en su config (`ecommerceConfig.delifast.localId`, editable en /admin/locales).
+// Así se da de alta un local nuevo sin tocar la env var DELIFAST_LOCAL_MAP ni redeploy.
+async function restaurantFromLocalDb(localId?: string | null): Promise<string | null> {
+  if (!localId) return null;
+  try {
+    const r = await prisma.restaurant.findFirst({
+      where: { ecommerceConfig: { path: ["delifast", "localId"], equals: String(localId) } },
+      select: { id: true },
+    });
+    return r?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Construye el objeto de seguimiento (DelifastTracking) desde el webhook de
 // Delifast, si trae los datos ricos (repartidor, ETA, PIN, ubicación, foto de
 // entrega, timestamps). Tolerante: acepta objeto anidado o campos sueltos.
@@ -164,7 +180,8 @@ export async function POST(req: NextRequest) {
   const localStr = rawLocal != null && String(rawLocal).trim() !== "" ? String(rawLocal).trim() : undefined;
   const restaurantId =
     (typeof body.restaurantId === "string" && body.restaurantId) ||
-    restaurantFromLocal(localStr);
+    restaurantFromLocal(localStr) ||
+    (await restaurantFromLocalDb(localStr));
   if (!restaurantId) {
     return NextResponse.json(
       {

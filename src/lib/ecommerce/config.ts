@@ -100,6 +100,11 @@ export interface DelifastCreds {
   email?: string;
   password?: string;
   plataforma?: string;
+  /** Id del local en Delifast (el que viaja en el webhook como `local`). Permite
+   *  mapear local→restaurante sin tocar la env var DELIFAST_LOCAL_MAP de Vercel:
+   *  el webhook /api/pos/delivery-status resuelve el restaurante buscando el local
+   *  que tenga este id guardado (fallback a la env var). Se guarda como texto. */
+  localId?: string;
 }
 
 export interface EcommerceConfig {
