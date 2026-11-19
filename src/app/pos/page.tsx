@@ -465,113 +465,92 @@ export default function PosHomePage() {
         />
       ) : (
         <div style={{ flexShrink: 0, background: 'var(--surface)' }}>
-          {/* Fila principal: hamburger + marca + pending */}
+          {/* Header: hamburger | centro: logo + marca + POS | pending */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center',
             padding: '0 14px', height: 48,
           }}>
-            {/* Hamburger */}
-            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú">
+            <button className="pos-hamburger" onClick={() => setMenuOpen(m => !m)} aria-label="Menú" style={{ flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M3 12h18M3 18h18"/>
               </svg>
             </button>
 
-            {/* Logo + nombre + tag POS */}
-            <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
-              <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
-              <span style={{
-                fontFamily: 'var(--mono, var(--sans))', fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em',
-                padding: '2.5px 8px', borderRadius: 6,
-                border: '1.5px solid #F4A623',
-                background: 'transparent',
-                color: '#F4A623',
-                textTransform: 'uppercase',
-              }}>POS</span>
-            </a>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="QuieroComer" style={{ width: 28, height: 28, borderRadius: 7 }} />
+                <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
+                <span style={{
+                  fontFamily: 'var(--mono, var(--sans))', fontSize: 9.5, fontWeight: 800, letterSpacing: '.1em',
+                  padding: '2.5px 8px', borderRadius: 6,
+                  border: '1.5px solid #F4A623',
+                  background: 'transparent',
+                  color: '#F4A623',
+                  textTransform: 'uppercase',
+                }}>POS</span>
+              </a>
+            </div>
 
-            {/* Sucursales — misma fila, centradas en el espacio restante */}
-            {restaurants.length > 1 ? (
-              <div style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 6, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
-                margin: '0 12px',
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
-                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                {restaurants.map(b => {
-                  const active = effectiveBranchMode === b.id
-                  return (
-                    <button
-                      key={b.id}
-                      onClick={() => handleBranchSelect(b.id)}
-                      style={{
-                        padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
-                        border: active ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
-                        background: active ? 'var(--amber-tint)' : 'transparent',
-                        fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
-                        color: active ? 'var(--amber-press)' : 'var(--ink-3)',
-                        whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-                      }}
-                    >
-                      {b.branchName ?? b.name}
-                    </button>
-                  )
-                })}
-                <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
-                <button
-                  onClick={() => handleBranchSelect('todas')}
-                  style={{
-                    padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
-                    border: effectiveBranchMode === 'todas' ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
-                    background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
-                    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
-                    color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
-                    whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
-                  }}
-                >
-                  Todas
+            <div style={{ flexShrink: 0, width: 36 }}>
+              {pendingCount > 0 && (
+                <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  {pendingCount}
                 </button>
-              </div>
-            ) : (
-              <div style={{ flex: 1 }} />
-            )}
-
-            {/* Pending sync */}
-            {pendingCount > 0 && (
-              <button className="pos-pending-btn" onClick={() => setPendingModal(true)} title={`${pendingCount} eventos pendientes`}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
-                </svg>
-                {pendingCount}
-              </button>
-            )}
-          </div>
-
-          {/* Separador */}
-          <div style={{ height: 1, background: 'var(--line)' }} />
-
-          {/* Fila de tabs: Todos · Pedidos · Mesas */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '10px 0', borderBottom: '1px solid var(--line)',
-          }}>
-            <div className="pos-tabs-bar">
-              {TABS.map(t => (
-                <button
-                  key={t.id}
-                  className={`pos-tab${tab === t.id && !innerPage ? ' on' : ''}`}
-                  onClick={() => selectTab(t.id)}
-                >
-                  {t.label}
-                  {tabCounts[t.id] ? <span className="pos-tab-badge">{tabCounts[t.id]}</span> : null}
-                </button>
-              ))}
+              )}
             </div>
           </div>
+
+          {/* Sucursales — centradas, debajo del header */}
+          {restaurants.length > 1 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 6, padding: '0 14px 10px',
+              overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.45 }}>
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              {restaurants.map(b => {
+                const active = effectiveBranchMode === b.id
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => handleBranchSelect(b.id)}
+                    style={{
+                      padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
+                      border: active ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
+                      background: active ? 'var(--amber-tint)' : 'transparent',
+                      fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
+                      color: active ? 'var(--amber-press)' : 'var(--ink-3)',
+                      whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                    }}
+                  >
+                    {b.branchName ?? b.name}
+                  </button>
+                )
+              })}
+              <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0, margin: '0 2px' }} />
+              <button
+                onClick={() => handleBranchSelect('todas')}
+                style={{
+                  padding: '5px 16px', borderRadius: 999, cursor: 'pointer',
+                  border: effectiveBranchMode === 'todas' ? '1.5px solid var(--amber)' : '1.5px solid var(--line)',
+                  background: effectiveBranchMode === 'todas' ? 'var(--amber-tint)' : 'transparent',
+                  fontFamily: 'var(--sans)', fontSize: 13, fontWeight: effectiveBranchMode === 'todas' ? 800 : 600,
+                  color: effectiveBranchMode === 'todas' ? 'var(--amber-press)' : 'var(--ink-3)',
+                  whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .15s',
+                }}
+              >
+                Todas
+              </button>
+            </div>
+          )}
+
+          <div style={{ height: 1, background: 'var(--line)' }} />
         </div>
       )}
 
@@ -634,6 +613,42 @@ export default function PosHomePage() {
 
       {/* ── Main content (solo cuando no hay inner page) ── */}
       {!innerPage && <>
+
+      {/* ── Tabs inline: Todos · Pedidos · Mesas ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 6, padding: '12px 14px 8px',
+        background: 'var(--bg)',
+      }}>
+        {TABS.map(t => {
+          const active = tab === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => selectTab(t.id)}
+              style={{
+                padding: '7px 20px', borderRadius: 10, cursor: 'pointer',
+                border: active ? '2px solid var(--amber)' : '1.5px solid var(--line)',
+                background: active ? 'var(--amber-tint)' : 'var(--surface)',
+                fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
+                color: active ? 'var(--amber-press)' : 'var(--ink-3)',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                transition: 'all .15s',
+              }}
+            >
+              {t.label}
+              {tabCounts[t.id] ? (
+                <span style={{
+                  fontSize: 11, fontWeight: 800, minWidth: 18, textAlign: 'center',
+                  padding: '1px 6px', borderRadius: 999,
+                  background: active ? 'var(--amber)' : 'var(--line)',
+                  color: active ? '#1a1a1a' : 'var(--ink-3)',
+                }}>{tabCounts[t.id]}</span>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
 
       {/* ── Retiro / Delivery / Todos ── */}
       {(tab === 'delivery' || tab === 'todos') && (
