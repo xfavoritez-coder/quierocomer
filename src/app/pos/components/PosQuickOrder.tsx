@@ -57,6 +57,11 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [customerPhone, setCustomerPhone] = useState('')
   const [address, setAddress] = useState('')
   const [addressRef, setAddressRef] = useState('')
+  // Autocompletado de dirección (Google vía /api/geo/search, con fallback OSM).
+  const [addrSug, setAddrSug] = useState<{ place_id: string; label: string }[]>([])
+  const [addrSugOpen, setAddrSugOpen] = useState(false)
+  const addrSugTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const skipAddrSug = useRef(false)
   const [payMethod, setPayMethod] = useState<PayMethod>('efectivo')
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [deliveryMsg, setDeliveryMsg] = useState('')
@@ -102,6 +107,33 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
     }, 800)
     return () => clearTimeout(deliveryTimer.current)
   }, [address, saleType, restaurantId])
+
+  // Sugerencias de dirección mientras se escribe (solo delivery).
+  useEffect(() => {
+    if (saleType !== 'DELIVERY') { setAddrSug([]); setAddrSugOpen(false); return }
+    if (skipAddrSug.current) { skipAddrSug.current = false; return }
+    const q = address.trim()
+    clearTimeout(addrSugTimer.current)
+    if (q.length < 3) { setAddrSug([]); setAddrSugOpen(false); return }
+    addrSugTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geo/search?q=${encodeURIComponent(q)}`)
+        const d = await res.json()
+        const list = Array.isArray(d)
+          ? d.map((s: { place_id?: string | number; display_name?: string; description?: string }) => ({ place_id: String(s.place_id ?? ''), label: String(s.display_name ?? s.description ?? '') })).filter((s) => s.label)
+          : []
+        setAddrSug(list)
+        setAddrSugOpen(list.length > 0)
+      } catch { setAddrSug([]); setAddrSugOpen(false) }
+    }, 300)
+    return () => clearTimeout(addrSugTimer.current)
+  }, [address, saleType])
+
+  const selectAddr = (label: string) => {
+    skipAddrSug.current = true
+    setAddress(label)
+    setAddrSug([]); setAddrSugOpen(false)
+  }
 
   // Report client info to parent for minimized pill label
   useEffect(() => {
@@ -268,10 +300,24 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           </div>
           {saleType === 'DELIVERY' && (
             <>
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Direccion</label>
-                <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle y numero"
+                <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle y numero" autoComplete="off"
+                  onFocus={() => { if (addrSug.length) setAddrSugOpen(true) }}
+                  onBlur={() => setTimeout(() => setAddrSugOpen(false), 150)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                {addrSugOpen && addrSug.length > 0 && (
+                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 60, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, boxShadow: '0 6px 20px rgba(0,0,0,.14)', overflow: 'hidden', maxHeight: 240, overflowY: 'auto' }}>
+                    {addrSug.map((s, i) => (
+                      <button key={s.place_id || `${s.label}-${i}`} type="button"
+                        onMouseDown={(e) => { e.preventDefault(); selectAddr(s.label) }}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 8, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: i < addrSug.length - 1 ? '1px solid var(--line)' : 'none', padding: '10px 12px', cursor: 'pointer', fontFamily: F, fontSize: 13.5, color: 'var(--ink)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, marginTop: 1, color: 'var(--ink-3)' }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                        <span>{s.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Depto / casa / referencia</label>
