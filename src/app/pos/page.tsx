@@ -328,6 +328,7 @@ export default function PosHomePage() {
     }
   }, [])
 
+  const [logoSpin, setLogoSpin] = useState(false)
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === 'undefined') return 'todos'
     const t = new URLSearchParams(window.location.search).get('tab')
@@ -598,9 +599,9 @@ export default function PosHomePage() {
 
             {/* Logo + branch: centrado en mobile, después del hamburger en desktop */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, ...(isDesktop ? {} : { margin: '0 auto' }) }}>
-              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos') }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+              <a href="/pos" onClick={(e) => { e.preventDefault(); selectTab('todos'); setLogoSpin(true); setTimeout(() => setLogoSpin(false), 600) }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8 }} />
+                <img src="/logo.png" alt="QuieroComer" style={{ width: 30, height: 30, borderRadius: 8, transition: 'transform .5s cubic-bezier(.34,1.56,.64,1)', transform: logoSpin ? 'rotate(360deg)' : 'rotate(0deg)' }} />
                 <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 15, color: 'var(--ink)', letterSpacing: '-0.01em' }}>QuieroComer</span>
               </a>
 
