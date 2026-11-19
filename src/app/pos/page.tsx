@@ -51,6 +51,90 @@ const TABS: { id: Tab; label: string }[] = [
 
 // ── Modals ────────────────────────────────────────────────────────
 
+// ── Branch Dropdown (custom, no native select) ──
+function BranchDropdown({ restaurants, value, onChange }: { restaurants: { id: string; name: string; branchName?: string | null }[]; value: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const current = value === 'todas' ? 'Todas las sucursales' : (restaurants.find(r => r.id === value)?.branchName ?? restaurants.find(r => r.id === value)?.name ?? 'Sucursal')
+  const storeIcon = (color: string, size = 12) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  )
+
+  const allOptions = [
+    { id: 'todas', label: 'Todas las sucursales' },
+    ...restaurants.map(b => ({ id: b.id, label: b.branchName ?? b.name })),
+  ]
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7,
+          padding: '5px 10px', borderRadius: 9,
+          border: '1.5px solid var(--amber)', background: 'var(--amber-tint)',
+          fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
+          color: 'var(--amber-press)', cursor: 'pointer', outline: 'none',
+        }}
+      >
+        {storeIcon('var(--amber)', 13)}
+        {current}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
+          style={{ transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 200,
+          background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12,
+          boxShadow: '0 10px 32px rgba(0,0,0,.14)', minWidth: 200, overflow: 'hidden',
+          padding: '4px',
+        }}>
+          {allOptions.map(opt => {
+            const active = value === opt.id
+            return (
+              <button
+                key={opt.id}
+                onClick={() => { onChange(opt.id); setOpen(false) }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  padding: '8px 10px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: active ? 'var(--amber-tint)' : 'transparent',
+                  fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 800 : 600,
+                  color: active ? 'var(--amber-press)' : 'var(--ink)',
+                  textAlign: 'left', transition: 'background .1s',
+                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--sunk)' }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+              >
+                {storeIcon(active ? 'var(--amber)' : 'var(--ink-3)', 13)}
+                {opt.label}
+                {active && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PendingModal({ count, onClose }: { count: number; onClose: () => void }) {
   return (
     <div className="pos-modal-overlay" onClick={onClose}>
@@ -474,32 +558,11 @@ export default function PosHomePage() {
             {restaurants.length > 1 ? (
               <>
                 <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                  <select
-                    value={effectiveBranchMode}
-                    onChange={(e) => handleBranchSelect(e.target.value)}
-                    style={{
-                      appearance: 'none', WebkitAppearance: 'none',
-                      padding: '5px 26px 5px 28px', borderRadius: 9,
-                      border: '1.5px solid var(--amber)', background: 'var(--amber-tint)',
-                      fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
-                      color: 'var(--amber-press)', cursor: 'pointer', outline: 'none',
-                    }}
-                  >
-                    <option value="todas">Todas las sucursales</option>
-                    {restaurants.map(b => (
-                      <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
-                    ))}
-                  </select>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
-                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <path d="M6 9l6 6 6-6"/>
-                  </svg>
-                </div>
+                <BranchDropdown
+                  restaurants={restaurants}
+                  value={effectiveBranchMode}
+                  onChange={handleBranchSelect}
+                />
               </>
             ) : restaurant?.name ? (
               <>
