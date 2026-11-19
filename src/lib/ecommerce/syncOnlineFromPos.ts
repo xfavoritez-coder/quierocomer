@@ -17,7 +17,7 @@ const STAGE_TO_STATUS: Record<string, string> = {
   delivered: "DONE",
 };
 
-export async function syncOnlineOrderFromPos(posOrder: { restaurantId: string; externalId: string; opsStage: string; posStatus?: string | null }): Promise<void> {
+export async function syncOnlineOrderFromPos(posOrder: { restaurantId: string; externalId: string; opsStage: string; posStatus?: string | null; rawPayload?: unknown }): Promise<void> {
   try {
     let onlineId: string | null = null;
     if (posOrder.externalId.startsWith("oo-")) {
@@ -38,9 +38,16 @@ export async function syncOnlineOrderFromPos(posOrder: { restaurantId: string; e
     if (!current || current.status === status) return; // sin cambios
 
     const history = Array.isArray(current.statusHistory) ? (current.statusHistory as any[]) : [];
+    // Extraer motivo de cancelación del PosOrder.rawPayload.posCancel.reason
+    const cancelReason = status === "CANCELLED" && posOrder.rawPayload && typeof posOrder.rawPayload === "object"
+      ? (posOrder.rawPayload as any)?.posCancel?.reason || null : null;
     await prisma.onlineOrder.update({
       where: { id: onlineId },
-      data: { status, statusHistory: [...history, { status, ts: new Date().toISOString() }] as unknown as object },
+      data: {
+        status,
+        statusHistory: [...history, { status, ts: new Date().toISOString() }] as unknown as object,
+        ...(cancelReason ? { cancellationReason: cancelReason } : {}),
+      },
     });
     // Push al cliente (PWA) con el cambio de estado.
     void import("@/lib/ecommerce/orderStatusPush").then((m) => m.sendOrderStatusPush(onlineId, status)).catch(() => {});
