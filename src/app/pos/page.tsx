@@ -483,27 +483,32 @@ export default function PosHomePage() {
               <>
                 <span style={{ width: 1, height: 18, background: 'var(--line)', flexShrink: 0 }} />
                 <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
                   <select
                     value={effectiveBranchMode}
                     onChange={(e) => handleBranchSelect(e.target.value)}
                     style={{
                       appearance: 'none', WebkitAppearance: 'none',
-                      padding: '5px 28px 5px 10px', borderRadius: 8,
-                      border: '1.5px solid var(--line)', background: 'var(--surface)',
+                      padding: '5px 26px 5px 28px', borderRadius: 9,
+                      border: '1.5px solid var(--amber)', background: 'var(--amber-tint)',
                       fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 700,
-                      color: 'var(--ink)', cursor: 'pointer', outline: 'none',
-                      transition: 'border-color .15s',
+                      color: 'var(--amber-press)', cursor: 'pointer', outline: 'none',
                     }}
-                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--amber)'}
-                    onBlur={(e) => e.currentTarget.style.borderColor = 'var(--line)'}
                   >
-                    {restaurants.map(b => (
-                      <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
-                    ))}
-                    <option value="todas">Todas las sucursales</option>
+                    <optgroup label="Sucursales">
+                      {restaurants.map(b => (
+                        <option key={b.id} value={b.id}>{b.branchName ?? b.name}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Vista global">
+                      <option value="todas">Todas las sucursales</option>
+                    </optgroup>
                   </select>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5"
-                    style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber-press)" strokeWidth="2.5"
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                     <path d="M6 9l6 6 6-6"/>
                   </svg>
                 </div>
