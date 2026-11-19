@@ -262,6 +262,21 @@ export default function EcommerceConfiguracionPage() {
               <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
                 Déjalo vacío si tienes un solo local. La asignación por cercanía usa la ubicación del local (configúrala en <b>Delivery → origen</b>).
               </p>
+
+              {/* Sucursal oculta */}
+              {cfg.brandSlug && (
+                <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div>
+                      <div style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)" }}>Sucursal oculta</div>
+                      <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 2, lineHeight: 1.45 }}>
+                        No aparece en el selector de sucursales, mapa ni buscador. Sigue funcionando por URL directa y recibe pedidos normalmente.
+                      </div>
+                    </div>
+                    <Toggle on={cfg.hiddenBranch} onClick={() => patch({ hiddenBranch: !cfg.hiddenBranch })} />
+                  </div>
+                </div>
+              )}
             </div>
           </section>
           )}
