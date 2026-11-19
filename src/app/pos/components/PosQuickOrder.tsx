@@ -569,7 +569,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           <button onClick={() => setActiveCat(null)}
             style={{
               padding: '6px 14px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0,
-              fontFamily: F, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              fontFamily: F, fontSize: 14, fontWeight: 700, cursor: 'pointer',
               border: !activeCat ? `2px solid ${AMBER}` : '1.5px solid var(--line)',
               background: !activeCat ? `${AMBER}12` : 'var(--surface)',
               color: !activeCat ? AMBER : 'var(--ink-3)',
@@ -579,7 +579,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
             <button key={c.id} onClick={() => setActiveCat(c.id)}
               style={{
                 padding: '6px 14px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0,
-                fontFamily: F, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                fontFamily: F, fontSize: 14, fontWeight: 700, cursor: 'pointer',
                 border: activeCat === c.id ? `2px solid ${AMBER}` : '1.5px solid var(--line)',
                 background: activeCat === c.id ? `${AMBER}12` : 'var(--surface)',
                 color: activeCat === c.id ? AMBER : 'var(--ink-3)',
