@@ -402,27 +402,37 @@ export default function PosHomePage() {
   const [orderCounts, setOrderCounts] = useState<{ retiro: number; delivery: number }>({ retiro: 0, delivery: 0 })
   const [branchCounts, setBranchCounts] = useState<Record<string, number>>({})
 
-  // Fetch per-branch counts independently (always all branches, regardless of selected)
+  // Fetch per-branch counts + tab counts independently (always all branches)
   useEffect(() => {
-    if (restaurants.length <= 1) return
     const fetchCounts = () => {
+      const ids = restaurants.length > 1 ? restaurants.map(b => b.id) : [restaurantId]
       Promise.all(
-        restaurants.map(b =>
-          fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${b.id}&scope=activos`, { cache: 'no-store' })
+        ids.map(id =>
+          fetch(`/api/panel/ecommerce/pos-orders?restaurantId=${id}&scope=activos`, { cache: 'no-store' })
             .then(r => r.ok ? r.json() : null)
-            .then(d => ({ id: b.id, count: Array.isArray(d?.orders) ? d.orders.length : 0 }))
-            .catch(() => ({ id: b.id, count: 0 }))
+            .then(d => ({ id, orders: Array.isArray(d?.orders) ? d.orders as any[] : [] }))
+            .catch(() => ({ id, orders: [] as any[] }))
         )
       ).then(results => {
         const bc: Record<string, number> = {}
-        for (const r of results) bc[r.id] = r.count
+        let del = 0, ret = 0
+        for (const r of results) {
+          bc[r.id] = r.orders.length
+          for (const o of r.orders) {
+            const isD = o.isDelivery || o.saleType === 'delivery'
+            const isDi = !isD && (o.saleType === 'dine-in' || o.saleType === 'dinein')
+            if (isD) del++
+            else if (!isDi) ret++
+          }
+        }
         setBranchCounts(bc)
+        setOrderCounts({ retiro: ret, delivery: del })
       })
     }
     fetchCounts()
     const iv = setInterval(fetchCounts, 15_000)
     return () => clearInterval(iv)
-  }, [restaurants])
+  }, [restaurants, restaurantId])
   // Pedidos activos + umbral de la alerta de preparación — para el watcher global.
   const [activeOrders, setActiveOrders] = useState<any[]>([])
   const [prepAlertMin, setPrepAlertMin] = useState<number | null>(null)
@@ -866,7 +876,7 @@ export default function PosHomePage() {
 
             {/* MESAS — Floor plan view (solo si el local activó "usar distribución real") */}
           {tab === 'mesas' && posFloorConfig?.enabled && tables.some(t => t.x > 0 || t.y > 0) && (
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', maxWidth: 800, margin: '0 auto' }}>
             <PosFloorView
               tables={tables}
               config={posFloorConfig}

@@ -79,7 +79,7 @@ export default function PosFloorView({ tables, config, mesaOrderByLabel, sectors
       if (!width) return
       // Prioriza LLENAR EL ANCHO disponible (el contenedor hace scroll vertical si queda
       // alto). Cap 2.6x para no agrandar demasiado cuando hay pocas mesas.
-      setScale(Math.max(0.3, Math.min(width / bbox.w, 2.6)))
+      setScale(Math.max(0.3, Math.min(width / bbox.w, 1.8)))
     }
     recompute()
     const obs = new ResizeObserver(recompute)
