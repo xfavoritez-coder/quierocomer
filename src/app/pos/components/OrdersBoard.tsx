@@ -418,7 +418,7 @@ function OrderCard({
         display: 'flex', flexDirection: 'column', gap: 8,
         flex: 1, minWidth: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
             <div style={{
               fontWeight: 700, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.3,
@@ -431,21 +431,13 @@ function OrderCard({
             {cols === 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), flexShrink: 0 }}>UberEats</span>}
             {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
-          <div style={{ flexShrink: 0, textAlign: 'right' }}>
-            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', display: 'block' }}>
-              {clp(order.deliveryFee > 0 ? order.totalAmount - order.deliveryFee : order.totalAmount)}
-            </span>
-            {isDelivery && order.deliveryFee > 0 && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginTop: 1 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="17" r="2"/><circle cx="6" cy="17" r="2"/><path d="M14 17h1a2 2 0 002-2V7h-5"/><path d="M2 17h2V9h8"/><path d="M17 7l3 5h-3"/></svg>
-                {clp(order.deliveryFee)}
-              </span>
-            )}
-          </div>
+          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', flexShrink: 0 }}>
+            {clp(order.deliveryFee > 0 ? order.totalAmount - order.deliveryFee : order.totalAmount)}
+          </span>
         </div>
         {/* Fila 2: chips inline + dirección (el texto fluye y envuelve debajo) */}
         {(secondary || (cols !== 2 && (showTypeChip || branchLabel))) && (
-          <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word', paddingRight: 70 }}>
+          <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word' }}>
             {cols !== 2 && showTypeChip && <span style={{ ...chip(typeColor), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{typeLabel}</span>}
             {cols !== 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>UberEats</span>}
             {cols !== 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{branchLabel}</span>}
@@ -454,10 +446,16 @@ function OrderCard({
           </div>
         )}
 
-        {/* Fila 3: hora · N ítems  |  chip pago derecha */}
+        {/* Fila 3: hora · N ítems · 🏍 delivery fee  |  chip pago derecha */}
         <div style={{ fontSize: 13.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
           <span>{new Date(order.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
           {qty > 0 && <><span style={{ color: 'var(--ink-4)' }}>·</span><span>{qty} ítem{qty !== 1 ? 's' : ''}</span></>}
+          {isDelivery && order.deliveryFee > 0 && (
+            <><span style={{ color: 'var(--ink-4)' }}>·</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zM15 17a2 2 0 104 0 2 2 0 00-4 0z"/><path d="M1 14V6h9l3 5h4l2 3"/><path d="M5 17H1"/><path d="M13 17h-4"/><path d="M19 17h2v-3"/></svg>
+              {clp(order.deliveryFee)}
+            </span></>
+          )}
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', flexShrink: 0,
             background: paid ? '#dcfce7' : 'transparent',
             color: paid ? '#15803d' : AMBER,
