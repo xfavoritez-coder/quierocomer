@@ -431,13 +431,21 @@ function OrderCard({
             {cols === 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), flexShrink: 0 }}>UberEats</span>}
             {cols === 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', flexShrink: 0 }}>{branchLabel}</span>}
           </div>
-          <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', flexShrink: 0 }}>
-            {clp(order.totalAmount)}
-          </span>
+          <div style={{ flexShrink: 0, textAlign: 'right' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 15.5, color: 'var(--ink)', display: 'block' }}>
+              {clp(order.deliveryFee > 0 ? order.totalAmount - order.deliveryFee : order.totalAmount)}
+            </span>
+            {isDelivery && order.deliveryFee > 0 && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginTop: 1 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="17" r="2"/><circle cx="6" cy="17" r="2"/><path d="M14 17h1a2 2 0 002-2V7h-5"/><path d="M2 17h2V9h8"/><path d="M17 7l3 5h-3"/></svg>
+                {clp(order.deliveryFee)}
+              </span>
+            )}
+          </div>
         </div>
         {/* Fila 2: chips inline + dirección (el texto fluye y envuelve debajo) */}
         {(secondary || (cols !== 2 && (showTypeChip || branchLabel))) && (
-          <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word' }}>
+          <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6, wordBreak: 'break-word', paddingRight: 70 }}>
             {cols !== 2 && showTypeChip && <span style={{ ...chip(typeColor), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{typeLabel}</span>}
             {cols !== 2 && showTypeChip && isUberEats && <span style={{ ...chip('#16a34a'), display: 'inline-flex', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>UberEats</span>}
             {cols !== 2 && branchLabel && <span style={{ display: 'inline-flex', padding: '2px 7px', borderRadius: 6, background: 'var(--sunk)', border: '1px solid var(--line)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', marginRight: 5, verticalAlign: 'middle', position: 'relative', top: -1 }}>{branchLabel}</span>}
