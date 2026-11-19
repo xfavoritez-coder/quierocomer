@@ -927,6 +927,7 @@ model Dish {
   description           String?
   price                 Float
   discountPrice         Float?
+  baseDiscountPrice     Float?   // oferta base del producto (PRECIO OFERTA); el cron de promos vuelve a este valor cuando no hay promo activa hoy, en vez de borrar discountPrice
   appPrice              Float? // precio exclusivo en la app (si está, es el precio al pedir desde la app)
   photos                String[]
   tags                  DishTag[]

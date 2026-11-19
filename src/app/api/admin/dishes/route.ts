@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
         description: description || null,
         price: Number(price),
         discountPrice: discountPrice ? Number(discountPrice) : null,
+        baseDiscountPrice: discountPrice ? Number(discountPrice) : null, // oferta base (la respeta el cron de promos)
         photos: photos || [],
         tags: tags || [],
         isHero: !!isHero,
