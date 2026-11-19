@@ -3133,6 +3133,8 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
 export default function PosReportesPanel({ restaurantId, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string, branch: string) => void }) {
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
+  const [branchReports, setBranchReports] = useState<{ id: string; name: string; data: Report }[]>([])
+  const [prevBranchReports, setPrevBranchReports] = useState<{ id: string; sales: number }[]>([])
   const [loading, setLoading] = useState(true)
   const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; isHourly: boolean } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
@@ -3162,6 +3164,12 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
           )
         )
         const valid = results.filter(Boolean) as Report[]
+        // Per-branch reports for the branch breakdown
+        const br: { id: string; name: string; data: Report }[] = []
+        for (let i = 0; i < allBranches.length; i++) {
+          if (results[i]) br.push({ id: allBranches[i].id, name: allBranches[i].branchName || allBranches[i].name, data: results[i]! })
+        }
+        setBranchReports(br)
         if (valid.length > 0) {
           setData({
             ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
@@ -3247,6 +3255,12 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
             productSales: valid.reduce((s, r) => s + r.productSales, 0),
             isHourly: isToday,
           })
+          // Per-branch prev sales for delta comparison
+          const pbr: { id: string; sales: number }[] = []
+          for (let i = 0; i < allBranches.length; i++) {
+            pbr.push({ id: allBranches[i].id, sales: results[i]?.productSales ?? 0 })
+          }
+          setPrevBranchReports(pbr)
         } else {
           const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}${hourParam}`)
           if (cancelled || !r.ok) return
@@ -3583,6 +3597,44 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
                 <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
               )}
             </div>
+
+            {/* Desglose por sucursal (solo multisucursal + "Todas") */}
+            {branchReports.length > 1 && (
+              <>
+                <SectionLabel>Por sucursal</SectionLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 4 }}>
+                  {branchReports.sort((a, b) => b.data.productSales - a.data.productSales).map(br => {
+                    const prevBr = prevBranchReports.find(p => p.id === br.id)
+                    const delta = prevBr && prevBr.sales > 0 ? computeDelta(br.data.productSales, prevBr.sales) : null
+                    const pct = data.productSales > 0 ? Math.round((br.data.productSales / data.productSales) * 100) : 0
+                    return (
+                      <Card key={br.id} style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 700, color: 'var(--ink)' }}>{br.name}</span>
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)' }}>{br.data.ordersCount} pedidos</span>
+                            </div>
+                            {/* Barra de proporción */}
+                            <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: 'var(--line)', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', borderRadius: 2, background: GREEN, width: `${pct}%`, transition: 'width .3s' }} />
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>{clp(br.data.productSales)}</div>
+                            {delta !== null && (
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 700, color: delta >= 0 ? GREEN : '#ef4444' }}>
+                                {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}% vs sem. ant.
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </>
+            )}
 
             {/* Canal + Tipo */}
             <SectionLabel>Desglose</SectionLabel>

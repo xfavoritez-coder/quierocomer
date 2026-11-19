@@ -458,7 +458,7 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           Productos {cartCount > 0 && `(${cartCount})`}
         </div>
         {cart.length === 0 ? (
-          <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--ink-4)', fontSize: 13, fontFamily: F }}>
+          <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--ink-4)', fontSize: 12, fontFamily: F, fontWeight: 500, opacity: 0.7 }}>
             Sin productos aun
           </div>
         ) : (
@@ -502,8 +502,8 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
         <button onClick={() => setView('products')}
           style={{
             width: '100%', marginTop: 8, padding: '12px', borderRadius: 10,
-            border: `1.5px dashed var(--line)`, background: 'transparent',
-            color: 'var(--ink-3)', fontFamily: F, fontSize: 13, fontWeight: 600,
+            border: `1.5px solid var(--line)`, background: 'var(--surface)',
+            color: 'var(--ink-2)', fontFamily: F, fontSize: 13, fontWeight: 700,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >
