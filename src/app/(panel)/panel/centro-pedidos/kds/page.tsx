@@ -298,7 +298,9 @@ export default function KdsPage({
       .subscribe();
     const onVis = () => { if (document.visibilityState === "visible") fetchOrders(); };
     document.addEventListener("visibilitychange", onVis);
-    const backup = setInterval(fetchOrders, 60000);
+    // Respaldo de polling: una pantalla de cocina debe mostrar un pedido nuevo rápido.
+    // Si Realtime tiene algún hipo, 60s era demasiado → se baja a 8s.
+    const backup = setInterval(fetchOrders, 8000);
     return () => { supabase.removeChannel(channel); document.removeEventListener("visibilitychange", onVis); clearInterval(backup); };
   }, [restaurantId, fetchOrders]);
 
