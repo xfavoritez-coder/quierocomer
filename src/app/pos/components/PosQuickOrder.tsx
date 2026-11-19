@@ -62,6 +62,11 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
   const [addrSugOpen, setAddrSugOpen] = useState(false)
   const addrSugTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const skipAddrSug = useRef(false)
+  // Búsqueda de cliente por teléfono (autollenar nombre + direcciones conocidas).
+  const [custAddrs, setCustAddrs] = useState<string[]>([])
+  const [custFound, setCustFound] = useState(false)
+  const custTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const nameAutofilled = useRef(false)
   const [payMethod, setPayMethod] = useState<PayMethod>('efectivo')
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [deliveryMsg, setDeliveryMsg] = useState('')
@@ -134,6 +139,32 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
     setAddress(label)
     setAddrSug([]); setAddrSugOpen(false)
   }
+
+  // Búsqueda de cliente al escribir el teléfono: trae nombre + direcciones previas.
+  useEffect(() => {
+    if (isMesa || saleType === 'QUICK') { setCustAddrs([]); setCustFound(false); return }
+    const digits = customerPhone.replace(/\D/g, '')
+    clearTimeout(custTimer.current)
+    if (digits.length < 8) { setCustAddrs([]); setCustFound(false); return }
+    custTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/panel/ecommerce/pos-orders/customer?restaurantId=${restaurantId}&phone=${encodeURIComponent(customerPhone)}&lite=1`, { cache: 'no-store' })
+        const d = await res.json()
+        if (!d?.found) { setCustFound(false); setCustAddrs([]); return }
+        setCustFound(true)
+        setCustAddrs(Array.isArray(d.addresses) ? d.addresses : [])
+        if (d.name && (!customerName.trim() || nameAutofilled.current)) {
+          nameAutofilled.current = true
+          setCustomerName(d.name)
+        }
+        if (saleType === 'DELIVERY' && !address.trim() && Array.isArray(d.addresses) && d.addresses.length) {
+          skipAddrSug.current = true
+          setAddress(d.addresses[0])
+        }
+      } catch { /* noop */ }
+    }, 450)
+    return () => clearTimeout(custTimer.current)
+  }, [customerPhone, saleType, isMesa, restaurantId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Report client info to parent for minimized pill label
   useEffect(() => {
@@ -289,17 +320,42 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
       {!isMesa && saleType !== 'QUICK' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
-            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Nombre</label>
-            <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Nombre del cliente"
+            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Telefono</label>
+            <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+56 9 1234 5678" type="tel" inputMode="tel"
               style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+            {custFound && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--jade)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                Cliente encontrado
+              </div>
+            )}
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Telefono</label>
-            <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+56 9 1234 5678" type="tel"
+            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Nombre</label>
+            <input value={customerName} onChange={e => { setCustomerName(e.target.value); nameAutofilled.current = false }} placeholder="Nombre del cliente"
               style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
           </div>
           {saleType === 'DELIVERY' && (
             <>
+              {custAddrs.length > 0 && (
+                <div>
+                  <div style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'var(--ink-4)', marginBottom: 5 }}>
+                    {custAddrs.length > 1 ? 'Direcciones del cliente — elige una o escribe otra' : 'Dirección del cliente'}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {custAddrs.map((a, i) => {
+                      const active = address.trim().toLowerCase() === a.trim().toLowerCase()
+                      return (
+                        <button key={i} type="button" onClick={() => { skipAddrSug.current = true; setAddress(a) }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, maxWidth: '100%', padding: '6px 10px', borderRadius: 999, border: `1.5px solid ${active ? 'var(--amber)' : 'var(--line)'}`, background: active ? 'rgba(222,124,0,.08)' : 'var(--surface)', color: active ? 'var(--amber)' : 'var(--ink-2)', fontFamily: F, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{a.replace(/,?\s*chile\b/gi, '').replace(/\s{2,}/g, ' ').trim()}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               <div style={{ position: 'relative' }}>
                 <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Direccion</label>
                 <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle y numero" autoComplete="off"

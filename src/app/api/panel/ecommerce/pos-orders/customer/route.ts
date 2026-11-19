@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { isSuperAdmin } from "@/lib/adminAuth";
@@ -38,6 +39,37 @@ export async function GET(req: NextRequest) {
   if (countOnly) {
     const count = await prisma.posOrder.count({ where });
     return NextResponse.json({ count });
+  }
+
+  // Modo LITE: búsqueda de cliente por teléfono para el tomador de pedidos.
+  // Devuelve el nombre y las direcciones de delivery conocidas. El teléfono se
+  // normaliza a los últimos 9 dígitos (los formatos guardados varían: "+56 9 …",
+  // "569…", "9…"), así que el match se hace en SQL quitando lo no numérico.
+  if (req.nextUrl.searchParams.get("lite") === "1") {
+    const digits9 = phone.replace(/\D/g, "").slice(-9);
+    if (digits9.length < 8) return NextResponse.json({ found: false, name: "", addresses: [] });
+    const rows = await prisma.$queryRaw<{ customerName: string | null; addressLine: string | null; isDelivery: boolean; saleType: string | null }[]>`
+      SELECT "customerName", "addressLine", "isDelivery", "saleType"
+      FROM "PosOrder"
+      WHERE "restaurantId" IN (${Prisma.join(allIds)})
+        AND "posStatus" <> 'canceled'
+        AND right(regexp_replace(coalesce("customerPhone", ''), '[^0-9]', '', 'g'), 9) = ${digits9}
+      ORDER BY "createdAt" DESC
+      LIMIT 40`;
+    if (!rows.length) return NextResponse.json({ found: false, name: "", addresses: [] });
+    const name = rows.find((r) => (r.customerName || "").trim())?.customerName?.trim() || "";
+    const seen = new Set<string>();
+    const addresses: string[] = [];
+    for (const r of rows) {
+      const a = (r.addressLine || "").trim();
+      if (!(r.isDelivery || r.saleType === "delivery") || !a) continue;
+      const key = a.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      addresses.push(a);
+      if (addresses.length >= 8) break;
+    }
+    return NextResponse.json({ found: true, name, addresses });
   }
 
   type OrderRow = {
