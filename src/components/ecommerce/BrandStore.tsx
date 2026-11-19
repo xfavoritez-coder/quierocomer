@@ -118,10 +118,11 @@ export default function BrandStore({ brand, representative, basePath, initialPro
     }
   }, [data, fetchStorefront, adoptRestaurant, setDeliveryAddress, confirmPickup, PERSIST_KEY]);
 
+  const activeBranchObj = useMemo(() => brand.branches.find((b) => b.slug === branchSlug) ?? null, [branchSlug, brand.branches]);
   const branchLabel = useMemo(() => {
-    const br = brand.branches.find((b) => b.slug === branchSlug);
-    return br ? (br.branchName || br.name) : null;
-  }, [branchSlug, brand.branches]);
+    if (!activeBranchObj) return null;
+    return activeBranchObj.hidden ? null : (activeBranchObj.branchName || activeBranchObj.name);
+  }, [activeBranchObj]);
 
   // Si la sucursal actual está cerrada, buscar una alternativa abierta para sugerirla
   const openBranchLabel = useMemo(() => {
@@ -133,6 +134,7 @@ export default function BrandStore({ brand, representative, basePath, initialPro
   const brandControls: BrandControls = {
     hasBranch: !!branchSlug,
     branchLabel,
+    hiddenBranch: activeBranchObj?.hidden ?? false,
     onRequireBranch: () => setPickerOpen(true),
     resolving,
     openBranchLabel,

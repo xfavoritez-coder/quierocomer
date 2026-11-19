@@ -937,7 +937,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
 
       {/* ── Footer ────── */}
       <div className="pb-28 sm:pb-8">
-        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="modern" brandMode={!!brandControls} siblings={siblings} />
+        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="modern" brandMode={!!brandControls} siblings={siblings} hideAddress={brandControls?.hiddenBranch} />
       </div>
 
       {/* ── Product modal ────── */}
@@ -1510,8 +1510,8 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
 
       <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-gray-500 mb-3 mt-6">Nuestros locales</h2>
       <div className="flex flex-col gap-4">
-        {siblings.length > 0 ? (
-          siblings.map(b => (
+        {siblings.filter(b => !(b as any).hidden).length > 0 ? (
+          siblings.filter(b => !(b as any).hidden).map(b => (
             <BranchCard
               key={b.id}
               name={b.branchName || b.name}

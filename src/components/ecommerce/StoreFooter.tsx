@@ -141,9 +141,10 @@ interface FooterProps {
   variant: 'modern' | 'base'
   brandMode?: boolean
   siblings?: { id: string; name: string; branchName: string | null }[]
+  hideAddress?: boolean
 }
 
-export default function StoreFooter({ tenant, primaryColor, variant, brandMode, siblings }: FooterProps) {
+export default function StoreFooter({ tenant, primaryColor, variant, brandMode, siblings, hideAddress }: FooterProps) {
   const dark = variant === 'modern'
   const bg = dark ? '#0f172a' : '#fafaf9'
   const border = dark ? '#1e293b' : '#e7e5e4'
@@ -215,7 +216,8 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
   const today = (() => { try { return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' })).getDay() } catch { return -1 } })()
   const hours = tenant.weeklyHours
 
-  const hasContact = tenant.whatsapp || tenant.phone || tenant.contactEmail || tenant.address
+  const showAddress = !hideAddress && tenant.address
+  const hasContact = tenant.whatsapp || tenant.phone || tenant.contactEmail || showAddress
   const hasHours = hours && hours.some((d: DayHours) => d.open)
 
   return (
@@ -249,7 +251,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: text3, marginBottom: 12 }}>Contacto</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {tenant.address && (
+                  {showAddress && (
                     <a href={mapsUrl || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'flex-start', gap: 8, textDecoration: 'none', color: text2, fontSize: 13, lineHeight: 1.5 }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={text3} strokeWidth="2" style={{ marginTop: 2, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                       {tenant.address}

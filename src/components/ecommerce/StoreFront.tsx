@@ -25,6 +25,7 @@ import { trackStoreView, trackDishView, trackCartAdd, trackCartView, trackSessio
 export interface BrandControls {
   hasBranch: boolean;
   branchLabel: string | null;
+  hiddenBranch?: boolean;
   onRequireBranch: (product?: StoreProduct | null) => void;
   resolving?: boolean;       // true mientras se carga la sucursal guardada (evita flash)
   openBranchLabel?: string | null; // nombre de sucursal abierta alternativa (si la actual está cerrada)
@@ -610,7 +611,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
 
       {/* ── Footer ───────────────────────────────────────────────── */}
       <div className="pb-32 sm:pb-14">
-        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="base" brandMode={!!brandControls} siblings={siblings} />
+        <StoreFooter tenant={tenant} primaryColor={primaryColor} variant="base" brandMode={!!brandControls} siblings={siblings} hideAddress={brandControls?.hiddenBranch} />
       </div>
 
       {/* Modal producto */}
@@ -1186,7 +1187,7 @@ export function DeliveryModal({ tenant, primaryColor, onClose, siblings, variant
               // Todas las sucursales pickup-enabled: la actual + las siblings (misma marca)
               const allBranches: Array<{ id: string; name: string; branchName: string | null; address: string | null; lat: number | null; lng: number | null; isCurrent: boolean; open: boolean; opensAt: string | null }> = [
                 { id: tenant.id, name: tenant.name, branchName: tenant.branchName, address: tenant.address, lat: null, lng: null, isCurrent: true, open: tenant.openStatus.open, opensAt: tenant.openStatus.opensAt },
-                ...(siblings ?? []).filter((s) => s.pickupEnabled).map((s) => ({ id: s.id, name: s.name, branchName: s.branchName, address: s.address, lat: s.lat, lng: s.lng, isCurrent: false, open: s.open, opensAt: s.opensAt })),
+                ...(siblings ?? []).filter((s) => s.pickupEnabled && !(s as any).hidden).map((s) => ({ id: s.id, name: s.name, branchName: s.branchName, address: s.address, lat: s.lat, lng: s.lng, isCurrent: false, open: s.open, opensAt: s.opensAt })),
               ].sort((a, b) => {
                 if (a.open !== b.open) return a.open ? -1 : 1;
                 return (a.branchName || a.name).localeCompare(b.branchName || b.name);
