@@ -10,7 +10,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
 import UberTracking from './UberTracking'
-import UberDirectTracking, { isUberDirectCourier } from './UberDirectTracking'
+import UberDirectTracking, { isUberDirectCourier, UberDirectStatusPill } from './UberDirectTracking'
 import { playDelifastWarning } from '../lib/orderSound'
 import { supabase } from '@/lib/supabase'
 import CustomerOrdersDrawer, { CustomerOrdersContent } from './CustomerOrdersDrawer'
@@ -359,6 +359,10 @@ function OrderCard({
   // Pedido de Uber Eats (puede ser delivery o retiro): pill verde adicional, sin
   // reemplazar el de tipo (delivery/retiro).
   const isUberEats = (order.vendorName || '').toLowerCase().includes('uber eats')
+  // Pedido despachado por Uber Direct: lo detectamos por el courier que deja el webhook
+  // (no Uber Eats, no deliveryhandroll, no PedidosYa). Muestra su propio pill y NO el de
+  // Delifast (que dispararía falsa alerta de "sin motorista").
+  const isUberDirectDelivery = isUberDirectCourier(order.courier)
   // Pedido de Uber Eats "por aceptar" (cuando el auto-aceptar está apagado): el POS
   // muestra Aceptar/Rechazar y oculta el avance normal hasta aceptarlo.
   const uberPendingAccept = isUberEats && !!(order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) && (order.rawPayload as Record<string, unknown>).uberPendingAccept)
@@ -591,13 +595,17 @@ function OrderCard({
                 pedidos de Uber Eats: su reparto lo gestiona Uber (no Delifast), así que
                 el seguimiento de Delifast no aplica y disparaba una alerta falsa de
                 "sin motorista" + borde rojo. */}
-            {paid && order.isDelivery && !isUberEats && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+            {paid && order.isDelivery && !isUberEats && !isUberDirectDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
                 onCancelDetected={() => setDelifastCancelled(true)}
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
+            )}
+            {/* Pill de estado Uber Direct — cuando el pedido lo lleva Uber Direct (lee order.courier). */}
+            {paid && order.isDelivery && isUberDirectDelivery && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+              <UberDirectStatusPill order={order} />
             )}
             {/* Solicitar repartidor externo (Uber Direct / PedidosYa) — delivery en prep/listo.
                 NO para pedidos de Uber Eats: Uber ya hace el reparto, no se pide otro courier. */}

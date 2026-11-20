@@ -173,3 +173,28 @@ export default function UberDirectTracking({ order, ribbon = false }: {
     </div>
   )
 }
+
+/** Pill compacto del estado de Uber Direct para la tarjeta del board. Lee order.courier
+ *  (sin fetch; se refresca con el board). No renderiza nada si aún no hay courier. */
+export function UberDirectStatusPill({ order }: { order: { courier?: unknown } }) {
+  const c: UberDirectCourier | null = isUberDirectCourier(order.courier) ? (order.courier as UberDirectCourier) : null
+  if (!c) return null
+
+  const { label, color } = statusInfo(c.status)
+  const delivered = /delivered/.test((c.status || '').toLowerCase())
+  const goingToCustomer = /dropoff|pickup_complete/.test((c.status || '').toLowerCase())
+  const eta = etaLabel(goingToCustomer ? c.eta : c.pickupEta)
+  const text = !delivered && eta ? `${label} · ${eta}` : label
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: color + '18', color, border: `1px solid ${color}40`,
+      fontWeight: 700, fontSize: 12, borderRadius: 20, padding: '4px 10px',
+      flexShrink: 0, whiteSpace: 'nowrap',
+    }}>
+      <Motorbike size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
+      {text}
+    </span>
+  )
+}
