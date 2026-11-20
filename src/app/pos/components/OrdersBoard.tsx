@@ -554,8 +554,11 @@ function OrderCard({
                 Cobrar
               </button>
             )}
-            {/* Pill de estado Delifast — visible en ready y out_for_delivery */}
-            {paid && order.isDelivery && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
+            {/* Pill de estado Delifast — visible en ready y out_for_delivery. NO para
+                pedidos de Uber Eats: su reparto lo gestiona Uber (no Delifast), así que
+                el seguimiento de Delifast no aplica y disparaba una alerta falsa de
+                "sin motorista" + borde rojo. */}
+            {paid && order.isDelivery && !isUberEats && !delifastCancelled && !delifastNoTracking && order.opsStage !== 'preparing' && order.opsStage !== 'delivered' && (
               <DelifastStatusPill
                 restaurantId={order._branchId ?? restaurantId}
                 posOrderId={order.id}
@@ -563,8 +566,9 @@ function OrderCard({
                 onNoTracking={() => setDelifastNoTracking(true)}
               />
             )}
-            {/* Solicitar repartidor externo (Uber Direct / PedidosYa) — delivery en prep/listo */}
-            <PosCourierActions order={order} restaurantId={order._branchId ?? restaurantId} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} onChanged={() => onCourierChanged?.()} />
+            {/* Solicitar repartidor externo (Uber Direct / PedidosYa) — delivery en prep/listo.
+                NO para pedidos de Uber Eats: Uber ya hace el reparto, no se pide otro courier. */}
+            {!isUberEats && <PosCourierActions order={order} restaurantId={order._branchId ?? restaurantId} uberEnabled={uberEnabled} pedidosyaEnabled={pedidosyaEnabled} onChanged={() => onCourierChanged?.()} />}
             {/* Botón "Entregado" — cuando Delifast no tiene tracking, canceló, o en out_for_delivery sin tracking activo.
                 `!next`: si el botón de avance normal ya ofrece "Entregado" (pedido sin delifastVentaId),
                 no duplicarlo aquí. */}
