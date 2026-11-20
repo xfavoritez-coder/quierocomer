@@ -13,6 +13,7 @@ import {
   purgeMirrorAccounts,
 } from '@/lib/pos'
 import type { PosTable } from '@/lib/pos'
+import { toast } from 'sonner'
 import { usePosCash } from '@/lib/pos/cashApi'
 import PosHeader from './components/PosHeader'
 import PosMenuDrawer from './components/PosMenuDrawer'
@@ -234,9 +235,20 @@ export default function PosHomePage() {
   // Pre-cargar menú en background al montar
   useEffect(() => { if (restaurantId) prefetchMenu(restaurantId) }, [restaurantId])
   const openNewOrder = useCallback((mesa?: { label: string; orderId?: string }) => {
+    // Gate obligatorio de caja: no se puede tomar/comandar NINGÚN pedido del POS
+    // (mesa nueva, agregar ítems a una mesa, o venta rápida) sin una caja abierta.
+    // Los pedidos de internet (ecommerce/Centro) NO pasan por aquí; entran por el
+    // webhook y por eso no dependen de la caja. cashSession===null = caja cerrada
+    // confirmada por el servidor; mientras carga (cashLoading) no se bloquea.
+    if (!cashLoading && cashSession === null) {
+      toast.warning('Abre la caja para tomar pedidos')
+      setInnerPage('caja')
+      window.history.replaceState(null, '', '/pos/caja')
+      return
+    }
     const id = ++npCounter.current
     setNpOrders(prev => [...prev, { id, open: true, mesa: mesa || null }])
-  }, [])
+  }, [cashSession, cashLoading])
   // Interceptar navegación a tomar-pedido y mesa para abrir modal
   const navigate = useCallback((path: string) => {
     if (path === '/pos/tomar-pedido') { openNewOrder(); return }
