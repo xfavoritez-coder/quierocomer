@@ -7,7 +7,7 @@
 /* ---------- shell ---------- */
 .pos-shell{height:100dvh;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;position:relative}
 .pos-scroll{flex:1;overflow-y:auto;background:var(--bg)}
-.pos-inner-title{font-family:var(--sans);font-size:18px;font-weight:700;color:var(--ink-2);letter-spacing:-.02em;margin:0 0 16px;line-height:1.2}
+.pos-inner-title{font-family:var(--sans);font-size:18px;font-weight:700;color:var(--ink-3);letter-spacing:-.02em;margin:0 0 16px;line-height:1.2}
 
 /* ---------- top bar ---------- */
 .pos-bar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:60px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex-shrink:0}
