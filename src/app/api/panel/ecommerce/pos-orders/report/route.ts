@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       status: { not: "CANCELLED" },
       OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ONLINE_PAY_METHODS } }],
     },
-    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true },
+    select: { id: true, total: true, deliveryFee: true, createdAt: true, items: true, orderType: true, fromApp: true, statusHistory: true, customerName: true, customerPhone: true, deliveryAddress: true, orderNumber: true, courier: true, paymentMethod: true },
   });
   const unmirroredOnline = onlineOrders.filter((o) => !mirroredOnlineIds.has(o.id));
   // Mapa de items de OnlineOrder para recuperar precios en PosOrders espejados
@@ -124,9 +124,11 @@ export async function GET(req: NextRequest) {
     const dowEntry = dowMap.get(dowKey) || { sum: 0, count: 0 };
     dowEntry.sum += net; dowEntry.count++; dowMap.set(dowKey, dowEntry);
 
-    // Método de pago (desde rawPayload.posPayment.method)
+    // Método de pago: cobrado en el POS (posPayment.method) o pagado online desde la
+    // web (webPayment.method, p.ej. webpay/flow/mercadopago). Antes solo se miraba
+    // posPayment → los pedidos web pagados online no aparecían en "Métodos de pago".
     const rp = typeof o.rawPayload === "object" && o.rawPayload ? (o.rawPayload as Record<string, any>) : {};
-    const rawMethod = (rp?.posPayment?.method || "").toLowerCase().trim();
+    const rawMethod = ((rp?.posPayment?.method || rp?.webPayment?.method || "") as string).toLowerCase().trim();
     if (rawMethod) {
       const label = PM_LABELS[rawMethod] || rawMethod.charAt(0).toUpperCase() + rawMethod.slice(1);
       const pm = pmMap.get(rawMethod) || { method: rawMethod, label, count: 0, amount: 0 };
@@ -227,6 +229,14 @@ export async function GET(req: NextRequest) {
     const h = chileHour(o.createdAt);
     hourly[h].sales += net;
     hourly[h].orders += 1;
+
+    // Método de pago del pedido online (webpay/flow/mercadopago/efectivo/transferencia).
+    const onlMethod = (o.paymentMethod || "").toLowerCase().trim();
+    if (onlMethod) {
+      const label = PM_LABELS[onlMethod] || onlMethod.charAt(0).toUpperCase() + onlMethod.slice(1);
+      const pm = pmMap.get(onlMethod) || { method: onlMethod, label, count: 0, amount: 0 };
+      pm.count += 1; pm.amount += net; pmMap.set(onlMethod, pm);
+    }
 
     // Canal: App (desde la app) o Web.
     const chName = o.fromApp ? "App" : "Web";
