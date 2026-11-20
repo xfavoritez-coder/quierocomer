@@ -3588,19 +3588,21 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
 
             {/* KPIs */}
             <SectionLabel>{singleDay ? 'Resumen del día' : 'Resumen del período'}</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
-              {(() => {
-                const dHint = prevData?.isHourly ? 'a esta hora sem. ant.' : deltaLabel(fromDate, toDate)
-                const deliveryBucket = data.byType?.find(t => t.type === 'delivery')
-                const deliveryFeeTotal = data.deliveryTotal ?? 0
-                const ingresosTotal = data.productSales + deliveryFeeTotal
-                const prevIngresos = prevData ? prevData.productSales + prevData.deliveryTotal : 0
-                return (<>
-                  <Stat label={singleDay ? 'Ingresos del día' : 'Ingresos del período'} value={clp(ingresosTotal)}
-                    hint={`Venta ${clp(data.productSales)} + Delivery ${clp(deliveryFeeTotal)}`} color={PURPLE} big full
-                    delta={prevData ? computeDelta(ingresosTotal, prevIngresos) : null}
-                    deltaHint={dHint}
-                    prevValue={prevIngresos > 0 ? clp(prevIngresos) : undefined} />
+            {(() => {
+              const dHint = prevData?.isHourly ? 'a esta hora sem. ant.' : deltaLabel(fromDate, toDate)
+              const deliveryBucket = data.byType?.find(t => t.type === 'delivery')
+              const deliveryFeeTotal = data.deliveryTotal ?? 0
+              const ingresosTotal = data.productSales + deliveryFeeTotal
+              const prevIngresos = prevData ? prevData.productSales + prevData.deliveryTotal : 0
+              return (<>
+                {/* Ingresos del día: tarjeta a todo el ancho (FUERA del grid, para no
+                    forzar el auto-fit a materializar columnas de más). */}
+                <Stat label={singleDay ? 'Ingresos del día' : 'Ingresos del período'} value={clp(ingresosTotal)}
+                  hint={`Venta ${clp(data.productSales)} + Delivery ${clp(deliveryFeeTotal)}`} color={PURPLE} big
+                  delta={prevData ? computeDelta(ingresosTotal, prevIngresos) : null}
+                  deltaHint={dHint}
+                  prevValue={prevIngresos > 0 ? clp(prevIngresos) : undefined} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
                   <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big
                     delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
                     deltaHint={dHint}
@@ -3617,12 +3619,12 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                     delta={prevData && prevData.ordersCount > 0 ? computeDelta(data.ordersCount > 0 ? data.productSales / data.ordersCount : 0, prevData.productSales / prevData.ordersCount) : null}
                     deltaHint={dHint}
                     prevValue={prevData && prevData.ordersCount > 0 ? clp(prevData.productSales / prevData.ordersCount) : undefined} />
-                </>)
-              })()}
-              {data.cancellations && data.cancellations.count > 0 && (
-                <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
-              )}
-            </div>
+                  {data.cancellations && data.cancellations.count > 0 && (
+                    <Stat label="Cancelados" value={data.cancellations.count.toString()} hint={`${data.cancellations.rate}% de tasa`} color="#ef4444" />
+                  )}
+                </div>
+              </>)
+            })()}
 
             {/* Desglose por sucursal (solo multisucursal + "Todas") */}
             {branchReports.length > 1 && (
