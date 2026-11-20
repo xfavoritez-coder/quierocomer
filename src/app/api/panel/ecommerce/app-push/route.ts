@@ -28,11 +28,12 @@ export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";
   if (!restaurantId) return NextResponse.json({ error: "Falta restaurantId" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  const [ios, android] = await Promise.all([
+  const [ios, android, recent] = await Promise.all([
     prisma.appDevice.count({ where: { restaurantId, optedIn: true, platform: "ios" } }),
     prisma.appDevice.count({ where: { restaurantId, optedIn: true, platform: "android" } }),
+    prisma.appPushLog.findMany({ where: { restaurantId }, orderBy: { createdAt: "desc" }, take: 20, select: { title: true, body: true, sent: true, total: true, createdAt: true } }),
   ]);
-  return NextResponse.json({ count: ios + android, ios, android });
+  return NextResponse.json({ count: ios + android, ios, android, recent });
 }
 
 export async function POST(req: NextRequest) {

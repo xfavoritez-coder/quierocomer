@@ -11,19 +11,28 @@ export default function NotificacionesPage() {
   const restaurantId = session?.selectedRestaurantId || "";
 
   const [count, setCount] = useState<{ total: number; ios: number; android: number } | null>(null);
+  const [recent, setRecent] = useState<{ title: string; body: string; sent: number; total: number; createdAt: string }[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [url, setUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
-  useEffect(() => {
+  async function loadInfo() {
     if (!restaurantId) return;
-    setCount(null);
-    fetch(`/api/panel/ecommerce/app-push?restaurantId=${restaurantId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setCount({ total: d.count ?? 0, ios: d.ios ?? 0, android: d.android ?? 0 }); })
-      .catch(() => {});
+    try {
+      const r = await fetch(`/api/panel/ecommerce/app-push?restaurantId=${restaurantId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setCount({ total: d.count ?? 0, ios: d.ios ?? 0, android: d.android ?? 0 });
+      setRecent(Array.isArray(d.recent) ? d.recent : []);
+    } catch { /* noop */ }
+  }
+
+  useEffect(() => {
+    setCount(null); setRecent([]);
+    loadInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
   async function enviar() {
@@ -39,6 +48,7 @@ export default function NotificacionesPage() {
       if (!r.ok) { setResult(d.error || "No se pudo enviar"); return; }
       setResult(`✓ Enviadas: ${d.sent} · Fallidas: ${d.failed}${d.invalid ? ` · Dados de baja: ${d.invalid}` : ""}`);
       setTitle(""); setBody(""); setUrl("");
+      loadInfo(); // refresca el historial con la recién enviada
     } catch { setResult("Error de conexión"); }
     finally { setSending(false); }
   }
@@ -91,6 +101,26 @@ export default function NotificacionesPage() {
         </button>
         {(count?.total ?? 0) === 0 && <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", margin: 0 }}>Aún no hay dispositivos suscritos. Se registran cuando los clientes abren la app con las notificaciones activadas.</p>}
         {result && <p style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 700, textAlign: "center", color: result.startsWith("✓") ? "var(--jade, #16a34a)" : "#ef4444", margin: 0 }}>{result}</p>}
+      </div>
+
+      {/* Últimas notificaciones enviadas */}
+      <div style={{ ...card, display: "grid", gap: 10 }}>
+        <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Últimas notificaciones</span>
+        {recent.length === 0 ? (
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Aún no has enviado notificaciones.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {recent.map((n, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-hover)" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.title}</div>
+                  <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{new Date(n.createdAt).toLocaleDateString("es-CL", { timeZone: "America/Santiago", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)", flexShrink: 0 }}>{n.sent}/{n.total}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

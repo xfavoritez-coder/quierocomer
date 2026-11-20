@@ -22,7 +22,9 @@ const CANCELLED = ["CANCELED", "CANCELLED", "REJECTED", "canceled", "cancelled",
 // Un PEDIDO real = NO anulado y (ya avanzó más allá de PENDING, es decir fue
 // aceptado/entregado) O está pagado. PENDING sin pagar = intento, NO cuenta.
 const realOrderWhere = { status: { notIn: CANCELLED }, OR: [{ status: { not: "PENDING" } }, { paymentStatus: "paid" }] };
-const ymd = (d: Date) => new Date(d.toLocaleString("en-US", { timeZone: "America/Santiago" })).toISOString().slice(0, 10);
+// Fecha calendario de Chile (YYYY-MM-DD) robusta, independiente de la zona horaria
+// del servidor (en-CA ya entrega el formato ISO directo, sin reparsear strings).
+const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId") || "";

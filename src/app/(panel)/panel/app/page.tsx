@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Send, Target, Trophy, Download, Copy, Check } from "lucide-react";
+import { Smartphone, Bell, Users, ShoppingBag, Sparkles, Target, Trophy, Download, Copy, Check, ChevronDown } from "lucide-react";
 import { useSessionContext } from "@/lib/admin/SessionContext";
 
 const F = "var(--font-display)";
@@ -39,6 +38,7 @@ export default function AppResumenPage() {
   const [ios, setIos] = useState("");
   const [linksSaving, setLinksSaving] = useState(false);
   const [linksMsg, setLinksMsg] = useState<string | null>(null);
+  const [linksOpen, setLinksOpen] = useState(false); // desplegable: colapsado por defecto
   const [copied, setCopied] = useState<string | null>(null);
   const slug = session?.restaurants.find((r) => r.id === restaurantId)?.slug || "";
   const smartLink = slug ? `https://quierocomer.com/descargar/${slug}` : "";
@@ -104,13 +104,16 @@ export default function AppResumenPage() {
         </div>
       </div>
 
-      {/* Enlaces de descarga de la app (se usan en el menú del ecommerce) */}
+      {/* Enlaces de descarga de la app (desplegable, colapsado por defecto) */}
       <div style={card}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <button onClick={() => setLinksOpen((o) => !o)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
           <Download size={17} color={BRAND} />
           <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Enlaces de descarga de la app</span>
-        </div>
-        <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Pega aquí los enlaces de tu app. Aparecerán en el menú del ecommerce como “Descargar app para Android / iPhone”.</p>
+          <ChevronDown size={18} color="var(--adm-text3)" style={{ marginLeft: "auto", transition: "transform .2s", transform: linksOpen ? "rotate(180deg)" : "none" }} />
+        </button>
+        {linksOpen && (
+        <>
+        <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", margin: "10px 0 12px" }}>Pega aquí los enlaces de tu app. Aparecerán en el menú del ecommerce como “Descargar app para Android / iPhone”.</p>
         <div style={{ display: "grid", gap: 10 }}>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 5 }}>Google Play (Android)</label>
@@ -143,6 +146,8 @@ export default function AppResumenPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {loading && !s ? (
@@ -218,45 +223,23 @@ export default function AppResumenPage() {
             ) : (
               <div style={{ display: "grid", gap: 6 }}>
                 {s.appOrdersList.map((o) => (
-                  <div key={o.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-hover)" }}>
+                  <a key={o.id} href={`/pedido/${o.id}`} target="_blank" rel="noopener noreferrer" title="Ver detalle del pedido" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-hover)", textDecoration: "none", cursor: "pointer" }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{toName(o.customer)}</div>
                       <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                        {new Date(o.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
+                        {new Date(o.createdAt).toLocaleDateString("es-CL", { timeZone: "America/Santiago", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · {o.orderType === "DELIVERY" ? "Delivery" : "Retiro"}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                       <span style={{ fontFamily: F, fontSize: "0.86rem", fontWeight: 800, color: "var(--adm-text)" }}>{clp(o.total)}</span>
                       <span style={{ fontFamily: F, fontSize: "0.64rem", fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: statusColor(o.status).bg, color: statusColor(o.status).fg }}>{statusLabel(o.status)}</span>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Notificaciones recientes */}
-          <div style={card}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Últimas notificaciones</span>
-              <Link href="/panel/app/notificaciones" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", padding: "7px 12px", borderRadius: 9, background: BRAND, color: "#fff", fontFamily: F, fontSize: "0.78rem", fontWeight: 700 }}><Send size={14} /> Enviar</Link>
-            </div>
-            {s.notifications.length === 0 ? (
-              <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0 }}>Aún no has enviado notificaciones.</p>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {s.notifications.map((n, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "9px 12px", borderRadius: 10, background: "var(--adm-hover)" }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.title}</div>
-                      <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{new Date(n.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
-                    </div>
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "var(--adm-text2)", flexShrink: 0 }}>{n.sent}/{n.total}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </>
       )}
     </div>
