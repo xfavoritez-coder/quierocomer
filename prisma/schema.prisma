@@ -558,6 +558,11 @@ model PosOrder {
   discountAmount Int    @default(0)
   currency       String @default("CLP")
 
+  // Caja (PosCashSession) a la que pertenece el COBRO de este pedido. Se estampa al
+  // cobrar en el POS (action:"pay") y al cerrar la caja (barre los pre-pagados web/
+  // Uber/Toteat del turno). Regla: todo pedido cobrado debe pertenecer a una caja.
+  cashSessionId String?
+
   // Boleta electrónica SII (SharkPOS). Se emite al cobrar; el folio/estado final
   // llega por webhook. boletaStatus = public_status de SharkPOS.
   boletaDteId     String?

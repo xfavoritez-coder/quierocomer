@@ -2096,8 +2096,12 @@ export function CobroModal({ order, restaurantId, type, delifastEnabled, onClose
         // Imprime la boleta en la caja cuando SharkPOS la emita (async). No bloquea
         // el cobro; en locales sin boleta no hace nada.
         printBoletaForOrder(order.id, { retries: 8, intervalMs: 2000 }).catch(() => {})
+      } else {
+        // 409 cajaClosed u otro error: mostrar el motivo (p.ej. "Abre la caja para cobrar").
+        const d = await r.json().catch(() => ({}))
+        window.alert(d.error || 'No se pudo cobrar')
       }
-    } catch { }
+    } catch { window.alert('Error de conexión al cobrar') }
     setSending(false)
   }
 

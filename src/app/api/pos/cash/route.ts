@@ -114,6 +114,20 @@ export async function POST(req: NextRequest) {
         : await prisma.posCashSession.findFirst({ where: { restaurantId, isOpen: true } });
       if (!caja || caja.restaurantId !== restaurantId) return NextResponse.json({ error: "Caja no encontrada" }, { status: 404 });
       if (!caja.isOpen) return NextResponse.json({ caja, already: true });
+      // Barre los pedidos pre-pagados del turno (web/Uber/Toteat que llegan ya
+      // pagados desde afuera, sin pasar por action:"pay") y los asocia a esta caja,
+      // para que TODO cobro del turno pertenezca a una caja. Los cobrados en el POS
+      // ya traen cashSessionId. Ventana = [apertura, ahora] por updatedAt.
+      await prisma.posOrder.updateMany({
+        where: {
+          restaurantId,
+          cashSessionId: null,
+          posStatus: { not: "canceled" },
+          paidAmount: { gt: 0 },
+          updatedAt: { gte: caja.openedAt, lte: new Date() },
+        },
+        data: { cashSessionId: caja.id },
+      }).catch(() => {});
       const num = (v: unknown): number | null => (v == null ? null : Math.round(Number(v) || 0));
       const updated = await prisma.posCashSession.update({
         where: { id: caja.id },

@@ -211,6 +211,16 @@ export async function PATCH(req: NextRequest) {
       const current = await prisma.posOrder.findUnique({ where: { id } });
       return NextResponse.json({ order: current, alreadyPaid: true });
     }
+    // ── Candado de caja: no se puede COBRAR sin una caja abierta. Todo pedido
+    // cobrado debe pertenecer a una caja (se estampa cashSessionId más abajo). ──
+    const openCaja = await prisma.posCashSession.findFirst({
+      where: { restaurantId, isOpen: true },
+      orderBy: { openedAt: "desc" },
+      select: { id: true },
+    });
+    if (!openCaja) {
+      return NextResponse.json({ error: "Abre la caja para cobrar", cajaClosed: true }, { status: 409 });
+    }
     const tip = Math.max(0, Math.round(Number(body?.tip) || 0));
 
     // Pago COMBINADO: se acepta un arreglo `payments` [{method, amount, received?}].
@@ -261,7 +271,7 @@ export async function PATCH(req: NextRequest) {
         posFactura = { rut, name: s("name"), giro: s("giro"), direccion: s("direccion"), comuna: s("comuna"), ...(s("ciudad") ? { ciudad: s("ciudad") } : {}), ...(s("email") ? { email: s("email") } : {}) };
       }
     }
-    const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0 }, ...(posFactura ? { posFactura } : {}) };
+    const rawPayload = { ...prevRaw, posPayment: { method, parts, received, tip, change, at: new Date().toISOString(), by, origin: "caja", balance: 0, cashSessionId: openCaja.id }, ...(posFactura ? { posFactura } : {}) };
     // Mesa (dine-in): cobrar = cerrar la mesa → marca "entregado" EN EL MISMO update
     // (atómico). Antes el cobro de mesa hacía un PATCH opsStage=delivered aparte; si
     // ese 2º paso fallaba, el pedido quedaba pagado pero sin entregar → desaparecía
@@ -270,7 +280,7 @@ export async function PATCH(req: NextRequest) {
     const deliverNow = isDineIn && order.opsStage !== "delivered";
     const updated = await prisma.posOrder.update({
       where: { id },
-      data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload, ...(deliverNow ? { opsStage: "delivered", opsDeliveredAt: new Date() } : {}) },
+      data: { paidAmount: total, tipAmount: tip, changeAmount: change, rawPayload, cashSessionId: openCaja.id, ...(deliverNow ? { opsStage: "delivered", opsDeliveredAt: new Date() } : {}) },
     });
     void syncOnlineOrderFromPos(updated).catch(() => {});
     // Boleta SII (SharkPOS): venta recién cobrada → emite en segundo plano (no
