@@ -60,6 +60,12 @@ export interface CourierInfo {
   courierVehicle: string | null;
   courierImg: string | null;
   location: { lat: number; lng: number } | null;
+  // Coordenadas que Uber geocodifica de las direcciones: sirven para el mapa del
+  // seguimiento del cliente cuando el PosOrder no tiene lat/lng propios.
+  dropoffLat: number | null; // destino (casa del cliente)
+  dropoffLng: number | null;
+  pickupLat: number | null; // local (origen del despacho)
+  pickupLng: number | null;
   dropoffPin: string | null; // código que el cliente da al repartidor (respaldo)
   pickupPin: string | null; // código para entregar el pedido al repartidor en el local
   proofPhotoUrl: string | null; // data URI cuando entregó
@@ -99,6 +105,8 @@ export function parseDelivery(d: Record<string, unknown>, prev?: Partial<Courier
   const loc = (courier.location as { lat?: number; lng?: number }) || {};
   const pickup = (d.pickup as Record<string, any>) || {};
   const dropoff = (d.dropoff as Record<string, any>) || {};
+  const dropLoc = (dropoff.location as { lat?: number; lng?: number }) || {};
+  const pickLoc = (pickup.location as { lat?: number; lng?: number }) || {};
   // El PIN del cliente (dropoff pincode) puede venir en varias rutas según el evento.
   const dropoffPin = firstStr(
     (d as any).verification_requirements?.pincode?.value,
@@ -123,6 +131,10 @@ export function parseDelivery(d: Record<string, unknown>, prev?: Partial<Courier
     courierVehicle: (courier.vehicle_type as string) ?? prev?.courierVehicle ?? null,
     courierImg: (courier.img_href as string) ?? (courier.image_url as string) ?? prev?.courierImg ?? null,
     location: (loc.lat != null && loc.lng != null) ? { lat: loc.lat, lng: loc.lng } : prev?.location ?? null,
+    dropoffLat: typeof dropLoc.lat === "number" ? dropLoc.lat : prev?.dropoffLat ?? null,
+    dropoffLng: typeof dropLoc.lng === "number" ? dropLoc.lng : prev?.dropoffLng ?? null,
+    pickupLat: typeof pickLoc.lat === "number" ? pickLoc.lat : prev?.pickupLat ?? null,
+    pickupLng: typeof pickLoc.lng === "number" ? pickLoc.lng : prev?.pickupLng ?? null,
     dropoffPin: dropoffPin ?? prev?.dropoffPin ?? null,
     pickupPin: pickupPin ?? prev?.pickupPin ?? null,
     proofPhotoUrl: prev?.proofPhotoUrl ?? null,

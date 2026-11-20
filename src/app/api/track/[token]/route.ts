@@ -50,16 +50,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const courier = (o.courier as any) || null;
   const delivered = o.opsStage === "delivered";
 
-  // Ubicación del repartidor: propio (GPS) o courier externo. Se descarta [0,0]
-  // (coordenada inválida que Uber a veces envía al cerrar la entrega).
+  // Destino (casa del cliente) para el mapa: coords propias del pedido o, si no las
+  // hay (pedidos del POS sin geocodificar), las que Uber Direct geocodificó del dropoff.
+  const destLat = o.customerLat ?? courier?.dropoffLat ?? null;
+  const destLng = o.customerLng ?? courier?.dropoffLng ?? null;
+
+  // Ubicación del repartidor: propio (GPS) o courier externo (Uber Direct: courier.location).
+  // Se descarta [0,0] (coordenada inválida que Uber a veces envía al cerrar la entrega).
   let driverLat = o.lastLat ?? courier?.location?.lat ?? null;
   let driverLng = o.lastLng ?? courier?.location?.lng ?? null;
   if (driverLat != null && driverLng != null && Math.abs(driverLat) < 0.5 && Math.abs(driverLng) < 0.5) {
     driverLat = null; driverLng = null;
   }
   // Entregado: el repartidor se ubica en la dirección donde entregó.
-  if (delivered && o.customerLat != null && o.customerLng != null) {
-    driverLat = o.customerLat; driverLng = o.customerLng;
+  if (delivered && destLat != null && destLng != null) {
+    driverLat = destLat; driverLng = destLng;
   }
 
   // El cliente ve la MARCA del pedido (una cuenta puede recibir de varias marcas),
@@ -84,8 +89,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     discount: o.discountAmount || 0,
     createdAt: o.createdAt ? o.createdAt.toISOString() : null,
     deliveredAt: o.opsDeliveredAt ? o.opsDeliveredAt.toISOString() : null,
-    destLat: o.customerLat ?? null,
-    destLng: o.customerLng ?? null,
+    destLat,
+    destLng,
     driverLat,
     driverLng,
     driverName: o.assignedTo || courier?.courierName || null,
