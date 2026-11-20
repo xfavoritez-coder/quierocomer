@@ -199,14 +199,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Stat({ label, value, hint, color, big, span, delta, deltaHint, badge, prevValue }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; delta?: number | null; deltaHint?: string; badge?: string; prevValue?: string }) {
+function Stat({ label, value, hint, color, big, span, full, delta, deltaHint, badge, prevValue }: { label: string; value: string; hint?: string; color: string; big?: boolean; span?: number; full?: boolean; delta?: number | null; deltaHint?: string; badge?: string; prevValue?: string }) {
   const hasCompare = delta != null
   const noBase = delta === DELTA_NO_BASE          // current > 0 pero prev = 0
   const isPos = !noBase && delta! > 0
   const isNeg = !noBase && delta! < 0
   const pillColor = (isPos || noBase) ? '#16a34a' : isNeg ? '#dc2626' : 'var(--ink-3)'
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', borderTop: `3px solid ${color}`, overflow: 'hidden', minWidth: 0, gridColumn: full ? '1 / -1' : span ? `span ${span}` : undefined }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 5 }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
         <div style={{ fontFamily: F, fontSize: big ? '1.35rem' : '1.2rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{value}</div>
@@ -3593,7 +3593,14 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                 const dHint = prevData?.isHourly ? 'a esta hora sem. ant.' : deltaLabel(fromDate, toDate)
                 const deliveryBucket = data.byType?.find(t => t.type === 'delivery')
                 const deliveryFeeTotal = data.deliveryTotal ?? 0
+                const ingresosTotal = data.productSales + deliveryFeeTotal
+                const prevIngresos = prevData ? prevData.productSales + prevData.deliveryTotal : 0
                 return (<>
+                  <Stat label={singleDay ? 'Ingresos del día' : 'Ingresos del período'} value={clp(ingresosTotal)}
+                    hint={`Venta ${clp(data.productSales)} + Delivery ${clp(deliveryFeeTotal)}`} color={PURPLE} big full
+                    delta={prevData ? computeDelta(ingresosTotal, prevIngresos) : null}
+                    deltaHint={dHint}
+                    prevValue={prevIngresos > 0 ? clp(prevIngresos) : undefined} />
                   <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big
                     delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
                     deltaHint={dHint}
