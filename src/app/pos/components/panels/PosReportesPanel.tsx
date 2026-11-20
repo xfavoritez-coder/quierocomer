@@ -3130,7 +3130,7 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
   },
 ]
 
-export default function PosReportesPanel({ restaurantId, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string, branch: string) => void }) {
+export default function PosReportesPanel({ restaurantId, title, onBack, allBranches, initialTab, initialFrom, initialTo, initialChart, onStateChange }: { restaurantId: string; title?: string; onDone?: () => void; onBack?: () => void; allBranches?: BranchInfo[]; initialTab?: string; initialFrom?: string; initialTo?: string; initialChart?: string; onStateChange?: (tab: string, from: string, to: string, chart: string, branch: string) => void }) {
   const [subSection, setSubSection] = useState<ReportSubSection>((initialTab as ReportSubSection) ?? 'dashboard')
   const [data, setData] = useState<Report | null>(null)
   const [branchReports, setBranchReports] = useState<{ id: string; name: string; data: Report }[]>([])
@@ -3277,6 +3277,18 @@ export default function PosReportesPanel({ restaurantId, allBranches, initialTab
   return (
     <div className="pos-scroll">
       <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', padding: '20px 16px 48px' }}>
+
+        {/* Title row */}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            {onBack && (
+              <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', fontFamily: F, fontSize: '0.82rem', fontWeight: 600, flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+            )}
+            <p className="pos-inner-title" style={{ margin: 0, flex: 1 }}>{title}</p>
+          </div>
+        )}
 
         {/* Sub-section tabs */}
         <div style={{ position: 'relative', marginBottom: 14 }}>

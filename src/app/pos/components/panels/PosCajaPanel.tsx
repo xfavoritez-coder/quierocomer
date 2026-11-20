@@ -35,7 +35,7 @@ const METHOD_LABELS: Record<string, string> = {
 
 const ALL_METHODS: PaymentMethod[] = ['efectivo', 'debito', 'credito', 'transferencia', 'app_pago', 'webpay']
 
-export default function PosCajaPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosCajaPanel({ restaurantId, title, onDone, onBack }: { restaurantId: string; title?: string; onDone?: () => void; onBack?: () => void }) {
   const { restaurant, loading: restLoading } = usePosRestaurant()
   const { syncing, ready: syncReady } = usePosSync(restaurantId)
   const { caja: serverCaja, shift, step, loading: cashLoading, refresh: refreshCash } = usePosCash(restaurantId)
@@ -275,7 +275,10 @@ export default function PosCajaPanel({ restaurantId, title, onDone }: { restaura
       <div className="pos-scroll">
         <div className="pos-caja-wrap">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-            {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {onBack && <button onClick={onBack} style={{ display: 'flex', padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+              {title ? <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p> : <span />}
+            </div>
             {historialBtn}
           </div>
 

@@ -657,26 +657,9 @@ export default function PosHomePage() {
           </div>
         </div>
 
-      {/* Botón volver para inner pages */}
-      {innerPage && (
-        <div style={{ padding: '6px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
-          <button
-            onClick={() => setInnerPage(null)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)',
-              padding: '4px 6px 4px 0', borderRadius: 6,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 6l-6 6 6 6"/></svg>
-            Volver
-          </button>
-        </div>
-      )}
 
-      {/* ── Tabs mobile: Todos · Pedidos · Mesas — siempre visibles ── */}
-      {!isDesktop && (
+      {/* ── Tabs mobile: Todos · Pedidos · Mesas — oculto en inner pages ── */}
+      {!isDesktop && !innerPage && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '8px 0', background: 'var(--bg)', borderBottom: '1px solid var(--line)',
@@ -742,6 +725,7 @@ export default function PosHomePage() {
               restaurantId: effectiveBranchMode !== 'todas' ? effectiveBranchMode : restaurantId,
               title: INNER_PAGES[innerPage].title,
               onDone: () => openInnerPage(null),
+              onBack: () => openInnerPage(null),
               allBranches,
               ...(innerPage === 'reportes' ? {
                 initialTab: new URLSearchParams(window.location.search).get('tab') || undefined,

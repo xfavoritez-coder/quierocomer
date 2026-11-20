@@ -364,7 +364,7 @@ function HistorialCard({ order, isSelected, onSelect, showBranch }: { order: His
 interface BranchInfo { id: string; name: string; branchName?: string | null }
 
 // ── Main component ────────────────────────────────────────────────────
-export default function PosHistorialPanel({ restaurantId, title, allBranches }: { restaurantId: string; title?: string; onDone?: () => void; allBranches?: BranchInfo[] }) {
+export default function PosHistorialPanel({ restaurantId, title, allBranches, onBack }: { restaurantId: string; title?: string; onDone?: () => void; onBack?: () => void; allBranches?: BranchInfo[] }) {
   const isDesktop = useIsDesktop()
   const today = todayYmd()
   const [from, setFrom] = useState(today)
@@ -402,7 +402,12 @@ export default function PosHistorialPanel({ restaurantId, title, allBranches }: 
   const listSection = (
     <div className="pos-scroll">
       <div className="pos-pad">
-        {title && <p className="pos-inner-title">{title}</p>}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            {onBack && <button onClick={onBack} style={{ display: 'flex', padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
 
         <DateRangePicker
           fromDate={from} toDate={to} today={today}

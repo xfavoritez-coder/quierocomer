@@ -26,7 +26,7 @@ const SECTIONS: SectionItem[] = [
   { id: 'usuarios',  icon: '👤', title: 'Usuarios',            desc: 'Garzones, cajeros y permisos',                           component: PosGarzonesPanel },
 ]
 
-export default function PosConfigPanel({ restaurantId, title, onDone }: { restaurantId: string; title?: string; onDone?: () => void }) {
+export default function PosConfigPanel({ restaurantId, title, onDone, onBack }: { restaurantId: string; title?: string; onDone?: () => void; onBack?: () => void }) {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
 
   const active = activeSection ? SECTIONS.find(s => s.id === activeSection) ?? null : null
@@ -43,7 +43,12 @@ export default function PosConfigPanel({ restaurantId, title, onDone }: { restau
   return (
     <div className="pos-scroll">
       <div style={{ padding: '20px 16px 48px', maxWidth: 520, margin: '0 auto', width: '100%' }}>
-        {title && <p className="pos-inner-title">{title}</p>}
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            {onBack && <button onClick={onBack} style={{ display: 'flex', padding: '5px 10px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--sunk)', cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>}
+            <p className="pos-inner-title" style={{ margin: 0 }}>{title}</p>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {SECTIONS.map(section => (
             <button
