@@ -7,6 +7,9 @@ import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySur
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Crear la entrega llama a Uber (OAuth + create) + cobra el saldo; damos margen para
+// que un pico de latencia no corte la función a mitad y deje el claim colgado.
+export const maxDuration = 30;
 
 async function assertOwnership(req: NextRequest, restaurantId: string): Promise<boolean> {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -72,8 +75,16 @@ export async function POST(req: NextRequest) {
   if (balance <= 0) return NextResponse.json({ error: "Sin saldo para delivery. Recarga tu saldo para solicitar repartidores externos." }, { status: 402 });
   if (expectedTotal > 0 && balance < expectedTotal) return NextResponse.json({ error: `Saldo insuficiente. El despacho + recargo cuesta ${expectedTotal.toLocaleString("es-CL")} y tu saldo es ${balance.toLocaleString("es-CL")}.` }, { status: 402 });
 
+  // Validaciones de datos ANTES de reservar el claim: si fallan después, dejarían el
+  // pedido colgado en "PENDING" sin liberar (y el POS mostraría "Uber en camino" en falso).
+  const pickupPhone = order.restaurant.address ? (order.restaurant.phone || order.restaurant.whatsapp || "") : "";
+  if (!order.restaurant.address || !pickupPhone) return NextResponse.json({ error: "Falta la dirección o teléfono del local (configúralos en el perfil)" }, { status: 400 });
+  if (!order.addressLine || !order.customerPhone) return NextResponse.json({ error: "El pedido no tiene dirección o teléfono de entrega" }, { status: 400 });
+
   // ── Claim atómico: evita que varios clics rápidos creen varias entregas Uber.
   //    Solo UN request logra pasar uberDeliveryId de null → "PENDING" y crea.
+  const releasePending = () =>
+    prisma.posOrder.updateMany({ where: { id: order.id, uberDeliveryId: "PENDING" }, data: { uberDeliveryId: null } }).catch(() => {});
   const claim = await prisma.posOrder.updateMany({
     where: { id: order.id, uberDeliveryId: null, pyaShippingId: null },
     data: { uberDeliveryId: "PENDING" },
@@ -82,10 +93,6 @@ export async function POST(req: NextRequest) {
     const cur = await prisma.posOrder.findUnique({ where: { id: order.id }, select: { courier: true } });
     return NextResponse.json({ ok: true, alreadyRequested: true, courier: cur?.courier });
   }
-
-  const pickupPhone = order.restaurant.address ? (order.restaurant.phone || order.restaurant.whatsapp || "") : "";
-  if (!order.restaurant.address || !pickupPhone) return NextResponse.json({ error: "Falta la dirección o teléfono del local (configúralos en el perfil)" }, { status: 400 });
-  if (!order.addressLine || !order.customerPhone) return NextResponse.json({ error: "El pedido no tiene dirección o teléfono de entrega" }, { status: 400 });
 
   const items = Array.isArray(order.items) ? (order.items as any[]) : [];
   const params: CreateDeliveryParams = {
@@ -106,31 +113,37 @@ export async function POST(req: NextRequest) {
   };
 
   const creds = uberSettingsFor(order.restaurant);
-  let res = await uberCreateDelivery(creds, params);
-  // Si la cotización ya venció, reintenta sin fijar el precio (Uber recotiza).
-  if (!res.ok && quoteId) res = await uberCreateDelivery(creds, { ...params, quoteId: null });
-  if (!res.ok || !res.delivery) {
-    // Liberar el claim para permitir reintentar.
-    await prisma.posOrder.updateMany({ where: { id: order.id, uberDeliveryId: "PENDING" }, data: { uberDeliveryId: null } });
-    return NextResponse.json({ error: res.error || "No se pudo solicitar el repartidor" }, { status: 502 });
-  }
+  try {
+    let res = await uberCreateDelivery(creds, params);
+    // Si la cotización ya venció, reintenta sin fijar el precio (Uber recotiza).
+    if (!res.ok && quoteId) res = await uberCreateDelivery(creds, { ...params, quoteId: null });
+    if (!res.ok || !res.delivery) {
+      await releasePending(); // libera el claim para permitir reintentar.
+      return NextResponse.json({ error: res.error || "No se pudo solicitar el repartidor" }, { status: 502 });
+    }
 
-  await prisma.posOrder.update({ where: { id: order.id }, data: { uberDeliveryId: res.delivery.deliveryId, courier: res.delivery as unknown as object, assignedTo: "Uber Direct" } });
+    await prisma.posOrder.update({ where: { id: order.id }, data: { uberDeliveryId: res.delivery.deliveryId, courier: res.delivery as unknown as object, assignedTo: "Uber Direct" } });
 
-  // Cobra el costo real del despacho + el recargo de plataforma al saldo prepago.
-  const fee = res.delivery.fee ?? expectedFee;
-  const surcharge = computeSurcharge(tiers, fee);
-  const ref = order.orderReference || order.id.slice(-6);
-  let newBalance = balance;
-  if (fee > 0) {
-    const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `Uber · despacho pedido ${ref}`, orderId: order.id, createdBy: "uber" });
-    newBalance = charge.balance;
+    // Cobra el costo real del despacho + el recargo de plataforma al saldo prepago.
+    const fee = res.delivery.fee ?? expectedFee;
+    const surcharge = computeSurcharge(tiers, fee);
+    const ref = order.orderReference || order.id.slice(-6);
+    let newBalance = balance;
+    if (fee > 0) {
+      const charge = await chargeWallet(restaurantId, fee, { type: "charge", description: `Uber · despacho pedido ${ref}`, orderId: order.id, createdBy: "uber" });
+      newBalance = charge.balance;
+    }
+    if (surcharge > 0) {
+      const charge = await chargeWallet(restaurantId, surcharge, { type: "surcharge", description: `Recargo por repartidor externo · pedido ${ref}`, orderId: order.id, createdBy: "uber" });
+      newBalance = charge.balance;
+    }
+    return NextResponse.json({ ok: true, courier: res.delivery, balance: newBalance, surcharge });
+  } catch (e) {
+    // Cualquier error inesperado (red/Uber/BD): libera el claim si aún está en "PENDING"
+    // (si ya se había guardado el deliveryId real, releasePending es no-op y la entrega queda).
+    await releasePending();
+    return NextResponse.json({ error: e instanceof Error ? e.message : "No se pudo solicitar el repartidor" }, { status: 502 });
   }
-  if (surcharge > 0) {
-    const charge = await chargeWallet(restaurantId, surcharge, { type: "surcharge", description: `Recargo por repartidor externo · pedido ${ref}`, orderId: order.id, createdBy: "uber" });
-    newBalance = charge.balance;
-  }
-  return NextResponse.json({ ok: true, courier: res.delivery, balance: newBalance, surcharge });
 }
 
 /** DELETE → cancela el courier Uber. ?restaurantId=&id= */
