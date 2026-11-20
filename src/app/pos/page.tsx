@@ -678,7 +678,7 @@ export default function PosHomePage() {
       {!isDesktop && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '8px 0', background: 'var(--surface)', borderBottom: '1px solid var(--line)',
+          padding: '8px 0', background: 'var(--bg)', borderBottom: '1px solid var(--line)',
           flexShrink: 0,
         }}>
           <div className="pos-tabs-bar">
