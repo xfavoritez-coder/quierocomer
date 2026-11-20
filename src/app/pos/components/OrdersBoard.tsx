@@ -1519,7 +1519,9 @@ export default function OrdersBoard({ restaurantId, type, allBranches, onOrdersU
       setStuckOrderIds(new Set())
       return
     }
-    const deliveryOrders = orders.filter(o => (o.isDelivery || o.saleType === 'delivery') && o.opsStage !== 'delivered')
+    // Uber Eats gestiona su propio reparto (no Delifast) → excluir de la evaluación de
+    // "sin motorista"/stuck, o daría una alerta y borde rojo falsos.
+    const deliveryOrders = orders.filter(o => (o.isDelivery || o.saleType === 'delivery') && o.opsStage !== 'delivered' && !(o.vendorName || '').toLowerCase().includes('uber eats'))
     if (deliveryOrders.length === 0) return
 
     let cancelled = false
