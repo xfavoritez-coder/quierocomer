@@ -230,6 +230,65 @@ function Stat({ label, value, hint, color, big, span, full, delta, deltaHint, ba
   )
 }
 
+// Tarjeta "Ingresos del día" a todo el ancho: total a la izquierda + desglose
+// (Venta vs Delivery) con barra de proporción y % a la derecha.
+function IngresosCard({ title, total, productSales, deliveryFee, delta, deltaHint, prevTotal }: {
+  title: string; total: number; productSales: number; deliveryFee: number;
+  delta?: number | null; deltaHint?: string; prevTotal?: number;
+}) {
+  const ventaPct = total > 0 ? Math.round((productSales / total) * 100) : 0
+  const deliveryPct = total > 0 ? 100 - ventaPct : 0
+  const noBase = delta === DELTA_NO_BASE
+  const isPos = !noBase && (delta ?? 0) > 0
+  const isNeg = !noBase && (delta ?? 0) < 0
+  const pillColor = (isPos || noBase) ? '#16a34a' : isNeg ? '#dc2626' : 'var(--ink-3)'
+  const labelSt: React.CSSProperties = { fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', fontFamily: F, textTransform: 'uppercase', letterSpacing: '.05em' }
+  const BreakItem = ({ color, label, value, pct }: { color: string; label: string; value: string; pct: number }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ width: 9, height: 9, borderRadius: 3, background: color, flexShrink: 0 }} />
+        <span style={{ ...labelSt, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+        <span style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{value}</span>
+        <span style={{ fontFamily: F, fontSize: '0.74rem', fontWeight: 700, color: 'var(--ink-4)' }}>{pct}%</span>
+      </div>
+    </div>
+  )
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, borderTop: `3px solid ${PURPLE}`, padding: '16px 18px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24, justifyContent: 'space-between' }}>
+        {/* Izquierda: total + comparación */}
+        <div style={{ minWidth: 190 }}>
+          <div style={{ ...labelSt, marginBottom: 5 }}>{title}</div>
+          <div style={{ fontFamily: F, fontSize: '1.7rem', fontWeight: 900, color: 'var(--ink)', lineHeight: 1.05 }}>{clp(total)}</div>
+          {delta != null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9, flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: `${pillColor}18`, color: pillColor, borderRadius: 20, padding: '2px 8px', fontFamily: F, fontSize: '0.72rem', fontWeight: 700 }}>
+                {noBase ? '↑ nuevo' : isPos ? `↑ ${Math.abs(delta)}%` : isNeg ? `↓ ${Math.abs(delta)}%` : '= igual'}
+              </span>
+              <span style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-4)' }}>
+                {deltaHint ?? 'anterior'}{prevTotal && prevTotal > 0 ? ` · ${clp(prevTotal)}` : ''}
+              </span>
+            </div>
+          )}
+        </div>
+        {/* Derecha: desglose Venta vs Delivery */}
+        <div style={{ flex: '1 1 320px', minWidth: 240, maxWidth: 560 }}>
+          <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', background: 'var(--sunk)', border: '1px solid var(--line)' }}>
+            <div style={{ width: `${ventaPct}%`, background: GREEN, transition: 'width .3s' }} />
+            <div style={{ width: `${deliveryPct}%`, background: BLUE, transition: 'width .3s' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 13 }}>
+            <BreakItem color={GREEN} label="Venta del día" value={clp(productSales)} pct={ventaPct} />
+            <BreakItem color={BLUE} label="Delivery (fee)" value={clp(deliveryFee)} pct={deliveryPct} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MonthlyChart({ monthly }: { monthly: { month: string; days: MonthlyDay[] } }) {
   const days = monthly?.days ?? []
   const hasData = days.some(d => d.sales > 0)
@@ -3597,11 +3656,10 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
               return (<>
                 {/* Ingresos del día: tarjeta a todo el ancho (FUERA del grid, para no
                     forzar el auto-fit a materializar columnas de más). */}
-                <Stat label={singleDay ? 'Ingresos del día' : 'Ingresos del período'} value={clp(ingresosTotal)}
-                  hint={`Venta ${clp(data.productSales)} + Delivery ${clp(deliveryFeeTotal)}`} color={PURPLE} big
+                <IngresosCard title={singleDay ? 'Ingresos del día' : 'Ingresos del período'}
+                  total={ingresosTotal} productSales={data.productSales} deliveryFee={deliveryFeeTotal}
                   delta={prevData ? computeDelta(ingresosTotal, prevIngresos) : null}
-                  deltaHint={dHint}
-                  prevValue={prevIngresos > 0 ? clp(prevIngresos) : undefined} />
+                  deltaHint={dHint} prevTotal={prevIngresos} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
                   <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big
                     delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
