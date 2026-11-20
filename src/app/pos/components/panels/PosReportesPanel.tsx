@@ -3136,7 +3136,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
   const [branchReports, setBranchReports] = useState<{ id: string; name: string; data: Report }[]>([])
   const [prevBranchReports, setPrevBranchReports] = useState<{ id: string; sales: number }[]>([])
   const [loading, setLoading] = useState(true)
-  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; isHourly: boolean } | null>(null)
+  const [prevData, setPrevData] = useState<{ ordersCount: number; productSales: number; deliverySales: number; isHourly: boolean } | null>(null)
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const [chartView, setChartView] = useState<'hora' | 'día' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'día' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
@@ -3253,6 +3253,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
           if (valid.length > 0) setPrevData({
             ordersCount: valid.reduce((s, r) => s + r.ordersCount, 0),
             productSales: valid.reduce((s, r) => s + r.productSales, 0),
+            deliverySales: valid.reduce((s, r) => s + (r.byType?.find(t => t.type === 'delivery')?.sales ?? 0), 0),
             isHourly: isToday,
           })
           // Per-branch prev sales for delta comparison
@@ -3265,7 +3266,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
           const r = await fetch(`/api/panel/ecommerce/pos-orders/report?restaurantId=${restaurantId}&from=${prevFrom}&to=${prevTo}${hourParam}`)
           if (cancelled || !r.ok) return
           const d = await r.json()
-          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales, isHourly: isToday })
+          setPrevData({ ordersCount: d.ordersCount, productSales: d.productSales, deliverySales: d.byType?.find((t: TypeBucket) => t.type === 'delivery')?.sales ?? 0, isHourly: isToday })
         }
       } catch { /* noop */ }
     }
@@ -3590,11 +3591,17 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 4 }}>
               {(() => {
                 const dHint = prevData?.isHourly ? 'a esta hora sem. ant.' : deltaLabel(fromDate, toDate)
+                const deliveryBucket = data.byType?.find(t => t.type === 'delivery')
+                const deliverySales = deliveryBucket?.sales ?? 0
                 return (<>
-                  <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big span={2}
+                  <Stat label={singleDay ? 'Venta del día' : 'Venta del período'} value={clp(data.productSales)} badge="IVA inc." color={GREEN} big
                     delta={prevData ? computeDelta(data.productSales, prevData.productSales) : null}
                     deltaHint={dHint}
                     prevValue={prevData && prevData.productSales > 0 ? clp(prevData.productSales) : undefined} />
+                  <Stat label="Delivery" value={clp(deliverySales)} hint={deliveryBucket && deliveryBucket.orders > 0 ? `${deliveryBucket.orders} pedidos` : 'Ventas por delivery'} color={BLUE} big
+                    delta={prevData ? computeDelta(deliverySales, prevData.deliverySales) : null}
+                    deltaHint={dHint}
+                    prevValue={prevData && prevData.deliverySales > 0 ? clp(prevData.deliverySales) : undefined} />
                   <Stat label="Pedidos" value={data.ordersCount.toLocaleString('es-CL')} color={'var(--amber)'}
                     delta={prevData ? computeDelta(data.ordersCount, prevData.ordersCount) : null}
                     deltaHint={dHint}
