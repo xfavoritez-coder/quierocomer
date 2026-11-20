@@ -21,6 +21,23 @@ import { parseEcommerceConfig, parseCentroPedidosConfig } from "@/lib/ecommerce/
 import { getUberOrder, acceptUberOrder, uberAppConfigured } from "@/lib/ubereats/client";
 import { createPosOrderFromUberOrder, applyUberDeliveryState } from "@/lib/ubereats/ingest";
 import { syncStoreMenu } from "@/lib/ubereats/menu";
+import { getPlatformSetting, setPlatformSetting } from "@/lib/platformSettings";
+
+// Captura de depuración: guarda el cuerpo crudo de los últimos webhooks de Uber en un
+// PlatformSetting (ring buffer) para inspeccionar qué manda Uber (ej. al rechazar desde
+// el Manager). Solo corre si el flag "ubereats_webhook_debug" === "1". Nunca rompe el webhook.
+const WEBHOOK_LOG_MAX = 40;
+async function captureUberWebhook(body: unknown): Promise<void> {
+  try {
+    if ((await getPlatformSetting("ubereats_webhook_debug")) !== "1") return;
+    let arr: unknown[] = [];
+    try { arr = JSON.parse((await getPlatformSetting("ubereats_webhook_log")) || "[]"); } catch { arr = []; }
+    if (!Array.isArray(arr)) arr = [];
+    arr.push({ at: new Date().toISOString(), body });
+    if (arr.length > WEBHOOK_LOG_MAX) arr = arr.slice(-WEBHOOK_LOG_MAX);
+    await setPlatformSetting("ubereats_webhook_log", JSON.stringify(arr));
+  } catch { /* nunca afecta al webhook */ }
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +80,8 @@ export async function POST(req: NextRequest) {
 
   let body: J;
   try { body = JSON.parse(raw) as J; } catch { return NextResponse.json({ error: "JSON inválido" }, { status: 400 }); }
+
+  await captureUberWebhook(body);
 
   const eventType = str(body.event_type || body.type);
   const meta = obj(body.meta);

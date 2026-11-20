@@ -118,26 +118,41 @@ export const UBER_DENY_REASONS: Record<string, string> = {
 };
 export type UberDenyReason = keyof typeof UBER_DENY_REASONS;
 
-// Códigos VÁLIDOS del enum de Uber (verificados contra el sandbox 2026-11-20).
-// deny_pos_order: reason es un OBJETO {code, explanation}; solo estos code son válidos.
-const UBER_DENY_CODES = new Set(["STORE_CLOSED", "POS_NOT_READY", "OTHER"]);
-// cancel: reason es un STRING; solo estos son válidos.
-const UBER_CANCEL_CODES = new Set(["OTHER", "OUT_OF_ITEMS"]);
+// Mapeo de NUESTROS motivos (UberDenyReason) al enum REAL de Uber (según la doc
+// oficial /docs/eats/references/api, verificado en sandbox 2026-11-20).
+// deny_pos_order: reason es OBJETO {code, explanation}. Enum: STORE_CLOSED,
+// POS_NOT_READY, POS_OFFLINE, ITEM_AVAILABILITY, MISSING_ITEM, MISSING_INFO,
+// PRICING, CAPACITY, ADDRESS, SPECIAL_INSTRUCTIONS, OTHER.
+const DENY_CODE_MAP: Record<UberDenyReason, string> = {
+  STORE_CLOSED: "STORE_CLOSED", POS_NOT_READY: "POS_NOT_READY", KITCHEN_BUSY: "CAPACITY",
+  ITEM_OUT_OF_STOCK: "ITEM_AVAILABILITY", OUT_OF_DELIVERY_RANGE: "ADDRESS",
+  PRICING_MISMATCH: "PRICING", OTHER: "OTHER",
+};
+// cancel (pedido ya aceptado): reason es STRING. Enum: OUT_OF_ITEMS, KITCHEN_CLOSED,
+// CUSTOMER_CALLED_TO_CANCEL, RESTAURANT_TOO_BUSY, CANNOT_COMPLETE_CUSTOMER_NOTE, OTHER.
+// `details` es OBLIGATORIO cuando reason = OTHER.
+const CANCEL_CODE_MAP: Record<UberDenyReason, string> = {
+  STORE_CLOSED: "KITCHEN_CLOSED", POS_NOT_READY: "RESTAURANT_TOO_BUSY", KITCHEN_BUSY: "RESTAURANT_TOO_BUSY",
+  ITEM_OUT_OF_STOCK: "OUT_OF_ITEMS", OUT_OF_DELIVERY_RANGE: "OTHER",
+  PRICING_MISMATCH: "CANNOT_COMPLETE_CUSTOMER_NOTE", OTHER: "OTHER",
+};
 
-/** Rechaza un pedido AÚN NO aceptado (deny_pos_order). Body: reason como OBJETO
- *  { code, explanation }. `code` debe ser un enum válido de Uber (los demás motivos
- *  nuestros se mandan como OTHER + explicación). Verificado contra el sandbox. */
+/** Rechaza un pedido AÚN NO aceptado (deny_pos_order). reason = OBJETO {code, explanation}.
+ *  OJO (doc): el deny NO cancela de inmediato si la tienda tiene la app Uber Eats Orders
+ *  activa — ahí pueden re-aceptarlo; si no, se cancela a los 11,5 min. */
 export async function denyUberOrder(orderId: string, reason: UberDenyReason = "STORE_CLOSED"): Promise<void> {
-  const code = UBER_DENY_CODES.has(reason) ? reason : "OTHER";
+  const code = DENY_CODE_MAP[reason] || "OTHER";
   const explanation = UBER_DENY_REASONS[reason] || "Rechazado en el POS";
   const res = await authed(EP.deny(orderId), { method: "POST", body: JSON.stringify({ reason: { code, explanation } }) });
   if (!res.ok) throw new Error(`Uber deny ${res.status}: ${await res.text()}`);
 }
 
-/** Cancela un pedido YA aceptado. Body: reason como STRING enum (OTHER/OUT_OF_ITEMS). */
+/** Cancela un pedido YA aceptado. reason = STRING enum (+ `details` si es OTHER). */
 export async function cancelUberOrder(orderId: string, reason: UberDenyReason = "OTHER"): Promise<{ ok: boolean; status: number; body: string }> {
-  const code = UBER_CANCEL_CODES.has(reason) ? reason : "OTHER";
-  const res = await authed(EP.cancel(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
+  const code = CANCEL_CODE_MAP[reason] || "OTHER";
+  const payload: Record<string, unknown> = { reason: code };
+  if (code === "OTHER") payload.details = UBER_DENY_REASONS[reason] || "Anulado en el POS";
+  const res = await authed(EP.cancel(orderId), { method: "POST", body: JSON.stringify(payload) });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };
 }
