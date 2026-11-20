@@ -141,7 +141,11 @@ export async function POST(req: NextRequest) {
       await acceptUberOrder(orderId);
     } else if (!autoAccept && result?.isNew && !alreadyFinal) {
       // Auto-aceptar apagado: el pedido queda "por aceptar" → el POS muestra Aceptar/Rechazar.
-      await prisma.posOrder.update({ where: { id: result.posOrderId }, data: { rawPayload: { uberPendingAccept: true } as object } }).catch(() => {});
+      // MERGE para no perder rawPayload.orderNotes (instrucciones del pedido) que puso el ingest.
+      const cur = await prisma.posOrder.findUnique({ where: { id: result.posOrderId }, select: { rawPayload: true } });
+      const prev = (cur?.rawPayload && typeof cur.rawPayload === "object" && !Array.isArray(cur.rawPayload)) ? { ...(cur.rawPayload as Record<string, unknown>) } : {};
+      prev.uberPendingAccept = true;
+      await prisma.posOrder.update({ where: { id: result.posOrderId }, data: { rawPayload: prev as object } }).catch(() => {});
     }
 
     // Estado de reparto (PROD): mapea current_state + deliveries[] → opsStage del POS

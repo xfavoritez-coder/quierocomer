@@ -64,6 +64,15 @@ export async function createPosOrderFromUberOrder(restaurantId: string, order: J
   const charges = obj(payment.charges);
   const total = money(charges.total || payment.total || order.total);
 
+  // Instrucciones especiales A NIVEL DE PEDIDO (alergias, notas del cliente): se
+  // guardan en rawPayload.orderNotes → la comanda de cocina las imprime ("Nota: …").
+  // Así cumplimos el requisito de Uber de TRANSMITIR las instrucciones (en vez de
+  // rechazar); las de ítem ya van en item.note.
+  const orderNote = str(
+    cart.special_instructions || order.special_instructions ||
+    order.order_special_instructions || obj(order.eater).note,
+  );
+
   const created = await prisma.posOrder.create({
     data: {
       restaurantId,
@@ -82,6 +91,7 @@ export async function createPosOrderFromUberOrder(restaurantId: string, order: J
       vendorName: "Uber Eats",
       orderReference: str(order.display_id || order.id) || null,
       items: items as unknown as object,
+      ...(orderNote ? { rawPayload: { orderNotes: orderNote } as object } : {}),
       trackingToken: crypto.randomBytes(20).toString("hex"),
     },
     select: { id: true },

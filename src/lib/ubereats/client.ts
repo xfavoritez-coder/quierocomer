@@ -96,11 +96,25 @@ export async function getUberOrder(orderId: string): Promise<Record<string, unkn
   return (await res.json()) as Record<string, unknown>;
 }
 
-/** Acepta el pedido (hay una ventana de tiempo para hacerlo). */
+/** Acepta el pedido (hay ventana de tiempo). `prepTimeMin` fija el tiempo de
+ *  preparación → se envía como `pickup_time` (timestamp Unix en segundos, por doc).
+ *  `fields_relayed` DECLARA que el POS transmite las instrucciones especiales y promos
+ *  a la cocina (requisito de Uber: solo se rechaza si NO se pueden transmitir; nosotros
+ *  SÍ las mostramos en la comanda, así que las relayeamos en vez de rechazar). */
 export async function acceptUberOrder(orderId: string, prepTimeMin = 15): Promise<void> {
+  const pickupTime = Math.floor(Date.now() / 1000) + prepTimeMin * 60;
   const res = await authed(EP.accept(orderId), {
     method: "POST",
-    body: JSON.stringify({ reason: "POS accepted", estimated_ready_for_pickup_at_seconds: prepTimeMin * 60 }),
+    body: JSON.stringify({
+      reason: "POS accepted",
+      pickup_time: pickupTime,
+      fields_relayed: {
+        order_special_instructions: true,
+        item_special_instructions: true,
+        item_special_requests: true,
+        promotions: true,
+      },
+    }),
   });
   if (!res.ok) throw new Error(`Uber accept ${res.status}: ${await res.text()}`);
 }
