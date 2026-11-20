@@ -19,7 +19,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig, parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 import { getUberOrder, acceptUberOrder, uberAppConfigured } from "@/lib/ubereats/client";
-import { createPosOrderFromUberOrder, applyUberDeliveryState } from "@/lib/ubereats/ingest";
+import { createPosOrderFromUberOrder, applyUberDeliveryState, uberPrepMinutes } from "@/lib/ubereats/ingest";
 import { syncStoreMenu } from "@/lib/ubereats/menu";
 import { getPlatformSetting, setPlatformSetting } from "@/lib/platformSettings";
 
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
     const FINAL = ["ACCEPTED", "CANCELLED", "DENIED", "DELIVERED", "FINISHED", "COMPLETED", "SUCCEEDED", "FAILED"];
     const alreadyFinal = FINAL.includes(state);
     if (autoAccept && !alreadyFinal) {
-      await acceptUberOrder(orderId);
+      await acceptUberOrder(orderId, await uberPrepMinutes(restaurantId));
     } else if (!autoAccept && result?.isNew && !alreadyFinal) {
       // Auto-aceptar apagado: el pedido queda "por aceptar" → el POS muestra Aceptar/Rechazar.
       // MERGE para no perder rawPayload.orderNotes (instrucciones del pedido) que puso el ingest.

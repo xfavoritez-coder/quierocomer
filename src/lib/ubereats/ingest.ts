@@ -11,6 +11,22 @@ import { prisma } from "@/lib/prisma";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
 import { STAGE_ORDER } from "@/lib/delifast/status";
 import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+
+/** Minutos de preparación para informar a Uber en el accept (`pickup_time`). Usa el
+ *  tiempo "Repartidor" configurado en el POS (ecommerceStoreConfig.waitTimeDriver, ej.
+ *  "15-20" → 20, toma el límite superior del rango). Si no hay, usa `fallback`. */
+export async function uberPrepMinutes(restaurantId: string, fallback = 15): Promise<number> {
+  try {
+    const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceStoreConfig: true } });
+    const raw = parseStoreConfig(r?.ecommerceStoreConfig).waitTimeDriver || "";
+    const nums = (raw.match(/\d+/g) || []).map(Number).filter((n) => n > 0);
+    const n = nums.length ? Math.max(...nums) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 type J = Record<string, unknown>;
 const obj = (v: unknown): J => (v && typeof v === "object" && !Array.isArray(v) ? (v as J) : {});

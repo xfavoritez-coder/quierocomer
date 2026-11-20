@@ -11,6 +11,7 @@ import { parseEcommerceConfig, integrationStatus, parseCentroPedidosConfig, effe
 import { getPlatformSetting } from "@/lib/platformSettings";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
 import { markUberOrderReady, denyUberOrder, cancelUberOrder, acceptUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
+import { uberPrepMinutes } from "@/lib/ubereats/ingest";
 
 // Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
 // reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
@@ -399,7 +400,7 @@ export async function PATCH(req: NextRequest) {
     if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     if (order.provider !== "ubereats" || !order.externalId?.startsWith("ue-")) return NextResponse.json({ error: "No es un pedido de Uber Eats" }, { status: 400 });
     try {
-      await acceptUberOrder(order.externalId.slice(3));
+      await acceptUberOrder(order.externalId.slice(3), await uberPrepMinutes(restaurantId));
     } catch (e) {
       return NextResponse.json({ error: "No se pudo aceptar en Uber Eats: " + (e as Error).message }, { status: 502 });
     }
