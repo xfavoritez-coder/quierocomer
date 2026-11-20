@@ -3405,7 +3405,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                       <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: F, marginBottom: 10 }}>
                         {heatPoints.length} pedido{heatPoints.length !== 1 ? 's' : ''} con ubicación
                       </div>
-                      <DeliveryHeatmap points={heatPoints} />
+                      <DeliveryHeatmap points={heatPoints} restaurantId={restaurantId} allBranches={allBranches} fromDate={fromDate} toDate={toDate} />
                     </div>
                   </>
                 )}
