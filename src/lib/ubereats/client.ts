@@ -118,16 +118,25 @@ export const UBER_DENY_REASONS: Record<string, string> = {
 };
 export type UberDenyReason = keyof typeof UBER_DENY_REASONS;
 
-/** Rechaza el pedido con un código de motivo enumerado (no texto libre). */
+// Códigos VÁLIDOS del enum de Uber (verificados contra el sandbox 2026-11-20).
+// deny_pos_order: reason es un OBJETO {code, explanation}; solo estos code son válidos.
+const UBER_DENY_CODES = new Set(["STORE_CLOSED", "POS_NOT_READY", "OTHER"]);
+// cancel: reason es un STRING; solo estos son válidos.
+const UBER_CANCEL_CODES = new Set(["OTHER", "OUT_OF_ITEMS"]);
+
+/** Rechaza un pedido AÚN NO aceptado (deny_pos_order). Body: reason como OBJETO
+ *  { code, explanation }. `code` debe ser un enum válido de Uber (los demás motivos
+ *  nuestros se mandan como OTHER + explicación). Verificado contra el sandbox. */
 export async function denyUberOrder(orderId: string, reason: UberDenyReason = "STORE_CLOSED"): Promise<void> {
-  const code = UBER_DENY_REASONS[reason] ? reason : "OTHER";
-  const res = await authed(EP.deny(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
+  const code = UBER_DENY_CODES.has(reason) ? reason : "OTHER";
+  const explanation = UBER_DENY_REASONS[reason] || "Rechazado en el POS";
+  const res = await authed(EP.deny(orderId), { method: "POST", body: JSON.stringify({ reason: { code, explanation } }) });
   if (!res.ok) throw new Error(`Uber deny ${res.status}: ${await res.text()}`);
 }
 
-/** Cancela un pedido YA aceptado. ⚠️ Requiere scope propio (solo prod); en sandbox 401. */
+/** Cancela un pedido YA aceptado. Body: reason como STRING enum (OTHER/OUT_OF_ITEMS). */
 export async function cancelUberOrder(orderId: string, reason: UberDenyReason = "OTHER"): Promise<{ ok: boolean; status: number; body: string }> {
-  const code = UBER_DENY_REASONS[reason] ? reason : "OTHER";
+  const code = UBER_CANCEL_CODES.has(reason) ? reason : "OTHER";
   const res = await authed(EP.cancel(orderId), { method: "POST", body: JSON.stringify({ reason: code }) });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };

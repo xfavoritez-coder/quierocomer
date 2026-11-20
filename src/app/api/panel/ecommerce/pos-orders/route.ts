@@ -375,14 +375,22 @@ export async function PATCH(req: NextRequest) {
     // Pedido de Uber Eats: avisar a Uber. Código de rechazo enumerado desde la UI
     // (body.denyReason) con fallback "OTHER". Se intenta DENY (si aún no aceptado);
     // si ya estaba aceptado, Uber lo rechaza y recurrimos a CANCEL.
+    let uberNotified: boolean | undefined;
     if (order.provider === "ubereats" && order.externalId?.startsWith("ue-")) {
       const uberId = order.externalId.slice(3);
       const code: UberDenyReason = UBER_DENY_REASONS[body?.denyReason] ? body.denyReason : "OTHER";
-      void denyUberOrder(uberId, code)
-        .catch(() => cancelUberOrder(uberId, code))
-        .catch((e) => console.error("[ubereats] deny/cancel:", (e as Error).message));
+      // Pendiente → deny_pos_order; ya aceptado → falla el deny y recurrimos a cancel.
+      // Se ESPERA el resultado para avisar en la UI si Uber quedó notificado.
+      try {
+        await denyUberOrder(uberId, code);
+        uberNotified = true;
+      } catch {
+        const c = await cancelUberOrder(uberId, code).catch(() => ({ ok: false, status: 0, body: "" }));
+        uberNotified = !!c.ok;
+        if (!uberNotified) console.error("[ubereats] deny/cancel falló para", uberId);
+      }
     }
-    return NextResponse.json({ order: updated });
+    return NextResponse.json({ order: updated, uberNotified });
   }
 
   // ── Aceptar un pedido de Uber Eats (cuando el auto-aceptar está apagado) ──

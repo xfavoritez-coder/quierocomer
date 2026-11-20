@@ -372,6 +372,7 @@ function OrderCard({
       const r = await fetch('/api/panel/ecommerce/pos-orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { window.alert(d.error || 'No se pudo procesar'); return }
+      if (action === 'reject' && d.uberNotified === false) window.alert('El pedido se rechazó en el POS, pero Uber Eats no confirmó el rechazo. Revísalo en el Manager de Uber.')
       onCourierChanged?.()
     } catch { window.alert('Error de conexión') }
     finally { setUberBusy(false) }
