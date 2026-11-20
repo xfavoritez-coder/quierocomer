@@ -1,8 +1,8 @@
 // Validación de teléfono MÓVIL chileno para el checkout de Ecommerce.
 // Reglas (acordadas con el usuario):
-//  - Formato local: exactamente 9 dígitos y empieza con 9 (celular), p. ej. 955141041.
+//  - Formato local: exactamente 9 dígitos y empieza con 9 (celular), p. ej. 912345678.
 //  - Formato internacional: empieza con "+56" seguido del celular (9 dígitos que
-//    empieza con 9) → total 11 dígitos tras el "+", p. ej. +56955141041.
+//    empieza con 9) → total 11 dígitos tras el "+", p. ej. +56912345678.
 // Se ignoran espacios, guiones y paréntesis al validar.
 //
 // Compartido entre el cliente (CheckoutForm) y el servidor (api/ecommerce/checkout)
@@ -38,4 +38,4 @@ export function normalizePhoneCL(raw: string | null | undefined): string | null 
 
 /** Mensaje de error estándar para mostrar al cliente. */
 export const PHONE_CL_ERROR =
-  "Ingresa un celular chileno válido: 9 dígitos que empiecen con 9 (ej. 955141041) o con +56 (ej. +56955141041).";
+  "Ingresa un celular chileno válido: 9 dígitos que empiecen con 9 (ej. 912345678) o con +56 (ej. +56912345678).";
