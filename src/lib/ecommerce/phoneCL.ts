@@ -16,13 +16,14 @@ export function cleanPhoneCL(raw: string | null | undefined): string {
   return (plus ? "+" : "") + digits;
 }
 
-/** true si es un móvil chileno válido en formato local (9XXXXXXXX) o internacional (+569XXXXXXXX). */
+/** true si es un móvil chileno válido en formato local (9XXXXXXXX) o internacional
+ *  con prefijo 56, con o sin "+" (+569XXXXXXXX / 569XXXXXXXX). */
 export function isValidPhoneCL(raw: string | null | undefined): boolean {
   const c = cleanPhoneCL(raw);
-  // Internacional: +56 + celular de 9 dígitos que empieza en 9.
+  // Internacional con "+": +56 + celular de 9 dígitos que empieza en 9.
   if (c.startsWith("+")) return /^\+569\d{8}$/.test(c);
-  // Local: 9 dígitos, empieza en 9.
-  return /^9\d{8}$/.test(c);
+  // Local (9XXXXXXXX) o internacional sin "+" (569XXXXXXXX).
+  return /^9\d{8}$/.test(c) || /^569\d{8}$/.test(c);
 }
 
 /** Normaliza a formato canónico internacional +569XXXXXXXX, o null si no es válido.
