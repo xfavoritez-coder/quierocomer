@@ -107,6 +107,18 @@ export interface DelifastCreds {
   localId?: string;
 }
 
+/** Credenciales de la API oficial de WhatsApp (Cloud API de Meta) del local, para
+ *  la bandeja CRM donde los cajeros atienden pedidos entrantes. El webhook global
+ *  (/api/whatsapp/webhook) rutea por `phoneNumberId`. `accessToken` se cifra en
+ *  reposo. Ver WHATSAPP_CRM_PLAN.md. */
+export interface WhatsAppCreds {
+  enabled?: boolean;
+  phoneNumberId?: string; // id del número en la API (metadata.phone_number_id del webhook)
+  wabaId?: string;        // WhatsApp Business Account id
+  accessToken?: string;   // token del system user / permanente (CIFRADO en reposo)
+  displayPhone?: string;  // número legible, informativo (ej. +56 9 1234 5678)
+}
+
 export interface EcommerceConfig {
   webpay?: WebpayCreds;
   flow?: FlowCreds;
@@ -118,6 +130,7 @@ export interface EcommerceConfig {
   pos?: PosConfig;
   deliveryHandroll?: DeliveryHandrollCreds;
   delifast?: DelifastCreds;
+  whatsapp?: WhatsAppCreds;
   ubereats?: UberEatsCreds;
   showWebpayToken?: boolean; // mostrar el token de la transacción en Pedidos → Historial (para certificación Transbank)
 }
@@ -303,6 +316,8 @@ export function integrationStatus(cfg: EcommerceConfig) {
     pos: cfg.pos?.provider === "toteat" ? !!(cfg.pos.toteat?.xir && cfg.pos.toteat?.xil && cfg.pos.toteat?.token) : false,
     // Delifast: seguimiento enriquecido del reparto (requiere login del panel).
     delifast: !!(cfg.delifast?.enabled && cfg.delifast?.email && cfg.delifast?.password && cfg.delifast?.plataforma),
+    // WhatsApp CRM: API oficial activa con número + token.
+    whatsapp: !!(cfg.whatsapp?.enabled && cfg.whatsapp?.phoneNumberId && cfg.whatsapp?.accessToken),
     // Uber Eats: integración directa de pedidos (el local activa + su storeId;
     // las credenciales de la app son globales por env).
     ubereats: !!(cfg.ubereats?.enabled && cfg.ubereats?.storeId),

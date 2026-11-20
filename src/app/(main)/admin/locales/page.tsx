@@ -1963,6 +1963,12 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
   const [dfPass, setDfPass] = useState("");
   const [dfPlataforma, setDfPlataforma] = useState("");
   const [dfLocalId, setDfLocalId] = useState("");
+  // WhatsApp CRM (API oficial de Meta: bandeja para atender pedidos entrantes)
+  const [waEnabled, setWaEnabled] = useState(false);
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
+  const [waWabaId, setWaWabaId] = useState("");
+  const [waToken, setWaToken] = useState("");
+  const [waDisplayPhone, setWaDisplayPhone] = useState("");
   // Uber Eats (integración directa de pedidos al POS)
   const [ueEnabled, setUeEnabled] = useState(false);
   const [ueStoreId, setUeStoreId] = useState("");
@@ -2013,6 +2019,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
     setPosApiUrl(c.pos?.toteat?.apiUrl || ""); setPosXir(c.pos?.toteat?.xir || ""); setPosXil(c.pos?.toteat?.xil || ""); setPosXiu(c.pos?.toteat?.xiu || ""); setPosToken(c.pos?.toteat?.token || "");
     setDhEnabled(c.deliveryHandroll?.enabled === true); setDhVendor(c.deliveryHandroll?.vendorName || "");
     setDfEnabled(c.delifast?.enabled === true); setDfEmail(c.delifast?.email || ""); setDfPass(c.delifast?.password || ""); setDfPlataforma(c.delifast?.plataforma || ""); setDfLocalId(c.delifast?.localId || "");
+    setWaEnabled(c.whatsapp?.enabled === true); setWaPhoneNumberId(c.whatsapp?.phoneNumberId || ""); setWaWabaId(c.whatsapp?.wabaId || ""); setWaToken(c.whatsapp?.accessToken || ""); setWaDisplayPhone(c.whatsapp?.displayPhone || "");
     setUeEnabled(c.ubereats?.enabled === true); setUeStoreId(c.ubereats?.storeId || ""); setUeAutoAccept(c.ubereats?.autoAccept !== false);
     setShowToken(c.showWebpayToken === true);
     setZonesText(JSON.stringify({ deliveryZones: restaurant.ecommerceDeliveryZones ?? [], deliveryConfig: restaurant.ecommerceDeliveryConfig ?? null }, null, 2));
@@ -2039,6 +2046,7 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
         : { provider: "none" },
       deliveryHandroll: { enabled: dhEnabled, vendorName: dhVendor.trim() || undefined },
       delifast: { enabled: dfEnabled, email: dfEmail.trim() || undefined, password: dfPass.trim() || undefined, plataforma: dfPlataforma.trim() || undefined, localId: dfLocalId.trim() || undefined },
+      whatsapp: { enabled: waEnabled, phoneNumberId: waPhoneNumberId.trim() || undefined, wabaId: waWabaId.trim() || undefined, accessToken: waToken.trim() || undefined, displayPhone: waDisplayPhone.trim() || undefined },
       ubereats: { enabled: ueEnabled, storeId: ueStoreId.trim() || undefined, autoAccept: ueAutoAccept },
       showWebpayToken: showToken,
     };
@@ -2178,6 +2186,16 @@ function EcommerceSection({ restaurant, onUpdate }: { restaurant: Restaurant; on
               <Input label="Clave (login Delifast)" value={dfPass} onChange={setDfPass} placeholder="••••••••" type="password" />
               <Input label="Plataforma (dominio)" value={dfPlataforma} onChange={setDfPlataforma} placeholder="quierosushi.cl" />
               <Input label={'ID de local Delifast (campo "local" del webhook, ej. 799)'} value={dfLocalId} onChange={setDfLocalId} placeholder="ej. 799" />
+            </>}
+          </IntegrationGroup>
+
+          <IntegrationGroup title="WhatsApp (bandeja CRM)" sub="API oficial de Meta (Cloud API): tus cajeros atienden a clientes que escriben primero y toman pedidos. El webhook es global; se rutea por el ID del número. El token se guarda cifrado." ok={st.whatsapp}>
+            <EnvSelect label="Bandeja WhatsApp" value={waEnabled ? "on" : "off"} onChange={(v) => setWaEnabled(v === "on")} options={[{ value: "off", label: "Desactivado" }, { value: "on", label: "Activado" }]} />
+            {waEnabled && <>
+              <Input label="Phone Number ID (ID del número en la API)" value={waPhoneNumberId} onChange={setWaPhoneNumberId} placeholder="ej. 123456789012345" />
+              <Input label="WABA ID (WhatsApp Business Account)" value={waWabaId} onChange={setWaWabaId} placeholder="ej. 987654321098765" />
+              <Input label="Access Token (system user / permanente)" value={waToken} onChange={setWaToken} placeholder="EAAG..." type="password" />
+              <Input label="Número visible (informativo)" value={waDisplayPhone} onChange={setWaDisplayPhone} placeholder="+56 9 1234 5678" />
             </>}
           </IntegrationGroup>
 

@@ -3692,3 +3692,64 @@ model GoTask {
 
   @@index([column, archivedAt])
 }
+
+// ─── WhatsApp CRM (bandeja para que los cajeros atiendan pedidos entrantes) ───
+// Ver WHATSAPP_CRM_PLAN.md. Tablas Prisma normales; se crean en prod de forma
+// ADITIVA (CREATE TABLE IF NOT EXISTS), nunca con `prisma db push`.
+// (Nota: ya existe un `WhatsAppMessage` de la mensajería Twilio/Leads; esto es
+//  otra cosa, por eso el prefijo WaInbox*.)
+model WaInboxContact {
+  id           String               @id @default(cuid())
+  restaurantId String
+  phone        String               // E.164 (ej. +56912345678)
+  waId         String?              // WhatsApp id (normalmente el teléfono sin +)
+  name         String?              // nombre del perfil de WhatsApp (profile.name)
+  customerId   String?              // link opcional al Customer del local
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  conversations WaInboxConversation[]
+
+  @@unique([restaurantId, phone])
+  @@index([restaurantId])
+}
+
+model WaInboxConversation {
+  id              String          @id @default(cuid())
+  restaurantId    String
+  contactId       String
+  status          String          @default("open") // open | closed
+  assignedToId    String?         // cajero/miembro asignado
+  windowExpiresAt DateTime?       // fin de la ventana de servicio de 24h
+  lastInboundAt   DateTime?       // último mensaje del cliente
+  lastMessageAt   DateTime?       // último mensaje (entrante o saliente)
+  unreadCount     Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  contact         WaInboxContact  @relation(fields: [contactId], references: [id])
+  messages        WaInboxMessage[]
+
+  @@index([restaurantId, status])
+  @@index([contactId])
+  @@index([restaurantId, lastMessageAt])
+}
+
+model WaInboxMessage {
+  id             String              @id @default(cuid())
+  conversationId String
+  restaurantId   String
+  direction      String              // in | out
+  type           String              @default("text") // text|image|audio|document|video|sticker|location|...
+  body           String?             @db.Text
+  mediaId        String?             // id del media en la API (para descargar)
+  mediaUrl       String?             // URL ya almacenada (Supabase Storage)
+  waMessageId    String?             @unique // id del mensaje en WhatsApp (idempotencia)
+  status         String?             // sent|delivered|read|failed (salientes)
+  errorDetail    String?
+  sentById       String?             // cajero que envió (salientes)
+  posOrderId     String?             // si de este chat salió un pedido
+  createdAt      DateTime            @default(now())
+  conversation   WaInboxConversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([restaurantId, createdAt])
+}

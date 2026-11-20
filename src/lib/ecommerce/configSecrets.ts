@@ -9,6 +9,9 @@ export function encryptEcommerceSecrets(cfg: EcommerceConfig): EcommerceConfig {
   if (out?.delifast?.password) {
     out = { ...out, delifast: { ...out.delifast, password: encryptSecret(out.delifast.password) } };
   }
+  if (out?.whatsapp?.accessToken) {
+    out = { ...out, whatsapp: { ...out.whatsapp, accessToken: encryptSecret(out.whatsapp.accessToken) } };
+  }
   return out;
 }
 
@@ -18,6 +21,9 @@ export function decryptEcommerceSecrets<T extends EcommerceConfig | null | undef
   let out = cfg as EcommerceConfig;
   if (out.delifast?.password) {
     out = { ...out, delifast: { ...out.delifast, password: decryptSecret(out.delifast.password) } };
+  }
+  if (out.whatsapp?.accessToken) {
+    out = { ...out, whatsapp: { ...out.whatsapp, accessToken: decryptSecret(out.whatsapp.accessToken) } };
   }
   return out as T;
 }
