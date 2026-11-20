@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { computeDiscount } from "@/lib/ecommerce/coupons";
 import { isInApp } from "@/lib/ecommerce/isInApp";
 import { clp } from "@/lib/ecommerce/format";
+import { isValidPhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
 import StoreLink from "./StoreLink";
 import { trackCouponAttempt } from "@/lib/ecommerce/storeAnalytics";
 import { getGuestId } from "@/lib/guestId";
@@ -248,7 +249,9 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const isOpen = tenant.openStatus.open;
   // Momento del pedido: "asap" requiere estar abierto; "scheduled" requiere una hora elegida.
   const timingOk = scheduleMode === "scheduled" ? !!scheduledIso : isOpen;
-  const isValid = timingOk && deliverySelected && name.trim().length >= 2 && phone.replace(/\D/g, "").length >= 8 && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
+  // Teléfono: debe ser un celular chileno válido (9 dígitos empezando en 9, o +56 + ese celular).
+  const phoneOk = isValidPhoneCL(phone);
+  const isValid = timingOk && deliverySelected && name.trim().length >= 2 && phoneOk && !!payment && !belowMin && (!isDelivery || !!deliveryAddress?.address) && emailReady;
 
   // Traer las franjas disponibles para programar (según tipo de entrega).
   useEffect(() => {
@@ -490,7 +493,11 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
               <Field label="Teléfono *">
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${phone.trim() && !phoneOk ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-200 focus:border-gray-400"}`} />
+                {phone.trim() && !phoneOk ? (
+                  <p className="mt-1 text-xs text-red-600">{PHONE_CL_ERROR}</p>
+                ) : null}
               </Field>
               <Field label={emailNeeded ? "Email *" : "Email"}>
                 <input id="qc-email" value={email} onChange={(e) => onEmailChange(e.target.value)} inputMode="email" placeholder="tu@email.com"

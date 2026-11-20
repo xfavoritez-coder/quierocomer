@@ -10,6 +10,7 @@ import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/l
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
+import { isValidPhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -96,6 +97,9 @@ export async function POST(req: NextRequest) {
       }
     }
     if (!customerPhone?.trim()) return NextResponse.json({ error: "El teléfono es obligatorio" }, { status: 400 });
+    // Rechaza teléfonos mal formados: debe ser un celular chileno válido (9 dígitos
+    // empezando en 9, o +56 + ese celular). Evita pedidos con número inutilizable.
+    if (!isValidPhoneCL(customerPhone)) return NextResponse.json({ error: PHONE_CL_ERROR }, { status: 400 });
     // Email obligatorio si paga con Flow o usa cupón.
     const emailRequired = paymentMethod === "flow" || !!couponCode;
     if (emailRequired && !customerEmail?.trim()) return NextResponse.json({ error: paymentMethod === "flow" ? "El email es obligatorio para pagar con Flow" : "El email es obligatorio para usar un cupón" }, { status: 400 });
