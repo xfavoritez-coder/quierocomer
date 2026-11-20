@@ -10,6 +10,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import { LiveClock, FrozenClock } from './OrderClock'
 import DelifastTracking, { DelifastStatusPill } from './DelifastTracking'
 import UberTracking from './UberTracking'
+import UberDirectTracking, { isUberDirectCourier } from './UberDirectTracking'
 import { playDelifastWarning } from '../lib/orderSound'
 import { supabase } from '@/lib/supabase'
 import CustomerOrdersDrawer, { CustomerOrdersContent } from './CustomerOrdersDrawer'
@@ -1070,12 +1071,14 @@ export function OrderDetailPanel({
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Seguimiento del reparto — cinta full-width, pegada al header. Uber Eats usa
-            su propio seguimiento (order.courier); el resto, Delifast. */}
+        {/* Seguimiento del reparto — cinta full-width, pegada al header. Uber Eats y
+            Uber Direct usan su propio seguimiento (order.courier); el resto, Delifast. */}
         {isDelivery && (
           <div style={{ margin: '-16px -22px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
             {(order.vendorName || '').toLowerCase().includes('uber eats')
               ? <UberTracking key={order.id} order={order} ribbon />
+              : isUberDirectCourier(order.courier)
+              ? <UberDirectTracking key={order.id} order={order} ribbon />
               : <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />}
           </div>
         )}
