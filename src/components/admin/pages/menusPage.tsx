@@ -396,7 +396,7 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = ["productos", "categorias", "ofertas", "modificadores", "horarios", "multimenu", "toteat"] as const;
+  const validTabs = ["productos", "categorias", "ofertas", "precios", "modificadores", "horarios", "multimenu", "toteat"] as const;
   type MenuTab = typeof validTabs[number];
   const tabFromUrl = searchParams.get("tab") as MenuTab | null;
   const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
@@ -458,6 +458,9 @@ export default function AdminMenus() {
   const [activeMenuGroupId, setActiveMenuGroupId] = useState<string | null>(null);
   const [multiMenuEnabled, setMultiMenuEnabled] = useState(false);
   const [uberEatsEnabled, setUberEatsEnabled] = useState(false); // el local tiene integración Uber Eats (habilita el precio Uber por plato)
+  // Tabla de precios (pestaña): orden + filtro de activos.
+  const [priceSort, setPriceSort] = useState<"cat" | "price-asc" | "price-desc" | "name">("cat");
+  const [priceActiveOnly, setPriceActiveOnly] = useState(false);
   const isMultiMenu = multiMenuEnabled && menuGroups.length >= 1;
 
   useEffect(() => {
@@ -1561,6 +1564,7 @@ export default function AdminMenus() {
           { key: "productos" as const, label: t("menu_products_tab") },
           { key: "categorias" as const, label: t("menu_categories_tab") },
           { key: "ofertas" as const, label: "Ofertas" },
+          { key: "precios" as const, label: "Tabla de precios" },
           { key: "modificadores" as const, label: t("menu_modifiers_tab") },
           { key: "horarios" as const, label: t("menu_schedules_tab") },
           ...(canAccess(activePlan, "multi_menu") ? [{ key: "multimenu" as const, label: t("menu_multimenu_tab") }] : []),
@@ -2232,6 +2236,77 @@ export default function AdminMenus() {
           <AdminPromos />
         </PlanPageGate>
       )}
+
+      {/* ── Tabla de precios tab ── */}
+      {menuTab === "precios" && selectedRestaurantId && (() => {
+        const list = dishes.filter(d => !priceActiveOnly || d.isActive);
+        const sorted = [...list].sort((a, b) => {
+          if (priceSort === "price-asc") return (a.price || 0) - (b.price || 0);
+          if (priceSort === "price-desc") return (b.price || 0) - (a.price || 0);
+          if (priceSort === "name") return a.name.localeCompare(b.name, "es");
+          // "cat": por categoría y luego por nombre
+          const c = (a.category?.name || "").localeCompare(b.category?.name || "", "es");
+          return c !== 0 ? c : a.name.localeCompare(b.name, "es");
+        });
+        const money = (n?: number | null) => (n != null && n > 0 ? "$" + Math.round(n).toLocaleString("es-CL") : "—");
+        const th: React.CSSProperties = { textAlign: "left", padding: "8px 10px", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.03em", borderBottom: "1px solid var(--adm-card-border)", whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" };
+        const td: React.CSSProperties = { padding: "9px 10px", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", borderBottom: "1px solid var(--adm-card-border)", whiteSpace: "nowrap" };
+        const tdNum: React.CSSProperties = { ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" };
+        return (
+          <div style={{ marginTop: 6 }}>
+            {/* Controles */}
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+              <select value={priceSort} onChange={e => setPriceSort(e.target.value as typeof priceSort)}
+                style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", cursor: "pointer" }}>
+                <option value="cat">Ordenar: Categoría</option>
+                <option value="price-asc">Ordenar: Precio ↑</option>
+                <option value="price-desc">Ordenar: Precio ↓</option>
+                <option value="name">Ordenar: Nombre</option>
+              </select>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", cursor: "pointer" }}>
+                <input type="checkbox" checked={priceActiveOnly} onChange={e => setPriceActiveOnly(e.target.checked)} /> Solo activos
+              </label>
+              <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{sorted.length} producto{sorted.length === 1 ? "" : "s"}</span>
+            </div>
+            {/* Tabla (sin fotos) */}
+            <div style={{ overflowX: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 12, background: "var(--adm-card)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+                <thead>
+                  <tr>
+                    <th style={th} onClick={() => setPriceSort("name")}>Producto</th>
+                    <th style={th} onClick={() => setPriceSort("cat")}>Categoría</th>
+                    <th style={{ ...th, textAlign: "right", cursor: "pointer" }} onClick={() => setPriceSort(priceSort === "price-asc" ? "price-desc" : "price-asc")}>Carta</th>
+                    <th style={{ ...th, textAlign: "right" }}>App</th>
+                    <th style={{ ...th, textAlign: "right" }}>Uber Eats</th>
+                    <th style={{ ...th, textAlign: "center" }}>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map(d => (
+                    <tr key={d.id} style={{ opacity: d.isActive ? 1 : 0.55 }}>
+                      <td style={{ ...td, fontWeight: 600, whiteSpace: "normal" }}>{d.name}</td>
+                      <td style={{ ...td, color: "var(--adm-text2)" }}>{d.category?.name || "—"}</td>
+                      <td style={tdNum}>
+                        {money(d.price)}
+                        {d.discountPrice != null && d.discountPrice > 0 && <span style={{ display: "block", fontSize: "0.72rem", color: "#16a34a", fontWeight: 700 }}>of. {money(d.discountPrice)}</span>}
+                      </td>
+                      <td style={{ ...tdNum, color: d.appPrice != null && d.appPrice > 0 ? "var(--adm-text)" : "var(--adm-text3)" }}>{money(d.appPrice)}</td>
+                      <td style={{ ...tdNum, color: d.uberEatsPrice != null && d.uberEatsPrice > 0 ? "var(--adm-text)" : "var(--adm-text3)" }}>{money(d.uberEatsPrice)}</td>
+                      <td style={{ ...td, textAlign: "center" }}>
+                        <span style={{ display: "inline-block", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: d.isActive ? "rgba(22,163,74,0.14)" : "var(--adm-hover)", color: d.isActive ? "#16a34a" : "var(--adm-text3)" }}>{d.isActive ? "Activo" : "Inactivo"}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {sorted.length === 0 && <div style={{ padding: 24, textAlign: "center", fontFamily: F, fontSize: "0.84rem", color: "var(--adm-text3)" }}>No hay productos.</div>}
+            </div>
+            <p style={{ margin: "10px 2px 0", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
+              “—” en App o Uber Eats = ese producto se publica con el precio de carta (no tiene precio especial definido).
+            </p>
+          </div>
+        );
+      })()}
 
       {/* ── Horarios tab ── */}
       {menuTab === "horarios" && selectedRestaurantId && (
