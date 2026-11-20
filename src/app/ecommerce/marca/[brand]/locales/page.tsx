@@ -33,5 +33,27 @@ export default async function BrandLocalesPage({ params, searchParams }: { param
   if (!data || visible.length === 0) return notFound();
   const representative = await getEcommerceStorefront(visible[0].slug);
   if (!representative) return notFound();
-  return <BrandStore brand={data} representative={representative} themeOverride={themeOverride} />;
+
+  // JSON-LD: cada sucursal como Restaurant para SEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: data.brandName,
+    ...(data.logoUrl ? { logo: data.logoUrl } : {}),
+    department: visible.map(b => ({
+      "@type": "Restaurant",
+      name: `${b.name}${b.branchName ? ` ${b.branchName}` : ''}`,
+      ...(b.address ? { address: { "@type": "PostalAddress", streetAddress: b.address, addressCountry: "CL" } } : {}),
+      ...(b.phone ? { telephone: b.phone } : {}),
+      ...(b.lat && b.lng ? { geo: { "@type": "GeoCoordinates", latitude: b.lat, longitude: b.lng } } : {}),
+      url: `https://quierocomer.com/ecommerce/${b.slug}`,
+    })),
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BrandStore brand={data} representative={representative} themeOverride={themeOverride} />
+    </>
+  );
 }

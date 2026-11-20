@@ -1525,6 +1525,7 @@ function LocalesViewContent({ tenant, siblings, primaryColor, onViewHours }: {
               weeklyHours={branchHours.get(b.id) ?? null}
               primaryColor={primaryColor}
               logoUrl={tenant.faviconUrl || b.logoUrl}
+              slug={b.slug}
               onViewHours={branchHours.get(b.id) ? () => {
                 if (b.id === tenant.id) { onViewHours(); return; }
                 const h = branchHours.get(b.id);
@@ -1714,11 +1715,12 @@ function LocalesMap({ googleMapsKey, siblings, tenant, primaryColor }: {
   );
 }
 
-function BranchCard({ name, address, phone, whatsapp, instagram, googleMapsUrl, open, opensAt, weeklyHours, primaryColor, onViewHours, current, logoUrl }: {
+function BranchCard({ name, address, phone, whatsapp, instagram, googleMapsUrl, open, opensAt, weeklyHours, primaryColor, onViewHours, current, logoUrl, slug, onSelect }: {
   name: string; address: string | null; phone: string | null; whatsapp: string | null; instagram: string | null; googleMapsUrl: string | null;
   open: boolean; opensAt: string | null;
   weeklyHours: import("@/lib/ecommerce/hours").DayHours[] | null; primaryColor: string;
   onViewHours?: () => void; current?: boolean; logoUrl?: string | null;
+  slug?: string; onSelect?: () => void;
 }) {
   const today = (() => { try { return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay(); } catch { return -1; } })();
   const todayHours = weeklyHours?.[today];
@@ -1794,6 +1796,29 @@ function BranchCard({ name, address, phone, whatsapp, instagram, googleMapsUrl, 
             );
           })()}
         </div>
+
+        {/* Pedir aquí */}
+        {(slug || onSelect) && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            {slug ? (
+              <a href={`/ecommerce/${slug}`} onClick={onSelect ? (e) => { e.preventDefault(); onSelect() } : undefined}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold transition"
+                style={{ background: `${primaryColor}10`, color: primaryColor, border: `1px solid ${primaryColor}25` }}
+              >
+                Pedir aquí
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            ) : onSelect ? (
+              <button onClick={onSelect}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold transition cursor-pointer"
+                style={{ background: `${primaryColor}10`, color: primaryColor, border: `1px solid ${primaryColor}25` }}
+              >
+                Pedir aquí
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
