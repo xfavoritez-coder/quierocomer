@@ -461,6 +461,8 @@ export default function AdminMenus() {
   // Tabla de precios (pestaña): orden + filtro de activos.
   const [priceSort, setPriceSort] = useState<"cat" | "price-asc" | "price-desc" | "name">("cat");
   const [priceActiveOnly, setPriceActiveOnly] = useState(false);
+  const [bulkPct, setBulkPct] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
   const isMultiMenu = multiMenuEnabled && menuGroups.length >= 1;
 
   useEffect(() => {
@@ -2252,6 +2254,24 @@ export default function AdminMenus() {
         const th: React.CSSProperties = { textAlign: "left", padding: "8px 10px", fontFamily: F, fontSize: "0.72rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.03em", borderBottom: "1px solid var(--adm-card-border)", whiteSpace: "nowrap", cursor: "pointer", userSelect: "none" };
         const td: React.CSSProperties = { padding: "9px 10px", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", borderBottom: "1px solid var(--adm-card-border)", whiteSpace: "nowrap" };
         const tdNum: React.CSSProperties = { ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" };
+        const bulkCount = dishes.filter(d => (!priceActiveOnly || d.isActive) && d.price > 0).length;
+        const applyBulk = async () => {
+          const pct = Number(bulkPct);
+          if (!Number.isFinite(pct) || !bulkPct.trim()) { alert("Ingresa un porcentaje (ej. 15)."); return; }
+          if (!window.confirm(`Se fijará el precio de Uber Eats de ${priceActiveOnly ? "los productos activos" : "TODOS los productos"} (${bulkCount}) como el precio de carta ${pct >= 0 ? "+" : ""}${pct}%. Esto sobrescribe los precios Uber actuales. ¿Continuar?`)) return;
+          setBulkBusy(true);
+          try {
+            const res = await fetch(`/api/admin/dishes/bulk-uber-price`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, percent: pct, activeOnly: priceActiveOnly }) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(d.error || "No se pudo aplicar"); return; }
+            const fresh = await fetch(`/api/admin/dishes?restaurantId=${selectedRestaurantId}`).then(r => r.json()).catch(() => null);
+            const arr = Array.isArray(fresh) ? fresh : fresh?.dishes;
+            if (Array.isArray(arr)) setDishes(arr);
+            setBulkPct("");
+            alert(`✓ Precio Uber Eats aplicado a ${d.updated ?? bulkCount} productos. Recuerda sincronizar el menú con Uber Eats para publicarlos.`);
+          } catch { alert("Error de conexión"); }
+          finally { setBulkBusy(false); }
+        };
         return (
           <div style={{ marginTop: 6 }}>
             {/* Controles */}
@@ -2268,6 +2288,19 @@ export default function AdminMenus() {
               </label>
               <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>{sorted.length} producto{sorted.length === 1 ? "" : "s"}</span>
             </div>
+            {/* Aplicar % de aumento a TODOS los precios de Uber Eats de una */}
+            {uberEatsEnabled && (
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(0,0,0,0.03)", border: "1px solid var(--adm-card-border)" }}>
+                <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text2)" }}>🛵 Precio Uber Eats = precio de carta</span>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.9rem", color: "var(--adm-text2)" }}>+</span>
+                  <input type="number" inputMode="numeric" value={bulkPct} onChange={e => setBulkPct(e.target.value)} placeholder="15" style={{ width: 70, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-input)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", textAlign: "right" }} />
+                  <span style={{ fontFamily: F, fontSize: "0.9rem", color: "var(--adm-text2)" }}>%</span>
+                </div>
+                <button onClick={applyBulk} disabled={bulkBusy || !bulkPct.trim()} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#111", color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: bulkBusy || !bulkPct.trim() ? "default" : "pointer", opacity: bulkBusy || !bulkPct.trim() ? 0.5 : 1 }}>{bulkBusy ? "Aplicando…" : `Aplicar a ${priceActiveOnly ? "activos" : "todos"} (${bulkCount})`}</button>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexBasis: "100%" }}>Sobrescribe el precio Uber de cada producto. Respeta el filtro “Solo activos”. Luego sincroniza el menú con Uber Eats para publicar.</span>
+              </div>
+            )}
             {/* Tabla (sin fotos) */}
             <div style={{ overflowX: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 12, background: "var(--adm-card)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
@@ -2278,6 +2311,7 @@ export default function AdminMenus() {
                     <th style={{ ...th, textAlign: "right", cursor: "pointer" }} onClick={() => setPriceSort(priceSort === "price-asc" ? "price-desc" : "price-asc")}>Carta</th>
                     <th style={{ ...th, textAlign: "right" }}>App</th>
                     <th style={{ ...th, textAlign: "right" }}>Uber Eats</th>
+                    <th style={{ ...th, textAlign: "right" }}>Margen</th>
                     <th style={{ ...th, textAlign: "center" }}>Estado</th>
                   </tr>
                 </thead>
@@ -2292,6 +2326,11 @@ export default function AdminMenus() {
                       </td>
                       <td style={{ ...tdNum, color: d.appPrice != null && d.appPrice > 0 ? "var(--adm-text)" : "var(--adm-text3)" }}>{money(d.appPrice)}</td>
                       <td style={{ ...tdNum, color: d.uberEatsPrice != null && d.uberEatsPrice > 0 ? "var(--adm-text)" : "var(--adm-text3)" }}>{money(d.uberEatsPrice)}</td>
+                      <td style={tdNum}>{(() => {
+                        if (d.uberEatsPrice == null || !(d.uberEatsPrice > 0) || !(d.price > 0)) return <span style={{ color: "var(--adm-text3)" }}>—</span>;
+                        const pct = Math.round(((d.uberEatsPrice - d.price) / d.price) * 100);
+                        return <span style={{ fontWeight: 700, color: pct > 0 ? "#16a34a" : pct < 0 ? "#dc2626" : "var(--adm-text3)" }}>{pct > 0 ? "+" : ""}{pct}%</span>;
+                      })()}</td>
                       <td style={{ ...td, textAlign: "center" }}>
                         <span style={{ display: "inline-block", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: d.isActive ? "rgba(22,163,74,0.14)" : "var(--adm-hover)", color: d.isActive ? "#16a34a" : "var(--adm-text3)" }}>{d.isActive ? "Activo" : "Inactivo"}</span>
                       </td>
