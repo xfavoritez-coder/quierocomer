@@ -50,6 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.price !== undefined && { price: Number(body.price) }),
         ...(body.discountPrice !== undefined && { discountPrice: body.discountPrice ? Number(body.discountPrice) : null, baseDiscountPrice: body.discountPrice ? Number(body.discountPrice) : null }),
         ...(body.appPrice !== undefined && { appPrice: body.appPrice ? Number(body.appPrice) : null }),
+        ...(body.uberEatsPrice !== undefined && { uberEatsPrice: body.uberEatsPrice ? Number(body.uberEatsPrice) : null }),
         ...(body.photos !== undefined && { photos: body.photos }),
         ...(body.tags !== undefined && { tags: body.tags }),
         ...(body.isHero !== undefined && { isHero: body.isHero }),

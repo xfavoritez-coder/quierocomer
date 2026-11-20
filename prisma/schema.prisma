@@ -934,6 +934,7 @@ model Dish {
   discountPrice         Float?
   baseDiscountPrice     Float?   // oferta base del producto (PRECIO OFERTA); el cron de promos vuelve a este valor cuando no hay promo activa hoy, en vez de borrar discountPrice
   appPrice              Float? // precio exclusivo en la app (si está, es el precio al pedir desde la app)
+  uberEatsPrice         Float? // precio con el que se publica el plato en Uber Eats (si está; si no, el precio normal). Uber suele cobrar comisión → precio más alto.
   photos                String[]
   tags                  DishTag[]
   isHero                Boolean                @default(false)

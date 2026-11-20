@@ -31,6 +31,15 @@ export async function buildUberMenu(restaurantId: string): Promise<{ menu: UberM
 
   // Solo platos pedibles: visibles, no agotados, con nombre y precio > 0.
   const products = sf.products.filter((p) => !p.hidden && !p.is_sold_out && p.name && (p.price || 0) > 0);
+
+  // Precio especial de Uber Eats por plato (Dish.uberEatsPrice). Si está, se publica
+  // con ese precio en Uber (suele ser más alto por la comisión); si no, el normal.
+  const uberPriceMap = new Map<string, number>();
+  try {
+    const rows = await prisma.dish.findMany({ where: { restaurantId, uberEatsPrice: { not: null } }, select: { id: true, uberEatsPrice: true } });
+    for (const d of rows) if (d.uberEatsPrice != null && d.uberEatsPrice > 0) uberPriceMap.set(d.id, d.uberEatsPrice);
+  } catch { /* si falla, se usan los precios normales */ }
+  const uberPriceOf = (p: typeof products[number]) => uberPriceMap.get(p.id) ?? (p.price || 0);
   const usedCat = new Set(products.map((p) => p.category_id));
   const categories = sf.categories.filter((c) => usedCat.has(c.id));
   const catIds = categories.map((c) => c.id);
@@ -77,7 +86,7 @@ export async function buildUberMenu(restaurantId: string): Promise<{ menu: UberM
       title: tr(p.name),
       ...(p.description ? { description: tr(p.description) } : {}),
       ...(img ? { image_url: img } : {}),
-      price_info: { price: Math.max(0, Math.round((p.price || 0) * 100)), overrides: [] },
+      price_info: { price: Math.max(0, Math.round(uberPriceOf(p) * 100)), overrides: [] },
       tax_info: {},
       ...(mgIds.length ? { modifier_group_ids: { ids: mgIds, overrides: [] } } : {}),
     };

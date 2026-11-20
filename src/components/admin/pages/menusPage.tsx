@@ -33,7 +33,7 @@ import { usePanelLang } from "@/lib/i18n/panel";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
-  id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null; appPrice?: number | null;
+  id: string; name: string; description: string | null; detailedDescription?: string | null; price: number; discountPrice: number | null; appPrice?: number | null; uberEatsPrice?: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; hideFromOrdering?: boolean; ecommerceOnly?: boolean; appOnly?: boolean; ingredients: string | null;
   allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string; daysOfWeek?: number[];
   toteatProductId?: string | null;
@@ -457,6 +457,7 @@ export default function AdminMenus() {
   const [menuGroups, setMenuGroups] = useState<{ id: string; name: string; slug: string; categories: { id: string }[] }[]>([]);
   const [activeMenuGroupId, setActiveMenuGroupId] = useState<string | null>(null);
   const [multiMenuEnabled, setMultiMenuEnabled] = useState(false);
+  const [uberEatsEnabled, setUberEatsEnabled] = useState(false); // el local tiene integración Uber Eats (habilita el precio Uber por plato)
   const isMultiMenu = multiMenuEnabled && menuGroups.length >= 1;
 
   useEffect(() => {
@@ -467,6 +468,8 @@ export default function AdminMenus() {
     ]).then(([groups, rest]) => {
       if (Array.isArray(groups)) { setMenuGroups(groups); setActiveMenuGroupId(null); }
       setMultiMenuEnabled(rest?.multiMenuEnabled || false);
+      const ue = rest?.ecommerceConfig?.ubereats;
+      setUberEatsEnabled(!!(ue?.enabled && ue?.storeId));
     }).catch(() => {});
   }, [selectedRestaurantId, menuTab]);
 
@@ -855,6 +858,7 @@ export default function AdminMenus() {
   const [ePrice, setEPrice] = useState("");
   const [eDiscountPrice, setEDiscountPrice] = useState("");
   const [eAppPrice, setEAppPrice] = useState("");
+  const [eUberPrice, setEUberPrice] = useState("");
   const [eToteatCode, setEToteatCode] = useState("");
   const [eDaysOfWeek, setEDaysOfWeek] = useState<number[]>([]);
   const [eIngredients, setEIngredients] = useState("");
@@ -978,6 +982,7 @@ export default function AdminMenus() {
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice != null ? String(d.discountPrice) : "");
     setEAppPrice((d as any).appPrice != null ? String((d as any).appPrice) : "");
+    setEUberPrice((d as any).uberEatsPrice != null ? String((d as any).uberEatsPrice) : "");
     setEToteatCode((d as any).toteatProductId || "");
     setEDaysOfWeek(d.daysOfWeek || []);
     setEIngredients(d.ingredients || "");
@@ -1027,6 +1032,7 @@ export default function AdminMenus() {
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
       appPrice: (!selectedDish.appOnly && eAppPrice) ? Number(eAppPrice) : null,
+      uberEatsPrice: (uberEatsEnabled && eUberPrice) ? Number(eUberPrice) : null,
       toteatProductId: eToteatCode.trim() || null,
       daysOfWeek: eDaysOfWeek,
       photos: ePhotoUrl ? [ePhotoUrl] : [],
@@ -1304,6 +1310,17 @@ export default function AdminMenus() {
                   <input type="number" value={eDiscountPrice} onChange={e => setEDiscountPrice(e.target.value)} placeholder="Opcional" style={INP} />
                 </div>
               </div>
+              {/* Precio para Uber Eats — solo si el local tiene la integración de Uber Eats.
+                  Uber cobra comisión → normalmente el precio publicado en Uber es más alto. */}
+              {uberEatsEnabled && (
+                <div style={{ marginBottom: 14, padding: "12px 14px", borderRadius: 10, background: "rgba(0,0,0,0.03)", border: "1px solid var(--adm-card-border)" }}>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", marginBottom: 6 }}>🛵 Precio en Uber Eats <span style={{ fontWeight: 400, color: "var(--adm-text3)" }}>(opcional)</span></label>
+                  <input type="number" inputMode="numeric" value={eUberPrice} onChange={e => setEUberPrice(e.target.value)} placeholder={`Normal: $${Number(ePrice || selectedDish.price || 0).toLocaleString("es-CL")}`} style={INP} />
+                  <p style={{ margin: "6px 2px 0", fontSize: "0.72rem", color: "var(--adm-text3)", lineHeight: 1.4 }}>
+                    Precio con el que se publica este plato en <strong>Uber Eats</strong> (al sincronizar el menú). Como Uber cobra comisión, suele ser más alto. Vacío = se publica con el precio normal. Se guarda con <strong>Guardar</strong> y aplica al <strong>sincronizar el menú con Uber Eats</strong>.
+                  </p>
+                </div>
+              )}
 
               {/* Código Toteat (POS) */}
               <div style={{ marginBottom: 14 }}>
