@@ -9,6 +9,8 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { notifyNewPosOrder } from "@/lib/ecommerce/notifyPosOrder";
+import { STAGE_ORDER } from "@/lib/delifast/status";
+import { syncOnlineOrderFromPos } from "@/lib/ecommerce/syncOnlineFromPos";
 
 type J = Record<string, unknown>;
 const obj = (v: unknown): J => (v && typeof v === "object" && !Array.isArray(v) ? (v as J) : {});
@@ -86,4 +88,90 @@ export async function createPosOrderFromUberOrder(restaurantId: string, order: J
   });
   void notifyNewPosOrder({ restaurantId, id: created.id, customerName, total, isDelivery }).catch(() => {});
   return { posOrderId: created.id, isNew: true };
+}
+
+// Mapeo de estado de reparto de Uber → opsStage del POS. Uber-específico (no toca el
+// mapeo compartido de Delifast); cae a `toOpsStage` para lo común. OJO: en "Delivery
+// by Uber" el `current_state` del pedido suele quedarse en ACCEPTED mientras el
+// avance real vive en `deliveries[].status` (en_route/picked_up/delivered).
+function uberToOpsStage(s: string): string | null {
+  const e = (s || "").toLowerCase();
+  if (!e) return null;
+  // Entregado: "delivered" (con -ed, para NO matchear "out_for_delivery"), o completado.
+  if (/deliver(ed|y[_ ]?complete)|dropoff[_ ]?complete|completed|fulfilled|succeeded/.test(e)) return "delivered";
+  // En camino = el repartidor YA tiene la comida y va al cliente. OJO: "picked" (ya
+  // recogió) sí, pero "en_route_to_pickup"/"arrived_at_pickup" (va AL local) NO.
+  if (/picked|en[_ ]?route[_ ]?to[_ ]?drop|arrived[_ ]?at[_ ]?drop|dropoff|out[_ ]?for[_ ]?deliver|on[_ ]?the[_ ]?way|in[_ ]?transit|reparto/.test(e)) return "out_for_delivery";
+  // Sin fallback al mapeo de Delifast (su `en.?route` marcaría "en camino" aunque el
+  // repartidor aún vaya AL local). Lo no reconocido no cambia el stage.
+  return null;
+}
+
+/** Lee el estado de reparto del pedido de Uber (current_state + deliveries[]) y, si
+ *  corresponde, AVANZA el opsStage del PosOrder (solo hacia adelante: out_for_delivery,
+ *  delivered), guarda el repartidor/ETA en `courier`, y sincroniza el OnlineOrder
+ *  (estado + push al cliente). Idempotente y tolerante al payload — los webhooks de
+ *  delivery status se activan en PRODUCCIÓN (hoy están off en pos_data). No crea nada:
+ *  si el PosOrder no existe, no hace nada. */
+export async function applyUberDeliveryState(restaurantId: string, order: J): Promise<{ changed: boolean; opsStage?: string }> {
+  const uberId = str(order.id || order.uuid || order.order_id);
+  if (!uberId) return { changed: false };
+  const po = await prisma.posOrder.findUnique({
+    where: { restaurantId_externalId: { restaurantId, externalId: `ue-${uberId}` } },
+    select: { id: true, opsStage: true },
+  });
+  if (!po) return { changed: false };
+
+  const delivery = obj(order.delivery || (Array.isArray(order.deliveries) ? (order.deliveries as unknown[])[0] : undefined));
+  // Estado: lo más específico primero (el viaje), luego el estado del pedido.
+  const stateStr = str(
+    delivery.status || delivery.state || delivery.delivery_state ||
+    order.delivery_state || order.fulfillment_state || order.current_state,
+  );
+  const nextStage = uberToOpsStage(stateStr);
+
+  // Repartidor + ETA (cuando Uber asigna el courier). Se guarda aunque no cambie el stage.
+  const courierRaw = obj(delivery.courier || delivery.driver);
+  const courierName = str(courierRaw.first_name || courierRaw.name);
+  const courierPhone = str(obj(courierRaw.phone).number || courierRaw.phone);
+  const courierPhoto = str(courierRaw.image_url || courierRaw.photo_url || courierRaw.picture);
+  const eta = str(delivery.estimated_dropoff_at || delivery.dropoff_eta || delivery.estimated_time_of_arrival || delivery.eta);
+  const location = obj(courierRaw.location || delivery.courier_location);
+  const lat = Number(location.latitude ?? location.lat);
+  const lng = Number(location.longitude ?? location.lng);
+  const hasCourier = courierName || courierPhone || courierPhoto || eta || Number.isFinite(lat);
+  const courier = hasCourier ? {
+    source: "ubereats" as const,
+    name: courierName || null,
+    phone: courierPhone || null,
+    photo: courierPhoto || null,
+    status: stateStr || null,
+    eta: eta || null,
+    location: Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null,
+  } : null;
+
+  const patch: Record<string, unknown> = {};
+  let stageChanged = false;
+  if (nextStage) {
+    const cur = STAGE_ORDER[po.opsStage] ?? 0;
+    const nxt = STAGE_ORDER[nextStage] ?? 0;
+    if (nxt > cur) {
+      patch.opsStage = nextStage;
+      stageChanged = true;
+      const now = new Date();
+      if (nextStage === "out_for_delivery") patch.opsDispatchedAt = now;
+      if (nextStage === "delivered") patch.opsDeliveredAt = now;
+    }
+  }
+  if (courier) patch.courier = courier as object;
+  if (Object.keys(patch).length === 0) return { changed: false, opsStage: po.opsStage };
+
+  const updated = await prisma.posOrder.update({
+    where: { id: po.id },
+    data: patch,
+    select: { restaurantId: true, externalId: true, opsStage: true, posStatus: true },
+  });
+  // Solo sincroniza OnlineOrder + push si avanzó el estado (no cuando solo guarda el courier).
+  if (stageChanged) void syncOnlineOrderFromPos(updated).catch(() => {});
+  return { changed: true, opsStage: updated.opsStage };
 }

@@ -5,7 +5,10 @@
 //
 //  Flujo: verifica firma HMAC → resuelve el local por storeId →
 //  getOrder → crea PosOrder → (auto)acepta en Uber. Cancelaciones
-//  marcan el PosOrder como anulado.
+//  marcan el PosOrder como anulado. Estado de reparto (en reparto /
+//  entregado + repartidor/ETA): se mapea del detalle del pedido en
+//  CADA evento (applyUberDeliveryState) → avanza opsStage + push al
+//  cliente. Requiere delivery_status_webhooks ON en Uber (prod).
 //
 //  ⚠️ Requiere: env UBEREATS_CLIENT_ID / UBEREATS_CLIENT_SECRET (app
 //  partner aprobada) y, por local, ecommerceConfig.ubereats.storeId.
@@ -16,7 +19,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { parseEcommerceConfig } from "@/lib/ecommerce/config";
 import { getUberOrder, acceptUberOrder, uberAppConfigured } from "@/lib/ubereats/client";
-import { createPosOrderFromUberOrder } from "@/lib/ubereats/ingest";
+import { createPosOrderFromUberOrder, applyUberDeliveryState } from "@/lib/ubereats/ingest";
 import { syncStoreMenu } from "@/lib/ubereats/menu";
 
 export const runtime = "nodejs";
@@ -111,11 +114,23 @@ export async function POST(req: NextRequest) {
       (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } }))?.ecommerceConfig,
     );
     const state = str(order.current_state).toUpperCase();
-    const alreadyFinal = state === "ACCEPTED" || state === "CANCELLED" || state === "DENIED";
+    // No re-aceptar si el pedido ya avanzó (aceptado/cancelado/denegado/entregado…).
+    // Un evento de ESTADO DE REPARTO llega con el pedido ya aceptado → solo avanza stage.
+    const FINAL = ["ACCEPTED", "CANCELLED", "DENIED", "DELIVERED", "FINISHED", "COMPLETED", "SUCCEEDED", "FAILED"];
+    const alreadyFinal = FINAL.includes(state);
     if (cfg.ubereats?.autoAccept !== false && !alreadyFinal) {
       await acceptUberOrder(orderId);
     }
-    return NextResponse.json({ ok: true, posOrderId: result?.posOrderId, isNew: result?.isNew, accepted: !alreadyFinal }, { status: 200 });
+
+    // Estado de reparto (PROD): mapea current_state + deliveries[] → opsStage del POS
+    // y avanza (en reparto / entregado) + guarda repartidor/ETA + sync/push al cliente.
+    // Hoy los delivery_status_webhooks están off en pos_data (se activan en producción);
+    // esto queda listo para funcionar solo al habilitarlos. No-op si no hay nada que avanzar.
+    const delivery = await applyUberDeliveryState(restaurantId, order).catch((e) => {
+      console.error("[ubereats] delivery-state:", (e as Error).message); return null;
+    });
+
+    return NextResponse.json({ ok: true, posOrderId: result?.posOrderId, isNew: result?.isNew, accepted: !alreadyFinal, deliveryStage: delivery?.opsStage }, { status: 200 });
   } catch (e) {
     // Fallo de procesamiento (getOrder/BD/accept): devolvemos 5xx para que Uber
     // REINTENTE (meta de inyección 99.9%). La creación es idempotente (externalId
