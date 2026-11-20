@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
+import { syncStoreMenu } from "@/lib/ubereats/menu";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,12 @@ export async function POST(req: NextRequest) {
       ? await prisma.$executeRaw`UPDATE "Dish" SET "uberEatsPrice" = ROUND("price" * ${factor}::float) WHERE "restaurantId" = ${restaurantId} AND "deletedAt" IS NULL AND "price" > 0 AND "isActive" = true`
       : await prisma.$executeRaw`UPDATE "Dish" SET "uberEatsPrice" = ROUND("price" * ${factor}::float) WHERE "restaurantId" = ${restaurantId} AND "deletedAt" IS NULL AND "price" > 0`;
 
-    return NextResponse.json({ ok: true, updated });
+    // Re-publicar el menú en Uber Eats con los precios nuevos (si el local tiene la
+    // integración; syncStoreMenu valida enabled+storeId). No bloquea el éxito del
+    // update de precios: si Uber falla, se reporta pero los precios ya quedaron.
+    const sync = await syncStoreMenu(restaurantId).catch((e) => ({ ok: false, error: (e as Error).message }));
+
+    return NextResponse.json({ ok: true, updated, synced: sync.ok, syncError: sync.ok ? undefined : (sync as { error?: string }).error });
   } catch (e) {
     return authErrorResponse(e as { status?: number; message?: string });
   }

@@ -463,6 +463,7 @@ export default function AdminMenus() {
   const [priceActiveOnly, setPriceActiveOnly] = useState(false);
   const [bulkPct, setBulkPct] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [uberSyncBusy, setUberSyncBusy] = useState(false);
   const isMultiMenu = multiMenuEnabled && menuGroups.length >= 1;
 
   useEffect(() => {
@@ -2268,9 +2269,20 @@ export default function AdminMenus() {
             const arr = Array.isArray(fresh) ? fresh : fresh?.dishes;
             if (Array.isArray(arr)) setDishes(arr);
             setBulkPct("");
-            alert(`✓ Precio Uber Eats aplicado a ${d.updated ?? bulkCount} productos. Recuerda sincronizar el menú con Uber Eats para publicarlos.`);
+            alert(d.synced
+              ? `✓ Precio Uber Eats aplicado a ${d.updated ?? bulkCount} productos y publicado en Uber Eats.`
+              : `✓ Precios aplicados a ${d.updated ?? bulkCount} productos, pero no se pudo publicar en Uber Eats${d.syncError ? ` (${d.syncError})` : ""}. Reintenta con “Sincronizar ahora”.`);
           } catch { alert("Error de conexión"); }
           finally { setBulkBusy(false); }
+        };
+        const syncUberMenu = async () => {
+          setUberSyncBusy(true);
+          try {
+            const res = await fetch(`/api/admin/ubereats/sync-menu`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId }) });
+            const d = await res.json().catch(() => ({}));
+            alert(res.ok ? "✓ Menú publicado en Uber Eats con los precios actuales." : (d.error || "No se pudo publicar en Uber Eats"));
+          } catch { alert("Error de conexión"); }
+          finally { setUberSyncBusy(false); }
         };
         return (
           <div style={{ marginTop: 6 }}>
@@ -2298,7 +2310,8 @@ export default function AdminMenus() {
                   <span style={{ fontFamily: F, fontSize: "0.9rem", color: "var(--adm-text2)" }}>%</span>
                 </div>
                 <button onClick={applyBulk} disabled={bulkBusy || !bulkPct.trim()} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#111", color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: bulkBusy || !bulkPct.trim() ? "default" : "pointer", opacity: bulkBusy || !bulkPct.trim() ? 0.5 : 1 }}>{bulkBusy ? "Aplicando…" : `Aplicar a ${priceActiveOnly ? "activos" : "todos"} (${bulkCount})`}</button>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexBasis: "100%" }}>Sobrescribe el precio Uber de cada producto. Respeta el filtro “Solo activos”. Luego sincroniza el menú con Uber Eats para publicar.</span>
+                <button onClick={syncUberMenu} disabled={uberSyncBusy} title="Publica el menú actual (con estos precios) en Uber Eats" style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: uberSyncBusy ? "default" : "pointer", opacity: uberSyncBusy ? 0.5 : 1 }}>{uberSyncBusy ? "Sincronizando…" : "↻ Sincronizar ahora"}</button>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexBasis: "100%" }}>Aplicar sobrescribe el precio Uber de cada producto y lo publica en Uber Eats al instante (respeta “Solo activos”). Si editas precios sueltos, usa “Sincronizar ahora” para publicarlos.</span>
               </div>
             )}
             {/* Tabla (sin fotos) */}
