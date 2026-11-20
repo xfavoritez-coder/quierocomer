@@ -656,7 +656,23 @@ export default function PosHomePage() {
           </div>
         </div>
 
-      {/* Inner page title lives inside each panel component */}
+      {/* Botón volver para inner pages */}
+      {innerPage && (
+        <div style={{ padding: '6px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
+          <button
+            onClick={() => setInnerPage(null)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)',
+              padding: '4px 6px 4px 0', borderRadius: 6,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M15 6l-6 6 6 6"/></svg>
+            Volver
+          </button>
+        </div>
+      )}
 
       {/* ── Tabs mobile: Todos · Pedidos · Mesas — siempre visibles ── */}
       {!isDesktop && (
