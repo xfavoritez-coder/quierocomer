@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { parseEcommerceConfig } from "@/lib/ecommerce/config";
+import { parseEcommerceConfig, parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 import { getUberOrder, acceptUberOrder, uberAppConfigured } from "@/lib/ubereats/client";
 import { createPosOrderFromUberOrder, applyUberDeliveryState } from "@/lib/ubereats/ingest";
 import { syncStoreMenu } from "@/lib/ubereats/menu";
@@ -110,16 +110,19 @@ export async function POST(req: NextRequest) {
     // Auto-aceptar en Uber, de forma IDEMPOTENTE según current_state: si el pedido ya
     // está aceptado (p. ej. en un reintento tras aceptar OK pero fallar la respuesta),
     // no se re-acepta. Si la aceptación falla, se propaga → 5xx → Uber reintenta.
-    const cfg = parseEcommerceConfig(
-      (await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceConfig: true } }))?.ecommerceConfig,
-    );
+    const rr = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { centroPedidosConfig: true } });
+    // Auto-aceptar configurable desde el POS (Centro de pedidos → Pedidos). Default: true.
+    const autoAccept = parseCentroPedidosConfig(rr?.centroPedidosConfig).uberEatsAutoAccept !== false;
     const state = str(order.current_state).toUpperCase();
     // No re-aceptar si el pedido ya avanzó (aceptado/cancelado/denegado/entregado…).
     // Un evento de ESTADO DE REPARTO llega con el pedido ya aceptado → solo avanza stage.
     const FINAL = ["ACCEPTED", "CANCELLED", "DENIED", "DELIVERED", "FINISHED", "COMPLETED", "SUCCEEDED", "FAILED"];
     const alreadyFinal = FINAL.includes(state);
-    if (cfg.ubereats?.autoAccept !== false && !alreadyFinal) {
+    if (autoAccept && !alreadyFinal) {
       await acceptUberOrder(orderId);
+    } else if (!autoAccept && result?.isNew && !alreadyFinal) {
+      // Auto-aceptar apagado: el pedido queda "por aceptar" → el POS muestra Aceptar/Rechazar.
+      await prisma.posOrder.update({ where: { id: result.posOrderId }, data: { rawPayload: { uberPendingAccept: true } as object } }).catch(() => {});
     }
 
     // Estado de reparto (PROD): mapea current_state + deliveries[] → opsStage del POS

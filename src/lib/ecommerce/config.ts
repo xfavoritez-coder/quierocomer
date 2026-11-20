@@ -161,6 +161,9 @@ export interface CentroPedidosConfig {
   /** Si está activo, al CERRAR LA CAJA el POS avisa si hay pedidos abiertos (no
    *  entregados) y deja entregarlos ahí mismo antes de cerrar. Default: off. */
   alertOpenOrdersOnClose?: boolean;
+  /** Auto-aceptar los pedidos de Uber Eats al recibirlos (default: true). Si se
+   *  apaga, los pedidos de Uber llegan "por aceptar" y el POS muestra Aceptar/Rechazar. */
+  uberEatsAutoAccept?: boolean;
   /** Métodos de pago de la caja. Si no está definido, se usan los 5 por defecto.
    *  `emitsFiscal` = al cobrar con este método se emite boleta (requiere además que
    *  el local tenga SharkPOS habilitado). */

@@ -10,7 +10,7 @@ import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseEcommerceConfig, integrationStatus, parseCentroPedidosConfig, effectivePaymentMethods } from "@/lib/ecommerce/config";
 import { getPlatformSetting } from "@/lib/platformSettings";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
-import { markUberOrderReady, denyUberOrder, cancelUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
+import { markUberOrderReady, denyUberOrder, cancelUberOrder, acceptUberOrder, UBER_DENY_REASONS, type UberDenyReason } from "@/lib/ubereats/client";
 
 // Auto-reparación del espejo: espeja al Centro cualquier OnlineOrder activo
 // reciente que no tenga su PosOrder (p. ej. si el espejo falló transitoriamente
@@ -382,6 +382,26 @@ export async function PATCH(req: NextRequest) {
         .catch(() => cancelUberOrder(uberId, code))
         .catch((e) => console.error("[ubereats] deny/cancel:", (e as Error).message));
     }
+    return NextResponse.json({ order: updated });
+  }
+
+  // ── Aceptar un pedido de Uber Eats (cuando el auto-aceptar está apagado) ──
+  if (body?.action === "uberAccept") {
+    const order = await prisma.posOrder.findUnique({ where: { id }, select: { restaurantId: true, provider: true, externalId: true, rawPayload: true } });
+    if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    if (order.provider !== "ubereats" || !order.externalId?.startsWith("ue-")) return NextResponse.json({ error: "No es un pedido de Uber Eats" }, { status: 400 });
+    try {
+      await acceptUberOrder(order.externalId.slice(3));
+    } catch (e) {
+      return NextResponse.json({ error: "No se pudo aceptar en Uber Eats: " + (e as Error).message }, { status: 502 });
+    }
+    const prevRaw = (order.rawPayload && typeof order.rawPayload === "object" && !Array.isArray(order.rawPayload))
+      ? { ...(order.rawPayload as Record<string, unknown>) } : {};
+    delete prevRaw.uberPendingAccept;
+    const updated = await prisma.posOrder.update({
+      where: { id },
+      data: { rawPayload: (Object.keys(prevRaw).length ? prevRaw : null) as object },
+    });
     return NextResponse.json({ order: updated });
   }
 

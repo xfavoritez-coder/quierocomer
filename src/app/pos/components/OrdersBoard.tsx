@@ -358,6 +358,24 @@ function OrderCard({
   // Pedido de Uber Eats (puede ser delivery o retiro): pill verde adicional, sin
   // reemplazar el de tipo (delivery/retiro).
   const isUberEats = (order.vendorName || '').toLowerCase().includes('uber eats')
+  // Pedido de Uber Eats "por aceptar" (cuando el auto-aceptar está apagado): el POS
+  // muestra Aceptar/Rechazar y oculta el avance normal hasta aceptarlo.
+  const uberPendingAccept = isUberEats && !!(order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) && (order.rawPayload as Record<string, unknown>).uberPendingAccept)
+  const [uberBusy, setUberBusy] = useState(false)
+  const uberAct = async (action: 'uberAccept' | 'reject') => {
+    if (action === 'reject' && !window.confirm('¿Rechazar este pedido de Uber Eats? Se avisará a Uber y el pedido se anula.')) return
+    setUberBusy(true)
+    try {
+      const body = action === 'uberAccept'
+        ? { restaurantId, id: order.id, action: 'uberAccept' }
+        : { restaurantId, id: order.id, action: 'cancel', reason: 'Rechazado en el POS', denyReason: 'KITCHEN_BUSY' }
+      const r = await fetch('/api/panel/ecommerce/pos-orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { window.alert(d.error || 'No se pudo procesar'); return }
+      onCourierChanged?.()
+    } catch { window.alert('Error de conexión') }
+    finally { setUberBusy(false) }
+  }
   const next = nextAction(order.opsStage, isDelivery, order.delifastVentaId)
   const busy = stageBusy === order.id
   // Cuando Delifast cancela el reparto el footer pasa a rojo aunque opsStage=ready.
@@ -522,8 +540,21 @@ function OrderCard({
               </span>
               <OrderTimer order={order} isRetiro={isRetiro} style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)', whiteSpace: 'nowrap' }} />
             </span>
+            {/* Pedido de Uber Eats por aceptar: Aceptar / Rechazar (reemplaza el avance). */}
+            {uberPendingAccept && (
+              <span style={{ display: 'inline-flex', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+                <button onClick={() => uberAct('reject')} disabled={uberBusy}
+                  style={{ fontSize: 12.5, fontWeight: 700, padding: '7px 12px', borderRadius: 8, border: `1px solid ${RED}`, background: 'transparent', color: RED, cursor: uberBusy ? 'default' : 'pointer', opacity: uberBusy ? 0.6 : 1, fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}>
+                  Rechazar
+                </button>
+                <button onClick={() => uberAct('uberAccept')} disabled={uberBusy}
+                  style={{ fontSize: 12.5, fontWeight: 700, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#16a34a', color: '#fff', cursor: uberBusy ? 'default' : 'pointer', opacity: uberBusy ? 0.6 : 1, fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}>
+                  {uberBusy ? '…' : 'Aceptar'}
+                </button>
+              </span>
+            )}
             {/* Botón de avance de etapa — mismo para pagado e impago */}
-            {next && (
+            {!uberPendingAccept && next && (
               <button
                 onClick={() => paid ? onStageChange(order, next.stage) : onBlock(order)}
                 disabled={busy}

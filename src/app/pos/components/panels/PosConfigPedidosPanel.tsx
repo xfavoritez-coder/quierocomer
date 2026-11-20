@@ -9,6 +9,7 @@ interface PedidosCfg {
   pedidosyaEnabled?: boolean
   customerAbsorbsSurcharge?: boolean
   alertOpenOrdersOnClose?: boolean
+  uberEatsAutoAccept?: boolean
   prepAlertMinutes?: number
 }
 
@@ -65,6 +66,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
   const [readyMin,  setReadyMin]  = useState('30')
   const [methods, setMethods] = useState<PaymentMethodConfig[]>([])
   const [sharkposEnabled, setSharkposEnabled] = useState(false)
+  const [uberEatsEnabled, setUberEatsEnabled] = useState(false)
   const [savingMethods, setSavingMethods] = useState(false)
 
   const loadPedidos = useCallback(async () => {
@@ -81,6 +83,7 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
       }
       if (r.ok && Array.isArray(d.paymentMethods)) setMethods(d.paymentMethods)
       if (r.ok && typeof d.sharkposEnabled === 'boolean') setSharkposEnabled(d.sharkposEnabled)
+      if (r.ok && typeof d.uberEatsEnabled === 'boolean') setUberEatsEnabled(d.uberEatsEnabled)
     } catch { /* noop */ }
   }, [restaurantId])
 
@@ -161,8 +164,9 @@ export default function PosConfigPedidosPanel({ restaurantId, title, onBack }: {
             { key: 'pedidosyaEnabled'     as const, title: 'Solicitar PedidosYa',    desc: 'Muestra el botón PedidosYa en las tarjetas. Desactívalo si no lo usas.' },
             { key: 'customerAbsorbsSurcharge' as const, title: 'Cliente paga cargo de servicio', desc: 'El cargo de la plataforma se suma al despacho que paga el cliente.' },
             { key: 'alertOpenOrdersOnClose' as const, title: 'Avisar pedidos abiertos al cerrar caja', desc: 'Al cerrar la caja, si hay pedidos sin entregar, el POS los muestra y deja entregarlos ahí mismo antes de cerrar.' },
+            ...(uberEatsEnabled ? [{ key: 'uberEatsAutoAccept' as const, title: 'Auto-aceptar pedidos de Uber Eats', desc: 'Activado: los pedidos de Uber Eats se aceptan solos al entrar. Desactívalo para aceptarlos o rechazarlos a mano desde el tablero.' }] : []),
           ] as { key: keyof PedidosCfg; title: string; desc: string }[]).map(({ key, title, desc }) => {
-            const checked = key === 'uberEnabled' || key === 'pedidosyaEnabled' ? pedidos[key] !== false : !!pedidos[key]
+            const checked = key === 'uberEnabled' || key === 'pedidosyaEnabled' || key === 'uberEatsAutoAccept' ? pedidos[key] !== false : !!pedidos[key]
             return <ToggleRow key={key} title={title} desc={desc} checked={checked} disabled={savingPed} onChange={() => updatePedidos({ [key]: !checked })} />
           })}
           <ToggleRow title="Mostrar descripción de productos" desc="En «Tomar pedidos» muestra la descripción debajo del nombre de cada producto." checked={showDesc} disabled={savingPed} onChange={() => updateShowDesc(!showDesc)} />

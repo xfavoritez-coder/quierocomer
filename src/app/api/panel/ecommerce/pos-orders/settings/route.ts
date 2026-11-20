@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
     paymentMethods: mergeConfiguredPaymentMethods(config, r?.orderingPaymentMethods),
     sharkposEnabled: r?.sharkposEnabled === true,
     facturaEnabled: r?.facturaEnabled === true,
+    uberEatsEnabled: !!(ecom.ubereats?.enabled && ecom.ubereats?.storeId),
   });
 }
 
@@ -58,6 +59,7 @@ export async function PUT(req: NextRequest) {
   if (typeof incoming.pedidosyaEnabled === "boolean") merged.pedidosyaEnabled = incoming.pedidosyaEnabled;
   if (typeof incoming.customerAbsorbsSurcharge === "boolean") merged.customerAbsorbsSurcharge = incoming.customerAbsorbsSurcharge;
   if (typeof incoming.alertOpenOrdersOnClose === "boolean") merged.alertOpenOrdersOnClose = incoming.alertOpenOrdersOnClose;
+  if (typeof incoming.uberEatsAutoAccept === "boolean") merged.uberEatsAutoAccept = incoming.uberEatsAutoAccept;
   if (typeof incoming.prepAlertMinutes === "number" && Number.isFinite(incoming.prepAlertMinutes)) {
     merged.prepAlertMinutes = Math.min(600, Math.max(0, Math.round(incoming.prepAlertMinutes)));
   }
