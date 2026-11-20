@@ -37,19 +37,25 @@ const EP = {
   deny: (id: string) => `${BASE}/v1/eats/orders/${id}/deny_pos_order`,
   cancel: (id: string) => `${BASE}/v1/eats/orders/${id}/cancel`,
   cart: (id: string) => `${BASE}/v2/eats/orders/${id}/cart`,
-  // "Listo"/estado de reparto. Requiere scope extra `eats.store.orders.restaurant_delivery`
-  // (no incluido en SCOPE abajo) → markReady fallará con 401 hasta agregarlo; no
-  // bloquea recibir/aceptar el pedido en la verificación.
+  // "Listo"/estado de reparto. Scope correcto (VERIFICADO 2026-11-20, concedido en
+  // sandbox): `eats.store.orders.restaurantdelivery.status` (NO el `..restaurant_delivery`
+  // que se asumía antes → daba 400 invalid_scope). ⚠️ Este endpoint es SOLO para
+  // pedidos de REPARTO PROPIO del restaurante: en "Delivery by Uber" responde 400
+  // "Cannot update status of this order type" (Uber maneja el repartidor) — markReady
+  // lo trata como no-op. No existe endpoint de "marcar listo" para Delivery-by-Uber
+  // (probados ~13 paths → 404); la hora de preparación se fija al aceptar.
   restaurantStatus: (id: string) => `${BASE}/v1/eats/orders/${id}/restaurantdelivery/status`,
   storeStatus: (storeId: string) => `${BASE}/v1/eats/store/${storeId}/status`,
   posData: (storeId: string) => `${BASE}/v1/eats/stores/${storeId}/pos_data`,
 };
 // Scopes del token. getOrder (v2) y accept/deny (v1) funcionan con `eats.store eats.order`
-// (verificado en sandbox). Las ESCRITURAS necesitan scopes extra que Uber concede recién
-// en producción: store toggle → eats.store.status.write; mark-ready → eats.store.orders
-// .restaurant_delivery; etc. OJO: pedir un scope NO concedido rompe TODO el token
-// (400 invalid_scope), así que el default es el mínimo y en prod se amplía por env
-// UBEREATS_SCOPES (p. ej. "eats.store eats.order eats.store.status.write ...").
+// (verificado en sandbox). Scopes de ESCRITURA (nombres VERIFICADOS 2026-11-20):
+// mark-ready/reparto propio → `eats.store.orders.restaurantdelivery.status` (SÍ se
+// concede en sandbox), store toggle → `eats.store.status.write`, etc. OJO: pedir un
+// scope NO concedido rompe TODO el token (400 invalid_scope), así que el default es el
+// mínimo y se amplía por env UBEREATS_SCOPES (p. ej. "eats.store eats.order
+// eats.store.orders.restaurantdelivery.status"). Para Delivery-by-Uber igual no hay
+// "marcar listo", así que ampliar el scope solo sirve para pedidos de reparto propio.
 const SCOPE = process.env.UBEREATS_SCOPES || "eats.store eats.order";
 
 // Token OAuth cacheado (client_credentials de la app global).
@@ -136,13 +142,19 @@ export async function updateUberOrderCart(orderId: string, cart: unknown): Promi
   return { ok: res.ok, status: res.status, body };
 }
 
-/** Marca el pedido como listo/finalizado de preparación. */
+/** Marca el pedido como listo/finalizado de preparación (solo reparto propio del
+ *  restaurante). En "Delivery by Uber" es no-op (Uber gestiona el repartidor). */
 export async function markUberOrderReady(orderId: string): Promise<void> {
   const res = await authed(EP.restaurantStatus(orderId), {
     method: "POST",
     body: JSON.stringify({ status: "finished" }),
   });
-  if (!res.ok) throw new Error(`Uber ready ${res.status}: ${await res.text()}`);
+  if (res.ok) return;
+  const body = await res.text();
+  // 400 "Cannot update status of this order type" = pedido Delivery-by-Uber → no-op
+  // esperado (no hay "listo" para ese tipo). Solo se reporta un error real.
+  if (res.status === 400 && /order type/i.test(body)) return;
+  throw new Error(`Uber ready ${res.status}: ${body}`);
 }
 
 // ── Menu API (v2) ────────────────────────────────────────────────
