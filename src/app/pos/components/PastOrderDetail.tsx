@@ -278,17 +278,14 @@ export default function PastOrderDetail({
     } catch { window.alert('No se pudo abrir el PDF de la nota de crédito') }
   }
 
-  const [descBusy, setDescBusy] = useState<string | null>(null)
-  async function descargarDoc(kind: 'boleta' | 'factura' | 'nc') {
-    setDescBusy(kind)
-    try {
-      const res = await fetch(`/api/pos/doc-pdf?posOrderId=${order.id}&kind=${kind}`, { cache: 'no-store' })
-      const d = await res.json().catch(() => ({}))
-      const fnameBase = kind === 'nc' ? 'nota-credito' : kind === 'boleta' ? 'boleta' : 'factura'
-      if (d?.ready && d.pdfBase64) abrirPdfBase64(d.pdfBase64, `${fnameBase}-${d.folio || order.id}.pdf`)
-      else window.alert(d?.reason || d?.error || 'No se pudo obtener el PDF')
-    } catch { window.alert('Error al obtener el PDF') }
-    finally { setDescBusy(null) }
+  // La descarga abre una pestaña nueva al instante (no hay estado "obteniendo").
+  const [descBusy] = useState<string | null>(null)
+  // Abre el PDF del documento directamente desde el endpoint (application/pdf) en una
+  // pestaña nueva. OJO: debe ser SÍNCRONO dentro del clic — iOS Safari bloquea el popup
+  // si se abre tras un await, y NO abre blobs en pestañas nuevas (da "Load failed"), por
+  // eso ya no se descarga base64 + blob sino la URL directa (el navegador la renderiza).
+  function descargarDoc(kind: 'boleta' | 'factura' | 'nc') {
+    window.open(`/api/pos/doc-pdf?posOrderId=${order.id}&kind=${kind}&dl=1`, '_blank', 'noopener')
   }
 
   const handleAnular = async () => {
