@@ -284,6 +284,22 @@ export default function PastOrderDetail({
     return () => { alive = false }
   }, [order.id, restaurantId, paid])
 
+  // Anular el pedido (sin boleta) antes de poder reembolsar. Para pedidos con boleta
+  // la anulación va por la nota de crédito (sección aparte).
+  const [canceledLocal, setCanceledLocal] = useState(false)
+  const [cancelBusy, setCancelBusy] = useState(false)
+  async function handleCancelOrder() {
+    if (!window.confirm('¿Anular este pedido? Se marcará como anulado.')) return // confirmación 1
+    setCancelBusy(true)
+    try {
+      const r = await fetch('/api/panel/ecommerce/pos-orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, id: order.id, action: 'cancel', reason: 'Anulado en el POS' }) })
+      if (!r.ok) { const d = await r.json().catch(() => ({})); window.alert(d.error || 'No se pudo anular el pedido'); return }
+      setCanceledLocal(true)
+      onRefresh?.()
+    } catch { window.alert('Error de conexión al anular') }
+    finally { setCancelBusy(false) }
+  }
+
   async function doRefund(amount?: number) {
     if (amount != null && (!(amount > 0) || amount > (refundInfo?.total ?? 0))) { setRefundMsg('⚠️ Monto inválido'); return }
     const label = amount == null ? 'el total' : clp(amount)
@@ -733,36 +749,50 @@ export default function PastOrderDetail({
           </div>
         )}
 
-        {/* Reembolso de dinero Transbank/Webpay — solo pedidos web pagados con Webpay. */}
-        {refundInfo && (refundInfo.eligible || refundInfo.refunded) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-            {refundInfo.refunded ? (
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--violet, #8b5cf6)', textAlign: 'center' }}>
-                ↩︎ Dinero reembolsado vía Transbank
-              </span>
-            ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ink-2)', flexShrink: 0 }}><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Devolución de dinero (Webpay)</span>
-                </div>
-                <span style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.4 }}>
-                  Este pedido se pagó con Webpay ({clp(refundInfo.total)}). ¿Reembolsar el dinero al cliente por Transbank?
+        {/* Reembolso Transbank/Webpay — DETRÁS de anular (2 confirmaciones: 1ª anular,
+            2ª reembolsar). Con boleta se anula por la NC de arriba; sin boleta, con el
+            botón "Anular pedido" de aquí. El reembolso aparece solo una vez anulado. */}
+        {(() => {
+          if (!refundInfo || (!refundInfo.eligible && !refundInfo.refunded)) return null
+          const anulado = anulada || canceled || canceledLocal
+          // Pedido con boleta aún no anulado: se anula por la NC → acá no mostramos nada todavía.
+          if (!refundInfo.refunded && !anulado && hasBoleta) return null
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+              {refundInfo.refunded ? (
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', textAlign: 'center' }}>
+                  ↩︎ Dinero reembolsado vía Transbank
                 </span>
-                <button onClick={() => doRefund()} disabled={refundBusy} style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none', background: '#8b5cf6', color: 'white', cursor: refundBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 800, opacity: refundBusy ? 0.6 : 1 }}>
-                  {refundBusy ? 'Reembolsando…' : `Reembolso total (${clp(refundInfo.total)})`}
+              ) : !anulado ? (
+                // Aún no anulado y SIN boleta → botón de anular (confirmación 1).
+                <button onClick={handleCancelOrder} disabled={cancelBusy} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.4)', background: 'transparent', color: '#ef4444', cursor: cancelBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, opacity: cancelBusy ? 0.6 : 1 }}>
+                  {cancelBusy ? 'Anulando…' : 'Anular pedido'}
                 </button>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input value={refundAmount} onChange={e => setRefundAmount(e.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="Monto parcial" style={{ ...ncInp, flex: 1 }} />
-                  <button onClick={() => doRefund(Math.round(Number(refundAmount) || 0))} disabled={refundBusy || !refundAmount} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: (refundBusy || !refundAmount) ? 'default' : 'pointer', fontWeight: 700, fontSize: 13, opacity: (refundBusy || !refundAmount) ? 0.5 : 1 }}>Parcial</button>
-                </div>
-              </>
-            )}
-            {refundMsg && (
-              <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: refundMsg.startsWith('✓') ? 'var(--jade)' : '#ef4444' }}>{refundMsg}</span>
-            )}
-          </div>
-        )}
+              ) : (
+                // Ya anulado → ofrecer el reembolso (cada botón confirma = confirmación 2).
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ink-2)', flexShrink: 0 }}><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Devolución de dinero (Webpay)</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.4 }}>
+                    Pedido anulado. Se pagó con Webpay ({clp(refundInfo.total)}). ¿Reembolsar el dinero al cliente por Transbank?
+                  </span>
+                  <button onClick={() => doRefund()} disabled={refundBusy} style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none', background: '#8b5cf6', color: 'white', cursor: refundBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 800, opacity: refundBusy ? 0.6 : 1 }}>
+                    {refundBusy ? 'Reembolsando…' : `Reembolso total (${clp(refundInfo.total)})`}
+                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input value={refundAmount} onChange={e => setRefundAmount(e.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="Monto parcial" style={{ ...ncInp, flex: 1 }} />
+                    <button onClick={() => doRefund(Math.round(Number(refundAmount) || 0))} disabled={refundBusy || !refundAmount} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: (refundBusy || !refundAmount) ? 'default' : 'pointer', fontWeight: 700, fontSize: 13, opacity: (refundBusy || !refundAmount) ? 0.5 : 1 }}>Parcial</button>
+                  </div>
+                </>
+              )}
+              {refundMsg && (
+                <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: refundMsg.startsWith('✓') ? 'var(--jade)' : '#ef4444' }}>{refundMsg}</span>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Tiempos (delivery report stats) */}
         {(order.prepMin != null || order.transitMin != null || order.totalMin != null) && (
