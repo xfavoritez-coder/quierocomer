@@ -268,6 +268,40 @@ export default function PastOrderDetail({
   const [ncR, setNcR] = useState({ rut: '', name: '', giro: '', direccion: '', comuna: '', ciudad: '' })
   const anulada = !!order.notaCreditoDteId || ncFolio != null
 
+  // Reembolso Transbank/Webpay: solo para pedidos web pagados con Webpay. La
+  // elegibilidad la resuelve el servidor desde el OnlineOrder (externalId "oo-…").
+  const [refundInfo, setRefundInfo] = useState<{ eligible: boolean; refunded: boolean; total: number } | null>(null)
+  const [refundAmount, setRefundAmount] = useState('')
+  const [refundBusy, setRefundBusy] = useState(false)
+  const [refundMsg, setRefundMsg] = useState<string | null>(null)
+  useEffect(() => {
+    if (!paid) { setRefundInfo(null); return }
+    let alive = true
+    fetch(`/api/pos/webpay-refund?restaurantId=${restaurantId}&posOrderId=${order.id}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (alive && d && (d.eligible || d.refunded)) setRefundInfo({ eligible: !!d.eligible, refunded: !!d.refunded, total: d.total || 0 }) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [order.id, restaurantId, paid])
+
+  async function doRefund(amount?: number) {
+    if (amount != null && (!(amount > 0) || amount > (refundInfo?.total ?? 0))) { setRefundMsg('⚠️ Monto inválido'); return }
+    const label = amount == null ? 'el total' : clp(amount)
+    if (!window.confirm(`¿Reembolsar ${label} al cliente vía Transbank? Esta acción devuelve el dinero y no se puede deshacer.`)) return
+    setRefundBusy(true); setRefundMsg(null)
+    try {
+      const r = await fetch('/api/pos/webpay-refund', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ restaurantId, posOrderId: order.id, amount }) })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok && d.ok) {
+        setRefundMsg(`✓ Reembolso realizado (${d.full ? 'total' : 'parcial'})`)
+        setRefundInfo(prev => prev ? { ...prev, eligible: false, refunded: true } : prev)
+        setRefundAmount('')
+        onRefresh?.()
+      } else setRefundMsg(`⚠️ ${d.error || 'No se pudo reembolsar'}`)
+    } catch { setRefundMsg('⚠️ Error de conexión') }
+    finally { setRefundBusy(false) }
+  }
+
   function abrirPdfBase64(b64: string, filename: string) {
     try {
       const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
@@ -695,6 +729,37 @@ export default function PastOrderDetail({
                   </button>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {/* Reembolso de dinero Transbank/Webpay — solo pedidos web pagados con Webpay. */}
+        {refundInfo && (refundInfo.eligible || refundInfo.refunded) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+            {refundInfo.refunded ? (
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--violet, #8b5cf6)', textAlign: 'center' }}>
+                ↩︎ Dinero reembolsado vía Transbank
+              </span>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ink-2)', flexShrink: 0 }}><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Devolución de dinero (Webpay)</span>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.4 }}>
+                  Este pedido se pagó con Webpay ({clp(refundInfo.total)}). ¿Reembolsar el dinero al cliente por Transbank?
+                </span>
+                <button onClick={() => doRefund()} disabled={refundBusy} style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none', background: '#8b5cf6', color: 'white', cursor: refundBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 800, opacity: refundBusy ? 0.6 : 1 }}>
+                  {refundBusy ? 'Reembolsando…' : `Reembolso total (${clp(refundInfo.total)})`}
+                </button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input value={refundAmount} onChange={e => setRefundAmount(e.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="Monto parcial" style={{ ...ncInp, flex: 1 }} />
+                  <button onClick={() => doRefund(Math.round(Number(refundAmount) || 0))} disabled={refundBusy || !refundAmount} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: (refundBusy || !refundAmount) ? 'default' : 'pointer', fontWeight: 700, fontSize: 13, opacity: (refundBusy || !refundAmount) ? 0.5 : 1 }}>Parcial</button>
+                </div>
+              </>
+            )}
+            {refundMsg && (
+              <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center', color: refundMsg.startsWith('✓') ? 'var(--jade)' : '#ef4444' }}>{refundMsg}</span>
             )}
           </div>
         )}
