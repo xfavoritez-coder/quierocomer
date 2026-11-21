@@ -10,6 +10,7 @@ import {
   isSuperAdmin,
 } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
+import { chileDayStart, chileDayEnd } from "@/lib/promoDates";
 import { syncRestaurantDishDiscounts } from "@/lib/promos/syncDishDiscounts";
 import { ensurePromoDish, removePromoDish, syncPromoStoreProductsActive } from "@/lib/promos/promoStoreProduct";
 
@@ -121,8 +122,8 @@ export async function POST(req: NextRequest) {
       dishId: dishId || null,
       promoName: promoName || null,
       originalPrice, promoPrice, discountPct,
-      validFrom: validFrom ? new Date(validFrom) : null,
-      validUntil: validUntil ? new Date(validUntil) : null,
+      validFrom: chileDayStart(validFrom), // inicio del día en hora de Chile
+      validUntil: chileDayEnd(validUntil), // fin del día en hora de Chile
       daysOfWeek: Array.isArray(daysOfWeek) ? daysOfWeek : [],
       status: "ACTIVE", generatedBy: "manual",
       modifierTemplates: Array.isArray(modifierTemplateIds) && modifierTemplateIds.length
@@ -190,8 +191,8 @@ export async function PUT(req: NextRequest) {
         ...(data.promoPrice !== undefined && { promoPrice: data.promoPrice }),
         ...(data.originalPrice !== undefined && { originalPrice: data.originalPrice }),
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
-        ...(data.validFrom !== undefined && { validFrom: data.validFrom ? new Date(data.validFrom) : null }),
-        ...(data.validUntil !== undefined && { validUntil: data.validUntil ? new Date(data.validUntil) : null }),
+        ...(data.validFrom !== undefined && { validFrom: chileDayStart(data.validFrom) }),
+        ...(data.validUntil !== undefined && { validUntil: chileDayEnd(data.validUntil) }),
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
         ...(data.hideOriginalWhenActive !== undefined && { hideOriginalWhenActive: !!data.hideOriginalWhenActive }),
         ...(updDishIds && { dishIds: updDishIds }),

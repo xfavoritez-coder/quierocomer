@@ -5,6 +5,7 @@ import { Tag } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { usePanelLang } from "@/lib/i18n/panel";
+import { toChileDateStr } from "@/lib/promoDates";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
@@ -139,8 +140,8 @@ export default function AdminPromociones() {
     setEditPromoPrice(p.promoPrice?.toString() || "");
     setEditOriginalPrice(p.originalPrice?.toString() || "");
     setEditDaysOfWeek(p.daysOfWeek || []);
-    setEditValidFrom(p.validFrom ? p.validFrom.slice(0, 10) : "");
-    setEditValidUntil(p.validUntil ? p.validUntil.slice(0, 10) : "");
+    setEditValidFrom(toChileDateStr(p.validFrom)); // fecha en hora de Chile (no UTC)
+    setEditValidUntil(toChileDateStr(p.validUntil));
     setEditDishSearch("");
   };
 
@@ -406,7 +407,7 @@ export default function AdminPromociones() {
                       )}
                       {(p.validFrom || p.validUntil) && (
                         <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>
-                          {p.validFrom ? new Date(p.validFrom).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "…"} → {p.validUntil ? new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "…"}
+                          {p.validFrom ? new Date(p.validFrom).toLocaleDateString("es-CL", { day: "numeric", month: "short", timeZone: "America/Santiago" }) : "…"} → {p.validUntil ? new Date(p.validUntil).toLocaleDateString("es-CL", { day: "numeric", month: "short", timeZone: "America/Santiago" }) : "…"}
                         </span>
                       )}
                     </div>
