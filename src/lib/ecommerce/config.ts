@@ -125,6 +125,13 @@ export interface WhatsAppCreds {
  *  Manager → Pixel → Configuración → API de conversiones → Generar token de acceso. */
 export interface MetaCreds {
   capiToken?: string;
+  // Sync de Custom Audiences (ads_management). adsToken opcional por-local (cifrado);
+  // si falta, se usa el env global META_ADS_TOKEN. adAccountId = cuenta publicitaria
+  // (solo dígitos). audiences = IDs de las audiencias ya creadas (los rellena el sync).
+  adsToken?: string;
+  adAccountId?: string;
+  audiencesEnabled?: boolean;
+  audiences?: { buyers?: string; lapsed?: string; top?: string };
 }
 
 export interface EcommerceConfig {

@@ -15,6 +15,9 @@ export function encryptEcommerceSecrets(cfg: EcommerceConfig): EcommerceConfig {
   if (out?.meta?.capiToken) {
     out = { ...out, meta: { ...out.meta, capiToken: encryptSecret(out.meta.capiToken) } };
   }
+  if (out?.meta?.adsToken) {
+    out = { ...out, meta: { ...out.meta, adsToken: encryptSecret(out.meta.adsToken) } };
+  }
   return out;
 }
 
@@ -30,6 +33,9 @@ export function decryptEcommerceSecrets<T extends EcommerceConfig | null | undef
   }
   if (out.meta?.capiToken) {
     out = { ...out, meta: { ...out.meta, capiToken: decryptSecret(out.meta.capiToken) } };
+  }
+  if (out.meta?.adsToken) {
+    out = { ...out, meta: { ...out.meta, adsToken: decryptSecret(out.meta.adsToken) } };
   }
   return out as T;
 }

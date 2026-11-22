@@ -5,6 +5,10 @@
       "schedule": "0 4 * * *"
     },
     {
+      "path": "/api/cron/meta-audiences",
+      "schedule": "30 5 * * *"
+    },
+    {
       "path": "/api/cron/nurturing",
       "schedule": "0 20 * * *"
     },
