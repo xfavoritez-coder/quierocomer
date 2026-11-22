@@ -13,6 +13,7 @@ interface RecoveryData {
     recoveryRate: number; recoveredRevenue: number
   }
   reasons: Record<string, number>
+  surveyResponses: { customerName: string | null; customerEmail: string; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; sentAt: string | null; convertedAt: string | null; createdAt: string }[]
   atRiskClients: { email: string; name: string; phone: string; orders: number; avgTicket: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; topProduct: string | null }[]
@@ -167,6 +168,38 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
                   </div>
                 )
               })}
+          </div>
+        </div>
+      )}
+
+      {/* Respuestas de clientes */}
+      {data.surveyResponses.length > 0 && (
+        <div>
+          <SectionLabel>Respuestas de clientes ({data.surveyResponses.length})</SectionLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {data.surveyResponses.map((r, i) => (
+              <div key={i} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{r.customerName || r.customerEmail}</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink-3)' }}>
+                    {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: r.comment ? 8 : 0 }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
+                    {REASON_LABELS[r.reason || ''] || r.reason}
+                  </span>
+                  {r.detail && (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-3)' }}>· {r.detail}</span>
+                  )}
+                </div>
+                {r.comment && (
+                  <p style={{ fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-2)', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
+                    &ldquo;{r.comment}&rdquo;
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

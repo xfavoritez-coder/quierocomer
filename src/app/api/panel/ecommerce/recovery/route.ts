@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   // Enrollments (de toda la marca)
   const enrollments = await prisma.recoveryEnrollment.findMany({
     where: { restaurantId: { in: allIds } },
-    select: { automation: true, status: true, sentAt: true, convertedAt: true, convertedOrderId: true, surveyReason: true, createdAt: true, customerName: true, customerEmail: true },
+    select: { automation: true, status: true, sentAt: true, convertedAt: true, convertedOrderId: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true },
     orderBy: { createdAt: "desc" },
     take: 500,
   });
@@ -81,6 +81,18 @@ export async function GET(req: NextRequest) {
     if (e.status === "converted") byAutomation[e.automation].converted++;
   }
 
+  // Respuestas de encuesta con comentarios
+  const surveyResponses = enrollments
+    .filter(e => e.surveyReason)
+    .map(e => ({
+      customerName: e.customerName,
+      customerEmail: e.customerEmail,
+      reason: e.surveyReason,
+      detail: e.surveyDetail || null,
+      comment: e.surveyComment || null,
+      answeredAt: e.surveyAnsweredAt?.toISOString() || e.createdAt.toISOString(),
+    }));
+
   // Actividad reciente (últimos 20)
   const recent = enrollments.slice(0, 20).map(e => ({
     automation: e.automation,
@@ -107,6 +119,7 @@ export async function GET(req: NextRequest) {
       recoveredRevenue,
     },
     reasons,
+    surveyResponses,
     byAutomation,
     recent,
     // Top 20 clientes en riesgo (con email, ordenados por riskScore)
