@@ -16,7 +16,7 @@ export function wrapRecoveryEmail(opts: {
   const { storeName, logoUrl, accent, bodyHtml, trackOpenUrl, unsubscribeUrl } = opts;
   const a = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(accent) ? accent : "#e63946";
   const headerLogo = logoUrl
-    ? `<img src="${esc(logoUrl)}" alt="${esc(storeName)}" height="64" style="max-height:64px;max-width:220px;object-fit:contain;display:block;margin:0 auto;" />`
+    ? `<img src="${esc(logoUrl)}" alt="${esc(storeName)}" width="180" style="width:180px;height:auto;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(storeName)}</span>`;
 
   return `<!DOCTYPE html>
