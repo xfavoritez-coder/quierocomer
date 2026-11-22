@@ -180,13 +180,9 @@ const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap>
     })),
   ])
 
-  // Commune → restaurant pages
-  const communeRestaurantPages: MetadataRoute.Sitemap = communeRestaurants.map(r => ({
-    url: `${BASE}/${r.communeSlug}/${r.slug}`,
-    lastModified: r.updatedAt,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
+  // Commune → restaurant pages: ya no se indexan porque hacen redirect 301 a /slug.
+  // Google seguirá el redirect y consolidará el SEO en la URL canónica.
+  const communeRestaurantPages: MetadataRoute.Sitemap = []
 
   return [
     ...staticPages,
