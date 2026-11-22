@@ -486,8 +486,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             </div>
           )}
 
-          {/* Datos del cliente */}
-          <Block title="Tus datos">
+          {/* Datos del cliente + Entrega */}
+          <Block title="Tus datos" action={deliverySelected ? <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Editar</button> : undefined}>
             <div className="flex flex-col gap-3">
               <Field label="Nombre">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
@@ -525,39 +525,38 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 {otpMsg && <p className={`text-xs mt-1.5 ${otpMsg.includes("incorrecto") || otpMsg.includes("No se pudo") || otpMsg.includes("Error") ? "text-red-500" : "text-gray-500"}`}>{otpMsg}</p>}
                 {emailNeeded && !emailVerifiedOk && !otpMsg && <p className="text-xs text-gray-400 mt-1.5">Necesario para {payment === "flow" ? "pagar con Flow" : "usar el cupón"}. Verifícalo para continuar.</p>}
               </Field>
-            </div>
-          </Block>
-
-          {/* Entrega — se elige aquí mismo (DeliveryModal inline) */}
-          <Block title="Entrega" action={deliverySelected ? <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>Cambiar</button> : undefined}>
-            {deliverySelected ? (
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                  {isDelivery ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
-                </div>
-                <div className="min-w-0">
-                  {isDelivery && deliveryAddress ? (
-                    <>
-                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Motorbike size={15} className="shrink-0" /> Delivery</p>
-                      <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Store size={15} className="shrink-0" /> Retiro en tienda</p>
-                      {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
-                    </>
-                  )}
-                </div>
+              {/* Entrega inline */}
+              <div className="pt-1 border-t border-gray-100 mt-1">
+                {deliverySelected ? (
+                  <div className="flex items-center gap-3 pt-2">
+                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                      {isDelivery ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
+                    </div>
+                    <div className="min-w-0">
+                      {isDelivery && deliveryAddress ? (
+                        <>
+                          <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Motorbike size={15} className="shrink-0" /> Delivery</p>
+                          <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Store size={15} className="shrink-0" /> Retiro en tienda</p>
+                          {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setDeliveryModalOpen(true)} className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left mt-1" style={{ borderColor: primaryColor, background: `${primaryColor}0d` }}>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <MapPin className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                      <span className="text-sm font-bold truncate" style={{ color: primaryColor }}>Elige cómo recibir tu pedido</span>
+                    </span>
+                    <ChevronRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                  </button>
+                )}
               </div>
-            ) : (
-              <button type="button" onClick={() => setDeliveryModalOpen(true)} className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left" style={{ borderColor: primaryColor, background: `${primaryColor}0d` }}>
-                <span className="flex items-center gap-2 min-w-0">
-                  <MapPin className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-                  <span className="text-sm font-bold truncate" style={{ color: primaryColor }}>Elige cómo recibir tu pedido</span>
-                </span>
-                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
-              </button>
-            )}
+            </div>
           </Block>
 
           {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} />}
@@ -658,38 +657,6 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             </Block>
           )}
 
-          {/* Cupón — colapsable: por defecto solo el enlace "¿Tienes un cupón?" */}
-          {(() => {
-            const emailNotice = coupon && emailNeeded && !emailVerifiedOk ? (
-              <div className="rounded-xl px-3 py-3 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}12` }}>
-                <p className="text-xs font-bold text-gray-800">{otpSent ? "Te enviamos un código a tu correo. Ingrésalo para aplicar el cupón." : "Para usar este cupón necesitas verificar tu correo."}</p>
-                <button type="button" onClick={goVerifyEmail} className="mt-1.5 text-xs font-black underline" style={{ color: primaryColor }}>{otpSent ? "Ir al código →" : "Verificar mi correo ahora →"}</button>
-              </div>
-            ) : null;
-            if (coupon) return (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 border self-start" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}10` }}>
-                  <span className="text-sm font-black" style={{ color: primaryColor }}>{coupon.code}</span>
-                  <span className="text-xs text-gray-500">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
-                  <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); setCouponOpen(false); }} className="ml-1 text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
-                </div>
-                {emailNotice}
-              </div>
-            );
-            if (couponOpen) return (
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <input autoFocus value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-mono uppercase outline-none focus:border-gray-400" />
-                  <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-4 rounded-xl text-white font-bold text-sm transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
-                </div>
-                {couponMsg && <p className="text-xs text-red-500">{couponMsg}</p>}
-              </div>
-            );
-            return (
-              <button type="button" onClick={() => setCouponOpen(true)} className="text-sm font-bold underline self-start px-1" style={{ color: primaryColor }}>¿Tienes un cupón?</button>
-            );
-          })()}
-
           </div>
 
           {/* ── Columna derecha (sticky en escritorio): detalles de la compra + pagar ── */}
@@ -699,9 +666,14 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
             {mounted && (
               <div className="flex flex-col gap-2">
                 {items.map((it) => (
-                  <div key={`${it.product_id}-${it.options.map((o) => o.value_id).join(",")}`} className="flex justify-between gap-3 text-sm items-start">
+                  <div key={`${it.product_id}-${it.options.map((o) => o.value_id).join(",")}`} className="flex gap-3 text-sm items-start">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0"><ShoppingCart size={18} className="text-gray-300" /></div>
+                    )}
                     <div className="min-w-0 flex-1">
-                      <span className="text-gray-700 font-medium">{it.name}</span>
+                      <span className="text-gray-700 font-medium leading-snug">{it.name}</span>
                       {it.options.length > 0 && (
                         <span className="block text-xs text-gray-400 truncate">{it.options.map((o) => o.value).join(", ")}</span>
                       )}
@@ -720,7 +692,40 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <div className="flex justify-between text-sm text-gray-500 pt-2 mt-1 border-t border-gray-100"><span>Subtotal</span><span>{clp(subtotal)}</span></div>
                 {isDelivery && <div className="flex justify-between text-sm text-gray-500"><span>Delivery</span><span>{clp(deliveryFee)}</span></div>}
                 {discount > 0 && <div className="flex justify-between text-sm" style={{ color: primaryColor }}><span>Descuento {coupon ? `(${coupon.code})` : ""}</span><span>−{clp(discount)}</span></div>}
-                <div className="flex justify-between font-black text-base text-gray-900"><span>Total</span><span style={{ color: primaryColor }}>{clp(finalTotal)}</span></div>
+                {/* Cupón inline debajo del detalle */}
+                <div className="pt-2 mt-1 border-t border-gray-100">
+                  {(() => {
+                    const emailNotice = coupon && emailNeeded && !emailVerifiedOk ? (
+                      <div className="rounded-xl px-3 py-2.5 border mt-2" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}12` }}>
+                        <p className="text-xs font-bold text-gray-800">{otpSent ? "Ingresa el código que te enviamos para aplicar el cupón." : "Verifica tu correo para usar este cupón."}</p>
+                        <button type="button" onClick={goVerifyEmail} className="mt-1 text-xs font-black underline" style={{ color: primaryColor }}>{otpSent ? "Ir al código →" : "Verificar ahora →"}</button>
+                      </div>
+                    ) : null;
+                    if (coupon) return (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}08` }}>
+                          <span className="text-xs font-black" style={{ color: primaryColor }}>{coupon.code}</span>
+                          <span className="text-xs text-gray-500 flex-1">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
+                          <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); setCouponOpen(false); }} className="text-gray-400 hover:text-gray-700"><X className="w-3.5 h-3.5" /></button>
+                        </div>
+                        {emailNotice}
+                      </div>
+                    );
+                    if (couponOpen) return (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <input autoFocus value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón" className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-mono uppercase outline-none focus:border-gray-400" />
+                          <button onClick={applyCoupon} disabled={couponBusy || !couponCode.trim()} className="px-3 rounded-lg text-white font-bold text-xs transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
+                        </div>
+                        {couponMsg && <p className="text-xs text-red-500">{couponMsg}</p>}
+                      </div>
+                    );
+                    return (
+                      <button type="button" onClick={() => setCouponOpen(true)} className="text-xs font-bold" style={{ color: primaryColor }}>¿Tienes un cupón?</button>
+                    );
+                  })()}
+                </div>
+                <div className="flex justify-between font-black text-base text-gray-900 pt-2 mt-1 border-t border-gray-100"><span>Total</span><span style={{ color: primaryColor }}>{clp(finalTotal)}</span></div>
               </div>
             )}
           </Block>
