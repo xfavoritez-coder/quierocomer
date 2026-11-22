@@ -86,6 +86,22 @@ function etaMinutes(eta?: string | null): number | null {
   return Math.max(0, Math.round((t - Date.now()) / 60000))
 }
 
+// Timestamp → "HH:MM" en hora de Chile.
+function hm(ts?: string | null): string | null {
+  if (!ts) return null
+  const raw = String(ts).trim()
+  const hasTz = /[zZ]|[+-]\d\d:?\d\d$/.test(raw)
+  if (hasTz || raw.includes('T')) {
+    const d = new Date(raw)
+    if (Number.isFinite(d.getTime())) {
+      try {
+        return new Intl.DateTimeFormat('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Santiago' }).format(d)
+      } catch { /* fallthrough */ }
+    }
+  }
+  const m = raw.match(/(?:^|[ T])(\d{1,2}):(\d{2})/)
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : null
+}
 
 // Pill coloreado de estado — pequeño, con dot + texto.
 function StatusBadge({ label, color }: { label: string; color: string }) {
@@ -106,6 +122,7 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   const [state, setState] = useState<'loading' | 'off' | 'pending' | 'error' | 'ok'>('loading')
   const [t, setT] = useState<Tracking | null>(null)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [open, setOpen] = useState(false)
   const cancelFiredRef = useRef(false)
 
   useEffect(() => {
@@ -199,25 +216,51 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
   // Link de seguimiento: preferir statusUrl de Delifast, fallback a nuestra página /track
   const trackingHref = t.statusUrl || (trackingToken ? `/track/${trackingToken}` : null)
 
+  const steps: { label: string; ts: string | null }[] = [
+    { label: 'Confirmada', ts: t.timeline.confirmacion },
+    { label: 'Pickup iniciado', ts: t.timeline.inicioPickup },
+    { label: 'Llegó al local', ts: t.timeline.llegadaLocal },
+    { label: 'En camino', ts: t.timeline.inicioDropoff },
+    { label: 'Llegó al cliente', ts: t.timeline.llegadaCasa },
+    { label: 'Entregado', ts: t.timeline.entregado },
+  ]
+  if (t.timeline.cancelado) steps.push({ label: 'Cancelado', ts: t.timeline.cancelado })
+
   return (
     <div style={ribbon ? {} : { borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-      {/* Header: icono + status + ETA */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: `12px ${px}` }}>
+      {/* Header row: icono + nombre/ETA + link seguimiento + chevron toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: `12px ${px}`, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: ribbon ? 0 : 12 }}
+      >
         <Motorbike size={17} style={{ color: isStuck ? stuckColor : 'var(--ink-2)', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>
-              {t.driver?.name || 'Motorista Delifast'}
-            </span>
-            <StatusBadge label={correctedLabel} color={activeColor} />
-          </div>
+        <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>
+            {t.driver?.name || 'Motorista Delifast'}
+          </span>
           {etaDisplay && (
-            <div style={{ fontSize: 12.5, color: 'var(--ink-2)', marginTop: 2 }}>{etaDisplay}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 1 }}>{etaDisplay}</div>
           )}
         </div>
-      </div>
+        {/* Link sutil de seguimiento */}
+        {trackingHref && (
+          <a
+            href={trackingHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, color: '#3b82f6', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            Seguimiento ↗
+          </a>
+        )}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+          style={{ color: 'var(--ink-3)', flexShrink: 0, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
 
-      {/* Alerta estado colgado */}
+      {/* Alerta estado colgado — visible siempre */}
       {isStuck && (
         <div style={{ margin: `0 ${px} 12px`, padding: '10px 12px', borderRadius: 10, background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.35)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.2" style={{ flexShrink: 0, marginTop: 1 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -228,38 +271,62 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         </div>
       )}
 
-      {/* Foto de entrega (prueba de entrega) */}
-      {t.deliveryPhoto && (
-        <div style={{ padding: `0 ${px} 12px`, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto de entrega</span>
-          <a href={t.deliveryPhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
-          </a>
-        </div>
-      )}
+      {/* Panel expandible con detalle Delifast */}
+      <div style={{ display: open ? 'flex' : 'none', flexDirection: 'column', gap: 12, padding: `12px ${px} 14px`, borderTop: '1px solid var(--line)' }}>
+        {/* Repartidor */}
+        {t.driver && (t.driver.name || t.driver.phone) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {t.driver.photo
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={t.driver.photo} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
+              : <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--sunk)', display: 'grid', placeItems: 'center', color: 'var(--ink-3)' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.4-3.6-8-8-8s-8 3.6-8 8z"/></svg>
+                </div>}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--ink)' }}>{t.driver.name || 'Repartidor'}</div>
+              {t.driver.phone && <div style={{ fontSize: 13, color: 'var(--ink-3)' }}>{t.driver.phone}</div>}
+            </div>
+          </div>
+        )}
 
-      {/* CTA: Seguimiento en vivo */}
-      {trackingHref && (
-        <div style={{ padding: `0 ${px} 14px` }}>
-          <a
-            href={trackingHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              width: '100%', padding: '10px 14px', borderRadius: 10,
-              background: '#3b82f6', color: '#fff', textDecoration: 'none',
-              fontFamily: 'var(--sans)', fontSize: 13.5, fontWeight: 700,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
-            </svg>
-            Seguimiento en vivo
-          </a>
+        {/* PIN de entrega */}
+        {t.pin && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>PIN de entrega</span>
+            <span style={{ fontFamily: 'var(--mono)', fontWeight: 800, fontSize: 18, letterSpacing: '.08em', color: 'var(--ink)', background: 'var(--sunk)', border: '1px solid var(--line)', borderRadius: 8, padding: '2px 10px' }}>{t.pin}</span>
+          </div>
+        )}
+
+        {/* Foto de entrega */}
+        {t.deliveryPhoto && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>Foto de entrega</span>
+            <a href={t.deliveryPhoto} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={t.deliveryPhoto} alt="Foto de la entrega al cliente" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--line)', display: 'block' }} />
+            </a>
+          </div>
+        )}
+
+        {/* Timeline */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(steps.length / 2)}, auto)`,
+          columnGap: 16, rowGap: 2,
+        }}>
+          {steps.map((s, i) => {
+            const done = !!s.ts
+            const isCancel = s.label === 'Cancelado'
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', minWidth: 0 }}>
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5, color: 'var(--ink-3)', minWidth: 40, flexShrink: 0 }}>{hm(s.ts) || '—'}</span>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: done ? (isCancel ? '#dc2626' : '#16a34a') : 'var(--line-strong)' }} />
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: done ? 'var(--ink)' : 'var(--ink-4)' }}>{s.label}</span>
+              </div>
+            )
+          })}
         </div>
-      )}
+      </div>
     </div>
   )
 }
