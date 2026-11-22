@@ -28,6 +28,8 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [checking, setChecking] = useState(false);
+  const [popularTopIds, setPopularTopIds] = useState<Set<string>>(new Set());
+  const [popularPairs, setPopularPairs] = useState<Record<string, string[]>>({});
 
   const checkAvailability = useCallback(async () => {
     const ids = [...new Set(items.map((i) => i.product_id))];
@@ -43,10 +45,21 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
     }
   }, [restaurantId, items]);
 
+  const loadPopularity = useCallback(async () => {
+    if (!restaurantId) return;
+    try {
+      const res = await fetch(`/api/ecommerce/popular-products?restaurantId=${restaurantId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setPopularTopIds(new Set(data.topIds ?? []));
+      setPopularPairs(data.pairs ?? {});
+    } catch { /* noop */ }
+  }, [restaurantId]);
+
   useEffect(() => {
-    if (open) checkAvailability();
+    if (open) { checkAvailability(); loadPopularity(); }
     else setUnavailableIds(new Set());
-  }, [open, checkAvailability]);
+  }, [open, checkAvailability, loadPopularity]);
 
   if (!open) return null;
 
@@ -170,10 +183,8 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
 
             {/* Cross-sell: sugerencias inteligentes */}
             {products && products.length > 0 && (() => {
-              const suggestions = getSuggestions(items, products);
+              const suggestions = getSuggestions(items, products, popularTopIds, popularPairs);
               if (!suggestions.length) return null;
-              // Marcar los 2 primeros como "Popular" (son los de mayor score = más pedidos/destacados)
-              const popularIds = new Set(suggestions.slice(0, 2).map(s => s.id));
               return (
                 <div className="border-t border-gray-100 px-4 py-3">
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Complementa tu pedido</p>
@@ -191,7 +202,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
                                 <UtensilsCrossed size={22} className="text-gray-300" strokeWidth={1.5} />
                               </div>
                             )}
-                            {popularIds.has(p.id) && (
+                            {popularTopIds.has(p.id) && (
                               <span className="absolute top-1 left-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-amber-400 text-amber-900 shadow-sm">Popular</span>
                             )}
                           </div>
@@ -275,52 +286,76 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
   );
 }
 
-/** Sugerencias inteligentes: productos de categorías diferentes a las del carrito,
- *  priorizados por popularidad real (frecuencia de pedido) y luego por imagen/precio. */
-function getSuggestions(cartItems: CartItem[], products: StoreProduct[], maxResults = 6): StoreProduct[] {
+/** Sugerencias inteligentes basadas en co-ocurrencia (qué se compra junto) y popularidad real.
+ *  Prioriza: productos que otros clientes compraron junto con lo que hay en el carrito,
+ *  luego productos populares de categorías diferentes. */
+function getSuggestions(
+  cartItems: CartItem[], products: StoreProduct[],
+  topIds: Set<string>, pairs: Record<string, string[]>,
+  maxResults = 6,
+): StoreProduct[] {
   if (!cartItems.length || !products.length) return [];
 
-  // IDs en carrito
   const cartIds = new Set(cartItems.map(i => i.product_id));
-  // Categorías en carrito
   const cartCatIds = new Set<string>();
   for (const item of cartItems) {
     const product = products.find(p => p.id === item.product_id);
     if (product) cartCatIds.add(product.category_id);
   }
 
-  // Candidatos: diferente categoría, no en carrito, disponible
+  const productMap = new Map(products.map(p => [p.id, p]));
+
+  // Paso 1: Co-ocurrencia — productos que otros compraron junto con los del carrito
+  const coScores = new Map<string, number>();
+  for (const item of cartItems) {
+    const pairIds = pairs[item.product_id];
+    if (!pairIds) continue;
+    for (let i = 0; i < pairIds.length; i++) {
+      const id = pairIds[i];
+      if (cartIds.has(id)) continue;
+      const p = productMap.get(id);
+      if (!p || p.is_sold_out || p.hidden) continue;
+      // Peso: posición en el ranking de pares (primero = más frecuente)
+      coScores.set(id, (coScores.get(id) ?? 0) + (pairIds.length - i));
+    }
+  }
+
+  // Paso 2: Candidatos de categorías diferentes (fallback si no hay co-ocurrencias)
   const candidates = products.filter(p =>
-    !cartIds.has(p.id) &&
-    !cartCatIds.has(p.category_id) &&
-    !p.is_sold_out &&
-    !p.hidden
+    !cartIds.has(p.id) && !cartCatIds.has(p.category_id) && !p.is_sold_out && !p.hidden
   );
 
-  if (!candidates.length) return [];
+  // Paso 3: Scoring combinado
+  const allCandidateIds = new Set([...coScores.keys(), ...candidates.map(p => p.id)]);
+  const scored: { product: StoreProduct; score: number }[] = [];
 
-  // Scoring: priorizar por señales de popularidad real
-  const scored = candidates.map(p => {
+  for (const id of allCandidateIds) {
+    const p = productMap.get(id);
+    if (!p || cartIds.has(id) || p.is_sold_out || p.hidden) continue;
+
     let score = 0;
-    // Producto con imagen (se ve mejor, más confiable)
-    if (p.image_url) score += 20;
-    // Destacado por el restaurante (decisión del dueño = popular en su criterio)
-    if (p.is_hero) score += 15;
-    // Sin modificadores obligatorios = add rápido (mejor UX)
-    if (!p.option_groups.some(g => g.min_select > 0)) score += 10;
-    // Precio accesible como complemento (< 60% del subtotal del carrito)
+    // Co-ocurrencia (señal más fuerte: otros clientes lo compraron junto)
+    score += (coScores.get(id) ?? 0) * 15;
+    // Popularidad real (top de adds al carrito en 30 días)
+    if (topIds.has(id)) score += 25;
+    // Tiene imagen
+    if (p.image_url) score += 10;
+    // Destacado por el restaurante
+    if (p.is_hero) score += 8;
+    // Sin modificadores obligatorios (1-click add)
+    if (!p.option_groups.some(g => g.min_select > 0)) score += 6;
+    // Precio accesible como complemento
     const cartAvg = cartItems.reduce((s, i) => s + i.unit_price, 0) / cartItems.length;
-    if (p.price < cartAvg * 0.6) score += 8;
-    // Badge nuevo o del día = novedad
-    if (p.new_badge) score += 5;
-    if (p.daily_badge) score += 5;
+    if (p.price < cartAvg * 0.6) score += 5;
     // Con descuento activo
-    if (p.original_price && p.original_price > p.price) score += 7;
-    return { product: p, score };
-  });
+    if (p.original_price && p.original_price > p.price) score += 4;
+    // Badge nuevo o del día
+    if (p.new_badge) score += 3;
+    if (p.daily_badge) score += 3;
 
-  // Ordenar por score desc, desempate aleatorio para variedad
-  scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
+    scored.push({ product: p, score });
+  }
 
+  scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, maxResults).map(s => s.product);
 }
