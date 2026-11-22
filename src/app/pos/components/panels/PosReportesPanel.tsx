@@ -3313,6 +3313,18 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             byDay: mergeByKey(valid.flatMap(r => r.byDay ?? []), 'ymd', ['sales', 'orders']).sort((a: any, b: any) => a.ymd.localeCompare(b.ymd)),
             byMonth: mergeByKey(valid.flatMap(r => r.byMonth ?? []), 'ym', ['sales', 'orders']).sort((a: any, b: any) => a.ym.localeCompare(b.ym)),
             byYear: mergeByKey(valid.flatMap(r => r.byYear ?? []), 'yr', ['sales', 'orders']).sort((a: any, b: any) => a.yr.localeCompare(b.yr)),
+            dineInStats: (() => {
+              const withDine = valid.filter(r => r.dineInStats && r.dineInStats.totalOrders > 0)
+              if (withDine.length === 0) return undefined
+              return {
+                totalOrders: withDine.reduce((s, r) => s + r.dineInStats!.totalOrders, 0),
+                totalSales: withDine.reduce((s, r) => s + r.dineInStats!.totalSales, 0),
+                avgTicket: (() => { const o = withDine.reduce((s, r) => s + r.dineInStats!.totalOrders, 0); const v = withDine.reduce((s, r) => s + r.dineInStats!.totalSales, 0); return o > 0 ? Math.round(v / o) : 0 })(),
+                tables: mergeByKey(withDine.flatMap(r => r.dineInStats?.tables ?? []), 'table', ['orders', 'sales']).sort((a: any, b: any) => b.orders - a.orders),
+                hourly: mergeByKey(withDine.flatMap(r => r.dineInStats?.hourly ?? []), 'hour', ['orders']).sort((a: any, b: any) => a.hour - b.hour),
+                history: withDine.flatMap(r => r.dineInStats?.history ?? []).sort((a: any, b: any) => new Date(b.openedAt ?? 0).getTime() - new Date(a.openedAt ?? 0).getTime()),
+              }
+            })(),
             deliveryTimes: (() => {
               const allOrders = valid.flatMap(r => r.deliveryTimes?.orders ?? []).sort((a, b) => {
                 if (a.totalMin == null && b.totalMin == null) return 0
