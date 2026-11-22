@@ -10,7 +10,7 @@ import { parseDeliveryZones, parseDeliveryConfig, computeDistanceFee } from "@/l
 import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } from "@/lib/ecommerce/uberDirect";
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
-import { isValidPhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
+import { isValidPhoneCL, normalizePhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -270,7 +270,7 @@ export async function POST(req: NextRequest) {
         restaurantId: restaurant.id,
         source: "ecommerce",
         customerName: String(customerName).trim(),
-        customerPhone: String(customerPhone).trim(),
+        customerPhone: normalizePhoneCL(customerPhone) || String(customerPhone).trim(),
         customerEmail: customerEmail?.trim() || null,
         orderType: orderType === "DELIVERY" ? "DELIVERY" : "PICKUP",
         deliveryAddress: deliveryAddress?.trim() || null,

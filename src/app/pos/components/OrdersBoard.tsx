@@ -1088,17 +1088,7 @@ export function OrderDetailPanel({
               ? <UberTracking key={order.id} order={order} ribbon />
               : isUberDirectCourier(order.courier)
               ? <UberDirectTracking key={order.id} order={order} ribbon />
-              : <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon />}
-          </div>
-        )}
-        {/* Ver el seguimiento tal como lo ve el cliente (página pública /track/<token>). */}
-        {isDelivery && order.trackingToken && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6 }}>
-            <a href={`/track/${order.trackingToken}`} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', textDecoration: 'none', padding: '4px 8px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              Ver como el cliente
-            </a>
+              : <DelifastTracking key={order.id} restaurantId={restaurantId} posOrderId={order.id} ribbon trackingToken={order.trackingToken} />}
           </div>
         )}
         {/* Dirección + hora */}

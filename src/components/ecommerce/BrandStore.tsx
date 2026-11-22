@@ -404,7 +404,7 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
                     const { latitude: lat, longitude: lng } = pos.coords;
                     // Intentar reverse geocode via Google
                     let address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    let parts: AddressParts = {};
+                    let parts: AddressParts = { street: "", comuna: "", city: "", region: "", country: "" };
                     let hasNumber = false;
                     try {
                       const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${brand.googleMapsKey}&language=es&region=cl`);

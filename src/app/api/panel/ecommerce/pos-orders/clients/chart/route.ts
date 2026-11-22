@@ -147,21 +147,26 @@ export async function GET(req: NextRequest) {
   const bucketExprCreatedAt = bucketExprForCol(`"createdAt"`, gran);
   const firstBucketExpr = bucketExprForCol(`fo.first_at`, gran);
 
-  // Combina PosOrder + OnlineOrder usando email (preferido) o teléfono como clave de cliente
+  // Combina PosOrder + OnlineOrder. Clave de cliente: email normalizado, o en su
+  // defecto los últimos 9 dígitos del teléfono (para agrupar +56912345678 con 912345678).
+  // NOTA: la agrupación transitiva email↔phone solo está en el endpoint principal
+  // de clientes (Union-Find en JS); aquí usamos la clave simple normalizada, que
+  // es suficiente una vez que el backfill de teléfonos se ejecute.
+  const phoneNorm = `RIGHT(REGEXP_REPLACE("customerPhone", '[^0-9]', '', 'g'), 9)`;
   const sql = `
     WITH
     all_orders AS (
       SELECT
-        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,
+        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) AS client_key,
         "createdAt"
       FROM "PosOrder"
       WHERE "restaurantId" IN (${idsLiteral})
         AND "posStatus" != 'canceled'
         AND "saleType" NOT IN ('dine-in', 'dinein', 'quick', 'QUICK')
-        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) IS NOT NULL
+        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) IS NOT NULL
       UNION ALL
       SELECT
-        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(TRIM("customerPhone"), '')) AS client_key,
+        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) AS client_key,
         "createdAt"
       FROM "OnlineOrder"
       WHERE "restaurantId" IN (${idsLiteral})

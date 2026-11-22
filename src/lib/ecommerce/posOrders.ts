@@ -4,6 +4,8 @@
 //  a multitenant (un local por token) y a montos enteros (CLP).
 // ═══════════════════════════════════════════════════════════
 
+import { normalizePhoneCL } from "@/lib/ecommerce/phoneCL";
+
 type AnyObj = Record<string, any>;
 
 /** Extrae la lista de pedidos del payload, tolerando las formas que manda Toteat:
@@ -249,7 +251,7 @@ export function mapToteatOrder(ord: AnyObj): MappedPosOrder | null {
     isDelivery,
     tableLabel,
     customerName,
-    customerPhone,
+    customerPhone: normalizePhoneCL(customerPhone) || customerPhone,
     addressLine,
     totalAmount: r(totalAmount),
     paidAmount: r(sumPaid),

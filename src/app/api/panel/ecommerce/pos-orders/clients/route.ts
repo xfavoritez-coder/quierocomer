@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { isSuperAdmin } from "@/lib/adminAuth";
+import { phoneKey } from "@/lib/ecommerce/phoneCL";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,7 +145,13 @@ export async function GET(req: NextRequest) {
     _cache.set(cacheKey, { ts: nowMs, data: orders });
   }
 
-  // ── Agrupar por cliente ─────────────────────────────────────────────
+  // ── Agrupar por cliente (Union-Find transitivo) ────────────────────
+  // Dos pedidos pertenecen al mismo cliente si comparten:
+  //   • mismo email (normalizado), O
+  //   • mismo teléfono (normalizado a 9 dígitos)
+  // La relación es transitiva: si A comparte email con B y B comparte
+  // teléfono con C, los tres se fusionan en un único perfil.
+
   function extractItemNames(items: unknown): string[] {
     if (!Array.isArray(items)) return [];
     return items.map((it) => {
@@ -155,18 +162,60 @@ export async function GET(req: NextRequest) {
     }).flat();
   }
 
-  const clientMap = new Map<string, {
+  // Union-Find
+  const parent: number[] = [];
+  const rank: number[] = [];
+  function makeSet() { const i = parent.length; parent.push(i); rank.push(0); return i; }
+  function find(x: number): number { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+  function union(a: number, b: number) {
+    const ra = find(a), rb = find(b);
+    if (ra === rb) return;
+    if (rank[ra] < rank[rb]) parent[ra] = rb;
+    else if (rank[ra] > rank[rb]) parent[rb] = ra;
+    else { parent[rb] = ra; rank[ra]++; }
+  }
+
+  // Asignar un índice UF a cada pedido y construir mapas de lookup
+  const emailToIdx = new Map<string, number>();  // email → primer índice
+  const phoneToIdx = new Map<string, number>();  // phoneKey → primer índice
+
+  for (let i = 0; i < orders.length; i++) {
+    makeSet();
+    const o = orders[i];
+    const em = o.email.trim().toLowerCase();
+    const pk = phoneKey(o.phone);
+
+    // Fusionar por email compartido
+    if (em) {
+      const prev = emailToIdx.get(em);
+      if (prev !== undefined) union(i, prev);
+      else emailToIdx.set(em, i);
+    }
+    // Fusionar por teléfono compartido
+    if (pk) {
+      const prev = phoneToIdx.get(pk);
+      if (prev !== undefined) union(i, prev);
+      else phoneToIdx.set(pk, i);
+    }
+  }
+
+  // Agrupar pedidos por raíz UF → un cliente por cluster
+  type ClientAcc = {
     email: string; name: string; phone: string;
     orders: number; totalSpent: number;
     firstAt: Date; lastAt: Date; dates: Date[];
     productCounts: Map<string, number>;
-  }>();
+  };
+  const clientMap = new Map<number, ClientAcc>();
 
-  for (const o of orders) {
-    const key = o.email.trim().toLowerCase() || o.phone.trim() || "";
-    if (!key) continue;
+  for (let i = 0; i < orders.length; i++) {
+    const o = orders[i];
+    const em = o.email.trim().toLowerCase();
+    const pk = phoneKey(o.phone);
+    if (!em && !pk) continue; // sin identificador → skip
+    const root = find(i);
     const itemNames = extractItemNames(o.items);
-    const existing = clientMap.get(key);
+    const existing = clientMap.get(root);
     if (existing) {
       existing.orders++;
       existing.totalSpent += o.net;
@@ -175,13 +224,15 @@ export async function GET(req: NextRequest) {
         if (o.name)  existing.name  = o.name;
         if (o.phone) existing.phone = o.phone;
       }
+      // Preferir email si no tenía uno
+      if (em && !existing.email) existing.email = em;
       existing.dates.push(o.createdAt);
       for (const n of itemNames) existing.productCounts.set(n, (existing.productCounts.get(n) ?? 0) + 1);
     } else {
       const productCounts = new Map<string, number>();
       for (const n of itemNames) productCounts.set(n, (productCounts.get(n) ?? 0) + 1);
-      clientMap.set(key, {
-        email: o.email.trim().toLowerCase() || "",
+      clientMap.set(root, {
+        email: em,
         name:  o.name  || "",
         phone: o.phone || "",
         orders: 1, totalSpent: o.net,

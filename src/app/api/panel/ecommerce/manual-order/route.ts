@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { dispatchOrderToPos } from "@/lib/ecommerce/pos";
 import { mirrorOnlineOrderToCentro } from "@/lib/ecommerce/centroMirror";
+import { normalizePhoneCL } from "@/lib/ecommerce/phoneCL";
 
 export const runtime = "nodejs";
 
@@ -132,7 +133,7 @@ export async function POST(req: NextRequest) {
         source: "ecommerce",
         channel: "manual", // creado desde el tomador de pedidos (no es de la tienda pública)
         customerName: effectiveName,
-        customerPhone: customerPhone?.trim() || "",
+        customerPhone: normalizePhoneCL(customerPhone) || customerPhone?.trim() || "",
         customerEmail: null,
         orderType: isDelivery ? "DELIVERY" : "PICKUP",
         deliveryAddress: isDelivery ? (deliveryAddress?.trim() || null) : null,
