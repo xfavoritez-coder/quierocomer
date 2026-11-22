@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
     ? r.ecommerceStoreConfig as Record<string, unknown> : {};
   const recovery = (cfg.recovery && typeof cfg.recovery === "object") ? cfg.recovery as Record<string, unknown> : {};
 
-  return NextResponse.json({ enabled: recovery.enabled === true });
+  const incentive = (recovery.recoveryIncentive && typeof recovery.recoveryIncentive === "object")
+    ? recovery.recoveryIncentive as Record<string, unknown> : {};
+
+  return NextResponse.json({ enabled: recovery.enabled === true, couponPercent: Number(incentive.couponPercent) || 15 });
 }
 
 export async function PUT(req: NextRequest) {
@@ -35,7 +38,6 @@ export async function PUT(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await req.json();
-  const enabled = body.enabled === true;
 
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceStoreConfig: true } });
   const cfg = (r?.ecommerceStoreConfig && typeof r.ecommerceStoreConfig === "object" && !Array.isArray(r.ecommerceStoreConfig))
@@ -43,10 +45,20 @@ export async function PUT(req: NextRequest) {
 
   const recovery = (cfg.recovery && typeof cfg.recovery === "object")
     ? { ...(cfg.recovery as Record<string, unknown>) } : {};
-  recovery.enabled = enabled;
+
+  if (typeof body.enabled === "boolean") recovery.enabled = body.enabled;
+  if (typeof body.couponPercent === "number") {
+    const pct = Math.min(50, Math.max(5, Math.round(body.couponPercent)));
+    const incentive = (recovery.recoveryIncentive && typeof recovery.recoveryIncentive === "object")
+      ? { ...(recovery.recoveryIncentive as Record<string, unknown>) } : {};
+    incentive.couponPercent = pct;
+    recovery.recoveryIncentive = incentive;
+  }
   cfg.recovery = recovery;
 
   await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceStoreConfig: cfg as object } });
 
-  return NextResponse.json({ ok: true, enabled });
+  const incentive = (recovery.recoveryIncentive && typeof recovery.recoveryIncentive === "object")
+    ? recovery.recoveryIncentive as Record<string, unknown> : {};
+  return NextResponse.json({ ok: true, enabled: recovery.enabled === true, couponPercent: Number(incentive.couponPercent) || 15 });
 }

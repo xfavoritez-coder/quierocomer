@@ -51,7 +51,9 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
   const [data, setData] = useState<RecoveryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [couponPercent, setCouponPercent] = useState(15)
   const [toggling, setToggling] = useState(false)
+  const [savingPercent, setSavingPercent] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -60,9 +62,21 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
       fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
     ]).then(([d, s]) => {
       if (d) setData(d)
-      if (s) setEnabled(s.enabled)
+      if (s) { setEnabled(s.enabled); if (s.couponPercent) setCouponPercent(s.couponPercent) }
     }).finally(() => setLoading(false))
   }, [restaurantId])
+
+  const saveCouponPercent = async (pct: number) => {
+    setSavingPercent(true)
+    try {
+      await fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponPercent: pct }),
+      })
+      setCouponPercent(pct)
+    } catch { /* noop */ }
+    setSavingPercent(false)
+  }
 
   const toggleEnabled = async () => {
     setToggling(true)
@@ -118,6 +132,34 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
           }} />
         </button>
       </div>
+
+      {/* Config cupón */}
+      {enabled && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+          <div>
+            <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>Descuento de recuperación</div>
+            <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>Cupón que se envía a clientes inactivos como último intento</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {[10, 15, 20, 25].map(pct => (
+              <button
+                key={pct}
+                onClick={() => saveCouponPercent(pct)}
+                disabled={savingPercent}
+                style={{
+                  padding: '6px 10px', borderRadius: 8, fontFamily: 'var(--mono)', fontSize: '0.78rem', fontWeight: 800,
+                  border: couponPercent === pct ? '2px solid var(--ink)' : '1.5px solid var(--line)',
+                  background: couponPercent === pct ? 'var(--ink)' : 'var(--surface)',
+                  color: couponPercent === pct ? '#fff' : 'var(--ink-2)',
+                  cursor: savingPercent ? 'default' : 'pointer', opacity: savingPercent ? 0.5 : 1,
+                }}
+              >
+                {pct}%
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
