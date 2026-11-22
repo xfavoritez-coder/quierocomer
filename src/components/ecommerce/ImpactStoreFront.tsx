@@ -428,7 +428,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
           window.history.replaceState(null, "", storeBase || "/");
         } catch { /* noop */ }
       }} />}
-      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={accent} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} />
+      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={accent} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} products={products} categories={categories} onOpenProduct={(p) => { setCartDrawerOpen(false); setTimeout(() => setSelectedProduct(p), 150); }} />
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
     </div>

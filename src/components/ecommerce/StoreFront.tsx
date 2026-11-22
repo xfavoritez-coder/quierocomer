@@ -640,7 +640,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
       )}
 
       {/* Cart drawer */}
-      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={primaryColor} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} />
+      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={primaryColor} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} products={products} categories={categories} onOpenProduct={openProduct} />
 
       {/* Modal delivery/retiro */}
       {deliveryModalOpen && (

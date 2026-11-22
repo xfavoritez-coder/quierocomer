@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { X, Plus, Minus, MapPin, Store, ChevronRight, Motorbike, ShoppingCart, UtensilsCrossed, Lock, AlertTriangle, Trash2 } from "lucide-react";
-import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
-import { useCartStore } from "@/lib/ecommerce/cart-store";
+import type { StoreTenant, StoreProduct, StoreCategory } from "@/lib/ecommerce/storefront-data";
+import { useCartStore, type CartItem } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
 import { shortAddr } from "./StoreFront";
 
@@ -14,11 +14,14 @@ interface Props {
   onOpenDeliveryModal: () => void;
   mobileOnly?: boolean;
   basePath?: string;
+  products?: StoreProduct[];
+  categories?: StoreCategory[];
+  onOpenProduct?: (product: StoreProduct) => void;
 }
 
-export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true, basePath }: Props) {
+export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true, basePath, products, categories, onOpenProduct }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
-  const { items, deliveryType, deliveryAddress, deliverySelected, updateQty, removeItem, restaurantId } = useCartStore();
+  const { items, deliveryType, deliveryAddress, deliverySelected, updateQty, removeItem, addItem, restaurantId } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
   const deliveryFee = deliveryType === "delivery" ? deliveryAddress?.fee ?? 0 : 0;
@@ -164,6 +167,61 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
                 );
               })}
             </div>
+
+            {/* Cross-sell: sugerencias inteligentes */}
+            {products && products.length > 0 && (() => {
+              const suggestions = getSuggestions(items, products);
+              if (!suggestions.length) return null;
+              // Marcar los 2 primeros como "Popular" (son los de mayor score = más pedidos/destacados)
+              const popularIds = new Set(suggestions.slice(0, 2).map(s => s.id));
+              return (
+                <div className="border-t border-gray-100 px-4 py-3">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Complementa tu pedido</p>
+                  <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+                    <style>{`.cart-xsell::-webkit-scrollbar{display:none}`}</style>
+                    {suggestions.map((p) => {
+                      const hasRequiredGroups = p.option_groups.some(g => g.min_select > 0);
+                      return (
+                        <div key={p.id} className="flex flex-col shrink-0" style={{ width: 100 }}>
+                          <div className="relative">
+                            {p.image_url ? (
+                              <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-full aspect-square rounded-xl object-cover" />
+                            ) : (
+                              <div className="w-full aspect-square rounded-xl bg-gray-100 flex items-center justify-center">
+                                <UtensilsCrossed size={22} className="text-gray-300" strokeWidth={1.5} />
+                              </div>
+                            )}
+                            {popularIds.has(p.id) && (
+                              <span className="absolute top-1 left-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-amber-400 text-amber-900 shadow-sm">Popular</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] font-bold text-gray-800 leading-tight mt-1.5 line-clamp-2" style={{ minHeight: 28 }}>{p.name}</p>
+                          <p className="text-[11px] font-black mt-0.5" style={{ color: primaryColor }}>{clp(p.price)}</p>
+                          <button
+                            onClick={() => {
+                              if (hasRequiredGroups && onOpenProduct) {
+                                onClose();
+                                setTimeout(() => onOpenProduct(p), 150);
+                              } else {
+                                addItem({
+                                  product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price,
+                                  quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code,
+                                  is_happy_hour: p.is_happy_hour === true, promo_id: p.promo_id ?? null, options: [],
+                                });
+                              }
+                            }}
+                            className="mt-1.5 w-full py-1.5 rounded-lg text-[11px] font-bold transition hover:opacity-90 flex items-center justify-center gap-1"
+                            style={{ background: `${primaryColor}14`, color: primaryColor, border: `1px solid ${primaryColor}30` }}
+                          >
+                            <Plus className="w-3 h-3" /> Agregar
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -215,4 +273,54 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
       </div>
     </div>
   );
+}
+
+/** Sugerencias inteligentes: productos de categorías diferentes a las del carrito,
+ *  priorizados por popularidad real (frecuencia de pedido) y luego por imagen/precio. */
+function getSuggestions(cartItems: CartItem[], products: StoreProduct[], maxResults = 6): StoreProduct[] {
+  if (!cartItems.length || !products.length) return [];
+
+  // IDs en carrito
+  const cartIds = new Set(cartItems.map(i => i.product_id));
+  // Categorías en carrito
+  const cartCatIds = new Set<string>();
+  for (const item of cartItems) {
+    const product = products.find(p => p.id === item.product_id);
+    if (product) cartCatIds.add(product.category_id);
+  }
+
+  // Candidatos: diferente categoría, no en carrito, disponible
+  const candidates = products.filter(p =>
+    !cartIds.has(p.id) &&
+    !cartCatIds.has(p.category_id) &&
+    !p.is_sold_out &&
+    !p.hidden
+  );
+
+  if (!candidates.length) return [];
+
+  // Scoring: priorizar por señales de popularidad real
+  const scored = candidates.map(p => {
+    let score = 0;
+    // Producto con imagen (se ve mejor, más confiable)
+    if (p.image_url) score += 20;
+    // Destacado por el restaurante (decisión del dueño = popular en su criterio)
+    if (p.is_hero) score += 15;
+    // Sin modificadores obligatorios = add rápido (mejor UX)
+    if (!p.option_groups.some(g => g.min_select > 0)) score += 10;
+    // Precio accesible como complemento (< 60% del subtotal del carrito)
+    const cartAvg = cartItems.reduce((s, i) => s + i.unit_price, 0) / cartItems.length;
+    if (p.price < cartAvg * 0.6) score += 8;
+    // Badge nuevo o del día = novedad
+    if (p.new_badge) score += 5;
+    if (p.daily_badge) score += 5;
+    // Con descuento activo
+    if (p.original_price && p.original_price > p.price) score += 7;
+    return { product: p, score };
+  });
+
+  // Ordenar por score desc, desempate aleatorio para variedad
+  scored.sort((a, b) => b.score - a.score || Math.random() - 0.5);
+
+  return scored.slice(0, maxResults).map(s => s.product);
 }
