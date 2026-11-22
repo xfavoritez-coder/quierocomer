@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   // Enrollments (de toda la marca)
   const enrollments = await prisma.recoveryEnrollment.findMany({
     where: { restaurantId: { in: allIds } },
-    select: { automation: true, status: true, sentAt: true, convertedAt: true, convertedOrderId: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true },
+    select: { automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true },
     orderBy: { createdAt: "desc" },
     take: 500,
   });
@@ -93,13 +93,17 @@ export async function GET(req: NextRequest) {
       answeredAt: e.surveyAnsweredAt?.toISOString() || e.createdAt.toISOString(),
     }));
 
-  // Actividad reciente (últimos 20)
-  const recent = enrollments.slice(0, 20).map(e => ({
+  // Actividad reciente (últimos 30)
+  const recent = enrollments.slice(0, 30).map(e => ({
     automation: e.automation,
     status: e.status,
     customerName: e.customerName,
     customerEmail: e.customerEmail,
+    couponCode: e.couponCode || null,
+    surveyReason: e.surveyReason || null,
     sentAt: e.sentAt?.toISOString() || null,
+    openedAt: e.openedAt?.toISOString() || null,
+    clickedAt: e.clickedAt?.toISOString() || null,
     convertedAt: e.convertedAt?.toISOString() || null,
     createdAt: e.createdAt.toISOString(),
   }));

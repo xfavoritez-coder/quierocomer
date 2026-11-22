@@ -15,7 +15,7 @@ interface RecoveryData {
   reasons: Record<string, number>
   surveyResponses: { customerName: string | null; customerEmail: string; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
-  recent: { automation: string; status: string; customerName: string | null; customerEmail: string; sentAt: string | null; convertedAt: string | null; createdAt: string }[]
+  recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
   atRiskClients: { email: string; name: string; phone: string; orders: number; avgTicket: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; topProduct: string | null }[]
 }
 
@@ -298,25 +298,43 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
         )}
       </div>
 
-      {/* Actividad reciente */}
+      {/* Emails enviados */}
       {data.recent.length > 0 && (
         <div>
-          <SectionLabel>Actividad reciente</SectionLabel>
+          <SectionLabel>Emails enviados ({data.recent.length})</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {data.recent.map((r, i) => {
               const st = STATUS_LABELS[r.status] || { label: r.status, color: '#94a3b8' }
+              const isCoupon = r.automation === 'recovery_incentive'
+              const steps: string[] = []
+              if (r.sentAt) steps.push('Enviado')
+              if (r.openedAt) steps.push('Abierto')
+              if (r.clickedAt) steps.push('Click')
+              if (r.surveyReason) steps.push(`Respondió: ${REASON_LABELS[r.surveyReason] || r.surveyReason}`)
+              if (r.convertedAt) steps.push('Volvió a comprar')
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: st.color + '18', color: st.color, textTransform: 'uppercase', letterSpacing: '.03em', flexShrink: 0 }}>
-                    {st.label}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)' }}>{r.customerName || r.customerEmail}</span>
-                    <span style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)', marginLeft: 6 }}>{AUTOMATION_LABELS[r.automation] || r.automation}</span>
+                <div key={i} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: st.color + '18', color: st.color, textTransform: 'uppercase', letterSpacing: '.03em', flexShrink: 0 }}>
+                      {st.label}
+                    </span>
+                    <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.customerName || r.customerEmail}
+                    </span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '0.7rem', color: 'var(--ink-3)', flexShrink: 0 }}>
+                      {new Date(r.sentAt || r.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                    </span>
                   </div>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink-3)', flexShrink: 0 }}>
-                    {new Date(r.sentAt || r.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-3)' }}>
+                      {isCoupon ? `Cupón ${r.couponCode || ''}` : 'Encuesta abandono'}
+                    </span>
+                    {steps.length > 0 && (
+                      <span style={{ fontSize: '0.68rem', color: 'var(--ink-4)' }}>
+                        · {steps.join(' → ')}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}
