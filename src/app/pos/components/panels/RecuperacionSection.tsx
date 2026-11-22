@@ -49,14 +49,31 @@ const REASON_LABELS: Record<string, string> = {
 export default function RecuperacionSection({ restaurantId }: { restaurantId: string; allBranches?: { id: string }[] }) {
   const [data, setData] = useState<RecoveryData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [toggling, setToggling] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setData(d) })
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch(`/api/panel/ecommerce/recovery?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`).then(r => r.ok ? r.json() : null),
+    ]).then(([d, s]) => {
+      if (d) setData(d)
+      if (s) setEnabled(s.enabled)
+    }).finally(() => setLoading(false))
   }, [restaurantId])
+
+  const toggleEnabled = async () => {
+    setToggling(true)
+    try {
+      const res = await fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !enabled }),
+      })
+      if (res.ok) { const d = await res.json(); setEnabled(d.enabled) }
+    } catch { /* noop */ }
+    setToggling(false)
+  }
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
@@ -76,6 +93,31 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Toggle activar/desactivar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+        <div>
+          <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Recuperación Inteligente</div>
+          <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)', marginTop: 2 }}>
+            {enabled ? 'Activo — se envían emails automáticos a clientes inactivos' : 'Desactivado — no se envían emails'}
+          </div>
+        </div>
+        <button
+          onClick={toggleEnabled}
+          disabled={toggling || enabled === null}
+          style={{
+            width: 48, height: 28, borderRadius: 14, border: 'none', cursor: toggling ? 'default' : 'pointer',
+            background: enabled ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative', flexShrink: 0,
+            opacity: toggling ? 0.5 : 1,
+          }}
+        >
+          <span style={{
+            position: 'absolute', top: 2, left: enabled ? 22 : 2,
+            width: 24, height: 24, borderRadius: '50%', background: '#fff',
+            boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s',
+          }} />
+        </button>
+      </div>
+
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <KPI label="En riesgo" value={k.atRisk + k.churned} sub={`${k.atRiskWithEmail + k.churnedWithEmail} con email`} color="#f59e0b" />
