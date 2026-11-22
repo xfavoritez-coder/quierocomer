@@ -5,6 +5,7 @@ import { ShoppingCart, Search, Plus, Minus, X, MapPin, Store, ChevronDown, Chevr
 import CustomerMenu, { type CustomerMenuView } from "./CustomerMenu";
 import StoreBottomNav from "./StoreBottomNav";
 import StoreFooter from "./StoreFooter";
+import CartDrawer from "./CartDrawer";
 import type { StoreTenant, StoreCategory, StoreProduct, BrandBranch } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
 import { clp, slugify } from "@/lib/ecommerce/format";
@@ -90,6 +91,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const selectedProductRef = useRef<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<CustomerMenuView>("root");
   const [menuLoginExpanded, setMenuLoginExpanded] = useState(false);
@@ -203,13 +205,13 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
     setDeliveryModalOpen(true);
   }, [brandMode, brandControls]);
 
-  // Ir al checkout: en modo marca sin sucursal, primero se elige sucursal.
-  const goCheckout = useCallback(() => {
+  // Abrir carrito: en modo marca sin sucursal, primero se elige sucursal.
+  const openCart = useCallback(() => {
     if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
     const cartValue = useCartStore.getState().subtotal?.() ?? 0;
     trackCartView(tenant.id, useCartStore.getState().itemCount(), cartValue);
-    window.location.href = `${storeBase}/checkout`;
-  }, [brandMode, hasBranch, brandControls, storeBase, tenant.id]);
+    setCartDrawerOpen(true);
+  }, [brandMode, hasBranch, brandControls, tenant.id]);
 
   // Si se llega con ?menu=<vista> (p.ej. desde la página de seguimiento del
   // pedido), abrir el menú en esa vista y limpiar la URL para que no reabra al
@@ -603,7 +605,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
               mounted={mounted}
               storeBase={storeBase}
               onOpenDeliveryModal={openDelivery}
-              onCheckout={goCheckout}
+              onCheckout={() => { window.location.href = `${storeBase}/checkout`; }}
             />
           </div>
         </div>
@@ -637,6 +639,9 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         />
       )}
 
+      {/* Cart drawer */}
+      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={primaryColor} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} />
+
       {/* Modal delivery/retiro */}
       {deliveryModalOpen && (
         <DeliveryModal tenant={tenant} primaryColor={primaryColor} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />
@@ -657,7 +662,7 @@ export default function StoreFront({ tenant, categories, products, basePath, bra
         cartBump={cartBump}
         onHome={() => { setActiveTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
         onFavorites={() => { if (loggedIn === false) { promptLogin(""); return; } setActiveTab("favorites"); openMenu("favorites"); }}
-        onCart={goCheckout}
+        onCart={openCart}
         onContact={() => { setActiveTab("contact"); openMenu("contact"); }}
         onProfile={() => { setActiveTab("profile"); openMenu("root"); }}
       />

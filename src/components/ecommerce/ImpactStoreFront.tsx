@@ -18,6 +18,7 @@ import CustomerMenu from "./CustomerMenu";
 import StoreStyles from "./StoreStyles";
 import ImpactSkin from "./ImpactSkin";
 import { DeliveryModal } from "./StoreFront";
+import CartDrawer from "./CartDrawer";
 
 interface Props {
   tenant: StoreTenant;
@@ -35,11 +36,12 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
   const accent = tenant.primaryColor;
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
   const communeSlug = tenant.commune ? slugify(tenant.commune) : "";
-  const goCheckout = () => { window.location.href = `${storeBase}/checkout`; };
+  const openCart = () => setCartDrawerOpen(true);
   useFavicon(tenant.faviconUrl || tenant.logoUrl);
 
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("");
   const [search, setSearch] = useState("");
@@ -254,7 +256,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
             ? <img src={tenant.logoUrl} alt={tenant.name} style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
             : <div style={{ width: 36, height: 36, borderRadius: 10, background: accent, display: "grid", placeItems: "center", fontWeight: 800, color: "#0e0e0e" }}>{tenant.name.charAt(0).toUpperCase()}</div>}
           <span style={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 18, color: "#fff", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tenant.name}</span>
-          <button onClick={goCheckout} aria-label="Carrito" style={{
+          <button onClick={openCart} aria-label="Carrito" style={{
             position: "relative", width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0,
             background: mounted && itemCount > 0 ? `color-mix(in srgb, ${accent} 55%, rgba(255,255,255,0.10))` : "rgba(255,255,255,0.12)",
             border: mounted && itemCount > 0 ? `1px solid color-mix(in srgb, ${accent} 38%, rgba(255,255,255,0.24))` : "1px solid rgba(255,255,255,0.16)",
@@ -401,7 +403,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
       {mounted && itemCount > 0 && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, padding: "12px 16px", paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))", background: "transparent", pointerEvents: "none", display: "flex", justifyContent: "center" }}>
           {/* Botón flotante liquid glass (sin recuadro de fondo) */}
-          <button onClick={goCheckout} style={{
+          <button onClick={openCart} style={{
             pointerEvents: "auto", width: "auto", maxWidth: "96%", padding: "15px 34px", borderRadius: 999,
             display: "flex", justifyContent: "center", gap: 38, alignItems: "center", cursor: "pointer", color: "#fff", fontFamily: FB,
             background: `color-mix(in srgb, ${accent} 26%, rgba(255,255,255,0.10))`,
@@ -426,6 +428,7 @@ export default function ImpactStoreFront({ tenant, categories, products, basePat
           window.history.replaceState(null, "", storeBase || "/");
         } catch { /* noop */ }
       }} />}
+      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={accent} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} />
       {deliveryModalOpen && <DeliveryModal tenant={tenant} primaryColor={accent} onClose={() => setDeliveryModalOpen(false)} siblings={siblings} />}
       {menuOpen && <CustomerMenu tenant={tenant} primaryColor={accent} onClose={() => setMenuOpen(false)} side="left" products={products} />}
     </div>

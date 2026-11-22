@@ -12,6 +12,7 @@ import StoreStyles from "./StoreStyles";
 import { trackStoreView, trackDishView, trackCartAdd, trackCartView, trackSessionEnd, trackScrollCategory, trackSearch, trackModifierOpen } from "@/lib/ecommerce/storeAnalytics";
 import { type BrandControls, shortAddr, DeliveryModal } from "./StoreFront";
 import StoreFooter from "./StoreFooter";
+import CartDrawer from "./CartDrawer";
 import { useGoogleMaps } from "@/lib/ecommerce/useGoogleMaps";
 
 const MODERN_SANS = "'DM Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -113,6 +114,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
     viewedCatIdsRef.current.add(categoryId);
   }, [VIEWED_KEY]);
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<CustomerMenuView>("root");
   const [menuLoginExpanded, setMenuLoginExpanded] = useState(false);
@@ -238,12 +240,12 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
     setDeliveryModalOpen(true);
   }, [brandMode, brandControls]);
 
-  const goCheckout = useCallback(() => {
+  const openCart = useCallback(() => {
     if (brandMode && !hasBranch) { brandControls!.onRequireBranch(null); return; }
     const cartValue = useCartStore.getState().subtotal?.() ?? 0;
     trackCartView(tenant.id, useCartStore.getState().itemCount(), cartValue);
-    window.location.href = `${storeBase}/checkout`;
-  }, [brandMode, hasBranch, brandControls, storeBase, tenant.id]);
+    setCartDrawerOpen(true);
+  }, [brandMode, hasBranch, brandControls, tenant.id]);
 
   // Open menu from URL param
   useEffect(() => {
@@ -571,7 +573,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
             <button onClick={() => loggedIn ? openMenu("root") : setLoginModalOpen(true)} aria-label="Mi cuenta" className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
               <User className="w-[22px] h-[22px]" />
             </button>
-            <button onClick={goCheckout} aria-label="Ver carrito" className={`w-10 h-10 flex items-center justify-center rounded-lg transition relative ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
+            <button onClick={openCart} aria-label="Ver carrito" className={`w-10 h-10 flex items-center justify-center rounded-lg transition relative ${headerDark ? "text-white hover:bg-white/15" : "text-gray-700 hover:bg-black/5"}`}>
               <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
                 <ShoppingCart className="w-[22px] h-[22px]" />
                 {badge > 0 && <span className="absolute -top-1.5 -right-2 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow bg-red-500">{badge}</span>}
@@ -644,7 +646,7 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           </button>
 
           {/* Cart */}
-          <button onClick={goCheckout} aria-label="Ver carrito" className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg transition relative ${headerDark ? "text-white hover:bg-white/15" : "text-gray-600 hover:bg-black/5"}`}>
+          <button onClick={openCart} aria-label="Ver carrito" className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-lg transition relative ${headerDark ? "text-white hover:bg-white/15" : "text-gray-600 hover:bg-black/5"}`}>
             <span className={`relative inline-flex ${cartBump ? "cart-bump" : ""}`}>
               <ShoppingCart className="w-[18px] h-[18px]" />
               {badge > 0 && <span className="absolute -top-1.5 -right-2 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow bg-red-500">{badge}</span>}
@@ -964,6 +966,9 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
           onIntercept={() => { const p = selectedProduct; setSelectedProduct(null); brandControls!.onRequireBranch(p); }}
         />
       )}
+
+      {/* ── Cart drawer ────── */}
+      <CartDrawer open={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} tenant={tenant} primaryColor={primaryColor} onOpenDeliveryModal={() => { setCartDrawerOpen(false); setDeliveryModalOpen(true); }} mobileOnly={false} basePath={storeBase} />
 
       {/* ── Delivery modal ────── */}
       {deliveryModalOpen && (
