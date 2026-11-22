@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/billing-recovery",
       "schedule": "0 9,21 * * *"
+    },
+    {
+      "path": "/api/cron/customer-recovery",
+      "schedule": "0 14 * * *"
     }
   ]
 }
