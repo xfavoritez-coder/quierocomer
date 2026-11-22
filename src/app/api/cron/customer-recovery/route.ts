@@ -152,7 +152,10 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, sent: totalSent, skipped: totalSkipped, converted: totalConverted, errors: errors.length });
 }
 
-/** Decide qué automatización aplicar a un cliente (o null si ninguna). */
+/** Decide qué automatización aplicar a un cliente (o null si ninguna).
+ *  Respeta la frecuencia natural del cliente: si pide cada 30 días y lleva 45,
+ *  no es anormal todavía. Solo contactar si lleva al menos 2x su frecuencia
+ *  habitual O si no tiene frecuencia conocida y supera el umbral de config. */
 function pickAutomation(
   client: ClientRow,
   rc: RecoveryConfig,
@@ -160,12 +163,23 @@ function pickAutomation(
   hasEnrollment: Set<string>,
   hasAbandonment: Set<string>,
 ): Automation | null {
+  // Verificar que la inactividad sea real respecto a su frecuencia natural.
+  // Si el cliente tiene frecuencia conocida, debe llevar al menos 2.5x su frecuencia.
+  // Si no tiene frecuencia (1 pedido), usar el umbral de config directamente.
+  const freq = client.avgFrequencyDays;
+  const minDaysForContact = freq
+    ? Math.max(rc.abandonmentSurvey.daysInactive, Math.round(freq * 2.5))
+    : rc.abandonmentSurvey.daysInactive;
+
   // Encuesta de abandono
-  if (rc.abandonmentSurvey.enabled && client.status === "churned" && client.daysSinceLastOrder >= rc.abandonmentSurvey.daysInactive) {
+  if (rc.abandonmentSurvey.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysForContact && client.orders >= 2) {
     if (!hasEnrollment.has(`${email}::abandonment_survey`)) return "abandonment_survey";
   }
-  // Incentivo de recuperación (solo si ya recibió encuesta de abandono)
-  if (rc.recoveryIncentive.enabled && client.status === "churned" && client.daysSinceLastOrder >= rc.recoveryIncentive.daysInactive) {
+  // Incentivo de recuperación (solo si ya recibió encuesta de abandono, 15 días después)
+  const minDaysIncentive = freq
+    ? Math.max(rc.recoveryIncentive.daysInactive, Math.round(freq * 3))
+    : rc.recoveryIncentive.daysInactive;
+  if (rc.recoveryIncentive.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysIncentive && client.orders >= 2) {
     if (hasAbandonment.has(email) && !hasEnrollment.has(`${email}::recovery_incentive`)) return "recovery_incentive";
   }
   return null;

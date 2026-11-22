@@ -1,13 +1,20 @@
 // Email de recuperación: encuesta de abandono con razones clickeables inline.
-// Cada razón es un link que lleva a la página con la respuesta pre-seleccionada.
-import { wrapRecoveryEmail, firstName, esc } from "./shared";
+// Header copiado del surveyEmail.ts para consistencia visual.
+
+function esc(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+function firstName(name?: string | null): string {
+  return (name || "").trim().split(/\s+/)[0] || "";
+}
 
 interface Args {
   storeName: string;
   logoUrl?: string | null;
   accent: string;
   customerName?: string | null;
-  surveyUrl: string; // /encuesta-abandono/[enrollmentId]
+  surveyUrl: string;
   trackOpenUrl?: string | null;
   unsubscribeUrl?: string | null;
 }
@@ -23,40 +30,65 @@ const REASONS = [
 
 export function abandonmentSurveySubject(args: Pick<Args, "customerName" | "storeName">): string {
   const name = firstName(args.customerName);
-  return name
-    ? `${name}, tu opinión nos importa mucho 🙏`
-    : `Tu opinión nos importa mucho 🙏`;
+  return name ? `${name}, pasó algo? :(` : `Pasó algo? :(`;
 }
 
 export function abandonmentSurveyHtml(args: Args): string {
   const name = firstName(args.customerName);
-  const saludo = name ? `${esc(name)}, nos gustaría escucharte` : "Nos gustaría escucharte";
+  const accent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(args.accent) ? args.accent : "#e63946";
 
+  // Header logo — mismo estilo que surveyEmail.ts
+  const headerLogo = args.logoUrl
+    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
+    : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
+
+  const saludo = name ? `${esc(name)}, sucedió algo? 😟` : `Sucedió algo? 😟`;
+
+  // Razones clickeables centradas
   const reasonButtons = REASONS.map(r => {
     const href = `${args.surveyUrl}?r=${r.id}`;
-    return `<tr><td style="padding:4px 0;">
-      <a href="${esc(href)}" style="display:block;padding:12px 16px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fafafa;text-decoration:none;color:#333;font-size:14px;font-weight:600;text-align:left;">
-        <span style="margin-right:8px;">${r.emoji}</span>${esc(r.label)}
+    return `<tr><td align="center" style="padding:3px 0;">
+      <a href="${esc(href)}" style="display:inline-block;width:100%;max-width:340px;padding:12px 18px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fafafa;text-decoration:none;color:#333;font-size:14px;font-weight:600;text-align:center;">
+        ${r.emoji}&nbsp;&nbsp;${esc(r.label)}
       </a>
     </td></tr>`;
   }).join("");
 
-  const bodyHtml = `
-    <div style="text-align:center;font-size:36px;line-height:1;margin-bottom:14px;">💬</div>
-    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 8px;text-align:center;">${saludo}</h1>
-    <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 20px;text-align:center;">
-      Hace un tiempo que no pides en <strong>${esc(args.storeName)}</strong>.
-      ¿Hubo algún motivo? Elige una opción, solo toma un segundo.
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
+<tr><td align="center" style="padding:32px 16px;">
+<table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
+  <tr><td style="background:${accent};border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
+    ${headerLogo}
+  </td></tr>
+  <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;text-align:center;">
+    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 10px;">${saludo}</h1>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 6px;">
+      Hace tiempo que no pides en <strong>${esc(args.storeName)}</strong> y lo hacías seguido.
+    </p>
+    <p style="font-size:14px;color:#777;line-height:1.6;margin:0 0 22px;">
+      Nos gustaría saber para mejorar y que no vuelva a pasar. Elige una opción:
     </p>
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
       ${reasonButtons}
     </table>
-    <p style="font-size:11px;color:#bbb;margin:16px 0 0;text-align:center;">Al hacer clic se guarda tu respuesta y puedes contarnos más si quieres.</p>`;
+    <p style="font-size:11px;color:#bbb;margin:18px 0 0;">Al hacer clic se guarda tu respuesta y puedes contarnos más si quieres.</p>
+  </td></tr>
+  <tr><td align="center" style="padding:16px 0 0;">
+    <span style="font-size:11px;color:#aaa;">Powered by QuieroComer.cl</span>
+    ${args.unsubscribeUrl ? `<br/><a href="${esc(args.unsubscribeUrl)}" style="font-size:11px;color:#bbb;text-decoration:underline;">Dejar de recibir estos correos</a>` : ""}
+  </td></tr>
+</table>
+${args.trackOpenUrl ? `<img src="${esc(args.trackOpenUrl)}" width="1" height="1" style="display:none" alt="" />` : ""}
+</td></tr></table>
+</body></html>`;
 
-  return wrapRecoveryEmail({ ...args, bodyHtml });
+  return html;
 }
 
-export function abandonmentSurveyText(args: Args): string {
+export function abandonmentSurveyText(args: Pick<Args, "storeName" | "customerName" | "surveyUrl">): string {
   const name = firstName(args.customerName);
-  return `${name ? `${name}, n` : "N"}os gustaría saber tu opinión sobre ${args.storeName}.\n\nHace un tiempo que no nos visitas. ¿Hubo algún motivo?\n\nResponde aquí: ${args.surveyUrl}`;
+  return `${name ? `${name}, p` : "P"}asó algo?\n\nHace tiempo que no pides en ${args.storeName} y lo hacías seguido. Nos gustaría saber para mejorar:\n${args.surveyUrl}`;
 }

@@ -79,16 +79,16 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
     }
   };
 
-  // Pantalla final de gracias (sin detalle extra)
+  // Pantalla final de gracias
   if (submitted || detailSent) {
     return (
-      <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
-        <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
-          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+      <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
+        <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
         <div style={{ padding: "40px 28px", textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 10px" }}>Gracias por tu respuesta</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 10px" }}>Gracias por tu respuesta</h1>
           <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6 }}>
             Tu opinión nos ayuda a mejorar {storeName}. Esperamos verte pronto.
           </p>
@@ -97,49 +97,25 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
     );
   }
 
-  // Pantalla intermedia: ya eligió razón desde el email, ofrecer agregar detalle
+  // Pantalla intermedia: ya eligió razón desde el email, ofrecer comentario libre
   if (preselectedReason && reason) {
     const reasonLabel = REASONS.find(r => r.id === reason)?.label || reason;
     return (
-      <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
-        <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
-          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+      <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
+        <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
-        <div style={{ padding: "28px 24px" }}>
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>🙏</div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 6px" }}>Gracias, {firstName || "tu respuesta fue registrada"}</h1>
-            <p style={{ fontSize: 14, color: "#777" }}>Seleccionaste: <strong>{reasonLabel}</strong></p>
-          </div>
+        <div style={{ padding: "32px 28px", textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>🙏</div>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 8px" }}>Gracias{firstName ? `, ${firstName}` : ""}</h1>
+          <p style={{ fontSize: 14, color: "#777", margin: "0 0 20px" }}>Seleccionaste: <strong>{reasonLabel}</strong></p>
 
-          {detailOptions.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 10 }}>¿Puedes decirnos un poco más?</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {detailOptions.map(d => (
-                  <button
-                    key={d.id}
-                    onClick={() => setDetail(d.id)}
-                    style={{
-                      padding: "8px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-                      border: detail === d.id ? `2px solid ${accent}` : "1.5px solid #e5e7eb",
-                      background: detail === d.id ? `${accent}10` : "#fafafa",
-                      color: detail === d.id ? "#111" : "#666",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#555", marginBottom: 10, textAlign: "left" }}>¿Puedes decirnos un poco más?</p>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
-            placeholder="¿Algo más que quieras contarnos? (opcional)"
-            rows={3}
+            placeholder="Cuéntanos con más detalle para que podamos mejorar (opcional)"
+            rows={4}
             maxLength={500}
             style={{
               width: "100%", padding: "12px 14px", borderRadius: 12,
@@ -151,22 +127,24 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button
               onClick={() => setDetailSent(true)}
-              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1.5px solid #e5e7eb", background: "#fff", color: "#666", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+              style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1.5px solid #e5e7eb", background: "#fff", color: "#666", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
             >
               Listo
             </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              style={{
-                flex: 1, padding: "12px", borderRadius: 12, border: "none",
-                background: accent, color: "#fff", fontSize: 14, fontWeight: 800,
-                cursor: submitting ? "default" : "pointer", fontFamily: "inherit",
-                opacity: submitting ? 0.6 : 1,
-              }}
-            >
-              {submitting ? "Enviando..." : "Enviar detalle"}
-            </button>
+            {comment.trim() && (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                style={{
+                  flex: 1, padding: "13px", borderRadius: 12, border: "none",
+                  background: accent, color: "#fff", fontSize: 14, fontWeight: 800,
+                  cursor: submitting ? "default" : "pointer", fontFamily: "inherit",
+                  opacity: submitting ? 0.6 : 1,
+                }}
+              >
+                {submitting ? "Enviando..." : "Enviar"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -174,10 +152,10 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
   }
 
   return (
-    <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
-      {/* Header branded */}
-      <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
-        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+    <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
+      {/* Header branded — mismo estilo que surveyEmail */}
+      <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
       </div>
 
       <div style={{ padding: "28px 24px" }}>
