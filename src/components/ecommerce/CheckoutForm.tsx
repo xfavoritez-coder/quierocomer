@@ -530,21 +530,22 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 {deliverySelected ? (
                   <div className="flex items-center gap-3 pt-2">
                     <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                      {isDelivery ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
+                      {isDelivery ? <Motorbike className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       {isDelivery && deliveryAddress ? (
                         <>
-                          <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Motorbike size={15} className="shrink-0" /> Delivery</p>
+                          <p className="text-sm font-bold text-gray-800">Entregar a</p>
                           <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}{deliveryAddress.details ? ` · ${deliveryAddress.details}` : ""}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-sm font-bold text-gray-800 inline-flex items-center gap-1.5"><Store size={15} className="shrink-0" /> Retiro en tienda</p>
+                          <p className="text-sm font-bold text-gray-800">Retiro en tienda</p>
                           {tenant.address && <p className="text-xs text-gray-500 truncate">{tenant.address}</p>}
                         </>
                       )}
                     </div>
+                    <button type="button" onClick={() => setDeliveryModalOpen(true)} className="text-xs font-bold shrink-0 px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition">Editar</button>
                   </div>
                 ) : (
                   <button type="button" onClick={() => setDeliveryModalOpen(true)} className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left mt-1" style={{ borderColor: primaryColor, background: `${primaryColor}0d` }}>

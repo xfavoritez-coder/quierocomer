@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { X, Plus, Minus, MapPin, Store, ChevronRight, Motorbike, ShoppingCart, UtensilsCrossed, Lock, AlertTriangle, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { X, Plus, Minus, MapPin, Store, ChevronLeft, ChevronRight, Motorbike, ShoppingCart, UtensilsCrossed, Lock, AlertTriangle, Trash2 } from "lucide-react";
 import type { StoreTenant, StoreProduct, StoreCategory } from "@/lib/ecommerce/storefront-data";
 import { useCartStore, type CartItem } from "@/lib/ecommerce/cart-store";
 import { clp } from "@/lib/ecommerce/format";
@@ -186,59 +186,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               const suggestions = getSuggestions(items, products, popularTopIds, popularPairs);
               if (!suggestions.length) return null;
               return (
-                <div className="bg-gray-50/80 px-4 py-3 border-t border-gray-100">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Agrega a tu pedido</p>
-                  <div className="relative">
-                    <div className="flex gap-2 overflow-x-auto pb-1 cart-xsell-scroll" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-                      <style>{`.cart-xsell-scroll::-webkit-scrollbar{display:none}`}</style>
-                      {suggestions.map((p) => {
-                        const hasRequiredGroups = p.option_groups.some(g => g.min_select > 0);
-                        const isPopular = popularTopIds.has(p.id);
-                        return (
-                          <button
-                            key={p.id}
-                            onClick={() => {
-                              if (hasRequiredGroups && onOpenProduct) {
-                                onClose();
-                                setTimeout(() => onOpenProduct(p), 150);
-                              } else {
-                                addItem({
-                                  product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price,
-                                  quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code,
-                                  is_happy_hour: p.is_happy_hour === true, promo_id: p.promo_id ?? null, options: [],
-                                });
-                              }
-                            }}
-                            className="flex items-center gap-2.5 shrink-0 bg-white rounded-xl border border-gray-100 px-2 py-2 hover:border-gray-200 hover:shadow-sm transition text-left"
-                            style={{ maxWidth: 200 }}
-                          >
-                            <div className="relative shrink-0">
-                              {p.image_url ? (
-                                <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover" />
-                              ) : (
-                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                  <UtensilsCrossed size={16} className="text-gray-300" strokeWidth={1.5} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1">
-                                <p className="text-[11px] font-bold text-gray-800 leading-tight truncate">{p.name}</p>
-                                {isPopular && <span className="shrink-0 text-[8px] font-extrabold uppercase px-1 py-px rounded bg-amber-100 text-amber-700">Top</span>}
-                              </div>
-                              <p className="text-[11px] font-black text-gray-500 mt-0.5">{clp(p.price)}</p>
-                            </div>
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: `${primaryColor}15` }}>
-                              <Plus className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {/* Fade derecho en mobile para indicar scroll */}
-                    <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-gray-50/80 to-transparent pointer-events-none lg:hidden" />
-                  </div>
-                </div>
+                <CrossSellSection suggestions={suggestions} popularTopIds={popularTopIds} primaryColor={primaryColor} addItem={addItem} onClose={onClose} onOpenProduct={onOpenProduct} />
               );
             })()}
           </div>
@@ -297,6 +245,73 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
 // Detecta si un producto es un plato principal/combo/promo (vs complemento como entrada, bebida, postre).
 // Heurística: si el precio es alto (>= 70% del precio más alto de la carta) o su nombre/categoría
 // contiene keywords de combo/promo, es un "principal" y no debería sugerirse si ya hay uno en el carrito.
+/** Sección de cross-sell con scroll horizontal, flechas en desktop, fade en mobile. */
+function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, onClose, onOpenProduct }: {
+  suggestions: StoreProduct[]; popularTopIds: Set<string>; primaryColor: string;
+  addItem: (item: CartItem) => void;
+  onClose: () => void; onOpenProduct?: (p: StoreProduct) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scroll = (dir: number) => { scrollRef.current?.scrollBy({ left: dir * 180, behavior: "smooth" }); };
+
+  return (
+    <div className="bg-gray-50/80 px-4 py-3 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Agrega a tu pedido</p>
+        {/* Flechas solo en desktop */}
+        <div className="hidden lg:flex items-center gap-1">
+          <button onClick={() => scroll(-1)} className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition">
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => scroll(1)} className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition">
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      <div className="relative">
+        <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          <style>{`[data-xsell]::-webkit-scrollbar{display:none}`}</style>
+          {suggestions.map((p) => {
+            const hasRequired = p.option_groups.some(g => g.min_select > 0);
+            const isPopular = popularTopIds.has(p.id);
+            return (
+              <button
+                key={p.id}
+                onClick={() => {
+                  if (hasRequired && onOpenProduct) { onClose(); setTimeout(() => onOpenProduct(p), 150); }
+                  else addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, is_happy_hour: p.is_happy_hour === true, promo_id: p.promo_id ?? null, options: [] });
+                }}
+                className="flex items-center gap-2.5 shrink-0 bg-white rounded-xl border border-gray-100 pl-1.5 pr-2.5 py-1.5 hover:border-gray-200 hover:shadow-sm transition text-left"
+                style={{ minWidth: 170, maxWidth: 210 }}
+              >
+                {p.image_url ? (
+                  <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                    <UtensilsCrossed size={18} className="text-gray-300" strokeWidth={1.5} />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold text-gray-800 leading-snug line-clamp-2">{p.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[11px] font-black" style={{ color: primaryColor }}>{clp(p.price)}</span>
+                    {isPopular && <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">Popular</span>}
+                  </div>
+                </div>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border" style={{ borderColor: `${primaryColor}40`, background: `${primaryColor}10` }}>
+                  <Plus className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {/* Fade derecho en mobile */}
+        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-[#f9fafbcc] to-transparent pointer-events-none lg:hidden" />
+      </div>
+    </div>
+  );
+}
+
 const MAIN_KEYWORDS = /promo|combo|combi|dúo|duo|trio|trío|familiar|deluxe|suprema|especial|mixto|parrilla|tabla|bandeja/i;
 const COMPLEMENT_KEYWORDS = /entrada|acompañ|bebida|drink|jugo|agua|postre|helado|mochi|gyoza|edamame|roll individual|pieza|salsa/i;
 
