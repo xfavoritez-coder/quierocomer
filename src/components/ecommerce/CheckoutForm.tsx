@@ -497,7 +497,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                   <span className="flex items-center gap-1.5 pl-3 pr-2 text-sm text-gray-500 select-none shrink-0" aria-hidden>
                     <span className="text-base leading-none">🇨🇱</span>+56
                   </span>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="9 1234 5678"
+                  <input value={phone} onChange={(e) => { let v = e.target.value; if (v.startsWith("+56")) v = v.slice(3); else if (v.startsWith("56") && v.length > 9) v = v.slice(2); setPhone(v.trimStart()); }} inputMode="tel" placeholder="9 1234 5678"
                     className="w-full bg-transparent py-2.5 pr-3 text-sm outline-none" />
                 </div>
                 {phone.trim() && !phoneOk ? (
