@@ -88,16 +88,16 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
         </div>
 
         {/* Selector de entrega */}
-        <button onClick={onOpenDeliveryModal} className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition text-left">
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-            {deliverySelected && deliveryType === "delivery" ? <MapPin className="w-4 h-4 text-gray-500" /> : <Store className="w-4 h-4 text-gray-500" />}
+        <button onClick={onOpenDeliveryModal} className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 hover:bg-gray-50/80 transition text-left bg-gray-50/50">
+          <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
+            {deliverySelected && deliveryType === "delivery" ? <MapPin className="w-3.5 h-3.5 text-gray-500" /> : <Store className="w-3.5 h-3.5 text-gray-500" />}
           </div>
           <div className="flex-1 min-w-0">
             {!deliverySelected ? (
               <p className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Motorbike size={13} className="shrink-0" /> Delivery</p>
+                <p className="text-xs font-bold text-gray-700">Entrega a</p>
                 <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
@@ -186,29 +186,17 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               const suggestions = getSuggestions(items, products, popularTopIds, popularPairs);
               if (!suggestions.length) return null;
               return (
-                <div className="border-t border-gray-100 px-4 py-3">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Complementa tu pedido</p>
-                  <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-                    <style>{`.cart-xsell::-webkit-scrollbar{display:none}`}</style>
-                    {suggestions.map((p) => {
-                      const hasRequiredGroups = p.option_groups.some(g => g.min_select > 0);
-                      return (
-                        <div key={p.id} className="flex flex-col shrink-0" style={{ width: 100 }}>
-                          <div className="relative">
-                            {p.image_url ? (
-                              <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-full aspect-square rounded-xl object-cover" />
-                            ) : (
-                              <div className="w-full aspect-square rounded-xl bg-gray-100 flex items-center justify-center">
-                                <UtensilsCrossed size={22} className="text-gray-300" strokeWidth={1.5} />
-                              </div>
-                            )}
-                            {popularTopIds.has(p.id) && (
-                              <span className="absolute top-1 left-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-amber-400 text-amber-900 shadow-sm">Popular</span>
-                            )}
-                          </div>
-                          <p className="text-[11px] font-bold text-gray-800 leading-tight mt-1.5 line-clamp-2" style={{ minHeight: 28 }}>{p.name}</p>
-                          <p className="text-[11px] font-black mt-0.5" style={{ color: primaryColor }}>{clp(p.price)}</p>
+                <div className="bg-gray-50/80 px-4 py-3 border-t border-gray-100">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Agrega a tu pedido</p>
+                  <div className="relative">
+                    <div className="flex gap-2 overflow-x-auto pb-1 cart-xsell-scroll" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+                      <style>{`.cart-xsell-scroll::-webkit-scrollbar{display:none}`}</style>
+                      {suggestions.map((p) => {
+                        const hasRequiredGroups = p.option_groups.some(g => g.min_select > 0);
+                        const isPopular = popularTopIds.has(p.id);
+                        return (
                           <button
+                            key={p.id}
                             onClick={() => {
                               if (hasRequiredGroups && onOpenProduct) {
                                 onClose();
@@ -221,14 +209,34 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
                                 });
                               }
                             }}
-                            className="mt-1.5 w-full py-1.5 rounded-lg text-[11px] font-bold transition hover:opacity-90 flex items-center justify-center gap-1"
-                            style={{ background: `${primaryColor}14`, color: primaryColor, border: `1px solid ${primaryColor}30` }}
+                            className="flex items-center gap-2.5 shrink-0 bg-white rounded-xl border border-gray-100 px-2 py-2 hover:border-gray-200 hover:shadow-sm transition text-left"
+                            style={{ maxWidth: 200 }}
                           >
-                            <Plus className="w-3 h-3" /> Agregar
+                            <div className="relative shrink-0">
+                              {p.image_url ? (
+                                <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                  <UtensilsCrossed size={16} className="text-gray-300" strokeWidth={1.5} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1">
+                                <p className="text-[11px] font-bold text-gray-800 leading-tight truncate">{p.name}</p>
+                                {isPopular && <span className="shrink-0 text-[8px] font-extrabold uppercase px-1 py-px rounded bg-amber-100 text-amber-700">Top</span>}
+                              </div>
+                              <p className="text-[11px] font-black text-gray-500 mt-0.5">{clp(p.price)}</p>
+                            </div>
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: `${primaryColor}15` }}>
+                              <Plus className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                            </div>
                           </button>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    {/* Fade derecho en mobile para indicar scroll */}
+                    <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-gray-50/80 to-transparent pointer-events-none lg:hidden" />
                   </div>
                 </div>
               );
@@ -286,26 +294,46 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
   );
 }
 
-/** Sugerencias inteligentes basadas en co-ocurrencia (qué se compra junto) y popularidad real.
- *  Prioriza: productos que otros clientes compraron junto con lo que hay en el carrito,
- *  luego productos populares de categorías diferentes. */
+// Detecta si un producto es un plato principal/combo/promo (vs complemento como entrada, bebida, postre).
+// Heurística: si el precio es alto (>= 70% del precio más alto de la carta) o su nombre/categoría
+// contiene keywords de combo/promo, es un "principal" y no debería sugerirse si ya hay uno en el carrito.
+const MAIN_KEYWORDS = /promo|combo|combi|dúo|duo|trio|trío|familiar|deluxe|suprema|especial|mixto|parrilla|tabla|bandeja/i;
+const COMPLEMENT_KEYWORDS = /entrada|acompañ|bebida|drink|jugo|agua|postre|helado|mochi|gyoza|edamame|roll individual|pieza|salsa/i;
+
+function isMainDish(p: StoreProduct, maxPrice: number): boolean {
+  if (COMPLEMENT_KEYWORDS.test(p.name)) return false;
+  if (MAIN_KEYWORDS.test(p.name)) return true;
+  return p.price >= maxPrice * 0.65;
+}
+
+/** Sugerencias inteligentes: complementos reales, no más platos principales.
+ *  Usa co-ocurrencia (qué se compra junto), popularidad, y filtra inteligentemente. */
 function getSuggestions(
   cartItems: CartItem[], products: StoreProduct[],
   topIds: Set<string>, pairs: Record<string, string[]>,
-  maxResults = 6,
+  maxResults = 5,
 ): StoreProduct[] {
   if (!cartItems.length || !products.length) return [];
 
   const cartIds = new Set(cartItems.map(i => i.product_id));
   const cartCatIds = new Set<string>();
+  const productMap = new Map(products.map(p => [p.id, p]));
+
   for (const item of cartItems) {
-    const product = products.find(p => p.id === item.product_id);
+    const product = productMap.get(item.product_id);
     if (product) cartCatIds.add(product.category_id);
   }
 
-  const productMap = new Map(products.map(p => [p.id, p]));
+  // Precio máximo de la carta (para detectar platos principales)
+  const maxPrice = Math.max(...products.filter(p => !p.is_sold_out && !p.hidden).map(p => p.price), 1);
 
-  // Paso 1: Co-ocurrencia — productos que otros compraron junto con los del carrito
+  // ¿El carrito ya tiene un plato principal/combo?
+  const cartHasMain = cartItems.some(item => {
+    const p = productMap.get(item.product_id);
+    return p ? isMainDish(p, maxPrice) : item.unit_price >= maxPrice * 0.65;
+  });
+
+  // Co-ocurrencia: productos que otros compraron junto
   const coScores = new Map<string, number>();
   for (const item of cartItems) {
     const pairIds = pairs[item.product_id];
@@ -315,43 +343,43 @@ function getSuggestions(
       if (cartIds.has(id)) continue;
       const p = productMap.get(id);
       if (!p || p.is_sold_out || p.hidden) continue;
-      // Peso: posición en el ranking de pares (primero = más frecuente)
       coScores.set(id, (coScores.get(id) ?? 0) + (pairIds.length - i));
     }
   }
 
-  // Paso 2: Candidatos de categorías diferentes (fallback si no hay co-ocurrencias)
-  const candidates = products.filter(p =>
+  // Candidatos: diferente categoría + no en carrito + disponible
+  const fallbackCandidates = products.filter(p =>
     !cartIds.has(p.id) && !cartCatIds.has(p.category_id) && !p.is_sold_out && !p.hidden
   );
 
-  // Paso 3: Scoring combinado
-  const allCandidateIds = new Set([...coScores.keys(), ...candidates.map(p => p.id)]);
+  const allCandidateIds = new Set([...coScores.keys(), ...fallbackCandidates.map(p => p.id)]);
   const scored: { product: StoreProduct; score: number }[] = [];
 
   for (const id of allCandidateIds) {
     const p = productMap.get(id);
     if (!p || cartIds.has(id) || p.is_sold_out || p.hidden) continue;
 
+    // Si ya hay un plato principal en el carrito, no sugerir otro principal
+    if (cartHasMain && isMainDish(p, maxPrice)) continue;
+
     let score = 0;
-    // Co-ocurrencia (señal más fuerte: otros clientes lo compraron junto)
+    // Co-ocurrencia (señal más fuerte)
     score += (coScores.get(id) ?? 0) * 15;
-    // Popularidad real (top de adds al carrito en 30 días)
+    // Popularidad real
     if (topIds.has(id)) score += 25;
+    // Es complemento explícito (entrada, bebida, postre)
+    if (COMPLEMENT_KEYWORDS.test(p.name)) score += 12;
     // Tiene imagen
-    if (p.image_url) score += 10;
-    // Destacado por el restaurante
-    if (p.is_hero) score += 8;
+    if (p.image_url) score += 8;
     // Sin modificadores obligatorios (1-click add)
     if (!p.option_groups.some(g => g.min_select > 0)) score += 6;
-    // Precio accesible como complemento
-    const cartAvg = cartItems.reduce((s, i) => s + i.unit_price, 0) / cartItems.length;
-    if (p.price < cartAvg * 0.6) score += 5;
+    // Precio bajo = buen complemento
+    if (p.price < maxPrice * 0.35) score += 8;
+    else if (p.price < maxPrice * 0.5) score += 4;
+    // Categoría diferente a las del carrito
+    if (!cartCatIds.has(p.category_id)) score += 5;
     // Con descuento activo
-    if (p.original_price && p.original_price > p.price) score += 4;
-    // Badge nuevo o del día
-    if (p.new_badge) score += 3;
-    if (p.daily_badge) score += 3;
+    if (p.original_price && p.original_price > p.price) score += 3;
 
     scored.push({ product: p, score });
   }
