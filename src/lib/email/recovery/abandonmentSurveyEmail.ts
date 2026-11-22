@@ -25,7 +25,6 @@ const REASONS = [
   { id: "delivery_slow", emoji: "🕐", label: "El delivery demora mucho" },
   { id: "delivery_expensive", emoji: "🚗", label: "El delivery es muy caro" },
   { id: "competitor", emoji: "🔄", label: "Encontré otro local" },
-  { id: "no_occasion", emoji: "⏰", label: "No he tenido la ocasión" },
   { id: "other", emoji: "💬", label: "Otro motivo" },
 ];
 

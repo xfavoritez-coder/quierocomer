@@ -7,7 +7,6 @@ const REASONS = [
   { id: "delivery_slow", label: "El delivery demora mucho", emoji: "🕐" },
   { id: "delivery_expensive", label: "El delivery es muy caro", emoji: "🚗" },
   { id: "competitor", label: "Encontré otro local", emoji: "🔄" },
-  { id: "no_occasion", label: "No he tenido la ocasión", emoji: "⏰" },
   { id: "other", label: "Otro motivo", emoji: "💬" },
 ] as const;
 
