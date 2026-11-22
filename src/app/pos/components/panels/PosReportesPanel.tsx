@@ -274,17 +274,6 @@ function IngresosCard({ title, total, productSales, deliveryFee, delta, deltaHin
             </div>
           )}
         </div>
-        {/* Derecha: desglose Venta vs Delivery */}
-        <div style={{ flex: '1 1 320px', minWidth: 240, maxWidth: 560 }}>
-          <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', background: 'var(--sunk)', border: '1px solid var(--line)' }}>
-            <div style={{ width: `${ventaPct}%`, background: GREEN, transition: 'width .3s' }} />
-            <div style={{ width: `${deliveryPct}%`, background: BLUE, transition: 'width .3s' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 13 }}>
-            <BreakItem color={GREEN} label="Venta del día" value={clp(productSales)} pct={ventaPct} />
-            <BreakItem color={BLUE} label="Delivery (fee)" value={clp(deliveryFee)} pct={deliveryPct} />
-          </div>
-        </div>
       </div>
     </div>
   )
