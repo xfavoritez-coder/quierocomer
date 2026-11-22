@@ -9,7 +9,7 @@ async function resolveBrandIds(restaurantId: string, extraIds: string[]): Promis
   if (extraIds.length > 0) return [viewIds, viewIds]; // ya viene "todas"
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
   if (!r?.ownerId) return [viewIds, viewIds];
-  const siblings = await prisma.restaurant.findMany({ where: { ownerId: r.ownerId, orderingEnabled: true }, select: { id: true } });
+  const siblings = await prisma.restaurant.findMany({ where: { ownerId: r.ownerId }, select: { id: true } });
   return [viewIds, siblings.length > 1 ? siblings.map(s => s.id) : viewIds];
 }
 

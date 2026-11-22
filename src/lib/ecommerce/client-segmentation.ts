@@ -59,7 +59,7 @@ function extractItemNames(items: unknown): string[] {
 export async function resolveBrandIds(restaurantId: string): Promise<string[]> {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
   if (!r?.ownerId) return [restaurantId];
-  const siblings = await prisma.restaurant.findMany({ where: { ownerId: r.ownerId, orderingEnabled: true }, select: { id: true } });
+  const siblings = await prisma.restaurant.findMany({ where: { ownerId: r.ownerId }, select: { id: true } });
   return siblings.length > 1 ? siblings.map(s => s.id) : [restaurantId];
 }
 

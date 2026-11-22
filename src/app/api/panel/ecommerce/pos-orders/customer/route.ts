@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   } else {
     const thisR = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
     if (thisR?.ownerId) {
-      const siblings = await prisma.restaurant.findMany({ where: { ownerId: thisR.ownerId, orderingEnabled: true }, select: { id: true } });
+      const siblings = await prisma.restaurant.findMany({ where: { ownerId: thisR.ownerId }, select: { id: true } });
       allIds = siblings.length > 1 ? siblings.map(s => s.id) : [restaurantId];
     } else {
       allIds = [restaurantId];
