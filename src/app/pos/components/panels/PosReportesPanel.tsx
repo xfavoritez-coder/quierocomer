@@ -2835,11 +2835,22 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
                     {c.riskScore > 0 && <span style={{ fontSize: '0.6rem', color: 'var(--ink-3)', fontFamily: F }}>{c.riskScore}%</span>}
                   </div>
                 </td>
-                {/* Nombre/email/teléfono */}
-                <td style={{ padding: '8px 6px 8px 0', maxWidth: 180, overflow: 'hidden' }}>
+                {/* Nombre/email/teléfono + recovery badge */}
+                <td style={{ padding: '8px 6px 8px 0', maxWidth: 200, overflow: 'hidden' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
                   {c.email && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
                   {c.phone && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.phone}</div>}
+                  {(c as any).recovery && (
+                    <span style={{
+                      display: 'inline-block', marginTop: 3, fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4,
+                      background: (c as any).recovery.type === 'recovery_incentive' ? '#f0fdf4' : '#eff6ff',
+                      color: (c as any).recovery.type === 'recovery_incentive' ? '#16a34a' : '#3b82f6',
+                      border: `1px solid ${(c as any).recovery.type === 'recovery_incentive' ? '#bbf7d0' : '#bfdbfe'}`,
+                    }}>
+                      {(c as any).recovery.type === 'recovery_incentive' ? '🎁 Cupón' : '📧 Encuesta'} · {new Date((c as any).recovery.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                      {(c as any).recovery.status === 'converted' ? ' · ✓' : ''}
+                    </span>
+                  )}
                 </td>
                 {/* Pedidos */}
                 <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
