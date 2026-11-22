@@ -606,7 +606,9 @@ export default async function CommuneOrNotFoundPage({ params }: Props) {
     const activeFeatures = [hasOrdering, hasLoyalty, hasReview].filter(Boolean).length
 
     if (activeFeatures === 0) {
-      redirect(`/qr/${restaurantSlug}`)
+      // Renderizar la carta QR directamente (sin redirect, sin salto extra)
+      const CartaPage = (await import('@/app/qr/[slug]/page')).default
+      return <CartaPage params={Promise.resolve({ slug: restaurantSlug })} searchParams={Promise.resolve({})} />
     }
     const leadData = await prisma.lead.findFirst({
       where: { generatedSlug: restaurantSlug },
