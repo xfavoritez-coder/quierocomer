@@ -30,7 +30,7 @@ const REASONS = [
 
 export function abandonmentSurveySubject(args: Pick<Args, "customerName" | "storeName">): string {
   const name = firstName(args.customerName);
-  return name ? `${name}, pasó algo? :(` : `Pasó algo? :(`;
+  return name ? `${name}, ¿pasó algo? 😔` : `¿Pasó algo? 😔`;
 }
 
 export function abandonmentSurveyHtml(args: Args): string {
@@ -42,7 +42,7 @@ export function abandonmentSurveyHtml(args: Args): string {
     ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="64" style="max-height:64px;max-width:220px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
-  const saludo = name ? `${esc(name)}, sucedió algo? 😟` : `Sucedió algo? 😟`;
+  const titulo = name ? `${esc(name)}, hace tiempo no sabemos de ti 😔` : `Hace tiempo no sabemos de ti 😔`;
 
   // Razones clickeables centradas
   const reasonButtons = REASONS.map(r => {
@@ -64,13 +64,11 @@ export function abandonmentSurveyHtml(args: Args): string {
     ${headerLogo}
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;text-align:center;">
-    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 10px;">${saludo}</h1>
-    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 6px;">
-      Hace tiempo que no pides en <strong>${esc(args.storeName)}</strong> y lo hacías seguido.
+    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 8px;">${titulo}</h1>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 20px;">
+      Llevas mucho tiempo sin pedir en <strong>${esc(args.storeName)}</strong>, ¿pasó algo?
     </p>
-    <p style="font-size:14px;color:#777;line-height:1.6;margin:0 0 22px;">
-      Nos gustaría saber para mejorar y que no vuelva a pasar. Elige una opción:
-    </p>
+    <p style="font-size:12px;color:#999;margin:0 0 14px;">Elige una opción</p>
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
       ${reasonButtons}
     </table>
