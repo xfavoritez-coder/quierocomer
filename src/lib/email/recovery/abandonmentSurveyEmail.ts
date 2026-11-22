@@ -39,7 +39,7 @@ export function abandonmentSurveyHtml(args: Args): string {
 
   // Header logo — mismo estilo que surveyEmail.ts
   const headerLogo = args.logoUrl
-    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
+    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="64" style="max-height:64px;max-width:220px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
   const saludo = name ? `${esc(name)}, sucedió algo? 😟` : `Sucedió algo? 😟`;
