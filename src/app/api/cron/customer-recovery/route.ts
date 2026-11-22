@@ -219,33 +219,8 @@ async function enrollAndSend(args: {
     },
   });
 
-  // Si es incentivo, crear el cupón en el restaurante
-  if (automation === "recovery_incentive" && couponCode) {
-    try {
-      const rest = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ecommerceCoupons: true } });
-      const coupons = Array.isArray(rest?.ecommerceCoupons) ? [...(rest.ecommerceCoupons as unknown[])] : [];
-      coupons.push({
-        id: enrollment.id,
-        code: couponCode,
-        label: `Recuperación ${client.name || client.email}`,
-        isEnabled: true,
-        type: "discount",
-        discountType: "percent",
-        discountValue: rc.recoveryIncentive.couponPercent,
-        maxDiscountAmount: null,
-        discountIncludesDelivery: false,
-        startDate: new Date().toISOString().slice(0, 10),
-        endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
-        daysOfWeek: ["D", "L", "M", "Mi", "J", "V", "S"],
-        appliesDelivery: true, appliesPickup: true, appOnly: false,
-        minOrderAmount: null, maxUses: 1, maxUsesPerUser: 1,
-        freeProductId: null,
-      });
-      await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceCoupons: coupons as object } });
-    } catch (e) {
-      console.error(`[recovery] coupon create error:`, e);
-    }
-  }
+  // Los cupones VUELVE-* se validan directamente desde RecoveryEnrollment
+  // (no se crean en el JSON de ecommerceCoupons del panel para no llenarlo).
 
   // Preparar email
   const unsubscribeUrl = `${BASE}/api/email/unsubscribe?email=${encodeURIComponent(client.email)}`;

@@ -22,7 +22,38 @@ export async function POST(req: NextRequest) {
       : prisma.restaurant.findUnique({ where: { slug: restaurantSlug! }, select: { id: true, ecommerceEnabled: true, ecommerceCoupons: true } }));
     if (!restaurant || !restaurant.ecommerceEnabled) return NextResponse.json({ valid: false, error: "Tienda no disponible" });
 
-    const coupon = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === String(code).toUpperCase().trim());
+    const normalCode = String(code).toUpperCase().trim();
+    const coupon = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === normalCode);
+
+    // Fallback: cupones de recuperación (VUELVE-*) viven en RecoveryEnrollment, no en el JSON
+    if (!coupon && normalCode.startsWith("VUELVE-")) {
+      try {
+        const enrollment = await prisma.recoveryEnrollment.findFirst({
+          where: { couponCode: normalCode, automation: "recovery_incentive", status: { not: "converted" } },
+          select: { id: true, couponCode: true, restaurantId: true, customerEmail: true, contextJson: true },
+        });
+        if (!enrollment) return NextResponse.json({ valid: false, error: "Cupón no encontrado o ya utilizado" });
+        // Buscar config del % de descuento
+        const restConfig = await prisma.restaurant.findUnique({ where: { id: enrollment.restaurantId }, select: { ecommerceStoreConfig: true } });
+        const cfg = restConfig?.ecommerceStoreConfig as Record<string, unknown> | null;
+        const recovery = (cfg?.recovery && typeof cfg.recovery === "object") ? cfg.recovery as Record<string, unknown> : {};
+        const incentive = (recovery.recoveryIncentive && typeof recovery.recoveryIncentive === "object") ? recovery.recoveryIncentive as Record<string, unknown> : {};
+        const pct = Number(incentive.couponPercent) || 15;
+        // Verificar si ya fue usado
+        const used = await prisma.ecommerceCouponUse.count({ where: { restaurantId: restaurant.id, couponCode: normalCode } });
+        if (used > 0) return NextResponse.json({ valid: false, error: "Este cupón ya fue utilizado" });
+        const discount = Math.round((Number(subtotal) || 0) * pct / 100);
+        return NextResponse.json({
+          valid: true, discount,
+          coupon: {
+            id: enrollment.id, code: normalCode, type: "discount" as const, label: `${pct}% de descuento`,
+            freeProductId: null, discountType: "percent" as const, discountValue: pct,
+            maxDiscountAmount: null, discountIncludesDelivery: false,
+          },
+        });
+      } catch { /* fall through to not found */ }
+    }
+
     if (!coupon) return NextResponse.json({ valid: false, error: "Cupón no encontrado" });
 
     const oType = orderType === "DELIVERY" ? "DELIVERY" : "PICKUP";
@@ -46,7 +77,6 @@ export async function POST(req: NextRequest) {
       discount,
       coupon: {
         id: coupon.id, code: coupon.code, type: coupon.type, label: coupon.label, freeProductId: coupon.freeProductId,
-        // Parámetros para que el cliente recalcule el descuento en vivo (misma fórmula).
         discountType: coupon.discountType, discountValue: coupon.discountValue,
         maxDiscountAmount: coupon.maxDiscountAmount, discountIncludesDelivery: coupon.discountIncludesDelivery,
       },
