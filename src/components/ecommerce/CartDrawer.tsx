@@ -308,6 +308,8 @@ function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, o
             );
           })}
         </div>
+        {/* Fade sutil a la derecha para indicar scroll en mobile */}
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-gray-50/70 to-transparent pointer-events-none lg:hidden" />
       </div>
     </div>
   );
