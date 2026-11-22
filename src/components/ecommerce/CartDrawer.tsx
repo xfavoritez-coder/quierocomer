@@ -97,13 +97,13 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               <p className="text-sm font-semibold text-gray-500">¿Dónde quieres pedir?</p>
             ) : deliveryType === "delivery" && deliveryAddress ? (
               <>
-                <p className="text-xs font-bold text-gray-700">Entrega a</p>
-                <p className="text-xs text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
+                <p className="text-sm font-bold text-gray-700">Entrega a</p>
+                <p className="text-[13px] text-gray-500 truncate">{shortAddr(deliveryAddress.address)}</p>
               </>
             ) : (
               <>
-                <p className="text-xs font-bold text-gray-700 inline-flex items-center gap-1"><Store size={13} className="shrink-0" /> Retiro en tienda</p>
-                {tenant.address && <p className="text-xs text-gray-400 truncate">{tenant.address}</p>}
+                <p className="text-sm font-bold text-gray-700">Retiro en tienda</p>
+                {tenant.address && <p className="text-[13px] text-gray-400 truncate">{tenant.address}</p>}
               </>
             )}
           </div>
@@ -181,12 +181,13 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               })}
             </div>
 
-            {/* Cross-sell: sugerencias inteligentes */}
+            {/* Cross-sell: sugerencias inteligentes — se recalcula en vivo al cambiar el carrito */}
             {products && products.length > 0 && (() => {
               const suggestions = getSuggestions(items, products, popularTopIds, popularPairs);
               if (!suggestions.length) return null;
+              const cartKey = items.map(i => `${i.product_id}:${i.quantity}`).join(",");
               return (
-                <CrossSellSection suggestions={suggestions} popularTopIds={popularTopIds} primaryColor={primaryColor} addItem={addItem} onClose={onClose} onOpenProduct={onOpenProduct} />
+                <CrossSellSection key={cartKey} suggestions={suggestions} popularTopIds={popularTopIds} primaryColor={primaryColor} addItem={addItem} onClose={onClose} onOpenProduct={onOpenProduct} />
               );
             })()}
           </div>
@@ -314,13 +315,14 @@ function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, o
   );
 }
 
-const MAIN_KEYWORDS = /promo|combo|combi|dúo|duo|trio|trío|familiar|deluxe|suprema|especial|mixto|parrilla|tabla|bandeja/i;
-const COMPLEMENT_KEYWORDS = /entrada|acompañ|bebida|drink|jugo|agua|postre|helado|mochi|gyoza|edamame|roll individual|pieza|salsa/i;
+const MAIN_KEYWORDS = /promo|combo|combi|dúo|duo|trio|trío|familiar|deluxe|suprema|especial|mixto|parrilla|tabla|bandeja|magnific|festival|mega|super|premium|grande|xl|doble|triple|for\s*2|para\s*2/i;
+const COMPLEMENT_KEYWORDS = /entrada|acompañ|bebida|drink|jugo|agua|postre|helado|mochi|gyoza|edamame|roll individual|pieza|salsa|agregad|extra|side|complement|dip|pan|arroz|sopa|ensalada/i;
 
 function isMainDish(p: StoreProduct, maxPrice: number): boolean {
   if (COMPLEMENT_KEYWORDS.test(p.name)) return false;
   if (MAIN_KEYWORDS.test(p.name)) return true;
-  return p.price >= maxPrice * 0.65;
+  // Precio alto = plato principal (más del 50% del más caro)
+  return p.price >= maxPrice * 0.50;
 }
 
 /** Sugerencias inteligentes: complementos reales, no más platos principales.
