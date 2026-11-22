@@ -437,7 +437,10 @@ function POS({ data, restaurantId, posAvailable, disableToteat = false, mapsKey,
             <div style={{ display: "flex", gap: 8 }}>
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre *" style={{ ...inp, flex: 1, minWidth: 0 }} />
               <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, overflow: "hidden" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, paddingLeft: 11, paddingRight: 4, fontSize: 13, color: C.text3, userSelect: "none", flexShrink: 0 }} aria-hidden>🇨🇱 +56</span>
+                <span style={{ display: "flex", alignItems: "center", gap: 5, paddingLeft: 11, paddingRight: 4, fontSize: 13, color: C.text3, userSelect: "none", flexShrink: 0 }} aria-hidden>
+                  <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0, boxShadow: "0 0 0 .5px rgba(0,0,0,.1)" }}><rect width="20" height="14" fill="#D52B1E"/><rect width="20" height="7" fill="#fff"/><rect width="7" height="7" fill="#002868"/><polygon points="3.5,1.8 4.1,3.6 2,2.5 5,2.5 2.9,3.6" fill="#fff"/></svg>
+                  +56
+                </span>
                 <input value={customerPhone} onChange={(e) => { let v = e.target.value; if (v.startsWith("+56")) v = v.slice(3); else if (v.startsWith("56") && v.length > 9) v = v.slice(2); setCustomerPhone(v.trimStart()); }} placeholder="9 1234 5678" type="tel"
                   style={{ flex: 1, padding: "9px 11px 9px 0", border: "none", background: "transparent", color: C.text, fontFamily: "var(--sans)", fontSize: 13, outline: "none", minWidth: 0 }} />
               </div>

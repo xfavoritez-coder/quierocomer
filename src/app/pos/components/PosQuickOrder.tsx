@@ -336,7 +336,10 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
           <div>
             <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Teléfono</label>
             <div style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 12, paddingRight: 6, fontFamily: F, fontSize: 14, color: 'var(--ink-3)', userSelect: 'none', flexShrink: 0 }} aria-hidden>🇨🇱 +56</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, paddingLeft: 12, paddingRight: 6, fontFamily: F, fontSize: 14, color: 'var(--ink-3)', userSelect: 'none', flexShrink: 0 }} aria-hidden>
+                <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0, boxShadow: '0 0 0 .5px rgba(0,0,0,.1)' }}><rect width="20" height="14" fill="#D52B1E"/><rect width="20" height="7" fill="#fff"/><rect width="7" height="7" fill="#002868"/><polygon points="3.5,1.8 4.1,3.6 2,2.5 5,2.5 2.9,3.6" fill="#fff"/></svg>
+                +56
+              </span>
               <input value={customerPhone} onChange={e => { let v = e.target.value; if (v.startsWith('+56')) v = v.slice(3); else if (v.startsWith('56') && v.length > 9) v = v.slice(2); setCustomerPhone(v.trimStart()); }} placeholder="9 1234 5678" type="tel" inputMode="tel"
                 style={{ flex: 1, padding: '10px 12px 10px 0', border: 'none', background: 'transparent', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box', minWidth: 0 }} />
             </div>

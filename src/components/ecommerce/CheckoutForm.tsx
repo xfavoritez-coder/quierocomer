@@ -495,7 +495,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
               <Field label="Teléfono *">
                 <div className={`flex items-center rounded-xl border overflow-hidden ${phone.trim() && !phoneOk ? "border-red-400 bg-red-50" : "border-gray-200 focus-within:border-gray-400"}`}>
                   <span className="flex items-center gap-1.5 pl-3 pr-2 text-sm text-gray-500 select-none shrink-0" aria-hidden>
-                    <span className="text-base leading-none">🇨🇱</span>+56
+                    <svg width="20" height="14" viewBox="0 0 20 14" className="shrink-0 rounded-sm" style={{boxShadow:'0 0 0 .5px rgba(0,0,0,.1)'}}><rect width="20" height="14" fill="#D52B1E"/><rect width="20" height="7" fill="#fff"/><rect width="7" height="7" fill="#002868"/><polygon points="3.5,1.8 4.1,3.6 2,2.5 5,2.5 2.9,3.6" fill="#fff"/></svg>+56
                   </span>
                   <input value={phone} onChange={(e) => { let v = e.target.value; if (v.startsWith("+56")) v = v.slice(3); else if (v.startsWith("56") && v.length > 9) v = v.slice(2); setPhone(v.trimStart()); }} inputMode="tel" placeholder="9 1234 5678"
                     className="w-full bg-transparent py-2.5 pr-3 text-sm outline-none" />
