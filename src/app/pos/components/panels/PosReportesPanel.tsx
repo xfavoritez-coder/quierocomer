@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import DelifastTracking from '../DelifastTracking'
+import RecuperacionSection from './RecuperacionSection'
 import StoreEventsPanel from '@/components/ecommerce/StoreEventsPanel'
 import PastOrderDetail from '../PastOrderDetail'
 import type { PastOrder } from '../PastOrderDetail'
@@ -3118,7 +3119,7 @@ function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: s
   )
 }
 
-type ReportSubSection = 'dashboard' | 'delivery' | 'mesa' | 'platos' | 'clientes' | 'comportamiento' | 'satisfaccion'
+type ReportSubSection = 'dashboard' | 'delivery' | 'mesa' | 'platos' | 'clientes' | 'comportamiento' | 'satisfaccion' | 'recuperacion'
 
 const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode }[] = [
   {
@@ -3185,6 +3186,15 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'recuperacion',
+    label: 'Recuperación',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>
       </svg>
     ),
   },
@@ -3404,6 +3414,11 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
         {/* Satisfacción sub-section */}
         {subSection === 'satisfaccion' && (
           <SatisfaccionTabSection restaurantId={restaurantId} allBranches={allBranches} />
+        )}
+
+        {/* Recuperación sub-section */}
+        {subSection === 'recuperacion' && (
+          <RecuperacionSection restaurantId={restaurantId} allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined} />
         )}
 
         {/* Comportamiento sub-section */}
