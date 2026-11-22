@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { X, Plus, Minus, MapPin, Store, ChevronRight, Motorbike, ShoppingCart, UtensilsCrossed, Lock, AlertTriangle, Trash2 } from "lucide-react";
 import type { StoreTenant } from "@/lib/ecommerce/storefront-data";
 import { useCartStore } from "@/lib/ecommerce/cart-store";
@@ -19,7 +18,6 @@ interface Props {
 
 export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpenDeliveryModal, mobileOnly = true, basePath }: Props) {
   const storeBase = basePath ?? `/ecommerce/${tenant.slug}`;
-  const router = useRouter();
   const { items, deliveryType, deliveryAddress, deliverySelected, updateQty, removeItem, restaurantId } = useCartStore();
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
@@ -205,7 +203,7 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
               </div>
             ) : (
               <button
-                onClick={() => router.push(`${storeBase}/checkout`)}
+                onClick={() => { window.location.href = `${storeBase}/checkout`; }}
                 className="mt-1 w-full py-3 rounded-xl text-white font-black text-sm transition hover:opacity-90"
                 style={{ background: primaryColor }}
               >
