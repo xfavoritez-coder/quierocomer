@@ -308,8 +308,6 @@ function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, o
             );
           })}
         </div>
-        {/* Fade derecho en mobile */}
-        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none lg:hidden" />
       </div>
     </div>
   );

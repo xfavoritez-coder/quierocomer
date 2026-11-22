@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
 
           // Crear enrollment y enviar
           const sent = await enrollAndSend({
-            restaurantId: rest.id, storeName: rest.name, logoUrl: rest.logoUrl,
+            restaurantId: rest.id, storeName: rest.name, logoUrl: cfg.storeLogoUrl ?? rest.logoUrl,
             accent: cfg.primaryColor, storeUrl, client, automation, rc,
           });
 
