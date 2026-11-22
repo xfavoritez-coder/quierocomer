@@ -1,4 +1,6 @@
-// Fechas de ofertas/promos en hora de Chile (America/Santiago), DST-safe.
+// Util CANÓNICO de fechas de solo-día en hora de Chile (America/Santiago), DST-safe.
+// Úsalo SIEMPRE que un `<input type="date">` ("YYYY-MM-DD") deba guardarse como rango
+// de día (ofertas, avisos, campañas, etc.) en vez de `new Date(str)` (que parsea en UTC).
 //
 // El input <input type="date"> entrega "YYYY-MM-DD". Si se guarda con
 // `new Date("2026-11-21")` queda en MEDIANOCHE UTC = 21:00 del 20 en Chile → una

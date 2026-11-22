@@ -150,9 +150,11 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       if (d.hungerLevel === "HEAVY") score += 1;
     }
 
-    // Time-based bonus using mealTimes field + category fallback
-    const hour = new Date().getHours();
-    const minutes = new Date().getMinutes();
+    // Time-based bonus using mealTimes field + category fallback.
+    // Hora de Chile (el server corre en UTC → getHours() daría ~3h adelantado).
+    const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const hour = chileNow.getHours();
+    const minutes = chileNow.getMinutes();
     const timeDecimal = hour + minutes / 60;
     const currentMeal =
       timeDecimal >= 6 && timeDecimal < 10 ? "DESAYUNO"

@@ -269,7 +269,7 @@ export default async function CartaPage({
   const activeAnnouncements = rawAnnouncements.filter(a => {
     if (a.daysOfWeek.length > 0 && !a.daysOfWeek.includes(todayDow)) return false;
     if (a.startDate && now < new Date(a.startDate)) return false;
-    if (a.endDate && now > new Date(new Date(a.endDate).getTime() + 86400000)) return false;
+    if (a.endDate && now > new Date(a.endDate)) return false; // endDate = fin del día en Chile (ya inclusivo)
     return true;
   }).map(a => ({ id: a.id, text: a.text, linkUrl: a.linkUrl }));
 

@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { logActivity } from "@/lib/admin/logActivity";
+import { chileDayStart, chileDayEnd } from "@/lib/promoDates";
 
 /** GET — list announcements for a restaurant */
 export async function GET(req: NextRequest) {
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
         text: text.trim(),
         linkUrl: linkUrl?.trim() || null,
         daysOfWeek: daysOfWeek || [],
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
+        startDate: chileDayStart(startDate),
+        endDate: chileDayEnd(endDate),
         position: count,
       },
     });
@@ -80,8 +81,8 @@ export async function PATCH(req: NextRequest) {
         ...(text !== undefined && { text: text.trim() }),
         ...(linkUrl !== undefined && { linkUrl: linkUrl?.trim() || null }),
         ...(daysOfWeek !== undefined && { daysOfWeek }),
-        ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
-        ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
+        ...(startDate !== undefined && { startDate: chileDayStart(startDate) }),
+        ...(endDate !== undefined && { endDate: chileDayEnd(endDate) }),
         ...(isActive !== undefined && { isActive }),
       },
     });

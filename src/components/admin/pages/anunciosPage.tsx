@@ -148,8 +148,8 @@ export default function AnunciosPage() {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {ann.linkUrl && <span style={{ fontSize: "0.68rem", color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "2px 8px", borderRadius: 4 }}>🔗 {ann.linkUrl.replace(/^https?:\/\//, "").slice(0, 30)}</span>}
                     {ann.daysOfWeek?.length > 0 && ann.daysOfWeek.length < 7 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].filter((_: string, i: number) => ann.daysOfWeek.includes(i)).join(", ")}</span>}
-                    {ann.startDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Desde {new Date(ann.startDate).toLocaleDateString("es-CL")}</span>}
-                    {ann.endDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Hasta {new Date(ann.endDate).toLocaleDateString("es-CL")}</span>}
+                    {ann.startDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Desde {new Date(ann.startDate).toLocaleDateString("es-CL", { timeZone: "America/Santiago" })}</span>}
+                    {ann.endDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Hasta {new Date(ann.endDate).toLocaleDateString("es-CL", { timeZone: "America/Santiago" })}</span>}
                   </div>
                 </>
               )}
