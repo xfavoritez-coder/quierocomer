@@ -629,7 +629,8 @@ export default async function DishSlugPage({ params }: Props) {
 
     const restaurant = await restaurantInCommuneCache(communeSlug, dishSlug)
     if (restaurant) {
-      return <RestaurantInCommunePage restaurant={restaurant} commune={commune} communeSlug={communeSlug} />
+      // 301 permanente → Google indexa la URL canónica y mantiene SEO
+      redirect(`/${restaurant.slug}`)
     }
 
     // dishSlug not recognized under this commune → 404
