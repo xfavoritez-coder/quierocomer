@@ -25,7 +25,7 @@ export function wrapRecoveryEmail(opts: {
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
 <tr><td align="center" style="padding:32px 16px;">
 <table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
-  <tr><td style="background:${a};border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
+  <tr><td style="background:${a};border-radius:12px 12px 0 0;padding:14px 28px;text-align:center;">
     ${headerLogo}
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;">
