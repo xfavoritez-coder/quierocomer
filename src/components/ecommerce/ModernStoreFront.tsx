@@ -477,7 +477,12 @@ export default function ModernStoreFront({ tenant, categories, products, basePat
   // Fly-to-cart animation
   const flyToCart = useCallback((imgUrl: string | null, sourceEl?: HTMLElement | null) => {
     try {
-      const cartIcon = document.querySelector('[aria-label="Ver carrito"]');
+      // Find the visible cart icon (there may be multiple — mobile + desktop headers)
+      const all = document.querySelectorAll<HTMLElement>('[aria-label="Ver carrito"]');
+      let cartIcon: HTMLElement | null = null;
+      for (const el of all) {
+        if (el.offsetParent !== null || el.getBoundingClientRect().width > 0) { cartIcon = el; break; }
+      }
       if (!cartIcon || !imgUrl) return;
       const cartRect = cartIcon.getBoundingClientRect();
       const startX = sourceEl ? sourceEl.getBoundingClientRect().left + sourceEl.getBoundingClientRect().width / 2 : window.innerWidth / 2;
