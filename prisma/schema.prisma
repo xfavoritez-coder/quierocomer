@@ -461,6 +461,7 @@ model Restaurant {
   queueEnabled               Boolean                   @default(false) // fila virtual (Gestión de fila) activa
   queuePhoneRequired         Boolean                   @default(true) // pedir teléfono al registrarse en la fila
   queueEntries               QueueEntry[]
+  recoveryEnrollments        RecoveryEnrollment[]
 
   @@index([ownerId])
   @@index([communeSlug])
@@ -3757,5 +3758,42 @@ model WaInboxMessage {
   conversation   WaInboxConversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Recuperación Inteligente — enrollments de clientes en
+//  automatizaciones de recuperación (first_buyer, at_risk,
+//  abandonment_survey, recovery_incentive).
+// ═══════════════════════════════════════════════════════════
+model RecoveryEnrollment {
+  id                 String    @id @default(cuid())
+  restaurantId       String
+  customerEmail      String
+  customerPhone      String?
+  customerName       String?
+  automation         String    // first_buyer | at_risk | abandonment_survey | recovery_incentive
+  status             String    @default("pending") // pending | sent | delivered | opened | clicked | converted | failed | skipped
+  emailLogId         String?
+  couponCode         String?
+  scheduledFor       DateTime?
+  sentAt             DateTime?
+  openedAt           DateTime?
+  clickedAt          DateTime?
+  convertedAt        DateTime?
+  convertedOrderId   String?
+  surveyReason       String?   // motivo seleccionado en encuesta de abandono
+  surveyDetail       String?   // sub-motivo o detalle adicional
+  surveyComment      String?   // comentario libre
+  surveyAnsweredAt   DateTime?
+  contextJson        Json?     // snapshot: { daysSince, avgFreq, totalSpent, orders, riskScore, topProduct }
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  restaurant         Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@index([restaurantId, automation])
+  @@index([customerEmail])
+  @@index([status, scheduledFor])
   @@index([restaurantId, createdAt])
 }

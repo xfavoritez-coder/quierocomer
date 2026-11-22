@@ -48,6 +48,7 @@ export interface EcommerceStoreConfig {
   privacyAddress: string | null;
   orderNotifyEmail: string | null; // correo del local que recibe aviso de cada pedido nuevo
   survey: SurveyConfig; // encuestas de satisfacción (envío automático tras la entrega)
+  recovery: RecoveryConfig; // recuperación inteligente de clientes
   printMode: "off" | "manual" | "auto"; // impresión de comandas: off | botón manual | automática al llegar
   printPaperWidth: 58 | 80; // ancho del papel térmico en mm
   printCopies: 1 | 2; // cuántas copias de la comanda imprimir por pedido (1 o 2)
@@ -84,6 +85,41 @@ export function normalizeGtmId(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const id = v.trim().toUpperCase();
   return /^GTM-[A-Z0-9]{4,12}$/.test(id) ? id : null;
+}
+
+// ── Recuperación Inteligente ──
+export interface RecoveryConfig {
+  enabled: boolean;
+  firstBuyer: { enabled: boolean; daysAfter: number };
+  atRisk: { enabled: boolean };
+  abandonmentSurvey: { enabled: boolean; daysInactive: number };
+  recoveryIncentive: { enabled: boolean; daysInactive: number; couponPercent: number };
+  maxEmailsPerMonth: number;
+  cooldownDays: number; // días mínimos entre emails de recuperación al mismo cliente
+}
+
+const DEFAULT_RECOVERY: RecoveryConfig = {
+  enabled: false,
+  firstBuyer: { enabled: true, daysAfter: 7 },
+  atRisk: { enabled: true },
+  abandonmentSurvey: { enabled: true, daysInactive: 45 },
+  recoveryIncentive: { enabled: true, daysInactive: 60, couponPercent: 15 },
+  maxEmailsPerMonth: 2,
+  cooldownDays: 14,
+};
+
+function parseRecovery(raw: unknown): RecoveryConfig {
+  const o = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const fb = (key: string) => (o[key] && typeof o[key] === "object" ? o[key] as Record<string, unknown> : {});
+  return {
+    enabled: o.enabled === true,
+    firstBuyer: { enabled: fb("firstBuyer").enabled !== false, daysAfter: nonNegInt(fb("firstBuyer").daysAfter, DEFAULT_RECOVERY.firstBuyer.daysAfter) || DEFAULT_RECOVERY.firstBuyer.daysAfter },
+    atRisk: { enabled: fb("atRisk").enabled !== false },
+    abandonmentSurvey: { enabled: fb("abandonmentSurvey").enabled !== false, daysInactive: nonNegInt(fb("abandonmentSurvey").daysInactive, DEFAULT_RECOVERY.abandonmentSurvey.daysInactive) || DEFAULT_RECOVERY.abandonmentSurvey.daysInactive },
+    recoveryIncentive: { enabled: fb("recoveryIncentive").enabled !== false, daysInactive: nonNegInt(fb("recoveryIncentive").daysInactive, DEFAULT_RECOVERY.recoveryIncentive.daysInactive) || DEFAULT_RECOVERY.recoveryIncentive.daysInactive, couponPercent: Math.min(50, Math.max(5, nonNegInt(fb("recoveryIncentive").couponPercent, DEFAULT_RECOVERY.recoveryIncentive.couponPercent) || DEFAULT_RECOVERY.recoveryIncentive.couponPercent)) },
+    maxEmailsPerMonth: Math.min(5, Math.max(1, nonNegInt(o.maxEmailsPerMonth, DEFAULT_RECOVERY.maxEmailsPerMonth) || DEFAULT_RECOVERY.maxEmailsPerMonth)),
+    cooldownDays: Math.min(60, Math.max(7, nonNegInt(o.cooldownDays, DEFAULT_RECOVERY.cooldownDays) || DEFAULT_RECOVERY.cooldownDays)),
+  };
 }
 
 // ── Encuestas de satisfacción ──
@@ -201,6 +237,7 @@ export function parseStoreConfig(raw: unknown, fb: Fallback = {}): EcommerceStor
     privacyAddress: typeof o.privacyAddress === "string" && o.privacyAddress.trim() ? o.privacyAddress.trim() : null,
     orderNotifyEmail: normalizeEmail(o.orderNotifyEmail),
     survey: parseSurvey(o.survey),
+    recovery: parseRecovery(o.recovery),
     printMode: o.printMode === "auto" ? "auto" : o.printMode === "off" ? "off" : "manual",
     printPaperWidth: Number(o.printPaperWidth) === 58 ? 58 : 80,
     printCopies: Number(o.printCopies) === 2 ? 2 : 1,
