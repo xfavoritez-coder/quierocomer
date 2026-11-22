@@ -2947,16 +2947,33 @@ function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: s
   const [data, setData] = useState<SurveyFullData | null>(null)
   const [loading, setLoading] = useState(true)
   const [filterStar, setFilterStar] = useState<number | null>(null)
+  const [branchAvgs, setBranchAvgs] = useState<{ name: string; avg: number; count: number }[]>([])
 
   useEffect(() => {
     setLoading(true)
     const branchIds = allBranches?.map(b => b.id).join(',') ?? ''
     const params = new URLSearchParams({ restaurantId })
     if (branchIds) params.set('branchIds', branchIds)
-    fetch(`/api/panel/ecommerce/survey/responses?${params}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => setData(d))
-      .finally(() => setLoading(false))
+    const mainFetch = fetch(`/api/panel/ecommerce/survey/responses?${params}`).then(r => r.ok ? r.json() : null)
+
+    // Fetch por sucursal para comparación
+    const branchFetches = allBranches && allBranches.length > 1
+      ? Promise.all(allBranches.map(b =>
+          fetch(`/api/panel/ecommerce/survey/responses?restaurantId=${b.id}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+              if (!d || !d.averages || d.total === 0) return null
+              const avgs = (d.averages as { avg: number; count: number }[]).filter(a => a.count > 0)
+              const overall = avgs.length > 0 ? avgs.reduce((s, a) => s + a.avg, 0) / avgs.length : 0
+              return { name: (b as any).branchName || b.name, avg: Math.round(overall * 10) / 10, count: d.total }
+            }).catch(() => null)
+        )).then(results => results.filter(Boolean) as { name: string; avg: number; count: number }[])
+      : Promise.resolve([])
+
+    Promise.all([mainFetch, branchFetches]).then(([d, avgs]) => {
+      setData(d)
+      setBranchAvgs(avgs)
+    }).finally(() => setLoading(false))
   }, [restaurantId, allBranches])
 
   if (loading) return (
@@ -3021,6 +3038,22 @@ function SatisfaccionTabSection({ restaurantId, allBranches }: { restaurantId: s
           )}
         </div>
       </div>
+
+      {/* Promedio por sucursal */}
+      {branchAvgs.length > 1 && (
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {branchAvgs.sort((a, b) => b.avg - a.avg).map(b => (
+            <div key={b.name} style={{ flex: '1 1 140px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '12px 14px', minWidth: 130 }}>
+              <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontFamily: F, fontSize: '1.2rem', fontWeight: 900, color: b.avg >= 4 ? GREEN : b.avg >= 3 ? '#f59e0b' : '#ef4444' }}>{b.avg}</span>
+                <MiniStars avg={b.avg} size={11} />
+              </div>
+              <div style={{ fontFamily: F, fontSize: '0.64rem', color: 'var(--ink-3)', marginTop: 2 }}>{b.count} respuestas</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tendencia semanal */}
       <Card>
@@ -3473,6 +3506,30 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
               products={data?.products ?? []}
               loading={loading}
             />
+            {/* Top 10 por sucursal */}
+            {branchReports.length > 1 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-3)' }}>Top 10 por sucursal</div>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(branchReports.length, 3)}, 1fr)`, gap: 10 }}>
+                  {branchReports.map(br => {
+                    const top = (br.data.products || []).sort((a: any, b: any) => b.qty - a.qty).slice(0, 10)
+                    if (!top.length) return null
+                    return (
+                      <div key={br.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '12px 14px', overflow: 'hidden' }}>
+                        <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{br.name}</div>
+                        {top.map((p: any, i: number) => (
+                          <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 800, color: 'var(--ink-3)', width: 18, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                            <span style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-2)', flexShrink: 0 }}>{p.qty}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
 
