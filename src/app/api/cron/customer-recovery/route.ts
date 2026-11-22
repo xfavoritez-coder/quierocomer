@@ -160,14 +160,6 @@ function pickAutomation(
   hasEnrollment: Set<string>,
   hasAbandonment: Set<string>,
 ): Automation | null {
-  // Primer comprador: 1 pedido, días suficientes sin volver
-  if (rc.firstBuyer.enabled && client.orders === 1 && client.daysSinceLastOrder >= rc.firstBuyer.daysAfter) {
-    if (!hasEnrollment.has(`${email}::first_buyer`)) return "first_buyer";
-  }
-  // En riesgo
-  if (rc.atRisk.enabled && client.status === "at_risk") {
-    if (!hasEnrollment.has(`${email}::at_risk`)) return "at_risk";
-  }
   // Encuesta de abandono
   if (rc.abandonmentSurvey.enabled && client.status === "churned" && client.daysSinceLastOrder >= rc.abandonmentSurvey.daysInactive) {
     if (!hasEnrollment.has(`${email}::abandonment_survey`)) return "abandonment_survey";

@@ -45,13 +45,16 @@ interface Props {
   accent: string;
   customerName: string | null;
   alreadyAnswered: boolean;
+  preselectedReason?: string;
 }
 
-export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl, accent, customerName, alreadyAnswered }: Props) {
-  const [reason, setReason] = useState<string | null>(null);
+export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl, accent, customerName, alreadyAnswered, preselectedReason }: Props) {
+  // Si viene preselected, ya se guardó en el server — mostrar pantalla de "gracias + detalle"
+  const [reason, setReason] = useState<string | null>(preselectedReason || null);
   const [detail, setDetail] = useState<string | null>(null);
   const [comment, setComment] = useState("");
-  const [submitted, setSubmitted] = useState(alreadyAnswered);
+  const [submitted, setSubmitted] = useState(alreadyAnswered && !preselectedReason);
+  const [detailSent, setDetailSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const firstName = (customerName || "").trim().split(/\s+/)[0] || "";
@@ -66,20 +69,22 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enrollmentId, reason, detail, comment: comment.trim() || null }),
       });
-      setSubmitted(true);
+      if (preselectedReason) setDetailSent(true);
+      else setSubmitted(true);
     } catch {
-      // best effort
-      setSubmitted(true);
+      if (preselectedReason) setDetailSent(true);
+      else setSubmitted(true);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (submitted) {
+  // Pantalla final de gracias (sin detalle extra)
+  if (submitted || detailSent) {
     return (
       <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
         <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
-          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 48, maxWidth: 160, objectFit: "contain" }} /> : <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
         <div style={{ padding: "40px 28px", textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
@@ -92,11 +97,87 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
     );
   }
 
+  // Pantalla intermedia: ya eligió razón desde el email, ofrecer agregar detalle
+  if (preselectedReason && reason) {
+    const reasonLabel = REASONS.find(r => r.id === reason)?.label || reason;
+    return (
+      <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
+        <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+        </div>
+        <div style={{ padding: "28px 24px" }}>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>🙏</div>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 6px" }}>Gracias, {firstName || "tu respuesta fue registrada"}</h1>
+            <p style={{ fontSize: 14, color: "#777" }}>Seleccionaste: <strong>{reasonLabel}</strong></p>
+          </div>
+
+          {detailOptions.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 10 }}>¿Puedes decirnos un poco más?</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {detailOptions.map(d => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDetail(d.id)}
+                    style={{
+                      padding: "8px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
+                      border: detail === d.id ? `2px solid ${accent}` : "1.5px solid #e5e7eb",
+                      background: detail === d.id ? `${accent}10` : "#fafafa",
+                      color: detail === d.id ? "#111" : "#666",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder="¿Algo más que quieras contarnos? (opcional)"
+            rows={3}
+            maxLength={500}
+            style={{
+              width: "100%", padding: "12px 14px", borderRadius: 12,
+              border: "1.5px solid #e5e7eb", fontSize: 14, fontFamily: "inherit",
+              resize: "vertical", outline: "none", boxSizing: "border-box", color: "#333",
+            }}
+          />
+
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            <button
+              onClick={() => setDetailSent(true)}
+              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1.5px solid #e5e7eb", background: "#fff", color: "#666", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Listo
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              style={{
+                flex: 1, padding: "12px", borderRadius: 12, border: "none",
+                background: accent, color: "#fff", fontSize: 14, fontWeight: 800,
+                cursor: submitting ? "default" : "pointer", fontFamily: "inherit",
+                opacity: submitting ? 0.6 : 1,
+              }}
+            >
+              {submitting ? "Enviando..." : "Enviar detalle"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)" }}>
       {/* Header branded */}
       <div style={{ background: accent, padding: "22px 28px", textAlign: "center" }}>
-        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 48, maxWidth: 160, objectFit: "contain" }} /> : <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 72, maxWidth: 240, objectFit: "contain" }} /> : <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
       </div>
 
       <div style={{ padding: "28px 24px" }}>
