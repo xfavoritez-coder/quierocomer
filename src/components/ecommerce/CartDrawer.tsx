@@ -245,20 +245,19 @@ export default function CartDrawer({ open, onClose, tenant, primaryColor, onOpen
 // Detecta si un producto es un plato principal/combo/promo (vs complemento como entrada, bebida, postre).
 // Heurística: si el precio es alto (>= 70% del precio más alto de la carta) o su nombre/categoría
 // contiene keywords de combo/promo, es un "principal" y no debería sugerirse si ya hay uno en el carrito.
-/** Sección de cross-sell con scroll horizontal, flechas en desktop, fade en mobile. */
+/** Sección de cross-sell: cards verticales con imagen grande, nombre, precio y botón +. */
 function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, onClose, onOpenProduct }: {
   suggestions: StoreProduct[]; popularTopIds: Set<string>; primaryColor: string;
   addItem: (item: CartItem) => void;
   onClose: () => void; onOpenProduct?: (p: StoreProduct) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const scroll = (dir: number) => { scrollRef.current?.scrollBy({ left: dir * 180, behavior: "smooth" }); };
+  const scroll = (dir: number) => { scrollRef.current?.scrollBy({ left: dir * 140, behavior: "smooth" }); };
 
   return (
-    <div className="bg-gray-50/80 px-4 py-3 border-t border-gray-100">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-gradient-to-b from-gray-50 to-gray-50/40 px-4 py-3.5 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-3">
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Agrega a tu pedido</p>
-        {/* Flechas solo en desktop */}
         <div className="hidden lg:flex items-center gap-1">
           <button onClick={() => scroll(-1)} className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition">
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -269,44 +268,47 @@ function CrossSellSection({ suggestions, popularTopIds, primaryColor, addItem, o
         </div>
       </div>
       <div className="relative">
-        <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-          <style>{`[data-xsell]::-webkit-scrollbar{display:none}`}</style>
+        <div ref={scrollRef} className="flex gap-2.5 overflow-x-auto pb-1 cart-xsell-scroll" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          <style>{`.cart-xsell-scroll::-webkit-scrollbar{display:none}`}</style>
           {suggestions.map((p) => {
             const hasRequired = p.option_groups.some(g => g.min_select > 0);
             const isPopular = popularTopIds.has(p.id);
             return (
-              <button
-                key={p.id}
-                onClick={() => {
-                  if (hasRequired && onOpenProduct) { onClose(); setTimeout(() => onOpenProduct(p), 150); }
-                  else addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, is_happy_hour: p.is_happy_hour === true, promo_id: p.promo_id ?? null, options: [] });
-                }}
-                className="flex items-center gap-2.5 shrink-0 bg-white rounded-xl border border-gray-100 pl-1.5 pr-2.5 py-1.5 hover:border-gray-200 hover:shadow-sm transition text-left"
-                style={{ minWidth: 170, maxWidth: 210 }}
-              >
-                {p.image_url ? (
-                  <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                    <UtensilsCrossed size={18} className="text-gray-300" strokeWidth={1.5} />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-bold text-gray-800 leading-snug line-clamp-2">{p.name}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] font-black" style={{ color: primaryColor }}>{clp(p.price)}</span>
-                    {isPopular && <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">Popular</span>}
-                  </div>
+              <div key={p.id} className="shrink-0 flex flex-col" style={{ width: 120 }}>
+                {/* Imagen */}
+                <div className="relative rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: "1" }}>
+                  {p.image_url ? (
+                    <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <UtensilsCrossed size={28} className="text-gray-300" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  {isPopular && (
+                    <span className="absolute top-1.5 left-1.5 text-[8px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-white/90 text-amber-600 shadow-sm backdrop-blur-sm">Popular</span>
+                  )}
+                  {/* Botón + sobre la imagen */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (hasRequired && onOpenProduct) { onClose(); setTimeout(() => onOpenProduct(p), 150); }
+                      else addItem({ product_id: p.id, name: p.name, unit_price: p.price, base_price: p.price, quantity: 1, image_url: p.image_url, toteat_code: p.toteat_code, is_happy_hour: p.is_happy_hour === true, promo_id: p.promo_id ?? null, options: [] });
+                    }}
+                    className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center shadow-md transition hover:scale-110"
+                    style={{ background: primaryColor }}
+                  >
+                    <Plus className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  </button>
                 </div>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border" style={{ borderColor: `${primaryColor}40`, background: `${primaryColor}10` }}>
-                  <Plus className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                </div>
-              </button>
+                {/* Info */}
+                <p className="text-[11px] font-semibold text-gray-800 leading-snug mt-1.5 line-clamp-2" style={{ minHeight: 28 }}>{p.name}</p>
+                <p className="text-[12px] font-black mt-0.5" style={{ color: primaryColor }}>{clp(p.price)}</p>
+              </div>
             );
           })}
         </div>
         {/* Fade derecho en mobile */}
-        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-[#f9fafbcc] to-transparent pointer-events-none lg:hidden" />
+        <div className="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none lg:hidden" />
       </div>
     </div>
   );
