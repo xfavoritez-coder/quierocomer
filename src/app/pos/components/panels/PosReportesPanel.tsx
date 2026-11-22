@@ -2299,6 +2299,26 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
                 </div>
               )}
 
+              {/* Recuperación */}
+              {(client as any).recovery && (
+                <div style={{ padding: '14px 16px 0' }}>
+                  <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Recuperación</div>
+                  <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16 }}>{(client as any).recovery.type === 'recovery_incentive' ? '🎁' : '📧'}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>
+                        {(client as any).recovery.type === 'recovery_incentive' ? 'Cupón de descuento enviado' : 'Encuesta de abandono enviada'}
+                      </div>
+                      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>
+                        {new Date((client as any).recovery.sentAt).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {(client as any).recovery.status === 'converted' && ' · Volvió a comprar ✓'}
+                        {(client as any).recovery.status === 'clicked' && ' · Abrió el email'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Encuestas */}
               {!loadingOrders && surveyOrders.length > 0 && (
                 <div style={{ padding: '14px 16px 0' }}>
@@ -2723,6 +2743,20 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
                       <div style={{ fontFamily: F, fontSize: '0.65rem', color: 'var(--ink-3)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         Favorito: <strong>{c.topProduct}</strong>
+                      </div>
+                    )}
+                    {(c as any).recovery && (
+                      <div style={{ marginTop: 5 }}>
+                        <span style={{
+                          fontFamily: F, fontSize: '0.62rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                          background: (c as any).recovery.type === 'recovery_incentive' ? '#f0fdf4' : '#eff6ff',
+                          color: (c as any).recovery.type === 'recovery_incentive' ? '#16a34a' : '#3b82f6',
+                          border: `1px solid ${(c as any).recovery.type === 'recovery_incentive' ? '#bbf7d0' : '#bfdbfe'}`,
+                        }}>
+                          {(c as any).recovery.type === 'recovery_incentive' ? '🎁 Cupón enviado' : '📧 Recuperación enviada'}
+                          {' · '}{new Date((c as any).recovery.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                          {(c as any).recovery.status === 'converted' && ' · ✓ Recuperado'}
+                        </span>
                       </div>
                     )}
                   </div>

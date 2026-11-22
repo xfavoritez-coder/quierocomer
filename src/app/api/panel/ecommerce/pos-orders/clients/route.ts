@@ -36,6 +36,7 @@ export interface ClientRow {
   riskScore: number;
   score: number;
   topProduct: string | null;
+  recovery?: { type: string; sentAt: string; status: string } | null;
 }
 
 function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
@@ -305,6 +306,28 @@ export async function GET(req: NextRequest) {
         : null,
     };
   });
+
+  // ── Enriquecer con datos de recuperación ────────────────────────────
+  try {
+    const emails = allClients.filter(c => c.email).map(c => c.email.toLowerCase());
+    if (emails.length > 0) {
+      const enrollments = await prisma.recoveryEnrollment.findMany({
+        where: { restaurantId: { in: allIds }, customerEmail: { in: emails } },
+        select: { customerEmail: true, automation: true, sentAt: true, status: true },
+        orderBy: { createdAt: "desc" },
+      });
+      const recoveryMap = new Map<string, { type: string; sentAt: string; status: string }>();
+      for (const e of enrollments) {
+        const key = e.customerEmail.toLowerCase();
+        if (!recoveryMap.has(key) && e.sentAt) {
+          recoveryMap.set(key, { type: e.automation, sentAt: e.sentAt.toISOString(), status: e.status });
+        }
+      }
+      for (const c of allClients) {
+        if (c.email) c.recovery = recoveryMap.get(c.email.toLowerCase()) || null;
+      }
+    }
+  } catch { /* tabla puede no existir aún */ }
 
   // ── Summary stats (siempre desde todos los clientes) ────────────────
   const total = allClients.length;

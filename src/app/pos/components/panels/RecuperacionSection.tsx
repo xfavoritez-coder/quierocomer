@@ -222,8 +222,13 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
             {data.surveyResponses.map((r, i) => (
               <div key={i} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{r.customerName || r.customerEmail}</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink-3)' }}>
+                  <div>
+                    <div style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{r.customerName || r.customerEmail}</div>
+                    {r.customerName && r.customerEmail && (
+                      <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{r.customerEmail}</div>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink-3)', flexShrink: 0 }}>
                     {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
                   </span>
                 </div>
