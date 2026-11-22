@@ -400,19 +400,43 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
                 onClick={async () => {
                   if (!navigator.geolocation) return;
                   try {
-                    const pos = await new Promise<GeolocationPosition>((ok, err) => navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy: true, timeout: 8000 }));
+                    const pos = await new Promise<GeolocationPosition>((ok, err) => navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy: true, timeout: 10000 }));
                     const { latitude: lat, longitude: lng } = pos.coords;
-                    const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${brand.googleMapsKey}&language=es&region=cl`);
-                    const j = await r.json();
-                    const result = j.results?.[0];
-                    if (result && inputRef.current) {
-                      inputRef.current.value = result.formatted_address;
-                      inputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-                      const parts = placeAddressParts(result);
-                      const hasNumber = (result.address_components ?? []).some((c: any) => c.types.includes("street_number"));
-                      setDest({ lat, lng, address: result.formatted_address, parts, hasNumber });
+                    // Intentar reverse geocode via Google
+                    let address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    let parts: AddressParts = {};
+                    let hasNumber = false;
+                    try {
+                      const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${brand.googleMapsKey}&language=es&region=cl`);
+                      const j = await r.json();
+                      const result = j.results?.[0];
+                      if (result) {
+                        address = result.formatted_address;
+                        parts = placeAddressParts(result);
+                        hasNumber = (result.address_components ?? []).some((c: any) => c.types.includes("street_number"));
+                      }
+                    } catch {}
+                    // Fallback: Google Maps Geocoder (client-side, no CORS issues)
+                    if (address.includes(",") && !hasNumber) {
+                      try {
+                        const g = (window as any).google;
+                        if (g?.maps?.Geocoder) {
+                          const geocoder = new g.maps.Geocoder();
+                          const res = await new Promise<any>((ok) => geocoder.geocode({ location: { lat, lng } }, (results: any, status: string) => ok(status === "OK" && results?.[0] ? results[0] : null)));
+                          if (res) {
+                            address = res.formatted_address;
+                            parts = placeAddressParts(res);
+                            hasNumber = (res.address_components ?? []).some((c: any) => c.types?.includes("street_number"));
+                          }
+                        }
+                      } catch {}
                     }
-                  } catch {}
+                    if (inputRef.current) {
+                      inputRef.current.value = address;
+                      inputRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                    setDest({ lat, lng, address, parts, hasNumber });
+                  } catch (e) { console.warn("Geolocation error:", e); }
                 }}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.82rem", fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: "6px 0", margin: "4px 0 0" }}
               >
