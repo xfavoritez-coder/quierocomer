@@ -88,6 +88,8 @@ export default function BrandStore({ brand, representative, basePath, initialPro
     if (!saved) { setResolving(false); return; }
     const br = brand.branches.find((b) => b.slug === saved);
     if (!br) { try { localStorage.removeItem(PERSIST_KEY); } catch {} setResolving(false); return; }
+    // Si la sucursal guardada es hidden y está cerrada, ignorarla
+    if (br.hidden && !br.open) { try { localStorage.removeItem(PERSIST_KEY); } catch {} setResolving(false); return; }
     (async () => {
       const bd = br.slug === representative.tenant.slug ? representative : await fetchStorefront(br.slug);
       if (!bd) { setResolving(false); return; }
