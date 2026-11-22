@@ -83,8 +83,8 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
   if (submitted || detailSent) {
     return (
       <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
-        <div style={{ background: accent, padding: "14px 28px", textAlign: "center" }}>
-          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ width: 180, height: "auto", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+        <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
         <div style={{ padding: "40px 28px", textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🙏</div>
@@ -102,8 +102,8 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
     const reasonLabel = REASONS.find(r => r.id === reason)?.label || reason;
     return (
       <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
-        <div style={{ background: accent, padding: "14px 28px", textAlign: "center" }}>
-          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ width: 180, height: "auto", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+        <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+          {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
         <div style={{ padding: "32px 28px", textAlign: "center" }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>🙏</div>
@@ -154,8 +154,8 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
   return (
     <div style={{ maxWidth: 480, width: "100%", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,.08)", fontFamily: "'Segoe UI',system-ui,-apple-system,sans-serif" }}>
       {/* Header branded — mismo estilo que surveyEmail */}
-      <div style={{ background: accent, padding: "14px 28px", textAlign: "center" }}>
-        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ width: 180, height: "auto", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
+      <div style={{ background: accent, padding: "24px 28px", textAlign: "center" }}>
+        {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
       </div>
 
       <div style={{ padding: "28px 24px" }}>

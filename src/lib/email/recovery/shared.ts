@@ -17,7 +17,7 @@ export function wrapRecoveryEmail(opts: {
   const { storeName, logoUrl, accent, bodyHtml, trackOpenUrl, unsubscribeUrl } = opts;
   const a = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(accent) ? accent : "#e63946";
   const logoImg = logoUrl
-    ? `<img src="${esc(logoUrl)}" alt="${esc(storeName)}" style="max-height:44px;width:auto;display:block;margin:0 auto;" />`
+    ? `<img src="${esc(logoUrl)}" alt="${esc(storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(storeName)}</span>`;
   const headerLogo = opts.storeUrl ? `<a href="${esc(opts.storeUrl)}" style="text-decoration:none;">${logoImg}</a>` : logoImg;
 
@@ -27,7 +27,7 @@ export function wrapRecoveryEmail(opts: {
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;">
 <tr><td align="center" style="padding:32px 16px;">
 <table width="480" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;">
-  <tr><td style="background:${a};border-radius:12px 12px 0 0;padding:10px 28px;text-align:center;">
+  <tr><td style="background:${a};border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
     ${headerLogo}
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;">

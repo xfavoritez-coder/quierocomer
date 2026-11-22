@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   // KPIs
   const sent = enrollments.filter(e => e.sentAt);
   const converted = enrollments.filter(e => e.status === "converted");
-  const opened = enrollments.filter(e => e.status === "opened" || e.status === "clicked" || e.status === "converted");
+  const opened = enrollments.filter(e => e.openedAt || e.clickedAt || e.surveyAnsweredAt || e.status === "opened" || e.status === "clicked" || e.status === "converted");
 
   // Ingresos recuperados
   let recoveredRevenue = 0;

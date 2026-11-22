@@ -12,7 +12,7 @@ export default async function AbandonmentSurveyPage({ params, searchParams }: { 
   const enrollment = await prisma.recoveryEnrollment.findUnique({
     where: { id: enrollmentId },
     select: {
-      id: true, automation: true, customerName: true, surveyReason: true, surveyAnsweredAt: true,
+      id: true, automation: true, customerName: true, surveyReason: true, surveyAnsweredAt: true, openedAt: true, clickedAt: true, status: true,
       restaurant: { select: { name: true, logoUrl: true, ecommerceStoreConfig: true } },
     },
   });
@@ -24,14 +24,21 @@ export default async function AbandonmentSurveyPage({ params, searchParams }: { 
 
   // Si viene ?r=reason y aún no se respondió, guardar la respuesta inmediatamente
   // (el click en el email ya cuenta como respuesta principal)
-  if (preselectedReason && !enrollment.surveyAnsweredAt) {
-    try {
-      await prisma.recoveryEnrollment.update({
-        where: { id: enrollmentId },
-        data: { surveyReason: preselectedReason.slice(0, 50), surveyAnsweredAt: new Date() },
-      });
-    } catch { /* noop */ }
-  }
+  // Marcar como abierto/clickeado siempre que se visite la página
+  try {
+    const now = new Date();
+    const updateData: Record<string, unknown> = {};
+    if (!enrollment.surveyAnsweredAt && preselectedReason) {
+      updateData.surveyReason = preselectedReason.slice(0, 50);
+      updateData.surveyAnsweredAt = now;
+    }
+    if (!(enrollment as any).openedAt) updateData.openedAt = now;
+    if (!(enrollment as any).clickedAt) updateData.clickedAt = now;
+    if (enrollment.status === "sent" || enrollment.status === "delivered") updateData.status = "clicked";
+    if (Object.keys(updateData).length > 0) {
+      await prisma.recoveryEnrollment.update({ where: { id: enrollmentId }, data: updateData });
+    }
+  } catch { /* noop */ }
 
   return (
     <div style={{ minHeight: "100dvh", background: "#f5f5f5", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
