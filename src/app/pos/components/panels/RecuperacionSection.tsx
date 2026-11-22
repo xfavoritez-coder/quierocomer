@@ -40,7 +40,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 const REASON_LABELS: Record<string, string> = {
   price: 'Precios altos',
   quality: 'Calidad bajó',
-  delivery_time: 'Delivery lento/caro',
+  delivery_slow: 'Delivery lento',
+  delivery_expensive: 'Delivery caro',
+  delivery_time: 'Delivery',
   moved: 'Cambió de zona',
   competitor: 'Otro local',
   no_occasion: 'Sin ocasión',

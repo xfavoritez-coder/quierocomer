@@ -271,23 +271,18 @@ async function enrollAndSend(args: {
       text = abandonmentSurveyText({ ...commonArgs, surveyUrl });
       break;
     case "recovery_incentive":
-      // Buscar imagen del producto más vendido del restaurante
-      let topProductImageUrl: string | null = null;
-      let topProductName = client.topProduct;
+      // Buscar la razón que dio en la encuesta de abandono para personalizar el mensaje
+      let surveyReason: string | null = null;
       try {
-        // Buscar el plato más popular del local (con foto)
-        const topDish = await prisma.dish.findFirst({
-          where: { restaurantId, isActive: true, photos: { isEmpty: false } },
-          orderBy: { position: "asc" },
-          select: { name: true, photos: true },
+        const prevEnrollment = await prisma.recoveryEnrollment.findFirst({
+          where: { restaurantId, customerEmail: client.email.toLowerCase(), automation: "abandonment_survey", surveyReason: { not: null } },
+          select: { surveyReason: true },
+          orderBy: { createdAt: "desc" },
         });
-        if (topDish?.photos?.[0]) {
-          topProductImageUrl = topDish.photos[0];
-          if (!topProductName) topProductName = topDish.name;
-        }
+        surveyReason = prevEnrollment?.surveyReason || null;
       } catch { /* noop */ }
       subject = recoveryIncentiveSubject({ customerName: client.name, storeName, couponPercent: rc.recoveryIncentive.couponPercent });
-      html = recoveryIncentiveHtml({ ...commonArgs, topProduct: topProductName, topProductImageUrl, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent });
+      html = recoveryIncentiveHtml({ ...commonArgs, surveyReason, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent });
       text = recoveryIncentiveText({ ...commonArgs, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent });
       break;
   }

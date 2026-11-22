@@ -4,8 +4,8 @@ import { useState } from "react";
 const REASONS = [
   { id: "price", label: "Los precios me parecen altos", emoji: "💰" },
   { id: "quality", label: "La calidad no fue la esperada", emoji: "😕" },
-  { id: "delivery_time", label: "El delivery demora o es caro", emoji: "🚗" },
-  { id: "moved", label: "Me mudé de zona", emoji: "🏠" },
+  { id: "delivery_slow", label: "El delivery demora mucho", emoji: "🕐" },
+  { id: "delivery_expensive", label: "El delivery es muy caro", emoji: "🚗" },
   { id: "competitor", label: "Encontré otro local", emoji: "🔄" },
   { id: "no_occasion", label: "No he tenido la ocasión", emoji: "⏰" },
   { id: "other", label: "Otro motivo", emoji: "💬" },

@@ -22,7 +22,8 @@ interface Args {
 const REASONS = [
   { id: "price", emoji: "💰", label: "Los precios me parecen altos" },
   { id: "quality", emoji: "😕", label: "La calidad no fue la esperada" },
-  { id: "delivery_time", emoji: "🚗", label: "El delivery demora o es caro" },
+  { id: "delivery_slow", emoji: "🕐", label: "El delivery demora mucho" },
+  { id: "delivery_expensive", emoji: "🚗", label: "El delivery es muy caro" },
   { id: "competitor", emoji: "🔄", label: "Encontré otro local" },
   { id: "no_occasion", emoji: "⏰", label: "No he tenido la ocasión" },
   { id: "other", emoji: "💬", label: "Otro motivo" },
