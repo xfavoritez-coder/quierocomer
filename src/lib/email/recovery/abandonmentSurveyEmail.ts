@@ -37,10 +37,12 @@ export function abandonmentSurveyHtml(args: Args): string {
   const name = firstName(args.customerName);
   const accent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(args.accent) ? args.accent : "#e63946";
 
-  // Header logo — mismo estilo que surveyEmail.ts
-  const headerLogo = args.logoUrl
-    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" width="180" style="width:180px;height:auto;display:block;margin:0 auto;" />`
+  // Header logo — copiado exacto de surveyEmail.ts + link a la tienda
+  const storeUrl = args.surveyUrl.split("/encuesta-abandono")[0] || "https://quierocomer.com";
+  const logoImg = args.logoUrl
+    ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
+  const headerLogo = `<a href="${esc(storeUrl)}" style="text-decoration:none;">${logoImg}</a>`;
 
   const titulo = name ? `${esc(name)}, hace tiempo no sabemos de ti 🥺` : `Hace tiempo no sabemos de ti 🥺`;
 
