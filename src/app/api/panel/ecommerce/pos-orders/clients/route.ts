@@ -313,14 +313,14 @@ export async function GET(req: NextRequest) {
     if (emails.length > 0) {
       const enrollments = await prisma.recoveryEnrollment.findMany({
         where: { restaurantId: { in: allIds }, customerEmail: { in: emails } },
-        select: { customerEmail: true, automation: true, sentAt: true, status: true },
+        select: { customerEmail: true, automation: true, sentAt: true, status: true, surveyReason: true },
         orderBy: { createdAt: "desc" },
       });
-      const recoveryMap = new Map<string, { type: string; sentAt: string; status: string }>();
+      const recoveryMap = new Map<string, { type: string; sentAt: string; status: string; surveyReason?: string | null }>();
       for (const e of enrollments) {
         const key = e.customerEmail.toLowerCase();
         if (!recoveryMap.has(key) && e.sentAt) {
-          recoveryMap.set(key, { type: e.automation, sentAt: e.sentAt.toISOString(), status: e.status });
+          recoveryMap.set(key, { type: e.automation, sentAt: e.sentAt.toISOString(), status: e.status, surveyReason: e.surveyReason });
         }
       }
       for (const c of allClients) {

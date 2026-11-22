@@ -2300,24 +2300,36 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
               )}
 
               {/* Recuperación */}
-              {(client as any).recovery && (
-                <div style={{ padding: '14px 16px 0' }}>
-                  <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Recuperación</div>
-                  <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>{(client as any).recovery.type === 'recovery_incentive' ? '🎁' : '📧'}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>
-                        {(client as any).recovery.type === 'recovery_incentive' ? 'Cupón de descuento enviado' : 'Encuesta de abandono enviada'}
-                      </div>
-                      <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>
-                        {new Date((client as any).recovery.sentAt).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        {(client as any).recovery.status === 'converted' && ' · Volvió a comprar ✓'}
-                        {(client as any).recovery.status === 'clicked' && ' · Abrió el email'}
+              {(client as any).recovery && (() => {
+                const r = (client as any).recovery;
+                const isCoupon = r.type === 'recovery_incentive';
+                const reasonLabels: Record<string, string> = { price: 'Precios altos', quality: 'Calidad bajó', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro motivo', moved: 'Se mudó' };
+                return (
+                  <div style={{ padding: '14px 16px 0' }}>
+                    <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Recuperación</div>
+                    <div style={{ background: 'var(--sunk)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>{isCoupon ? '🎁' : '📧'}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>
+                          {isCoupon ? 'Cupón de descuento enviado' : 'Encuesta de recuperación enviada'}
+                        </div>
+                        <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>
+                          {new Date(r.sentAt).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {r.status === 'converted' && ' · Volvió a comprar ✓'}
+                          {r.status === 'clicked' && ' · Abrió el email'}
+                        </div>
+                        {r.surveyReason && (
+                          <div style={{ marginTop: 4 }}>
+                            <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
+                              Respondió: {reasonLabels[r.surveyReason] || r.surveyReason}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Encuestas */}
               {!loadingOrders && surveyOrders.length > 0 && (
@@ -2840,17 +2852,29 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
                   <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
                   {c.email && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
                   {c.phone && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.phone}</div>}
-                  {(c as any).recovery && (
-                    <span style={{
-                      display: 'inline-block', marginTop: 3, fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4,
-                      background: (c as any).recovery.type === 'recovery_incentive' ? '#f0fdf4' : '#eff6ff',
-                      color: (c as any).recovery.type === 'recovery_incentive' ? '#16a34a' : '#3b82f6',
-                      border: `1px solid ${(c as any).recovery.type === 'recovery_incentive' ? '#bbf7d0' : '#bfdbfe'}`,
-                    }}>
-                      {(c as any).recovery.type === 'recovery_incentive' ? '🎁 Cupón' : '📧 Encuesta'} · {new Date((c as any).recovery.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
-                      {(c as any).recovery.status === 'converted' ? ' · ✓' : ''}
-                    </span>
-                  )}
+                  {(c as any).recovery && (() => {
+                    const r = (c as any).recovery;
+                    const isCoupon = r.type === 'recovery_incentive';
+                    const reasonLabels: Record<string, string> = { price: 'Precios', quality: 'Calidad', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro', moved: 'Se mudó' };
+                    return (
+                      <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 3 }}>
+                        <span style={{
+                          fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4,
+                          background: isCoupon ? '#f0fdf4' : '#eff6ff',
+                          color: isCoupon ? '#16a34a' : '#3b82f6',
+                          border: `1px solid ${isCoupon ? '#bbf7d0' : '#bfdbfe'}`,
+                        }}>
+                          {isCoupon ? '🎁 Cupón' : '📧 Recuperación'} · {new Date(r.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                          {r.status === 'converted' ? ' · ✓' : ''}
+                        </span>
+                        {r.surveyReason && (
+                          <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
+                            {reasonLabels[r.surveyReason] || r.surveyReason}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
                 {/* Pedidos */}
                 <td style={{ padding: '8px 6px', fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
