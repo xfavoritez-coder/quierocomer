@@ -234,14 +234,9 @@ export default function DelifastTracking({ restaurantId, posOrderId, live = true
         style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: `12px ${px}`, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: ribbon ? 0 : 12 }}
       >
         <Motorbike size={17} style={{ color: isStuck ? stuckColor : 'var(--ink-2)', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-          <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>
-            {t.driver?.name || 'Motorista Delifast'}
-          </span>
-          {etaDisplay && (
-            <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 1 }}>{etaDisplay}</div>
-          )}
-        </div>
+        <span style={{ flex: 1, minWidth: 0, textAlign: 'left', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>
+          {t.driver?.name || 'Motorista Delifast'}
+        </span>
         {/* Link sutil de seguimiento */}
         {trackingHref && (
           <a
