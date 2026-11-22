@@ -119,7 +119,16 @@ export interface WhatsAppCreds {
   displayPhone?: string;  // número legible, informativo (ej. +56 9 1234 5678)
 }
 
+/** Meta (Facebook) Conversions API: token server-side para mandar eventos (Purchase)
+ *  al Pixel. El Pixel ID (público) vive en ecommerceStoreConfig.metaPixelId; el token
+ *  (secreto) vive aquí, CIFRADO, y NUNCA se envía al cliente. Se genera en Events
+ *  Manager → Pixel → Configuración → API de conversiones → Generar token de acceso. */
+export interface MetaCreds {
+  capiToken?: string;
+}
+
 export interface EcommerceConfig {
+  meta?: MetaCreds;
   webpay?: WebpayCreds;
   flow?: FlowCreds;
   mercadopago?: MercadoPagoCreds;

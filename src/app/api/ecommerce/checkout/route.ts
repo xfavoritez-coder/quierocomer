@@ -11,6 +11,7 @@ import { uberSettingsFor, uberConfigured, uberCreateQuote, uberQuoteErrorEs } fr
 import { getSurchargeTiers, computeSurcharge } from "@/lib/ecommerce/deliverySurcharge";
 import { parseCentroPedidosConfig } from "@/lib/ecommerce/config";
 import { isValidPhoneCL, normalizePhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerce/phoneCL";
+import { fireMetaPurchase } from "@/lib/meta/capi";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
@@ -320,6 +321,8 @@ export async function POST(req: NextRequest) {
 
     // ── Pago offline ──
     if (!isOnline) {
+      // Pedido colocado (efectivo/transferencia = se paga al recibir) → Purchase a Meta (CAPI).
+      void fireMetaPurchase(order.id, req);
       if (scheduledDate) {
         // Pedido programado: NO se envía al POS ni se imprime todavía. El cron
         // de liberación lo despacha (POS + impresión + aviso) `estimado` minutos

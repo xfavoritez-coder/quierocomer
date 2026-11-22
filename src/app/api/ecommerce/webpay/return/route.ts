@@ -8,6 +8,7 @@ import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { notifyNewEcommerceOrder } from "@/lib/ecommerce/notifyOrder";
 import { parseStoreConfig, storeBasePath } from "@/lib/ecommerce/store-config";
+import { fireMetaPurchase } from "@/lib/meta/capi";
 
 export const runtime = "nodejs";
 
@@ -90,6 +91,7 @@ async function handle(req: NextRequest) {
       where: { id: order.id },
       data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" },
     });
+    void fireMetaPurchase(order.id, req); // venta pagada → Purchase a Meta (CAPI)
     await registerCouponUse(order);
     void sendOrderStatusEmail(order.id, "ACCEPTED");
     // Pago confirmado → enviar el pedido al POS (Toteat) si está configurado.

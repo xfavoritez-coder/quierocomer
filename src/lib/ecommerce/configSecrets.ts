@@ -12,6 +12,9 @@ export function encryptEcommerceSecrets(cfg: EcommerceConfig): EcommerceConfig {
   if (out?.whatsapp?.accessToken) {
     out = { ...out, whatsapp: { ...out.whatsapp, accessToken: encryptSecret(out.whatsapp.accessToken) } };
   }
+  if (out?.meta?.capiToken) {
+    out = { ...out, meta: { ...out.meta, capiToken: encryptSecret(out.meta.capiToken) } };
+  }
   return out;
 }
 
@@ -24,6 +27,9 @@ export function decryptEcommerceSecrets<T extends EcommerceConfig | null | undef
   }
   if (out.whatsapp?.accessToken) {
     out = { ...out, whatsapp: { ...out.whatsapp, accessToken: decryptSecret(out.whatsapp.accessToken) } };
+  }
+  if (out.meta?.capiToken) {
+    out = { ...out, meta: { ...out.meta, capiToken: decryptSecret(out.meta.capiToken) } };
   }
   return out as T;
 }

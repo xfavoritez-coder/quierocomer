@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { confirmFlowPayment } from "@/lib/payments/flowConfirm";
 import { parseStoreConfig, storeBasePath } from "@/lib/ecommerce/store-config";
+import { fireMetaPurchase } from "@/lib/meta/capi";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ async function handle(req: NextRequest) {
 
   const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain });
   const checkout = `${baseUrl}${base}/checkout`;
-  if (paid) return NextResponse.redirect(`${checkout}?pago=exito&order=${order.id}`, 303);
+  if (paid) { void fireMetaPurchase(order.id, req); return NextResponse.redirect(`${checkout}?pago=exito&order=${order.id}`, 303); }
 
   if (order.paymentStatus === "pending") {
     await prisma.onlineOrder.update({ where: { id: order.id }, data: { paymentStatus: "failed" } }).catch(() => {});

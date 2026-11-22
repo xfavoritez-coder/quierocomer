@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { confirmMercadoPagoPayment } from "@/lib/payments/mercadopagoConfirm";
 import { parseStoreConfig, storeBasePath } from "@/lib/ecommerce/store-config";
+import { fireMetaPurchase } from "@/lib/meta/capi";
 
 export const runtime = "nodejs";
 
@@ -30,7 +31,7 @@ async function handle(req: NextRequest) {
 
   const base = storeBasePath({ host: req.nextUrl.host, slug: order.restaurant.slug, customDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).customDomain, brandDomain: parseStoreConfig(order.restaurant.ecommerceStoreConfig).brandDomain });
   const checkout = `${baseUrl}${base}/checkout`;
-  if (paid) return NextResponse.redirect(`${checkout}?pago=exito&order=${orderId}`, 303);
+  if (paid) { void fireMetaPurchase(orderId, req); return NextResponse.redirect(`${checkout}?pago=exito&order=${orderId}`, 303); }
 
   // Pago no completado → marcar fallido (si sigue pendiente) y volver a reintentar.
   if (order.paymentStatus === "pending") {
