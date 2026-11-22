@@ -629,7 +629,7 @@ export default async function DishSlugPage({ params }: Props) {
 
     const restaurant = await restaurantInCommuneCache(communeSlug, dishSlug)
     if (restaurant) {
-      redirect(`/${restaurant.slug}`)
+      return <RestaurantInCommunePage restaurant={restaurant} commune={commune} communeSlug={communeSlug} />
     }
 
     // dishSlug not recognized under this commune → 404
