@@ -323,11 +323,13 @@ function BranchPicker({ brand, currentSlug, switching, fetchStorefront, onChoose
   // por cercanía). Si ninguna cubre, no hay opción de delivery para esa dirección.
   const chosen = useMemo<BranchEval | null>(() => {
     if (!evals) return null;
-    const ok = evals.filter((e) => e.available).sort((a, b) => {
-      // Priorizar sucursales abiertas sobre cerradas
-      if (a.branch.open !== b.branch.open) return a.branch.open ? -1 : 1;
-      return a.fee - b.fee || a.km - b.km;
-    });
+    // Excluir sucursales hidden que están cerradas (el cliente no debe saber que existen)
+    const ok = evals.filter((e) => e.available && !(e.branch.hidden && !e.branch.open))
+      .sort((a, b) => {
+        // Priorizar sucursales abiertas sobre cerradas
+        if (a.branch.open !== b.branch.open) return a.branch.open ? -1 : 1;
+        return a.fee - b.fee || a.km - b.km;
+      });
     return ok[0] ?? null;
   }, [evals]);
   const noCoverage = !!evals && evals.length > 0 && !chosen;
