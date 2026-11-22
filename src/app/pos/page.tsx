@@ -738,9 +738,7 @@ export default function PosHomePage() {
               title: INNER_PAGES[innerPage].title,
               onDone: () => openInnerPage(null),
               onBack: () => openInnerPage(null),
-              allBranches: innerPage === 'reportes' || innerPage === 'historial'
-                ? (restaurants.length > 1 ? restaurants : allBranches)
-                : allBranches,
+              allBranches,
               ...(innerPage === 'reportes' ? {
                 initialTab: new URLSearchParams(window.location.search).get('tab') || undefined,
                 initialFrom: new URLSearchParams(window.location.search).get('from') || undefined,

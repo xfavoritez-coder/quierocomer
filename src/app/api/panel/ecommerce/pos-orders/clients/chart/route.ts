@@ -3,6 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { isSuperAdmin } from "@/lib/adminAuth";
 
+/** Busca sucursales hermanas por ownerId. Devuelve [viewIds, allBrandIds]. */
+async function resolveBrandIds(restaurantId: string, extraIds: string[]): Promise<[string[], string[]]> {
+  const viewIds = Array.from(new Set([restaurantId, ...extraIds]));
+  if (extraIds.length > 0) return [viewIds, viewIds]; // ya viene "todas"
+  const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
+  if (!r?.ownerId) return [viewIds, viewIds];
+  const siblings = await prisma.restaurant.findMany({ where: { ownerId: r.ownerId, orderingEnabled: true }, select: { id: true } });
+  return [viewIds, siblings.length > 1 ? siblings.map(s => s.id) : viewIds];
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -136,13 +146,15 @@ export async function GET(req: NextRequest) {
   const range = (req.nextUrl.searchParams.get("range") || "30d") as RangeParam;
   const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
   const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
-  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
+  const [viewIds, allBrandIds] = await resolveBrandIds(restaurantId, extraIds);
 
   const gran = getGranularity(range);
   const { from, to } = getRangeDates(range);
 
-  // Build safe SQL literal for IN clause
-  const idsLiteral = allIds.map(id => `'${id.replace(/'/g, "''")}'`).join(", ");
+  // viewIdsLiteral: sucursales que se están viendo (filtro del gráfico)
+  // brandIdsLiteral: todas las sucursales de la marca (para saber primer pedido global)
+  const viewIdsLiteral = viewIds.map(id => `'${id.replace(/'/g, "''")}'`).join(", ");
+  const brandIdsLiteral = allBrandIds.map(id => `'${id.replace(/'/g, "''")}'`).join(", ");
 
   const bucketExprCreatedAt = bucketExprForCol(`"createdAt"`, gran);
   const firstBucketExpr = bucketExprForCol(`fo.first_at`, gran);
@@ -152,36 +164,49 @@ export async function GET(req: NextRequest) {
   // NOTA: la agrupación transitiva email↔phone solo está en el endpoint principal
   // de clientes (Union-Find en JS); aquí usamos la clave simple normalizada, que
   // es suficiente una vez que el backfill de teléfonos se ejecute.
+  // all_orders: TODA la marca (para saber cuándo pidió por primera vez globalmente)
+  // view_orders: solo las sucursales vistas (para el gráfico de rango)
   const phoneNorm = `RIGHT(REGEXP_REPLACE("customerPhone", '[^0-9]', '', 'g'), 9)`;
+  const clientKeyExpr = `COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, ''))`;
   const sql = `
     WITH
-    all_orders AS (
-      SELECT
-        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) AS client_key,
-        "createdAt"
+    brand_orders AS (
+      SELECT ${clientKeyExpr} AS client_key, "createdAt"
       FROM "PosOrder"
-      WHERE "restaurantId" IN (${idsLiteral})
+      WHERE "restaurantId" IN (${brandIdsLiteral})
         AND "posStatus" != 'canceled'
         AND "saleType" NOT IN ('dine-in', 'dinein', 'quick', 'QUICK')
-        AND COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) IS NOT NULL
+        AND ${clientKeyExpr} IS NOT NULL
       UNION ALL
-      SELECT
-        COALESCE(NULLIF(LOWER(TRIM("customerEmail")), ''), NULLIF(${phoneNorm}, '')) AS client_key,
-        "createdAt"
+      SELECT ${clientKeyExpr} AS client_key, "createdAt"
       FROM "OnlineOrder"
-      WHERE "restaurantId" IN (${idsLiteral})
+      WHERE "restaurantId" IN (${brandIdsLiteral})
         AND "status" != 'CANCELLED'
         AND "source" = 'ecommerce'
     ),
     first_orders AS (
       SELECT client_key, MIN("createdAt") as first_at
-      FROM all_orders
+      FROM brand_orders
       WHERE client_key IS NOT NULL
       GROUP BY client_key
     ),
+    view_orders AS (
+      SELECT ${clientKeyExpr} AS client_key, "createdAt"
+      FROM "PosOrder"
+      WHERE "restaurantId" IN (${viewIdsLiteral})
+        AND "posStatus" != 'canceled'
+        AND "saleType" NOT IN ('dine-in', 'dinein', 'quick', 'QUICK')
+        AND ${clientKeyExpr} IS NOT NULL
+      UNION ALL
+      SELECT ${clientKeyExpr} AS client_key, "createdAt"
+      FROM "OnlineOrder"
+      WHERE "restaurantId" IN (${viewIdsLiteral})
+        AND "status" != 'CANCELLED'
+        AND "source" = 'ecommerce'
+    ),
     range_data AS (
       SELECT client_key, ${bucketExprCreatedAt} as order_bucket
-      FROM all_orders
+      FROM view_orders
       WHERE "createdAt" >= $1::timestamptz
         AND "createdAt" <= $2::timestamptz
     )

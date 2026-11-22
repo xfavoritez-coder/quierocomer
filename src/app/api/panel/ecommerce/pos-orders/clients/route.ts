@@ -76,14 +76,31 @@ export async function GET(req: NextRequest) {
 
   const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
   const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
-  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
+
+  // ── Sucursales hermanas: si no vienen branchIds, buscar por ownerId ───
+  // Esto permite que al ver Providencia se crucen datos de Recoleta para
+  // calcular status (recurrente vs nuevo) correctamente a nivel de marca.
+  let allIds: string[];
+  if (extraIds.length > 0) {
+    allIds = Array.from(new Set([restaurantId, ...extraIds]));
+  } else {
+    const thisR = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
+    if (thisR?.ownerId) {
+      const siblings = await prisma.restaurant.findMany({ where: { ownerId: thisR.ownerId, orderingEnabled: true }, select: { id: true } });
+      allIds = siblings.length > 1 ? siblings.map(s => s.id) : [restaurantId];
+    } else {
+      allIds = [restaurantId];
+    }
+  }
+  // viewIds: las sucursales que el usuario está viendo (para filtrar clientes mostrados)
+  const viewIds = new Set(extraIds.length > 0 ? allIds : [restaurantId]);
 
   // ── Cache key: per restaurant + branches, sort-independent (filtering/sort happens in-memory) ──
-  const cacheKey = allIds.sort().join(',');
+  const cacheKey = allIds.slice().sort().join(',');
   const cached = _cache.get(cacheKey);
   const nowMs = Date.now();
 
-  interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date; items?: unknown }
+  interface NormOrder { email: string; name: string; phone: string; net: number; createdAt: Date; items?: unknown; rid: string }
   let orders: NormOrder[];
 
   if (cached && nowMs - cached.ts < CACHE_TTL) {
@@ -98,7 +115,7 @@ export async function GET(req: NextRequest) {
           OR: [{ customerEmail: { not: "" } }, { customerPhone: { not: "" } }],
         },
         select: {
-          externalId: true, customerEmail: true, customerName: true,
+          restaurantId: true, externalId: true, customerEmail: true, customerName: true,
           customerPhone: true, totalAmount: true, deliveryFee: true,
           tipAmount: true, createdAt: true, items: true,
         },
@@ -110,7 +127,7 @@ export async function GET(req: NextRequest) {
           status: { not: "CANCELLED" },
           OR: [{ paymentStatus: "paid" }, { paymentMethod: { notIn: ["webpay", "flow", "mercadopago"] } }],
         },
-        select: { id: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true, items: true },
+        select: { id: true, restaurantId: true, customerEmail: true, customerName: true, customerPhone: true, total: true, deliveryFee: true, createdAt: true, items: true },
         orderBy: { createdAt: "asc" },
       }),
     ]);
@@ -127,6 +144,7 @@ export async function GET(req: NextRequest) {
       net:   Math.max(0, (o.totalAmount || 0) - (o.deliveryFee || 0) - (o.tipAmount || 0)),
       createdAt: o.createdAt,
       items: o.items,
+      rid: o.restaurantId,
     }));
 
     for (const o of onlineOrders) {
@@ -139,6 +157,7 @@ export async function GET(req: NextRequest) {
         net:   Math.max(0, (o.total || 0) - (o.deliveryFee || 0)),
         createdAt: o.createdAt,
         items: o.items,
+        rid: o.restaurantId,
       });
     }
     orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -205,6 +224,7 @@ export async function GET(req: NextRequest) {
     orders: number; totalSpent: number;
     firstAt: Date; lastAt: Date; dates: Date[];
     productCounts: Map<string, number>;
+    inView: boolean; // tiene al menos 1 pedido en las sucursales que se están viendo
   };
   const clientMap = new Map<number, ClientAcc>();
 
@@ -215,10 +235,12 @@ export async function GET(req: NextRequest) {
     if (!em && !pk) continue; // sin identificador → skip
     const root = find(i);
     const itemNames = extractItemNames(o.items);
+    const isInView = viewIds.has(o.rid);
     const existing = clientMap.get(root);
     if (existing) {
       existing.orders++;
       existing.totalSpent += o.net;
+      if (isInView) existing.inView = true;
       if (o.createdAt > existing.lastAt) {
         existing.lastAt = o.createdAt;
         if (o.name)  existing.name  = o.name;
@@ -239,8 +261,14 @@ export async function GET(req: NextRequest) {
         firstAt: o.createdAt, lastAt: o.createdAt,
         dates: [o.createdAt],
         productCounts,
+        inView: isInView,
       });
     }
+  }
+
+  // Filtrar: solo clientes que pidieron en las sucursales vistas
+  for (const [root, c] of clientMap) {
+    if (!c.inView) clientMap.delete(root);
   }
 
   const now = new Date();

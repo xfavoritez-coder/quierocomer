@@ -2096,7 +2096,7 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
     addressLine: string; saleType: string; isDelivery: boolean
     totalAmount: number; paidAmount: number; deliveryFee: number; tipAmount: number
     changeAmount: number; items: unknown; createdAt: string; posStatus: string
-    vendorName?: string | null; rawPayload?: unknown
+    vendorName?: string | null; rawPayload?: unknown; branchName?: string | null
     surveySentAt?: string | null; surveyEmailOpenedAt?: string | null
     surveyAnsweredAt?: string | null; surveyRatings?: unknown; surveyComment?: string | null
     opsReadyForDeliveryAt?: string | null; opsDispatchedAt?: string | null; opsDeliveredAt?: string | null
@@ -2370,6 +2370,7 @@ function FichaCliente({ client, restaurantId, allBranches, onClose }: {
                         </div>
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4, background: typeColor + '20', color: typeColor }}>{typeLabel}</span>
+                          {o.branchName && <span style={{ fontFamily: F, fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', padding: '1px 5px', borderRadius: 4, background: 'var(--sunk)' }}>{o.branchName}</span>}
                           {qty > 0 && <span style={{ fontFamily: F, fontSize: 12, color: 'var(--ink-3)' }}>{qty} ítem{qty !== 1 ? 's' : ''}</span>}
                           {o.surveyAnsweredAt && <span style={{ fontFamily: F, fontSize: 11, color: 'var(--jade)' }}>⭐ Encuesta</span>}
                         </div>

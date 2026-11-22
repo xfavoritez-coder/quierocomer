@@ -26,7 +26,20 @@ export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email") || "";
   const rawBranchIds = req.nextUrl.searchParams.get("branchIds") || "";
   const extraIds = rawBranchIds ? rawBranchIds.split(",").map(s => s.trim()).filter(Boolean) : [];
-  const allIds = Array.from(new Set([restaurantId, ...extraIds]));
+  // Si no vienen branchIds, buscar sucursales hermanas por ownerId para mostrar
+  // el historial completo del cliente a nivel de marca.
+  let allIds: string[];
+  if (extraIds.length > 0) {
+    allIds = Array.from(new Set([restaurantId, ...extraIds]));
+  } else {
+    const thisR = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
+    if (thisR?.ownerId) {
+      const siblings = await prisma.restaurant.findMany({ where: { ownerId: thisR.ownerId, orderingEnabled: true }, select: { id: true } });
+      allIds = siblings.length > 1 ? siblings.map(s => s.id) : [restaurantId];
+    } else {
+      allIds = [restaurantId];
+    }
+  }
   const countOnly = req.nextUrl.searchParams.get("countOnly") === "1";
   if (!restaurantId || (!phone && !email)) return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
@@ -83,7 +96,7 @@ export async function GET(req: NextRequest) {
   };
   // surveySentAt and surveyEmailOpenedAt live on OnlineOrder, not PosOrder — always null here
   const baseSelect = {
-    id: true, orderReference: true, customerName: true, customerPhone: true,
+    id: true, restaurantId: true, orderReference: true, customerName: true, customerPhone: true,
     addressLine: true, saleType: true, isDelivery: true, opsStage: true,
     opsReadyForDeliveryAt: true, opsDispatchedAt: true, opsDeliveredAt: true,
     totalAmount: true, paidAmount: true, tipAmount: true, changeAmount: true,
@@ -113,9 +126,20 @@ export async function GET(req: NextRequest) {
   }
   const responseMap = new Map(raw.filter(r => r.orderId != null).map(r => [r.orderId as string, { answeredAt: r.createdAt, ratings: r.ratings, comment: r.comment }]));
 
+  // Resolver nombres de sucursales para pedidos cross-branch
+  const branchNameMap = new Map<string, string>();
+  if (allIds.length > 1) {
+    const branches = await prisma.restaurant.findMany({ where: { id: { in: allIds } }, select: { id: true, name: true } });
+    for (const b of branches) branchNameMap.set(b.id, b.name);
+  }
+
   const enriched = orders.map(o => {
     const sr = responseMap.get(o.id);
-    return { ...o, surveyAnsweredAt: sr?.answeredAt ?? null, surveyRatings: sr?.ratings ?? null, surveyComment: sr?.comment ?? null };
+    return {
+      ...o,
+      branchName: branchNameMap.get((o as any).restaurantId) || null,
+      surveyAnsweredAt: sr?.answeredAt ?? null, surveyRatings: sr?.ratings ?? null, surveyComment: sr?.comment ?? null,
+    };
   });
 
   return NextResponse.json({ count: enriched.length, orders: enriched });
