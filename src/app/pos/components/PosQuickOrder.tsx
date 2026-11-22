@@ -334,9 +334,12 @@ export default function PosQuickOrder({ restaurantId, data, onDone, isMesa, tabl
       {!isMesa && saleType !== 'QUICK' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
-            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Telefono</label>
-            <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+56 9 1234 5678" type="tel" inputMode="tel"
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+            <label style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>Teléfono</label>
+            <div style={{ display: 'flex', alignItems: 'center', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 12, paddingRight: 6, fontFamily: F, fontSize: 14, color: 'var(--ink-3)', userSelect: 'none', flexShrink: 0 }} aria-hidden>🇨🇱 +56</span>
+              <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="9 1234 5678" type="tel" inputMode="tel"
+                style={{ flex: 1, padding: '10px 12px 10px 0', border: 'none', background: 'transparent', color: 'var(--ink)', fontFamily: F, fontSize: 14, outline: 'none', boxSizing: 'border-box', minWidth: 0 }} />
+            </div>
             {custFound && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, fontFamily: F, fontSize: 12, fontWeight: 600, color: 'var(--jade)' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>

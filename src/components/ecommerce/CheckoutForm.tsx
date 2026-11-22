@@ -493,8 +493,13 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400" />
               </Field>
               <Field label="Teléfono *">
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="+56 9 1234 5678"
-                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${phone.trim() && !phoneOk ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-200 focus:border-gray-400"}`} />
+                <div className={`flex items-center rounded-xl border overflow-hidden ${phone.trim() && !phoneOk ? "border-red-400 bg-red-50" : "border-gray-200 focus-within:border-gray-400"}`}>
+                  <span className="flex items-center gap-1.5 pl-3 pr-2 text-sm text-gray-500 select-none shrink-0" aria-hidden>
+                    <span className="text-base leading-none">🇨🇱</span>+56
+                  </span>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="9 1234 5678"
+                    className="w-full bg-transparent py-2.5 pr-3 text-sm outline-none" />
+                </div>
                 {phone.trim() && !phoneOk ? (
                   <p className="mt-1 text-xs text-red-600">{PHONE_CL_ERROR}</p>
                 ) : null}
