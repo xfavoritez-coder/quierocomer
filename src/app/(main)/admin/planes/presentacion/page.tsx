@@ -412,7 +412,7 @@ export default function PresentacionPage() {
 
     if (slide.type === "panorama") return (
       <div style={{ ...wrap, gap: "clamp(12px,1.8vh,22px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow(cfg.headings?.plansTitle || "Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
           {cfg.plans.map((p, i) => {
             const hi = p.recommended === true || (!cfg.plans.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
@@ -502,7 +502,7 @@ export default function PresentacionPage() {
 
     if (slide.type === "addons") return (
       <div style={{ ...wrap, gap: "clamp(24px,3.5vh,40px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow("Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{eyebrow(cfg.headings?.addonsTitle || "Paquetes y add-ons")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(2rem,4.5vw,4rem)", fontWeight: 600, lineHeight: 1.05, color: INK, margin: 0 }}>Súmale fidelización y carta digital</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(360px,1fr))", gap: "clamp(16px,2vw,28px)" }}>
           {cfg.addons.map((p, i) => (
             <div key={p.id} style={{ background: CARD, border: `1px solid ${CARDB}`, borderRadius: 22, padding: "clamp(24px,2.4vw,36px)", display: "flex", flexDirection: "column", gap: "clamp(14px,1.6vw,20px)", boxShadow: CARDSHADOW }}>

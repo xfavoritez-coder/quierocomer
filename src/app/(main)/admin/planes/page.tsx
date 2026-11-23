@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
-import type { PricingConfig, PricePlan, PriceLine } from "@/lib/pricing";
+import { DEFAULT_HEADINGS } from "@/lib/pricing";
+import type { PricingConfig, PricePlan, PriceLine, PricingHeadings } from "@/lib/pricing";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -65,6 +66,7 @@ export default function PlanesPage() {
   const addPlan = (k: PlanKey) => mutate((c) => { c[k].push({ id: uid(), name: "Nuevo plan", price: 0, features: [] }); });
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
+  const setHeading = (field: keyof PricingHeadings, v: string) => mutate((c) => { c.headings = { ...(c.headings || {}), [field]: v }; });
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
   const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
@@ -76,6 +78,7 @@ export default function PlanesPage() {
   if (!cfg) return <div style={{ padding: 32, color: GOLD, fontFamily: F }}>Cargando planes…</div>;
 
   const implFor = (name: string) => cfg.implementation.find((l) => l.label.trim().toLowerCase() === name.trim().toLowerCase())?.price ?? null;
+  const hv = (f: keyof PricingHeadings) => cfg.headings?.[f] || DEFAULT_HEADINGS[f]; // valor efectivo del encabezado (custom o default)
   const anyRecommended = [...cfg.plans, ...cfg.addons].some((p) => p.recommended);
   // Resalta el plan marcado como recomendado. Fallback: si nadie está marcado, resalta el premium (comportamiento anterior).
   const isHighlight = (p: PricePlan, accent: boolean) => p.recommended === true || (!anyRecommended && accent && (p.id === "premium" || /(^|\s)premium$/i.test(p.name.trim())));
@@ -116,8 +119,8 @@ export default function PlanesPage() {
   const renderView = () => (
     <>
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>Planes Ecommerce</h2>
-        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>Suscripción mensual · precio de implementación por única vez.</p>
+        <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>{hv("plansTitle")}</h2>
+        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>{hv("plansSub")}</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginBottom: 34 }}>
         {cfg.plans.map((p) => planCard(p, true))}
@@ -125,8 +128,8 @@ export default function PlanesPage() {
 
       {cfg.addons.length > 0 && <>
         <div style={{ marginBottom: 14 }}>
-          <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>Paquetes y add-ons</h2>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>Módulos que se contratan aparte o se suman a un plan.</p>
+          <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>{hv("addonsTitle")}</h2>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>{hv("addonsSub")}</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 34 }}>
           {cfg.addons.map((p) => planCard(p, false))}
@@ -154,10 +157,14 @@ export default function PlanesPage() {
   );
 
   // ───────────────────────── EDIT (form) ─────────────────────────
-  const renderPlans = (k: PlanKey, title: string, sub: string) => (
+  const renderPlans = (k: PlanKey) => {
+    const tf: keyof PricingHeadings = k === "plans" ? "plansTitle" : "addonsTitle";
+    const sf: keyof PricingHeadings = k === "plans" ? "plansSub" : "addonsSub";
+    return (
     <div style={card}>
-      <h3 style={sectionTitle}>{title}</h3>
-      <p style={sectionSub}>{sub}</p>
+      <p style={{ fontFamily: FB, fontSize: "0.66rem", color: "#777", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>Título y subtítulo de la sección</p>
+      <input style={{ ...inp, fontFamily: F, fontWeight: 900, fontSize: "1.05rem", color: "#fff", marginBottom: 6 }} value={cfg.headings?.[tf] ?? ""} onChange={(e) => setHeading(tf, e.target.value)} placeholder={DEFAULT_HEADINGS[tf]} />
+      <input style={{ ...inp, fontSize: "0.8rem", color: "#bbb", marginBottom: 16 }} value={cfg.headings?.[sf] ?? ""} onChange={(e) => setHeading(sf, e.target.value)} placeholder={DEFAULT_HEADINGS[sf]} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
         {cfg[k].map((p, pi) => (
           <div key={p.id} style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 12, padding: 14 }}>
@@ -193,7 +200,8 @@ export default function PlanesPage() {
       </div>
       <button style={{ ...smallBtn, marginTop: 14 }} onClick={() => addPlan(k)}>+ agregar {k === "plans" ? "plan" : "paquete"}</button>
     </div>
-  );
+    );
+  };
 
   const renderLines = (k: LineKey, title: string, sub: string, addLabel: string) => (
     <div style={card}>
@@ -221,8 +229,8 @@ export default function PlanesPage() {
 
   const renderEdit = () => (
     <>
-      {renderPlans("plans", "Planes Ecommerce", "Suscripción mensual. Cada plan con sus características incluidas.")}
-      {renderPlans("addons", "Paquetes / Add-ons", "Módulos que se contratan aparte o se suman a un plan.")}
+      {renderPlans("plans")}
+      {renderPlans("addons")}
       {renderLines("implementation", "Implementación", "Pago único de puesta en marcha por plan o paquete.", "ítem de implementación")}
       {renderLines("extras", "Otros cobros", "Cobros variables (por mensaje, por metro, dominio, etc.).", "otro cobro")}
     </>

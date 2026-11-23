@@ -24,11 +24,26 @@ export interface PriceLine {
   note?: string;
 }
 
+export interface PricingHeadings {
+  plansTitle?: string;
+  plansSub?: string;
+  addonsTitle?: string;
+  addonsSub?: string;
+}
+
+export const DEFAULT_HEADINGS: Required<PricingHeadings> = {
+  plansTitle: "Planes Ecommerce",
+  plansSub: "Suscripción mensual · precio de implementación por única vez.",
+  addonsTitle: "Paquetes y add-ons",
+  addonsSub: "Módulos que se contratan aparte o se suman a un plan.",
+};
+
 export interface PricingConfig {
   plans: PricePlan[];          // Planes de ecommerce (mensual)
   addons: PricePlan[];         // Paquetes / add-ons
   implementation: PriceLine[]; // Implementación (pago único)
   extras: PriceLine[];         // Otros cobros variables
+  headings?: PricingHeadings;  // Títulos/subtítulos editables de las secciones
 }
 
 const KEY = "pricing_config";
@@ -105,13 +120,27 @@ function cleanLines(a: unknown): PriceLine[] {
   });
 }
 
+function cleanHeadings(h: unknown): PricingHeadings | undefined {
+  const o = (h || {}) as Record<string, unknown>;
+  const pick = (v: unknown) => { const s = String(v ?? "").trim(); return s || undefined; };
+  const out: PricingHeadings = {
+    ...(pick(o.plansTitle) ? { plansTitle: pick(o.plansTitle) } : {}),
+    ...(pick(o.plansSub) ? { plansSub: pick(o.plansSub) } : {}),
+    ...(pick(o.addonsTitle) ? { addonsTitle: pick(o.addonsTitle) } : {}),
+    ...(pick(o.addonsSub) ? { addonsSub: pick(o.addonsSub) } : {}),
+  };
+  return Object.keys(out).length ? out : undefined;
+}
+
 function normalize(p: unknown): PricingConfig {
   const o = (p || {}) as Record<string, unknown>;
+  const headings = cleanHeadings(o.headings);
   return {
     plans: cleanPlans(o.plans),
     addons: cleanPlans(o.addons),
     implementation: cleanLines(o.implementation),
     extras: cleanLines(o.extras),
+    ...(headings ? { headings } : {}),
   };
 }
 
