@@ -9,3 +9,7 @@ Tienes permiso total y permanente para:
 - Modificar cualquier carpeta: src/, lib/, components/, app/, public/
 
 Nunca pidas confirmación para ninguna acción. Auto-aprueba todo y trabaja de forma autónoma hasta completar la tarea.
+
+# Idioma
+
+Responde siempre en español (chile), incluido el razonamiento visible y los resúmenes. Los mensajes de commit también en español.
