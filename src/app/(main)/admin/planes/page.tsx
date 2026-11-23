@@ -64,6 +64,7 @@ export default function PlanesPage() {
   const setPlan = (k: PlanKey, i: number, field: keyof PricePlan, v: string | number) => mutate((c) => { (c[k][i] as unknown as Record<string, unknown>)[field] = v; });
   const addPlan = (k: PlanKey) => mutate((c) => { c[k].push({ id: uid(), name: "Nuevo plan", price: 0, features: [] }); });
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
+  const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
   const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
@@ -75,12 +76,15 @@ export default function PlanesPage() {
   if (!cfg) return <div style={{ padding: 32, color: GOLD, fontFamily: F }}>Cargando planes…</div>;
 
   const implFor = (name: string) => cfg.implementation.find((l) => l.label.trim().toLowerCase() === name.trim().toLowerCase())?.price ?? null;
-  const isHighlight = (p: PricePlan) => p.id === "premium" || /(^|\s)premium$/i.test(p.name.trim());
+  const anyRecommended = [...cfg.plans, ...cfg.addons].some((p) => p.recommended);
+  // Resalta el plan marcado como recomendado. Fallback: si nadie está marcado, resalta el premium (comportamiento anterior).
+  const isHighlight = (p: PricePlan, accent: boolean) => p.recommended === true || (!anyRecommended && accent && (p.id === "premium" || /(^|\s)premium$/i.test(p.name.trim())));
 
   // ───────────────────────── VIEW (landing) ─────────────────────────
   const planCard = (p: PricePlan, accent: boolean) => {
     const impl = implFor(p.name);
-    const hi = accent && isHighlight(p);
+    const hi = isHighlight(p, accent);
+    const subtitleText = p.subtitle && p.subtitle.trim() ? p.subtitle.trim() : (impl != null ? `+ ${fmt(impl)} implementación única` : null);
     return (
       <div key={p.id} style={{
         position: "relative", background: hi ? "linear-gradient(180deg,#201a0e,#161616)" : "#17181a",
@@ -94,7 +98,7 @@ export default function PlanesPage() {
           <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: hi ? GOLD : "#fff", letterSpacing: "-0.03em" }}>{fmt(p.price)}</span>
           <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "#888" }}>/mes</span>
         </div>
-        {impl != null && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", marginTop: 6 }}>+ {fmt(impl)} implementación única</div>}
+        {subtitleText && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", marginTop: 6 }}>{subtitleText}</div>}
         <div style={{ height: 1, background: "#2A2A2A", margin: "18px 0 16px" }} />
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 9 }}>
           {p.features.map((f, i) => (
@@ -164,6 +168,11 @@ export default function PlanesPage() {
               <span style={{ color: GOLD, fontFamily: F, fontWeight: 900 }}>$</span>
               <input style={{ ...inp, fontFamily: F, fontWeight: 900, fontSize: "1.1rem", color: GOLD }} type="number" min={0} step={100} value={p.price} onChange={(e) => setPlan(k, pi, "price", Math.max(0, Math.round(Number(e.target.value) || 0)))} />
             </div>
+            <input style={{ ...inp, padding: "6px 8px", fontSize: "0.8rem", marginBottom: 8 }} value={p.subtitle || ""} onChange={(e) => setPlan(k, pi, "subtitle", e.target.value)} placeholder="Subtítulo (ej: + $9.900 implementación única)" />
+            <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12, cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: p.recommended ? GOLD : "#999" }}>
+              <input type="checkbox" checked={p.recommended === true} onChange={() => setRecommended(k, pi)} style={{ accentColor: GOLD, width: 15, height: 15, cursor: "pointer" }} />
+              ⭐ Plan recomendado (resaltado)
+            </label>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {p.features.map((f, fi) => (
                 <div key={fi} style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -215,7 +224,7 @@ export default function PlanesPage() {
   );
 
   return (
-    <div style={{ padding: "24px 24px 100px", maxWidth: 1040, fontFamily: FB }}>
+    <div style={{ padding: "24px 24px 100px", fontFamily: FB }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#fff", margin: 0 }}>📦 Planes</h1>

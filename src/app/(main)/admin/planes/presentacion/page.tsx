@@ -415,7 +415,7 @@ export default function PresentacionPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow("Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(cfg.plans.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
           {cfg.plans.map((p, i) => {
-            const hi = /premium/i.test(p.name) && !/futuro/i.test(p.name);
+            const hi = p.recommended === true || (!cfg.plans.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
             const prev = i > 0 ? cfg.plans[i - 1] : null;
             const prevSet = prev ? new Set(prev.features.map((x) => x.trim().toLowerCase())) : null;
             const shown = prevSet ? p.features.filter((f) => !prevSet.has(f.trim().toLowerCase())) : p.features;
@@ -425,6 +425,7 @@ export default function PresentacionPage() {
                 {hi ? eyebrow("Recomendado", true) : <div style={{ height: "clamp(0.8rem,1.1vw,1.05rem)" }} />}
                 <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.4vw,1.4rem)", fontWeight: 700, color: tInk, margin: 0 }}>{p.name}</h3>
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
+                {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.62rem,0.8vw,0.85rem)", color: tSub, margin: 0 }}>{p.subtitle.trim()}</p> : null}
                 <div style={{ height: 1, background: line, margin: "6px 0 2px" }} />
                 {prev ? (
                   <>
@@ -510,6 +511,7 @@ export default function PresentacionPage() {
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
               </div>
+              {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-6px 0 0" }}>{p.subtitle.trim()}</p> : null}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
                 {p.features.map((f) => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>

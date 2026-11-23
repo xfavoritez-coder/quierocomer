@@ -12,6 +12,8 @@ export interface PricePlan {
   name: string;
   price: number; // CLP / mes
   features: string[];
+  subtitle?: string;     // Subtítulo editable bajo el precio (ej: "+ $9.900 implementación única"). Si no se setea, se autogenera desde implementation.
+  recommended?: boolean; // Marca el plan como "Recomendado" (resaltado). Solo uno por grupo.
 }
 
 export interface PriceLine {
@@ -75,11 +77,14 @@ function cleanPlans(a: unknown): PricePlan[] {
   if (!Array.isArray(a)) return [];
   return a.map((x, i) => {
     const o = (x || {}) as Record<string, unknown>;
+    const subtitle = String(o.subtitle || "").trim();
     return {
       id: String(o.id || `p${i}`),
       name: String(o.name || "").trim(),
       price: Math.max(0, Math.round(Number(o.price) || 0)),
       features: Array.isArray(o.features) ? o.features.map((f) => String(f)).filter((f) => f.trim() !== "") : [],
+      ...(subtitle ? { subtitle } : {}),
+      ...(o.recommended === true ? { recommended: true } : {}),
     };
   });
 }
