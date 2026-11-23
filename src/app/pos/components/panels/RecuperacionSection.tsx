@@ -14,7 +14,7 @@ interface RecoveryData {
     couponsSent: number; couponsOpened: number; couponsUsed: number
   }
   reasons: Record<string, number>
-  surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
+  surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
   queue: { email: string; name: string; orders: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number }[]
@@ -35,6 +35,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const [savingPct, setSavingPct] = useState(false)
   const [respFilter, setRespFilter] = useState<string | null>(null)
   const [respSearch, setRespSearch] = useState('')
+  const [respSort, setRespSort] = useState<'date' | 'spent'>('date')
   const [respPage, setRespPage] = useState(0)
   const RESP_PAGE = 8
 
@@ -88,6 +89,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const filteredResp = allResp
     .filter(r => !respFilter || r.reason === respFilter)
     .filter(r => !respSearch || (r.customerName || '').toLowerCase().includes(respSearch.toLowerCase()) || r.customerEmail.toLowerCase().includes(respSearch.toLowerCase()))
+    .sort((a, b) => respSort === 'spent' ? b.totalSpent - a.totalSpent : new Date(b.answeredAt).getTime() - new Date(a.answeredAt).getTime())
   const totalRespPages = Math.ceil(filteredResp.length / RESP_PAGE)
   const pageResp = filteredResp.slice(respPage * RESP_PAGE, (respPage + 1) * RESP_PAGE)
 
@@ -212,7 +214,12 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       {allResp.length > 0 && (
         <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Respuestas ({filteredResp.length})</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Respuestas ({filteredResp.length})</span>
+              <button onClick={() => { setRespSort(s => s === 'spent' ? 'date' : 'spent'); setRespPage(0) }} style={{ ...pillBtn, fontSize: '0.64rem', padding: '2px 7px' }}>
+                {respSort === 'spent' ? '↓ Mayor gasto' : '↓ Recientes'}
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               <button onClick={() => { setRespFilter(null); setRespPage(0) }} style={{ ...pillBtn, ...(respFilter === null ? pillActive : {}) }}>Todos</button>
               {reasonKeys.map(r => (
@@ -236,6 +243,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 </div>
                 <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', flexShrink: 0 }}>
                   {REASON_LABELS[r.reason || ''] || r.reason || '—'}
+                </span>
+                <span style={{ fontFamily: M, fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink)', flexShrink: 0 }}>
+                  {clp(r.totalSpent)}
                 </span>
                 <span style={{ fontFamily: M, fontSize: '0.68rem', color: 'var(--ink-3)', flexShrink: 0 }}>
                   {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}

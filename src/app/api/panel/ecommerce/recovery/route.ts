@@ -82,7 +82,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Respuestas de encuesta con comentarios (deduplicar por email, priorizar con respuesta)
-  const surveyResponseMap = new Map<string, { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }>();
+  // Mapa de totalSpent por email desde los clientes segmentados
+  const spentByEmail = new Map<string, number>();
+  for (const c of clients) { if (c.email) spentByEmail.set(c.email.toLowerCase(), c.totalSpent); }
+
+  const surveyResponseMap = new Map<string, { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }>();
   for (const e of enrollments) {
     if (!e.surveyReason) continue;
     const key = e.customerEmail.toLowerCase();
@@ -92,6 +96,7 @@ export async function GET(req: NextRequest) {
         reason: e.surveyReason, detail: e.surveyDetail || null,
         comment: e.surveyComment || null,
         answeredAt: e.surveyAnsweredAt?.toISOString() || e.createdAt.toISOString(),
+        totalSpent: spentByEmail.get(key) || 0,
       });
     }
   }
