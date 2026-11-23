@@ -199,7 +199,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pageResp.map((r, i) => (
-              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: r.customerPhone || '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
+              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: r.customerPhone || '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.customerName || r.customerEmail}</div>
                   <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{r.customerEmail}{r.customerPhone ? ` · ${r.customerPhone}` : ''}</div>
@@ -210,12 +210,12 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 <span style={{ fontFamily: M, fontSize: '0.68rem', color: 'var(--ink-3)', flexShrink: 0 }}>
                   {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
                 </span>
+                {r.comment && (
+                  <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', fontStyle: 'italic', lineHeight: 1.4, width: '100%', marginTop: 4 }}>
+                    {"\u201C"}{r.comment}{"\u201D"}
+                  </div>
+                )}
               </div>
-              {r.comment && (
-                <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', fontStyle: 'italic', marginTop: 4, lineHeight: 1.4 }}>
-                  {"\u201C"}{r.comment}{"\u201D"}
-                </div>
-              )}
             ))}
           </div>
           {totalRespPages > 1 && (
