@@ -3549,8 +3549,16 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
           <RecuperacionSection
             restaurantId={restaurantId}
             allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined}
-            onSelectClient={(c) => {
-              // Abrir FichaCliente con datos mínimos
+            onSelectClient={async (c) => {
+              // Buscar datos reales del cliente en la API
+              try {
+                const params = new URLSearchParams({ restaurantId, pageSize: '1', search: c.email })
+                const res = await fetch(`/api/panel/ecommerce/pos-orders/clients?${params}`)
+                if (res.ok) {
+                  const d = await res.json()
+                  if (d.clients?.[0]) { setRecoveryClient(d.clients[0]); return }
+                }
+              } catch { /* fallback */ }
               setRecoveryClient({ email: c.email, name: c.name, phone: c.phone || '', orders: 0, totalSpent: 0, avgTicket: 0, lastOrderAt: '', firstOrderAt: '', daysSinceLastOrder: 0, avgFrequencyDays: null, status: 'churned' as const, riskScore: 0, score: 0, topProduct: null })
             }}
           />

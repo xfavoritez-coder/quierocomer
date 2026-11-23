@@ -14,7 +14,7 @@ interface RecoveryData {
     couponsSent: number; couponsOpened: number; couponsUsed: number
   }
   reasons: Record<string, number>
-  surveyResponses: { customerName: string | null; customerEmail: string; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
+  surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
   atRiskClients: { email: string; name: string; phone: string; orders: number; avgTicket: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; topProduct: string | null }[]
@@ -199,10 +199,10 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pageResp.map((r, i) => (
-              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
+              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: r.customerPhone || '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.customerName || r.customerEmail}</div>
-                  {r.customerName && <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{r.customerEmail}</div>}
+                  <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{r.customerEmail}{r.customerPhone ? ` · ${r.customerPhone}` : ''}</div>
                 </div>
                 <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', flexShrink: 0 }}>
                   {REASON_LABELS[r.reason || ''] || r.reason || '—'}

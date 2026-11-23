@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   // Enrollments (de toda la marca)
   const enrollments = await prisma.recoveryEnrollment.findMany({
     where: { restaurantId: { in: allIds } },
-    select: { automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true },
+    select: { automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true, customerPhone: true },
     orderBy: { createdAt: "desc" },
     take: 2000,
   });
@@ -82,13 +82,13 @@ export async function GET(req: NextRequest) {
   }
 
   // Respuestas de encuesta con comentarios (deduplicar por email, priorizar con respuesta)
-  const surveyResponseMap = new Map<string, { customerName: string | null; customerEmail: string; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }>();
+  const surveyResponseMap = new Map<string, { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }>();
   for (const e of enrollments) {
     if (!e.surveyReason) continue;
     const key = e.customerEmail.toLowerCase();
     if (!surveyResponseMap.has(key)) {
       surveyResponseMap.set(key, {
-        customerName: e.customerName, customerEmail: e.customerEmail,
+        customerName: e.customerName, customerEmail: e.customerEmail, customerPhone: e.customerPhone || null,
         reason: e.surveyReason, detail: e.surveyDetail || null,
         comment: e.surveyComment || null,
         answeredAt: e.surveyAnsweredAt?.toISOString() || e.createdAt.toISOString(),
