@@ -105,11 +105,8 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
           {logoUrl ? <img src={logoUrl} alt={storeName} style={{ maxHeight: 52, maxWidth: 180, objectFit: "contain", display: "block", margin: "0 auto" }} /> : <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{storeName}</span>}
         </div>
         <div style={{ padding: "32px 28px", textAlign: "center" }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>🙏</div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 8px" }}>Gracias{firstName ? `, ${firstName}` : ""}</h1>
-          <p style={{ fontSize: 14, color: "#777", margin: "0 0 20px" }}>Seleccionaste: <strong>{reasonLabel}</strong></p>
-
-          <p style={{ fontSize: 14, fontWeight: 700, color: "#555", marginBottom: 10, textAlign: "left" }}>¿Puedes decirnos un poco más?</p>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 8px" }}>Una última cosita{firstName ? `, ${firstName}` : ""} 🙏</h1>
+          <p style={{ fontSize: 14, color: "#777", margin: "0 0 20px" }}>¿Puedes contarnos un poco más sobre por qué <strong>{reasonLabel.toLowerCase()}</strong>?</p>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
