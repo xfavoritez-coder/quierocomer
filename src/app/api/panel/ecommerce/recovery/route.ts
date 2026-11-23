@@ -126,7 +126,9 @@ export async function GET(req: NextRequest) {
   const rc = parseStoreConfig(thisR?.ecommerceStoreConfig).recovery;
   const since180 = Date.now() - 180 * 86400000;
   const thirtyDaysAgo = Date.now() - 30 * 86400000;
-  const mine = enrollments.filter(e => e.restaurantId === restaurantId && e.createdAt.getTime() >= since180);
+  // Usar TODOS los enrollments de la marca (no solo esta sucursal) para detectar correctamente
+  // si un cliente ya recibió encuesta desde otra sucursal
+  const mine = enrollments.filter(e => e.createdAt.getTime() >= since180);
   const hasEnrollment = new Set<string>();
   const hasAbandonment = new Set<string>();
   const lastSent = new Map<string, number>();
