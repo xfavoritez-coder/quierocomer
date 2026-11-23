@@ -424,7 +424,7 @@ export default function PresentacionPage() {
               <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 18, padding: "clamp(16px,1.6vw,26px) clamp(14px,1.4vw,22px)", display: "flex", flexDirection: "column", gap: 8, boxShadow: CARDSHADOW }}>
                 {hi ? eyebrow("Recomendado", true) : <div style={{ height: "clamp(0.8rem,1.1vw,1.05rem)" }} />}
                 <h3 style={{ fontFamily: SANS, fontSize: "clamp(0.95rem,1.4vw,1.4rem)", fontWeight: 700, color: tInk, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{p.priceFrom ? <span style={{ fontFamily: SANS, fontSize: "0.4em", color: tSub, fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
                 {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.62rem,0.8vw,0.85rem)", color: tSub, margin: 0 }}>{p.subtitle.trim()}</p> : null}
                 <div style={{ height: 1, background: line, margin: "6px 0 2px" }} />
                 {prev ? (
@@ -472,7 +472,7 @@ export default function PresentacionPage() {
               <p style={{ fontFamily: SANS, fontSize: "clamp(1rem,1.4vw,1.5rem)", color: INKSOFT, margin: 0 }}>{taglineFor(plan.name)}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <p style={{ fontFamily: DISP, fontSize: "clamp(2.2rem,4.5vw,4rem)", fontWeight: 600, color: GOLD, margin: 0, lineHeight: 1 }}>{fmt(plan.price)}</p>
+              <p style={{ fontFamily: DISP, fontSize: "clamp(2.2rem,4.5vw,4rem)", fontWeight: 600, color: GOLD, margin: 0, lineHeight: 1 }}>{plan.priceFrom ? <span style={{ fontFamily: SANS, fontSize: "0.32em", color: INKSOFT, fontWeight: 600 }}>Desde </span> : null}{fmt(plan.price)}</p>
               <p style={{ fontFamily: SANS, fontSize: "clamp(0.85rem,1.1vw,1.15rem)", color: INKSOFT, margin: "4px 0 0" }}>por mes{impl != null ? ` · + ${fmt(impl)} implementación` : ""}</p>
             </div>
           </div>
@@ -509,7 +509,7 @@ export default function PresentacionPage() {
               <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 2px" }}>{i === 0 ? <SceneLoyalty /> : <SceneQr />}</div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                 <h3 style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2.2vw,2.3rem)", fontWeight: 600, color: INK, margin: 0 }}>{p.name}</h3>
-                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
+                <p style={{ fontFamily: DISP, fontSize: "clamp(1.4rem,2vw,2.1rem)", fontWeight: 600, color: GOLD, margin: 0 }}>{p.priceFrom ? <span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.45em", fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ color: INKSOFT, fontFamily: SANS, fontSize: "0.5em" }}> /mes</span></p>
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-6px 0 0" }}>{p.subtitle.trim()}</p> : null}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>

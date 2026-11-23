@@ -14,6 +14,7 @@ export interface PricePlan {
   features: string[];
   subtitle?: string;     // Subtítulo editable bajo el precio (ej: "+ $9.900 implementación única"). Si no se setea, se autogenera desde implementation.
   recommended?: boolean; // Marca el plan como "Recomendado" (resaltado). Solo uno por grupo.
+  priceFrom?: boolean;   // Muestra un "Desde" pequeño antes del precio (ej: "Desde $19.900 /mes").
 }
 
 export interface PriceLine {
@@ -85,6 +86,7 @@ function cleanPlans(a: unknown): PricePlan[] {
       features: Array.isArray(o.features) ? o.features.map((f) => String(f)).filter((f) => f.trim() !== "") : [],
       ...(subtitle ? { subtitle } : {}),
       ...(o.recommended === true ? { recommended: true } : {}),
+      ...(o.priceFrom === true ? { priceFrom: true } : {}),
     };
   });
 }

@@ -61,7 +61,7 @@ export default function PlanesPage() {
   };
 
   // ── edit helpers ────────────────────────────────────────────────
-  const setPlan = (k: PlanKey, i: number, field: keyof PricePlan, v: string | number) => mutate((c) => { (c[k][i] as unknown as Record<string, unknown>)[field] = v; });
+  const setPlan = (k: PlanKey, i: number, field: keyof PricePlan, v: string | number | boolean) => mutate((c) => { (c[k][i] as unknown as Record<string, unknown>)[field] = v; });
   const addPlan = (k: PlanKey) => mutate((c) => { c[k].push({ id: uid(), name: "Nuevo plan", price: 0, features: [] }); });
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
@@ -95,6 +95,7 @@ export default function PlanesPage() {
         {hi && <span style={{ position: "absolute", top: -11, left: 22, background: GOLD, color: "#111", fontFamily: F, fontWeight: 900, fontSize: "0.62rem", letterSpacing: "0.5px", textTransform: "uppercase", padding: "4px 10px", borderRadius: 50 }}>Recomendado</span>}
         <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 900, color: "#fff", margin: "0 0 10px" }}>{p.name}</h3>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+          {p.priceFrom && <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", fontWeight: 700 }}>Desde</span>}
           <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: hi ? GOLD : "#fff", letterSpacing: "-0.03em" }}>{fmt(p.price)}</span>
           <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "#888" }}>/mes</span>
         </div>
@@ -168,6 +169,10 @@ export default function PlanesPage() {
               <span style={{ color: GOLD, fontFamily: F, fontWeight: 900 }}>$</span>
               <input style={{ ...inp, fontFamily: F, fontWeight: 900, fontSize: "1.1rem", color: GOLD }} type="number" min={0} step={100} value={p.price} onChange={(e) => setPlan(k, pi, "price", Math.max(0, Math.round(Number(e.target.value) || 0)))} />
             </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer", fontFamily: FB, fontSize: "0.78rem", color: p.priceFrom ? "#ddd" : "#888" }}>
+              <input type="checkbox" checked={p.priceFrom === true} onChange={(e) => setPlan(k, pi, "priceFrom", e.target.checked)} style={{ accentColor: GOLD, width: 14, height: 14, cursor: "pointer" }} />
+              Mostrar “Desde” antes del precio
+            </label>
             <input style={{ ...inp, padding: "6px 8px", fontSize: "0.8rem", marginBottom: 8 }} value={p.subtitle || ""} onChange={(e) => setPlan(k, pi, "subtitle", e.target.value)} placeholder="Subtítulo (ej: + $9.900 implementación única)" />
             <label style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12, cursor: "pointer", fontFamily: FB, fontSize: "0.8rem", fontWeight: 700, color: p.recommended ? GOLD : "#999" }}>
               <input type="checkbox" checked={p.recommended === true} onChange={() => setRecommended(k, pi)} style={{ accentColor: GOLD, width: 15, height: 15, cursor: "pointer" }} />
