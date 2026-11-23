@@ -470,10 +470,15 @@ function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryDat
         <p style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-3)', textAlign: 'center', padding: '12px 0', margin: 0 }}>Sin envíos {range === 'today' ? 'hoy' : 'en los últimos 7 días'}.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {list.slice(0, shown).map((r, i) => {
+          {(() => {
+            // Sets para saber si un email tiene encuesta/cupón
+            const hasSurvey = new Set(sends.filter(s => s.automation === 'abandonment_survey').map(s => s.email.toLowerCase()))
+            const hasCoupon = new Set(sends.filter(s => s.automation === 'recovery_incentive').map(s => s.email.toLowerCase()))
+            return list.slice(0, shown).map((r, i) => {
             const st = r.clientStatus ? CLIENT_STATUS[r.clientStatus] : null
             const d = new Date(r.sentAt)
             const when = d >= startOfToday ? d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+            const em = r.email.toLowerCase()
             return (
               <div key={r.email + r.sentAt} onClick={() => onSelectClient?.({ email: r.email, name: r.name || '', phone: r.phone || '' })}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
@@ -482,10 +487,8 @@ function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryDat
                   <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <AutomationBadge automation={r.automation} />
-                  {r.automation === 'recovery_incentive' && (r.surveySentAt
-                    ? <span style={{ fontSize: '0.66rem', color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>encuesta {new Date(r.surveySentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })} · {Math.round((new Date(r.sentAt).getTime() - new Date(r.surveySentAt).getTime()) / 86400000)}d antes</span>
-                    : <span title="Se envió el cupón sin que la encuesta se hubiera enviado antes" style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' }}>⚠ Sin encuesta previa</span>)}
+                  {hasSurvey.has(em) && <AutomationBadge automation="abandonment_survey" />}
+                  {hasCoupon.has(em) && <AutomationBadge automation="recovery_incentive" />}
                   {st
                     ? <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: st.bg, color: st.fg }}>{st.label}</span>
                     : <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'var(--sunk)', color: 'var(--ink-3)' }}>Sin datos</span>}
@@ -499,7 +502,8 @@ function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryDat
                 </div>
               </div>
             )
-          })}
+          })
+          })()}
         </div>
       )}
       {list.length > shown && (
