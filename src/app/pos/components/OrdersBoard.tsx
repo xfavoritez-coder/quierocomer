@@ -416,10 +416,14 @@ function OrderCard({
       : { border: '1.5px solid var(--line)', boxShadow: isSelected ? '0 6px 20px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07)' : 'var(--sh-1)' }
 
   // Texto secundario (dirección / mesa / retiro) uniforme para todas las tarjetas.
+  // Mesa: el número ya va en el título ("Mesa 2"); abajo se muestra cuántas personas hay.
+  const dineInCovers = isDineIn && order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload)
+    ? ((order.rawPayload as Record<string, any>).mesa?.covers as number | undefined)
+    : undefined
   const secondary = (isDelivery && order.addressLine)
     ? cleanAddr(order.addressLine)
-    : isDineIn && order.tableLabel
-      ? order.tableLabel
+    : isDineIn
+      ? (dineInCovers ? `${dineInCovers} ${dineInCovers === 1 ? 'persona' : 'personas'}` : '')
       : (!isDelivery && !isDineIn)
         ? 'Retiro en local'
         : ''
@@ -520,7 +524,6 @@ function OrderCard({
         const mins = Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000)
         const timeStr = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`
         const mesaMeta = (order.rawPayload && typeof order.rawPayload === 'object' && !Array.isArray(order.rawPayload) ? (order.rawPayload as Record<string, any>).mesa : null) as { covers?: number; garzon?: string } | null
-        const covers = mesaMeta?.covers
         const garzon = mesaMeta?.garzon
         // Estado de la mesa
         const mesaStatus = order.posStatus === 'preparing' ? 'Preparando' : order.posStatus === 'ready' ? 'Listo para servir' : mins > 60 ? 'Esperando cuenta' : 'Comiendo'
@@ -540,12 +543,6 @@ function OrderCard({
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{timeStr}</span>
               {garzon && <span style={{ fontSize: 11, color: 'var(--ink-4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>· {garzon}</span>}
             </span>
-            {covers ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', flexShrink: 0 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 20c0-4.418-3.582-8-8-8s-8 3.582-8 8h16z"/></svg>
-                {covers}
-              </span>
-            ) : null}
           </div>
         )
       })()}
