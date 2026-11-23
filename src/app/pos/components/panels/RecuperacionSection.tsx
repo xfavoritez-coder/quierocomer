@@ -211,6 +211,11 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                   {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
+              {r.comment && (
+                <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', fontStyle: 'italic', marginTop: 4, lineHeight: 1.4 }}>
+                  &ldquo;{r.comment}&rdquo;
+                </div>
+              )}
             ))}
           </div>
           {totalRespPages > 1 && (
