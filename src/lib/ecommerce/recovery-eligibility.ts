@@ -4,7 +4,7 @@ import type { ClientRow } from "@/lib/ecommerce/client-segmentation";
 export type RecoveryAutomation = "first_buyer" | "at_risk" | "abandonment_survey" | "recovery_incentive";
 
 /** Días que deben pasar entre la encuesta ENVIADA y el cupón. */
-export const COUPON_DAYS_AFTER_SURVEY = 7;
+export const COUPON_DAYS_AFTER_SURVEY = 3;
 
 /** Días mínimos sin pedir para enviar la encuesta de abandono a este cliente. */
 export function surveyMinDays(client: ClientRow, rc: RecoveryConfig): number {
