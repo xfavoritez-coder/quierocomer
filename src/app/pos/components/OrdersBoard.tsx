@@ -424,14 +424,43 @@ function OrderCard({
         ? 'Retiro en local'
         : ''
 
+  // Swipe horizontal en mobile para avanzar/retroceder etapa
+  const swipeStartX = useRef(0)
+  const swipeStartY = useRef(0)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const swiping = useRef(false)
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    swipeStartX.current = e.touches[0].clientX
+    swipeStartY.current = e.touches[0].clientY
+    swiping.current = false
+  }
+  const handleSwipeMove = (e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - swipeStartX.current
+    const dy = e.touches[0].clientY - swipeStartY.current
+    if (!swiping.current && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) swiping.current = true
+    if (swiping.current) { e.preventDefault(); setSwipeOffset(dx) }
+  }
+  const handleSwipeEnd = () => {
+    if (swiping.current && next && swipeOffset < -60 && paid) {
+      onStageChange(order, next.stage)
+    } else if (swiping.current && swipeOffset < -60 && !paid && next) {
+      onBlock(order)
+    }
+    setSwipeOffset(0)
+    swiping.current = false
+  }
+
   return (
     <div
+      onTouchStart={handleSwipeStart}
+      onTouchMove={handleSwipeMove}
+      onTouchEnd={handleSwipeEnd}
       style={{
         borderRadius: 14, cursor: 'pointer', overflow: 'hidden',
         ...shell,
-        transform: isSelected ? 'translateY(-2px)' : 'none',
+        transform: isSelected ? 'translateY(-2px)' : swipeOffset !== 0 ? `translateX(${swipeOffset * 0.4}px)` : 'none',
         fontFamily: 'var(--sans)',
-        transition: 'box-shadow .2s ease, border-color .2s ease, transform .15s ease',
+        transition: swipeOffset !== 0 ? 'none' : 'box-shadow .2s ease, border-color .2s ease, transform .15s ease',
         display: 'flex', flexDirection: 'column', height: '100%',
       }}
       onClick={onSelect}
