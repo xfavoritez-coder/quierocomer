@@ -15,6 +15,9 @@ export const maxDuration = 300;
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 const MAX_PER_RESTAURANT = 9999;
 const MAX_TOTAL = 9999;
+// Cortar antes del límite de Vercel (maxDuration) para no dejar envíos a medias.
+// Lo que no alcance a enviarse sale en la ejecución del día siguiente.
+const TIME_BUDGET_MS = 240_000;
 
 type Automation = RecoveryAutomation;
 
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
     for (const u of unsubs) if (u.email) unsubscribed.add(u.email.toLowerCase());
 
     for (const rest of eligible) {
-      if (totalSent >= MAX_TOTAL) break;
+      if (totalSent >= MAX_TOTAL || Date.now() - startMs > TIME_BUDGET_MS) break;
       const cfg = parseStoreConfig(rest.ecommerceStoreConfig);
       const rc = cfg.recovery;
       const storeUrl = cfg.customDomain ? `https://${cfg.customDomain}` : `${BASE}/ecommerce/${rest.slug}`;
@@ -68,7 +71,7 @@ export async function GET(req: NextRequest) {
         const since180 = new Date(Date.now() - 180 * 86400000);
         const existing = await prisma.recoveryEnrollment.findMany({
           where: { restaurantId: { in: brandIds }, createdAt: { gte: since180 } },
-          select: { customerEmail: true, automation: true, sentAt: true, status: true },
+          select: { customerEmail: true, automation: true, sentAt: true, status: true, createdAt: true },
         });
         const idx = indexEnrollments(existing);
 
@@ -76,6 +79,7 @@ export async function GET(req: NextRequest) {
 
         for (const client of clients) {
           if (sentThisRestaurant >= MAX_PER_RESTAURANT || totalSent >= MAX_TOTAL) break;
+          if (Date.now() - startMs > TIME_BUDGET_MS) break;
           if (!client.email) continue;
           const email = client.email.toLowerCase();
           if (unsubscribed.has(email)) continue;

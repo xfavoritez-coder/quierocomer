@@ -12,7 +12,11 @@ export function surveyMinDays(client: ClientRow, rc: RecoveryConfig): number {
   return Math.min(90, freq ? Math.max(rc.abandonmentSurvey.daysInactive, Math.round(freq * 2.5)) : rc.abandonmentSurvey.daysInactive);
 }
 
-type EnrollmentLike = { customerEmail: string; automation: string; status: string; sentAt: Date | null };
+type EnrollmentLike = { customerEmail: string; automation: string; status: string; sentAt: Date | null; createdAt?: Date };
+
+/** Un enrollment 'pending' sin enviar más viejo que esto se considera abortado (p. ej. el cron
+ *  se cortó por timeout entre crear el registro y llamar a Resend) y se trata como fallido. */
+const STALE_PENDING_MS = 60 * 60 * 1000;
 
 /** Índice del historial de envíos de recuperación (de TODA la marca).
  *  - `hasEnrollment`: automatizaciones ya hechas por cliente. Los envíos FALLIDOS no
@@ -26,7 +30,8 @@ export function indexEnrollments(enrollments: EnrollmentLike[], now = Date.now()
   const sentLast30 = new Map<string, number>();
   for (const e of enrollments) {
     const em = e.customerEmail.toLowerCase();
-    if (e.status !== "failed") hasEnrollment.add(`${em}::${e.automation}`);
+    const abortedPending = !e.sentAt && e.status === "pending" && !!e.createdAt && now - e.createdAt.getTime() > STALE_PENDING_MS;
+    if (e.status !== "failed" && !abortedPending) hasEnrollment.add(`${em}::${e.automation}`);
     if (!e.sentAt) continue;
     const t = e.sentAt.getTime();
     if (e.automation === "abandonment_survey" && t < (surveySentAt.get(em) ?? Infinity)) surveySentAt.set(em, t);
