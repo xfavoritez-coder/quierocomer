@@ -213,7 +213,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               </div>
               {r.comment && (
                 <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', fontStyle: 'italic', marginTop: 4, lineHeight: 1.4 }}>
-                  &ldquo;{r.comment}&rdquo;
+                  {"\u201C"}{r.comment}{"\u201D"}
                 </div>
               )}
             ))}
