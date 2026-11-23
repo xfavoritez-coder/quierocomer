@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     where: { restaurantId: { in: allIds } },
     select: { restaurantId: true, automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true, customerPhone: true },
     orderBy: { createdAt: "desc" },
-    take: 2000,
+    take: 5000,
   });
 
   // KPIs

@@ -153,6 +153,18 @@ async function enrollAndSend(args: {
 }): Promise<boolean> {
   const { restaurantId, storeName, logoUrl, accent, storeUrl, client, automation, rc } = args;
 
+  // Verificación de seguridad: consulta directa a DB para evitar duplicados
+  // (protege contra idx incompleto o race conditions entre crons)
+  const alreadySent = await prisma.recoveryEnrollment.findFirst({
+    where: {
+      customerEmail: { equals: client.email, mode: "insensitive" },
+      automation,
+      sentAt: { not: null },
+    },
+    select: { id: true },
+  });
+  if (alreadySent) return false; // ya se envió, no duplicar
+
   // Generar cupón si es incentivo
   let couponCode: string | null = null;
   if (automation === "recovery_incentive") {
