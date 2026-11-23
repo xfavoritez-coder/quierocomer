@@ -4,7 +4,7 @@ import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-segmentation";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
-import { pickAutomation, surveyMinDays, incentiveMinDays } from "@/lib/ecommerce/recovery-eligibility";
+import { pickAutomation, surveyMinDays, indexEnrollments } from "@/lib/ecommerce/recovery-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,24 +125,8 @@ export async function GET(req: NextRequest) {
   // ── Cola: replica las reglas del cron para ESTE restaurante ──
   const rc = parseStoreConfig(thisR?.ecommerceStoreConfig).recovery;
   const since180 = Date.now() - 180 * 86400000;
-  const thirtyDaysAgo = Date.now() - 30 * 86400000;
-  // Usar TODOS los enrollments de la marca (no solo esta sucursal) para detectar correctamente
-  // si un cliente ya recibió encuesta desde otra sucursal
-  const mine = enrollments.filter(e => e.createdAt.getTime() >= since180);
-  const hasEnrollment = new Set<string>();
-  const hasAbandonment = new Set<string>();
-  const lastSent = new Map<string, number>();
-  const sentLast30 = new Map<string, number>();
-  for (const e of mine) {
-    const em = e.customerEmail.toLowerCase();
-    hasEnrollment.add(`${em}::${e.automation}`);
-    if (e.automation === "abandonment_survey") hasAbandonment.add(em);
-    if (e.sentAt) {
-      const t = e.sentAt.getTime();
-      if (t > (lastSent.get(em) ?? 0)) lastSent.set(em, t);
-      if (t > thirtyDaysAgo) sentLast30.set(em, (sentLast30.get(em) ?? 0) + 1);
-    }
-  }
+  // Usar TODOS los enrollments de la marca (no solo esta sucursal), igual que el cron
+  const idx = indexEnrollments(enrollments.filter(e => e.createdAt.getTime() >= since180));
   const candidateEmails = [...atRiskWithEmail, ...churnedWithEmail].map(c => c.email!.toLowerCase());
   const unsubscribed = new Set<string>();
   if (candidateEmails.length) {
@@ -152,10 +136,10 @@ export async function GET(req: NextRequest) {
   const fullQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
     const em = c.email!.toLowerCase();
     if (unsubscribed.has(em)) return [];
-    const ls = lastSent.get(em);
+    const ls = idx.lastSent.get(em);
     if (ls && Date.now() - ls < rc.cooldownDays * 86400000) return [];
-    if ((sentLast30.get(em) ?? 0) >= rc.maxEmailsPerMonth) return [];
-    const automation = pickAutomation(c, rc, em, hasEnrollment, hasAbandonment);
+    if ((idx.sentLast30.get(em) ?? 0) >= rc.maxEmailsPerMonth) return [];
+    const automation = pickAutomation(c, rc, em, idx);
     return automation ? [{ c, automation }] : [];
   }) : [];
   const queueTotal = fullQueue.length;
@@ -183,7 +167,8 @@ export async function GET(req: NextRequest) {
         orders: c?.orders ?? null,
         daysSinceLastOrder: c?.daysSinceLastOrder ?? null,
         avgFrequencyDays: c?.avgFrequencyDays ?? null,
-        minDays: c ? (e.automation === "recovery_incentive" ? incentiveMinDays(c, rc) : surveyMinDays(c, rc)) : null,
+        minDays: c && e.automation !== "recovery_incentive" ? surveyMinDays(c, rc) : null,
+        surveySentAt: e.automation === "recovery_incentive" ? (idx.surveySentAt.has(e.customerEmail.toLowerCase()) ? new Date(idx.surveySentAt.get(e.customerEmail.toLowerCase())!).toISOString() : null) : undefined,
       };
     });
 

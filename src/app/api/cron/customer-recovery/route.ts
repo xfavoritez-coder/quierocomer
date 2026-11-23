@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig, type RecoveryConfig } from "@/lib/ecommerce/store-config";
-import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-segmentation";
-import { pickAutomation, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
+import { getClientSegmentation, resolveBrandIds, type ClientRow } from "@/lib/ecommerce/client-segmentation";
+import { pickAutomation, indexEnrollments, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
 import { storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { firstBuyerSubject, firstBuyerHtml, firstBuyerText } from "@/lib/email/recovery/firstBuyerEmail";
 import { atRiskSubject, atRiskHtml, atRiskText } from "@/lib/email/recovery/atRiskEmail";
@@ -62,29 +62,15 @@ export async function GET(req: NextRequest) {
         const clients = await getClientSegmentation(rest.id);
         if (!clients.length) continue;
 
-        // 3. Cargar enrollments existentes para este restaurante (últimos 180 días)
+        // 3. Historial de envíos de TODA la marca (últimos 180 días): así no se repite
+        //    la encuesta desde otra sucursal y el cupón exige una encuesta realmente enviada.
+        const brandIds = await resolveBrandIds(rest.id);
         const since180 = new Date(Date.now() - 180 * 86400000);
         const existing = await prisma.recoveryEnrollment.findMany({
-          where: { restaurantId: rest.id, createdAt: { gte: since180 } },
+          where: { restaurantId: { in: brandIds }, createdAt: { gte: since180 } },
           select: { customerEmail: true, automation: true, sentAt: true, status: true },
         });
-
-        // Mapa de último envío por email+automation
-        const lastSent = new Map<string, Date>();
-        const hasEnrollment = new Set<string>();
-        for (const e of existing) {
-          const key = `${e.customerEmail.toLowerCase()}::${e.automation}`;
-          hasEnrollment.add(key);
-          if (e.sentAt && (!lastSent.has(e.customerEmail.toLowerCase()) || e.sentAt > lastSent.get(e.customerEmail.toLowerCase())!)) {
-            lastSent.set(e.customerEmail.toLowerCase(), e.sentAt);
-          }
-        }
-
-        // Enrollments con abandonment_survey completados
-        const hasAbandonment = new Set<string>();
-        for (const e of existing) {
-          if (e.automation === "abandonment_survey") hasAbandonment.add(e.customerEmail.toLowerCase());
-        }
+        const idx = indexEnrollments(existing);
 
         let sentThisRestaurant = 0;
 
@@ -95,16 +81,14 @@ export async function GET(req: NextRequest) {
           if (unsubscribed.has(email)) continue;
 
           // Cooldown: no enviar si recibió email en los últimos cooldownDays
-          const lastEmail = lastSent.get(email);
-          if (lastEmail && (Date.now() - lastEmail.getTime()) < rc.cooldownDays * 86400000) continue;
+          const lastEmail = idx.lastSent.get(email);
+          if (lastEmail && (Date.now() - lastEmail) < rc.cooldownDays * 86400000) continue;
 
           // Frecuencia mensual: contar emails enviados en últimos 30 días
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
-          const recentCount = existing.filter(e => e.customerEmail.toLowerCase() === email && e.sentAt && e.sentAt > thirtyDaysAgo).length;
-          if (recentCount >= rc.maxEmailsPerMonth) continue;
+          if ((idx.sentLast30.get(email) ?? 0) >= rc.maxEmailsPerMonth) continue;
 
           // Determinar qué automatización aplicar (prioridad)
-          const automation = pickAutomation(client, rc, email, hasEnrollment, hasAbandonment);
+          const automation = pickAutomation(client, rc, email, idx);
           if (!automation) continue;
 
           // Crear enrollment y enviar
@@ -116,8 +100,11 @@ export async function GET(req: NextRequest) {
           if (sent) {
             sentThisRestaurant++;
             totalSent++;
-            lastSent.set(email, new Date());
-            hasEnrollment.add(`${email}::${automation}`);
+            const now = Date.now();
+            idx.lastSent.set(email, now);
+            idx.sentLast30.set(email, (idx.sentLast30.get(email) ?? 0) + 1);
+            idx.hasEnrollment.add(`${email}::${automation}`);
+            if (automation === "abandonment_survey") idx.surveySentAt.set(email, now);
           } else {
             totalSkipped++;
           }
@@ -220,7 +207,7 @@ async function enrollAndSend(args: {
       let surveyReason: string | null = null;
       try {
         const prevEnrollment = await prisma.recoveryEnrollment.findFirst({
-          where: { restaurantId, customerEmail: client.email.toLowerCase(), automation: "abandonment_survey", surveyReason: { not: null } },
+          where: { restaurantId: { in: await resolveBrandIds(restaurantId) }, customerEmail: { equals: client.email, mode: "insensitive" }, automation: "abandonment_survey", surveyReason: { not: null } },
           select: { surveyReason: true },
           orderBy: { createdAt: "desc" },
         });

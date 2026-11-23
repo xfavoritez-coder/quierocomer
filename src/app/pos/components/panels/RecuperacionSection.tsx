@@ -21,7 +21,7 @@ interface RecoveryData {
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
   queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string }[]
   queueTotal?: number
-  recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null }[]
+  recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -483,6 +483,9 @@ function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryDat
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <AutomationBadge automation={r.automation} />
+                  {r.automation === 'recovery_incentive' && (r.surveySentAt
+                    ? <span style={{ fontSize: '0.66rem', color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>encuesta {new Date(r.surveySentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })} · {Math.round((new Date(r.sentAt).getTime() - new Date(r.surveySentAt).getTime()) / 86400000)}d antes</span>
+                    : <span title="Se envió el cupón sin que la encuesta se hubiera enviado antes" style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' }}>⚠ Sin encuesta previa</span>)}
                   {st
                     ? <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: st.bg, color: st.fg }}>{st.label}</span>
                     : <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'var(--sunk)', color: 'var(--ink-3)' }}>Sin datos</span>}
