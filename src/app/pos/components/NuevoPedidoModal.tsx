@@ -127,11 +127,10 @@ export default function NuevoPedidoModal({ restaurantId, open, onClose, onMinimi
         <span style={{ background: AMBER, color: '#000', fontWeight: 900, fontSize: 10, padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>Abrir</span>
       </button>
       )}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,23,42,.6)', backdropFilter: 'blur(6px)', display: open ? 'flex' : 'none', alignItems: 'stretch', justifyContent: 'center', animation: 'npFadeIn .15s ease-out' }}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,23,42,.6)', backdropFilter: 'blur(6px)', display: open ? 'flex' : 'none', alignItems: 'stretch', justifyContent: 'center' }}
         onClick={isMesa ? onClose : onMinimize}>
-      <style>{`@keyframes npFadeIn{from{opacity:0}to{opacity:1}}@keyframes npSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
       <div onClick={e => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 1200, margin: 16, background: '#f8fafc', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.35)', animation: 'npSlideUp .2s ease-out', position: 'relative' }}>
+        style={{ width: '100%', maxWidth: 1200, margin: 16, background: '#f8fafc', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.35)', position: 'relative' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: '#fff', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
