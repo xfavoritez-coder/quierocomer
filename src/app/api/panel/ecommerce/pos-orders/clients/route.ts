@@ -319,11 +319,18 @@ export async function GET(req: NextRequest) {
         select: { customerEmail: true, automation: true, sentAt: true, status: true, surveyReason: true },
         orderBy: { createdAt: "desc" },
       });
-      const recoveryMap = new Map<string, { type: string; sentAt: string; status: string; surveyReason?: string | null }>();
+      const recoveryMap = new Map<string, { type: string; sentAt: string; status: string; surveyReason?: string | null; hasSurvey: boolean; hasCoupon: boolean }>();
       for (const e of enrollments) {
+        if (!e.sentAt) continue;
         const key = e.customerEmail.toLowerCase();
-        if (!recoveryMap.has(key) && e.sentAt) {
-          recoveryMap.set(key, { type: e.automation, sentAt: e.sentAt.toISOString(), status: e.status, surveyReason: e.surveyReason });
+        const existing = recoveryMap.get(key);
+        if (!existing) {
+          recoveryMap.set(key, { type: e.automation, sentAt: e.sentAt.toISOString(), status: e.status, surveyReason: e.surveyReason, hasSurvey: e.automation === "abandonment_survey", hasCoupon: e.automation === "recovery_incentive" });
+        } else {
+          if (e.automation === "abandonment_survey") existing.hasSurvey = true;
+          if (e.automation === "recovery_incentive") { existing.hasCoupon = true; existing.type = "recovery_incentive"; existing.sentAt = e.sentAt.toISOString(); }
+          if (e.surveyReason && !existing.surveyReason) existing.surveyReason = e.surveyReason;
+          if (e.status === "converted") existing.status = "converted";
         }
       }
       for (const c of allClients) {

@@ -2880,19 +2880,22 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
                   {c.phone && <div style={{ fontSize: '0.67rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.phone}</div>}
                   {(c as any).recovery && (() => {
                     const r = (c as any).recovery;
-                    const isCoupon = r.type === 'recovery_incentive';
                     const reasonLabels: Record<string, string> = { price: 'Precios', quality: 'Calidad', delivery_slow: 'Delivery lento', delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro', moved: 'Se mudó' };
                     return (
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 3 }}>
-                        <span style={{
-                          fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4,
-                          background: isCoupon ? '#f0fdf4' : '#eff6ff',
-                          color: isCoupon ? '#16a34a' : '#3b82f6',
-                          border: `1px solid ${isCoupon ? '#bbf7d0' : '#bfdbfe'}`,
-                        }}>
-                          {isCoupon ? '🎁 Cupón' : '📧 Recuperación'} · {new Date(r.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
-                          {r.status === 'converted' ? ' · ✓' : ''}
-                        </span>
+                        {r.hasSurvey && (
+                          <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe' }}>
+                            📧 Encuesta
+                          </span>
+                        )}
+                        {r.hasCoupon && (
+                          <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+                            🎁 Cupón
+                          </span>
+                        )}
+                        {r.status === 'converted' && (
+                          <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>✓ Recuperado</span>
+                        )}
                         {r.surveyReason && (
                           <span style={{ fontFamily: F, fontSize: '0.58rem', fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
                             {reasonLabels[r.surveyReason] || r.surveyReason}
