@@ -10,11 +10,11 @@ import { abandonmentSurveySubject, abandonmentSurveyHtml, abandonmentSurveyText 
 import { recoveryIncentiveSubject, recoveryIncentiveHtml, recoveryIncentiveText } from "@/lib/email/recovery/recoveryIncentiveEmail";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
-const MAX_PER_RESTAURANT = 50;
-const MAX_TOTAL = 200;
+const MAX_PER_RESTAURANT = 9999;
+const MAX_TOTAL = 9999;
 
 type Automation = RecoveryAutomation;
 
@@ -121,6 +121,8 @@ export async function GET(req: NextRequest) {
           } else {
             totalSkipped++;
           }
+          // Rate limit: 500ms entre envíos para no bloquear Resend (max 2/seg)
+          await new Promise(r => setTimeout(r, 500));
         }
 
         // 7. Atribución: marcar conversiones
