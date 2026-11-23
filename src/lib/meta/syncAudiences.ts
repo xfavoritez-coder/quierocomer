@@ -9,13 +9,13 @@ import { createCustomAudience, replaceAudienceUsers, type AudienceMember } from 
 
 const DAY = 86400000;
 
-interface Cust { phone: string; email: string | null; total: number; count: number; last: number }
+interface Cust { phone: string; email: string | null; total: number; count: number; last: number; app: boolean }
 
 /** Agrupa los pedidos del local por cliente (clave = últimos 9 díg. del teléfono). */
 async function loadCustomers(restaurantId: string): Promise<Cust[]> {
   const orders = await prisma.onlineOrder.findMany({
     where: { restaurantId, NOT: { paymentStatus: "failed" }, status: { not: "CANCELLED" } },
-    select: { customerPhone: true, customerEmail: true, total: true, createdAt: true },
+    select: { customerPhone: true, customerEmail: true, total: true, createdAt: true, fromApp: true },
     take: 100000,
   });
   const map = new Map<string, Cust>();
@@ -26,9 +26,10 @@ async function loadCustomers(restaurantId: string): Promise<Cust[]> {
     const ts = o.createdAt.getTime();
     if (prev) {
       prev.total += o.total || 0; prev.count += 1;
+      if (o.fromApp) prev.app = true; // cualquier pedido por la app marca al cliente como usuario de la app
       if (ts > prev.last) { prev.last = ts; if (o.customerEmail) prev.email = o.customerEmail; }
     } else {
-      map.set(key, { phone: o.customerPhone, email: o.customerEmail || null, total: o.total || 0, count: 1, last: ts });
+      map.set(key, { phone: o.customerPhone, email: o.customerEmail || null, total: o.total || 0, count: 1, last: ts, app: o.fromApp === true });
     }
   }
   return [...map.values()];
@@ -37,8 +38,8 @@ async function loadCustomers(restaurantId: string): Promise<Cust[]> {
 export interface AudienceSyncResult {
   ok: boolean;
   error?: string;
-  segments?: { buyers: number; lapsed: number; top: number };
-  uploaded?: { buyers?: number; lapsed?: number; top?: number };
+  segments?: { buyers: number; lapsed: number; top: number; appUsers: number };
+  uploaded?: { buyers?: number; lapsed?: number; top?: number; appUsers?: number };
   created?: string[];
 }
 
@@ -62,13 +63,17 @@ export async function syncRestaurantAudiences(restaurantId: string): Promise<Aud
   const bySpend = [...custs].sort((a, b) => b.total - a.total);
   const topN = Math.max(Math.min(bySpend.length, 100), Math.ceil(bySpend.length * 0.2));
   const top = bySpend.slice(0, topN);
+  // Usuarios de la app = clientes con al menos un pedido fromApp (ya tienen la app instalada).
+  // Se usa para EXCLUIR de campañas de descarga/adopción de la app.
+  const appUsers = custs.filter((c) => c.app);
 
   const toMembers = (list: Cust[]): AudienceMember[] => list.map((c) => ({ email: c.email, phone: c.phone }));
 
-  const defs: { key: "buyers" | "lapsed" | "top"; name: string; desc: string; list: Cust[] }[] = [
+  const defs: { key: "buyers" | "lapsed" | "top" | "appUsers"; name: string; desc: string; list: Cust[] }[] = [
     { key: "buyers", name: `${r.name} · Compradores`, desc: "Clientes que han comprado (sync automático ecommerce)", list: buyers },
     { key: "lapsed", name: `${r.name} · Inactivos 30-120d`, desc: "Clientes sin comprar hace 30-120 días (win-back)", list: lapsed },
     { key: "top", name: `${r.name} · Mejores clientes`, desc: "Top 20% por gasto (semilla para Lookalike)", list: top },
+    { key: "appUsers", name: `${r.name} · Usuarios de la app`, desc: "Clientes que han pedido desde la app (fromApp). Para EXCLUIR de campañas de descarga de la app.", list: appUsers },
   ];
 
   const audiences = { ...(meta.audiences || {}) } as Record<string, string | undefined>;
@@ -79,11 +84,11 @@ export async function syncRestaurantAudiences(restaurantId: string): Promise<Aud
     let id = audiences[d.key];
     if (!id) {
       const c = await createCustomAudience(meta.adAccountId, token, d.name, d.desc);
-      if (!c.ok || !c.id) return { ok: false, error: `crear audiencia ${d.key}: ${c.error}`, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length } };
+      if (!c.ok || !c.id) return { ok: false, error: `crear audiencia ${d.key}: ${c.error}`, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length, appUsers: appUsers.length } };
       id = c.id; audiences[d.key] = id; created.push(d.key);
     }
     const up = await replaceAudienceUsers(id, token, toMembers(d.list));
-    if (!up.ok) return { ok: false, error: `subir ${d.key}: ${up.error}`, created, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length } };
+    if (!up.ok) return { ok: false, error: `subir ${d.key}: ${up.error}`, created, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length, appUsers: appUsers.length } };
     uploaded[d.key] = up.count;
   }
 
@@ -93,5 +98,5 @@ export async function syncRestaurantAudiences(restaurantId: string): Promise<Aud
     await prisma.restaurant.update({ where: { id: restaurantId }, data: { ecommerceConfig: nextCfg as object } }).catch(() => {});
   }
 
-  return { ok: true, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length }, uploaded, created };
+  return { ok: true, segments: { buyers: buyers.length, lapsed: lapsed.length, top: top.length, appUsers: appUsers.length }, uploaded, created };
 }
