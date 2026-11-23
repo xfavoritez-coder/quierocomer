@@ -42,6 +42,8 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
   const [respSort, setRespSort] = useState<'date' | 'spent'>('date')
   const [respPage, setRespPage] = useState(0)
   const RESP_PAGE = 8
+  const [queuePage, setQueuePage] = useState(0)
+  const QUEUE_PAGE = 10
 
   useEffect(() => {
     setLoading(true)
@@ -254,12 +256,13 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 </tr>
               </thead>
               <tbody>
-                {data.queue.map((c, i) => {
+                {data.queue.slice(queuePage * QUEUE_PAGE, (queuePage + 1) * QUEUE_PAGE).map((c, idx) => {
+                  const i = queuePage * QUEUE_PAGE + idx
                   const daysUntil = Math.ceil((i + 1) / 50)
                   const sendDate = new Date(Date.now() + daysUntil * 86400000)
                   const sendLabel = sendDate.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
                   return (
-                  <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
+                  <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: idx % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                     <td style={{ padding: '8px 8px', maxWidth: 180 }}>
                       <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
                       <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
@@ -284,6 +287,18 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               </tbody>
             </table>
           </div>
+          {data.queue.length > QUEUE_PAGE && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 10 }}>
+              {Array.from({ length: Math.ceil(data.queue.length / QUEUE_PAGE) }, (_, i) => (
+                <button key={i} onClick={() => setQueuePage(i)} style={{
+                  width: 28, height: 28, borderRadius: 6, fontFamily: M, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                  border: queuePage === i ? '1.5px solid var(--ink)' : '1px solid var(--line)',
+                  background: queuePage === i ? 'var(--ink)' : 'transparent',
+                  color: queuePage === i ? '#fff' : 'var(--ink-2)',
+                }}>{i + 1}</button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
