@@ -1322,6 +1322,10 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
   const [viewsLoading, setViewsLoading] = useState(true)
   const [sortKey, setSortKey] = useState<PlatosSortKey>('sold')
   const [sortAsc, setSortAsc] = useState(false)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 10
+
+  useEffect(() => { setPage(0) }, [fromDate, toDate, sortKey, sortAsc, products])
 
   useEffect(() => {
     setViewsLoading(true)
@@ -1377,6 +1381,15 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
   )
 
   const hasViews = all.some(r => r.views > 0)
+  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageStart = safePage * PAGE_SIZE
+  const pageRows = all.slice(pageStart, pageStart + PAGE_SIZE)
+  const pagerBtn = (disabled: boolean): React.CSSProperties => ({
+    fontFamily: F, fontSize: '0.76rem', fontWeight: 700, padding: '6px 12px', borderRadius: 8,
+    border: '1px solid var(--line)', background: 'var(--surface)', color: disabled ? 'var(--ink-4)' : 'var(--ink)',
+    cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
+  })
 
   const thSt = (col: PlatosSortKey): React.CSSProperties => ({
     textAlign: 'right', padding: '0 0 8px 8px', fontFamily: F, fontSize: '0.62rem', fontWeight: 700,
@@ -1423,10 +1436,11 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
             </tr>
           </thead>
           <tbody>
-            {all.slice(0, 60).map((r, i) => {
+            {pageRows.map((r, idx) => {
+              const i = pageStart + idx
               const convColor = r.convRate === null ? 'var(--ink-3)' : r.convRate >= 20 ? GREEN : r.convRate >= 10 ? 'var(--amber)' : '#ef4444'
               return (
-                <tr key={r.name} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+                <tr key={r.name} style={{ background: idx % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
                   <td style={{ padding: '7px 8px 7px 0', fontSize: '0.82rem', fontWeight: 600, color: r.sold === 0 ? 'var(--ink-3)' : 'var(--ink)', width: '50%' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 5 }}>
                       <span style={{ flexShrink: 0, marginTop: 1, width: 18, height: 18, borderRadius: 5, background: i < 3 ? 'var(--amber-tint)' : 'var(--sunk)', color: i < 3 ? 'var(--amber)' : 'var(--ink-3)', fontSize: '0.6rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
@@ -1446,7 +1460,15 @@ function PlatosSection({ restaurantId, fromDate, toDate, products, loading: repo
             })}
           </tbody>
         </table>
-        {all.length > 60 && <p style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', textAlign: 'center', margin: '10px 0 0' }}>Mostrando 60 de {all.length}</p>}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12 }}>
+            <button type="button" disabled={safePage === 0} onClick={() => setPage(safePage - 1)} style={pagerBtn(safePage === 0)}>‹ Anterior</button>
+            <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', textAlign: 'center' }}>
+              {pageStart + 1}–{pageStart + pageRows.length} de {all.length} · Pág. {safePage + 1}/{totalPages}
+            </span>
+            <button type="button" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)} style={pagerBtn(safePage >= totalPages - 1)}>Siguiente ›</button>
+          </div>
+        )}
       </div>
     </Card>
   )
@@ -3278,6 +3300,15 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
     ),
   },
   {
+    id: 'recuperacion',
+    label: 'Recuperación',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>
+      </svg>
+    ),
+  },
+  {
     id: 'comportamiento',
     label: 'Comportamiento',
     icon: (
@@ -3292,15 +3323,6 @@ const SUB_SECTIONS: { id: ReportSubSection; label: string; icon: React.ReactNode
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'recuperacion',
-    label: 'Recuperación',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>
       </svg>
     ),
   },
@@ -3526,7 +3548,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
             {branchReports.length > 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
                 <div style={{ fontFamily: 'var(--mono)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-3)' }}>Top 10 por sucursal</div>
-                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(branchReports.length, 3)}, 1fr)`, gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 10 }}>
                   {branchReports.map(br => {
                     const top = (br.data.products || []).sort((a: any, b: any) => b.qty - a.qty).slice(0, 10)
                     if (!top.length) return null
@@ -3534,9 +3556,9 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
                       <div key={br.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: '12px 14px', overflow: 'hidden' }}>
                         <div style={{ fontFamily: F, fontSize: '0.76rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{br.name}</div>
                         {top.map((p: any, i: number) => (
-                          <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
+                          <div key={p.name} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0', borderTop: i > 0 ? '1px solid var(--line)' : 'none' }}>
                             <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', fontWeight: 800, color: 'var(--ink-3)', width: 18, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                            <span style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                            <span style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink)', flex: 1, minWidth: 0, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{p.name}</span>
                             <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-2)', flexShrink: 0 }}>{p.qty}</span>
                           </div>
                         ))}
