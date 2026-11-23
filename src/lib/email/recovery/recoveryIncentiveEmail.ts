@@ -60,7 +60,10 @@ function personalMessage(reason: string | null | undefined, storeName: string): 
 }
 
 export function recoveryIncentiveSubject(args: Pick<Args, "customerName" | "storeName" | "couponPercent">): string {
-  return `¿Nos das otra oportunidad? 💚 REGALO: -${args.couponPercent}% OFF`;
+  const name = firstName(args.customerName);
+  return name
+    ? `🎁 REGALO para ${name}, ¿Nos das otra oportunidad? 🥹`
+    : `🎁 REGALO para ti, ¿Nos das otra oportunidad? 🥹`;
 }
 
 export function recoveryIncentiveHtml(args: Args): string {
