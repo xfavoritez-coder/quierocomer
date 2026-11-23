@@ -106,7 +106,17 @@ export default function AbandonmentSurveyForm({ enrollmentId, storeName, logoUrl
         </div>
         <div style={{ padding: "32px 28px", textAlign: "center" }}>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#111", margin: "0 0 8px" }}>Una última cosita{firstName ? `, ${firstName}` : ""} 🙏</h1>
-          <p style={{ fontSize: 14, color: "#777", margin: "0 0 20px" }}>¿Puedes contarnos un poco más sobre por qué <strong>{reasonLabel.toLowerCase()}</strong>?</p>
+          <p style={{ fontSize: 14, color: "#777", margin: "0 0 20px" }}>{(() => {
+            switch (reason) {
+              case "price": return "¿Qué productos o precios sientes que están altos?"
+              case "quality": return "¿Qué pasó con la calidad? Queremos mejorar."
+              case "delivery_slow": return "¿Cuánto demoró y qué esperabas? Estamos mejorando."
+              case "delivery_expensive": return "¿Cuánto pagaste de delivery y cuánto te parecería justo?"
+              case "competitor": return "¿Qué local encontraste y qué te gustó de él?"
+              case "other": return "Cuéntanos qué pasó, tu opinión nos importa mucho."
+              default: return "Cuéntanos un poco más para poder mejorar."
+            }
+          })()}</p>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
