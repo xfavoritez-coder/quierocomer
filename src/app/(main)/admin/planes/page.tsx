@@ -38,6 +38,7 @@ export default function PlanesPage() {
   const [saved, setSaved] = useState<PricingConfig | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [drag, setDrag] = useState<{ k: PlanKey; pi: number; fi: number } | null>(null); // característica que se está arrastrando
 
   useEffect(() => {
     fetch("/api/admin/pricing")
@@ -77,6 +78,9 @@ export default function PlanesPage() {
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
   const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
+  const moveFeature = (k: PlanKey, pi: number, from: number, to: number) => mutate((c) => { const arr = c[k][pi].features; if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return; const [it] = arr.splice(from, 1); arr.splice(to, 0, it); });
+  // Al arrastrar una característica por encima de otra (mismo plan), la reordena en vivo.
+  const onFeatEnter = (k: PlanKey, pi: number, fi: number) => { if (!drag || drag.k !== k || drag.pi !== pi || drag.fi === fi) return; moveFeature(k, pi, drag.fi, fi); setDrag({ ...drag, fi }); };
   const setLine = (k: LineKey, i: number, field: keyof PriceLine, v: string | number) => mutate((c) => { (c[k][i] as unknown as Record<string, unknown>)[field] = v; });
   const addLine = (k: LineKey) => mutate((c) => { c[k].push({ id: uid(), label: "Nuevo ítem", price: 0, note: "" }); });
   const removeLine = (k: LineKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
@@ -193,13 +197,28 @@ export default function PlanesPage() {
               ⭐ Plan recomendado (resaltado)
             </label>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {p.features.map((f, fi) => (
-                <div key={fi} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ color: GOLD, fontSize: "0.7rem" }}>✓</span>
+              {p.features.map((f, fi) => {
+                const dragging = !!drag && drag.k === k && drag.pi === pi && drag.fi === fi;
+                return (
+                <div
+                  key={fi}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDragEnter={() => onFeatEnter(k, pi, fi)}
+                  onDrop={(e) => { e.preventDefault(); setDrag(null); }}
+                  style={{ display: "flex", gap: 6, alignItems: "center", opacity: dragging ? 0.4 : 1, background: dragging ? "#1e1e1e" : "transparent", borderRadius: 6 }}
+                >
+                  <span
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", ""); setDrag({ k, pi, fi }); }}
+                    onDragEnd={() => setDrag(null)}
+                    title="Arrastrar para reordenar"
+                    style={{ cursor: "grab", color: "#6f6f6f", fontSize: "1rem", userSelect: "none", padding: "0 3px", flexShrink: 0, lineHeight: 1 }}
+                  >⠿</span>
                   <input style={{ ...inp, padding: "6px 8px", fontSize: "0.8rem" }} value={f} onChange={(e) => setFeature(k, pi, fi, e.target.value)} placeholder="Característica" />
                   <button style={xBtn} title="Quitar" onClick={() => removeFeature(k, pi, fi)}>✕</button>
                 </div>
-              ))}
+                );
+              })}
               <button style={{ ...smallBtn, marginTop: 4, alignSelf: "flex-start" }} onClick={() => addFeature(k, pi)}>+ característica</button>
             </div>
           </div>
