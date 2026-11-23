@@ -129,6 +129,9 @@ export async function GET(req: NextRequest) {
       recovered: converted.length,
       recoveryRate: sent.length > 0 ? Math.round((converted.length / sent.length) * 100) : 0,
       recoveredRevenue,
+      // Encuestas
+      surveysSent: enrollments.filter(e => e.automation === "abandonment_survey" && e.sentAt).length,
+      surveysOpened: enrollments.filter(e => e.automation === "abandonment_survey" && (e.openedAt || e.clickedAt || e.surveyAnsweredAt)).length,
       // Cupones
       couponsSent: enrollments.filter(e => e.automation === "recovery_incentive" && e.sentAt).length,
       couponsOpened: enrollments.filter(e => e.automation === "recovery_incentive" && (e.openedAt || e.clickedAt)).length,
@@ -136,6 +139,10 @@ export async function GET(req: NextRequest) {
     },
     reasons,
     surveyResponses,
+    couponRecipients: enrollments
+      .filter(e => e.automation === "recovery_incentive" && e.sentAt)
+      .slice(0, 20)
+      .map(e => ({ name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null, code: e.couponCode || null, sentAt: e.sentAt!.toISOString(), opened: !!(e.openedAt || e.clickedAt), used: e.status === "converted" })),
     byAutomation,
     recent,
     // Cola de próximos envíos: clientes que recibirán email pronto

@@ -12,7 +12,9 @@ interface RecoveryData {
     contacted: number; opened: number; responded: number; recovered: number
     recoveryRate: number; recoveredRevenue: number
     couponsSent: number; couponsOpened: number; couponsUsed: number
+    surveysSent?: number; surveysOpened?: number
   }
+  couponRecipients?: { name: string | null; email: string; phone: string | null; code: string | null; sentAt: string; opened: boolean; used: boolean }[]
   reasons: Record<string, number>
   surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
@@ -138,7 +140,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
-      <RecoverySummary k={k} />
+      <RecoverySummary k={k} queueCount={data.queue.length} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -297,67 +299,101 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
 // ── Helpers ──
 
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0)
+const fmt = (n: number) => n.toLocaleString('es-CL')
 
-function RecoverySummary({ k }: { k: RecoveryData['kpis'] }) {
-  const steps = [
-    { label: 'Enviadas', value: k.contacted, rate: null as number | null },
-    { label: 'Abiertas', value: k.opened, rate: pct(k.opened, k.contacted) },
-    { label: 'Respondieron', value: k.responded, rate: pct(k.responded, k.contacted) },
-    { label: 'Volvieron', value: k.recovered, rate: pct(k.recovered, k.contacted) },
-  ]
-  const label: React.CSSProperties = { fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em' }
+type Stat = { label: string; value: string; hint?: string; color?: string }
+
+function StatGroup({ title, color, icon, stats, children }: { title: string; color: string; icon: React.ReactNode; stats: Stat[]; children?: React.ReactNode }) {
   return (
-    <div style={{ borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
-      <style>{`
-        .rec-funnel{display:grid;grid-template-columns:repeat(4,1fr)}
-        .rec-funnel > div + div{border-left:1px solid var(--line)}
-        @media (max-width:560px){
-          .rec-funnel{grid-template-columns:repeat(2,1fr)}
-          .rec-funnel > div:nth-child(3){border-left:none}
-          .rec-funnel > div:nth-child(n+3){border-top:1px solid var(--line)}
-        }
-      `}</style>
-
-      {/* Header: ingresos recuperados */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 18px 12px' }}>
-        <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Resultados</span>
-        <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)' }}>
-          Ingresos recuperados <b style={{ fontFamily: M, fontSize: '0.9rem', color: k.recoveredRevenue > 0 ? '#16a34a' : 'var(--ink)', marginLeft: 4 }}>{clp(k.recoveredRevenue)}</b>
-        </span>
+    <div style={{ borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 26, height: 26, borderRadius: 8, background: `${color}1a`, color, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
+        <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 800, color: 'var(--ink)' }}>{title}</span>
       </div>
-
-      {/* Embudo */}
-      <div className="rec-funnel" style={{ borderTop: '1px solid var(--line)' }}>
-        {steps.map((st, i) => (
-          <div key={st.label} style={{ padding: '12px 18px' }}>
-            <div style={label}>{st.label}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-              <span style={{ fontFamily: F, fontSize: '1.35rem', fontWeight: 900, color: i === 3 && st.value > 0 ? '#16a34a' : 'var(--ink)', lineHeight: 1 }}>{st.value.toLocaleString('es-CL')}</span>
-              {st.rate !== null && <span style={{ fontFamily: M, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)' }}>{st.rate}%</span>}
-            </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'var(--sunk)', marginTop: 8, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${st.rate === null ? 100 : Math.max(st.value > 0 ? 3 : 0, st.rate)}%`, background: i === 3 ? '#16a34a' : '#3b82f6', opacity: 1 - i * 0.18, borderRadius: 2 }} />
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, gap: 8 }}>
+        {stats.map((st, i) => (
+          <div key={st.label} style={{ minWidth: 0, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? '1px solid var(--line)' : 'none' }}>
+            <div style={{ fontFamily: F, fontSize: '1.3rem', fontWeight: 900, color: st.color ?? 'var(--ink)', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.value}</div>
+            <div style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, lineHeight: 1.25 }}>{st.label}</div>
+            {st.hint && <div style={{ fontFamily: F, fontSize: '0.64rem', fontWeight: 500, color: 'var(--ink-4)', marginTop: 2 }}>{st.hint}</div>}
           </div>
         ))}
       </div>
+      {children}
+    </div>
+  )
+}
 
-      {/* Footer: estado de clientes + cupones */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px', padding: '11px 18px', borderTop: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-2)' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b' }} />
-          <b style={{ color: 'var(--ink)' }}>{k.atRisk.toLocaleString('es-CL')}</b> en riesgo
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />
-          <b style={{ color: 'var(--ink)' }}>{k.churned.toLocaleString('es-CL')}</b> perdidos
-        </span>
-        {k.couponsSent > 0 && (
-          <span style={{ marginLeft: 'auto', color: 'var(--ink-3)' }}>
-            Cupones: <b style={{ color: 'var(--ink)' }}>{k.couponsSent}</b> enviados · <b style={{ color: 'var(--ink)' }}>{k.couponsOpened}</b> abiertos · <b style={{ color: '#16a34a' }}>{k.couponsUsed}</b> usados
-          </span>
+const ic = (d: React.ReactNode) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+
+function RecoverySummary({ k, queueCount, couponRecipients, onSelectClient }: {
+  k: RecoveryData['kpis']; queueCount: number
+  couponRecipients: NonNullable<RecoveryData['couponRecipients']>
+  onSelectClient?: (client: { email: string; name: string; phone: string }) => void
+}) {
+  const [showCoupons, setShowCoupons] = useState(false)
+  const surveysSent = k.surveysSent ?? Math.max(0, k.contacted - k.couponsSent)
+  const surveysOpened = k.surveysOpened ?? k.opened
+  return (
+    <div className="rec-summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 10 }}>
+      <StatGroup title="Clientes" color="#ef4444"
+        icon={ic(<><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>)}
+        stats={[
+          { label: 'En riesgo', value: fmt(k.atRisk), color: '#d97706', hint: 'bajando frecuencia' },
+          { label: 'Perdidos', value: fmt(k.churned), color: '#dc2626', hint: 'inactivos' },
+          { label: 'Por contactar', value: queueCount >= 15 ? '15+' : fmt(queueCount), hint: 'en cola' },
+        ]} />
+
+      <StatGroup title="Encuestas" color="#3b82f6"
+        icon={ic(<><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></>)}
+        stats={[
+          { label: 'Enviadas', value: fmt(surveysSent) },
+          { label: 'Abiertas', value: fmt(surveysOpened), hint: `${pct(surveysOpened, surveysSent)}%` },
+          { label: 'Respondieron', value: fmt(k.responded), hint: `${pct(k.responded, surveysSent)}%` },
+        ]} />
+
+      <StatGroup title="Cupones" color="#f59e0b"
+        icon={ic(<><path d="M3 9a3 3 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a3 3 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M13 5v14" strokeDasharray="2 2"/></>)}
+        stats={[
+          { label: 'Enviados', value: fmt(k.couponsSent) },
+          { label: 'Abiertos', value: fmt(k.couponsOpened), hint: k.couponsSent ? `${pct(k.couponsOpened, k.couponsSent)}%` : undefined },
+          { label: 'Usados', value: fmt(k.couponsUsed), color: k.couponsUsed > 0 ? '#16a34a' : undefined, hint: k.couponsSent ? `${pct(k.couponsUsed, k.couponsSent)}%` : undefined },
+        ]}>
+        {couponRecipients.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+            <button type="button" onClick={() => setShowCoupons(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-2)' }}>
+              {showCoupons ? '▾' : '▸'} Ver a quién se envió
+            </button>
+            {showCoupons && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+                {couponRecipients.map(c => (
+                  <div key={c.email + c.sentAt} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                      <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {new Date(c.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}{c.code ? ` · ${c.code}` : ''}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, flexShrink: 0,
+                      background: c.used ? '#f0fdf4' : c.opened ? '#f5f3ff' : 'var(--surface)',
+                      color: c.used ? '#16a34a' : c.opened ? '#7c3aed' : 'var(--ink-3)' }}>
+                      {c.used ? 'Usado' : c.opened ? 'Abierto' : 'Enviado'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
-      </div>
+      </StatGroup>
+
+      <StatGroup title="Resultados" color="#16a34a"
+        icon={ic(<><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></>)}
+        stats={[
+          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recoveryRate}% de contactados` : undefined },
+          { label: 'Ingresos recuperados', value: clp(k.recoveredRevenue), color: k.recoveredRevenue > 0 ? '#16a34a' : undefined },
+        ]} />
     </div>
   )
 }
