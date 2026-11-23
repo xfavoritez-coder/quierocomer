@@ -21,6 +21,7 @@ export default async function AbandonmentSurveyPage({ params, searchParams }: { 
 
   const cfg = enrollment.restaurant.ecommerceStoreConfig as Record<string, unknown> | null;
   const accent = (typeof cfg?.primaryColor === "string" && /^#/.test(cfg.primaryColor)) ? cfg.primaryColor : "#e63946";
+  const logoUrl = (typeof cfg?.storeLogoUrl === "string" && cfg.storeLogoUrl) ? cfg.storeLogoUrl : enrollment.restaurant.logoUrl;
 
   // Si viene ?r=reason y aún no se respondió, guardar la respuesta inmediatamente
   // (el click en el email ya cuenta como respuesta principal)
@@ -45,7 +46,7 @@ export default async function AbandonmentSurveyPage({ params, searchParams }: { 
       <AbandonmentSurveyForm
         enrollmentId={enrollment.id}
         storeName={enrollment.restaurant.name}
-        logoUrl={enrollment.restaurant.logoUrl}
+        logoUrl={logoUrl}
         accent={accent}
         customerName={enrollment.customerName}
         alreadyAnswered={!!enrollment.surveyAnsweredAt}

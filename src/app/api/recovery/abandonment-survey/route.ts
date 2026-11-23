@@ -27,9 +27,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Encuesta no encontrada" }, { status: 404 });
     }
 
-    // Si ya respondió, no sobrescribir (idempotente)
+    // Si ya respondió, solo permitir agregar detalle/comentario (no cambiar razón)
     if (enrollment.surveyAnsweredAt) {
-      return NextResponse.json({ ok: true, alreadyAnswered: true });
+      const updateData: Record<string, unknown> = {};
+      if (detail) updateData.surveyDetail = detail.slice(0, 100);
+      if (comment) updateData.surveyComment = comment.slice(0, 500);
+      if (Object.keys(updateData).length > 0) {
+        await prisma.recoveryEnrollment.update({ where: { id: enrollmentId }, data: updateData });
+      }
+      return NextResponse.json({ ok: true, updated: true });
     }
 
     await prisma.recoveryEnrollment.update({
