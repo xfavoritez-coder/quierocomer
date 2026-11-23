@@ -83,7 +83,7 @@ function contentsFromItems(items: unknown): { content_ids: string[]; num_items: 
   let num = 0;
   for (const it of arr) {
     if (it?.isExtra) continue;
-    const id = String(it?.dishId ?? it?.productId ?? it?.id ?? it?.productName ?? it?.name ?? "").trim();
+    const id = String(it?.dishId ?? it?.productId ?? it?.product_id ?? it?.id ?? it?.productName ?? it?.name ?? "").trim();
     const qty = Number(it?.quantity ?? it?.qty ?? 1) || 1;
     if (id) ids.push(id);
     num += qty;

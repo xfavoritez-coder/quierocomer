@@ -37,8 +37,18 @@ const PAY_META: Record<string, { label: string; hint: string; Icon: any; online?
   tarjeta: { label: "Tarjeta", hint: "Pagas con tarjeta al recibir", Icon: CreditCard },
 };
 
-function fbTrack(event: string, params?: Record<string, unknown>) {
-  try { (window as any).fbq?.("track", event, params); } catch {}
+function fbTrack(event: string, params?: Record<string, unknown>, eventID?: string) {
+  // El 4º arg {eventID} permite deduplicar con el evento server-side (CAPI) que usa el mismo id.
+  try { (window as any).fbq?.("track", event, params, eventID ? { eventID } : undefined); } catch {}
+}
+
+// content_ids + num_items del carrito, alineados con el CAPI del servidor (dedup por eventID).
+function cartContents(items: { product_id?: string; quantity?: number }[]) {
+  return {
+    content_ids: items.map((i) => String(i.product_id ?? "")).filter(Boolean),
+    content_type: "product" as const,
+    num_items: items.reduce((n, i) => n + (i.quantity || 1), 0),
+  };
 }
 
 export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant; basePath?: string }) {
@@ -89,7 +99,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const orderPlacedRef = useRef(false);
   useEffect(() => {
     setMounted(true);
-    if (items.length > 0) fbTrack("InitiateCheckout", { value: subtotal, currency: "CLP", num_items: items.length });
+    if (items.length > 0) fbTrack("InitiateCheckout", { value: subtotal, currency: "CLP", ...cartContents(items) });
     trackCheckoutStart(tenant.id, items.length, subtotal);
     return () => {
       if (!orderPlacedRef.current) {
@@ -201,7 +211,11 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
       try { sessionStorage.removeItem(PENDING_KEY); } catch {}
       // Pedido completado: limpiar cupón/comentario/acompañamientos guardados.
       try { localStorage.removeItem(`qc-checkout-extra:${tenant.id}`); localStorage.removeItem(`qc-accom:${tenant.id}`); } catch {}
-      fbTrack("Purchase", { value: subtotal, currency: "CLP" });
+      fbTrack(
+        "Purchase",
+        { value: finalTotal, currency: "CLP", ...cartContents(items) },
+        orderParam ? `order-${orderParam}` : undefined,
+      );
       clearCart();
       if (orderParam) window.location.replace(`/pedido/${orderParam}`);
       return;
@@ -420,6 +434,8 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
 
       // Pago offline: ir al seguimiento del pedido.
       setRedirecting(true);
+      // Purchase del navegador (dedup con el CAPI del servidor vía eventID = order-<id>).
+      fbTrack("Purchase", { value: finalTotal, currency: "CLP", ...cartContents(items) }, `order-${data.orderId}`);
       clearCart();
       window.location.href = `/pedido/${data.orderId}`;
     } catch {
