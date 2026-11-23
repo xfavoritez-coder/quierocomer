@@ -133,15 +133,19 @@ export async function GET(req: NextRequest) {
     surveyResponses,
     byAutomation,
     recent,
-    // Top 20 clientes en riesgo (con email, ordenados por riskScore)
-    atRiskClients: [...atRiskWithEmail, ...churnedWithEmail]
-      .sort((a, b) => b.riskScore - a.riskScore)
-      .slice(0, 20)
-      .map(c => ({
-        email: c.email, name: c.name, phone: c.phone,
-        orders: c.orders, avgTicket: c.avgTicket, totalSpent: c.totalSpent,
-        daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
-        status: c.status, riskScore: c.riskScore, topProduct: c.topProduct,
-      })),
+    // Cola de próximos envíos: clientes que recibirán email pronto
+    // (en riesgo o inactivos con email, que NO han sido contactados aún)
+    queue: (() => {
+      const contactedEmails = new Set(enrollments.filter(e => e.sentAt).map(e => e.customerEmail.toLowerCase()));
+      return [...atRisk, ...churned]
+        .filter(c => c.email && !contactedEmails.has(c.email.toLowerCase()))
+        .sort((a, b) => b.riskScore - a.riskScore)
+        .slice(0, 15)
+        .map(c => ({
+          email: c.email, name: c.name, orders: c.orders,
+          daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
+          status: c.status, riskScore: c.riskScore,
+        }));
+    })(),
   });
 }

@@ -2600,6 +2600,7 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
   const [sortAsc, setSortAsc] = useState(false)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(0)
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null)
   const PAGE_SIZE = 10
@@ -2618,13 +2619,14 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
       restaurantId, pageSize: String(PAGE_SIZE), page: String(page),
       sortKey, sortAsc: sortAsc ? '1' : '0',
       ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
     })
     if (branchIds) params.set('branchIds', branchIds)
     fetch(`/api/panel/ecommerce/pos-orders/clients?${params}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setCd(d) })
       .finally(() => setClLoading(false))
-  }, [restaurantId, allBranches, page, debouncedSearch, sortKey, sortAsc])
+  }, [restaurantId, allBranches, page, debouncedSearch, sortKey, sortAsc, statusFilter])
 
   const toggleSort = (key: ClientSortKey) => {
     if (sortKey === key) setSortAsc(a => !a)
@@ -2780,6 +2782,19 @@ function ClientsSection({ restaurantId, allBranches }: { restaurantId: string; a
           {clLoading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.5" style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
         </div>
         <span style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{debouncedSearch ? `${cd.filtered} de ${cd.total}` : `${cd.total} únicos`}</span>
+      </div>
+
+      {/* Filtro por estado */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+        {([['', 'Todos'], ['active', 'Activos'], ['at_risk', 'En riesgo'], ['churned', 'Perdidos'], ['new', 'Nuevos']] as const).map(([val, label]) => (
+          <button key={val} onClick={() => { setStatusFilter(val); setPage(0) }} style={{
+            padding: '5px 11px', borderRadius: 7, fontFamily: F, fontSize: '0.74rem', fontWeight: 700,
+            border: statusFilter === val ? '1.5px solid var(--ink)' : '1px solid var(--line)',
+            background: statusFilter === val ? 'var(--ink)' : 'transparent',
+            color: statusFilter === val ? '#fff' : 'var(--ink-2)',
+            cursor: 'pointer',
+          }}>{label}{cd?.byStatus && val ? ` (${(cd.byStatus as Record<string, number>)[val] ?? 0})` : ''}</button>
+        ))}
       </div>
 
       {/* Buscador */}

@@ -70,6 +70,7 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const rawSearch  = (req.nextUrl.searchParams.get("search") ?? "").trim();
+  const statusFilter = req.nextUrl.searchParams.get("status") || "";
   const pageSize   = Math.min(50, Math.max(1, parseInt(req.nextUrl.searchParams.get("pageSize") ?? "10", 10) || 10));
   const page       = Math.max(0, parseInt(req.nextUrl.searchParams.get("page") ?? "0", 10) || 0);
   const sortKey    = req.nextUrl.searchParams.get("sortKey") ?? "riskScore";
@@ -366,13 +367,10 @@ export async function GET(req: NextRequest) {
 
   // ── Filtro + orden + paginación del directorio ──────────────────────
   const searchLower = rawSearch.toLowerCase();
-  const searchFiltered = rawSearch
-    ? allClients.filter(c =>
-        c.name.toLowerCase().includes(searchLower) ||
-        c.email.toLowerCase().includes(searchLower) ||
-        c.phone.toLowerCase().includes(searchLower)
-      )
-    : allClients;
+  const statusValid = ["active", "at_risk", "churned", "new"].includes(statusFilter);
+  const searchFiltered = allClients
+    .filter(c => !statusValid || c.status === statusFilter)
+    .filter(c => !rawSearch || c.name.toLowerCase().includes(searchLower) || c.email.toLowerCase().includes(searchLower) || c.phone.toLowerCase().includes(searchLower));
 
   // Orden del directorio (default: riskScore desc)
   const sortFn = (a: ClientRow, b: ClientRow): number => {
