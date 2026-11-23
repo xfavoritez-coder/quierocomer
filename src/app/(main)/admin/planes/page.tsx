@@ -3,12 +3,19 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
-import { DEFAULT_HEADINGS } from "@/lib/pricing";
 import type { PricingConfig, PricePlan, PriceLine, PricingHeadings } from "@/lib/pricing";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+
+// Defaults de encabezados — copia LOCAL client-safe. No importar de @/lib/pricing: arrastra prisma al cliente y rompe la página.
+const DEFAULT_HEADINGS: Record<keyof PricingHeadings, string> = {
+  plansTitle: "Planes Ecommerce",
+  plansSub: "Suscripción mensual · precio de implementación por única vez.",
+  addonsTitle: "Paquetes y add-ons",
+  addonsSub: "Módulos que se contratan aparte o se suman a un plan.",
+};
 
 type PlanKey = "plans" | "addons";
 type LineKey = "implementation" | "extras";
