@@ -3301,6 +3301,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
   const [heatPoints, setHeatPoints] = useState<HeatPt[]>([])
   const [chartView, setChartView] = useState<'hora' | 'día' | 'semana' | 'mes' | 'año'>((initialChart as 'hora' | 'día' | 'semana' | 'mes' | 'año') ?? 'hora')
   const [chartSelectedDate, setChartSelectedDate] = useState<string | null>(null)
+  const [recoveryClient, setRecoveryClient] = useState<ClientRow | null>(null)
   const today = chileTodayLocal()
   const [fromDate, setFromDate] = useState(initialFrom ?? today)
   const [toDate, setToDate] = useState(initialTo ?? today)
@@ -3545,7 +3546,17 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
 
         {/* Recuperación sub-section */}
         {subSection === 'recuperacion' && (
-          <RecuperacionSection restaurantId={restaurantId} allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined} />
+          <RecuperacionSection
+            restaurantId={restaurantId}
+            allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined}
+            onSelectClient={(c) => {
+              // Abrir FichaCliente con datos mínimos
+              setRecoveryClient({ email: c.email, name: c.name, phone: c.phone || '', orders: 0, totalSpent: 0, avgTicket: 0, lastOrderAt: '', firstOrderAt: '', daysSinceLastOrder: 0, avgFrequencyDays: null, status: 'churned' as const, riskScore: 0, score: 0, topProduct: null })
+            }}
+          />
+        )}
+        {recoveryClient && (
+          <FichaCliente client={recoveryClient} restaurantId={restaurantId} allBranches={allBranches} onClose={() => setRecoveryClient(null)} />
         )}
 
         {/* Comportamiento sub-section */}

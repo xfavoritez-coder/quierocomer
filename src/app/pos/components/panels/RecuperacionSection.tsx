@@ -2,15 +2,16 @@
 import { useEffect, useState } from 'react'
 
 const F = 'var(--sans)'
+const M = 'var(--mono)'
 const clp = (n: number) => '$' + (Math.round(n) || 0).toLocaleString('es-CL')
 
 interface RecoveryData {
   kpis: {
     totalClients: number; withEmail: number
-    atRisk: number; atRiskWithEmail: number
-    churned: number; churnedWithEmail: number
-    contacted: number; opened: number; recovered: number
+    atRisk: number; churned: number
+    contacted: number; opened: number; responded: number; recovered: number
     recoveryRate: number; recoveredRevenue: number
+    couponsSent: number; couponsOpened: number; couponsUsed: number
   }
   reasons: Record<string, number>
   surveyResponses: { customerName: string | null; customerEmail: string; reason: string | null; detail: string | null; comment: string | null; answeredAt: string }[]
@@ -19,43 +20,23 @@ interface RecoveryData {
   atRiskClients: { email: string; name: string; phone: string; orders: number; avgTicket: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; topProduct: string | null }[]
 }
 
-const AUTOMATION_LABELS: Record<string, string> = {
-  first_buyer: 'Primer comprador',
-  at_risk: 'En riesgo',
-  abandonment_survey: 'Encuesta abandono',
-  recovery_incentive: 'Incentivo',
-}
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendiente', color: '#94a3b8' },
-  sent: { label: 'Enviado', color: '#3b82f6' },
-  delivered: { label: 'Entregado', color: '#3b82f6' },
-  opened: { label: 'Abierto', color: '#8b5cf6' },
-  clicked: { label: 'Click', color: '#8b5cf6' },
-  converted: { label: 'Recuperado', color: '#16a34a' },
-  failed: { label: 'Fallido', color: '#ef4444' },
-  skipped: { label: 'Omitido', color: '#94a3b8' },
-}
-
 const REASON_LABELS: Record<string, string> = {
-  price: 'Precios altos',
-  quality: 'Calidad bajó',
-  delivery_slow: 'Delivery lento',
-  delivery_expensive: 'Delivery caro',
-  delivery_time: 'Delivery',
-  moved: 'Cambió de zona',
-  competitor: 'Otro local',
-  no_occasion: 'Sin ocasión',
-  other: 'Otro motivo',
+  price: 'Precios altos', quality: 'Calidad', delivery_slow: 'Delivery lento',
+  delivery_expensive: 'Delivery caro', delivery_time: 'Delivery', moved: 'Se mudó',
+  competitor: 'Otro local', no_occasion: 'Sin ocasión', other: 'Otro',
 }
 
-export default function RecuperacionSection({ restaurantId }: { restaurantId: string; allBranches?: { id: string }[] }) {
+export default function RecuperacionSection({ restaurantId, onSelectClient }: { restaurantId: string; allBranches?: { id: string }[]; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
   const [data, setData] = useState<RecoveryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [couponPercent, setCouponPercent] = useState(15)
   const [toggling, setToggling] = useState(false)
-  const [savingPercent, setSavingPercent] = useState(false)
+  const [savingPct, setSavingPct] = useState(false)
+  const [respFilter, setRespFilter] = useState<string | null>(null)
+  const [respSearch, setRespSearch] = useState('')
+  const [respPage, setRespPage] = useState(0)
+  const RESP_PAGE = 8
 
   useEffect(() => {
     setLoading(true)
@@ -68,19 +49,7 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
     }).finally(() => setLoading(false))
   }, [restaurantId])
 
-  const saveCouponPercent = async (pct: number) => {
-    setSavingPercent(true)
-    try {
-      await fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ couponPercent: pct }),
-      })
-      setCouponPercent(pct)
-    } catch { /* noop */ }
-    setSavingPercent(false)
-  }
-
-  const toggleEnabled = async () => {
+  const toggle = async () => {
     setToggling(true)
     try {
       const res = await fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`, {
@@ -92,256 +61,116 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
     setToggling(false)
   }
 
+  const savePct = async (pct: number) => {
+    setSavingPct(true)
+    try {
+      await fetch(`/api/panel/ecommerce/recovery/settings?restaurantId=${restaurantId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponPercent: pct }),
+      })
+      setCouponPercent(pct)
+    } catch { /* noop */ }
+    setSavingPct(false)
+  }
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
       Cargando...
     </div>
   )
-
-  if (!data) return (
-    <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F }}>
-      No se pudo cargar la información de recuperación.
-    </div>
-  )
+  if (!data) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F }}>No se pudo cargar.</div>
 
   const k = data.kpis
-  const hasData = k.contacted > 0
+
+  // Respuestas filtradas
+  const allResp = data.surveyResponses
+  const filteredResp = allResp
+    .filter(r => !respFilter || r.reason === respFilter)
+    .filter(r => !respSearch || (r.customerName || '').toLowerCase().includes(respSearch.toLowerCase()) || r.customerEmail.toLowerCase().includes(respSearch.toLowerCase()))
+  const totalRespPages = Math.ceil(filteredResp.length / RESP_PAGE)
+  const pageResp = filteredResp.slice(respPage * RESP_PAGE, (respPage + 1) * RESP_PAGE)
+
+  // Razones únicas para filtro
+  const reasonKeys = [...new Set(allResp.map(r => r.reason).filter(Boolean))] as string[]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Toggle activar/desactivar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-        <div>
-          <div style={{ fontFamily: F, fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)' }}>Recuperación Inteligente</div>
-          <div style={{ fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)', marginTop: 2 }}>
-            {enabled ? 'Activo — se envían emails automáticos a clientes inactivos' : 'Desactivado — no se envían emails'}
+
+      {/* ── Control panel: toggle + descuento ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '18px 20px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontFamily: F, fontSize: '0.92rem', fontWeight: 800, color: 'var(--ink)' }}>Recuperación Inteligente</div>
+            <div style={{ fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 2 }}>
+              {enabled ? 'Activo — emails automáticos a clientes inactivos' : 'Desactivado'}
+            </div>
           </div>
-        </div>
-        <button
-          onClick={toggleEnabled}
-          disabled={toggling || enabled === null}
-          style={{
-            width: 48, height: 28, borderRadius: 14, border: 'none', cursor: toggling ? 'default' : 'pointer',
+          <button onClick={toggle} disabled={toggling || enabled === null} style={{
+            width: 50, height: 28, borderRadius: 14, border: 'none', cursor: toggling ? 'default' : 'pointer',
             background: enabled ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative', flexShrink: 0,
             opacity: toggling ? 0.5 : 1,
-          }}
-        >
-          <span style={{
-            position: 'absolute', top: 2, left: enabled ? 22 : 2,
-            width: 24, height: 24, borderRadius: '50%', background: '#fff',
-            boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s',
-          }} />
-        </button>
-      </div>
-
-      {/* Config cupón */}
-      {enabled && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-          <div>
-            <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)' }}>Descuento de recuperación</div>
-            <div style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>Cupón que se envía a clientes inactivos como último intento</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {[10, 15, 20, 25].map(pct => (
-              <button
-                key={pct}
-                onClick={() => saveCouponPercent(pct)}
-                disabled={savingPercent}
-                style={{
-                  padding: '6px 10px', borderRadius: 8, fontFamily: 'var(--mono)', fontSize: '0.78rem', fontWeight: 800,
+          }}>
+            <span style={{ position: 'absolute', top: 2, left: enabled ? 24 : 2, width: 24, height: 24, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+          </button>
+        </div>
+        {enabled && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+            <div>
+              <div style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)' }}>Descuento de recuperación</div>
+              <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)', marginTop: 1 }}>Cupón para clientes que no volvieron</div>
+            </div>
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {[10, 15, 20, 25].map(pct => (
+                <button key={pct} onClick={() => savePct(pct)} disabled={savingPct} style={{
+                  padding: '5px 10px', borderRadius: 8, fontFamily: M, fontSize: '0.76rem', fontWeight: 800,
                   border: couponPercent === pct ? '2px solid var(--ink)' : '1.5px solid var(--line)',
-                  background: couponPercent === pct ? 'var(--ink)' : 'var(--surface)',
+                  background: couponPercent === pct ? 'var(--ink)' : 'transparent',
                   color: couponPercent === pct ? '#fff' : 'var(--ink-2)',
-                  cursor: savingPercent ? 'default' : 'pointer', opacity: savingPercent ? 0.5 : 1,
-                }}
-              >
-                {pct}%
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-        <KPI label="En riesgo" value={k.atRisk + k.churned} sub={`${k.atRiskWithEmail + k.churnedWithEmail} con email`} color="#f59e0b" />
-        <KPI label="Contactados" value={k.contacted} sub={`${k.opened} abrieron`} color="#3b82f6" />
-        <KPI label="Recuperados" value={k.recovered} sub={k.recoveryRate > 0 ? `${k.recoveryRate}% tasa` : 'Sin datos'} color="#16a34a" />
-        <KPI label="Ingresos recuperados" value={clp(k.recoveredRevenue)} sub={`${k.recovered} pedidos`} color="#8b5cf6" isMoney />
-      </div>
-
-      {/* Por automatización */}
-      {hasData && (
-        <div>
-          <SectionLabel>Por automatización</SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
-            {Object.entries(data.byAutomation).map(([key, v]) => (
-              <div key={key} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-                <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>
-                  {AUTOMATION_LABELS[key] || key}
-                </div>
-                <div style={{ display: 'flex', gap: 16, fontFamily: F, fontSize: '0.82rem' }}>
-                  <span style={{ color: 'var(--ink-2)' }}>Enviados <b style={{ color: 'var(--ink)' }}>{v.sent}</b></span>
-                  <span style={{ color: 'var(--ink-2)' }}>Abiertos <b style={{ color: 'var(--ink)' }}>{v.opened}</b></span>
-                  <span style={{ color: '#16a34a' }}>Recuperados <b>{v.converted}</b></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Razones de abandono */}
-      {Object.keys(data.reasons).length > 0 && (
-        <div>
-          <SectionLabel>Motivos de abandono</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Object.entries(data.reasons)
-              .sort((a, b) => b[1] - a[1])
-              .map(([reason, count]) => {
-                const total = Object.values(data.reasons).reduce((s, v) => s + v, 0)
-                const pct = Math.round((count / total) * 100)
-                return (
-                  <div key={reason} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontFamily: F, fontSize: '0.82rem', color: 'var(--ink)', minWidth: 140 }}>{REASON_LABELS[reason] || reason}</span>
-                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--sunk)', overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: '#f59e0b' }} />
-                    </div>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-2)', minWidth: 32, textAlign: 'right' }}>{count}</span>
-                  </div>
-                )
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* Respuestas de clientes */}
-      {data.surveyResponses.length > 0 && (
-        <div>
-          <SectionLabel>Respuestas de clientes ({data.surveyResponses.length})</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {data.surveyResponses.map((r, i) => (
-              <div key={i} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div>
-                    <div style={{ fontFamily: F, fontSize: '0.84rem', fontWeight: 700, color: 'var(--ink)' }}>{r.customerName || r.customerEmail}</div>
-                    {r.customerName && r.customerEmail && (
-                      <div style={{ fontFamily: F, fontSize: '0.68rem', color: 'var(--ink-3)' }}>{r.customerEmail}</div>
-                    )}
-                  </div>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink-3)', flexShrink: 0 }}>
-                    {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: r.comment ? 8 : 0 }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}>
-                    {REASON_LABELS[r.reason || ''] || r.reason}
-                  </span>
-                  {r.detail && (
-                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-3)' }}>· {r.detail}</span>
-                  )}
-                </div>
-                {r.comment && (
-                  <p style={{ fontFamily: F, fontSize: '0.84rem', color: 'var(--ink-2)', fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
-                    &ldquo;{r.comment}&rdquo;
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Clientes en riesgo */}
-      <div>
-        <SectionLabel>Clientes en riesgo ({data.atRiskClients.length})</SectionLabel>
-        {data.atRiskClients.length === 0 ? (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--ink-3)', fontFamily: F, fontSize: '0.84rem' }}>
-            No hay clientes en riesgo con email registrado.
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F, fontSize: '0.82rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid var(--line)' }}>
-                  <th style={th}>Cliente</th>
-                  <th style={th}>Pedidos</th>
-                  <th style={th}>Ticket</th>
-                  <th style={th}>Último pedido</th>
-                  <th style={th}>Frecuencia</th>
-                  <th style={th}>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.atRiskClients.map((c) => (
-                  <tr key={c.email} style={{ borderBottom: '1px solid var(--line)' }}>
-                    <td style={td}>
-                      <div style={{ fontWeight: 700, color: 'var(--ink)' }}>{c.name || c.email}</div>
-                      {c.name && <div style={{ fontSize: '0.74rem', color: 'var(--ink-3)' }}>{c.email}</div>}
-                    </td>
-                    <td style={{ ...td, fontFamily: 'var(--mono)', fontWeight: 700 }}>{c.orders}</td>
-                    <td style={{ ...td, fontFamily: 'var(--mono)' }}>{clp(c.avgTicket)}</td>
-                    <td style={td}>
-                      <span style={{ fontWeight: 700, color: c.daysSinceLastOrder > 60 ? '#ef4444' : c.daysSinceLastOrder > 30 ? '#f59e0b' : 'var(--ink)' }}>
-                        {c.daysSinceLastOrder}d
-                      </span>
-                    </td>
-                    <td style={td}>{c.avgFrequencyDays ? `c/${c.avgFrequencyDays}d` : '—'}</td>
-                    <td style={td}>
-                      <span style={{
-                        fontSize: '0.7rem', fontWeight: 700, padding: '2px 7px', borderRadius: 6,
-                        background: c.status === 'churned' ? '#fef2f2' : '#fffbeb',
-                        color: c.status === 'churned' ? '#dc2626' : '#d97706',
-                      }}>
-                        {c.status === 'churned' ? 'Inactivo' : 'En riesgo'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  cursor: savingPct ? 'default' : 'pointer', opacity: savingPct ? 0.5 : 1,
+                }}>{pct}%</button>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Emails enviados */}
-      {data.recent.length > 0 && (
-        <div>
-          <SectionLabel>Emails enviados ({data.recent.length})</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {data.recent.map((r, i) => {
-              const st = STATUS_LABELS[r.status] || { label: r.status, color: '#94a3b8' }
-              const isCoupon = r.automation === 'recovery_incentive'
-              const steps: string[] = []
-              if (r.sentAt) steps.push('Enviado')
-              if (r.openedAt) steps.push('Abierto')
-              if (r.clickedAt) steps.push('Click')
-              if (r.surveyReason) steps.push(`Respondió: ${REASON_LABELS[r.surveyReason] || r.surveyReason}`)
-              if (r.convertedAt) steps.push('Volvió a comprar')
+      {/* ── KPIs ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+        <Kpi label="Encuestas enviadas" value={k.contacted} color="#3b82f6" />
+        <Kpi label="Abiertos" value={k.opened} color="#8b5cf6" />
+        <Kpi label="Respondieron" value={k.responded} color="#f59e0b" />
+        <Kpi label="Recuperados" value={k.recovered} sub={k.recoveryRate > 0 ? `${k.recoveryRate}%` : undefined} color="#16a34a" />
+        <Kpi label="Ingresos recuperados" value={clp(k.recoveredRevenue)} color="#8b5cf6" mono />
+      </div>
+
+      {/* ── Cupones ── */}
+      {(k.couponsSent > 0 || k.contacted > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+          <Kpi label="Cupones enviados" value={k.couponsSent} color="#f59e0b" />
+          <Kpi label="Cupones abiertos" value={k.couponsOpened} color="#8b5cf6" />
+          <Kpi label="Cupones usados" value={k.couponsUsed} color="#16a34a" />
+          <Kpi label="Perdidos" value={k.churned} sub="inactivos" color="#ef4444" />
+          <Kpi label="En riesgo" value={k.atRisk} sub="bajando frecuencia" color="#f59e0b" />
+        </div>
+      )}
+
+      {/* ── Motivos de abandono (barras) ── */}
+      {Object.keys(data.reasons).length > 0 && (
+        <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+          <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 12 }}>Motivos de abandono</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {Object.entries(data.reasons).sort((a, b) => b[1] - a[1]).map(([reason, count]) => {
+              const total = Object.values(data.reasons).reduce((s, v) => s + v, 0)
+              const pct = Math.round((count / total) * 100)
               return (
-                <div key={i} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: st.color + '18', color: st.color, textTransform: 'uppercase', letterSpacing: '.03em', flexShrink: 0 }}>
-                      {st.label}
-                    </span>
-                    <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.customerName || r.customerEmail}
-                    </span>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: '0.7rem', color: 'var(--ink-3)', flexShrink: 0 }}>
-                      {new Date(r.sentAt || r.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
-                    </span>
+                <div key={reason} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontFamily: F, fontSize: '0.8rem', color: 'var(--ink)', minWidth: 110, fontWeight: 600 }}>{REASON_LABELS[reason] || reason}</span>
+                  <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--sunk)', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: '#f59e0b', transition: 'width .3s' }} />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-3)' }}>
-                      {isCoupon ? `Cupón ${r.couponCode || ''}` : 'Encuesta abandono'}
-                    </span>
-                    {steps.length > 0 && (
-                      <span style={{ fontSize: '0.68rem', color: 'var(--ink-4)' }}>
-                        · {steps.join(' → ')}
-                      </span>
-                    )}
-                  </div>
+                  <span style={{ fontFamily: M, fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink-2)', minWidth: 28, textAlign: 'right' }}>{count}</span>
+                  <span style={{ fontFamily: M, fontSize: '0.68rem', color: 'var(--ink-3)', minWidth: 32, textAlign: 'right' }}>{pct}%</span>
                 </div>
               )
             })}
@@ -349,14 +178,63 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
         </div>
       )}
 
-      {/* Estado vacío */}
-      {!hasData && data.atRiskClients.length === 0 && (
+      {/* ── Respuestas (tabla con filtro + paginador) ── */}
+      {allResp.length > 0 && (
+        <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Respuestas ({filteredResp.length})</div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              <button onClick={() => { setRespFilter(null); setRespPage(0) }} style={{ ...pillBtn, ...(respFilter === null ? pillActive : {}) }}>Todos</button>
+              {reasonKeys.map(r => (
+                <button key={r} onClick={() => { setRespFilter(r); setRespPage(0) }} style={{ ...pillBtn, ...(respFilter === r ? pillActive : {}) }}>
+                  {REASON_LABELS[r] || r}
+                </button>
+              ))}
+            </div>
+          </div>
+          <input
+            value={respSearch} onChange={e => { setRespSearch(e.target.value); setRespPage(0) }}
+            placeholder="Buscar por nombre o email..."
+            style={{ width: '100%', boxSizing: 'border-box', padding: '7px 11px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: F, fontSize: '0.8rem', color: 'var(--ink)', outline: 'none', marginBottom: 10 }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {pageResp.map((r, i) => (
+              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.customerName || r.customerEmail}</div>
+                  {r.customerName && <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{r.customerEmail}</div>}
+                </div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', flexShrink: 0 }}>
+                  {REASON_LABELS[r.reason || ''] || r.reason || '—'}
+                </span>
+                <span style={{ fontFamily: M, fontSize: '0.68rem', color: 'var(--ink-3)', flexShrink: 0 }}>
+                  {new Date(r.answeredAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}
+                </span>
+              </div>
+            ))}
+          </div>
+          {totalRespPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 10 }}>
+              {Array.from({ length: totalRespPages }, (_, i) => (
+                <button key={i} onClick={() => setRespPage(i)} style={{
+                  width: 28, height: 28, borderRadius: 6, border: respPage === i ? '1.5px solid var(--ink)' : '1px solid var(--line)',
+                  background: respPage === i ? 'var(--ink)' : 'transparent',
+                  color: respPage === i ? '#fff' : 'var(--ink-2)',
+                  fontFamily: M, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                }}>{i + 1}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Estado vacío ── */}
+      {k.contacted === 0 && (
         <div style={{ padding: '48px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔄</div>
           <h3 style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)', margin: '0 0 8px' }}>Recuperación Inteligente</h3>
           <p style={{ fontFamily: F, fontSize: '0.88rem', color: 'var(--ink-3)', lineHeight: 1.5, maxWidth: 400, margin: '0 auto' }}>
-            Cuando se active, QuieroComer detectará automáticamente clientes que dejan de comprar,
-            les enviará comunicaciones personalizadas y te mostrará los resultados aquí.
+            Cuando se active, QuieroComer detectará clientes que dejan de comprar y les enviará comunicaciones personalizadas.
           </p>
         </div>
       )}
@@ -366,25 +244,22 @@ export default function RecuperacionSection({ restaurantId }: { restaurantId: st
 
 // ── Helpers ──
 
-function KPI({ label, value, sub, color, isMoney }: { label: string; value: number | string; sub: string; color: string; isMoney?: boolean }) {
+function Kpi({ label, value, sub, color, mono }: { label: string; value: number | string; sub?: string; color: string; mono?: boolean }) {
   return (
-    <div style={{ padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-      <div style={{ fontFamily: 'var(--sans)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: isMoney ? 'var(--mono)' : 'var(--sans)', fontSize: isMoney ? '1.2rem' : '1.5rem', fontWeight: 900, color, lineHeight: 1 }}>
+    <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', borderLeft: `3px solid ${color}` }}>
+      <div style={{ fontFamily: 'var(--sans)', fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: mono ? 'var(--mono)' : 'var(--sans)', fontSize: mono ? '1rem' : '1.3rem', fontWeight: 900, color, lineHeight: 1 }}>
         {value}
       </div>
-      <div style={{ fontFamily: 'var(--sans)', fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 4 }}>{sub}</div>
+      {sub && <div style={{ fontFamily: 'var(--sans)', fontSize: '0.66rem', color: 'var(--ink-3)', marginTop: 3 }}>{sub}</div>}
     </div>
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontFamily: 'var(--mono)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-3)', marginBottom: 8 }}>
-      {children}
-    </div>
-  )
+const pillBtn: React.CSSProperties = {
+  padding: '3px 9px', borderRadius: 6, fontFamily: 'var(--sans)', fontSize: '0.68rem', fontWeight: 600,
+  border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', cursor: 'pointer',
 }
-
-const th: React.CSSProperties = { textAlign: 'left', padding: '8px 10px', fontWeight: 700, color: 'var(--ink-3)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }
-const td: React.CSSProperties = { padding: '10px 10px', color: 'var(--ink-2)', whiteSpace: 'nowrap' }
+const pillActive: React.CSSProperties = {
+  background: 'var(--ink)', color: '#fff', borderColor: 'var(--ink)',
+}
