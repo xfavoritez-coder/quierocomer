@@ -299,10 +299,14 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       {/* ── Estado vacío ── */}
       {k.contacted === 0 && (
         <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔄</div>
-          <h3 style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)', margin: '0 0 8px' }}>Recuperación Inteligente</h3>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>{enabled ? '✅' : '🔄'}</div>
+          <h3 style={{ fontFamily: F, fontSize: '1.1rem', fontWeight: 800, color: 'var(--ink)', margin: '0 0 8px' }}>
+            {enabled ? 'Recuperación activada' : 'Recuperación Inteligente'}
+          </h3>
           <p style={{ fontFamily: F, fontSize: '0.88rem', color: 'var(--ink-3)', lineHeight: 1.5, maxWidth: 400, margin: '0 auto' }}>
-            Cuando se active, QuieroComer detectará clientes que dejan de comprar y les enviará comunicaciones personalizadas.
+            {enabled
+              ? 'El sistema está activo. El cron diario analizará tus clientes y enviará emails automáticamente a los que dejen de comprar. Los resultados aparecerán aquí.'
+              : 'Activa el sistema arriba para que QuieroComer detecte clientes que dejan de comprar y les envíe comunicaciones personalizadas.'}
           </p>
         </div>
       )}
