@@ -250,10 +250,15 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Sin pedir</th>
                   <th title="Cada cuántos días pedía en promedio" style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Frecuencia</th>
                   <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Próximo email</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Envío estimado</th>
                 </tr>
               </thead>
               <tbody>
-                {data.queue.map((c, i) => (
+                {data.queue.map((c, i) => {
+                  const daysUntil = Math.ceil((i + 1) / 50)
+                  const sendDate = new Date(Date.now() + daysUntil * 86400000)
+                  const sendLabel = sendDate.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+                  return (
                   <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                     <td style={{ padding: '8px 8px', maxWidth: 180 }}>
                       <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
@@ -270,8 +275,12 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                     <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                       <AutomationBadge automation={c.nextEmail} />
                     </td>
+                    <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      ~{sendLabel}
+                    </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
