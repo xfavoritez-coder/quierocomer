@@ -423,7 +423,12 @@ function OrderCard({
   const secondary = (isDelivery && order.addressLine)
     ? cleanAddr(order.addressLine)
     : isDineIn
-      ? (dineInCovers ? `${dineInCovers} ${dineInCovers === 1 ? 'persona' : 'personas'}` : '')
+      ? (dineInCovers ? (
+          <span title={`${dineInCovers} ${dineInCovers === 1 ? 'persona' : 'personas'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: 'middle', fontWeight: 700, color: 'var(--ink-2)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            {dineInCovers}
+          </span>
+        ) : null)
       : (!isDelivery && !isDineIn)
         ? 'Retiro en local'
         : ''
