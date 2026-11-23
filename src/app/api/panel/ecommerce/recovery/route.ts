@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     if (siblings.length > 1) allIds = siblings.map(s => s.id);
   }
 
-  // Clientes segmentados (vista de la sucursal seleccionada, stats globales)
-  const clients = await getClientSegmentation(restaurantId, [restaurantId]);
+  // Clientes segmentados (todos de la marca, sin filtro de branch — para stats globales)
+  const clients = await getClientSegmentation(restaurantId);
 
   const atRisk = clients.filter(c => c.status === "at_risk");
   const churned = clients.filter(c => c.status === "churned");

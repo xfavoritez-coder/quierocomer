@@ -163,22 +163,22 @@ function pickAutomation(
   hasEnrollment: Set<string>,
   hasAbandonment: Set<string>,
 ): Automation | null {
-  // Verificar que la inactividad sea real respecto a su frecuencia natural.
-  // Si el cliente tiene frecuencia conocida, debe llevar al menos 2.5x su frecuencia.
-  // Si no tiene frecuencia (1 pedido), usar el umbral de config directamente.
+  // Contactar si: lleva > 90 días (tope absoluto) O supera 2.5x su frecuencia.
+  // Mínimo siempre el umbral de config (45 días por defecto).
   const freq = client.avgFrequencyDays;
-  const minDaysForContact = freq
-    ? Math.max(rc.abandonmentSurvey.daysInactive, Math.round(freq * 2.5))
-    : rc.abandonmentSurvey.daysInactive;
+  const minDaysForContact = Math.min(
+    90, // tope: nunca esperar más de 90 días
+    freq ? Math.max(rc.abandonmentSurvey.daysInactive, Math.round(freq * 2.5)) : rc.abandonmentSurvey.daysInactive
+  );
 
   // Encuesta de abandono
   if (rc.abandonmentSurvey.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysForContact && client.orders >= 2) {
     if (!hasEnrollment.has(`${email}::abandonment_survey`)) return "abandonment_survey";
   }
-  // Incentivo de recuperación (solo si ya recibió encuesta de abandono, 15 días después)
-  const minDaysIncentive = freq
+  // Incentivo de recuperación
+  const minDaysIncentive = Math.min(120, freq
     ? Math.max(rc.recoveryIncentive.daysInactive, Math.round(freq * 3))
-    : rc.recoveryIncentive.daysInactive;
+    : rc.recoveryIncentive.daysInactive);
   if (rc.recoveryIncentive.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysIncentive && client.orders >= 2) {
     if (hasAbandonment.has(email) && !hasEnrollment.has(`${email}::recovery_incentive`)) return "recovery_incentive";
   }

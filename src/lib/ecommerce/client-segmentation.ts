@@ -26,6 +26,10 @@ export interface ClientRow {
 
 export function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
   if (freq === null) return "new";
+  // Tope absoluto: más de 90 días sin pedir = perdido, sin importar frecuencia
+  if (daysSince > 90) return "churned";
+  // Más de 45 días = en riesgo como mínimo
+  if (daysSince > 45) return daysSince / freq >= 3 ? "churned" : "at_risk";
   const ratio = daysSince / freq;
   if (ratio < 1.5) return "active";
   if (ratio < 3) return "at_risk";

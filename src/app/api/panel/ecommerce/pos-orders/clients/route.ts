@@ -41,6 +41,8 @@ export interface ClientRow {
 
 function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
   if (freq === null) return "new";
+  if (daysSince > 90) return "churned";
+  if (daysSince > 45) return daysSince / freq >= 3 ? "churned" : "at_risk";
   const ratio = daysSince / freq;
   if (ratio < 1.5) return "active";
   if (ratio < 3) return "at_risk";
