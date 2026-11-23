@@ -58,10 +58,7 @@ function personalMessage(reason: string | null | undefined, storeName: string): 
 }
 
 export function recoveryIncentiveSubject(args: Pick<Args, "customerName" | "storeName" | "couponPercent">): string {
-  const name = firstName(args.customerName);
-  return name
-    ? `${name}, tenemos un ${args.couponPercent}% para ti en ${args.storeName} 🎁`
-    : `Tenemos un ${args.couponPercent}% para ti en ${args.storeName} 🎁`;
+  return `¿Nos das otra oportunidad? 💚 REGALO: -${args.couponPercent}% OFF`;
 }
 
 export function recoveryIncentiveHtml(args: Args): string {
