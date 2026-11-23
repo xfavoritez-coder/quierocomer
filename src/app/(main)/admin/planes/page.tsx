@@ -30,6 +30,7 @@ export default function PlanesPage() {
   const [saved, setSaved] = useState<PricingConfig | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [featDraft, setFeatDraft] = useState<Record<string, string>>({}); // texto de "nueva característica" por tarjeta
 
   useEffect(() => {
     fetch("/api/admin/pricing")
@@ -65,9 +66,19 @@ export default function PlanesPage() {
   const addPlan = (k: PlanKey) => mutate((c) => { c[k].push({ id: uid(), name: "Nuevo plan", price: 0, features: [] }); });
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
-  const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
-  const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
-  const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
+  // ── características: catálogo compartido (unión de todos los planes y add-ons) + check por tarjeta ──
+  const featKey = (f: string) => f.trim().toLowerCase();
+  const planHasFeature = (p: PricePlan, f: string) => p.features.some((x) => featKey(x) === featKey(f));
+  const toggleFeature = (k: PlanKey, pi: number, f: string) => mutate((c) => {
+    const arr = c[k][pi].features;
+    const idx = arr.findIndex((x) => featKey(x) === featKey(f));
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(f.trim());
+  });
+  const addCatalogFeature = (k: PlanKey, pi: number, text: string) => {
+    const t = text.trim(); if (!t) return;
+    mutate((c) => { const arr = c[k][pi].features; if (!arr.some((x) => featKey(x) === featKey(t))) arr.push(t); });
+    setFeatDraft((d) => ({ ...d, [`${k}:${pi}`]: "" }));
+  };
   const setLine = (k: LineKey, i: number, field: keyof PriceLine, v: string | number) => mutate((c) => { (c[k][i] as unknown as Record<string, unknown>)[field] = v; });
   const addLine = (k: LineKey) => mutate((c) => { c[k].push({ id: uid(), label: "Nuevo ítem", price: 0, note: "" }); });
   const removeLine = (k: LineKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
@@ -153,7 +164,12 @@ export default function PlanesPage() {
   );
 
   // ───────────────────────── EDIT (form) ─────────────────────────
-  const renderPlans = (k: PlanKey, title: string, sub: string) => (
+  const renderPlans = (k: PlanKey, title: string, sub: string) => {
+    // Catálogo compartido: todas las características usadas en cualquier plan o add-on (dedup).
+    const seen = new Map<string, string>();
+    for (const grp of [cfg.plans, cfg.addons]) for (const pp of grp) for (const f of pp.features) { const key = featKey(f); if (key && !seen.has(key)) seen.set(key, f.trim()); }
+    const catalog = [...seen.values()];
+    return (
     <div style={card}>
       <h3 style={sectionTitle}>{title}</h3>
       <p style={sectionSub}>{sub}</p>
@@ -173,22 +189,38 @@ export default function PlanesPage() {
               <input type="checkbox" checked={p.recommended === true} onChange={() => setRecommended(k, pi)} style={{ accentColor: GOLD, width: 15, height: 15, cursor: "pointer" }} />
               ⭐ Plan recomendado (resaltado)
             </label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {p.features.map((f, fi) => (
-                <div key={fi} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ color: GOLD, fontSize: "0.7rem" }}>✓</span>
-                  <input style={{ ...inp, padding: "6px 8px", fontSize: "0.8rem" }} value={f} onChange={(e) => setFeature(k, pi, fi, e.target.value)} placeholder="Característica" />
-                  <button style={xBtn} title="Quitar" onClick={() => removeFeature(k, pi, fi)}>✕</button>
-                </div>
-              ))}
-              <button style={{ ...smallBtn, marginTop: 4, alignSelf: "flex-start" }} onClick={() => addFeature(k, pi)}>+ característica</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>Características incluidas ({p.features.length})</p>
+              <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1, border: "1px solid #242424", borderRadius: 8, padding: "6px 8px" }}>
+                {catalog.map((f) => {
+                  const on = planHasFeature(p, f);
+                  return (
+                    <label key={f} style={{ display: "flex", alignItems: "flex-start", gap: 7, cursor: "pointer", padding: "3px 0", fontFamily: FB, fontSize: "0.78rem", color: on ? "#e8e8e8" : "#8a8a8a", lineHeight: 1.3 }}>
+                      <input type="checkbox" checked={on} onChange={() => toggleFeature(k, pi, f)} style={{ accentColor: GOLD, width: 14, height: 14, marginTop: 2, flexShrink: 0, cursor: "pointer" }} />
+                      <span>{f}</span>
+                    </label>
+                  );
+                })}
+                {catalog.length === 0 && <span style={{ fontFamily: FB, fontSize: "0.76rem", color: "#777" }}>Aún no hay características. Agrega una abajo.</span>}
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                <input
+                  style={{ ...inp, padding: "6px 8px", fontSize: "0.78rem" }}
+                  value={featDraft[`${k}:${pi}`] || ""}
+                  onChange={(e) => setFeatDraft((d) => ({ ...d, [`${k}:${pi}`]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCatalogFeature(k, pi, featDraft[`${k}:${pi}`] || ""); } }}
+                  placeholder="Nueva característica…"
+                />
+                <button style={smallBtn} onClick={() => addCatalogFeature(k, pi, featDraft[`${k}:${pi}`] || "")}>+ agregar</button>
+              </div>
             </div>
           </div>
         ))}
       </div>
       <button style={{ ...smallBtn, marginTop: 14 }} onClick={() => addPlan(k)}>+ agregar {k === "plans" ? "plan" : "paquete"}</button>
     </div>
-  );
+    );
+  };
 
   const renderLines = (k: LineKey, title: string, sub: string, addLabel: string) => (
     <div style={card}>
