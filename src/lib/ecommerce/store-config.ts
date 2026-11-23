@@ -105,7 +105,7 @@ const DEFAULT_RECOVERY: RecoveryConfig = {
   abandonmentSurvey: { enabled: true, daysInactive: 45 },
   recoveryIncentive: { enabled: true, daysInactive: 60, couponPercent: 15 },
   maxEmailsPerMonth: 2,
-  cooldownDays: 14,
+  cooldownDays: 7,
 };
 
 function parseRecovery(raw: unknown): RecoveryConfig {
