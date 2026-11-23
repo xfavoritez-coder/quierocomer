@@ -17,7 +17,7 @@ interface RecoveryData {
   surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
-  queue: { email: string; name: string; orders: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number }[]
+  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number }[]
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -180,36 +180,6 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
         </div>
       )}
 
-      {/* ── Cola de próximos envíos ── */}
-      {data.queue.length > 0 && (
-        <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
-          <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 10 }}>
-            Próximos a contactar ({data.queue.length})
-            <span style={{ fontFamily: F, fontSize: '0.68rem', fontWeight: 500, color: 'var(--ink-3)', marginLeft: 8 }}>Clientes que recibirán email en las próximas ejecuciones</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {data.queue.map((c, i) => (
-              <div key={c.email} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
-                <span style={{ fontFamily: F, fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {c.name || c.email}
-                </span>
-                <span style={{ fontFamily: M, fontSize: '0.68rem', color: 'var(--ink-3)', flexShrink: 0 }}>{c.orders} ped</span>
-                <span style={{ fontFamily: M, fontSize: '0.68rem', color: c.daysSinceLastOrder > 90 ? '#ef4444' : '#f59e0b', fontWeight: 700, flexShrink: 0 }}>
-                  {c.daysSinceLastOrder}d
-                </span>
-                <span style={{
-                  fontSize: '0.62rem', fontWeight: 700, padding: '1px 6px', borderRadius: 4, flexShrink: 0,
-                  background: c.status === 'churned' ? '#fef2f2' : '#fffbeb',
-                  color: c.status === 'churned' ? '#dc2626' : '#d97706',
-                }}>
-                  {c.status === 'churned' ? 'Perdido' : 'En riesgo'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── Respuestas (tabla con filtro + paginador) ── */}
       {allResp.length > 0 && (
         <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
@@ -270,6 +240,55 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Cola de próximos envíos ── */}
+      {data.queue.length > 0 && (
+        <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+          <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)', marginBottom: 4 }}>
+            Pendientes de contactar
+          </div>
+          <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
+            {data.queue.length} clientes en cola — recibirán el email de recuperación en las próximas ejecuciones del cron diario
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--line)' }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Cliente</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Pedidos</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Total compras</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Sin pedir</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.queue.map((c, i) => (
+                  <tr key={c.email} style={{ borderBottom: '1px solid var(--line)', background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+                    <td style={{ padding: '8px 8px', maxWidth: 180 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
+                      <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                    </td>
+                    <td style={{ padding: '8px 8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
+                    <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.totalSpent)}</td>
+                    <td style={{ padding: '8px 8px', fontSize: '0.78rem', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', color: c.daysSinceLastOrder > 90 ? '#ef4444' : c.daysSinceLastOrder > 45 ? '#f59e0b' : 'var(--ink-2)' }}>
+                      {c.daysSinceLastOrder} días
+                    </td>
+                    <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                      <span style={{
+                        fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                        background: c.status === 'churned' ? '#fef2f2' : '#fffbeb',
+                        color: c.status === 'churned' ? '#dc2626' : '#d97706',
+                      }}>
+                        {c.status === 'churned' ? 'Perdido' : 'En riesgo'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

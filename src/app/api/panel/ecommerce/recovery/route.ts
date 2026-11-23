@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
         .sort((a, b) => b.riskScore - a.riskScore)
         .slice(0, 15)
         .map(c => ({
-          email: c.email, name: c.name, orders: c.orders,
+          email: c.email, name: c.name, orders: c.orders, totalSpent: c.totalSpent,
           daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
           status: c.status, riskScore: c.riskScore,
         }));
