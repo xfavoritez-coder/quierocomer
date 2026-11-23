@@ -137,25 +137,8 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
         )}
       </div>
 
-      {/* ── KPIs ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-        <Kpi label="Encuestas enviadas" value={k.contacted} color="#3b82f6" />
-        <Kpi label="Abiertos" value={k.opened} color="#8b5cf6" />
-        <Kpi label="Respondieron" value={k.responded} color="#f59e0b" />
-        <Kpi label="Recuperados" value={k.recovered} sub={k.recoveryRate > 0 ? `${k.recoveryRate}%` : undefined} color="#16a34a" />
-        <Kpi label="Ingresos recuperados" value={clp(k.recoveredRevenue)} color="#8b5cf6" mono />
-      </div>
-
-      {/* ── Cupones ── */}
-      {(k.couponsSent > 0 || k.contacted > 0) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-          <Kpi label="Cupones enviados" value={k.couponsSent} color="#f59e0b" />
-          <Kpi label="Cupones abiertos" value={k.couponsOpened} color="#8b5cf6" />
-          <Kpi label="Cupones usados" value={k.couponsUsed} color="#16a34a" />
-          <Kpi label="Perdidos" value={k.churned} sub="inactivos" color="#ef4444" />
-          <Kpi label="En riesgo" value={k.atRisk} sub="bajando frecuencia" color="#f59e0b" />
-        </div>
-      )}
+      {/* ── Resumen (embudo + estado de clientes) ── */}
+      <RecoverySummary k={k} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -250,8 +233,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
             Pendientes de contactar
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-            {data.queue.length} clientes en cola — recibirán el email de recuperación en las próximas ejecuciones del cron diario
+            {data.queue.length} clientes en cola — recibirán el email de recuperación en las próximas ejecuciones del cron diario.{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
           </div>
+          <style>{`.rec-queue-row:hover{background:var(--sunk) !important}`}</style>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: F }}>
               <thead>
@@ -260,12 +244,13 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Pedidos</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Total compras</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Sin pedir</th>
+                  <th title="Cada cuántos días pedía en promedio" style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Frecuencia</th>
                   <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {data.queue.map((c, i) => (
-                  <tr key={c.email} style={{ borderBottom: '1px solid var(--line)', background: i % 2 === 0 ? 'transparent' : 'var(--sunk)' }}>
+                  <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                     <td style={{ padding: '8px 8px', maxWidth: 180 }}>
                       <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || '—'}</div>
                       <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
@@ -274,6 +259,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                     <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.totalSpent)}</td>
                     <td style={{ padding: '8px 8px', fontSize: '0.78rem', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', color: c.daysSinceLastOrder > 90 ? '#ef4444' : c.daysSinceLastOrder > 45 ? '#f59e0b' : 'var(--ink-2)' }}>
                       {c.daysSinceLastOrder} días
+                    </td>
+                    <td style={{ padding: '8px 8px', fontSize: '0.78rem', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--ink-2)' }}>
+                      {c.avgFrequencyDays !== null ? `cada ${c.avgFrequencyDays} ${c.avgFrequencyDays === 1 ? 'día' : 'días'}` : <span style={{ color: 'var(--ink-4)' }}>1 pedido</span>}
                     </td>
                     <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                       <span style={{
@@ -308,14 +296,68 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
 
 // ── Helpers ──
 
-function Kpi({ label, value, sub, color, mono }: { label: string; value: number | string; sub?: string; color: string; mono?: boolean }) {
+const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0)
+
+function RecoverySummary({ k }: { k: RecoveryData['kpis'] }) {
+  const steps = [
+    { label: 'Enviadas', value: k.contacted, rate: null as number | null },
+    { label: 'Abiertas', value: k.opened, rate: pct(k.opened, k.contacted) },
+    { label: 'Respondieron', value: k.responded, rate: pct(k.responded, k.contacted) },
+    { label: 'Volvieron', value: k.recovered, rate: pct(k.recovered, k.contacted) },
+  ]
+  const label: React.CSSProperties = { fontFamily: F, fontSize: '0.62rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em' }
   return (
-    <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', borderLeft: `3px solid ${color}` }}>
-      <div style={{ fontFamily: 'var(--sans)', fontSize: '0.64rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: mono ? 'var(--mono)' : 'var(--sans)', fontSize: mono ? '1rem' : '1.3rem', fontWeight: 900, color, lineHeight: 1 }}>
-        {value}
+    <div style={{ borderRadius: 14, border: '1px solid var(--line)', background: 'var(--surface)', overflow: 'hidden' }}>
+      <style>{`
+        .rec-funnel{display:grid;grid-template-columns:repeat(4,1fr)}
+        .rec-funnel > div + div{border-left:1px solid var(--line)}
+        @media (max-width:560px){
+          .rec-funnel{grid-template-columns:repeat(2,1fr)}
+          .rec-funnel > div:nth-child(3){border-left:none}
+          .rec-funnel > div:nth-child(n+3){border-top:1px solid var(--line)}
+        }
+      `}</style>
+
+      {/* Header: ingresos recuperados */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 18px 12px' }}>
+        <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Resultados</span>
+        <span style={{ fontFamily: F, fontSize: '0.72rem', color: 'var(--ink-3)' }}>
+          Ingresos recuperados <b style={{ fontFamily: M, fontSize: '0.9rem', color: k.recoveredRevenue > 0 ? '#16a34a' : 'var(--ink)', marginLeft: 4 }}>{clp(k.recoveredRevenue)}</b>
+        </span>
       </div>
-      {sub && <div style={{ fontFamily: 'var(--sans)', fontSize: '0.66rem', color: 'var(--ink-3)', marginTop: 3 }}>{sub}</div>}
+
+      {/* Embudo */}
+      <div className="rec-funnel" style={{ borderTop: '1px solid var(--line)' }}>
+        {steps.map((st, i) => (
+          <div key={st.label} style={{ padding: '12px 18px' }}>
+            <div style={label}>{st.label}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+              <span style={{ fontFamily: F, fontSize: '1.35rem', fontWeight: 900, color: i === 3 && st.value > 0 ? '#16a34a' : 'var(--ink)', lineHeight: 1 }}>{st.value.toLocaleString('es-CL')}</span>
+              {st.rate !== null && <span style={{ fontFamily: M, fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)' }}>{st.rate}%</span>}
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--sunk)', marginTop: 8, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${st.rate === null ? 100 : Math.max(st.value > 0 ? 3 : 0, st.rate)}%`, background: i === 3 ? '#16a34a' : '#3b82f6', opacity: 1 - i * 0.18, borderRadius: 2 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer: estado de clientes + cupones */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px', padding: '11px 18px', borderTop: '1px solid var(--line)', background: 'var(--sunk)', fontFamily: F, fontSize: '0.74rem', color: 'var(--ink-2)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b' }} />
+          <b style={{ color: 'var(--ink)' }}>{k.atRisk.toLocaleString('es-CL')}</b> en riesgo
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} />
+          <b style={{ color: 'var(--ink)' }}>{k.churned.toLocaleString('es-CL')}</b> perdidos
+        </span>
+        {k.couponsSent > 0 && (
+          <span style={{ marginLeft: 'auto', color: 'var(--ink-3)' }}>
+            Cupones: <b style={{ color: 'var(--ink)' }}>{k.couponsSent}</b> enviados · <b style={{ color: 'var(--ink)' }}>{k.couponsOpened}</b> abiertos · <b style={{ color: '#16a34a' }}>{k.couponsUsed}</b> usados
+          </span>
+        )}
+      </div>
     </div>
   )
 }
