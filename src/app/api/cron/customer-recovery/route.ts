@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseStoreConfig, type RecoveryConfig } from "@/lib/ecommerce/store-config";
 import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-segmentation";
+import { pickAutomation, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
 import { storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { firstBuyerSubject, firstBuyerHtml, firstBuyerText } from "@/lib/email/recovery/firstBuyerEmail";
 import { atRiskSubject, atRiskHtml, atRiskText } from "@/lib/email/recovery/atRiskEmail";
@@ -15,7 +16,7 @@ const BASE = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.com";
 const MAX_PER_RESTAURANT = 50;
 const MAX_TOTAL = 200;
 
-type Automation = "first_buyer" | "at_risk" | "abandonment_survey" | "recovery_incentive";
+type Automation = RecoveryAutomation;
 
 /** Cron diario: segmenta clientes → inscribe en automatizaciones → envía emails → atribuye conversiones. */
 export async function GET(req: NextRequest) {
@@ -150,39 +151,6 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, sent: totalSent, skipped: totalSkipped, converted: totalConverted, errors: errors.length });
-}
-
-/** Decide qué automatización aplicar a un cliente (o null si ninguna).
- *  Respeta la frecuencia natural del cliente: si pide cada 30 días y lleva 45,
- *  no es anormal todavía. Solo contactar si lleva al menos 2x su frecuencia
- *  habitual O si no tiene frecuencia conocida y supera el umbral de config. */
-function pickAutomation(
-  client: ClientRow,
-  rc: RecoveryConfig,
-  email: string,
-  hasEnrollment: Set<string>,
-  hasAbandonment: Set<string>,
-): Automation | null {
-  // Contactar si: lleva > 90 días (tope absoluto) O supera 2.5x su frecuencia.
-  // Mínimo siempre el umbral de config (45 días por defecto).
-  const freq = client.avgFrequencyDays;
-  const minDaysForContact = Math.min(
-    90, // tope: nunca esperar más de 90 días
-    freq ? Math.max(rc.abandonmentSurvey.daysInactive, Math.round(freq * 2.5)) : rc.abandonmentSurvey.daysInactive
-  );
-
-  // Encuesta de abandono
-  if (rc.abandonmentSurvey.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysForContact && client.orders >= 2) {
-    if (!hasEnrollment.has(`${email}::abandonment_survey`)) return "abandonment_survey";
-  }
-  // Incentivo de recuperación
-  const minDaysIncentive = Math.min(120, freq
-    ? Math.max(rc.recoveryIncentive.daysInactive, Math.round(freq * 3))
-    : rc.recoveryIncentive.daysInactive);
-  if (rc.recoveryIncentive.enabled && client.status === "churned" && client.daysSinceLastOrder >= minDaysIncentive && client.orders >= 2) {
-    if (hasAbandonment.has(email) && !hasEnrollment.has(`${email}::recovery_incentive`)) return "recovery_incentive";
-  }
-  return null;
 }
 
 /** Inscribe al cliente y envía el email. Devuelve true si se envió. */

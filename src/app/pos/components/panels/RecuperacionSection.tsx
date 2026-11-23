@@ -19,7 +19,9 @@ interface RecoveryData {
   surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
-  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number }[]
+  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string }[]
+  queueTotal?: number
+  recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null }[]
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -140,7 +142,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
       </div>
 
       {/* ── Resumen (embudo + estado de clientes) ── */}
-      <RecoverySummary k={k} queueCount={data.queue.length} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
+      <RecoverySummary k={k} queueCount={data.queueTotal ?? data.queue.length} couponRecipients={data.couponRecipients ?? []} onSelectClient={onSelectClient} />
 
       {/* ── Motivos de abandono (barras) ── */}
       {Object.keys(data.reasons).length > 0 && (
@@ -235,7 +237,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
             Pendientes de contactar
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-            {data.queue.length} clientes en cola — recibirán el email de recuperación en las próximas ejecuciones del cron diario.{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
+            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes cumplen hoy las reglas de envío y recibirán un email en la próxima ejecución diaria{(data.queueTotal ?? 0) > data.queue.length ? ` (se muestran los ${data.queue.length} de mayor riesgo)` : ''}. Solo se contacta a clientes perdidos que llevan al menos 45 días sin pedir (o 2,5× su frecuencia).{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
           </div>
           <style>{`.rec-queue-row:hover{background:var(--sunk) !important}`}</style>
           <div style={{ overflowX: 'auto' }}>
@@ -247,7 +249,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Total compras</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Sin pedir</th>
                   <th title="Cada cuántos días pedía en promedio" style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Frecuencia</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Estado</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Próximo email</th>
                 </tr>
               </thead>
               <tbody>
@@ -266,13 +268,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                       {c.avgFrequencyDays !== null ? `cada ${c.avgFrequencyDays} ${c.avgFrequencyDays === 1 ? 'día' : 'días'}` : <span style={{ color: 'var(--ink-4)' }}>1 pedido</span>}
                     </td>
                     <td style={{ padding: '8px 8px', textAlign: 'center' }}>
-                      <span style={{
-                        fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5,
-                        background: c.status === 'churned' ? '#fef2f2' : '#fffbeb',
-                        color: c.status === 'churned' ? '#dc2626' : '#d97706',
-                      }}>
-                        {c.status === 'churned' ? 'Perdido' : 'En riesgo'}
-                      </span>
+                      <AutomationBadge automation={c.nextEmail} />
                     </td>
                   </tr>
                 ))}
@@ -281,6 +277,15 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
           </div>
         </div>
       )}
+
+      {data.queue.length === 0 && k.contacted > 0 && (
+        <div style={{ padding: '14px 18px', borderRadius: 12, border: '1px dashed var(--line)', fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)' }}>
+          Nadie cumple hoy las reglas de envío: ningún cliente perdido llegó todavía a su umbral de días sin pedir, o ya fue contactado recientemente.
+        </div>
+      )}
+
+      {/* ── Últimos envíos ── */}
+      {(data.recentSends?.length ?? 0) > 0 && <RecentSends sends={data.recentSends!} onSelectClient={onSelectClient} />}
 
       {/* ── Estado vacío ── */}
       {k.contacted === 0 && (
@@ -341,7 +346,7 @@ function RecoverySummary({ k, queueCount, couponRecipients, onSelectClient }: {
         stats={[
           { label: 'En riesgo', value: fmt(k.atRisk), color: '#d97706', hint: 'bajando frecuencia' },
           { label: 'Perdidos', value: fmt(k.churned), color: '#dc2626', hint: 'inactivos' },
-          { label: 'Por contactar', value: queueCount >= 15 ? '15+' : fmt(queueCount), hint: 'en cola' },
+          { label: 'Por contactar', value: fmt(queueCount), hint: 'próximo envío' },
         ]} />
 
       <StatGroup title="Encuestas" color="#3b82f6"
@@ -394,6 +399,81 @@ function RecoverySummary({ k, queueCount, couponRecipients, onSelectClient }: {
           { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recoveryRate}% de contactados` : undefined },
           { label: 'Ingresos recuperados', value: clp(k.recoveredRevenue), color: k.recoveredRevenue > 0 ? '#16a34a' : undefined },
         ]} />
+    </div>
+  )
+}
+
+function AutomationBadge({ automation }: { automation?: string }) {
+  const isCoupon = automation === 'recovery_incentive'
+  return (
+    <span style={{ fontFamily: F, fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, whiteSpace: 'nowrap',
+      background: isCoupon ? '#fffbeb' : '#eff6ff', color: isCoupon ? '#d97706' : '#2563eb' }}>
+      {isCoupon ? 'Cupón' : 'Encuesta'}
+    </span>
+  )
+}
+
+const CLIENT_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
+  churned: { label: 'Perdido', bg: '#fef2f2', fg: '#dc2626' },
+  at_risk: { label: 'En riesgo', bg: '#fffbeb', fg: '#d97706' },
+  active: { label: 'Activo', bg: '#f0fdf4', fg: '#16a34a' },
+  new: { label: 'Nuevo', bg: 'var(--sunk)', fg: 'var(--ink-3)' },
+}
+
+function RecentSends({ sends, onSelectClient }: { sends: NonNullable<RecoveryData['recentSends']>; onSelectClient?: (client: { email: string; name: string; phone: string }) => void }) {
+  const [range, setRange] = useState<'today' | 'week'>('today')
+  const [shown, setShown] = useState(10)
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const todayCount = sends.filter(s => new Date(s.sentAt) >= startOfToday).length
+  const list = range === 'today' ? sends.filter(s => new Date(s.sentAt) >= startOfToday) : sends
+  return (
+    <div style={{ padding: '16px 18px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+        <span style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 800, color: 'var(--ink)' }}>Últimos envíos</span>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button onClick={() => { setRange('today'); setShown(10) }} style={{ ...pillBtn, ...(range === 'today' ? pillActive : {}) }}>Hoy ({todayCount})</button>
+          <button onClick={() => { setRange('week'); setShown(10) }} style={{ ...pillBtn, ...(range === 'week' ? pillActive : {}) }}>7 días ({sends.length})</button>
+        </div>
+      </div>
+      <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
+        A quién se le envió cada email y cómo está ese cliente hoy. "Sin pedir" muestra los días al momento actual y el mínimo que exigía la regla.
+      </div>
+      {list.length === 0 ? (
+        <p style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-3)', textAlign: 'center', padding: '12px 0', margin: 0 }}>Sin envíos {range === 'today' ? 'hoy' : 'en los últimos 7 días'}.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {list.slice(0, shown).map((r, i) => {
+            const st = r.clientStatus ? CLIENT_STATUS[r.clientStatus] : null
+            const d = new Date(r.sentAt)
+            const when = d >= startOfToday ? d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+            return (
+              <div key={r.email + r.sentAt} onClick={() => onSelectClient?.({ email: r.email, name: r.name || '', phone: r.phone || '' })}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
+                <div style={{ flex: '1 1 160px', minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.email}</div>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <AutomationBadge automation={r.automation} />
+                  {st
+                    ? <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: st.bg, color: st.fg }}>{st.label}</span>
+                    : <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'var(--sunk)', color: 'var(--ink-3)' }}>Sin datos</span>}
+                  {r.daysSinceLastOrder !== null && (
+                    <span style={{ fontSize: '0.68rem', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+                      <b>{r.daysSinceLastOrder}</b> días sin pedir{r.minDays !== null ? <span style={{ color: 'var(--ink-4)' }}> · mín. {r.minDays}</span> : null}
+                      {r.avgFrequencyDays !== null ? <span style={{ color: 'var(--ink-3)' }}> · pedía cada {r.avgFrequencyDays}d</span> : null}
+                    </span>
+                  )}
+                  <span style={{ fontFamily: M, fontSize: '0.66rem', color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{when}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {list.length > shown && (
+        <button onClick={() => setShown(n => n + 20)} style={{ ...pillBtn, display: 'block', margin: '10px auto 0' }}>Ver más ({list.length - shown})</button>
+      )}
     </div>
   )
 }

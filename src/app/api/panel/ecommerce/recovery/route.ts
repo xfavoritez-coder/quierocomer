@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { getClientSegmentation, type ClientRow } from "@/lib/ecommerce/client-segmentation";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
+import { pickAutomation, surveyMinDays, incentiveMinDays } from "@/lib/ecommerce/recovery-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
   if (!(await assertOwnership(req, restaurantId))) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   // Resolver sucursales hermanas
-  const thisR = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true } });
+  const thisR = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { ownerId: true, ecommerceStoreConfig: true } });
   let allIds = [restaurantId];
   if (thisR?.ownerId) {
     const siblings = await prisma.restaurant.findMany({ where: { ownerId: thisR.ownerId }, select: { id: true } });
@@ -44,7 +46,7 @@ export async function GET(req: NextRequest) {
   // Enrollments (de toda la marca)
   const enrollments = await prisma.recoveryEnrollment.findMany({
     where: { restaurantId: { in: allIds } },
-    select: { automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true, customerPhone: true },
+    select: { restaurantId: true, automation: true, status: true, sentAt: true, openedAt: true, clickedAt: true, convertedAt: true, convertedOrderId: true, couponCode: true, surveyReason: true, surveyDetail: true, surveyComment: true, surveyAnsweredAt: true, createdAt: true, customerName: true, customerEmail: true, customerPhone: true },
     orderBy: { createdAt: "desc" },
     take: 2000,
   });
@@ -117,6 +119,72 @@ export async function GET(req: NextRequest) {
     createdAt: e.createdAt.toISOString(),
   }));
 
+  const clientByEmail = new Map<string, ClientRow>();
+  for (const c of clients) if (c.email) clientByEmail.set(c.email.toLowerCase(), c);
+
+  // ── Cola: replica las reglas del cron para ESTE restaurante ──
+  const rc = parseStoreConfig(thisR?.ecommerceStoreConfig).recovery;
+  const since180 = Date.now() - 180 * 86400000;
+  const thirtyDaysAgo = Date.now() - 30 * 86400000;
+  const mine = enrollments.filter(e => e.restaurantId === restaurantId && e.createdAt.getTime() >= since180);
+  const hasEnrollment = new Set<string>();
+  const hasAbandonment = new Set<string>();
+  const lastSent = new Map<string, number>();
+  const sentLast30 = new Map<string, number>();
+  for (const e of mine) {
+    const em = e.customerEmail.toLowerCase();
+    hasEnrollment.add(`${em}::${e.automation}`);
+    if (e.automation === "abandonment_survey") hasAbandonment.add(em);
+    if (e.sentAt) {
+      const t = e.sentAt.getTime();
+      if (t > (lastSent.get(em) ?? 0)) lastSent.set(em, t);
+      if (t > thirtyDaysAgo) sentLast30.set(em, (sentLast30.get(em) ?? 0) + 1);
+    }
+  }
+  const candidateEmails = [...atRiskWithEmail, ...churnedWithEmail].map(c => c.email!.toLowerCase());
+  const unsubscribed = new Set<string>();
+  if (candidateEmails.length) {
+    const unsubs = await prisma.qRUser.findMany({ where: { email: { in: candidateEmails, mode: "insensitive" }, unsubscribedAt: { not: null } }, select: { email: true } });
+    for (const u of unsubs) if (u.email) unsubscribed.add(u.email.toLowerCase());
+  }
+  const fullQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
+    const em = c.email!.toLowerCase();
+    if (unsubscribed.has(em)) return [];
+    const ls = lastSent.get(em);
+    if (ls && Date.now() - ls < rc.cooldownDays * 86400000) return [];
+    if ((sentLast30.get(em) ?? 0) >= rc.maxEmailsPerMonth) return [];
+    const automation = pickAutomation(c, rc, em, hasEnrollment, hasAbandonment);
+    return automation ? [{ c, automation }] : [];
+  }) : [];
+  const queueTotal = fullQueue.length;
+  const queue = fullQueue
+    .sort((a, b) => b.c.riskScore - a.c.riskScore)
+    .slice(0, 50)
+    .map(({ c, automation }) => ({
+      email: c.email, name: c.name, orders: c.orders, totalSpent: c.totalSpent,
+      daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
+      status: c.status, riskScore: c.riskScore, nextEmail: automation,
+    }));
+
+  // ── Últimos envíos (7 días) con el estado actual del cliente ──
+  const sevenDaysAgo = Date.now() - 7 * 86400000;
+  const recentSends = enrollments
+    .filter(e => e.sentAt && e.sentAt.getTime() >= sevenDaysAgo)
+    .sort((a, b) => b.sentAt!.getTime() - a.sentAt!.getTime())
+    .slice(0, 200)
+    .map(e => {
+      const c = clientByEmail.get(e.customerEmail.toLowerCase());
+      return {
+        automation: e.automation, sentAt: e.sentAt!.toISOString(), status: e.status,
+        name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null,
+        clientStatus: c?.status ?? null,
+        orders: c?.orders ?? null,
+        daysSinceLastOrder: c?.daysSinceLastOrder ?? null,
+        avgFrequencyDays: c?.avgFrequencyDays ?? null,
+        minDays: c ? (e.automation === "recovery_incentive" ? incentiveMinDays(c, rc) : surveyMinDays(c, rc)) : null,
+      };
+    });
+
   return NextResponse.json({
     kpis: {
       totalClients: clients.length,
@@ -145,19 +213,11 @@ export async function GET(req: NextRequest) {
       .map(e => ({ name: e.customerName, email: e.customerEmail, phone: e.customerPhone || null, code: e.couponCode || null, sentAt: e.sentAt!.toISOString(), opened: !!(e.openedAt || e.clickedAt), used: e.status === "converted" })),
     byAutomation,
     recent,
-    // Cola de próximos envíos: clientes que recibirán email pronto
-    // (en riesgo o inactivos con email, que NO han sido contactados aún)
-    queue: (() => {
-      const contactedEmails = new Set(enrollments.filter(e => e.sentAt).map(e => e.customerEmail.toLowerCase()));
-      return [...atRisk, ...churned]
-        .filter(c => c.email && !contactedEmails.has(c.email.toLowerCase()))
-        .sort((a, b) => b.riskScore - a.riskScore)
-        .slice(0, 15)
-        .map(c => ({
-          email: c.email, name: c.name, orders: c.orders, totalSpent: c.totalSpent,
-          daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
-          status: c.status, riskScore: c.riskScore,
-        }));
-    })(),
+    // Cola de próximos envíos: misma regla que el cron diario (customer-recovery),
+    // así lo que se ve aquí es exactamente a quién le llegará el próximo email.
+    queue,
+    queueTotal,
+    // Envíos de los últimos 7 días con el estado ACTUAL del cliente
+    recentSends,
   });
 }
