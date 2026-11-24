@@ -273,7 +273,7 @@ export default function PastOrderDetail({
 
   // Reembolso Transbank/Webpay: solo para pedidos web pagados con Webpay. La
   // elegibilidad la resuelve el servidor desde el OnlineOrder (externalId "oo-…").
-  const [refundInfo, setRefundInfo] = useState<{ eligible: boolean; refunded: boolean; total: number } | null>(null)
+  const [refundInfo, setRefundInfo] = useState<{ eligible: boolean; refunded: boolean; total: number; allowsPartial: boolean } | null>(null)
   const [refundAmount, setRefundAmount] = useState('')
   const [refundBusy, setRefundBusy] = useState(false)
   const [refundMsg, setRefundMsg] = useState<string | null>(null)
@@ -282,7 +282,7 @@ export default function PastOrderDetail({
     let alive = true
     fetch(`/api/pos/webpay-refund?restaurantId=${restaurantId}&posOrderId=${order.id}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (alive && d && (d.eligible || d.refunded)) setRefundInfo({ eligible: !!d.eligible, refunded: !!d.refunded, total: d.total || 0 }) })
+      .then(d => { if (alive && d && (d.eligible || d.refunded)) setRefundInfo({ eligible: !!d.eligible, refunded: !!d.refunded, total: d.total || 0, allowsPartial: d.allowsPartial !== false }) })
       .catch(() => {})
     return () => { alive = false }
   }, [order.id, restaurantId, paid])
@@ -785,10 +785,14 @@ export default function PastOrderDetail({
                   <button onClick={() => doRefund()} disabled={refundBusy} style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: 'none', background: '#8b5cf6', color: 'white', cursor: refundBusy ? 'default' : 'pointer', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 800, opacity: refundBusy ? 0.6 : 1 }}>
                     {refundBusy ? 'Reembolsando…' : `Reembolso total (${clp(refundInfo.total)})`}
                   </button>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input value={refundAmount} onChange={e => setRefundAmount(e.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="Monto parcial" style={{ ...ncInp, flex: 1 }} />
-                    <button onClick={() => doRefund(Math.round(Number(refundAmount) || 0))} disabled={refundBusy || !refundAmount} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: (refundBusy || !refundAmount) ? 'default' : 'pointer', fontWeight: 700, fontSize: 13, opacity: (refundBusy || !refundAmount) ? 0.5 : 1 }}>Parcial</button>
-                  </div>
+                  {refundInfo.allowsPartial ? (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input value={refundAmount} onChange={e => setRefundAmount(e.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="Monto parcial" style={{ ...ncInp, flex: 1 }} />
+                      <button onClick={() => doRefund(Math.round(Number(refundAmount) || 0))} disabled={refundBusy || !refundAmount} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: (refundBusy || !refundAmount) ? 'default' : 'pointer', fontWeight: 700, fontSize: 13, opacity: (refundBusy || !refundAmount) ? 0.5 : 1 }}>Parcial</button>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.4 }}>Pago con débito/prepago: Transbank solo permite devolución total.</span>
+                  )}
                 </>
               )}
               {refundMsg && (

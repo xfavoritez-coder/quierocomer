@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { webpayRefund, webpaySettingsFor } from "@/lib/payments/webpay";
+import { webpayRefund, webpaySettingsFor, webpayAllowsPartialRefund } from "@/lib/payments/webpay";
 
 export const runtime = "nodejs";
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const order = await prisma.onlineOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, restaurantId: true, total: true, webpayToken: true, paymentGateway: true, statusHistory: true, restaurant: { select: { ecommerceConfig: true } } },
+    select: { id: true, restaurantId: true, total: true, webpayToken: true, webpayPaymentType: true, paymentGateway: true, statusHistory: true, restaurant: { select: { ecommerceConfig: true } } },
   });
   if (!order || order.restaurantId !== restaurantId) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
   if (order.paymentGateway !== "webpay" || !order.webpayToken) return NextResponse.json({ error: "El pedido no tiene una transacción Webpay" }, { status: 400 });
@@ -38,6 +38,10 @@ export async function POST(req: NextRequest) {
   const amount = Math.round(Number(body?.amount) || order.total);
   if (!Number.isFinite(amount) || amount <= 0 || amount > order.total) {
     return NextResponse.json({ error: "Monto de reembolso inválido" }, { status: 400 });
+  }
+  // Candado: Transbank solo permite reembolso TOTAL en débito/prepago.
+  if (amount < order.total && !webpayAllowsPartialRefund(order.webpayPaymentType)) {
+    return NextResponse.json({ error: "Este pago fue con débito/prepago: Transbank solo permite devolución total." }, { status: 400 });
   }
 
   const res = await webpayRefund(order.webpayToken, amount, webpaySettingsFor({ ecommerceConfig: order.restaurant.ecommerceConfig }));

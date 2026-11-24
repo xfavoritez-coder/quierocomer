@@ -121,6 +121,13 @@ export async function webpayConfirm(token: string, settings: WebpaySettings = {}
   }
 }
 
+/** Débito (VD) y prepago (VP) solo admiten reembolso TOTAL en Transbank; el parcial
+ *  es exclusivo de crédito. Si no se conoce el tipo (pedidos viejos, null) se permite
+ *  para no bloquear el flujo existente. */
+export function webpayAllowsPartialRefund(paymentTypeCode?: string | null): boolean {
+  return paymentTypeCode !== "VD" && paymentTypeCode !== "VP";
+}
+
 export interface WebpayRefundResult { ok: boolean; type?: string; error?: string; raw?: unknown }
 
 /**

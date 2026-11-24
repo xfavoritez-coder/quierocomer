@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isSuperAdmin } from "@/lib/adminAuth";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
-import { webpayRefund, webpaySettingsFor } from "@/lib/payments/webpay";
+import { webpayRefund, webpaySettingsFor, webpayAllowsPartialRefund } from "@/lib/payments/webpay";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ async function resolveWebpayOnlineOrder(posOrderId: string, restaurantId: string
   if (!ooId) return { notWeb: true as const };
   const oo = await prisma.onlineOrder.findUnique({
     where: { id: ooId },
-    select: { id: true, restaurantId: true, total: true, webpayToken: true, paymentGateway: true, paymentStatus: true, statusHistory: true, restaurant: { select: { ecommerceConfig: true } } },
+    select: { id: true, restaurantId: true, total: true, webpayToken: true, webpayPaymentType: true, paymentGateway: true, paymentStatus: true, statusHistory: true, restaurant: { select: { ecommerceConfig: true } } },
   });
   if (!oo || oo.restaurantId !== restaurantId) return { notWeb: true as const };
   return { oo };
@@ -62,6 +62,8 @@ export async function GET(req: NextRequest) {
     eligible,
     refunded,
     total: isWebpay ? oo.total : 0,
+    // VD/VP = débito/prepago → solo reembolso total; el panel oculta el parcial.
+    allowsPartial: webpayAllowsPartialRefund(oo.webpayPaymentType),
     reason: !isWebpay ? "no-webpay" : refunded ? "refunded" : eligible ? null : "not-paid",
   });
 }
@@ -84,6 +86,10 @@ export async function POST(req: NextRequest) {
   const amount = Math.round(Number(body?.amount) || oo.total);
   if (!Number.isFinite(amount) || amount <= 0 || amount > oo.total) {
     return NextResponse.json({ error: "Monto de reembolso inválido" }, { status: 400 });
+  }
+  // Candado: Transbank solo permite reembolso TOTAL en débito/prepago.
+  if (amount < oo.total && !webpayAllowsPartialRefund(oo.webpayPaymentType)) {
+    return NextResponse.json({ error: "Este pago fue con débito/prepago: Transbank solo permite devolución total." }, { status: 400 });
   }
 
   const res = await webpayRefund(oo.webpayToken, amount, webpaySettingsFor({ ecommerceConfig: oo.restaurant.ecommerceConfig }));
