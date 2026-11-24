@@ -46,14 +46,20 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     ? `<img src="${esc(args.logoUrl)}" alt="${esc(args.storeName)}" height="52" style="max-height:52px;max-width:180px;object-fit:contain;display:block;margin:0 auto;" />`
     : `<span style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${esc(args.storeName)}</span>`;
 
-  const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo todo?` : `¿Cómo estuvo todo?`;
-  const cuerpo = `Nos encantaría saber qué tal estuvo tu experiencia en <strong>${esc(args.storeName)}</strong>.`;
+  const saludo = firstName ? `${esc(firstName)}, ¿cómo estuvo tu pedido?` : `¿Cómo estuvo tu pedido?`;
+  const cuerpo = `Tu opinión ayuda a otros a saber qué esperar de <strong>${esc(args.storeName)}</strong>.`;
 
-  // Estrellas clickeables — cada una lleva a la página con ?stars=N que guarda la valoración al abrir
+  const starLabels = ['Muy mal', 'Mal', 'Regular', 'Bien', 'Excelente'];
+  const starEmojis = ['😞', '😕', '😐', '🙂', '🤩'];
   const stars = [1, 2, 3, 4, 5].map(n => {
     const href = `${args.link}${args.link.includes('?') ? '&' : '?'}stars=${n}`;
-    return `<a href="${esc(href)}" style="text-decoration:none;font-size:32px;padding:4px 6px;" title="${n} estrella${n > 1 ? 's' : ''}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</a>`;
-  }).join('</td></tr><tr><td align="center" style="padding:2px 0;">');
+    return `<tr><td align="center" style="padding:4px 0;">
+      <a href="${esc(href)}" style="display:inline-block;width:100%;max-width:300px;padding:12px 16px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fafafa;text-decoration:none;color:#333;font-size:14px;text-align:center;">
+        <span style="font-size:22px;letter-spacing:2px;">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>
+        <span style="display:block;font-size:12px;color:#888;margin-top:3px;font-weight:600;">${starEmojis[n - 1]} ${starLabels[n - 1]}</span>
+      </a>
+    </td></tr>`;
+  }).join('');
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -65,13 +71,16 @@ export async function sendSurveyEmail(args: SendSurveyArgs): Promise<boolean> {
     ${headerLogo}
   </td></tr>
   <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:32px 28px;text-align:center;">
-    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 8px;">${saludo}</h1>
-    <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 20px;">${cuerpo}</p>
-    <p style="font-size:13px;color:#999;margin:0 0 12px;">Toca una estrella para calificar:</p>
+    <p style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin:0 0 10px;">Califica tu experiencia</p>
+    <h1 style="font-size:20px;font-weight:800;color:#111;margin:0 0 6px;">${saludo}</h1>
+    <p style="font-size:14px;color:#555;line-height:1.6;margin:0 0 22px;">${cuerpo}</p>
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
-      <tr><td align="center" style="padding:2px 0;">${stars}</td></tr>
+      ${stars}
     </table>
-    <p style="font-size:11px;color:#ccc;margin:18px 0 0;">Al tocar una estrella se guarda tu valoración y puedes dejar un comentario.</p>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:18px;"><tr><td align="center">
+      <a href="${esc(args.link)}" style="display:inline-block;background:${accent};color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;">Escribir un comentario →</a>
+    </td></tr></table>
+    <p style="font-size:11px;color:#ccc;margin:14px 0 0;">Al tocar una estrella se guarda tu valoración automáticamente.</p>
   </td></tr>
   <tr><td align="center" style="padding:16px 0 0;">
     <span style="font-size:11px;color:#aaa;">Powered by QuieroComer.cl</span>
