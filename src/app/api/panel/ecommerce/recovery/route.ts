@@ -170,7 +170,6 @@ export async function GET(req: NextRequest) {
   type PendingItem = { c: ClientRow; nextEmail: string; daysLeft: number; minDays: number };
   const COUPON_DAYS = 3;
   const futureQueue: PendingItem[] = rc.enabled ? churnedWithEmail.flatMap((c): PendingItem[] => {
-    if (c.lastRestaurantId && c.lastRestaurantId !== restaurantId && recoveryOnIds.has(c.lastRestaurantId)) return [];
     const em = c.email!.toLowerCase();
     if (unsubscribed.has(em)) return [];
     if (idx.hasEnrollment.has(`${em}::abandonment_survey`) && idx.hasEnrollment.has(`${em}::recovery_incentive`)) return [];
