@@ -9,6 +9,26 @@ export function branchDisplayName(r: { name: string; ecommerceStoreConfig: unkno
 
 export const isRecoveryCouponCode = (code: string) => code.toUpperCase().trim().startsWith("VUELVE-");
 
+/** % que se prometió en el email del cupón (nunca el configurado hoy):
+ *  1. guardado en el enrollment al enviar (contextJson.couponPercent);
+ *  2. cupones enviados antes de guardarlo: se lee del asunto del email enviado
+ *     ("…tenemos un 25% para ti…" / "REGALO: -25% OFF");
+ *  3. último recurso (sin registro del email): la configuración actual. */
+async function promisedPercent(e: { restaurantId: string; contextJson: unknown; emailLogId: string | null }): Promise<number> {
+  const ctx = e.contextJson && typeof e.contextJson === "object" ? (e.contextJson as Record<string, unknown>) : {};
+  const saved = Number(ctx.couponPercent);
+  if (Number.isFinite(saved) && saved > 0 && saved <= 100) return saved;
+
+  if (e.emailLogId) {
+    const log = await prisma.emailLog.findUnique({ where: { id: e.emailLogId }, select: { subject: true } });
+    const m = log?.subject?.match(/(\d{1,2})\s*%/);
+    if (m) return Number(m[1]);
+  }
+
+  const home = await prisma.restaurant.findUnique({ where: { id: e.restaurantId }, select: { ecommerceStoreConfig: true } });
+  return parseStoreConfig(home?.ecommerceStoreConfig).recovery.recoveryIncentive.couponPercent || 15;
+}
+
 type Result =
   | { ok: true; coupon: Pick<Coupon, "id" | "code" | "type" | "label" | "freeProductId" | "discountType" | "discountValue" | "maxDiscountAmount" | "discountIncludesDelivery"> }
   | { ok: false; error: string };
@@ -20,7 +40,7 @@ export async function validateRecoveryCoupon(rawCode: string, restaurantId: stri
   const code = rawCode.toUpperCase().trim();
   const enrollment = await prisma.recoveryEnrollment.findFirst({
     where: { couponCode: code, automation: "recovery_incentive" },
-    select: { id: true, restaurantId: true, status: true },
+    select: { id: true, restaurantId: true, status: true, contextJson: true, emailLogId: true },
   });
   if (!enrollment) return { ok: false, error: "Cupón no encontrado" };
 
@@ -34,8 +54,7 @@ export async function validateRecoveryCoupon(rawCode: string, restaurantId: stri
   const used = await prisma.ecommerceCouponUse.count({ where: { couponCode: code } });
   if (used > 0 || enrollment.status === "converted") return { ok: false, error: "Este cupón ya fue utilizado" };
 
-  const home = await prisma.restaurant.findUnique({ where: { id: enrollment.restaurantId }, select: { ecommerceStoreConfig: true } });
-  const pct = parseStoreConfig(home?.ecommerceStoreConfig).recovery.recoveryIncentive.couponPercent || 15;
+  const pct = await promisedPercent(enrollment);
 
   return {
     ok: true,

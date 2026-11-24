@@ -195,6 +195,9 @@ async function enrollAndSend(args: {
         orders: client.orders,
         riskScore: client.riskScore,
         topProduct: client.topProduct,
+        // % prometido en el email: el cupón se cobra SIEMPRE con este valor,
+        // aunque después se cambie la configuración del local.
+        ...(automation === "recovery_incentive" ? { couponPercent: rc.recoveryIncentive.couponPercent } : {}),
       },
     },
   });
