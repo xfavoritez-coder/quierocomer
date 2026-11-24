@@ -600,15 +600,13 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           const courierName = tracking?.courier?.name;
           const prov = (tracking?.courier?.provider || "").toLowerCase();
           const provLabel = prov === "pedidosya" ? "PedidosYa" : prov === "uber" ? "Uber" : (tracking?.courier?.provider || "");
-          const vehicle = tracking?.courier?.vehicle || "";
           const title = courierName
-            ? (hasCourierLoc ? `${courierName} va en camino` : `${courierName} va en camino`)
+            ? `${courierName} va en camino`
             : (hasCourierLoc ? "Tu repartidor va en camino" : "Tu pedido va en camino");
-          // Subtítulo: "PedidosYa · Bicicleta", o el estado si no hay datos del repartidor.
-          const subParts = [provLabel, vehicle].filter(Boolean);
-          const sub = subParts.length
-            ? subParts.join(" · ")
-            : (tracking?.courier?.label || (hasCourierLoc ? "Ubicación en tiempo real" : "En camino a tu dirección"));
+          // Subtítulo: el proveedor (PedidosYa/Uber), o el estado si no hay datos del repartidor.
+          const sub = provLabel
+            || tracking?.courier?.label
+            || (hasCourierLoc ? "Ubicación en tiempo real" : "En camino a tu dirección");
           return (
             <div style={{ ...cardStyle, padding: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 10px" }}>
