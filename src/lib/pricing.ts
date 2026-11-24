@@ -18,6 +18,13 @@ export interface PricePlan {
   includedAddons?: string[]; // IDs de add-ons incluidos en este plan (su precio se suma al total).
   addonPrices?: Record<string, number>; // Monto a usar por add-on incluido en ESTE plan (override; si no, el precio del add-on).
   offerPrice?: number;   // Precio oferta (promo). Si se setea, se muestra como precio final y el sumado va tachado.
+  categoryId?: string;   // Sección donde se muestra ("__plans", "__addons", o id de una categoría custom). Vacío = sección por defecto de su pool.
+}
+
+export interface PricingCategory {
+  id: string;
+  title: string;
+  subtitle?: string;
 }
 
 export interface PriceLine {
@@ -46,7 +53,8 @@ export interface PricingConfig {
   addons: PricePlan[];         // Paquetes / add-ons
   implementation: PriceLine[]; // Implementación (pago único)
   extras: PriceLine[];         // Otros cobros variables
-  headings?: PricingHeadings;  // Títulos/subtítulos editables de las secciones
+  headings?: PricingHeadings;  // Títulos/subtítulos de las secciones por defecto
+  categories?: PricingCategory[]; // Secciones/categorías custom (además de las 2 por defecto)
 }
 
 const KEY = "pricing_config";
@@ -106,6 +114,7 @@ function cleanPlans(a: unknown): PricePlan[] {
       }
     }
     const offerPrice = Math.max(0, Math.round(Number(o.offerPrice) || 0));
+    const categoryId = String(o.categoryId || "").trim();
     return {
       id: String(o.id || `p${i}`),
       name: String(o.name || "").trim(),
@@ -117,6 +126,7 @@ function cleanPlans(a: unknown): PricePlan[] {
       ...(includedAddons.length ? { includedAddons } : {}),
       ...(Object.keys(addonPrices).length ? { addonPrices } : {}),
       ...(offerPrice > 0 ? { offerPrice } : {}),
+      ...(categoryId ? { categoryId } : {}),
     };
   });
 }
@@ -147,15 +157,28 @@ function cleanHeadings(h: unknown): PricingHeadings | undefined {
   return Object.keys(out).length ? out : undefined;
 }
 
+function cleanCategories(a: unknown): PricingCategory[] {
+  if (!Array.isArray(a)) return [];
+  return a
+    .map((x, i) => {
+      const o = (x || {}) as Record<string, unknown>;
+      const subtitle = String(o.subtitle || "").trim();
+      return { id: String(o.id || `cat${i}`), title: String(o.title || "").trim(), ...(subtitle ? { subtitle } : {}) };
+    })
+    .filter((c) => c.id);
+}
+
 function normalize(p: unknown): PricingConfig {
   const o = (p || {}) as Record<string, unknown>;
   const headings = cleanHeadings(o.headings);
+  const categories = cleanCategories(o.categories);
   return {
     plans: cleanPlans(o.plans),
     addons: cleanPlans(o.addons),
     implementation: cleanLines(o.implementation),
     extras: cleanLines(o.extras),
     ...(headings ? { headings } : {}),
+    ...(categories.length ? { categories } : {}),
   };
 }
 

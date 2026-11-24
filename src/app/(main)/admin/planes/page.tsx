@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
-import type { PricingConfig, PricePlan, PriceLine, PricingHeadings } from "@/lib/pricing";
+import type { PricingConfig, PricePlan, PriceLine, PricingHeadings, PricingCategory } from "@/lib/pricing";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -75,6 +75,9 @@ export default function PlanesPage() {
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
   const setHeading = (field: keyof PricingHeadings, v: string) => mutate((c) => { c.headings = { ...(c.headings || {}), [field]: v }; });
+  const addCategory = () => mutate((c) => { c.categories = [...(c.categories || []), { id: uid(), title: "Nueva categoría", subtitle: "" }]; });
+  const setCategoryField = (ci: number, field: keyof PricingCategory, v: string) => mutate((c) => { if (!c.categories) return; c.categories[ci] = { ...c.categories[ci], [field]: v }; });
+  const removeCategory = (ci: number) => mutate((c) => { if (c.categories) c.categories.splice(ci, 1); }); // los ítems de esa categoría caen a su sección por defecto
   const toggleIncludedAddon = (k: PlanKey, pi: number, addonId: string) => mutate((c) => { const p = c[k][pi]; const arr = p.includedAddons ? [...p.includedAddons] : []; const idx = arr.indexOf(addonId); if (idx >= 0) { arr.splice(idx, 1); if (p.addonPrices) { const m = { ...p.addonPrices }; delete m[addonId]; p.addonPrices = m; } } else arr.push(addonId); p.includedAddons = arr; });
   const setAddonPrice = (k: PlanKey, pi: number, addonId: string, price: number) => mutate((c) => { const p = c[k][pi]; const m = { ...(p.addonPrices || {}) }; if (price > 0) m[addonId] = price; else delete m[addonId]; p.addonPrices = m; });
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
@@ -92,6 +95,16 @@ export default function PlanesPage() {
 
   const implFor = (name: string) => cfg.implementation.find((l) => l.label.trim().toLowerCase() === name.trim().toLowerCase())?.price ?? null;
   const hv = (f: keyof PricingHeadings) => cfg.headings?.[f] || DEFAULT_HEADINGS[f]; // valor efectivo del encabezado (custom o default)
+  // Secciones: 2 por defecto (desde headings) + categorías custom. Cada ítem se muestra en la sección de su categoryId, o en la de su pool.
+  const customCats = cfg.categories || [];
+  const sections: { id: string; title: string; subtitle: string; accent: boolean }[] = [
+    { id: "__plans", title: hv("plansTitle"), subtitle: hv("plansSub"), accent: true },
+    { id: "__addons", title: hv("addonsTitle"), subtitle: hv("addonsSub"), accent: false },
+    ...customCats.map((c) => ({ id: c.id, title: c.title || "Categoría", subtitle: c.subtitle || "", accent: false })),
+  ];
+  const validSectionIds = new Set(sections.map((s) => s.id));
+  const itemSectionId = (p: PricePlan, pool: PlanKey) => (p.categoryId && validSectionIds.has(p.categoryId)) ? p.categoryId : (pool === "plans" ? "__plans" : "__addons");
+  const allItems: { p: PricePlan; pool: PlanKey }[] = [...cfg.plans.map((p) => ({ p, pool: "plans" as PlanKey })), ...cfg.addons.map((p) => ({ p, pool: "addons" as PlanKey }))];
   const anyRecommended = [...cfg.plans, ...cfg.addons].some((p) => p.recommended);
   // Resalta el plan marcado como recomendado. Fallback: si nadie está marcado, resalta el premium (comportamiento anterior).
   const isHighlight = (p: PricePlan, accent: boolean) => p.recommended === true || (!anyRecommended && accent && (p.id === "premium" || /(^|\s)premium$/i.test(p.name.trim())));
@@ -138,23 +151,21 @@ export default function PlanesPage() {
 
   const renderView = () => (
     <>
-      <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>{hv("plansTitle")}</h2>
-        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>{hv("plansSub")}</p>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginBottom: 34 }}>
-        {cfg.plans.map((p) => planCard(p, true))}
-      </div>
-
-      {cfg.addons.length > 0 && <>
-        <div style={{ marginBottom: 14 }}>
-          <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>{hv("addonsTitle")}</h2>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>{hv("addonsSub")}</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 34 }}>
-          {cfg.addons.map((p) => planCard(p, false))}
-        </div>
-      </>}
+      {sections.map((s) => {
+        const its = allItems.filter(({ p, pool }) => itemSectionId(p, pool) === s.id);
+        if (its.length === 0) return null;
+        return (
+          <div key={s.id}>
+            <div style={{ marginBottom: 14 }}>
+              <h2 style={{ fontFamily: F, fontSize: "1.25rem", fontWeight: 900, color: "#fff", margin: "0 0 2px" }}>{s.title}</h2>
+              {s.subtitle && <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>{s.subtitle}</p>}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 34 }}>
+              {its.map(({ p }) => planCard(p, s.accent))}
+            </div>
+          </div>
+        );
+      })}
 
       {cfg.extras.length > 0 && <>
         <div style={{ marginBottom: 14 }}>
@@ -192,6 +203,9 @@ export default function PlanesPage() {
               <input style={{ ...inp, fontWeight: 800, color: "#fff" }} value={p.name} onChange={(e) => setPlan(k, pi, "name", e.target.value)} placeholder="Nombre del plan" />
               <button style={xBtn} title="Eliminar plan" onClick={() => removePlan(k, pi)}>✕</button>
             </div>
+            <select value={p.categoryId || (k === "plans" ? "__plans" : "__addons")} onChange={(e) => setPlan(k, pi, "categoryId", e.target.value)} style={{ ...inp, padding: "6px 8px", fontSize: "0.78rem", marginBottom: 8, cursor: "pointer" }} title="Categoría / sección donde se muestra">
+              {sections.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+            </select>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
               <span style={{ color: GOLD, fontFamily: F, fontWeight: 900 }}>$</span>
               <input style={{ ...inp, fontFamily: F, fontWeight: 900, fontSize: "1.1rem", color: GOLD }} type="number" min={0} step={100} value={p.price} onChange={(e) => setPlan(k, pi, "price", Math.max(0, Math.round(Number(e.target.value) || 0)))} />
@@ -294,8 +308,27 @@ export default function PlanesPage() {
     </div>
   );
 
+  const renderCategories = () => (
+    <div style={card}>
+      <h3 style={sectionTitle}>Categorías</h3>
+      <p style={sectionSub}>Crea secciones y, con el selector arriba de cada tarjeta, asigna a qué sección va cada plan/add-on. “{DEFAULT_HEADINGS.plansTitle}” y “{DEFAULT_HEADINGS.addonsTitle}” son las secciones por defecto.</p>
+      {customCats.length === 0 && <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#777", margin: "0 0 10px" }}>Aún no hay categorías custom.</p>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {customCats.map((c, ci) => (
+          <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input style={{ ...inp, fontWeight: 800, color: "#fff" }} value={c.title} onChange={(e) => setCategoryField(ci, "title", e.target.value)} placeholder="Título de la categoría" />
+            <input style={inp} value={c.subtitle || ""} onChange={(e) => setCategoryField(ci, "subtitle", e.target.value)} placeholder="Subtítulo (opcional)" />
+            <button style={xBtn} title="Eliminar categoría" onClick={() => removeCategory(ci)}>✕</button>
+          </div>
+        ))}
+      </div>
+      <button style={{ ...smallBtn, marginTop: 12 }} onClick={addCategory}>+ agregar categoría</button>
+    </div>
+  );
+
   const renderEdit = () => (
     <>
+      {renderCategories()}
       {renderPlans("plans")}
       {renderPlans("addons")}
       {renderLines("implementation", "Implementación", "Pago único de puesta en marcha por plan o paquete.", "ítem de implementación")}
