@@ -121,6 +121,7 @@ export default function EcommercePedidosPage() {
   const [live, setLive] = useState(false);
   const [uberEnabled, setUberEnabled] = useState(false);
   const [mapsKey, setMapsKey] = useState<string | null>(null);
+  const [customDomain, setCustomDomain] = useState<string | null>(null);
   const [showWebpayToken, setShowWebpayToken] = useState(false);
   const [printMode, setPrintMode] = useState<"off" | "manual" | "auto">("off");
   const [agentEnabled, setAgentEnabled] = useState(false); // agente de impresión local (ESC/POS)
@@ -152,7 +153,7 @@ export default function EcommercePedidosPage() {
     if (!restaurantId) return;
     fetch(`/api/panel/ecommerce/status?restaurantId=${restaurantId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); setShowWebpayToken(!!d.showWebpayToken); } })
+      .then((d) => { if (d) { setUberEnabled(!!d.integrations?.uberDirect); setMapsKey(d.googleMapsKey || null); setShowWebpayToken(!!d.showWebpayToken); setCustomDomain(d.customDomain || null); } })
       .catch(() => {});
   }, [restaurantId]);
 
@@ -392,12 +393,12 @@ export default function EcommercePedidosPage() {
           {paused ? <PowerOff size={15} /> : <Power size={15} />}
           {paused ? `Cerrada · ${fmtUntil(pausedUntil)}` : "Cerrar web"}
         </button>
-        {storeSlug && (
+        {(customDomain || storeSlug) && (
           <a
-            href={`/ecommerce/${storeSlug}`}
+            href={customDomain ? `https://${customDomain}` : `/ecommerce/${storeSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            title="Abrir la página web de la tienda en una pestaña nueva"
+            title={customDomain ? `Abrir ${customDomain} en una pestaña nueva` : "Abrir la página web de la tienda en una pestaña nueva"}
             style={{ ...iconBtn, width: "auto", padding: "0 12px", gap: 6, fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, textDecoration: "none", color: "var(--adm-text2)" }}
           >
             <ExternalLink size={15} /> Ir a la web

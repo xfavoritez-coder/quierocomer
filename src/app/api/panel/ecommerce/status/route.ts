@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { teamMemberCanAccess } from "@/lib/ecommerce/panelAuth";
 import { parseEcommerceConfig, integrationStatus } from "@/lib/ecommerce/config";
+import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 
 /**
  * GET /api/panel/ecommerce/status?restaurantId=...
@@ -29,11 +30,12 @@ export async function GET(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { ecommerceEnabled: true, ecommerceConfig: true },
+    select: { ecommerceEnabled: true, ecommerceConfig: true, ecommerceStoreConfig: true },
   });
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const cfg = parseEcommerceConfig(restaurant.ecommerceConfig);
+  const store = parseStoreConfig(restaurant.ecommerceStoreConfig);
   return NextResponse.json({
     enabled: !!restaurant.ecommerceEnabled,
     integrations: integrationStatus(cfg),
@@ -41,5 +43,6 @@ export async function GET(req: NextRequest) {
     posProvider: cfg.pos?.provider || "none",
     googleMapsKey: cfg.googleMaps?.apiKey || null, // key de navegador, para el mini-mapa del courier
     showWebpayToken: !!cfg.showWebpayToken, // mostrar token de transacción en Historial (certificación)
+    customDomain: store.customDomain || null, // dominio propio (ej: "handroll.cl"); null = quierocomer.com/ecommerce/<slug>
   });
 }
