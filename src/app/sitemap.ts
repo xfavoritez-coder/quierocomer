@@ -135,17 +135,14 @@ const buildMainSitemap = unstable_cache(async (): Promise<MetadataRoute.Sitemap>
   // Tiendas ecommerce en el dominio principal. Las que tienen dominio propio
   // (handroll.cl) se excluyen: su canónica apunta a ese dominio y deben listarse
   // en el sitemap de su propio dominio, no en el de quierocomer.com.
-  const ecommercePages: MetadataRoute.Sitemap = ecommerceStores
-    .filter(r => {
-      const cfg = r.ecommerceStoreConfig as { customDomain?: string | null; hiddenBranch?: boolean } | null;
-      return !cfg?.customDomain && !cfg?.hiddenBranch;
-    })
-    .map(r => ({
-      url: `${BASE}/ecommerce/${r.slug}`,
-      lastModified: r.updatedAt,
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    }))
+  const visibleEcommerceStores = ecommerceStores.filter(r => {
+    const cfg = r.ecommerceStoreConfig as { customDomain?: string | null; hiddenBranch?: boolean } | null;
+    return !cfg?.customDomain && !cfg?.hiddenBranch;
+  })
+  const ecommercePages: MetadataRoute.Sitemap = visibleEcommerceStores.flatMap(r => [
+    { url: `${BASE}/ecommerce/${r.slug}`, lastModified: r.updatedAt, changeFrequency: 'daily' as const, priority: 0.9 },
+    { url: `${BASE}/ecommerce/${r.slug}/local`, lastModified: r.updatedAt, changeFrequency: 'weekly' as const, priority: 0.8 },
+  ])
 
   // SEO commune pages
   const distinctCommunes = [
