@@ -140,7 +140,7 @@ interface FooterProps {
   primaryColor: string
   variant: 'modern' | 'base'
   brandMode?: boolean
-  siblings?: { id: string; name: string; branchName: string | null }[]
+  siblings?: { id: string; slug: string; name: string; branchName: string | null; hidden?: boolean }[]
   hideAddress?: boolean
 }
 
@@ -296,7 +296,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: text3, marginBottom: 12 }}>Explorar</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {brandMode && siblings && siblings.filter(s => !(s as any).hidden).length > 0 && (
+                {brandMode && siblings && siblings.filter(s => !s.hidden).length > 0 && (
                   <a href="/locales" style={{ fontSize: 13, color: text2, textDecoration: 'none' }}>Nuestros locales</a>
                 )}
                 {tenant.website && (
@@ -307,6 +307,20 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
                 <a href="/politica" onClick={openPrivacy} style={{ fontSize: 13, color: text2, textDecoration: 'none', cursor: 'pointer' }}>Política de privacidad</a>
               </div>
             </div>
+
+            {/* Sucursales */}
+            {brandMode && siblings && siblings.filter(s => !s.hidden).length > 1 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: text3, marginBottom: 12 }}>Sucursales</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {siblings.filter(s => !s.hidden).map(s => (
+                    <a key={s.id} href={`/ecommerce/${s.slug}`} style={{ fontSize: 13, color: text2, textDecoration: 'none' }}>
+                      {s.branchName || s.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Divider */}

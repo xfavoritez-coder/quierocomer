@@ -85,6 +85,14 @@ export default function StoreJsonLd({
     ...(menuSections.length
       ? { hasMenu: { "@type": "Menu", name: "Menú", url: canonicalUrl, hasMenuSection: menuSections } }
       : {}),
+    // Modalidades: delivery, retiro, mesa
+    ...((tenant.deliveryEnabled || tenant.pickupEnabled || tenant.showTableMenu) ? {
+      availableService: [
+        ...(tenant.deliveryEnabled ? [{ "@type": "DeliveryService", serviceType: "Delivery" }] : []),
+        ...(tenant.pickupEnabled ? [{ "@type": "TakeoutService", serviceType: "Retiro en local" }] : []),
+        ...(tenant.showTableMenu ? [{ "@type": "DineInService", serviceType: "Pedido en mesa" }] : []),
+      ],
+    } : {}),
     potentialAction: [
       { "@type": "OrderAction", target: { "@type": "EntryPoint", urlTemplate: canonicalUrl, actionAccessibilityRequirement: { "@type": "ActionAccessSpecification", eligibleRegion: { "@type": "Country", name: "CL" } } } },
       { "@type": "ViewAction", target: canonicalUrl },

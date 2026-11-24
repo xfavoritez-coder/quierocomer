@@ -78,7 +78,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const base = tenant.customDomain && slug === tenant.customDomain ? "" : `/ecommerce/${tenant.slug}`;
   const manifestUrl = `/api/ecommerce/manifest/${tenant.slug}?base=${encodeURIComponent(base)}`;
   const title = tenant.pageTitle || `${tenant.name} · Pedir online`;
-  const description = tenant.metaDescription || `Haz tu pedido en ${tenant.name}. Rápido y fácil.`;
+  // Descripción enriquecida con modalidades (delivery, retiro, mesa)
+  const modalities: string[] = [];
+  if (tenant.deliveryEnabled) modalities.push("delivery");
+  if (tenant.pickupEnabled) modalities.push("retiro en local");
+  if (tenant.showTableMenu) modalities.push("pedido en mesa");
+  const modalityText = modalities.length ? ` Disponible: ${modalities.join(", ")}.` : "";
+  const description = tenant.metaDescription || `Haz tu pedido en ${tenant.name}.${modalityText} Rápido y fácil.`;
   return {
     title,
     description,
