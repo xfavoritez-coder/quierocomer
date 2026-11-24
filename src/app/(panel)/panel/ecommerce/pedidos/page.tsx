@@ -727,6 +727,9 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
   const [refundAmount, setRefundAmount] = useState("");
   const [refundBusy, setRefundBusy] = useState(false);
   const [refundMsg, setRefundMsg] = useState<string | null>(null);
+  // Confirmación antes de reembolsar (el reembolso es inmediato e irreversible).
+  // null = cerrado; { amount } = parcial; { amount: undefined } = total.
+  const [confirmRefund, setConfirmRefund] = useState<{ amount?: number } | null>(null);
   const doRefund = async (amount?: number) => {
     if (!order.restaurantId) return;
     setRefundBusy(true); setRefundMsg(null);
@@ -845,10 +848,30 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
                     <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 6px" }}>Reembolso (certificación)</p>
                     <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                       <input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder={`Monto (máx ${order.total})`} style={{ ...inp, flex: "1 1 120px", minWidth: 100 }} />
-                      <button onClick={() => doRefund(Number(refundAmount))} disabled={refundBusy || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) >= order.total} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Parcial</button>
-                      <button onClick={() => doRefund()} disabled={refundBusy} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Total</button>
+                      <button onClick={() => setConfirmRefund({ amount: Number(refundAmount) })} disabled={refundBusy || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) >= order.total} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Parcial</button>
+                      <button onClick={() => setConfirmRefund({})} disabled={refundBusy} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Total</button>
                     </div>
                     {refundMsg && <p style={{ fontFamily: FB, fontSize: "0.72rem", margin: "6px 0 0", color: refundMsg.startsWith("✓") ? GREEN : RED }}>{refundMsg}</p>}
+                    {confirmRefund && (() => {
+                      const isTotal = confirmRefund.amount === undefined;
+                      const rawAmount = confirmRefund.amount;
+                      const amt = isTotal ? order.total : (rawAmount ?? 0);
+                      return (
+                        <div onClick={(e) => { e.stopPropagation(); if (!refundBusy) setConfirmRefund(null); }} style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "var(--adm-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 18, padding: 22, fontFamily: FB, boxShadow: "0 24px 60px rgba(0,0,0,0.28)" }}>
+                            <h3 style={{ fontFamily: F, fontSize: "1.02rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 10px" }}>Confirmar devolución {isTotal ? "total" : "parcial"}</h3>
+                            <p style={{ fontFamily: FB, fontSize: "0.86rem", color: "var(--adm-text2)", margin: "0 0 4px", lineHeight: 1.5 }}>
+                              Se devolverán <b style={{ color: "var(--adm-text)" }}>{fmt(amt)}</b> al cliente por Webpay{isTotal ? " (monto total del pedido)" : ""}.
+                            </p>
+                            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: RED, margin: "0 0 18px" }}>Esta acción es inmediata y no se puede deshacer.</p>
+                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                              <button onClick={() => setConfirmRefund(null)} disabled={refundBusy} style={{ padding: "9px 14px", borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: refundBusy ? "default" : "pointer", opacity: refundBusy ? 0.5 : 1 }}>Cancelar</button>
+                              <button onClick={async () => { await doRefund(rawAmount); setConfirmRefund(null); }} disabled={refundBusy} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.82rem", fontWeight: 800, cursor: refundBusy ? "wait" : "pointer", opacity: refundBusy ? 0.7 : 1 }}>{refundBusy ? "Devolviendo…" : `Sí, devolver ${fmt(amt)}`}</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
