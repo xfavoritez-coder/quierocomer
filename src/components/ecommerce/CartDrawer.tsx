@@ -321,8 +321,10 @@ const COMPLEMENT_KEYWORDS = /entrada|acompañ|bebida|drink|jugo|agua|postre|hela
 function isMainDish(p: StoreProduct, maxPrice: number): boolean {
   if (COMPLEMENT_KEYWORDS.test(p.name)) return false;
   if (MAIN_KEYWORDS.test(p.name)) return true;
-  // Precio alto = plato principal (más del 50% del más caro)
-  return p.price >= maxPrice * 0.50;
+  // Tiene promo activa = es un plato principal/combo en oferta
+  if (p.promo_id) return true;
+  // Precio alto = plato principal (más del 35% del más caro)
+  return p.price >= maxPrice * 0.35;
 }
 
 /** Sugerencias inteligentes: complementos reales, no más platos principales.
@@ -346,10 +348,10 @@ function getSuggestions(
   // Precio máximo de la carta (para detectar platos principales)
   const maxPrice = Math.max(...products.filter(p => !p.is_sold_out && !p.hidden).map(p => p.price), 1);
 
-  // ¿El carrito ya tiene un plato principal/combo?
+  // ¿El carrito ya tiene un plato principal/combo/promo?
   const cartHasMain = cartItems.some(item => {
     const p = productMap.get(item.product_id);
-    return p ? isMainDish(p, maxPrice) : item.unit_price >= maxPrice * 0.65;
+    return p ? isMainDish(p, maxPrice) : item.unit_price >= maxPrice * 0.35;
   });
 
   // Co-ocurrencia: productos que otros compraron junto
