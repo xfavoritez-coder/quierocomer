@@ -89,7 +89,7 @@ async function handle(req: NextRequest) {
     console.log("[webpay-return] approved", JSON.stringify({ orderId: order.id, buyOrder: order.webpayBuyOrder, amount: result.amount, secondsOnForm: secsOnForm }));
     await prisma.onlineOrder.update({
       where: { id: order.id },
-      data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED" },
+      data: { paymentStatus: "paid", paidAt: new Date(), status: "ACCEPTED", webpayPaymentType: result.paymentTypeCode ?? null },
     });
     void fireMetaPurchase(order.id, req); // venta pagada → Purchase a Meta (CAPI)
     await registerCouponUse(order);

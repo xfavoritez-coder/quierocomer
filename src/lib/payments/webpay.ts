@@ -27,6 +27,10 @@ export interface WebpayConfirmResult {
   responseCode?: number;
   status?: string;
   reason?: string;
+  // Tipo de tarjeta/pago de Transbank: VD=débito, VP=prepago (solo reembolso total),
+  // VN/VC/SI/S2/NC...=crédito (admite parcial). Se usa para habilitar/bloquear la
+  // devolución parcial en el panel.
+  paymentTypeCode?: string;
   raw?: unknown;
   error?: string;
 }
@@ -107,6 +111,7 @@ export async function webpayConfirm(token: string, settings: WebpaySettings = {}
       responseCode: res.response_code,
       status: res.status ?? undefined,
       reason,
+      paymentTypeCode: (res as { payment_type_code?: string }).payment_type_code,
       raw: res,
     };
   } catch (err: unknown) {

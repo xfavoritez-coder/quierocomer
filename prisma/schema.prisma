@@ -490,6 +490,7 @@ model OnlineOrder {
   paymentGateway       String?
   webpayToken          String?
   webpayBuyOrder       String?
+  webpayPaymentType    String?    // payment_type_code de Transbank: VD/VP=débito/prepago (solo total), VN/VC/...=crédito (admite parcial)
   paidAt               DateTime?
   orderNumber          Int?
   toteatOrderId        String?

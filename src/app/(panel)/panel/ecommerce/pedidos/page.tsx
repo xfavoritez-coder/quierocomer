@@ -23,7 +23,7 @@ interface Order {
   notes: string | null; status: OrderStatus; createdAt: string; toteatOrderId?: string | null; posError?: string | null; cancellationReason?: string | null;
   source?: string | null; channel?: string | null; fromApp?: boolean;
   scheduledFor?: string | null; scheduledReleasedAt?: string | null;
-  webpayToken?: string | null; webpayBuyOrder?: string | null; flowToken?: string | null;
+  webpayToken?: string | null; webpayBuyOrder?: string | null; webpayPaymentType?: string | null; flowToken?: string | null;
   deliveryLat?: number | null; deliveryLng?: number | null;
   uberDeliveryId?: string | null;
   courier?: CourierInfo | null;
@@ -730,6 +730,9 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
   // Confirmación antes de reembolsar (el reembolso es inmediato e irreversible).
   // null = cerrado; { amount } = parcial; { amount: undefined } = total.
   const [confirmRefund, setConfirmRefund] = useState<{ amount?: number } | null>(null);
+  // Transbank solo permite reembolso TOTAL en débito (VD) y prepago (VP); el parcial
+  // es solo para crédito. En pedidos viejos sin este dato (null) dejamos ambos.
+  const refundDebitOnly = order.webpayPaymentType === "VD" || order.webpayPaymentType === "VP";
   const doRefund = async (amount?: number) => {
     if (!order.restaurantId) return;
     setRefundBusy(true); setRefundMsg(null);
@@ -847,10 +850,11 @@ function DetailModal({ order, onClose, onStatusChange, onForceStatus, onResendPo
                   <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--adm-card-border)" }}>
                     <p style={{ fontFamily: FB, fontSize: "0.64rem", fontWeight: 800, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 6px" }}>Reembolso (certificación)</p>
                     <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                      <input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder={`Monto (máx ${order.total})`} style={{ ...inp, flex: "1 1 120px", minWidth: 100 }} />
-                      <button onClick={() => setConfirmRefund({ amount: Number(refundAmount) })} disabled={refundBusy || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) >= order.total} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Parcial</button>
+                      <input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" disabled={refundDebitOnly} placeholder={refundDebitOnly ? "Solo total (débito)" : `Monto (máx ${order.total})`} style={{ ...inp, flex: "1 1 120px", minWidth: 100, opacity: refundDebitOnly ? 0.5 : 1 }} />
+                      <button onClick={() => setConfirmRefund({ amount: Number(refundAmount) })} disabled={refundDebitOnly || refundBusy || !refundAmount || Number(refundAmount) <= 0 || Number(refundAmount) >= order.total} title={refundDebitOnly ? "Débito/prepago: Transbank solo permite devolución total" : undefined} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: "var(--adm-bg)", color: "var(--adm-text)", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundDebitOnly ? "not-allowed" : refundBusy ? "wait" : "pointer", opacity: refundDebitOnly ? 0.5 : 1 }}>Parcial</button>
                       <button onClick={() => setConfirmRefund({})} disabled={refundBusy} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: RED, color: "#fff", fontFamily: F, fontSize: "0.76rem", fontWeight: 700, cursor: refundBusy ? "wait" : "pointer" }}>Total</button>
                     </div>
+                    {refundDebitOnly && <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Pago con débito/prepago: Transbank solo permite <b>devolución total</b>.</p>}
                     {refundMsg && <p style={{ fontFamily: FB, fontSize: "0.72rem", margin: "6px 0 0", color: refundMsg.startsWith("✓") ? GREEN : RED }}>{refundMsg}</p>}
                     {confirmRefund && (() => {
                       const isTotal = confirmRefund.amount === undefined;
