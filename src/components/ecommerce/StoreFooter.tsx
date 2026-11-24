@@ -314,7 +314,7 @@ export default function StoreFooter({ tenant, primaryColor, variant, brandMode, 
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: text3, marginBottom: 12 }}>Sucursales</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {siblings.filter(s => !s.hidden).map(s => (
-                    <a key={s.id} href={`/ecommerce/${s.slug}`} style={{ fontSize: 13, color: text2, textDecoration: 'none' }}>
+                    <a key={s.id} href={`https://quierocomer.com/ecommerce/${s.slug}`} style={{ fontSize: 13, color: text2, textDecoration: 'none' }}>
                       {s.branchName || s.name}
                     </a>
                   ))}
