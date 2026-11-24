@@ -6,6 +6,10 @@ import MetaPixel from "@/components/MetaPixel";
 export const metadata: Metadata = {
   metadataBase: new URL("https://quierocomer.com"),
   icons: { icon: "/logo.png", shortcut: "/logo.png" },
+  // Safari (iPhone/iPad) convierte solo teléfonos/correos/direcciones en enlaces
+  // modificando el DOM por debajo de React; al re-renderizar (paginar, ordenar)
+  // React no encuentra sus nodos y cae con "The object can not be found here".
+  formatDetection: { telephone: false, email: false, address: false, date: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
