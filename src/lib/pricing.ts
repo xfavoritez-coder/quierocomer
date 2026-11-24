@@ -16,6 +16,7 @@ export interface PricePlan {
   recommended?: boolean; // Marca el plan como "Recomendado" (resaltado). Solo uno por grupo.
   priceFrom?: boolean;   // Muestra un "Desde" pequeño antes del precio (ej: "Desde $19.900 /mes").
   includedAddons?: string[]; // IDs de add-ons incluidos en este plan (su precio se suma al total).
+  addonPrices?: Record<string, number>; // Monto a usar por add-on incluido en ESTE plan (override; si no, el precio del add-on).
   offerPrice?: number;   // Precio oferta (promo). Si se setea, se muestra como precio final y el sumado va tachado.
 }
 
@@ -97,6 +98,13 @@ function cleanPlans(a: unknown): PricePlan[] {
     const o = (x || {}) as Record<string, unknown>;
     const subtitle = String(o.subtitle || "").trim();
     const includedAddons = Array.isArray(o.includedAddons) ? o.includedAddons.map((x) => String(x)).filter(Boolean) : [];
+    const addonPrices: Record<string, number> = {};
+    if (o.addonPrices && typeof o.addonPrices === "object") {
+      for (const [id, v] of Object.entries(o.addonPrices as Record<string, unknown>)) {
+        const n = Math.max(0, Math.round(Number(v) || 0));
+        if (n > 0 && includedAddons.includes(id)) addonPrices[id] = n; // solo guardo overrides de add-ons realmente incluidos
+      }
+    }
     const offerPrice = Math.max(0, Math.round(Number(o.offerPrice) || 0));
     return {
       id: String(o.id || `p${i}`),
@@ -107,6 +115,7 @@ function cleanPlans(a: unknown): PricePlan[] {
       ...(o.recommended === true ? { recommended: true } : {}),
       ...(o.priceFrom === true ? { priceFrom: true } : {}),
       ...(includedAddons.length ? { includedAddons } : {}),
+      ...(Object.keys(addonPrices).length ? { addonPrices } : {}),
       ...(offerPrice > 0 ? { offerPrice } : {}),
     };
   });

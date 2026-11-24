@@ -75,7 +75,8 @@ export default function PlanesPage() {
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
   const setHeading = (field: keyof PricingHeadings, v: string) => mutate((c) => { c.headings = { ...(c.headings || {}), [field]: v }; });
-  const toggleIncludedAddon = (k: PlanKey, pi: number, addonId: string) => mutate((c) => { const p = c[k][pi]; const arr = p.includedAddons ? [...p.includedAddons] : []; const idx = arr.indexOf(addonId); if (idx >= 0) arr.splice(idx, 1); else arr.push(addonId); p.includedAddons = arr; });
+  const toggleIncludedAddon = (k: PlanKey, pi: number, addonId: string) => mutate((c) => { const p = c[k][pi]; const arr = p.includedAddons ? [...p.includedAddons] : []; const idx = arr.indexOf(addonId); if (idx >= 0) { arr.splice(idx, 1); if (p.addonPrices) { const m = { ...p.addonPrices }; delete m[addonId]; p.addonPrices = m; } } else arr.push(addonId); p.includedAddons = arr; });
+  const setAddonPrice = (k: PlanKey, pi: number, addonId: string, price: number) => mutate((c) => { const p = c[k][pi]; const m = { ...(p.addonPrices || {}) }; if (price > 0) m[addonId] = price; else delete m[addonId]; p.addonPrices = m; });
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
   const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
@@ -100,7 +101,7 @@ export default function PlanesPage() {
     const impl = implFor(p.name);
     const hi = isHighlight(p, accent);
     const subtitleText = p.subtitle && p.subtitle.trim() ? p.subtitle.trim() : (impl != null ? `+ ${fmt(impl)} implementación única` : null);
-    const addonsSum = (p.includedAddons || []).reduce((s, id) => s + (cfg.addons.find((a) => a.id === id)?.price || 0), 0);
+    const addonsSum = (p.includedAddons || []).reduce((s, id) => s + (p.addonPrices?.[id] ?? (cfg.addons.find((a) => a.id === id)?.price || 0)), 0);
     const regular = p.price + addonsSum;
     const hasOffer = typeof p.offerPrice === "number" && p.offerPrice > 0 && p.offerPrice < regular;
     const mainPrice = hasOffer ? (p.offerPrice as number) : regular;
@@ -209,17 +210,25 @@ export default function PlanesPage() {
                 <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>Add-ons incluidos</p>
                 {cfg.addons.map((a) => {
                   const on = (p.includedAddons || []).includes(a.id);
+                  const eff = p.addonPrices?.[a.id] ?? a.price;
                   return (
-                    <label key={a.id} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", padding: "2px 0", fontFamily: FB, fontSize: "0.78rem", color: on ? "#e8e8e8" : "#8a8a8a" }}>
+                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 7, padding: "2px 0", fontFamily: FB, fontSize: "0.78rem" }}>
                       <input type="checkbox" checked={on} onChange={() => toggleIncludedAddon(k, pi, a.id)} style={{ accentColor: GOLD, width: 14, height: 14, cursor: "pointer", flexShrink: 0 }} />
-                      <span style={{ flex: 1 }}>{a.name}</span>
-                      <span style={{ color: "#999" }}>{fmt(a.price)}</span>
-                    </label>
+                      <span onClick={() => toggleIncludedAddon(k, pi, a.id)} style={{ flex: 1, cursor: "pointer", color: on ? "#e8e8e8" : "#8a8a8a" }}>{a.name}</span>
+                      {on ? (
+                        <span style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }} title="Monto de este add-on en este plan (editable)">
+                          <span style={{ color: "#888" }}>$</span>
+                          <input type="number" min={0} step={100} value={eff} onChange={(e) => setAddonPrice(k, pi, a.id, Math.max(0, Math.round(Number(e.target.value) || 0)))} style={{ ...inp, width: 92, padding: "4px 6px", fontSize: "0.76rem", color: GOLD, fontWeight: 700 }} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "#999", flexShrink: 0 }}>{fmt(a.price)}</span>
+                      )}
+                    </div>
                   );
                 })}
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, paddingTop: 6, borderTop: "1px solid #242424", fontFamily: FB, fontSize: "0.82rem", fontWeight: 800, color: "#fff" }}>
                   <span>Precio sumado</span>
-                  <span style={{ color: GOLD }}>{fmt(p.price + (p.includedAddons || []).reduce((s, id) => s + (cfg.addons.find((a) => a.id === id)?.price || 0), 0))}</span>
+                  <span style={{ color: GOLD }}>{fmt(p.price + (p.includedAddons || []).reduce((s, id) => s + (p.addonPrices?.[id] ?? (cfg.addons.find((a) => a.id === id)?.price || 0)), 0))}</span>
                 </div>
               </div>
             )}
