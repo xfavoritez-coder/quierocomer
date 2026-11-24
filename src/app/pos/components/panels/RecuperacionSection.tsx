@@ -547,7 +547,7 @@ function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, atRisk, 
       <StatGroup title="Resultados" color="#16a34a"
         icon={ic(<><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></>)}
         stats={[
-          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recoveryRate}% de contactados` : undefined, onClick: k.recovered > 0 ? () => setShowRecovered(v => !v) : undefined },
+          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recovered && k.contacted ? (k.recovered / k.contacted * 100 < 1 ? (k.recovered / k.contacted * 100).toFixed(1) : Math.round(k.recovered / k.contacted * 100).toString()) : '0'}% de contactados` : undefined, onClick: k.recovered > 0 ? () => setShowRecovered(v => !v) : undefined },
           { label: 'Ingresos recuperados', value: clp(k.recoveredRevenue), color: k.recoveredRevenue > 0 ? '#16a34a' : undefined },
         ]}>
         {showRecovered && recoveredClients.length > 0 && (
