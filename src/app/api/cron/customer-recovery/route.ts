@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseStoreConfig, type RecoveryConfig } from "@/lib/ecommerce/store-config";
 import { getClientSegmentation, resolveBrandIds, type ClientRow } from "@/lib/ecommerce/client-segmentation";
 import { pickAutomation, indexEnrollments, type RecoveryAutomation } from "@/lib/ecommerce/recovery-eligibility";
+import { branchDisplayName } from "@/lib/ecommerce/recoveryCoupon";
 import { storeAbsBase } from "@/lib/ecommerce/surveyEmail";
 import { firstBuyerSubject, firstBuyerHtml, firstBuyerText } from "@/lib/email/recovery/firstBuyerEmail";
 import { atRiskSubject, atRiskHtml, atRiskText } from "@/lib/email/recovery/atRiskEmail";
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
       const cfg = parseStoreConfig(r.ecommerceStoreConfig);
       return cfg.recovery.enabled;
     });
+    const eligibleIds = new Set(eligible.map(r => r.id));
 
     // 2. Emails dados de baja (global)
     const unsubscribed = new Set<string>();
@@ -81,6 +83,9 @@ export async function GET(req: NextRequest) {
           if (sentThisRestaurant >= MAX_PER_RESTAURANT || totalSent >= MAX_TOTAL) break;
           if (Date.now() - startMs > TIME_BUDGET_MS) break;
           if (!client.email) continue;
+          // Cada cliente se contacta desde la sucursal de su ÚLTIMO pedido (el cupón solo
+          // vale ahí). Si esa sucursal no tiene recuperación activa, lo toma esta.
+          if (client.lastRestaurantId && client.lastRestaurantId !== rest.id && eligibleIds.has(client.lastRestaurantId)) continue;
           const email = client.email.toLowerCase();
           if (unsubscribed.has(email)) continue;
 
@@ -97,7 +102,7 @@ export async function GET(req: NextRequest) {
 
           // Crear enrollment y enviar
           const sent = await enrollAndSend({
-            restaurantId: rest.id, storeName: rest.name, logoUrl: cfg.storeLogoUrl ?? rest.logoUrl,
+            restaurantId: rest.id, storeName: rest.name, branchName: branchDisplayName(rest), logoUrl: cfg.storeLogoUrl ?? rest.logoUrl,
             accent: cfg.primaryColor, storeUrl, client, automation, rc,
           });
 
@@ -148,10 +153,10 @@ export async function GET(req: NextRequest) {
 
 /** Inscribe al cliente y envía el email. Devuelve true si se envió. */
 async function enrollAndSend(args: {
-  restaurantId: string; storeName: string; logoUrl: string | null;
+  restaurantId: string; storeName: string; branchName: string; logoUrl: string | null;
   accent: string; storeUrl: string; client: ClientRow; automation: Automation; rc: RecoveryConfig;
 }): Promise<boolean> {
-  const { restaurantId, storeName, logoUrl, accent, storeUrl, client, automation, rc } = args;
+  const { restaurantId, storeName, branchName, logoUrl, accent, storeUrl, client, automation, rc } = args;
 
   // Verificación de seguridad: consulta directa a DB para evitar duplicados
   // (protege contra idx incompleto o race conditions entre crons)
@@ -230,8 +235,8 @@ async function enrollAndSend(args: {
         surveyReason = prevEnrollment?.surveyReason || null;
       } catch { /* noop */ }
       subject = recoveryIncentiveSubject({ customerName: client.name, storeName, couponPercent: rc.recoveryIncentive.couponPercent });
-      html = recoveryIncentiveHtml({ ...commonArgs, surveyReason, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent });
-      text = recoveryIncentiveText({ ...commonArgs, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent });
+      html = recoveryIncentiveHtml({ ...commonArgs, surveyReason, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent, branchName });
+      text = recoveryIncentiveText({ ...commonArgs, couponCode: couponCode!, couponPercent: rc.recoveryIncentive.couponPercent, branchName });
       break;
   }
 

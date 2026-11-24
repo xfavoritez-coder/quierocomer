@@ -22,6 +22,8 @@ export interface ClientRow {
   riskScore: number;
   score: number;
   topProduct: string | null;
+  /** Sucursal (restaurantId) del último pedido del cliente. */
+  lastRestaurantId?: string;
 }
 
 export function computeStatus(daysSince: number, freq: number | null): ClientRow["status"] {
@@ -154,7 +156,7 @@ export async function getClientSegmentation(restaurantId: string, filterBranchId
   type ClientAcc = {
     email: string; name: string; phone: string;
     orders: number; totalSpent: number;
-    firstAt: Date; lastAt: Date; dates: Date[];
+    firstAt: Date; lastAt: Date; lastRid: string; dates: Date[];
     productCounts: Map<string, number>;
     inView: boolean;
   };
@@ -175,6 +177,7 @@ export async function getClientSegmentation(restaurantId: string, filterBranchId
       if (isInView) existing.inView = true;
       if (o.createdAt > existing.lastAt) {
         existing.lastAt = o.createdAt;
+        existing.lastRid = o.rid;
         if (o.name) existing.name = o.name;
         if (o.phone) existing.phone = o.phone;
       }
@@ -187,7 +190,7 @@ export async function getClientSegmentation(restaurantId: string, filterBranchId
       clientMap.set(root, {
         email: em, name: o.name || "", phone: o.phone || "",
         orders: 1, totalSpent: o.net,
-        firstAt: o.createdAt, lastAt: o.createdAt, dates: [o.createdAt],
+        firstAt: o.createdAt, lastAt: o.createdAt, lastRid: o.rid, dates: [o.createdAt],
         productCounts, inView: isInView,
       });
     }
@@ -231,6 +234,7 @@ export async function getClientSegmentation(restaurantId: string, filterBranchId
       topProduct: c.productCounts.size > 0
         ? [...c.productCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
         : null,
+      lastRestaurantId: c.lastRid,
     };
   });
 }

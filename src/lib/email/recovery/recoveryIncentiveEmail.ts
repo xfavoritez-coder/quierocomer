@@ -10,6 +10,8 @@ interface Args {
   surveyReason?: string | null;
   couponCode: string;
   couponPercent: number;
+  /** Sucursal donde vale el cupón (solo es válido ahí). */
+  branchName?: string | null;
   storeUrl: string;
   trackOpenUrl?: string | null;
   unsubscribeUrl?: string | null;
@@ -77,6 +79,7 @@ export function recoveryIncentiveHtml(args: Args): string {
       <div style="font-size:28px;font-weight:900;color:${args.accent};letter-spacing:1px;">${args.couponPercent}% OFF</div>
       <div style="margin-top:8px;font-family:monospace;font-size:20px;font-weight:800;color:#111;letter-spacing:2px;background:#f0f0f0;border-radius:8px;padding:6px 14px;display:inline-block;">${esc(args.couponCode)}</div>
     </div>
+    ${args.branchName ? `<p style="font-size:13px;color:#444;margin:0 0 16px;text-align:center;">📍 Válido solo para pedidos en la sucursal <strong>${esc(args.branchName)}</strong>. Un solo uso.</p>` : ""}
     ${ctaButton("Usar mi descuento →", urlWithCoupon, args.accent)}
     <p style="font-size:12px;color:#999;margin:16px 0 0;text-align:center;">El código se aplica automáticamente al hacer clic en el botón.</p>
     <p style="font-size:12px;color:#ccc;margin:8px 0 0;text-align:center;">Si el botón no funciona: <a href="${esc(urlWithCoupon)}" style="color:#aaa;">${esc(urlWithCoupon)}</a></p>`;
@@ -86,5 +89,5 @@ export function recoveryIncentiveHtml(args: Args): string {
 
 export function recoveryIncentiveText(args: Args): string {
   const name = firstName(args.customerName);
-  return `${name ? `${name}, t` : "T"}enemos un ${args.couponPercent}% de descuento para tu próximo pedido en ${args.storeName}.\n\nCódigo: ${args.couponCode}\n\nUsalo aquí: ${args.storeUrl}?coupon=${args.couponCode}`;
+  return `${name ? `${name}, t` : "T"}enemos un ${args.couponPercent}% de descuento para tu próximo pedido en ${args.storeName}.\n\nCódigo: ${args.couponCode}${args.branchName ? `\nVálido solo en la sucursal ${args.branchName}. Un solo uso.` : ""}\n\nUsalo aquí: ${args.storeUrl}?coupon=${args.couponCode}`;
 }

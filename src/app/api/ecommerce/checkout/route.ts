@@ -14,6 +14,7 @@ import { isValidPhoneCL, normalizePhoneCL, PHONE_CL_ERROR } from "@/lib/ecommerc
 import { fireMetaPurchase } from "@/lib/meta/capi";
 import { parseStoreConfig } from "@/lib/ecommerce/store-config";
 import { parseCoupons, validateCoupon, computeDiscount } from "@/lib/ecommerce/coupons";
+import { isRecoveryCouponCode, validateRecoveryCoupon } from "@/lib/ecommerce/recoveryCoupon";
 import { registerCouponUse } from "@/lib/ecommerce/couponUse";
 import { sendOrderStatusEmail } from "@/lib/ecommerce/orderEmails";
 import { parseHours, resolveAvailability } from "@/lib/ecommerce/hours";
@@ -209,12 +210,20 @@ export async function POST(req: NextRequest) {
     }
     // Cupón: revalidar en el servidor (nunca confiar en el cliente).
     let discount = 0;
-    let appliedCoupon: ReturnType<typeof parseCoupons>[number] | null = null;
+    let appliedCoupon: { code: string; type: string; label?: string | null } | null = null;
     let couponNote: string | null = null;
     let couponError: string | null = null;
     if (couponCode) {
       const found = parseCoupons(restaurant.ecommerceCoupons).find((c) => c.code === String(couponCode).toUpperCase().trim());
-      if (!found) {
+      if (!found && isRecoveryCouponCode(String(couponCode))) {
+        // Cupón de recuperación (VUELVE-*): vive en RecoveryEnrollment, solo vale en su sucursal.
+        const r = await validateRecoveryCoupon(String(couponCode), restaurant.id);
+        if (!r.ok) couponError = r.error;
+        else {
+          appliedCoupon = r.coupon;
+          discount = computeDiscount(r.coupon, subtotal, deliveryFee);
+        }
+      } else if (!found) {
         couponError = "El cupón ya no existe";
       } else {
         const v = validateCoupon(found, { subtotal, orderType: isDelivery ? "DELIVERY" : "PICKUP", fromApp: fromApp === true });
@@ -238,7 +247,7 @@ export async function POST(req: NextRequest) {
     // Si se envió un cupón pero no se pudo aplicar, NO seguir en silencio a precio
     // completo: avisar para que el cliente lo quite o corrija (evita cobrar de más).
     if (couponCode && !appliedCoupon) {
-      return NextResponse.json({ error: `No se pudo aplicar el cupón: ${couponError || "no es válido"}. Quítalo e inténtalo de nuevo.`, couponInvalid: true }, { status: 400 });
+      return NextResponse.json({ error: `No se pudo aplicar el cupón: ${(couponError || "no es válido").replace(/\.\s*$/, "")}. Quítalo e inténtalo de nuevo.`, couponInvalid: true }, { status: 400 });
     }
 
     const total = Math.max(0, subtotal + deliveryFee - discount);

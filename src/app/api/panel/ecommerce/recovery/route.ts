@@ -133,7 +133,12 @@ export async function GET(req: NextRequest) {
     const unsubs = await prisma.qRUser.findMany({ where: { email: { in: candidateEmails, mode: "insensitive" }, unsubscribedAt: { not: null } }, select: { email: true } });
     for (const u of unsubs) if (u.email) unsubscribed.add(u.email.toLowerCase());
   }
+  // Igual que el cron: cada cliente se contacta desde la sucursal de su último pedido
+  // (si esa sucursal tiene recuperación activa).
+  const brandRests = await prisma.restaurant.findMany({ where: { id: { in: allIds } }, select: { id: true, orderingEnabled: true, ecommerceStoreConfig: true } });
+  const recoveryOnIds = new Set(brandRests.filter(r => r.orderingEnabled && parseStoreConfig(r.ecommerceStoreConfig).recovery.enabled).map(r => r.id));
   const fullQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
+    if (c.lastRestaurantId && c.lastRestaurantId !== restaurantId && recoveryOnIds.has(c.lastRestaurantId)) return [];
     const em = c.email!.toLowerCase();
     if (unsubscribed.has(em)) return [];
     const ls = idx.lastSent.get(em);
