@@ -19,6 +19,7 @@ export interface PricePlan {
   addonPrices?: Record<string, number>; // Monto a usar por add-on incluido en ESTE plan (override; si no, el precio del add-on).
   offerPrice?: number;   // Precio oferta (promo). Si se setea, se muestra como precio final y el sumado va tachado.
   categoryId?: string;   // Sección donde se muestra ("__plans", "__addons", o id de una categoría custom). Vacío = sección por defecto de su pool.
+  highlightedFeatures?: string[]; // Textos de características resaltadas (se muestran con ★ y en negrita).
 }
 
 export interface PricingCategory {
@@ -115,11 +116,15 @@ function cleanPlans(a: unknown): PricePlan[] {
     }
     const offerPrice = Math.max(0, Math.round(Number(o.offerPrice) || 0));
     const categoryId = String(o.categoryId || "").trim();
+    const features = Array.isArray(o.features) ? o.features.map((f) => String(f)).filter((f) => f.trim() !== "") : [];
+    const highlightedFeatures = Array.isArray(o.highlightedFeatures)
+      ? o.highlightedFeatures.map((x) => String(x)).filter((x) => features.some((f) => f.trim().toLowerCase() === x.trim().toLowerCase()))
+      : [];
     return {
       id: String(o.id || `p${i}`),
       name: String(o.name || "").trim(),
       price: Math.max(0, Math.round(Number(o.price) || 0)),
-      features: Array.isArray(o.features) ? o.features.map((f) => String(f)).filter((f) => f.trim() !== "") : [],
+      features,
       ...(subtitle ? { subtitle } : {}),
       ...(o.recommended === true ? { recommended: true } : {}),
       ...(o.priceFrom === true ? { priceFrom: true } : {}),
@@ -127,6 +132,7 @@ function cleanPlans(a: unknown): PricePlan[] {
       ...(Object.keys(addonPrices).length ? { addonPrices } : {}),
       ...(offerPrice > 0 ? { offerPrice } : {}),
       ...(categoryId ? { categoryId } : {}),
+      ...(highlightedFeatures.length ? { highlightedFeatures } : {}),
     };
   });
 }

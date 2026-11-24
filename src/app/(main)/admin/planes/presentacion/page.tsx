@@ -421,11 +421,8 @@ export default function PresentacionPage() {
       <div style={{ ...wrap, gap: "clamp(12px,1.8vh,22px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{eyebrow(cfg.headings?.plansTitle || "Planes Ecommerce")}<h2 style={{ fontFamily: DISP, fontSize: "clamp(1.6rem,3.2vw,2.7rem)", fontWeight: 600, lineHeight: 1.04, color: INK, margin: 0 }}>Cada plan incluye al anterior</h2></div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : `repeat(${Math.min(slide.items.length, 4)},1fr)`, gap: "clamp(10px,1.2vw,18px)", alignItems: "stretch" }}>
-          {slide.items.map((p, i) => {
+          {slide.items.map((p) => {
             const hi = p.recommended === true || (!slide.items.some((pp) => pp.recommended) && /premium/i.test(p.name) && !/futuro/i.test(p.name));
-            const prev = i > 0 ? slide.items[i - 1] : null;
-            const prevSet = prev ? new Set(prev.features.map((x) => x.trim().toLowerCase())) : null;
-            const shown = prevSet ? p.features.filter((f) => !prevSet.has(f.trim().toLowerCase())) : p.features;
             const tInk = hi ? CREAM : INK, tSub = hi ? "#CFC6B4" : INKSOFT, line = hi ? "#4A4236" : CARDB;
             return (
               <div key={p.id} style={{ background: hi ? "#2B2620" : CARD, border: `1px solid ${hi ? GOLD : CARDB}`, borderRadius: 18, padding: "clamp(16px,1.6vw,26px) clamp(14px,1.4vw,22px)", display: "flex", flexDirection: "column", gap: 8, boxShadow: CARDSHADOW }}>
@@ -434,28 +431,15 @@ export default function PresentacionPage() {
                 <p style={{ fontFamily: DISP, fontSize: "clamp(1.5rem,2.4vw,2.3rem)", fontWeight: 600, color: hi ? GOLDB : GOLD, margin: 0, lineHeight: 1 }}>{p.priceFrom ? <span style={{ fontFamily: SANS, fontSize: "0.4em", color: tSub, fontWeight: 600 }}>Desde </span> : null}{fmt(p.price)}<span style={{ fontFamily: SANS, fontSize: "0.42em", color: tSub, fontWeight: 500 }}> /mes</span></p>
                 {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.62rem,0.8vw,0.85rem)", color: tSub, margin: 0 }}>{p.subtitle.trim()}</p> : null}
                 <div style={{ height: 1, background: line, margin: "6px 0 2px" }} />
-                {prev ? (
-                  <>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, background: hi ? "rgba(232,163,58,0.14)" : "#FBF2DF", border: `1px solid ${hi ? "rgba(232,163,58,0.4)" : "#E7C98A"}`, borderRadius: 9, padding: "7px 9px" }}>
-                      <span style={{ color: GOLDB, fontWeight: 900, fontSize: "clamp(0.85rem,1.1vw,1.1rem)" }}>✚</span>
-                      <span style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1.05rem)", fontWeight: 700, color: tInk, lineHeight: 1.2 }}>Todo lo del {prev.name}</span>
-                    </div>
-                    {shown.length > 0 && <p style={{ fontFamily: SANS, fontSize: "clamp(0.68rem,0.85vw,0.9rem)", color: tSub, margin: "4px 0 0", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Y además</p>}
-                    {shown.map((f) => (
-                      <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
-                        <span style={{ color: GOLDB, fontWeight: 900, fontSize: "clamp(0.8rem,1vw,1.05rem)", flexShrink: 0 }}>★</span>
-                        <span style={{ fontFamily: SANS, fontSize: "clamp(0.82rem,1.05vw,1.15rem)", color: tInk, fontWeight: 600, lineHeight: 1.25 }}>{f}</span>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  p.features.map((f) => (
+                {p.features.map((f) => {
+                  const fhi = (p.highlightedFeatures || []).some((x) => x.trim().toLowerCase() === f.trim().toLowerCase());
+                  return (
                     <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
-                      <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.78rem,0.95vw,1rem)", flexShrink: 0 }}>✓</span>
-                      <span style={{ fontFamily: SANS, fontSize: "clamp(0.76rem,0.95vw,1.02rem)", color: tInk, lineHeight: 1.22 }}>{f}</span>
+                      <span style={{ color: fhi ? GOLDB : GOLD, fontWeight: 900, fontSize: "clamp(0.8rem,1vw,1.05rem)", flexShrink: 0 }}>{fhi ? "★" : "✓"}</span>
+                      <span style={{ fontFamily: SANS, fontSize: "clamp(0.8rem,1vw,1.1rem)", color: tInk, fontWeight: fhi ? 800 : 500, lineHeight: 1.25 }}>{f}</span>
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             );
           })}
@@ -520,12 +504,15 @@ export default function PresentacionPage() {
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-6px 0 0" }}>{p.subtitle.trim()}</p> : null}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
-                {p.features.map((f) => (
+                {p.features.map((f) => {
+                  const fhi = (p.highlightedFeatures || []).some((x) => x.trim().toLowerCase() === f.trim().toLowerCase());
+                  return (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>✓</span>
-                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0 }}>{f}</p>
+                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>{fhi ? "★" : "✓"}</span>
+                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0, fontWeight: fhi ? 800 : 400 }}>{f}</p>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -545,12 +532,15 @@ export default function PresentacionPage() {
               </div>
               {p.subtitle && p.subtitle.trim() ? <p style={{ fontFamily: SANS, fontSize: "clamp(0.78rem,0.95vw,1.05rem)", color: INKSOFT, margin: "-4px 0 0" }}>{p.subtitle.trim()}</p> : null}
               <div style={{ display: "grid", gridTemplateColumns: p.features.length > 4 ? "1fr 1fr" : "1fr", gap: "clamp(7px,0.9vw,12px) clamp(16px,2vw,28px)" }}>
-                {p.features.map((f) => (
+                {p.features.map((f) => {
+                  const fhi = (p.highlightedFeatures || []).some((x) => x.trim().toLowerCase() === f.trim().toLowerCase());
+                  return (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>✓</span>
-                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0 }}>{f}</p>
+                    <span style={{ color: GOLD, fontWeight: 900, fontSize: "clamp(0.95rem,1.2vw,1.25rem)" }}>{fhi ? "★" : "✓"}</span>
+                    <p style={{ fontFamily: SANS, fontSize: "clamp(0.9rem,1.15vw,1.3rem)", color: INK, margin: 0, fontWeight: fhi ? 800 : 400 }}>{f}</p>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

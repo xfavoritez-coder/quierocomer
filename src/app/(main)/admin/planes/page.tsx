@@ -80,9 +80,12 @@ export default function PlanesPage() {
   const removeCategory = (ci: number) => mutate((c) => { if (c.categories) c.categories.splice(ci, 1); }); // los ítems de esa categoría caen a su sección por defecto
   const toggleIncludedAddon = (k: PlanKey, pi: number, addonId: string) => mutate((c) => { const p = c[k][pi]; const arr = p.includedAddons ? [...p.includedAddons] : []; const idx = arr.indexOf(addonId); if (idx >= 0) { arr.splice(idx, 1); if (p.addonPrices) { const m = { ...p.addonPrices }; delete m[addonId]; p.addonPrices = m; } } else arr.push(addonId); p.includedAddons = arr; });
   const setAddonPrice = (k: PlanKey, pi: number, addonId: string, price: number) => mutate((c) => { const p = c[k][pi]; const m = { ...(p.addonPrices || {}) }; if (price > 0) m[addonId] = price; else delete m[addonId]; p.addonPrices = m; });
-  const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
+  const featEq = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const isFeatHi = (p: PricePlan, f: string) => (p.highlightedFeatures || []).some((x) => featEq(x, f));
+  const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { const p = c[k][pi]; const old = p.features[fi]; p.features[fi] = v; if (p.highlightedFeatures && old !== undefined) { const i = p.highlightedFeatures.findIndex((x) => featEq(x, old)); if (i >= 0) p.highlightedFeatures[i] = v; } });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
-  const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
+  const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { const p = c[k][pi]; const [removed] = p.features.splice(fi, 1); if (p.highlightedFeatures && removed !== undefined) { const i = p.highlightedFeatures.findIndex((x) => featEq(x, removed)); if (i >= 0) p.highlightedFeatures.splice(i, 1); } });
+  const toggleFeatureHighlight = (k: PlanKey, pi: number, text: string) => mutate((c) => { const p = c[k][pi]; const arr = p.highlightedFeatures ? [...p.highlightedFeatures] : []; const i = arr.findIndex((x) => featEq(x, text)); if (i >= 0) arr.splice(i, 1); else arr.push(text); p.highlightedFeatures = arr; });
   const moveFeature = (k: PlanKey, pi: number, from: number, to: number) => mutate((c) => { const arr = c[k][pi].features; if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return; const [it] = arr.splice(from, 1); arr.splice(to, 0, it); });
   // Al arrastrar una característica por encima de otra (mismo plan), la reordena en vivo.
   const onFeatEnter = (k: PlanKey, pi: number, fi: number) => { if (!drag || drag.k !== k || drag.pi !== pi || drag.fi === fi) return; moveFeature(k, pi, drag.fi, fi); setDrag({ ...drag, fi }); };
@@ -138,12 +141,15 @@ export default function PlanesPage() {
         {subtitleText && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", marginTop: 6 }}>{subtitleText}</div>}
         <div style={{ height: 1, background: "#2A2A2A", margin: "18px 0 16px" }} />
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 9 }}>
-          {p.features.map((f, i) => (
-            <li key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontFamily: FB, fontSize: "0.82rem", color: "#d4d4d4", lineHeight: 1.35 }}>
-              <span style={{ color: GOLD, fontWeight: 900, flexShrink: 0, marginTop: 1 }}>✓</span>
+          {p.features.map((f, i) => {
+            const fhi = isFeatHi(p, f);
+            return (
+            <li key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontFamily: FB, fontSize: "0.82rem", color: fhi ? "#fff" : "#d4d4d4", fontWeight: fhi ? 800 : 400, lineHeight: 1.35 }}>
+              <span style={{ color: GOLD, fontWeight: 900, flexShrink: 0, marginTop: 1 }}>{fhi ? "★" : "✓"}</span>
               <span>{f}</span>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
     );
@@ -270,6 +276,7 @@ export default function PlanesPage() {
                     style={{ cursor: "grab", color: "#6f6f6f", fontSize: "1rem", userSelect: "none", padding: "0 3px", flexShrink: 0, lineHeight: 1 }}
                   >⠿</span>
                   <input style={{ ...inp, padding: "6px 8px", fontSize: "0.8rem" }} value={f} onChange={(e) => setFeature(k, pi, fi, e.target.value)} placeholder="Característica" />
+                  <button onClick={() => toggleFeatureHighlight(k, pi, f)} title={isFeatHi(p, f) ? "Quitar resaltado" : "Resaltar"} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.95rem", color: isFeatHi(p, f) ? GOLD : "#555", padding: "0 2px", flexShrink: 0, lineHeight: 1 }}>★</button>
                   <button style={xBtn} title="Quitar" onClick={() => removeFeature(k, pi, fi)}>✕</button>
                 </div>
                 );
