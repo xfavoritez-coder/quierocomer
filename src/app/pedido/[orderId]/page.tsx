@@ -547,7 +547,7 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px calc(120px + env(safe-area-inset-bottom))" }}>
 
         {/* Restaurant header — clickeable para volver a la tienda */}
-        <a href={storeHome} style={{ display: "block", textAlign: "center", marginBottom: 24, textDecoration: "none" }}>
+        <a href={storeHome} style={{ display: "block", textAlign: "center", marginBottom: 14, textDecoration: "none" }}>
           {order.restaurantLogoUrl ? (
             <img
               src={order.restaurantLogoUrl}
@@ -635,24 +635,29 @@ export default function PedidoPage({ params }: { params: Promise<{ orderId: stri
           const pin = tracking?.courier?.pin;
           if (!pin) return null;
           if (!(order.orderType === "DELIVERY" && order.status !== "DONE" && order.status !== "CANCELLED")) return null;
-          const dark = (order.colorMode ?? "LIGHT") === "DARK";
           return (
             <div style={{
               ...cardStyle,
-              textAlign: "center",
-              padding: "16px 14px",
-              background: dark ? "rgba(250,204,21,0.08)" : "#FFFBEB",
-              border: `1px solid ${dark ? "rgba(250,204,21,0.35)" : "#FDE68A"}`,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 14px",
             }}>
-              <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: dark ? "#FCD34D" : "#B45309", margin: 0 }}>
-                🔑 PIN de entrega
-              </p>
-              <p style={{ fontFamily: FONT, fontSize: 38, fontWeight: 900, letterSpacing: "0.14em", color: dark ? "#FDE047" : "#B45309", margin: "4px 0", lineHeight: 1 }}>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>🔑</span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: theme.text2, margin: 0 }}>
+                  PIN de entrega
+                </p>
+                <p style={{ fontSize: 11.5, color: theme.text2, opacity: 0.8, margin: "1px 0 0" }}>
+                  Dáselo al repartidor para confirmar.
+                </p>
+              </div>
+              <span style={{
+                fontFamily: FONT, fontSize: 22, fontWeight: 800, letterSpacing: "0.12em",
+                color: theme.accent, flex: "0 0 auto",
+              }}>
                 {pin}
-              </p>
-              <p style={{ fontSize: 12.5, color: theme.text2, margin: 0 }}>
-                Dáselo al repartidor para confirmar la entrega de tu pedido.
-              </p>
+              </span>
             </div>
           );
         })()}
