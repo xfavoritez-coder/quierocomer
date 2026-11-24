@@ -379,7 +379,9 @@ function getSuggestions(
     if (!p || cartIds.has(id) || p.is_sold_out || p.hidden) continue;
 
     // Si ya hay un plato principal en el carrito, no sugerir otro principal
+    // ni otro producto de la misma categoría (ej: otra promo del mismo tipo)
     if (cartHasMain && isMainDish(p, maxPrice)) continue;
+    if (cartCatIds.has(p.category_id) && isMainDish(p, maxPrice)) continue;
 
     let score = 0;
     // Co-ocurrencia (señal más fuerte)
