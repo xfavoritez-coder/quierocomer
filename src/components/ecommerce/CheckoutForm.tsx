@@ -62,6 +62,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const couponRef = useRef<HTMLDivElement>(null);
+  const couponScrolledRef = useRef(false);
   const subtotal = useCartStore((s) => s.subtotal());
   const total = useCartStore((s) => s.total());
 
@@ -771,7 +772,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                         <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 border" style={{ borderColor: `${primaryColor}55`, background: `${primaryColor}08` }}>
                           <span className="text-xs font-black" style={{ color: primaryColor }}>{coupon.code}</span>
                           <span className="text-xs text-gray-500 flex-1">{coupon.label || (discount > 0 ? `−${clp(discount)}` : "aplicado")}</span>
-                          <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); setCouponOpen(false); }} className="text-gray-400 hover:text-gray-700"><X className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => { setCoupon(null); setCouponCode(""); setCouponMsg(null); setCouponOpen(false); couponScrolledRef.current = false; }} className="text-gray-400 hover:text-gray-700"><X className="w-3.5 h-3.5" /></button>
                         </div>
                         {emailNotice}
                       </div>
@@ -780,7 +781,7 @@ export default function CheckoutForm({ tenant, basePath }: { tenant: StoreTenant
                       <div ref={couponRef} className="flex flex-col gap-2">
                         <div className="flex gap-2">
                           <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && applyCoupon()} placeholder="Código de cupón"
-                            ref={(el) => { if (el) requestAnimationFrame(() => { el.focus(); setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300); }); }}
+                            ref={(el) => { if (el && !couponScrolledRef.current) { couponScrolledRef.current = true; requestAnimationFrame(() => { el.focus(); setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300); }); } }}
                             className="flex-1 min-w-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-mono uppercase outline-none focus:border-gray-400" />
                           <button onClick={() => applyCoupon()} disabled={couponBusy || !couponCode.trim()} className="px-3 rounded-lg text-white font-bold text-xs transition hover:opacity-90 disabled:opacity-40 shrink-0" style={{ background: primaryColor }}>{couponBusy ? "…" : "Aplicar"}</button>
                         </div>
