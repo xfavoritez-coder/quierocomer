@@ -134,6 +134,7 @@ export default function EcommercePedidosPage() {
   const knownPendingRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
   const storeName = session?.restaurants.find((r) => r.id === restaurantId)?.name || "";
+  const storeSlug = session?.restaurants.find((r) => r.id === restaurantId)?.slug || null;
 
   useEffect(() => { printModeRef.current = printMode; }, [printMode]);
 
@@ -391,6 +392,17 @@ export default function EcommercePedidosPage() {
           {paused ? <PowerOff size={15} /> : <Power size={15} />}
           {paused ? `Cerrada · ${fmtUntil(pausedUntil)}` : "Cerrar web"}
         </button>
+        {storeSlug && (
+          <a
+            href={`/ecommerce/${storeSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Abrir la página web de la tienda en una pestaña nueva"
+            style={{ ...iconBtn, width: "auto", padding: "0 12px", gap: 6, fontFamily: FB, fontSize: "0.82rem", fontWeight: 700, textDecoration: "none", color: "var(--adm-text2)" }}
+          >
+            <ExternalLink size={15} /> Ir a la web
+          </a>
+        )}
         <button onClick={() => fetchOrders(false)} title="Actualizar" style={iconBtn}><RefreshCw size={16} /></button>
       </div>
 
