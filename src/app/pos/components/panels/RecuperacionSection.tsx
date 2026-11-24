@@ -515,74 +515,99 @@ function RecoverySummary({ k, queueCount, pendingSurvey, pendingCoupon, atRisk, 
       <StatGroup title="Cupones" color="#f59e0b"
         icon={ic(<><path d="M3 9a3 3 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a3 3 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M13 5v14" strokeDasharray="2 2"/></>)}
         stats={[
-          { label: 'Enviados', value: fmt(k.couponsSent), onClick: k.couponsSent > 0 ? () => setShowCoupons(v => !v) : undefined },
+          { label: 'Enviados', value: fmt(k.couponsSent), onClick: k.couponsSent > 0 ? () => setShowCoupons(true) : undefined },
           { label: 'Interactuaron', value: fmt(k.couponsOpened), hint: k.couponsSent ? `${pct(k.couponsOpened, k.couponsSent)}%` : undefined },
           { label: 'Usados', value: fmt(k.couponsUsed), color: k.couponsUsed > 0 ? '#16a34a' : undefined, hint: k.couponsSent ? `${pct(k.couponsUsed, k.couponsSent)}%` : undefined },
-        ]}>
-        {showCoupons && couponRecipients.length > 0 && (
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, maxHeight: 320, overflowY: 'auto' }}>
-            <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink-2)', marginBottom: 6 }}>Cupones enviados</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {couponRecipients.map(c => (
-                <div key={c.email + c.sentAt} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
-                    <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {new Date(c.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}{c.code ? ` · ${c.code}` : ''}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 5, flexShrink: 0,
-                    background: c.used ? '#f0fdf4' : c.opened ? '#f5f3ff' : 'var(--surface)',
-                    color: c.used ? '#16a34a' : c.opened ? '#7c3aed' : 'var(--ink-3)' }}>
-                    {c.used ? 'Usado' : c.opened ? 'Interactuó' : 'Enviado'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </StatGroup>
+        ]} />
 
       <StatGroup title="Resultados" color="#16a34a"
         icon={ic(<><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></>)}
         stats={[
-          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recovered && k.contacted ? (k.recovered / k.contacted * 100 < 1 ? (k.recovered / k.contacted * 100).toFixed(1) : Math.round(k.recovered / k.contacted * 100).toString()) : '0'}% de contactados` : undefined, onClick: k.recovered > 0 ? () => setShowRecovered(v => !v) : undefined },
+          { label: 'Recuperados', value: fmt(k.recovered), color: k.recovered > 0 ? '#16a34a' : undefined, hint: k.contacted ? `${k.recovered && k.contacted ? (k.recovered / k.contacted * 100 < 1 ? (k.recovered / k.contacted * 100).toFixed(1) : Math.round(k.recovered / k.contacted * 100).toString()) : '0'}% de contactados` : undefined, onClick: k.recovered > 0 ? () => setShowRecovered(true) : undefined },
           { label: 'Ingresos recuperados', value: clp(k.recoveredRevenue), color: k.recoveredRevenue > 0 ? '#16a34a' : undefined },
-        ]}>
-        {showRecovered && recoveredClients.length > 0 && (
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ fontFamily: F, fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink-2)', marginBottom: 2 }}>Clientes que volvieron a pedir</div>
+        ]} />
+
+      {/* ── Modal: Cupones enviados ── */}
+      {showCoupons && couponRecipients.length > 0 && (
+        <RecoveryModal title={`Cupones enviados (${couponRecipients.length})`} onClose={() => setShowCoupons(false)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {couponRecipients.map(c => (
+              <div key={c.email + c.sentAt} onClick={() => { setShowCoupons(false); onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' }) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F, transition: 'background .12s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--line)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--sunk)' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.email} · {new Date(c.sentAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}{c.code ? ` · ${c.code}` : ''}
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.64rem', fontWeight: 700, padding: '3px 8px', borderRadius: 6, flexShrink: 0,
+                  background: c.used ? '#f0fdf4' : c.opened ? '#f5f3ff' : 'var(--surface)',
+                  color: c.used ? '#16a34a' : c.opened ? '#7c3aed' : 'var(--ink-3)' }}>
+                  {c.used ? 'Usado' : c.opened ? 'Interactu\u00F3' : 'Enviado'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </RecoveryModal>
+      )}
+
+      {/* ── Modal: Clientes recuperados ── */}
+      {showRecovered && recoveredClients.length > 0 && (
+        <RecoveryModal title={`Clientes recuperados (${recoveredClients.length})`} onClose={() => setShowRecovered(false)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {recoveredClients.map(c => (
-              <div key={c.orderId} onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' })}
-                style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F }}>
+              <div key={c.orderId} onClick={() => { setShowRecovered(false); onSelectClient?.({ email: c.email, name: c.name || '', phone: c.phone || '' }) }}
+                style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', fontFamily: F, transition: 'background .12s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--line)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--sunk)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
-                    <div style={{ fontSize: '0.64rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name || c.email}</div>
+                    <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                   </div>
-                  <span style={{ fontFamily: M, fontSize: '0.82rem', fontWeight: 900, color: '#16a34a', flexShrink: 0 }}>{clp(c.orderTotal)}</span>
+                  <span style={{ fontFamily: M, fontSize: '0.9rem', fontWeight: 900, color: '#16a34a', flexShrink: 0 }}>{clp(c.orderTotal)}</span>
                 </div>
-                <div style={{ fontSize: '0.66rem', color: 'var(--ink-3)', lineHeight: 1.4, marginTop: 2 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--ink-3)', lineHeight: 1.4, marginTop: 4 }}>
                   {new Date(c.orderDate).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
                   {c.branchName ? ` \u00B7 ${c.branchName}` : ''}
                   {c.usedCoupon ? ' \u00B7 \uD83C\uDF81 Us\u00F3 cup\u00F3n' : ' \u00B7 sin cup\u00F3n'}
                 </div>
                 {c.items.length > 0 && (
-                  <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {c.items.slice(0, 5).map((it, i) => (
-                      <span key={i} style={{ fontSize: '0.62rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--surface)', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {c.items.slice(0, 6).map((it, i) => (
+                      <span key={i} style={{ fontSize: '0.64rem', fontWeight: 600, padding: '2px 8px', borderRadius: 5, background: 'var(--surface)', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
                         {it.qty > 1 ? `${it.qty}x ` : ''}{it.name}
                       </span>
                     ))}
-                    {c.items.length > 5 && <span style={{ fontSize: '0.62rem', color: 'var(--ink-4)' }}>+{c.items.length - 5} m\u00E1s</span>}
+                    {c.items.length > 6 && <span style={{ fontSize: '0.64rem', color: 'var(--ink-4)' }}>+{c.items.length - 6} m\u00E1s</span>}
                   </div>
                 )}
               </div>
             ))}
           </div>
-        )}
-      </StatGroup>
+        </RecoveryModal>
+      )}
+    </div>
+  )
+}
+
+/** Modal centrado con overlay oscuro. */
+function RecoveryModal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--line)', boxShadow: '0 20px 60px rgba(0,0,0,.18)', width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--line)' }}>
+          <span style={{ fontFamily: F, fontSize: '0.9rem', fontWeight: 800, color: 'var(--ink)' }}>{title}</span>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, color: 'var(--ink-3)', lineHeight: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div style={{ padding: '14px 18px', overflowY: 'auto', flex: 1 }}>
+          {children}
+        </div>
+      </div>
     </div>
   )
 }
