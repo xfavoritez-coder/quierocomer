@@ -18,7 +18,7 @@ function statusColor(s: string): { bg: string; fg: string } {
 
 interface Stats {
   days: number;
-  devices: { total: number; ios: number; android: number; optedIn: number; new: number; active: number };
+  devices: { total: number; ios: number; android: number; optedIn: number; new: number; active: number; series: { date: string; ios: number; android: number; total: number }[] };
   orders: { app: number; appRevenue: number; appAov: number; web: number; webRevenue: number; webAov: number; total: number; appSharePct: number; series: { date: string; app: number; web: number }[] };
   conversion: { buyers: number; devices: number; pct: number };
   topProducts: { name: string; qty: number; revenue: number }[];
@@ -164,6 +164,23 @@ export default function AppResumenPage() {
             <Tile icon={<Users size={16} />} label={`Activos (${days}d)`} value={s.devices.active} sub="abrieron la app" />
           </div>
 
+          {/* Instalaciones / activaciones por día (datos propios, en vivo) */}
+          <div style={card}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Download size={17} color={BRAND} />
+                <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>Instalaciones / activaciones por día</span>
+              </div>
+              <span style={{ display: "inline-flex", gap: 14, fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text2)" }}>
+                <Legend color={BRAND} label="iOS" /><Legend color="#22c55e" label="Android" />
+              </span>
+            </div>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
+              Cada vez que un dispositivo nuevo abre la app por primera vez (datos propios, en vivo — sin el desfase de Play Console / App Store Connect). Total {days}d: <b style={{ color: "var(--adm-text)" }}>{s.devices.new}</b>.
+            </p>
+            <DevicesChart series={s.devices.series} />
+          </div>
+
           {/* Pedidos app vs web */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
             <Tile icon={<ShoppingBag size={16} />} label={`Pedidos app (${days}d)`} value={s.orders.app} sub={`${s.orders.appSharePct}% del total`} accent />
@@ -266,6 +283,37 @@ function CopyBtn({ disabled, copied, onClick }: { disabled: boolean; copied: boo
 
 function Legend({ color, label }: { color: string; label: string }) {
   return <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 3, background: color }} />{label}</span>;
+}
+
+function DevicesChart({ series }: { series: { date: string; ios: number; android: number; total: number }[] }) {
+  const max = Math.max(1, ...series.map((d) => d.total));
+  const n = series.length;
+  const gap = n > 45 ? 1 : 2;
+  const dm = (ymd: string) => { const [, m, d] = ymd.split("-"); return `${Number(d)}/${Number(m)}`; };
+  const idxs = n <= 1 ? [0] : Array.from(new Set([0, Math.round(n * 0.25), Math.round(n * 0.5), Math.round(n * 0.75), n - 1].map((i) => Math.min(n - 1, Math.max(0, i)))));
+  const empty = series.every((d) => d.total === 0);
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap, height: 120 }}>
+        {series.map((d, i) => {
+          const iosH = (d.ios / max) * 100;
+          const andH = (d.android / max) * 100;
+          return (
+            <div key={i} title={`${dm(d.date)}: ${d.total} (iOS ${d.ios} · Android ${d.android})`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", minWidth: 2 }}>
+              <div style={{ height: `${iosH}%`, background: BRAND, borderRadius: "3px 3px 0 0" }} />
+              <div style={{ height: `${andH}%`, background: "#22c55e", borderRadius: iosH > 0 ? 0 : "3px 3px 0 0" }} />
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        {idxs.map((i) => (
+          <span key={i} style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{dm(series[i].date)}</span>
+        ))}
+      </div>
+      {empty && <p style={{ fontFamily: FB, fontSize: "0.76rem", color: "var(--adm-text3)", textAlign: "center", margin: "10px 0 0" }}>Aún no hay instalaciones registradas en este período.</p>}
+    </div>
+  );
 }
 
 function OrdersChart({ series }: { series: { date: string; app: number; web: number }[] }) {

@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  const [totalDev, iosDev, androidDev, optedIn, newDev, activeDev, exclusives, orders, notifs] = await Promise.all([
+  const [totalDev, iosDev, androidDev, optedIn, newDev, activeDev, exclusives, orders, notifs, newDevRows] = await Promise.all([
     prisma.appDevice.count({ where: { restaurantId } }),
     prisma.appDevice.count({ where: { restaurantId, platform: "ios" } }),
     prisma.appDevice.count({ where: { restaurantId, platform: "android" } }),
@@ -48,7 +48,19 @@ export async function GET(req: NextRequest) {
       select: { id: true, fromApp: true, total: true, createdAt: true, items: true, customerName: true, customerPhone: true, status: true, orderType: true },
     }),
     prisma.appPushLog.findMany({ where: { restaurantId }, orderBy: { createdAt: "desc" }, take: 10, select: { title: true, sent: true, total: true, createdAt: true } }),
+    // Dispositivos nuevos en la ventana (para la serie diaria de instalaciones/activaciones).
+    prisma.appDevice.findMany({ where: { restaurantId, createdAt: { gte: from } }, select: { createdAt: true, platform: true } }),
   ]);
+
+  // Serie diaria de dispositivos nuevos (≈ instalaciones / primeras activaciones), por plataforma.
+  const devByDay = new Map<string, { ios: number; android: number }>();
+  for (let i = days - 1; i >= 0; i--) devByDay.set(ymd(new Date(Date.now() - i * 864e5)), { ios: 0, android: 0 });
+  for (const d of newDevRows) {
+    const slot = devByDay.get(ymd(d.createdAt));
+    if (!slot) continue;
+    if (d.platform === "ios") slot.ios++; else slot.android++;
+  }
+  const deviceSeries = Array.from(devByDay.entries()).map(([date, v]) => ({ date, ios: v.ios, android: v.android, total: v.ios + v.android }));
 
   // Pedidos: app vs web (tienda ecommerce), ingresos, ticket promedio, serie diaria.
   let appOrders = 0, appRevenue = 0, webOrders = 0, webRevenue = 0;
@@ -65,7 +77,7 @@ export async function GET(req: NextRequest) {
       appOrders++; appRevenue += o.total || 0; if (slot) slot.app++;
       if (o.customerPhone) appBuyers.add(o.customerPhone);
       if (appList.length < 50) appList.push({ id: o.id, customer: o.customerName || "—", phone: o.customerPhone || "", total: o.total || 0, status: o.status, orderType: o.orderType, createdAt: o.createdAt });
-      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      const items = Array.isArray(o.items) ? (o.items as Record<string, unknown>[]) : [];
       for (const it of items) {
         const name = String(it?.dishName || it?.name || "Ítem").trim() || "Ítem";
         const key = String(it?.product_id || name);
@@ -83,7 +95,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     days,
-    devices: { total: totalDev, ios: iosDev, android: androidDev, optedIn, new: newDev, active: activeDev },
+    devices: { total: totalDev, ios: iosDev, android: androidDev, optedIn, new: newDev, active: activeDev, series: deviceSeries },
     orders: {
       app: appOrders, appRevenue, appAov: appOrders ? Math.round(appRevenue / appOrders) : 0,
       web: webOrders, webRevenue, webAov: webOrders ? Math.round(webRevenue / webOrders) : 0,
