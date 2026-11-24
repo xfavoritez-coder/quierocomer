@@ -133,16 +133,6 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
     }
     setImportBusy(false)
   }
-  const clearImported = async () => {
-    if (!window.confirm('¿Borrar todo el listado de correos importados?')) return
-    setImportBusy(true)
-    try {
-      await fetch(`/api/panel/ecommerce/recovery/import?restaurantId=${restaurantId}`, { method: 'DELETE' })
-      setImportMsg(null)
-      await loadData({ silent: true })
-    } catch { /* noop */ }
-    setImportBusy(false)
-  }
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0', color: 'var(--ink-3)', gap: 8, fontFamily: F, fontSize: '0.84rem' }}>
@@ -230,11 +220,8 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 cursor: importBusy ? 'default' : 'pointer', opacity: importBusy ? 0.5 : 1, whiteSpace: 'nowrap',
               }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V5M8 9l4-4 4 4M5 19h14"/></svg>
-                {importBusy ? 'Subiendo…' : 'Subir CSV'}
+                {importBusy ? 'Subiendo…' : importedCount > 0 ? 'Agregar más' : 'Subir CSV'}
               </button>
-              {importedCount > 0 && (
-                <button onClick={clearImported} disabled={importBusy} style={{ ...pillBtn, color: '#dc2626', borderColor: '#f3c0c0' }}>Borrar</button>
-              )}
             </div>
           </div>
           <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" onChange={onFileChange} style={{ display: 'none' }} />
