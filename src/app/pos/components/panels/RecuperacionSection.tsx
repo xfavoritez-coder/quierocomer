@@ -303,10 +303,13 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pageResp.map((r, i) => (
-              <div key={i} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: r.customerPhone || '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', flexWrap: 'wrap' }}>
+              // key por cliente (no por posición): al cambiar de página React reemplaza la
+              // fila entera en vez de editar sus textos, que en iPhone el navegador puede
+              // haber modificado (detección de teléfonos/correos) → "object can not be found".
+              <div key={`${r.customerEmail}|${r.answeredAt}`} onClick={() => onSelectClient?.({ email: r.customerEmail, name: r.customerName || '', phone: r.customerPhone || '' })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: i % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.customerName || r.customerEmail}</div>
-                  <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{r.customerEmail}{r.customerPhone ? ` · ${r.customerPhone}` : ''}</div>
+                  <div style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)' }}>{`${r.customerEmail}${r.customerPhone ? ` · ${r.customerPhone}` : ''}`}</div>
                 </div>
                 <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', flexShrink: 0 }}>
                   {REASON_LABELS[r.reason || ''] || r.reason || '—'}
@@ -319,7 +322,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                 </span>
                 {r.comment && (
                   <div style={{ fontFamily: F, fontSize: '0.78rem', color: 'var(--ink-2)', fontStyle: 'italic', lineHeight: 1.4, width: '100%', marginTop: 4 }}>
-                    {"\u201C"}{r.comment}{"\u201D"}
+                    {`\u201C${r.comment}\u201D`}
                   </div>
                 )}
               </div>
