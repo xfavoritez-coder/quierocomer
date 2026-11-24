@@ -75,6 +75,7 @@ export default function PlanesPage() {
   const removePlan = (k: PlanKey, i: number) => mutate((c) => { c[k].splice(i, 1); });
   const setRecommended = (k: PlanKey, pi: number) => mutate((c) => { const was = c[k][pi].recommended === true; c[k].forEach((p) => { p.recommended = false; }); if (!was) c[k][pi].recommended = true; });
   const setHeading = (field: keyof PricingHeadings, v: string) => mutate((c) => { c.headings = { ...(c.headings || {}), [field]: v }; });
+  const toggleIncludedAddon = (k: PlanKey, pi: number, addonId: string) => mutate((c) => { const p = c[k][pi]; const arr = p.includedAddons ? [...p.includedAddons] : []; const idx = arr.indexOf(addonId); if (idx >= 0) arr.splice(idx, 1); else arr.push(addonId); p.includedAddons = arr; });
   const setFeature = (k: PlanKey, pi: number, fi: number, v: string) => mutate((c) => { c[k][pi].features[fi] = v; });
   const addFeature = (k: PlanKey, pi: number) => mutate((c) => { c[k][pi].features.push(""); });
   const removeFeature = (k: PlanKey, pi: number, fi: number) => mutate((c) => { c[k][pi].features.splice(fi, 1); });
@@ -99,6 +100,11 @@ export default function PlanesPage() {
     const impl = implFor(p.name);
     const hi = isHighlight(p, accent);
     const subtitleText = p.subtitle && p.subtitle.trim() ? p.subtitle.trim() : (impl != null ? `+ ${fmt(impl)} implementación única` : null);
+    const addonsSum = (p.includedAddons || []).reduce((s, id) => s + (cfg.addons.find((a) => a.id === id)?.price || 0), 0);
+    const regular = p.price + addonsSum;
+    const hasOffer = typeof p.offerPrice === "number" && p.offerPrice > 0 && p.offerPrice < regular;
+    const mainPrice = hasOffer ? (p.offerPrice as number) : regular;
+    const incAddonNames = (p.includedAddons || []).map((id) => cfg.addons.find((a) => a.id === id)?.name).filter(Boolean) as string[];
     return (
       <div key={p.id} style={{
         position: "relative", background: hi ? "linear-gradient(180deg,#201a0e,#161616)" : "#17181a",
@@ -108,11 +114,13 @@ export default function PlanesPage() {
       }}>
         {hi && <span style={{ position: "absolute", top: -11, left: 22, background: GOLD, color: "#111", fontFamily: F, fontWeight: 900, fontSize: "0.62rem", letterSpacing: "0.5px", textTransform: "uppercase", padding: "4px 10px", borderRadius: 50 }}>Recomendado</span>}
         <h3 style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 900, color: "#fff", margin: "0 0 10px" }}>{p.name}</h3>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
           {p.priceFrom && <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", fontWeight: 700 }}>Desde</span>}
-          <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: hi ? GOLD : "#fff", letterSpacing: "-0.03em" }}>{fmt(p.price)}</span>
+          {hasOffer && <span style={{ fontFamily: FB, fontSize: "0.95rem", color: "#888", textDecoration: "line-through", fontWeight: 700 }}>{fmt(regular)}</span>}
+          <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 900, color: hi ? GOLD : "#fff", letterSpacing: "-0.03em" }}>{fmt(mainPrice)}</span>
           <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "#888" }}>/mes</span>
         </div>
+        {incAddonNames.length > 0 && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "#c6ad6b", marginTop: 6 }}>Incluye: {incAddonNames.join(" · ")}</div>}
         {subtitleText && <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "#9a9a9a", marginTop: 6 }}>{subtitleText}</div>}
         <div style={{ height: 1, background: "#2A2A2A", margin: "18px 0 16px" }} />
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 9 }}>
@@ -196,6 +204,30 @@ export default function PlanesPage() {
               <input type="checkbox" checked={p.recommended === true} onChange={() => setRecommended(k, pi)} style={{ accentColor: GOLD, width: 15, height: 15, cursor: "pointer" }} />
               ⭐ Plan recomendado (resaltado)
             </label>
+            {k === "plans" && cfg.addons.length > 0 && (
+              <div style={{ border: "1px solid #242424", borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700 }}>Add-ons incluidos</p>
+                {cfg.addons.map((a) => {
+                  const on = (p.includedAddons || []).includes(a.id);
+                  return (
+                    <label key={a.id} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", padding: "2px 0", fontFamily: FB, fontSize: "0.78rem", color: on ? "#e8e8e8" : "#8a8a8a" }}>
+                      <input type="checkbox" checked={on} onChange={() => toggleIncludedAddon(k, pi, a.id)} style={{ accentColor: GOLD, width: 14, height: 14, cursor: "pointer", flexShrink: 0 }} />
+                      <span style={{ flex: 1 }}>{a.name}</span>
+                      <span style={{ color: "#999" }}>{fmt(a.price)}</span>
+                    </label>
+                  );
+                })}
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, paddingTop: 6, borderTop: "1px solid #242424", fontFamily: FB, fontSize: "0.82rem", fontWeight: 800, color: "#fff" }}>
+                  <span>Precio sumado</span>
+                  <span style={{ color: GOLD }}>{fmt(p.price + (p.includedAddons || []).reduce((s, id) => s + (cfg.addons.find((a) => a.id === id)?.price || 0), 0))}</span>
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <span style={{ color: "#bbb", fontFamily: FB, fontSize: "0.78rem", whiteSpace: "nowrap" }}>Precio oferta</span>
+              <span style={{ color: GOLD, fontFamily: F, fontWeight: 900 }}>$</span>
+              <input style={{ ...inp, fontFamily: F, fontWeight: 800, fontSize: "0.95rem", color: GOLD }} type="number" min={0} step={100} value={p.offerPrice ?? ""} onChange={(e) => setPlan(k, pi, "offerPrice", Math.max(0, Math.round(Number(e.target.value) || 0)))} placeholder="0 = sin oferta" />
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {p.features.map((f, fi) => {
                 const dragging = !!drag && drag.k === k && drag.pi === pi && drag.fi === fi;

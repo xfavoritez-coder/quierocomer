@@ -15,6 +15,8 @@ export interface PricePlan {
   subtitle?: string;     // Subtítulo editable bajo el precio (ej: "+ $9.900 implementación única"). Si no se setea, se autogenera desde implementation.
   recommended?: boolean; // Marca el plan como "Recomendado" (resaltado). Solo uno por grupo.
   priceFrom?: boolean;   // Muestra un "Desde" pequeño antes del precio (ej: "Desde $19.900 /mes").
+  includedAddons?: string[]; // IDs de add-ons incluidos en este plan (su precio se suma al total).
+  offerPrice?: number;   // Precio oferta (promo). Si se setea, se muestra como precio final y el sumado va tachado.
 }
 
 export interface PriceLine {
@@ -94,6 +96,8 @@ function cleanPlans(a: unknown): PricePlan[] {
   return a.map((x, i) => {
     const o = (x || {}) as Record<string, unknown>;
     const subtitle = String(o.subtitle || "").trim();
+    const includedAddons = Array.isArray(o.includedAddons) ? o.includedAddons.map((x) => String(x)).filter(Boolean) : [];
+    const offerPrice = Math.max(0, Math.round(Number(o.offerPrice) || 0));
     return {
       id: String(o.id || `p${i}`),
       name: String(o.name || "").trim(),
@@ -102,6 +106,8 @@ function cleanPlans(a: unknown): PricePlan[] {
       ...(subtitle ? { subtitle } : {}),
       ...(o.recommended === true ? { recommended: true } : {}),
       ...(o.priceFrom === true ? { priceFrom: true } : {}),
+      ...(includedAddons.length ? { includedAddons } : {}),
+      ...(offerPrice > 0 ? { offerPrice } : {}),
     };
   });
 }
