@@ -34,6 +34,7 @@ function isPromoActiveToday(p: Promo): boolean {
 interface Promo {
   id: string;
   name: string;
+  restaurantId: string;
   status: string;
   dishId?: string | null;
   promoName?: string | null;
@@ -93,6 +94,35 @@ export default function AdminPromociones() {
   const [cValidUntil, setCValidUntil] = useState("");
   const [cDishSearch, setCDishSearch] = useState("");
   const [savingNew, setSavingNew] = useState(false);
+
+  // Copiar oferta a otras sucursales
+  const [copyTargets, setCopyTargets] = useState<string[]>([]);
+  const [copying, setCopying] = useState(false);
+  const [copyMsg, setCopyMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const branchLabel = (r: { name: string; slug: string }) => {
+    const dup = restaurants.filter(x => x.name === r.name).length > 1;
+    return dup ? `${r.name} · ${r.slug}` : r.name;
+  };
+  const copyPromo = async (promoId: string) => {
+    if (!copyTargets.length || copying) return;
+    setCopying(true); setCopyMsg(null);
+    try {
+      const res = await fetch("/api/admin/promotions", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "copy", promoId, targetRestaurantIds: copyTargets }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setCopyMsg({ ok: false, text: d.error || "No se pudo copiar" }); return; }
+      const nameOf = (id: string) => { const r = restaurants.find(x => x.id === id); return r ? branchLabel(r) : id; };
+      const lines = (d.results || []).map((r: { restaurantId: string; ok: boolean; replaced?: boolean; missing?: string[]; error?: string }) =>
+        r.ok
+          ? `✓ ${nameOf(r.restaurantId)}: ${r.replaced ? "actualizada" : "copiada"}${r.missing?.length ? ` (sin: ${r.missing.join(", ")})` : ""}`
+          : `✗ ${nameOf(r.restaurantId)}: ${r.error || "error"}`);
+      setCopyMsg({ ok: !!d.ok, text: lines.join("\n") });
+      if (d.ok) setCopyTargets([]);
+    } catch { setCopyMsg({ ok: false, text: "Error de conexión" }); }
+    finally { setCopying(false); }
+  };
 
   useEffect(() => {
     if (selectedRestaurantId && !selectedLocal) setSelectedLocal(selectedRestaurantId);
@@ -528,6 +558,32 @@ export default function AdminPromociones() {
                       )}
                       <button onClick={() => handleDelete(editing.id)} style={{ marginLeft: "auto", padding: "10px 16px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.3)", borderRadius: 8, color: "#ff6b6b", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Eliminar</button>
                     </div>
+
+                    {/* Copiar a otras sucursales */}
+                    {restaurants.filter(r => r.id !== editing.restaurantId).length > 0 && (
+                      <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--adm-card-border)" }}>
+                        <div style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 700, color: "var(--adm-text)", marginBottom: 4 }}>Copiar a otra sucursal</div>
+                        <div style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", marginBottom: 10 }}>
+                          Crea la misma oferta (días, precios, fechas) en las sucursales elegidas, buscando el plato por su nombre. Si la sucursal ya tiene una oferta con este nombre, se reemplaza. Guarda primero si hiciste cambios.
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                          {restaurants.filter(r => r.id !== editing.restaurantId).map(r => {
+                            const on = copyTargets.includes(r.id);
+                            return (
+                              <button key={r.id} type="button" onClick={() => setCopyTargets(t => on ? t.filter(x => x !== r.id) : [...t, r.id])} style={{
+                                padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+                                border: on ? `1px solid ${GOLD}` : "1px solid var(--adm-card-border)",
+                                background: on ? "rgba(244,166,35,0.12)" : "transparent", color: on ? GOLD : "var(--adm-text2)",
+                              }}>{on ? "✓ " : ""}{branchLabel(r)}</button>
+                            );
+                          })}
+                        </div>
+                        <button onClick={() => copyPromo(editing.id)} disabled={!copyTargets.length || copying} style={{ padding: "9px 16px", background: copyTargets.length ? GOLD : "var(--adm-hover)", color: copyTargets.length ? "white" : "var(--adm-text3)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.8rem", fontWeight: 700, cursor: copyTargets.length && !copying ? "pointer" : "default" }}>
+                          {copying ? "Copiando…" : `Copiar${copyTargets.length ? ` a ${copyTargets.length} sucursal${copyTargets.length > 1 ? "es" : ""}` : ""}`}
+                        </button>
+                        {copyMsg && <pre style={{ whiteSpace: "pre-wrap", fontFamily: F, fontSize: "0.74rem", margin: "10px 0 0", color: copyMsg.ok ? "#4ade80" : "#ff6b6b" }}>{copyMsg.text}</pre>}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

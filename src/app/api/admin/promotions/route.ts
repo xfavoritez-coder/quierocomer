@@ -104,6 +104,71 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, promotions: created });
     }
 
+    // Copiar una promoción a otras sucursales. Los platos y plantillas de
+    // modificadores se buscan POR NOMBRE en cada sucursal destino (cada sucursal
+    // tiene sus propios IDs). Si la sucursal ya tiene una promo con el mismo nombre,
+    // se reemplaza para que quede igual a la de origen.
+    if (body.action === "copy") {
+      const src = await prisma.promotion.findUnique({
+        where: { id: String(body.promoId || "") },
+        include: { modifierTemplates: { select: { name: true } } },
+      });
+      if (!src || src.status === "DELETED") return NextResponse.json({ error: "Promoción no encontrada" }, { status: 404 });
+      await assertOwnsRestaurant(req, src.restaurantId);
+      const targets: string[] = (Array.isArray(body.targetRestaurantIds) ? body.targetRestaurantIds : []).map(String).filter((id: string) => id && id !== src.restaurantId);
+      if (!targets.length) return NextResponse.json({ error: "Elige al menos una sucursal destino" }, { status: 400 });
+
+      const srcDishIds = [...new Set([...src.dishIds, ...(src.dishId ? [src.dishId] : [])])];
+      const srcDishes = srcDishIds.length ? await prisma.dish.findMany({ where: { id: { in: srcDishIds } }, select: { id: true, name: true } }) : [];
+      const srcNameById = new Map(srcDishes.map((d) => [d.id, d.name]));
+      const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+      const results: { restaurantId: string; ok: boolean; replaced?: boolean; missing?: string[]; error?: string }[] = [];
+      for (const targetId of targets) {
+        try {
+          await assertOwnsRestaurant(req, targetId);
+          const tDishes = await prisma.dish.findMany({ where: { restaurantId: targetId, deletedAt: null }, select: { id: true, name: true } });
+          const byName = new Map<string, string>();
+          for (const d of tDishes) if (!byName.has(norm(d.name))) byName.set(norm(d.name), d.id);
+          const mapId = (id: string) => { const n = srcNameById.get(id); return n ? byName.get(norm(n)) : undefined; };
+
+          const missing = srcDishIds.filter((id) => !mapId(id)).map((id) => srcNameById.get(id) || id);
+          const mainDish = src.dishId ? mapId(src.dishId) : null;
+          if (src.dishId && !mainDish) { results.push({ restaurantId: targetId, ok: false, missing, error: `No existe el plato "${srcNameById.get(src.dishId) || "?"}" en esta sucursal` }); continue; }
+          const dishIds = [...new Set(src.dishIds.map(mapId).filter((x): x is string => !!x))];
+          if (mainDish && !dishIds.includes(mainDish)) dishIds.push(mainDish);
+
+          const tTemplates = src.modifierTemplates.length
+            ? await prisma.modifierTemplate.findMany({ where: { restaurantId: targetId, name: { in: src.modifierTemplates.map((m) => m.name) } }, select: { id: true } })
+            : [];
+
+          const data = {
+            name: src.name, description: src.description, promoType: src.promoType,
+            imageUrl: src.imageUrl, thumbUrl: src.thumbUrl,
+            dishIds, dishId: mainDish ?? null, promoName: src.promoName,
+            originalPrice: src.originalPrice, promoPrice: src.promoPrice, discountPct: src.discountPct,
+            validFrom: src.validFrom, validUntil: src.validUntil, daysOfWeek: src.daysOfWeek,
+            featured: src.featured, hideOriginalWhenActive: src.hideOriginalWhenActive,
+            status: src.status, generatedBy: "manual",
+          };
+          const existing = await prisma.promotion.findFirst({ where: { restaurantId: targetId, name: src.name, status: { not: "DELETED" } }, select: { id: true, dishIds: true } });
+          const saved = existing
+            ? await prisma.promotion.update({ where: { id: existing.id }, data: { ...data, modifierTemplates: { set: tTemplates.map((t) => ({ id: t.id })) } } })
+            : await prisma.promotion.create({ data: { ...data, restaurantId: targetId, modifierTemplates: tTemplates.length ? { connect: tTemplates.map((t) => ({ id: t.id })) } : undefined } });
+
+          // Mismos pasos que al guardar desde el panel: precios del día, producto en tienda, caché.
+          await syncRestaurantDishDiscounts(targetId, [...new Set([...saved.dishIds, ...(existing?.dishIds ?? [])])]);
+          if (src.linkedDishId) { try { await ensurePromoDish(saved.id); await syncPromoStoreProductsActive(targetId); } catch (e) { console.error("[promo copy store product]", e); } }
+          await revalidateRestaurant(targetId);
+          logActivity(targetId, "promo_copy", { fromPromoId: src.id, promoId: saved.id, name: src.name });
+          results.push({ restaurantId: targetId, ok: true, replaced: !!existing, missing });
+        } catch (e: any) {
+          results.push({ restaurantId: targetId, ok: false, error: e?.message || "Error" });
+        }
+      }
+      return NextResponse.json({ ok: results.every((r) => r.ok), results });
+    }
+
     // Create manual promotion
     const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, dishId, promoName, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek, modifierTemplateIds } = body;
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId and name required" }, { status: 400 });
