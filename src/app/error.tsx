@@ -1,6 +1,29 @@
 'use client'
 
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+import { useEffect } from 'react'
+
+// Tras un despliegue nuevo, una pestaña que quedó abierta con la versión anterior
+// pide trozos de JS que ya no existen (404 → ChunkLoadError) y la app cae aquí.
+// En ese caso basta recargar para tomar la versión nueva: se hace sola, una vez.
+const isStaleBuildError = (e: unknown) => {
+  const err = e as { name?: string; message?: string } | null
+  return err?.name === 'ChunkLoadError' ||
+    /Loading (CSS )?chunk|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(err?.message || '')
+}
+
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    console.error('[app error]', error)
+    if (!isStaleBuildError(error)) return
+    try {
+      const k = 'qc-stale-reload'
+      const last = Number(sessionStorage.getItem(k) || 0)
+      if (Date.now() - last < 30_000) return // ya se recargó hace poco: no entrar en bucle
+      sessionStorage.setItem(k, String(Date.now()))
+    } catch { /* sin storage: recargar igual */ }
+    window.location.reload()
+  }, [error])
+
   return (
     <div style={{
       minHeight: '100dvh',

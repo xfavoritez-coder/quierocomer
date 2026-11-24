@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import DelifastTracking from '../DelifastTracking'
 import RecuperacionSection from './RecuperacionSection'
+import SectionErrorBoundary from '../SectionErrorBoundary'
 import StoreEventsPanel from '@/components/ecommerce/StoreEventsPanel'
 import PastOrderDetail from '../PastOrderDetail'
 import type { PastOrder } from '../PastOrderDetail'
@@ -3587,6 +3588,7 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
 
         {/* Recuperación sub-section */}
         {subSection === 'recuperacion' && (
+          <SectionErrorBoundary name="recuperacion">
           <RecuperacionSection
             restaurantId={restaurantId}
             allBranches={allBranches ? allBranches.map(b => ({ id: b.id })) : undefined}
@@ -3618,9 +3620,12 @@ export default function PosReportesPanel({ restaurantId, title, onBack, allBranc
               setRecoveryClient({ email: c.email, name: c.name, phone: c.phone || '', orders: 0, totalSpent: 0, avgTicket: 0, lastOrderAt: '', firstOrderAt: '', daysSinceLastOrder: 0, avgFrequencyDays: null, status: 'churned' as const, riskScore: 0, score: 0, topProduct: null })
             }}
           />
+          </SectionErrorBoundary>
         )}
         {recoveryClient && (
+          <SectionErrorBoundary name="ficha-cliente-recuperacion">
           <FichaCliente client={recoveryClient} restaurantId={restaurantId} allBranches={allBranches} onClose={() => setRecoveryClient(null)} />
+          </SectionErrorBoundary>
         )}
 
         {/* Comportamiento sub-section */}
