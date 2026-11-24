@@ -32,7 +32,7 @@ interface RecoveryData {
   surveyResponses: { customerName: string | null; customerEmail: string; customerPhone: string | null; reason: string | null; detail: string | null; comment: string | null; answeredAt: string; totalSpent: number }[]
   byAutomation: Record<string, { sent: number; opened: number; converted: number }>
   recent: { automation: string; status: string; customerName: string | null; customerEmail: string; couponCode: string | null; surveyReason: string | null; sentAt: string | null; openedAt: string | null; clickedAt: string | null; convertedAt: string | null; createdAt: string }[]
-  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string }[]
+  queue: { email: string; name: string; orders: number; totalSpent: number; daysSinceLastOrder: number; avgFrequencyDays: number | null; status: string; riskScore: number; nextEmail?: string; daysLeft?: number; minDays?: number }[]
   queueTotal?: number
   recentSends?: { automation: string; sentAt: string; status: string; name: string | null; email: string; phone: string | null; clientStatus: string | null; orders: number | null; daysSinceLastOrder: number | null; avgFrequencyDays: number | null; minDays: number | null; surveySentAt?: string | null }[]
 }
@@ -331,7 +331,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
             Pendientes de contactar
           </div>
           <div style={{ fontFamily: F, fontSize: '0.7rem', color: 'var(--ink-3)', marginBottom: 12 }}>
-            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes cumplen hoy las reglas de envío y recibirán un email en la próxima ejecución diaria{(data.queueTotal ?? 0) > data.queue.length ? ` (se muestran los ${data.queue.length} de mayor riesgo)` : ''}. Solo se contacta a clientes perdidos que llevan al menos 45 días sin pedir (o 2,5× su frecuencia).{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
+            {(data.queueTotal ?? data.queue.length).toLocaleString('es-CL')} clientes perdidos pendientes de contactar. Los marcados con 🟢 se envían en la próxima ejecución diaria; el resto cuando lleguen a su umbral de días sin pedir.{onSelectClient ? ' Toca un cliente para ver su detalle.' : ''}
           </div>
           {/* Indicador de ritmo: el cron envía hasta ~480/día, no los 50 que se listan. */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12, padding: '9px 11px', borderRadius: 10, background: 'var(--amber-tint-2)', border: '1px solid var(--amber-tint)' }}>
@@ -368,10 +368,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               <tbody>
                 {data.queue.slice(queuePage * QUEUE_PAGE, (queuePage + 1) * QUEUE_PAGE).map((c, idx) => {
                   const i = queuePage * QUEUE_PAGE + idx
-                  // La tanda del cliente según el tope diario; la 1ª sale en la próxima corrida del cron.
-                  const batch = Math.floor(i / DAILY_SEND_CAP)
-                  const sendDate = new Date(nextRun.getTime() + batch * 86400000)
-                  const sendLabel = sendDate.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
+                  const daysLeft = c.daysLeft ?? 0
+                  const sendDate = new Date(Date.now() + Math.max(1, daysLeft) * 86400000)
+                  const sendLabel = daysLeft === 0 ? 'Hoy' : sendDate.toLocaleDateString('es-CL', { timeZone: 'America/Santiago', day: '2-digit', month: 'short' })
                   return (
                   <tr key={c.email} className="rec-queue-row" onClick={() => onSelectClient?.({ email: c.email, name: c.name || '', phone: '' })} style={{ borderBottom: '1px solid var(--line)', background: idx % 2 === 0 ? 'transparent' : 'var(--sunk)', cursor: onSelectClient ? 'pointer' : 'default' }}>
                     <td style={{ padding: '8px 8px', maxWidth: 180 }}>
@@ -389,8 +388,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                     <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                       <AutomationBadge automation={c.nextEmail} />
                     </td>
-                    <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.72rem', color: '#3b82f6', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      ~{sendLabel}
+                    <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.72rem', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', color: daysLeft === 0 ? '#16a34a' : daysLeft <= 7 ? '#3b82f6' : 'var(--ink-3)' }}>
+                      {daysLeft === 0 ? '🟢 Hoy' : `~${sendLabel}`}
+                      {daysLeft > 0 && <span style={{ fontSize: '0.62rem', color: 'var(--ink-4)', marginLeft: 4 }}>({daysLeft}d)</span>}
                     </td>
                   </tr>
                   )
@@ -415,7 +415,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
 
       {data.queue.length === 0 && k.contacted > 0 && (
         <div style={{ padding: '14px 18px', borderRadius: 12, border: '1px dashed var(--line)', fontFamily: F, fontSize: '0.76rem', color: 'var(--ink-3)' }}>
-          Nadie cumple hoy las reglas de envío: ningún cliente perdido llegó todavía a su umbral de días sin pedir, o ya fue contactado recientemente.
+          Todos los clientes perdidos ya han sido contactados. Cuando nuevos clientes cumplan el umbral de inactividad, aparecerán aquí.
         </div>
       )}
 

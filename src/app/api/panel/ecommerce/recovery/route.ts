@@ -166,14 +166,37 @@ export async function GET(req: NextRequest) {
     const automation = pickAutomation(c, rc, em, idx);
     return automation ? [{ c, automation }] : [];
   }) : [];
-  const queueTotal = fullQueue.length;
-  const queue = fullQueue
-    .sort((a, b) => b.c.riskScore - a.c.riskScore)
+  // También incluir perdidos que AÚN no llegan al umbral pero lo harán
+  const futureQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
+    if (c.lastRestaurantId && c.lastRestaurantId !== restaurantId && recoveryOnIds.has(c.lastRestaurantId)) return [];
+    const em = c.email!.toLowerCase();
+    if (unsubscribed.has(em)) return [];
+    // Ya contactado con encuesta Y cupón → no hay nada más que enviar
+    if (idx.hasEnrollment.has(`${em}::abandonment_survey`) && idx.hasEnrollment.has(`${em}::recovery_incentive`)) return [];
+    // Ya en fullQueue (cumple reglas hoy) → no duplicar
+    if (fullQueue.some(q => q.c.email?.toLowerCase() === em)) return [];
+    // Calcular cuántos días faltan para el umbral
+    const minDays = surveyMinDays(c, rc);
+    const daysLeft = Math.max(0, minDays - c.daysSinceLastOrder);
+    // Ya contactado con encuesta pero aún no toca cupón
+    const hasSurvey = idx.hasEnrollment.has(`${em}::abandonment_survey`);
+    const nextEmail = hasSurvey ? "recovery_incentive" : "abandonment_survey";
+    return [{ c, nextEmail, daysLeft, minDays }];
+  }) : [];
+
+  const allPending = [
+    ...fullQueue.map(q => ({ c: q.c, nextEmail: q.automation, daysLeft: 0, minDays: surveyMinDays(q.c, rc) })),
+    ...futureQueue,
+  ].sort((a, b) => a.daysLeft - b.daysLeft || b.c.riskScore - a.c.riskScore);
+
+  const queueTotal = allPending.length;
+  const queue = allPending
     .slice(0, 50)
-    .map(({ c, automation }) => ({
+    .map(({ c, nextEmail, daysLeft, minDays }) => ({
       email: c.email, name: c.name, orders: c.orders, totalSpent: c.totalSpent,
       daysSinceLastOrder: c.daysSinceLastOrder, avgFrequencyDays: c.avgFrequencyDays,
-      status: c.status, riskScore: c.riskScore, nextEmail: automation,
+      status: c.status, riskScore: c.riskScore, nextEmail,
+      daysLeft, minDays,
     }));
 
   // ── Últimos envíos (7 días) con el estado actual del cliente ──
