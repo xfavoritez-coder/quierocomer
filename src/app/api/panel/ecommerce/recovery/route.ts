@@ -153,8 +153,9 @@ export async function GET(req: NextRequest) {
   }
   // Igual que el cron: cada cliente se contacta desde la sucursal de su último pedido
   // (si esa sucursal tiene recuperación activa).
-  const brandRests = await prisma.restaurant.findMany({ where: { id: { in: allIds } }, select: { id: true, orderingEnabled: true, ecommerceStoreConfig: true } });
-  const recoveryOnIds = new Set(brandRests.filter(r => r.orderingEnabled && parseStoreConfig(r.ecommerceStoreConfig).recovery.enabled).map(r => r.id));
+  const brandRests = await prisma.restaurant.findMany({ where: { id: { in: allIds } }, select: { id: true, ecommerceStoreConfig: true } });
+  // Mismo criterio que el cron: recovery.enabled (no orderingEnabled, flag legacy).
+  const recoveryOnIds = new Set(brandRests.filter(r => parseStoreConfig(r.ecommerceStoreConfig).recovery.enabled).map(r => r.id));
   const fullQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
     if (c.lastRestaurantId && c.lastRestaurantId !== restaurantId && recoveryOnIds.has(c.lastRestaurantId)) return [];
     const em = c.email!.toLowerCase();

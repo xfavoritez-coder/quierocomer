@@ -37,9 +37,11 @@ export async function GET(req: NextRequest) {
   const errors: string[] = [];
 
   try {
-    // 1. Restaurantes con recovery habilitado
+    // 1. Restaurantes con recovery habilitado.
+    //    El opt-in real es recovery.enabled; NO dependemos de orderingEnabled (flag del
+    //    pilar legacy "pedir online"): un local del pilar ecommerce —p. ej. Hand Roll con
+    //    dominio propio— puede tener orderingEnabled=false y aun así usar recuperación.
     const restaurants = await prisma.restaurant.findMany({
-      where: { orderingEnabled: true },
       select: { id: true, name: true, logoUrl: true, slug: true, ecommerceStoreConfig: true },
     });
 
