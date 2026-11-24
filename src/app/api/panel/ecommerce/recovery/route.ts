@@ -167,24 +167,30 @@ export async function GET(req: NextRequest) {
     return automation ? [{ c, automation }] : [];
   }) : [];
   // También incluir perdidos que AÚN no llegan al umbral pero lo harán
-  const futureQueue = rc.enabled ? churnedWithEmail.flatMap(c => {
+  type PendingItem = { c: ClientRow; nextEmail: string; daysLeft: number; minDays: number };
+  const COUPON_DAYS = 3;
+  const futureQueue: PendingItem[] = rc.enabled ? churnedWithEmail.flatMap((c): PendingItem[] => {
     if (c.lastRestaurantId && c.lastRestaurantId !== restaurantId && recoveryOnIds.has(c.lastRestaurantId)) return [];
     const em = c.email!.toLowerCase();
     if (unsubscribed.has(em)) return [];
-    // Ya contactado con encuesta Y cupón → no hay nada más que enviar
     if (idx.hasEnrollment.has(`${em}::abandonment_survey`) && idx.hasEnrollment.has(`${em}::recovery_incentive`)) return [];
-    // Ya en fullQueue (cumple reglas hoy) → no duplicar
     if (fullQueue.some(q => q.c.email?.toLowerCase() === em)) return [];
-    // Calcular cuántos días faltan para el umbral
-    const minDays = surveyMinDays(c, rc);
-    const daysLeft = Math.max(0, minDays - c.daysSinceLastOrder);
-    // Ya contactado con encuesta pero aún no toca cupón
     const hasSurvey = idx.hasEnrollment.has(`${em}::abandonment_survey`);
-    const nextEmail = hasSurvey ? "recovery_incentive" : "abandonment_survey";
-    return [{ c, nextEmail, daysLeft, minDays }];
+    if (hasSurvey) {
+      // Encuesta ya enviada → próximo es cupón. Calcular días desde encuesta.
+      const surveyAt = idx.surveySentAt.get(em);
+      const daysSinceSurvey = surveyAt ? Math.round((Date.now() - surveyAt) / 86400000) : 0;
+      const daysLeft = Math.max(0, COUPON_DAYS - daysSinceSurvey);
+      return [{ c, nextEmail: "recovery_incentive" as const, daysLeft, minDays: COUPON_DAYS }];
+    } else {
+      // Sin encuesta → próximo es encuesta. Calcular días hasta umbral.
+      const minDays = surveyMinDays(c, rc);
+      const daysLeft = Math.max(0, minDays - c.daysSinceLastOrder);
+      return [{ c, nextEmail: "abandonment_survey" as const, daysLeft, minDays }];
+    }
   }) : [];
 
-  const allPending = [
+  const allPending: PendingItem[] = [
     ...fullQueue.map(q => ({ c: q.c, nextEmail: q.automation, daysLeft: 0, minDays: surveyMinDays(q.c, rc) })),
     ...futureQueue,
   ].sort((a, b) => a.daysLeft - b.daysLeft || b.c.riskScore - a.c.riskScore);

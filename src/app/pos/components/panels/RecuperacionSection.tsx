@@ -347,9 +347,6 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
               Próximo envío: {nextRunDay} · {nextRunTime}
             </span>
-            <span style={{ fontFamily: F, fontSize: '0.66rem', color: 'var(--ink-3)', flex: '1 1 160px', minWidth: 0 }}>
-              Es el tope del envío diario (una ejecución al día). La tabla de abajo es solo una muestra de los 50 de mayor riesgo, no el total que se envía.
-            </span>
           </div>
           <style>{`.rec-queue-row:hover{background:var(--sunk) !important}`}</style>
           <div style={{ overflowX: 'auto' }}>
@@ -359,7 +356,7 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                   <th style={{ textAlign: 'left', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Cliente</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Pedidos</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Total compras</th>
-                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Sin pedir</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Último pedido</th>
                   <th title="Cada cuántos días pedía en promedio" style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Frecuencia</th>
                   <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Próximo email</th>
                   <th style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.68rem', fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>Envío estimado</th>
@@ -379,8 +376,9 @@ export default function RecuperacionSection({ restaurantId, onSelectClient }: { 
                     </td>
                     <td style={{ padding: '8px 8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.orders}</td>
                     <td style={{ padding: '8px 8px', fontFamily: M, fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)', textAlign: 'right', whiteSpace: 'nowrap' }}>{clp(c.totalSpent)}</td>
-                    <td style={{ padding: '8px 8px', fontSize: '0.78rem', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', color: c.daysSinceLastOrder > 90 ? '#ef4444' : c.daysSinceLastOrder > 45 ? '#f59e0b' : 'var(--ink-2)' }}>
-                      {c.daysSinceLastOrder} días
+                    <td style={{ padding: '8px 8px', fontSize: '0.76rem', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--ink-2)' }}>
+                      <div style={{ fontWeight: 600 }}>{new Date(Date.now() - c.daysSinceLastOrder * 86400000).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}</div>
+                      <div style={{ fontSize: '0.64rem', color: c.daysSinceLastOrder > 90 ? '#ef4444' : c.daysSinceLastOrder > 45 ? '#f59e0b' : 'var(--ink-3)' }}>hace {c.daysSinceLastOrder}d</div>
                     </td>
                     <td style={{ padding: '8px 8px', fontSize: '0.78rem', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--ink-2)' }}>
                       {c.avgFrequencyDays !== null ? `cada ${c.avgFrequencyDays} ${c.avgFrequencyDays === 1 ? 'día' : 'días'}` : <span style={{ color: 'var(--ink-4)' }}>1 pedido</span>}
